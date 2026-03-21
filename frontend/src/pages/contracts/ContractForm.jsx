@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -18,21 +18,44 @@ import {
   Autocomplete,
   FormControlLabel,
   Checkbox,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
+  Chip,
+  Alert,
+  IconButton,
+  Tooltip,
+  Paper,
+  alpha,
   useMediaQuery,
-  useTheme
+  useTheme,
+  LinearProgress,
+  InputAdornment,
 } from '@mui/material';
 import {
   Save,
   Cancel,
   ArrowBack,
+  ArrowForward,
   AutoAwesome,
   AutoFixHigh,
   RateReview,
-  Send
+  SmartToy,
+  Business,
+  Person,
+  CalendarToday,
+  AttachMoney,
+  Gavel,
+  Draw,
+  CloudUpload,
+  CheckCircle,
+  Description,
+  FileUpload,
+  Close,
+  Send,
+  PictureAsPdf,
+  Article,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
@@ -43,9 +66,504 @@ import {
   updateContract,
 } from '../../store/slices/contractsSlice';
 import { fetchSuppliers } from '../../store/slices/suppliersSlice';
-import { aiChatAPI } from '../../services/api';
+import { fetchClients } from '../../store/slices/clientsSlice';
+import { aiChatAPI, contractsAPI } from '../../services/api';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+
+// Modèles de contrats préconstruits
+const BUILTIN_TEMPLATES = [
+  {
+    id: 'service',
+    icon: '🔧',
+    label: 'Contrat de services',
+    type: 'service',
+    description: 'Pour des prestations de services récurrentes ou ponctuelles',
+    prompt: 'Contrat de prestation de services professionnels avec clauses de confidentialité et modalités de paiement nettes 30 jours',
+  },
+  {
+    id: 'purchase',
+    icon: '🛒',
+    label: "Contrat d'achat",
+    type: 'purchase',
+    description: 'Achat de produits ou matières premières auprès d\'un fournisseur',
+    prompt: 'Contrat d\'achat de marchandises avec conditions de livraison, garantie et retour produits',
+  },
+  {
+    id: 'nda',
+    icon: '🔒',
+    label: 'Accord de confidentialité (NDA)',
+    type: 'nda',
+    description: 'Protection des informations confidentielles entre deux parties',
+    prompt: 'Accord de non-divulgation (NDA) bilatéral pour protéger les informations confidentielles échangées dans le cadre d\'une collaboration',
+  },
+  {
+    id: 'maintenance',
+    icon: '⚙️',
+    label: 'Contrat de maintenance',
+    type: 'maintenance',
+    description: 'Maintenance et support technique d\'équipements ou systèmes',
+    prompt: 'Contrat de maintenance préventive et corrective avec niveaux de service (SLA) et astreintes',
+  },
+  {
+    id: 'lease',
+    icon: '🏢',
+    label: 'Contrat de location',
+    type: 'lease',
+    description: 'Location de locaux, équipements ou véhicules',
+    prompt: 'Contrat de location avec conditions d\'utilisation, dépôt de garantie et modalités de résiliation',
+  },
+  {
+    id: 'partnership',
+    icon: '🤝',
+    label: 'Accord de partenariat',
+    type: 'partnership',
+    description: 'Partenariat commercial ou stratégique entre deux entreprises',
+    prompt: 'Accord de partenariat commercial avec partage des responsabilités, revenus et conditions de sortie',
+  },
+  {
+    id: 'freelance',
+    icon: '💻',
+    label: 'Contrat freelance',
+    type: 'service',
+    description: 'Pour les travailleurs indépendants et consultants',
+    prompt: 'Contrat de mission freelance avec livrables, jalons, tarification horaire et droits de propriété intellectuelle',
+  },
+  {
+    id: 'distribution',
+    icon: '📦',
+    label: 'Contrat de distribution',
+    type: 'other',
+    description: 'Distribution exclusive ou non-exclusive de produits',
+    prompt: 'Contrat de distribution avec territoire exclusif, objectifs de vente et conditions de renouvellement',
+  },
+];
+
+const STEPS = [
+  { label: 'Description avec IA', icon: <SmartToy /> },
+  { label: 'Informations', icon: <Business /> },
+  { label: 'Contenu', icon: <Gavel /> },
+  { label: 'Signatures & Finalisation', icon: <Draw /> },
+];
+
+// Composant IA Chat intégré
+function AIDescriptionStep({ onDataGenerated, formData, isEditMode }) {
+  const [description, setDescription] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [generating, setGenerating] = useState(false);
+  const [mode, setMode] = useState('template'); // template | chat
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const messagesEndRef = useRef(null);
+  const { enqueueSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const handleTemplateSelect = async (tpl) => {
+    setSelectedTemplate(tpl);
+    setDescription(tpl.prompt);
+  };
+
+  const handleGenerate = async () => {
+    if (!description.trim()) return;
+    setGenerating(true);
+
+    const userMsg = description;
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+
+    try {
+      const prompt = `Tu es un assistant juridique IA spécialisé en droit des affaires québécois/canadien. L'utilisateur veut créer un contrat. Génère immédiatement le JSON complet du contrat sans poser de questions supplémentaires. Utilise des valeurs sensées par défaut pour les informations manquantes.
+
+DESCRIPTION DU CONTRAT: ${userMsg}
+
+Génère le JSON entre \`\`\`json et \`\`\` avec EXACTEMENT ce format:
+{
+  "title": "Titre court et professionnel du contrat",
+  "contract_type": "purchase|service|maintenance|lease|nda|partnership|other",
+  "description": "Description de 2-3 phrases de l'objet du contrat",
+  "start_date": "YYYY-MM-DD",
+  "end_date": "YYYY-MM-DD",
+  "total_value": 5000,
+  "currency": "CAD",
+  "terms_and_conditions": "<h2>CONDITIONS GÉNÉRALES</h2><h3>Article 1 — Objet</h3><p>...</p><h3>Article 2 — Durée</h3><p>...</p><h3>Article 3 — Obligations des parties</h3><p>...</p><h3>Article 4 — Confidentialité</h3><p>...</p><h3>Article 5 — Résiliation</h3><p>...</p><h3>Article 6 — Règlement des différends</h3><p>...</p><br><h3>Signatures</h3><table style='width:100%;border-collapse:collapse'><tr><td style='width:50%;padding:20px;border:1px solid #ccc'><p><strong>Pour [Partie A]</strong></p><br><br><p>Signature: ___________________________</p><p>Nom: ___________________________</p><p>Titre: ___________________________</p><p>Date: ___________________________</p></td><td style='width:50%;padding:20px;border:1px solid #ccc'><p><strong>Pour [Partie B]</strong></p><br><br><p>Signature: ___________________________</p><p>Nom: ___________________________</p><p>Titre: ___________________________</p><p>Date: ___________________________</p></td></tr></table>",
+  "payment_terms": "<p><strong>Modalités de paiement:</strong></p><ul><li>...</li></ul>",
+  "renewal_notice_days": 30,
+  "alert_days_before_expiry": 30
+}`;
+
+      const response = await aiChatAPI.sendMessage({ message: prompt, stream: false });
+      const reply = response.data.message.content;
+
+      const jsonMatch = reply.match(/```json\n([\s\S]*?)\n```/);
+      if (jsonMatch) {
+        const data = JSON.parse(jsonMatch[1]);
+        onDataGenerated(data);
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: '✅ Contrat généré ! J\'ai pré-rempli toutes les sections. Vérifiez et complétez les informations aux étapes suivantes.',
+        }]);
+      } else {
+        setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+        enqueueSnackbar('Contenu généré — vérifiez et complétez le formulaire', { variant: 'info' });
+      }
+    } catch (err) {
+      console.error(err);
+      enqueueSnackbar('Erreur de communication avec l\'IA', { variant: 'error' });
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Désolé, une erreur est survenue. Veuillez réessayer.' }]);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (isEditMode) {
+    return (
+      <Alert severity="info" sx={{ borderRadius: 2 }}>
+        L'assistant IA est disponible uniquement lors de la création d'un nouveau contrat.
+        Vous pouvez modifier directement les champs ci-dessous.
+      </Alert>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Mode selector */}
+      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+        <Button
+          variant={mode === 'template' ? 'contained' : 'outlined'}
+          size="small"
+          onClick={() => setMode('template')}
+          startIcon={<Article />}
+        >
+          Choisir un modèle
+        </Button>
+        <Button
+          variant={mode === 'chat' ? 'contained' : 'outlined'}
+          size="small"
+          onClick={() => setMode('chat')}
+          startIcon={<SmartToy />}
+        >
+          Décrire librement
+        </Button>
+      </Box>
+
+      {/* Template grid */}
+      {mode === 'template' && (
+        <Box>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            Sélectionnez un modèle pour démarrer avec une structure pré-remplie par l'IA :
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 1.5, mb: 3 }}>
+            {BUILTIN_TEMPLATES.map(tpl => (
+              <Card
+                key={tpl.id}
+                onClick={() => handleTemplateSelect(tpl)}
+                sx={{
+                  cursor: 'pointer',
+                  border: '2px solid',
+                  borderColor: selectedTemplate?.id === tpl.id ? 'primary.main' : 'divider',
+                  transition: 'all 0.2s ease',
+                  '&:hover': { borderColor: 'primary.light', transform: 'translateY(-2px)' },
+                }}
+              >
+                <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <Typography variant="h5" mb={0.5}>{tpl.icon}</Typography>
+                  <Typography variant="subtitle2" fontWeight={700} gutterBottom>{tpl.label}</Typography>
+                  <Typography variant="caption" color="text.secondary">{tpl.description}</Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+
+          {selectedTemplate && (
+            <Box sx={{ bgcolor: 'primary.50', borderRadius: 2, p: 2, border: '1px solid', borderColor: 'primary.light' }}>
+              <Typography variant="subtitle2" fontWeight={700} mb={1}>
+                {selectedTemplate.icon} Modèle sélectionné : {selectedTemplate.label}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" mb={2}>
+                Ajoutez des détails spécifiques (parties, montants, durée...) ou générez directement avec les paramètres par défaut :
+              </Typography>
+              <TextField
+                multiline
+                rows={3}
+                fullWidth
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Précisez les détails : noms des parties, montant, durée, spécificités..."
+                sx={{ mb: 1.5 }}
+              />
+              <Button
+                variant="contained"
+                startIcon={generating ? <CircularProgress size={16} color="inherit" /> : <AutoAwesome />}
+                onClick={handleGenerate}
+                disabled={generating}
+              >
+                {generating ? 'Génération en cours...' : 'Générer le contrat avec l\'IA'}
+              </Button>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Free description mode */}
+      {mode === 'chat' && (
+        <Box>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            Décrivez le contrat que vous souhaitez créer en langage naturel. L'IA pré-remplira toutes les sections.
+          </Typography>
+
+          {/* Chat messages */}
+          {messages.length > 0 && (
+            <Box sx={{
+              bgcolor: 'grey.50',
+              borderRadius: 2,
+              p: 2,
+              mb: 2,
+              maxHeight: 250,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+            }}>
+              {messages.map((msg, i) => (
+                <Box
+                  key={i}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  <Box sx={{
+                    maxWidth: '85%',
+                    p: 1.5,
+                    borderRadius: 2,
+                    bgcolor: msg.role === 'user' ? 'primary.main' : 'white',
+                    color: msg.role === 'user' ? 'white' : 'text.primary',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                    fontSize: '0.875rem',
+                    lineHeight: 1.5,
+                    whiteSpace: 'pre-line',
+                  }}>
+                    {msg.content}
+                  </Box>
+                </Box>
+              ))}
+              {generating && (
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1.5, bgcolor: 'white', borderRadius: 2, width: 'fit-content', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                  <CircularProgress size={16} />
+                  <Typography variant="caption" color="text.secondary">L'IA génère votre contrat...</Typography>
+                </Box>
+              )}
+              <div ref={messagesEndRef} />
+            </Box>
+          )}
+
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-end' }}>
+            <TextField
+              multiline
+              rows={4}
+              fullWidth
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="Ex: Contrat de maintenance informatique mensuel avec Acme Corp, 2500$/mois, 12 mois, inclut support téléphonique 24/7 et intervention en 4h..."
+              disabled={generating}
+            />
+            <Button
+              variant="contained"
+              onClick={handleGenerate}
+              disabled={generating || !description.trim()}
+              sx={{ height: 56, minWidth: 56, borderRadius: '10px' }}
+            >
+              {generating ? <CircularProgress size={20} color="inherit" /> : <AutoAwesome />}
+            </Button>
+          </Box>
+
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+            Conseil : Mentionnez les parties impliquées, la durée, le montant et l'objet principal pour un meilleur résultat.
+          </Typography>
+        </Box>
+      )}
+
+      {messages.some(m => m.role === 'assistant' && m.content.startsWith('✅')) && (
+        <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }}>
+          Contrat pré-rempli par l'IA. Passez à l'étape suivante pour vérifier et compléter les informations.
+        </Alert>
+      )}
+    </Box>
+  );
+}
+
+// Composant section signature
+function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
+  const fileInputRef = useRef(null);
+  const [uploadedFileName, setUploadedFileName] = useState('');
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUploadedFileName(file.name);
+      onSignedPdfUpload(file);
+    }
+  };
+
+  return (
+    <Box>
+      <Typography variant="h6" fontWeight={700} mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Draw fontSize="small" color="primary" />
+        Signatures des parties
+      </Typography>
+
+      <Grid container spacing={3} mb={3}>
+        {/* Notre signature */}
+        <Grid item xs={12} md={6}>
+          <Box sx={{ border: '1.5px solid', borderColor: 'divider', borderRadius: 2, p: 2.5 }}>
+            <Typography variant="subtitle2" fontWeight={700} mb={2} color="primary">
+              Notre organisation
+            </Typography>
+            <Stack spacing={2}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.signed_by_us}
+                    onChange={e => setFormData(prev => ({ ...prev, signed_by_us: e.target.checked }))}
+                  />
+                }
+                label="Signé de notre côté"
+              />
+              {formData.signed_by_us && (
+                <>
+                  <TextField
+                    label="Nom du signataire"
+                    size="small"
+                    value={formData.signed_by_us_name || ''}
+                    onChange={e => setFormData(prev => ({ ...prev, signed_by_us_name: e.target.value }))}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Date de signature"
+                    type="date"
+                    size="small"
+                    value={formData.signed_by_us_at ? formData.signed_by_us_at.split('T')[0] : ''}
+                    onChange={e => setFormData(prev => ({ ...prev, signed_by_us_at: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                  />
+                </>
+              )}
+            </Stack>
+          </Box>
+        </Grid>
+
+        {/* Signature contrepartie */}
+        <Grid item xs={12} md={6}>
+          <Box sx={{ border: '1.5px solid', borderColor: 'divider', borderRadius: 2, p: 2.5 }}>
+            <Typography variant="subtitle2" fontWeight={700} mb={2} color="secondary">
+              Contrepartie (client / fournisseur)
+            </Typography>
+            <Stack spacing={2}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={formData.signed_by_counterpart}
+                    onChange={e => setFormData(prev => ({ ...prev, signed_by_counterpart: e.target.checked }))}
+                  />
+                }
+                label="Signé par la contrepartie"
+              />
+              {formData.signed_by_counterpart && (
+                <>
+                  <TextField
+                    label="Nom du signataire"
+                    size="small"
+                    value={formData.signed_by_counterpart_name || ''}
+                    onChange={e => setFormData(prev => ({ ...prev, signed_by_counterpart_name: e.target.value }))}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Date de signature"
+                    type="date"
+                    size="small"
+                    value={formData.signed_by_counterpart_at ? formData.signed_by_counterpart_at.split('T')[0] : ''}
+                    onChange={e => setFormData(prev => ({ ...prev, signed_by_counterpart_at: e.target.value }))}
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                  />
+                </>
+              )}
+            </Stack>
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* Upload PDF signé */}
+      <Box sx={{ border: '2px dashed', borderColor: 'divider', borderRadius: 2, p: 3, textAlign: 'center', bgcolor: 'grey.50' }}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf"
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
+        {uploadedFileName ? (
+          <Box>
+            <CheckCircle color="success" sx={{ fontSize: 40, mb: 1 }} />
+            <Typography variant="subtitle2" fontWeight={600} color="success.main">{uploadedFileName}</Typography>
+            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+              PDF signé importé avec succès
+            </Typography>
+            <Button size="small" variant="outlined" onClick={() => fileInputRef.current?.click()}>
+              Remplacer
+            </Button>
+          </Box>
+        ) : (
+          <Box>
+            <PictureAsPdf sx={{ fontSize: 40, mb: 1, color: 'text.secondary' }} />
+            <Typography variant="subtitle2" fontWeight={600} mb={0.5}>
+              Importer le PDF signé par les deux parties
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" mb={2}>
+              Gardez une trace du contrat signé pour une traçabilité complète. Formats acceptés: PDF
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<CloudUpload />}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Parcourir...
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      {/* Export */}
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="subtitle2" fontWeight={600} mb={1.5} color="text.secondary">
+          Exporter le contrat
+        </Typography>
+        <Stack direction="row" spacing={1.5}>
+          <Chip
+            icon={<PictureAsPdf />}
+            label="Exporter en PDF"
+            clickable
+            color="error"
+            variant="outlined"
+            size="small"
+          />
+          <Chip
+            icon={<Description />}
+            label="Exporter en Word"
+            clickable
+            color="primary"
+            variant="outlined"
+            size="small"
+          />
+        </Stack>
+      </Box>
+    </Box>
+  );
+}
 
 function ContractForm() {
   const { t } = useTranslation(['contracts', 'common']);
@@ -54,9 +572,12 @@ function ContractForm() {
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const [signedPdfFile, setSignedPdfFile] = useState(null);
 
   const { currentContract, loading } = useSelector((state) => state.contracts);
   const { suppliers } = useSelector((state) => state.suppliers);
+  const { clients } = useSelector((state) => state.clients);
 
   const isEditMode = Boolean(id);
 
@@ -65,8 +586,11 @@ function ContractForm() {
 
   const [formData, setFormData] = useState({
     title: '',
-    contract_type: 'purchase',
+    contract_type: 'service',
+    party_type: 'client', // client | supplier
     supplier: null,
+    client: null,
+    counterpart_name: '',
     description: '',
     terms_and_conditions: '',
     payment_terms: '',
@@ -78,14 +602,22 @@ function ContractForm() {
     renewal_notice_days: 30,
     alert_days_before_expiry: 30,
     internal_notes: '',
+    signed_by_us: false,
+    signed_by_us_name: '',
+    signed_by_us_at: '',
+    signed_by_counterpart: false,
+    signed_by_counterpart_name: '',
+    signed_by_counterpart_at: '',
   });
 
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     dispatch(fetchSuppliers());
+    dispatch(fetchClients());
     if (isEditMode) {
       dispatch(fetchContract(id));
+      setActiveStep(1); // En mode édition, commencer à l'étape infos
     }
   }, [id, isEditMode, dispatch]);
 
@@ -93,8 +625,11 @@ function ContractForm() {
     if (isEditMode && currentContract) {
       setFormData({
         title: currentContract.title || '',
-        contract_type: currentContract.contract_type || 'purchase',
+        contract_type: currentContract.contract_type || 'service',
+        party_type: currentContract.client ? 'client' : 'supplier',
         supplier: suppliers.find(s => s.id === currentContract.supplier) || null,
+        client: clients.find(c => c.id === currentContract.client) || null,
+        counterpart_name: currentContract.counterpart_name || '',
         description: currentContract.description || '',
         terms_and_conditions: currentContract.terms_and_conditions || '',
         payment_terms: currentContract.payment_terms || '',
@@ -106,126 +641,53 @@ function ContractForm() {
         renewal_notice_days: currentContract.renewal_notice_days || 30,
         alert_days_before_expiry: currentContract.alert_days_before_expiry || 30,
         internal_notes: currentContract.internal_notes || '',
+        signed_by_us: currentContract.signed_by_us || false,
+        signed_by_us_name: currentContract.signed_by_us_name || '',
+        signed_by_us_at: currentContract.signed_by_us_at || '',
+        signed_by_counterpart: currentContract.signed_by_counterpart || false,
+        signed_by_counterpart_name: currentContract.signed_by_counterpart_name || '',
+        signed_by_counterpart_at: currentContract.signed_by_counterpart_at || '',
       });
     }
-  }, [currentContract, isEditMode, suppliers]);
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
-  const [aiMessages, setAiMessages] = useState([]);
-  const [aiInput, setAiInput] = useState('');
-  const aiMessagesEndRef = React.useRef(null);
+  }, [currentContract, isEditMode, suppliers, clients]);
 
-  useEffect(() => {
-    if (aiMessagesEndRef.current) {
-      aiMessagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [aiMessages]);
-
-  const startAIAssistant = () => {
-    setAiMessages([{
-      role: 'assistant',
-      content: t('contracts:aiAssistant.welcome', "Bonjour ! Je suis votre assistant juridique IA. Pour commencer la création de votre contrat, quel en est l'objet principal ?")
-    }]);
-    setAiAssistantOpen(true);
+  const handleAIDataGenerated = (data) => {
+    setFormData(prev => ({
+      ...prev,
+      title: data.title || prev.title,
+      contract_type: data.contract_type || prev.contract_type,
+      description: data.description || prev.description,
+      start_date: data.start_date || prev.start_date,
+      end_date: data.end_date || prev.end_date,
+      total_value: data.total_value || prev.total_value,
+      currency: data.currency || prev.currency,
+      terms_and_conditions: data.terms_and_conditions || prev.terms_and_conditions,
+      payment_terms: data.payment_terms || prev.payment_terms,
+      renewal_notice_days: data.renewal_notice_days || prev.renewal_notice_days,
+      alert_days_before_expiry: data.alert_days_before_expiry || prev.alert_days_before_expiry,
+    }));
+    enqueueSnackbar('Contrat pré-rempli par l\'IA — vérifiez les informations', { variant: 'success' });
   };
 
-  const parseJsonResponse = (text, defaultText) => {
-    try {
-      const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/);
-      if (jsonMatch) {
-         return JSON.parse(jsonMatch[1]);
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  const handleSendAIAssistant = async () => {
-    if (!aiInput.trim()) return;
-    
-    // Ajout du message utilisateur
-    const newMessages = [...aiMessages, { role: 'user', content: aiInput }];
-    setAiMessages(newMessages);
-    setAiInput('');
-    setIsGenerating(true);
-
-    try {
-      // Construction du prompt complet avec l'historique
-      let prompt = "Tu es un assistant juridique IA. Ton but est d'aider l'utilisateur à créer un contrat étape par étape en posant une question à la fois (titre, description, montant, fournisseur, type, dates). ";
-      prompt += "L'utilisateur te répond. Quand tu estimes avoir suffisamment d'informations, au lieu de poser une nouvelle question, tu vas générer le JSON complet avec les données et le texte du contrat. Le texte du contrat DOIT toujours inclure un espace 'Signature et Cachet' à la fin. ";
-      prompt += "IMPORTANT: Le texte contenu dans 'terms_and_conditions' et 'payment_terms' DOIT être généré au format HTML sémantique (utilise <strong>, <br>, <ul>, <li>, <h3>, etc.) adapté à un éditeur de texte enrichi (Rich Text). N'utilise pas de markdown pour ces champs de texte, unqiement du HTML valide. ";
-      prompt += "Ta réponse finale contenant le JSON DOIT OBLIGATOIREMENT être formattée entre des balises ```json et ```. Voici le format JSON attendu : { \"title\": \"...\", \"contract_type\": \"...\", \"description\": \"...\", \"start_date\": \"YYYY-MM-DD\", \"end_date\": \"YYYY-MM-DD\", \"total_value\": 1000, \"currency\": \"CAD\", \"terms_and_conditions\": \"<h1>Titre du contrat</h1><p>Texte avec <strong>gras</strong>...</p><br><br><p>Signature et Cachet : _________________</p>\", \"payment_terms\": \"...\" }.\n\nHistorique de la conversation :\n";
-      
-      newMessages.forEach(msg => {
-        prompt += `${msg.role === 'user' ? 'Utilisateur' : 'Assistant'} : ${msg.content}\n`;
-      });
-
-      const response = await aiChatAPI.sendMessage({
-        message: prompt,
-        stream: false
-      });
-
-      const assistantReply = response.data.message.content;
-      setAiMessages(prev => [...prev, { role: 'assistant', content: assistantReply }]);
-
-      // Vérifier si la réponse contient du JSON
-      const extractedData = parseJsonResponse(assistantReply);
-      if (extractedData) {
-        // Remplir le formulaire avec les données
-        setFormData(prev => ({
-          ...prev,
-          title: extractedData.title || prev.title,
-          contract_type: extractedData.contract_type || prev.contract_type,
-          description: extractedData.description || prev.description,
-          start_date: extractedData.start_date || prev.start_date,
-          end_date: extractedData.end_date || prev.end_date,
-          total_value: extractedData.total_value || prev.total_value,
-          currency: extractedData.currency || prev.currency,
-          terms_and_conditions: extractedData.terms_and_conditions || prev.terms_and_conditions,
-          payment_terms: extractedData.payment_terms || prev.payment_terms,
-        }));
-        
-        enqueueSnackbar('Les informations ont été transférées vers le formulaire ! Vous pouvez maintenant vérifier avant de confirmer.', { variant: 'success', autoHideDuration: 6000 });
-        setAiAssistantOpen(false); // Fermer le dialog pour révéler la vue avant confirmation
-      }
-
-    } catch (error) {
-      console.error('AI Assistant error:', error);
-      enqueueSnackbar("Erreur de communication avec l'IA", { variant: 'error' });
-      setAiMessages(prev => [...prev, { role: 'assistant', content: "Désolé, une erreur technique est survenue. Veuillez réessayer."}]);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleGenerateAI = async (field) => {
-    if (!formData.title || !formData.description) {
-      enqueueSnackbar('Veuillez remplir le titre et la description pour aider l\'IA', { variant: 'warning' });
+  const handleGenerateSection = async (field) => {
+    if (!formData.title && !formData.description) {
+      enqueueSnackbar('Remplissez le titre ou la description d\'abord', { variant: 'warning' });
       return;
     }
-
     setIsGenerating(true);
     try {
-      const prompt = `Génère un texte professionnel pour le champ "${field === 'terms_and_conditions' ? 'Conditions Générales' : 'Conditions de Paiement'}" d'un contrat nommé "${formData.title}". 
-      Description du projet: ${formData.description}. 
-      Montant: ${formData.total_value} ${formData.currency}.
-      Type de contrat: ${formData.contract_type}.
-      Réponds directement avec le texte juridique sans introduction. IMPORTANT: Tu DOIS formater ton texte en HTML sémantique valide (utilise <strong>, <ul>, <li>, <p>, <br>). N'utilise SURTOUT PAS de Markdown (**gras**). Il est impératif de toujours ajouter un espace clair pour les signatures au format HTML (ex: '<br><br><p><strong>Signature et Cachet du Client / Fournisseur :</strong> _________________</p>') à la fin du document si applicable.`;
+      const fieldLabel = field === 'terms_and_conditions' ? 'Conditions Générales du contrat' : 'Conditions et Modalités de Paiement';
+      const prompt = `Tu es un expert en rédaction juridique. Génère un texte professionnel pour la section "${fieldLabel}" d'un contrat.
+Type: ${formData.contract_type}. Titre: ${formData.title}. Description: ${formData.description}.
+Montant: ${formData.total_value} ${formData.currency}. Durée: ${formData.start_date} au ${formData.end_date}.
+IMPORTANT: Format HTML sémantique uniquement (utilise <h3>, <p>, <strong>, <ul>, <li>, <br>). Pas de markdown.
+${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confidentialité, résiliation, règlement des litiges, et un tableau de signatures à la fin.' : 'Inclure: montant, échéances, mode de paiement, pénalités de retard.'}`;
 
-      const response = await aiChatAPI.sendMessage({
-        message: prompt,
-        stream: false
-      });
-
-      const generatedText = response.data.message.content;
-      setFormData(prev => ({
-        ...prev,
-        [field]: generatedText
-      }));
-      enqueueSnackbar('Contenu généré avec succès par l\'IA !', { variant: 'success' });
-    } catch (error) {
-      console.error('AI Generation error:', error);
-      enqueueSnackbar('Erreur lors de la génération par l\'IA', { variant: 'error' });
+      const response = await aiChatAPI.sendMessage({ message: prompt, stream: false });
+      setFormData(prev => ({ ...prev, [field]: response.data.message.content }));
+      enqueueSnackbar('Section générée avec succès', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar('Erreur lors de la génération', { variant: 'error' });
     } finally {
       setIsGenerating(false);
     }
@@ -233,456 +695,484 @@ function ContractForm() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleSupplierChange = (event, newValue) => {
-    setFormData((prev) => ({
-      ...prev,
-      supplier: newValue,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!formData.title) {
+      enqueueSnackbar('Le titre du contrat est requis', { variant: 'error' });
+      setActiveStep(1);
+      return;
+    }
     setSubmitting(true);
-
     try {
       const payload = {
         ...formData,
-        supplier: formData.supplier?.id,
+        supplier: formData.party_type === 'supplier' ? formData.supplier?.id : null,
+        client: formData.party_type === 'client' ? formData.client?.id : null,
       };
+      // Remove non-API fields
+      delete payload.party_type;
 
       if (isEditMode) {
         await dispatch(updateContract({ id, data: payload })).unwrap();
-        enqueueSnackbar(t('contracts:messages.updateSuccess'), { variant: 'success' });
+        enqueueSnackbar('Contrat mis à jour avec succès', { variant: 'success' });
       } else {
-        await dispatch(createContract(payload)).unwrap();
-        enqueueSnackbar(t('contracts:messages.createSuccess'), { variant: 'success' });
+        const result = await dispatch(createContract(payload)).unwrap();
+        // Upload signed PDF if provided
+        if (signedPdfFile && result?.id) {
+          const formDataUpload = new FormData();
+          formDataUpload.append('signed_pdf', signedPdfFile);
+          await contractsAPI.update(result.id, formDataUpload);
+        }
+        enqueueSnackbar('Contrat créé avec succès', { variant: 'success' });
       }
       navigate('/contracts');
-    } catch (error) {
-      enqueueSnackbar(
-        error.message || t('contracts:messages.updateError'),
-        { variant: 'error' }
-      );
+    } catch (err) {
+      enqueueSnackbar(err.message || 'Erreur lors de la sauvegarde', { variant: 'error' });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleNext = () => setActiveStep(prev => Math.min(prev + 1, STEPS.length - 1));
+  const handleBack = () => setActiveStep(prev => Math.max(prev - 1, 0));
+
   if (isEditMode && loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>;
   }
 
-  return (
-    <Box sx={{
-      p: { xs: 0, sm: 2, md: 3 },
-      bgcolor: 'background.default',
-      minHeight: '100vh'
-    }}>
-      {/* Header - Caché sur mobile (géré par top navbar) */}
-      <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/contracts')}
-          sx={{ mb: 2 }}
-        >
-          {t('common:back')}
-        </Button>
-      </Box>
+  const renderStepContent = (step) => {
+    switch (step) {
+      case 0:
+        return (
+          <AIDescriptionStep
+            onDataGenerated={handleAIDataGenerated}
+            formData={formData}
+            isEditMode={isEditMode}
+          />
+        );
 
-      {/* Actions Mobile - Style mobile app compact (pas de bouton back, géré par top navbar) */}
-      <Box sx={{
-        mb: 1.5,
-        display: { xs: 'flex', md: 'none' },
-        justifyContent: 'flex-end',
-        px: 2,
-        py: 1
-      }}>
-        {/* Les actions sont gérées par le top navbar sur mobile */}
-      </Box>
-      <Box sx={{ px: isMobile ? 2 : 0 }}>
-      <Card>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
-              {isEditMode ? t('contracts:form.title.edit') : t('contracts:form.title.new')}
-            </Typography>
-            {!isEditMode && (
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<AutoAwesome />}
-                onClick={startAIAssistant}
-              >
-                Créer avec l'Assistant IA
-              </Button>
-            )}
-          </Box>
+      case 1:
+        return (
+          <Grid container spacing={2.5}>
+            <Grid item xs={12} md={8}>
+              <TextField
+                fullWidth
+                required
+                label="Titre du contrat"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="Ex: Contrat de maintenance — Acme Corp 2024"
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth required>
+                <InputLabel>Type de contrat</InputLabel>
+                <Select name="contract_type" value={formData.contract_type} onChange={handleChange} label="Type de contrat">
+                  <MenuItem value="purchase">Contrat d'achat</MenuItem>
+                  <MenuItem value="service">Contrat de service</MenuItem>
+                  <MenuItem value="maintenance">Contrat de maintenance</MenuItem>
+                  <MenuItem value="lease">Contrat de location</MenuItem>
+                  <MenuItem value="nda">Accord de confidentialité</MenuItem>
+                  <MenuItem value="partnership">Accord de partenariat</MenuItem>
+                  <MenuItem value="other">Autre</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-          <Divider sx={{ my: 3 }} />
+            {/* Type de partie */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Contrepartie du contrat</Typography>
+              <Stack direction="row" spacing={1} mb={2}>
+                <Button
+                  variant={formData.party_type === 'client' ? 'contained' : 'outlined'}
+                  size="small"
+                  startIcon={<Person />}
+                  onClick={() => setFormData(prev => ({ ...prev, party_type: 'client' }))}
+                >
+                  Client
+                </Button>
+                <Button
+                  variant={formData.party_type === 'supplier' ? 'contained' : 'outlined'}
+                  size="small"
+                  startIcon={<Business />}
+                  onClick={() => setFormData(prev => ({ ...prev, party_type: 'supplier' }))}
+                >
+                  Fournisseur
+                </Button>
+                <Button
+                  variant={formData.party_type === 'other' ? 'contained' : 'outlined'}
+                  size="small"
+                  onClick={() => setFormData(prev => ({ ...prev, party_type: 'other' }))}
+                >
+                  Autre
+                </Button>
+              </Stack>
 
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              {/* Informations générales */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  {t('contracts:form.fields.generalInfo')}
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} md={8}>
-                <TextField
-                  fullWidth
-                  required
-                  label={t('contracts:form.fields.contractTitle')}
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder={t('contracts:form.fields.descriptionPlaceholder')}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth required>
-                  <InputLabel>{t('contracts:form.fields.contractType')}</InputLabel>
-                  <Select
-                    name="contract_type"
-                    value={formData.contract_type}
-                    onChange={handleChange}
-                    label={t('contracts:form.fields.contractType')}
-                  >
-                    <MenuItem value="purchase">{t('contracts:form.fields.purchase_contract')}</MenuItem>
-                    <MenuItem value="service">{t('contracts:form.fields.service_contract')}</MenuItem>
-                    <MenuItem value="maintenance">{t('contracts:form.fields.maintenance_contract')}</MenuItem>
-                    <MenuItem value="lease">{t('contracts:form.fields.lease_contract')}</MenuItem>
-                    <MenuItem value="nda">{t('contracts:form.fields.nda_contract')}</MenuItem>
-                    <MenuItem value="partnership">{t('contracts:form.fields.partnership_contract')}</MenuItem>
-                    <MenuItem value="other">{t('contracts:form.fields.other_contract')}</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12}>
+              {formData.party_type === 'client' && (
                 <Autocomplete
-                  options={suppliers}
-                  getOptionLabel={(option) => option.name || ''}
+                  options={clients || []}
+                  getOptionLabel={opt => opt.name || opt.company_name || ''}
+                  value={formData.client}
+                  onChange={(_, v) => setFormData(prev => ({ ...prev, client: v }))}
+                  renderInput={params => <TextField {...params} label="Client" placeholder="Sélectionner un client" />}
+                />
+              )}
+              {formData.party_type === 'supplier' && (
+                <Autocomplete
+                  options={suppliers || []}
+                  getOptionLabel={opt => opt.name || ''}
                   value={formData.supplier}
-                  onChange={handleSupplierChange}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={t('contracts:form.fields.supplier')}
-                      required
-                      placeholder={t('contracts:form.fields.selectSupplier')}
-                    />
-                  )}
+                  onChange={(_, v) => setFormData(prev => ({ ...prev, supplier: v }))}
+                  renderInput={params => <TextField {...params} label="Fournisseur" placeholder="Sélectionner un fournisseur" />}
                 />
-              </Grid>
-
-              <Grid item xs={12}>
+              )}
+              {formData.party_type === 'other' && (
                 <TextField
                   fullWidth
-                  required
-                  multiline
-                  rows={4}
-                  label={t('contracts:form.fields.description')}
-                  name="description"
-                  value={formData.description}
+                  label="Nom de la contrepartie"
+                  name="counterpart_name"
+                  value={formData.counterpart_name}
                   onChange={handleChange}
-                  placeholder={t('contracts:form.fields.descriptionPlaceholder')}
+                  placeholder="Nom de l'entreprise ou de la personne"
                 />
-              </Grid>
+              )}
+            </Grid>
 
-              {/* Dates et montants */}
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  {t('contracts:form.fields.datesAndAmounts')}
-                </Typography>
-              </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Description de l'objet du contrat"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Décrivez brièvement l'objet et le contexte de ce contrat..."
+              />
+            </Grid>
 
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  required
-                  type="date"
-                  label={t('contracts:form.fields.startDate')}
-                  name="start_date"
-                  value={formData.start_date}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Date de début"
+                name="start_date"
+                value={formData.start_date}
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Date de fin"
+                name="end_date"
+                value={formData.end_date}
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Valeur totale"
+                name="total_value"
+                value={formData.total_value}
+                onChange={handleChange}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Select
+                        value={formData.currency}
+                        onChange={e => setFormData(prev => ({ ...prev, currency: e.target.value }))}
+                        size="small"
+                        variant="standard"
+                        disableUnderline
+                        sx={{ '& .MuiSelect-select': { py: 0, fontSize: '0.875rem' } }}
+                      >
+                        <MenuItem value="CAD">CAD</MenuItem>
+                        <MenuItem value="USD">USD</MenuItem>
+                        <MenuItem value="EUR">EUR</MenuItem>
+                        <MenuItem value="MAD">MAD</MenuItem>
+                      </Select>
+                    </InputAdornment>
+                  ),
+                }}
+                inputProps={{ min: 0, step: 0.01 }}
+              />
+            </Grid>
+          </Grid>
+        );
 
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  required
-                  type="date"
-                  label={t('contracts:form.fields.endDate')}
-                  name="end_date"
-                  value={formData.end_date}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
+      case 2:
+        return (
+          <Box>
+            {/* Conditions générales */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700}>Conditions générales et clauses</Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={isGenerating ? <CircularProgress size={14} /> : <AutoFixHigh />}
+                onClick={() => handleGenerateSection('terms_and_conditions')}
+                disabled={isGenerating}
+              >
+                Rédiger avec l'IA
+              </Button>
+            </Box>
+            <Box sx={{
+              mb: 3,
+              '.ql-editor': { minHeight: 280, fontSize: '0.9rem' },
+              '.ql-container': { borderRadius: '0 0 8px 8px' },
+              '.ql-toolbar': { borderRadius: '8px 8px 0 0' }
+            }}>
+              <ReactQuill
+                theme="snow"
+                value={formData.terms_and_conditions}
+                onChange={val => setFormData(prev => ({ ...prev, terms_and_conditions: val }))}
+                placeholder="Rédigez les conditions générales... ou utilisez l'IA pour les générer automatiquement."
+              />
+            </Box>
 
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  required
-                  type="number"
-                  label={t('contracts:form.fields.totalValue')}
-                  name="total_value"
-                  value={formData.total_value}
-                  onChange={handleChange}
-                  InputProps={{ endAdornment: formData.currency }}
-                  inputProps={{ min: 0, step: 0.01 }}
-                />
-              </Grid>
+            <Divider sx={{ my: 2.5 }} />
 
-              {/* Termes */}
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="h6">
-                    {t('contracts:form.fields.termsSection')}
-                  </Typography>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={isGenerating ? <CircularProgress size={16} /> : <AutoFixHigh />}
-                    onClick={() => handleGenerateAI('terms_and_conditions')}
-                    disabled={isGenerating}
-                    sx={{ borderRadius: 2, textTransform: 'none' }}
-                  >
-                    Rédiger avec l'IA
-                  </Button>
-                </Box>
-              </Grid>
+            {/* Conditions de paiement */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700}>Conditions de paiement</Typography>
+              <Button
+                size="small"
+                variant="text"
+                startIcon={isGenerating ? <CircularProgress size={14} /> : <RateReview />}
+                onClick={() => handleGenerateSection('payment_terms')}
+                disabled={isGenerating}
+              >
+                Générer avec l'IA
+              </Button>
+            </Box>
+            <Box sx={{
+              mb: 3,
+              '.ql-editor': { minHeight: 130, fontSize: '0.9rem' },
+              '.ql-container': { borderRadius: '0 0 8px 8px' },
+              '.ql-toolbar': { borderRadius: '8px 8px 0 0' }
+            }}>
+              <ReactQuill
+                theme="snow"
+                value={formData.payment_terms}
+                onChange={val => setFormData(prev => ({ ...prev, payment_terms: val }))}
+                placeholder="Ex: 50% à la signature, 50% à la livraison. Paiement net 30 jours..."
+              />
+            </Box>
 
-              <Grid item xs={12}>
-                <Box sx={{ mb: 1 }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    {t('contracts:form.fields.terms')}
-                  </Typography>
-                </Box>
-                <Box sx={{ 
-                  '.ql-editor': { minHeight: 300, fontSize: '1rem', fontFamily: 'inherit' },
-                  '.ql-container': { borderRadius: '0 0 8px 8px', borderColor: 'divider' },
-                  '.ql-toolbar': { borderRadius: '8px 8px 0 0', borderColor: 'divider' }
-                }}>
-                  <ReactQuill
-                    theme="snow"
-                    value={formData.terms_and_conditions}
-                    onChange={(val) => setFormData(prev => ({ ...prev, terms_and_conditions: val }))}
-                    placeholder={t('contracts:form.fields.termsPlaceholder')}
-                  />
-                </Box>
-              </Grid>
+            <Divider sx={{ my: 2.5 }} />
 
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, mt: 1 }}>
-                  <Typography variant="subtitle1" fontWeight="600">
-                    {t('contracts:form.fields.paymentTerms')}
-                  </Typography>
-                  <Button
-                    size="small"
-                    variant="text"
-                    color="secondary"
-                    startIcon={isGenerating ? <CircularProgress size={16} /> : <RateReview />}
-                    onClick={() => handleGenerateAI('payment_terms')}
-                    disabled={isGenerating}
-                    sx={{ textTransform: 'none' }}
-                  >
-                    Générer clauses de paiement
-                  </Button>
-                </Box>
-                <Box sx={{ 
-                  '.ql-editor': { minHeight: 150, fontSize: '1rem', fontFamily: 'inherit' },
-                  '.ql-container': { borderRadius: '0 0 8px 8px', borderColor: 'divider' },
-                  '.ql-toolbar': { borderRadius: '8px 8px 0 0', borderColor: 'divider' }
-                }}>
-                  <ReactQuill
-                    theme="snow"
-                    value={formData.payment_terms}
-                    onChange={(val) => setFormData(prev => ({ ...prev, payment_terms: val }))}
-                    placeholder={t('contracts:form.fields.paymentTermsPlaceholder')}
-                  />
-                </Box>
-              </Grid>
+            {/* Notes internes */}
+            <Typography variant="subtitle1" fontWeight={700} mb={1.5}>Notes internes</Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
+              name="internal_notes"
+              value={formData.internal_notes}
+              onChange={handleChange}
+              placeholder="Notes confidentielles (non incluses dans le contrat exporté)..."
+            />
+          </Box>
+        );
 
-              {/* Options de renouvellement */}
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  {t('contracts:form.fields.renewalAndAlerts')}
-                </Typography>
-              </Grid>
+      case 3:
+        return (
+          <Box>
+            <SignatureSection
+              formData={formData}
+              setFormData={setFormData}
+              onSignedPdfUpload={setSignedPdfFile}
+            />
 
+            <Divider sx={{ my: 3 }} />
+
+            {/* Renouvellement & alertes */}
+            <Typography variant="h6" fontWeight={700} mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CalendarToday fontSize="small" color="primary" />
+              Renouvellement & Alertes
+            </Typography>
+            <Grid container spacing={2}>
               <Grid item xs={12}>
                 <FormControlLabel
                   control={
-                    <Checkbox
-                      name="auto_renewal"
-                      checked={formData.auto_renewal}
-                      onChange={handleChange}
-                    />
+                    <Checkbox name="auto_renewal" checked={formData.auto_renewal} onChange={handleChange} />
                   }
-                  label={t('contracts:form.fields.autoRenewal')}
+                  label="Renouvellement automatique"
                 />
               </Grid>
-
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   type="number"
-                  label={t('contracts:form.fields.renewalNoticeDays')}
+                  label="Préavis de renouvellement (jours)"
                   name="renewal_notice_days"
                   value={formData.renewal_notice_days}
                   onChange={handleChange}
                   inputProps={{ min: 1 }}
+                  size="small"
                 />
               </Grid>
-
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   type="number"
-                  label={t('contracts:form.fields.alertDaysBeforeExpiry')}
+                  label="Alerte avant expiration (jours)"
                   name="alert_days_before_expiry"
                   value={formData.alert_days_before_expiry}
                   onChange={handleChange}
                   inputProps={{ min: 1 }}
+                  size="small"
                 />
-              </Grid>
-
-              {/* Notes internes */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  label={t('contracts:form.fields.internalNotes')}
-                  name="internal_notes"
-                  value={formData.internal_notes}
-                  onChange={handleChange}
-                  placeholder={t('contracts:form.fields.notesPlaceholder')}
-                />
-              </Grid>
-
-              {/* Actions */}
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <Stack direction="row" spacing={2} justifyContent="flex-end">
-                  <Button
-                    variant="outlined"
-                    startIcon={<Cancel />}
-                    onClick={() => navigate('/contracts')}
-                  >
-                    {t('common:cancel')}
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    startIcon={<Save />}
-                    disabled={submitting}
-                  >
-                    {submitting ? t('common:saving') : t('common:save')}
-                  </Button>
-                </Stack>
               </Grid>
             </Grid>
-          </form>
-        </CardContent>
-      </Card>
+
+            {/* Résumé */}
+            <Divider sx={{ my: 3 }} />
+            <Typography variant="h6" fontWeight={700} mb={2}>Résumé du contrat</Typography>
+            <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2.5 }}>
+              <Stack spacing={1}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Titre</Typography>
+                  <Typography variant="body2" fontWeight={600}>{formData.title || '—'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Type</Typography>
+                  <Typography variant="body2" fontWeight={600}>{formData.contract_type}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Contrepartie</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {formData.party_type === 'client' ? formData.client?.name || formData.client?.company_name :
+                     formData.party_type === 'supplier' ? formData.supplier?.name :
+                     formData.counterpart_name || '—'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Durée</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {formData.start_date && formData.end_date ? `${formData.start_date} → ${formData.end_date}` : '—'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Valeur</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {formData.total_value ? `${Number(formData.total_value).toLocaleString()} ${formData.currency}` : '—'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Signatures</Typography>
+                  <Stack direction="row" spacing={0.5}>
+                    {formData.signed_by_us && <Chip label="Nous ✓" size="small" color="success" />}
+                    {formData.signed_by_counterpart && <Chip label="Contrepartie ✓" size="small" color="success" />}
+                    {!formData.signed_by_us && !formData.signed_by_counterpart && (
+                      <Typography variant="body2" color="text.secondary">Non signé</Typography>
+                    )}
+                  </Stack>
+                </Box>
+              </Stack>
+            </Box>
+          </Box>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Box sx={{ p: { xs: 1, md: 3 }, maxWidth: 900, mx: 'auto' }}>
+      {/* Header */}
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <IconButton onClick={() => navigate('/contracts')} size="small">
+          <ArrowBack />
+        </IconButton>
+        <Box>
+          <Typography variant="h5" fontWeight={700}>
+            {isEditMode ? 'Modifier le contrat' : 'Nouveau contrat'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {isEditMode ? 'Mettez à jour les informations du contrat' : 'Créez un contrat en quelques étapes avec l\'aide de l\'IA'}
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Dialog Assistant IA */}
-      <Dialog
-        open={aiAssistantOpen}
-        onClose={() => !isGenerating && setAiAssistantOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AutoAwesome color="secondary" />
-            Assistant de Création de Contrat
-          </Box>
-        </DialogTitle>
-        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', height: '400px', p: 2, bgcolor: '#f8fafc' }}>
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, pb: 2 }}>
-            {aiMessages.filter(msg => msg.role !== 'system').map((msg, idx) => (
-              <Box 
-                key={idx} 
-                sx={{ 
-                  display: 'flex', 
-                  justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' 
-                }}
-              >
-                <Box sx={{ 
-                  maxWidth: '80%', 
-                  p: 2, 
-                  borderRadius: 2, 
-                  bgcolor: msg.role === 'user' ? 'primary.main' : 'white',
-                  color: msg.role === 'user' ? 'white' : 'text.primary',
-                  boxShadow: 1
-                }}>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>{msg.content}</Typography>
-                </Box>
-              </Box>
-            ))}
-            {isGenerating && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <Box sx={{ maxWidth: '80%', p: 2, borderRadius: 2, bgcolor: 'white', boxShadow: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <CircularProgress size={20} />
-                  <Typography variant="body2" color="text.secondary">L'IA réfléchit...</Typography>
-                </Box>
-              </Box>
-            )}
-            <div ref={aiMessagesEndRef} />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, bgcolor: 'white' }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Tapez votre réponse ici..."
-            value={aiInput}
-            onChange={(e) => setAiInput(e.target.value)}
-            disabled={isGenerating}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendAIAssistant();
-              }
-            }}
-            InputProps={{
-              sx: { borderRadius: 3, bgcolor: '#f1f5f9' },
-            }}
-          />
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleSendAIAssistant}
-            disabled={isGenerating || !aiInput.trim()}
-            sx={{ borderRadius: 3, minWidth: '40px', p: '8px' }}
-          >
-            <Send />
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Stepper */}
+      <Stepper activeStep={activeStep} alternativeLabel={!isMobile} sx={{ mb: 4 }}>
+        {STEPS.map((step, i) => (
+          <Step key={step.label} completed={i < activeStep}>
+            <StepLabel
+              onClick={() => i <= activeStep && setActiveStep(i)}
+              sx={{ cursor: i <= activeStep ? 'pointer' : 'default' }}
+            >
+              <Typography variant="caption" fontWeight={activeStep === i ? 700 : 400}>
+                {step.label}
+              </Typography>
+            </StepLabel>
+          </Step>
+        ))}
+      </Stepper>
+
+      {/* Content */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+          {renderStepContent(activeStep)}
+        </CardContent>
+      </Card>
+
+      {/* Navigation */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBack />}
+          onClick={activeStep === 0 ? () => navigate('/contracts') : handleBack}
+        >
+          {activeStep === 0 ? 'Annuler' : 'Précédent'}
+        </Button>
+
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          {/* Toujours permettre de sauvegarder dès l'étape 1 */}
+          {activeStep >= 1 && (
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={submitting ? <CircularProgress size={16} /> : <Save />}
+              onClick={handleSubmit}
+              disabled={submitting || !formData.title}
+            >
+              Sauvegarder
+            </Button>
+          )}
+
+          {activeStep < STEPS.length - 1 ? (
+            <Button
+              variant="contained"
+              endIcon={<ArrowForward />}
+              onClick={handleNext}
+            >
+              Suivant
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <CheckCircle />}
+              onClick={handleSubmit}
+              disabled={submitting || !formData.title}
+              color="success"
+            >
+              {isEditMode ? 'Mettre à jour' : 'Créer le contrat'}
+            </Button>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }

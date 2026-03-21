@@ -56,6 +56,8 @@
         "stockQuantity": "Quantité en stock",
         "licensesCount": "Nombre de licences",
         "lowStockThreshold": "Seuil de stock bas",
+        "priceEditable": "Prix modifiable à la facturation",
+        "priceEditableHelp": "Permet de modifier le prix lors de la création d'une facture",
         "activeProduct": "Produit actif",
         "inactiveProduct": "Produit inactif",
         "generatingLabel": "Génération du rapport en cours...",

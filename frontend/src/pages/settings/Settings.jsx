@@ -98,6 +98,13 @@ const createImage = (url) =>
     image.src = url;
   });
 
+const LOGO_FORMATS = [
+  { value: 'square',    label: 'Carré',    aspect: 1,         hint: '1:1' },
+  { value: 'landscape', label: 'Paysage',  aspect: 4,         hint: '4:1' },
+  { value: 'portrait',  label: 'Portrait', aspect: 3 / 4,     hint: '3:4' },
+  { value: 'original',  label: 'Original', aspect: undefined,  hint: 'libre' },
+];
+
 /**
  * Composant principal Settings
  */
@@ -123,6 +130,7 @@ const Settings = () => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [logoFormat, setLogoFormat] = useState('original');
 
   // Charger les paramètres au montage
   useEffect(() => {
@@ -499,6 +507,8 @@ const Settings = () => {
               settings={settings}
               onUpdate={handleUpdateSetting}
               onFileSelect={handleFileSelect}
+              logoFormat={logoFormat}
+              setLogoFormat={setLogoFormat}
             />
           )}
 
@@ -601,6 +611,7 @@ const Settings = () => {
                 image={imageToCrop}
                 crop={crop}
                 zoom={zoom}
+                aspect={LOGO_FORMATS.find(f => f.value === logoFormat)?.aspect}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
                 onCropComplete={onCropComplete}
@@ -644,7 +655,7 @@ const Settings = () => {
 /**
  * Section Général - Informations de l'entreprise
  */
-const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
+const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoFormat }) => {
   const { t } = useTranslation(['settings', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -712,35 +723,90 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
           />
         </Grid>
 
-        {/* Logo et Branding - Compact */}
-        <Grid item xs={12} md={6}>
-          <Stack spacing={2}>
-            {settings.companyLogo && (
+        {/* Logo et Branding */}
+        <Grid item xs={12}>
+          <Stack spacing={1.5}>
+            <Typography variant="caption" color="text.secondary" fontWeight={500}>
+              Format du logo
+            </Typography>
+            {/* Format selector */}
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {LOGO_FORMATS.map((fmt) => (
+                <Box
+                  key={fmt.value}
+                  onClick={() => setLogoFormat(fmt.value)}
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: 1.5,
+                    border: '1.5px solid',
+                    borderColor: logoFormat === fmt.value ? 'primary.main' : 'divider',
+                    bgcolor: logoFormat === fmt.value ? 'primary.50' : 'transparent',
+                    color: logoFormat === fmt.value ? 'primary.main' : 'text.secondary',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                    userSelect: 'none',
+                    '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
+                  }}
+                >
+                  {fmt.label} <Box component="span" sx={{ opacity: 0.6, ml: 0.5 }}>{fmt.hint}</Box>
+                </Box>
+              ))}
+            </Stack>
+
+            {/* Logo preview + upload */}
+            <Stack direction="row" alignItems="flex-start" spacing={2}>
               <Box
-                component="img"
-                src={settings.companyLogo}
-                alt="Logo"
-                sx={{ maxHeight: 120, maxWidth: 300, objectFit: 'contain' }}
-              />
-            )}
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<CloudUploadIcon />}
-              size="small"
-            >
-              {settings.companyLogo ? 'Changer le logo' : t('settings:logo.choose')}
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    onFileSelect(e.target.files[0]);
-                  }
+                sx={{
+                  width: logoFormat === 'landscape' ? 200 : logoFormat === 'portrait' ? 90 : 120,
+                  height: logoFormat === 'landscape' ? 50 : logoFormat === 'portrait' ? 120 : 120,
+                  borderRadius: 2,
+                  border: '2px dashed',
+                  borderColor: settings.companyLogo ? 'transparent' : 'divider',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: settings.companyLogo ? 'transparent' : 'action.hover',
+                  flexShrink: 0,
+                  transition: 'all 0.2s',
                 }}
-              />
-            </Button>
+              >
+                {settings.companyLogo ? (
+                  <Box
+                    component="img"
+                    src={settings.companyLogo}
+                    alt="Logo"
+                    sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <Typography variant="caption" color="text.secondary" textAlign="center" px={1}>
+                    Aperçu
+                  </Typography>
+                )}
+              </Box>
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<CloudUploadIcon />}
+                size="small"
+                sx={{ alignSelf: 'center' }}
+              >
+                {settings.companyLogo ? 'Changer le logo' : t('settings:logo.choose')}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      onFileSelect(e.target.files[0]);
+                    }
+                  }}
+                />
+              </Button>
+            </Stack>
           </Stack>
         </Grid>
 

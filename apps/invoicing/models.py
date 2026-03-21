@@ -161,14 +161,11 @@ class Product(models.Model):
 
         # Les services et produits digitaux ne doivent pas avoir de gestion de stock
         if self.product_type in ['service', 'digital']:
-            if self.stock_quantity != 0 or self.low_stock_threshold != 0:
-                raise ValidationError(
-                    f'Les {self.get_product_type_display()} ne gèrent pas de stock'
-                )
-            if self.warehouse:
-                raise ValidationError(
-                    f'Pas de warehouse pour {self.get_product_type_display()}'
-                )
+            self.stock_quantity = 0
+            self.low_stock_threshold = 0
+            self.warehouse = None
+            # Les services sont toujours à prix libre (devis)
+            self.price_editable = True
 
     def save(self, *args, **kwargs):
         # Convertir les chaînes vides en None pour éviter les erreurs d'unicité (barcode, reference)

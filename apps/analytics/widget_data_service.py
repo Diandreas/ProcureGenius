@@ -293,9 +293,14 @@ class WidgetDataService:
         }
 
     def get_stock_alerts(self, **kwargs):
-        """Stock alerts (low and out of stock)"""
-        from apps.invoicing.models import Product
+        """Stock alerts: low stock, out of stock, expiring & expired batches"""
+        from apps.invoicing.models import Product, ProductBatch
         from django.db.models import F
+        from django.utils import timezone
+        from datetime import timedelta
+
+        today = timezone.now().date()
+        expiry_threshold = today + timedelta(days=30)
 
         low_stock = Product.objects.filter(
             organization=self.stats_service.organization,
@@ -312,7 +317,23 @@ class WidgetDataService:
             is_active=True
         ).values('id', 'name')[:10]
 
-        # Format data to match frontend expectations
+        # Expired batches with remaining stock
+        expired_batches_qs = ProductBatch.objects.filter(
+            product__organization=self.stats_service.organization,
+            expiration_date__lt=today,
+            current_quantity__gt=0,
+            is_active=True
+        ).select_related('product').order_by('expiration_date')[:10]
+
+        # Batches expiring within 30 days
+        expiring_batches_qs = ProductBatch.objects.filter(
+            product__organization=self.stats_service.organization,
+            expiration_date__gte=today,
+            expiration_date__lte=expiry_threshold,
+            current_quantity__gt=0,
+            is_active=True
+        ).select_related('product').order_by('expiration_date')[:10]
+
         low_stock_products = [
             {
                 'name': p['name'],
@@ -322,10 +343,32 @@ class WidgetDataService:
             for p in low_stock
         ]
 
+        expired_batches = [
+            {
+                'product_name': b.product.name,
+                'batch_number': b.batch_number,
+                'expiration_date': str(b.expiration_date),
+                'current_quantity': b.current_quantity,
+            }
+            for b in expired_batches_qs
+        ]
+
+        expiring_batches = [
+            {
+                'product_name': b.product.name,
+                'batch_number': b.batch_number,
+                'expiration_date': str(b.expiration_date),
+                'current_quantity': b.current_quantity,
+            }
+            for b in expiring_batches_qs
+        ]
+
         return {
             'low_stock_products': low_stock_products,
-            'low_stock': list(low_stock),  # Keep for backward compatibility
-            'out_of_stock': list(out_of_stock)
+            'expired_batches': expired_batches,
+            'expiring_batches': expiring_batches,
+            'low_stock': list(low_stock),
+            'out_of_stock': list(out_of_stock),
         }
 
 

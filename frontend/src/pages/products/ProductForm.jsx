@@ -79,6 +79,8 @@ import {
     Edit,
     Delete,
     Search,
+    NavigateNext,
+    NavigateBefore,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -105,6 +107,11 @@ function ProductForm() {
         advanced: false,
     });
     const [activeStep, setActiveStep] = useState(0);
+
+    // Batch/lot state for physical products
+    const [createInitialBatch, setCreateInitialBatch] = useState(false);
+    const [batchNumber, setBatchNumber] = useState('');
+    const [batchExpiry, setBatchExpiry] = useState('');
 
     // Modal states
     const [supplierModalOpen, setSupplierModalOpen] = useState(false);
@@ -155,7 +162,9 @@ function ProductForm() {
             name: Yup.string().required(t('products:validation.nameRequired')),
             reference: Yup.string(),
             description: Yup.string().required(t('products:validation.descriptionRequired')),
-            price: Yup.number().positive(t('products:validation.pricePositive')).required(t('products:validation.priceRequired')),
+            price: productType === 'service'
+                ? Yup.number().min(0, t('products:validation.pricePositive'))
+                : Yup.number().positive(t('products:validation.pricePositive')).required(t('products:validation.priceRequired')),
             cost_price: Yup.number().min(0, t('products:validation.costNegative')),
             category_id: Yup.string().nullable(),
             supplier_id: Yup.string().nullable(),
@@ -464,8 +473,23 @@ function ProductForm() {
                 await productsAPI.update(id, cleanedValues);
                 enqueueSnackbar(t('products:messages.updateSuccess'), { variant: 'success' });
             } else {
-                await productsAPI.create(cleanedValues);
+                const createdProduct = await productsAPI.create(cleanedValues);
                 enqueueSnackbar(t('products:messages.createSuccess'), { variant: 'success' });
+
+                // Create initial batch/lot if requested
+                if (createInitialBatch && batchNumber.trim()) {
+                    try {
+                        const { productBatchesAPI } = await import('../../services/api');
+                        await productBatchesAPI.create({
+                            product: createdProduct.data.id,
+                            batch_number: batchNumber,
+                            expiration_date: batchExpiry || null,
+                            initial_quantity: parseInt(values.stock_quantity) || 0,
+                        });
+                    } catch (e) {
+                        console.warn('Lot initial non créé:', e);
+                    }
+                }
             }
             navigate('/products');
         } catch (error) {
@@ -544,6 +568,19 @@ function ProductForm() {
         </Paper>
     );
 
+    // Step definitions
+    const getSteps = (productType) => {
+        if (productType === 'physical') return ['Informations', 'Tarification', 'Stock & Lots'];
+        return ['Informations', 'Tarification'];
+    };
+
+    // Fields to validate per step (for physical; step 2 only exists for physical)
+    const STEP_FIELDS = {
+        0: ['name', 'description'],
+        1: ['price'],
+        2: ['warehouse_id', 'stock_quantity', 'low_stock_threshold'],
+    };
+
     return (
         <Box sx={{
             maxWidth: 1400,
@@ -594,34 +631,71 @@ function ProductForm() {
 
             <Formik
                 initialValues={initialValues}
-                validationSchema={getValidationSchema(initialValues.product_type, warehouses.length > 0)}
+                validationSchema={Yup.lazy((values) =>
+                    getValidationSchema(values?.product_type || 'physical', warehouses.length > 0)
+                )}
                 onSubmit={handleSubmit}
                 enableReinitialize
             >
-                {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue }) => {
+                {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue, validateForm, setTouched }) => {
                     // Update refs to access from modals
                     formikRef.current.setFieldValue = setFieldValue;
                     formikRef.current.values = values;
 
+                    const steps = getSteps(values.product_type);
+                    const totalSteps = steps.length;
+                    const isLastStep = activeStep === totalSteps - 1;
+
+                    const handleStepNext = async () => {
+                        const stepFieldsList = STEP_FIELDS[activeStep] || [];
+                        const touchedFields = {};
+                        stepFieldsList.forEach(f => { touchedFields[f] = true; });
+                        setTouched(touchedFields, true);
+                        const errs = await validateForm();
+                        const hasStepErrors = stepFieldsList.some(f => errs[f]);
+                        if (!hasStepErrors) {
+                            setActiveStep(prev => prev + 1);
+                        }
+                    };
+
+                    const handleStepBack = () => {
+                        if (activeStep === 0) {
+                            navigate('/products');
+                        } else {
+                            setActiveStep(prev => prev - 1);
+                        }
+                    };
+
+                    // Ensure activeStep is within bounds when product type changes
+                    const safeActiveStep = Math.min(activeStep, totalSteps - 1);
+
                     return (
                         <Form>
-                            <Grid container spacing={isMobile ? 1.5 : 2}>
-                                {/* Section principale */}
-                                <Grid item xs={12} lg={8}>
-                                    {/* Sélecteur de type de produit */}
-                                    <Box sx={{ mb: 3 }}>
-                                        <ProductTypeSelector value={values.product_type} onChange={handleChange} />
-                                    </Box>
+                            {/* Stepper */}
+                            <Box sx={{ mb: 3 }}>
+                                <Stepper
+                                    activeStep={safeActiveStep}
+                                    alternativeLabel={!isMobile}
+                                    orientation={isMobile ? 'vertical' : 'horizontal'}
+                                    sx={{
+                                        '& .MuiStepLabel-root .Mui-completed': { color: 'primary.main' },
+                                        '& .MuiStepLabel-root .Mui-active': { color: 'primary.main' },
+                                    }}
+                                >
+                                    {steps.map((label, index) => (
+                                        <Step key={label}>
+                                            <StepLabel>{label}</StepLabel>
+                                        </Step>
+                                    ))}
+                                </Stepper>
+                            </Box>
 
-                                    {/* Informations générales - ESSENTIELLES UNIQUEMENT */}
-                                    <Card
-                                        sx={{
-                                            mb: 2.5,
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none'
-                                        }}
-                                    >
+                            {/* Step Content */}
+                            <Box sx={{ maxWidth: 860, mx: 'auto' }}>
+
+                                {/* STEP 0: Informations */}
+                                {safeActiveStep === 0 && (
+                                    <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
                                         <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
                                             <Box display="flex" alignItems="center" justifyContent="space-between" mb={2.5}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -648,6 +722,25 @@ function ProductForm() {
                                                         sx={{ borderRadius: 1 }}
                                                     />
                                                 )}
+                                            </Box>
+
+                                            {/* Product Type Selector */}
+                                            <Box sx={{ mb: 2.5 }}>
+                                                <ProductTypeSelector value={values.product_type} onChange={(e) => {
+                                                    handleChange(e);
+                                                    // Reset step if type changes and step would be out of bounds
+                                                    const newSteps = getSteps(e.target.value);
+                                                    if (activeStep >= newSteps.length) {
+                                                        setActiveStep(newSteps.length - 1);
+                                                    }
+                                                    // Auto-check price_editable for services
+                                                    if (e.target.value === 'service') {
+                                                        setFieldValue('price_editable', true);
+                                                        setFieldValue('price', 0);
+                                                    } else {
+                                                        setFieldValue('price_editable', false);
+                                                    }
+                                                }} />
                                             </Box>
 
                                             <Grid container spacing={1.5}>
@@ -697,65 +790,14 @@ function ProductForm() {
                                                         required
                                                     />
                                                 </Grid>
-
-                                                {/* Gestion de stock pour produits physiques */}
-                                                {values.product_type === 'physical' && (
-                                                    <>
-                                                        <Grid item xs={12}>
-                                                            <Divider sx={{ my: 1 }}>
-                                                                <Chip label={t('products:labels.stockManagement', 'Gestion de stock')} icon={<Inventory />} size="small" />
-                                                            </Divider>
-                                                        </Grid>
-
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="stock_quantity"
-                                                                label={t('products:labels.stockQuantity')}
-                                                                type="number"
-                                                                value={values.stock_quantity}
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                error={touched.stock_quantity && Boolean(errors.stock_quantity)}
-                                                                helperText={touched.stock_quantity && errors.stock_quantity}
-                                                                required
-                                                                InputProps={{
-                                                                    startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
-                                                                }}
-                                                            />
-                                                        </Grid>
-
-                                                        <Grid item xs={12} md={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                name="low_stock_threshold"
-                                                                label={t('products:labels.lowStockThreshold')}
-                                                                type="number"
-                                                                value={values.low_stock_threshold}
-                                                                onChange={handleChange}
-                                                                onBlur={handleBlur}
-                                                                error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
-                                                                helperText={touched.low_stock_threshold && errors.low_stock_threshold || t('products:messages.alertLowStock')}
-                                                                required
-                                                            />
-                                                        </Grid>
-                                                    </>
-                                                )}
                                             </Grid>
                                         </CardContent>
                                     </Card>
+                                )}
 
-                                    {/* Tarification */}
-                                    <Card
-                                        sx={{
-                                            mb: 2.5,
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none'
-                                        }}
-                                    >
+                                {/* STEP 1: Tarification */}
+                                {safeActiveStep === 1 && (
+                                    <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
                                         <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
                                                 <Box sx={{
@@ -814,6 +856,7 @@ function ProductForm() {
                                                         }}
                                                     />
                                                 </Grid>
+
                                                 <Grid item xs={12}>
                                                     <FormControlLabel
                                                         control={
@@ -836,65 +879,7 @@ function ProductForm() {
                                                     />
                                                 </Grid>
 
-                                            </Grid>
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* Badge type visible pour non-physiques */}
-                                    {values.product_type !== 'physical' && (
-                                        <Alert severity="info" sx={{ mb: 2 }}>
-                                            {t('products:labels.type')}: {values.product_type === 'service' ? t('products:labels.service') : t('products:labels.digitalProduct')}
-                                            {' - '}{t('products:messages.noStockManagement')}
-                                        </Alert>
-                                    )}
-
-                                    {/* DÉTAILS AVANCÉS - Accordion pour ne pas surcharger */}
-                                    <Accordion
-                                        defaultExpanded={false}
-                                        sx={{
-                                            mb: 2.5,
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none',
-                                            '&:before': { display: 'none' }
-                                        }}
-                                    >
-                                        <AccordionSummary
-                                            expandIcon={<ExpandMore />}
-                                            sx={{
-                                                px: 3,
-                                                py: 2,
-                                                '& .MuiAccordionSummary-content': {
-                                                    my: 1
-                                                }
-                                            }}
-                                        >
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Box sx={{
-                                                    p: 1,
-                                                    borderRadius: 1,
-                                                    bgcolor: 'info.50',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <Info sx={{ fontSize: 20, color: 'info.main' }} />
-                                                </Box>
-                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                    {t('products:labels.advancedDetails', 'Détails avancés')}
-                                                </Typography>
-                                                <Chip
-                                                    label={t('products:labels.optional', 'Optionnel')}
-                                                    size="small"
-                                                    sx={{ ml: 2, borderRadius: 1.5 }}
-                                                    variant="outlined"
-                                                    color="default"
-                                                />
-                                            </Box>
-                                        </AccordionSummary>
-                                        <AccordionDetails sx={{ px: 3, pb: 3 }}>
-                                            <Grid container spacing={2}>
-                                                {/* Catégorie - Tous types */}
+                                                {/* Catégorie */}
                                                 <Grid item xs={12} md={6}>
                                                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                                                         <FormControl fullWidth size={isMobile ? "small" : "medium"}>
@@ -918,9 +903,7 @@ function ProductForm() {
                                                         </FormControl>
                                                         <Tooltip title={t('products:modals.manageCategories', 'Gérer les catégories')}>
                                                             <IconButton
-                                                                onClick={() => {
-                                                                    setCategoryModalOpen(true);
-                                                                }}
+                                                                onClick={() => setCategoryModalOpen(true)}
                                                                 sx={{
                                                                     bgcolor: 'primary.main',
                                                                     color: 'white',
@@ -963,8 +946,8 @@ function ProductForm() {
                                                     </Grid>
                                                 )}
 
-                                                {/* Fournisseur - Seulement pour produits physiques et si module activé */}
-                                                {values.product_type === 'physical' && suppliers.length > 0 && (
+                                                {/* Fournisseur */}
+                                                {suppliers.length > 0 && (
                                                     <Grid item xs={12} md={6}>
                                                         <Box sx={{ display: 'flex', gap: 1 }}>
                                                             <FormControl
@@ -1005,98 +988,236 @@ function ProductForm() {
                                                         </Box>
                                                     </Grid>
                                                 )}
+                                            </Grid>
+                                        </CardContent>
+                                    </Card>
+                                )}
 
-                                                {/* Entrepôt - Seulement pour produits physiques */}
-                                                {values.product_type === 'physical' && (
+                                {/* STEP 2: Stock & Lots (physical only) */}
+                                {safeActiveStep === 2 && values.product_type === 'physical' && (
+                                    <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
+                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
+                                                <Box sx={{
+                                                    p: 1,
+                                                    borderRadius: 1,
+                                                    bgcolor: 'warning.50',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}>
+                                                    <Inventory sx={{ fontSize: 22, color: 'warning.main' }} />
+                                                </Box>
+                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                    Stock & Lots
+                                                </Typography>
+                                            </Box>
+
+                                            <Grid container spacing={1.5}>
+                                                {/* Entrepôt */}
+                                                <Grid item xs={12}>
+                                                    <Divider sx={{ my: 1 }}>
+                                                        <Chip label={t('products:labels.warehouse', 'Entrepôt')} icon={<Warehouse />} size="small" />
+                                                    </Divider>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                                                        <FormControl
+                                                            fullWidth
+                                                            size={isMobile ? "small" : "medium"}
+                                                            required={warehouses.length > 0}
+                                                            error={touched.warehouse_id && Boolean(errors.warehouse_id)}
+                                                        >
+                                                            <InputLabel>{t('products:labels.warehouseMain')} {warehouses.length > 0 ? '' : t('products:labels.optional')}</InputLabel>
+                                                            <Select
+                                                                name="warehouse_id"
+                                                                value={values.warehouse_id}
+                                                                onChange={handleChange}
+                                                                label={`${t('products:labels.warehouseMain')} ${warehouses.length > 0 ? '' : t('products:labels.optional')}`}
+                                                                startAdornment={<Warehouse sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
+                                                            >
+                                                                {warehouses.length === 0 ? (
+                                                                    <MenuItem value="">
+                                                                        <em>{t('products:labels.noWarehouseAvailable')}</em>
+                                                                    </MenuItem>
+                                                                ) : (
+                                                                    <>
+                                                                        <MenuItem value="">
+                                                                            <em>{t('products:labels.selectWarehouse')}</em>
+                                                                        </MenuItem>
+                                                                        {warehouses.map((warehouse) => (
+                                                                            <MenuItem key={warehouse.id} value={warehouse.id}>
+                                                                                {warehouse.name} ({warehouse.code}) - {warehouse.city}
+                                                                            </MenuItem>
+                                                                        ))}
+                                                                    </>
+                                                                )}
+                                                            </Select>
+                                                            {touched.warehouse_id && errors.warehouse_id && (
+                                                                <FormHelperText error>{errors.warehouse_id}</FormHelperText>
+                                                            )}
+                                                            {warehouses.length === 0 && (
+                                                                <FormHelperText>
+                                                                    {t('products:messages.noWarehouseAvailable')}
+                                                                </FormHelperText>
+                                                            )}
+                                                        </FormControl>
+                                                        <Tooltip title={t('products:modals.manageWarehouses', 'Gérer les entrepôts')}>
+                                                            <IconButton
+                                                                onClick={() => setWarehouseModalOpen(true)}
+                                                                sx={{
+                                                                    bgcolor: 'primary.main',
+                                                                    color: 'white',
+                                                                    '&:hover': { bgcolor: 'primary.dark' },
+                                                                    mt: isMobile ? 0.5 : 0.75
+                                                                }}
+                                                                size={isMobile ? "small" : "medium"}
+                                                            >
+                                                                <Add />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
+                                                </Grid>
+
+                                                {/* Stock */}
+                                                <Grid item xs={12}>
+                                                    <Divider sx={{ my: 1 }}>
+                                                        <Chip label={t('products:labels.stockManagement', 'Gestion de stock')} icon={<Inventory />} size="small" />
+                                                    </Divider>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        size={isMobile ? "small" : "medium"}
+                                                        name="stock_quantity"
+                                                        label={t('products:labels.stockQuantity')}
+                                                        type="number"
+                                                        value={values.stock_quantity}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.stock_quantity && Boolean(errors.stock_quantity)}
+                                                        helperText={touched.stock_quantity && errors.stock_quantity}
+                                                        required
+                                                        InputProps={{
+                                                            startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
+                                                        }}
+                                                    />
+                                                </Grid>
+
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        size={isMobile ? "small" : "medium"}
+                                                        name="low_stock_threshold"
+                                                        label={t('products:labels.lowStockThreshold')}
+                                                        type="number"
+                                                        value={values.low_stock_threshold}
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
+                                                        error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
+                                                        helperText={touched.low_stock_threshold && errors.low_stock_threshold || t('products:messages.alertLowStock')}
+                                                        required
+                                                    />
+                                                </Grid>
+
+                                                {/* Lot initial - only for new products */}
+                                                {!isEdit && (
                                                     <>
                                                         <Grid item xs={12}>
                                                             <Divider sx={{ my: 1 }}>
-                                                                <Chip label={t('products:labels.warehouse', 'Entrepôt')} icon={<Warehouse />} size="small" />
+                                                                <Chip label="Lot initial" icon={<Schedule />} size="small" />
                                                             </Divider>
                                                         </Grid>
 
-                                                        <Grid item xs={12} md={6}>
-                                                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                                                                <FormControl
-                                                                    fullWidth
-                                                                    size={isMobile ? "small" : "medium"}
-                                                                    required={warehouses.length > 0}
-                                                                    error={touched.warehouse_id && Boolean(errors.warehouse_id)}
-                                                                >
-                                                                    <InputLabel>{t('products:labels.warehouseMain')} {warehouses.length > 0 ? '' : t('products:labels.optional')}</InputLabel>
-                                                                    <Select
-                                                                        name="warehouse_id"
-                                                                        value={values.warehouse_id}
-                                                                        onChange={handleChange}
-                                                                        label={`${t('products:labels.warehouseMain')} ${warehouses.length > 0 ? '' : t('products:labels.optional')}`}
-                                                                        startAdornment={<Warehouse sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                                    >
-                                                                        {warehouses.length === 0 ? (
-                                                                            <MenuItem value="">
-                                                                                <em>{t('products:labels.noWarehouseAvailable')}</em>
-                                                                            </MenuItem>
-                                                                        ) : (
-                                                                            <>
-                                                                                <MenuItem value="">
-                                                                                    <em>{t('products:labels.selectWarehouse')}</em>
-                                                                                </MenuItem>
-                                                                                {warehouses.map((warehouse) => (
-                                                                                    <MenuItem key={warehouse.id} value={warehouse.id}>
-                                                                                        {warehouse.name} ({warehouse.code}) - {warehouse.city}
-                                                                                    </MenuItem>
-                                                                                ))}
-                                                                            </>
-                                                                        )}
-                                                                    </Select>
-                                                                    {touched.warehouse_id && errors.warehouse_id && (
-                                                                        <FormHelperText error>{errors.warehouse_id}</FormHelperText>
-                                                                    )}
-                                                                    {warehouses.length === 0 && (
-                                                                        <FormHelperText>
-                                                                            {t('products:messages.noWarehouseAvailable')}
-                                                                        </FormHelperText>
-                                                                    )}
-                                                                </FormControl>
-                                                                <Tooltip title={t('products:modals.manageWarehouses', 'Gérer les entrepôts')}>
-                                                                    <IconButton
-                                                                        onClick={() => {
-                                                                            setWarehouseModalOpen(true);
-                                                                        }}
-                                                                        sx={{
-                                                                            bgcolor: 'primary.main',
-                                                                            color: 'white',
-                                                                            '&:hover': { bgcolor: 'primary.dark' },
-                                                                            mt: isMobile ? 0.5 : 0.75
-                                                                        }}
-                                                                        size={isMobile ? "small" : "medium"}
-                                                                    >
-                                                                        <Add />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                            </Box>
+                                                        <Grid item xs={12}>
+                                                            <FormControlLabel
+                                                                control={
+                                                                    <Checkbox
+                                                                        checked={createInitialBatch}
+                                                                        onChange={(e) => setCreateInitialBatch(e.target.checked)}
+                                                                    />
+                                                                }
+                                                                label={
+                                                                    <Box>
+                                                                        <Typography variant="body2">Créer un lot initial</Typography>
+                                                                        <Typography variant="caption" color="text.secondary">
+                                                                            Associer un numéro de lot à ce stock initial
+                                                                        </Typography>
+                                                                    </Box>
+                                                                }
+                                                            />
                                                         </Grid>
+
+                                                        {createInitialBatch && (
+                                                            <>
+                                                                <Grid item xs={12} md={6}>
+                                                                    <TextField
+                                                                        fullWidth
+                                                                        size={isMobile ? "small" : "medium"}
+                                                                        label="Numéro de lot"
+                                                                        value={batchNumber}
+                                                                        onChange={(e) => setBatchNumber(e.target.value)}
+                                                                        required
+                                                                        placeholder="LOT-001"
+                                                                    />
+                                                                </Grid>
+                                                                <Grid item xs={12} md={6}>
+                                                                    <TextField
+                                                                        fullWidth
+                                                                        size={isMobile ? "small" : "medium"}
+                                                                        label="Date d'expiration (optionnel)"
+                                                                        type="date"
+                                                                        value={batchExpiry}
+                                                                        onChange={(e) => setBatchExpiry(e.target.value)}
+                                                                        InputLabelProps={{ shrink: true }}
+                                                                    />
+                                                                </Grid>
+                                                            </>
+                                                        )}
                                                     </>
                                                 )}
-                                            </Grid>
-                                        </AccordionDetails>
-                                    </Accordion>
-                                </Grid>
 
-                                {/* Sidebar */}
-                                <Grid item xs={12} lg={4}>
-                                    {/* Statut et disponibilité */}
-                                    <Card
-                                        sx={{
-                                            mb: 2.5,
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none'
-                                        }}
-                                    >
+                                                {/* Statut actif - on last step */}
+                                                <Grid item xs={12}>
+                                                    <Divider sx={{ my: 1 }} />
+                                                    <FormControlLabel
+                                                        control={
+                                                            <Checkbox
+                                                                name="is_active"
+                                                                checked={values.is_active}
+                                                                onChange={handleChange}
+                                                                color="success"
+                                                            />
+                                                        }
+                                                        label={
+                                                            <Box display="flex" alignItems="center">
+                                                                {values.is_active ? (
+                                                                    <>
+                                                                        <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
+                                                                        {t('products:labels.activeProduct')}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Warning sx={{ mr: 1, color: 'warning.main' }} />
+                                                                        {t('products:labels.inactiveProduct')}
+                                                                    </>
+                                                                )}
+                                                            </Box>
+                                                        }
+                                                    />
+                                                </Grid>
+                                            </Grid>
+                                        </CardContent>
+                                    </Card>
+                                )}
+
+                                {/* For service/digital: is_active on last step (step 1) */}
+                                {safeActiveStep === 1 && values.product_type !== 'physical' && (
+                                    <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
                                         <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                                                {t('products:labels.status')}
-                                            </Typography>
+                                            <Divider sx={{ mb: 2 }} />
                                             <FormControlLabel
                                                 control={
                                                     <Checkbox
@@ -1124,78 +1245,34 @@ function ProductForm() {
                                             />
                                         </CardContent>
                                     </Card>
+                                )}
 
-                                    {/* Résumé des informations */}
-                                    <Card
-                                        sx={{
-                                            borderRadius: 1.5,
-                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                            border: 'none'
-                                        }}
+                                {/* Navigation Buttons */}
+                                <Box sx={{
+                                    display: 'flex',
+                                    gap: 2,
+                                    justifyContent: 'space-between',
+                                    position: isMobile ? 'fixed' : 'relative',
+                                    bottom: isMobile ? 0 : 'auto',
+                                    left: isMobile ? 0 : 'auto',
+                                    right: isMobile ? 0 : 'auto',
+                                    backgroundColor: isMobile ? 'background.paper' : 'transparent',
+                                    p: isMobile ? 2 : 0,
+                                    zIndex: isMobile ? 1000 : 1,
+                                    boxShadow: isMobile ? 4 : 0,
+                                    width: isMobile ? '100%' : 'auto',
+                                    margin: isMobile ? '-16px' : 0,
+                                }}>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={activeStep === 0 ? <Cancel /> : <NavigateBefore />}
+                                        onClick={handleStepBack}
+                                        disabled={isSubmitting}
                                     >
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                                                {t('products:labels.summary')}
-                                            </Typography>
-                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                <Box display="flex" justifyContent="space-between">
-                                                    <Typography variant="caption" color="text.secondary">{t('products:labels.type')}:</Typography>
-                                                    <Chip
-                                                        size="small"
-                                                        label={
-                                                            values.product_type === 'physical' ? t('products:productTypes.physical') :
-                                                                values.product_type === 'digital' ? t('products:productTypes.digital') : t('products:productTypes.service')
-                                                        }
-                                                        color={
-                                                            values.product_type === 'physical' ? 'primary' :
-                                                                values.product_type === 'digital' ? 'info' : 'secondary'
-                                                        }
-                                                    />
-                                                </Box>
-                                                {values.price && (
-                                                    <Box display="flex" justifyContent="space-between">
-                                                        <Typography variant="caption" color="text.secondary">{t('products:labels.price')}:</Typography>
-                                                        <Typography variant="body2" fontWeight="bold">${values.price}</Typography>
-                                                    </Box>
-                                                )}
-                                                {values.stock_quantity && values.product_type !== 'service' && (
-                                                    <Box display="flex" justifyContent="space-between">
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {values.product_type === 'digital' ? t('products:labels.licensesCount') : t('products:labels.stockQuantity')}:
-                                                        </Typography>
-                                                        <Typography variant="body2">{values.stock_quantity}</Typography>
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
+                                        {activeStep === 0 ? t('products:actions.cancel') : 'Précédent'}
+                                    </Button>
 
-                                {/* Boutons d'action */}
-                                <Grid item xs={12}>
-                                    <Box sx={{
-                                        display: 'flex',
-                                        gap: 2,
-                                        justifyContent: 'flex-end',
-                                        position: isMobile ? 'fixed' : 'relative',
-                                        bottom: isMobile ? 0 : 'auto',
-                                        left: isMobile ? 0 : 'auto',
-                                        right: isMobile ? 0 : 'auto',
-                                        backgroundColor: isMobile ? 'background.paper' : 'transparent',
-                                        p: isMobile ? 2 : 0,
-                                        zIndex: isMobile ? 1000 : 1,
-                                        boxShadow: isMobile ? 4 : 0,
-                                        width: isMobile ? '100%' : 'auto',
-                                        margin: isMobile ? '-16px' : 0,
-                                    }}>
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<Cancel />}
-                                            onClick={() => navigate('/products')}
-                                            disabled={isSubmitting}
-                                        >
-                                            {t('products:actions.cancel')}
-                                        </Button>
+                                    {isLastStep ? (
                                         <Button
                                             type="submit"
                                             variant="contained"
@@ -1204,9 +1281,18 @@ function ProductForm() {
                                         >
                                             {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('products:actions.modify') : t('products:actions.create'))}
                                         </Button>
-                                    </Box>
-                                </Grid>
-                            </Grid>
+                                    ) : (
+                                        <Button
+                                            variant="contained"
+                                            endIcon={<NavigateNext />}
+                                            onClick={handleStepNext}
+                                            disabled={isSubmitting}
+                                        >
+                                            Suivant
+                                        </Button>
+                                    )}
+                                </Box>
+                            </Box>
                         </Form>
                     );
                 }}

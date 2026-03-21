@@ -214,20 +214,6 @@ function MainLayout() {
       case '/dashboard':
         return {
           title: t('navigation:menu.dashboard'),
-          periodControls: true,
-          currentPeriod: dashboardPeriod,
-          onPeriodChange: (newPeriod) => {
-            setDashboardPeriod(newPeriod);
-            window.dispatchEvent(new CustomEvent('dashboard-period-change', { detail: { period: newPeriod } }));
-          },
-          onRefresh: () => window.dispatchEvent(new CustomEvent('dashboard-refresh')),
-          actions: [{
-            label: '',
-            icon: <Tune fontSize="small" />,
-            onClick: () => window.dispatchEvent(new CustomEvent('dashboard-edit-mode', { detail: { activate: true } })),
-            isIconOnly: true,
-            tooltip: t('navigation:topBar.customizeDashboard', 'Personnaliser')
-          }]
         };
       case '/suppliers':
         return {

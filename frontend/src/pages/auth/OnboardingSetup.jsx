@@ -1,9 +1,10 @@
 /**
  * Page d'onboarding dédiée - Configuration initiale de l'organisation
- * Étapes : Informations entreprise → Paramètres légaux → Modules → Terminé
+ * Étapes : Entreprise → Fiscal → Modules → Terminé
  */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
   Box,
   Container,
@@ -20,15 +21,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
-  Avatar,
-  IconButton,
   Alert,
   Paper,
   Chip,
   LinearProgress,
+  Divider,
 } from '@mui/material';
 import {
   Business,
@@ -42,12 +39,15 @@ import {
   CompareArrows,
   Gavel,
   Analytics,
+  CloudUpload,
+  CelebrationOutlined,
+  LocationOn,
+  AccountBalance,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import Mascot from '../../components/Mascot';
 import api from '../../services/api';
 
-const steps = ['Votre entreprise', 'Paramètres fiscaux', 'Modules', 'Terminé'];
+const steps = ['Entreprise', 'Fiscal', 'Modules'];
 
 // Modules disponibles
 const AVAILABLE_MODULES = [
@@ -75,17 +75,27 @@ const TAX_REGIONS = [
 function OnboardingSetup() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+
+  // Pre-fill company name from Redux state
+  const reduxCompanyName = useSelector(
+    (state) =>
+      state?.settings?.companyName ||
+      state?.auth?.user?.organization?.name ||
+      state?.auth?.user?.organization_name ||
+      ''
+  );
+
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
 
   const [formData, setFormData] = useState({
-    // Étape 1 : Informations entreprise
-    companyName: '',
-    sector: '',
+    // Étape 0 : Informations entreprise
+    companyName: reduxCompanyName,
+    address: '',
     logo: null,
 
-    // Étape 2 : Paramètres fiscaux
+    // Étape 1 : Paramètres fiscaux
     taxRegion: 'international',
     companyNiu: '',
     companyRcNumber: '',
@@ -97,7 +107,7 @@ function OnboardingSetup() {
     defaultCurrency: 'CAD',
     defaultTaxRate: 15,
 
-    // Étape 3 : Modules
+    // Étape 2 : Modules
     selectedModules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices'],
   });
 
@@ -121,20 +131,18 @@ function OnboardingSetup() {
     setFormData(prev => ({
       ...prev,
       selectedModules: prev.selectedModules.includes(moduleId)
-        ? prev.selectedModules.filter(id => id !== moduleId && id !== 'dashboard') // Can't remove dashboard
-        : [...prev.selectedModules, moduleId]
+        ? prev.selectedModules.filter(id => id !== moduleId && id !== 'dashboard')
+        : [...prev.selectedModules, moduleId],
     }));
   };
 
   const handleNext = () => {
-    // Validation par étape
     if (activeStep === 0) {
       if (!formData.companyName.trim()) {
-        enqueueSnackbar('Le nom de l\'entreprise est requis', { variant: 'error' });
+        enqueueSnackbar("Le nom de l'entreprise est requis", { variant: 'error' });
         return;
       }
     }
-
     setActiveStep(prev => prev + 1);
   };
 
@@ -210,11 +218,8 @@ function OnboardingSetup() {
 
       enqueueSnackbar('Configuration terminée avec succès !', { variant: 'success' });
 
-      // Rediriger vers le dashboard avec rechargement complet
-      setTimeout(() => {
-        window.location.href = '/dashboard'; // Force full page reload to update all state
-      }, 1500);
-
+      // Afficher l'écran de célébration
+      setActiveStep(3);
     } catch (error) {
       console.error('Onboarding error:', error);
       enqueueSnackbar('Erreur lors de la sauvegarde. Veuillez réessayer.', { variant: 'error' });
@@ -223,21 +228,26 @@ function OnboardingSetup() {
     }
   };
 
+  const progressPercent = activeStep >= 3 ? 100 : Math.round((activeStep / steps.length) * 100);
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 0: // Informations entreprise
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-              Informations sur votre entreprise
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
+              Votre entreprise
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
               Ces informations apparaîtront sur vos documents (factures, bons de commande, etc.)
             </Typography>
 
             <Grid container spacing={3}>
-              {/* Logo */}
-              <Grid item xs={12} sx={{ textAlign: 'center' }}>
+              {/* Logo upload zone */}
+              <Grid item xs={12}>
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: 'text.secondary' }}>
+                  Logo de l'entreprise
+                </Typography>
                 <input
                   accept="image/*"
                   style={{ display: 'none' }}
@@ -245,28 +255,51 @@ function OnboardingSetup() {
                   type="file"
                   onChange={handleLogoUpload}
                 />
-                <label htmlFor="logo-upload">
-                  <Box sx={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}>
-                    <Avatar
-                      src={logoPreview}
-                      sx={{ width: 100, height: 100, mb: 1, bgcolor: 'primary.light' }}
-                    >
-                      <Business sx={{ fontSize: 50 }} />
-                    </Avatar>
-                    <Button
-                      component="span"
-                      variant="outlined"
-                      startIcon={<Upload />}
-                      size="small"
-                    >
-                      Ajouter un logo
-                    </Button>
+                <label htmlFor="logo-upload" style={{ display: 'block', width: 'fit-content' }}>
+                  <Box
+                    sx={{
+                      width: 180,
+                      height: 120,
+                      border: '2px dashed',
+                      borderColor: logoPreview ? 'primary.main' : 'divider',
+                      borderRadius: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      overflow: 'hidden',
+                      bgcolor: logoPreview ? 'transparent' : 'action.hover',
+                      transition: 'border-color 0.2s, background-color 0.2s',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        bgcolor: 'primary.50',
+                      },
+                    }}
+                  >
+                    {logoPreview ? (
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
+                    ) : (
+                      <>
+                        <CloudUpload sx={{ fontSize: 32, color: 'text.disabled', mb: 0.5 }} />
+                        <Typography variant="caption" color="text.secondary" align="center" sx={{ px: 1 }}>
+                          Cliquez pour ajouter votre logo
+                        </Typography>
+                      </>
+                    )}
                   </Box>
                 </label>
+                <Typography variant="caption" color="text.disabled" sx={{ mt: 0.75, display: 'block' }}>
+                  (apparaîtra sur vos documents)
+                </Typography>
               </Grid>
 
               {/* Nom de l'entreprise */}
-              <Grid item xs={12}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   required
                   fullWidth
@@ -274,17 +307,23 @@ function OnboardingSetup() {
                   value={formData.companyName}
                   onChange={(e) => handleChange('companyName', e.target.value)}
                   placeholder="Ex: ACME Corporation"
+                  helperText={reduxCompanyName ? 'Pré-rempli depuis votre inscription' : ''}
                 />
               </Grid>
 
-              {/* Secteur d'activité */}
-              <Grid item xs={12}>
+              {/* Adresse */}
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Secteur d'activité"
-                  value={formData.sector}
-                  onChange={(e) => handleChange('sector', e.target.value)}
-                  placeholder="Ex: Distribution, Services, Manufacture..."
+                  label="Ville / Pays"
+                  value={formData.address}
+                  onChange={(e) => handleChange('address', e.target.value)}
+                  placeholder="Ex: Douala, Cameroun"
+                  InputProps={{
+                    startAdornment: (
+                      <LocationOn sx={{ color: 'text.disabled', mr: 0.5, fontSize: 20 }} />
+                    ),
+                  }}
                 />
               </Grid>
             </Grid>
@@ -294,11 +333,11 @@ function OnboardingSetup() {
       case 1: // Paramètres fiscaux
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-              Paramètres fiscaux et légaux
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
+              Région & Devise
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Configurez vos paramètres fiscaux selon votre région
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+              Configurez vos paramètres fiscaux selon votre région d'activité
             </Typography>
 
             <Grid container spacing={3}>
@@ -329,11 +368,11 @@ function OnboardingSetup() {
                     onChange={(e) => handleChange('defaultCurrency', e.target.value)}
                     label="Devise par défaut"
                   >
-                    <MenuItem value="CAD">CAD - Dollar canadien</MenuItem>
-                    <MenuItem value="EUR">EUR - Euro</MenuItem>
-                    <MenuItem value="USD">USD - Dollar américain</MenuItem>
-                    <MenuItem value="XAF">XAF - Franc CFA (Afrique centrale)</MenuItem>
-                    <MenuItem value="XOF">XOF - Franc CFA (Afrique de l'Ouest)</MenuItem>
+                    <MenuItem value="CAD">CAD — Dollar canadien</MenuItem>
+                    <MenuItem value="EUR">EUR — Euro</MenuItem>
+                    <MenuItem value="USD">USD — Dollar américain</MenuItem>
+                    <MenuItem value="XAF">XAF — Franc CFA (Afrique centrale)</MenuItem>
+                    <MenuItem value="XOF">XOF — Franc CFA (Afrique de l'Ouest)</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -353,6 +392,13 @@ function OnboardingSetup() {
               {/* Champs conditionnels selon la région */}
               {(formData.taxRegion === 'cameroon' || formData.taxRegion === 'ohada') && (
                 <>
+                  <Grid item xs={12}>
+                    <Divider>
+                      <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
+                        Identifiants légaux (OHADA)
+                      </Typography>
+                    </Divider>
+                  </Grid>
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
@@ -375,6 +421,13 @@ function OnboardingSetup() {
 
               {formData.taxRegion === 'canada' && (
                 <>
+                  <Grid item xs={12}>
+                    <Divider>
+                      <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
+                        Identifiants légaux (Canada)
+                      </Typography>
+                    </Divider>
+                  </Grid>
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
@@ -403,15 +456,24 @@ function OnboardingSetup() {
               )}
 
               {formData.taxRegion === 'eu' && (
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Numéro de TVA intracommunautaire"
-                    value={formData.companyVatNumber}
-                    onChange={(e) => handleChange('companyVatNumber', e.target.value)}
-                    placeholder="Ex: FR12345678901"
-                  />
-                </Grid>
+                <>
+                  <Grid item xs={12}>
+                    <Divider>
+                      <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
+                        Identifiants légaux (UE)
+                      </Typography>
+                    </Divider>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Numéro de TVA intracommunautaire"
+                      value={formData.companyVatNumber}
+                      onChange={(e) => handleChange('companyVatNumber', e.target.value)}
+                      placeholder="Ex: FR12345678901"
+                    />
+                  </Grid>
+                </>
               )}
             </Grid>
           </Box>
@@ -420,11 +482,11 @@ function OnboardingSetup() {
       case 2: // Sélection des modules
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-              Choisissez vos modules
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
+              Modules
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Sélectionnez les fonctionnalités dont vous avez besoin. Vous pourrez les modifier plus tard.
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+              Sélectionnez les fonctionnalités dont vous avez besoin. Vous pourrez les modifier à tout moment.
             </Typography>
 
             <Grid container spacing={2}>
@@ -436,36 +498,50 @@ function OnboardingSetup() {
                 return (
                   <Grid item xs={12} sm={6} md={4} key={module.id}>
                     <Card
+                      variant="outlined"
                       sx={{
                         cursor: isRequired ? 'default' : 'pointer',
-                        border: isSelected ? 2 : 1,
+                        border: '1.5px solid',
                         borderColor: isSelected ? 'primary.main' : 'divider',
                         bgcolor: isSelected ? 'primary.50' : 'background.paper',
-                        opacity: isRequired ? 0.7 : 1,
-                        transition: 'all 0.2s',
+                        transition: 'all 0.15s ease',
                         '&:hover': {
+                          borderColor: isRequired ? 'divider' : 'primary.main',
                           transform: isRequired ? 'none' : 'translateY(-2px)',
-                          boxShadow: isRequired ? 1 : 3,
+                          boxShadow: isRequired ? 'none' : '0 4px 12px rgba(0,0,0,0.08)',
                         },
                       }}
                       onClick={() => !isRequired && handleModuleToggle(module.id)}
                     >
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <Box sx={{ color: isSelected ? 'primary.main' : 'text.secondary', mr: 1 }}>
+                      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                          <Box
+                            sx={{
+                              color: isSelected ? 'primary.main' : 'text.secondary',
+                              mr: 1.5,
+                              mt: 0.25,
+                              flexShrink: 0,
+                            }}
+                          >
                             {module.icon}
                           </Box>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
-                            {module.name}
-                          </Typography>
-                          {isSelected && <CheckCircle color="primary" fontSize="small" />}
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                              {module.name}
+                            </Typography>
+                            <Box sx={{ mt: 0.75 }}>
+                              {isRequired && (
+                                <Chip label="Requis" size="small" color="primary" variant="outlined" />
+                              )}
+                              {!isRequired && isRecommended && (
+                                <Chip label="Recommandé" size="small" color="secondary" variant="outlined" />
+                              )}
+                            </Box>
+                          </Box>
+                          {isSelected && (
+                            <CheckCircle color="primary" fontSize="small" sx={{ flexShrink: 0, mt: 0.25 }} />
+                          )}
                         </Box>
-                        {isRequired && (
-                          <Chip label="Requis" size="small" color="primary" sx={{ mt: 1 }} />
-                        )}
-                        {!isRequired && isRecommended && (
-                          <Chip label="Recommandé" size="small" color="secondary" sx={{ mt: 1 }} />
-                        )}
                       </CardContent>
                     </Card>
                   </Grid>
@@ -473,39 +549,104 @@ function OnboardingSetup() {
               })}
             </Grid>
 
-            <Alert severity="info" sx={{ mt: 3 }}>
-              Vous avez sélectionné {formData.selectedModules.length} module(s). Vous pourrez activer ou désactiver
+            <Alert severity="info" sx={{ mt: 3, borderRadius: 2 }}>
+              {formData.selectedModules.length} module(s) sélectionné(s). Vous pourrez activer ou désactiver
               des modules à tout moment depuis les paramètres.
             </Alert>
           </Box>
         );
 
-      case 3: // Terminé
+      case 3: // Terminé — écran de célébration
         return (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Mascot pose="celebration" animation="bounce" size={150} />
-            <Typography variant="h5" sx={{ mt: 3, mb: 2, fontWeight: 700 }}>
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                bgcolor: 'success.light',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+              }}
+            >
+              <CelebrationOutlined sx={{ fontSize: 40, color: 'success.dark' }} />
+            </Box>
+
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
               Tout est prêt !
             </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
               Votre espace de travail est configuré et prêt à l'emploi.
             </Typography>
-            <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.default', mt: 3 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Configuration :
+
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                textAlign: 'left',
+                maxWidth: 420,
+                mx: 'auto',
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}>
+                Récapitulatif de votre configuration
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                🏢 {formData.companyName}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                🌍 {TAX_REGIONS.find(r => r.value === formData.taxRegion)?.label}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                💰 {formData.defaultCurrency}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                📦 {formData.selectedModules.length} modules activés
-              </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Business fontSize="small" color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Entreprise
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {formData.companyName}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {formData.address && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <LocationOn fontSize="small" color="primary" />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Localisation
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {formData.address}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <AccountBalance fontSize="small" color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Région fiscale & devise
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {TAX_REGIONS.find(r => r.value === formData.taxRegion)?.label} — {formData.defaultCurrency}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <CheckCircle fontSize="small" color="primary" />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Modules activés
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {formData.selectedModules.length} module(s)
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
             </Paper>
           </Box>
         );
@@ -515,78 +656,109 @@ function OnboardingSetup() {
     }
   };
 
+  const isCompletionScreen = activeStep === 3;
+
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        py: 4,
-      }}
-    >
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6 }}>
       <Container maxWidth="md">
         {/* Header */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Mascot pose="happy" animation="float" size={80} />
-          <Typography variant="h4" sx={{ mt: 2, fontWeight: 700 }}>
+        <Box sx={{ textAlign: 'center', mb: 5 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
             Configuration de votre espace
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Quelques étapes pour personnaliser votre expérience
+            Quelques étapes pour personnaliser votre expérience Procura
           </Typography>
         </Box>
 
-        {/* Stepper */}
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+        {/* Stepper + Progress */}
+        {!isCompletionScreen && (
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                Étape {activeStep + 1} sur {steps.length}
+              </Typography>
+              <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
+                {progressPercent}%
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={progressPercent}
+              sx={{ borderRadius: 4, height: 6, mb: 3 }}
+            />
+            <Stepper activeStep={activeStep} alternativeLabel>
+              {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          </Box>
+        )}
 
-        {/* Progress bar */}
-        <LinearProgress
-          variant="determinate"
-          value={(activeStep / (steps.length - 1)) * 100}
-          sx={{ mb: 4, borderRadius: 2, height: 6 }}
-        />
-
-        {/* Content */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent sx={{ p: 4 }}>
+        {/* Content card */}
+        <Card
+          variant="outlined"
+          sx={{
+            mb: 3,
+            borderRadius: 3,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+          }}
+        >
+          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
             {renderStepContent()}
           </CardContent>
         </Card>
 
         {/* Actions */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            onClick={handleBack}
-            disabled={activeStep === 0 || loading}
-            variant="outlined"
-          >
-            Retour
-          </Button>
+        {!isCompletionScreen && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Button
+              onClick={handleBack}
+              disabled={activeStep === 0 || loading}
+              variant="outlined"
+              sx={{ minWidth: 100 }}
+            >
+              Retour
+            </Button>
 
-          {activeStep === steps.length - 1 ? (
+            {activeStep === steps.length - 1 ? (
+              <Button
+                variant="contained"
+                onClick={handleComplete}
+                disabled={loading}
+                size="large"
+                sx={{ minWidth: 180 }}
+              >
+                {loading ? 'Finalisation...' : 'Terminer la configuration'}
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                disabled={loading}
+                sx={{ minWidth: 120 }}
+              >
+                Suivant
+              </Button>
+            )}
+          </Box>
+        )}
+
+        {/* Completion screen CTA */}
+        {isCompletionScreen && (
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
             <Button
               variant="contained"
-              onClick={handleComplete}
-              disabled={loading}
               size="large"
+              sx={{ minWidth: 220 }}
+              onClick={() => { window.location.href = '/dashboard'; }}
             >
-              {loading ? 'Finalisation...' : 'Accéder au dashboard'}
+              Accéder au dashboard
             </Button>
-          ) : (
-            <Button
-              variant="contained"
-              onClick={handleNext}
-              disabled={loading}
-            >
-              Suivant
-            </Button>
-          )}
-        </Box>
+          </Box>
+        )}
       </Container>
     </Box>
   );

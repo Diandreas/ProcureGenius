@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Paper,
   Typography,
-  Checkbox,
-  FormGroup,
-  FormControlLabel,
   Grid,
-  Alert,
+  Switch,
   CircularProgress,
   Button,
   Divider,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Apps as AppsIcon,
   Save as SaveIcon,
@@ -23,22 +20,20 @@ import {
   Description,
   Gavel,
   BarChart,
-  Search,
-  Assignment,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 
 const AVAILABLE_MODULES = [
-  { code: 'dashboard', name: 'Tableau de bord', description: 'Vue d\'ensemble', always_enabled: true, IconComponent: AppsIcon },
-  { code: 'invoices', name: 'Facturation', description: 'Gestion des factures', IconComponent: Receipt },
-  { code: 'purchase-orders', name: 'Bons de commande', description: 'Achats et commandes', IconComponent: ShoppingCart },
-  { code: 'suppliers', name: 'Fournisseurs', description: 'Gestion fournisseurs', IconComponent: Business },
-  { code: 'clients', name: 'Clients', description: 'Gestion clients', IconComponent: People },
-  { code: 'products', name: 'Produits', description: 'Catalogue produits', IconComponent: Inventory },
-  { code: 'contracts', name: 'Contrats', description: 'Gestion des contrats', IconComponent: Description },
-  { code: 'e-sourcing', name: 'E-Sourcing', description: 'Appels d\'offres', IconComponent: Gavel },
-  { code: 'analytics', name: 'Analytics', description: 'Rapports et analyses', IconComponent: BarChart },
+  { code: 'dashboard', name: 'Tableau de bord', always_enabled: true, IconComponent: AppsIcon },
+  { code: 'invoices', name: 'Facturation', IconComponent: Receipt },
+  { code: 'purchase-orders', name: 'Bons de commande', IconComponent: ShoppingCart },
+  { code: 'suppliers', name: 'Fournisseurs', IconComponent: Business },
+  { code: 'clients', name: 'Clients', IconComponent: People },
+  { code: 'products', name: 'Produits', IconComponent: Inventory },
+  { code: 'contracts', name: 'Contrats', IconComponent: Description },
+  { code: 'e-sourcing', name: 'E-Sourcing', IconComponent: Gavel },
+  { code: 'analytics', name: 'Analytics', IconComponent: BarChart },
 ];
 
 const ModulesManager = () => {
@@ -46,7 +41,6 @@ const ModulesManager = () => {
   const [enabledModules, setEnabledModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     loadModules();
@@ -102,24 +96,6 @@ const ModulesManager = () => {
     }
   };
 
-  const handleDebug = async () => {
-    try {
-      // Charger les deux endpoints
-      const [orgSettings, userModules] = await Promise.all([
-        api.get('/accounts/organization/settings/'),
-        api.get('/accounts/modules/')
-      ]);
-
-      setDebugInfo({
-        orgSettingsModules: orgSettings.data.enabled_modules,
-        userModulesData: userModules.data.modules,
-        userModulesCodes: userModules.data.module_codes,
-      });
-    } catch (error) {
-      enqueueSnackbar('Erreur lors du debug: ' + error.message, { variant: 'error' });
-    }
-  };
-
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
@@ -130,137 +106,71 @@ const ModulesManager = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
         <AppsIcon color="primary" />
         <Typography variant="h6">Modules actifs</Typography>
       </Box>
-      <Divider sx={{ mb: 3 }} />
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+        Activez ou désactivez les modules de votre organisation. Un rechargement sera nécessaire.
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
 
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Sélectionnez les modules que vous souhaitez activer pour votre organisation.
-        Les changements nécessitent un rechargement de la page.
-      </Alert>
+      <Grid container spacing={1}>
+        {AVAILABLE_MODULES.map((module) => {
+          const isEnabled = enabledModules.includes(module.code);
+          const isAlwaysEnabled = module.always_enabled;
 
-      <Paper elevation={0} sx={{ p: 3, border: '1px solid #e0e0e0' }}>
-        <FormGroup>
-          <Grid container spacing={2}>
-            {AVAILABLE_MODULES.map((module) => {
-              const isEnabled = enabledModules.includes(module.code);
-              const isAlwaysEnabled = module.always_enabled;
+          return (
+            <Grid item xs={6} md={4} key={module.code}>
+              <Box
+                onClick={() => !isAlwaysEnabled && handleToggle(module.code)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 1.5,
+                  py: 1,
+                  border: '1px solid',
+                  borderRadius: 2,
+                  borderColor: isEnabled ? 'primary.main' : 'divider',
+                  bgcolor: isEnabled ? (theme) => alpha(theme.palette.primary.main, 0.05) : 'transparent',
+                  opacity: isAlwaysEnabled ? 0.5 : 1,
+                  cursor: isAlwaysEnabled ? 'default' : 'pointer',
+                  transition: 'border-color 0.15s, background-color 0.15s',
+                  userSelect: 'none',
+                }}
+              >
+                <Switch
+                  size="small"
+                  checked={isEnabled}
+                  disabled={isAlwaysEnabled}
+                  onChange={() => handleToggle(module.code)}
+                  onClick={(e) => e.stopPropagation()}
+                  sx={{ flexShrink: 0 }}
+                />
+                {module.IconComponent && (
+                  <module.IconComponent sx={{ fontSize: 16, flexShrink: 0, color: isEnabled ? 'primary.main' : 'text.secondary' }} />
+                )}
+                <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                  {module.name}
+                </Typography>
+              </Box>
+            </Grid>
+          );
+        })}
+      </Grid>
 
-              return (
-                <Grid item xs={12} sm={6} md={4} key={module.code}>
-                  <Paper
-                    elevation={isEnabled ? 2 : 0}
-                    sx={{
-                      p: 2,
-                      border: isEnabled ? '2px solid' : '1px solid',
-                      borderColor: isEnabled ? 'primary.main' : '#e0e0e0',
-                      backgroundColor: isEnabled ? 'primary.50' : 'transparent',
-                      opacity: isAlwaysEnabled ? 0.7 : 1,
-                      cursor: isAlwaysEnabled ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        borderColor: isAlwaysEnabled ? '#e0e0e0' : 'primary.main',
-                      },
-                    }}
-                    onClick={() => !isAlwaysEnabled && handleToggle(module.code)}
-                  >
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={isEnabled}
-                          disabled={isAlwaysEnabled}
-                          onChange={() => handleToggle(module.code)}
-                        />
-                      }
-                      label={
-                        <Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            {module.IconComponent && <module.IconComponent sx={{ fontSize: 20 }} />}
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                              {module.name}
-                            </Typography>
-                          </Box>
-                          <Typography variant="caption" color="text.secondary">
-                            {module.description}
-                          </Typography>
-                          {isAlwaysEnabled && (
-                            <Typography variant="caption" color="primary" sx={{ display: 'block', mt: 0.5 }}>
-                              (Toujours activé)
-                            </Typography>
-                          )}
-                        </Box>
-                      }
-                      sx={{ m: 0, width: '100%' }}
-                    />
-                  </Paper>
-                </Grid>
-              );
-            })}
-          </Grid>
-        </FormGroup>
-      </Paper>
-
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-        <Button
-          variant="outlined"
-          color="info"
-          onClick={handleDebug}
-          startIcon={<Search />}
-        >
-          Debug Info
-        </Button>
+      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="contained"
           startIcon={<SaveIcon />}
           onClick={handleSave}
           disabled={saving}
+          size="small"
         >
-          {saving ? 'Enregistrement...' : 'Enregistrer les modules'}
+          {saving ? 'Enregistrement...' : 'Enregistrer'}
         </Button>
       </Box>
-
-      {/* Debug Information */}
-      {debugInfo && (
-        <Paper sx={{ mt: 3, p: 3, bgcolor: '#f5f5f5' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Search />
-            <Typography variant="h6">Informations de Debug</Typography>
-          </Box>
-          <Divider sx={{ mb: 2 }} />
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Inventory sx={{ fontSize: 18 }} />
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-              Modules depuis Organization Settings (sauvegardés):
-            </Typography>
-          </Box>
-          <Box sx={{ mb: 2, p: 2, bgcolor: 'white', borderRadius: 1, fontFamily: 'monospace' }}>
-            {JSON.stringify(debugInfo.orgSettingsModules, null, 2)}
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Assignment sx={{ fontSize: 18 }} />
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-              Modules depuis User Modules API (utilisés par le menu):
-            </Typography>
-          </Box>
-          <Box sx={{ mb: 2, p: 2, bgcolor: 'white', borderRadius: 1, fontFamily: 'monospace' }}>
-            {JSON.stringify(debugInfo.userModulesCodes, null, 2)}
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Description sx={{ fontSize: 18 }} />
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-              Métadonnées complètes:
-            </Typography>
-          </Box>
-          <Box sx={{ p: 2, bgcolor: 'white', borderRadius: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}>
-            {JSON.stringify(debugInfo.userModulesData, null, 2)}
-          </Box>
-        </Paper>
-      )}
     </Box>
   );
 };

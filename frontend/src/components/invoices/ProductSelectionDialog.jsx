@@ -329,14 +329,7 @@ function ProductSelectionDialog({
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Box
-                  sx={{
-                    textAlign: 'center',
-                    p: 2,
-                    bgcolor: 'success.50',
-                    borderRadius: 1,
-                  }}
-                >
+                <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
                   <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
                     {formatCurrency((newItem.quantity || 0) * (newItem.unit_price || 0))}
                   </Typography>
@@ -434,27 +427,13 @@ function ProductSelectionDialog({
                   onChange={(e) =>
                     setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })
                   }
-                  disabled={newItem.product !== null && !newItem.product?.price_editable}
-                  helperText={
-                    newItem.product
-                      ? newItem.product.price_editable
-                        ? t('invoices:messages.priceEditableByProduct')
-                        : t('invoices:messages.priceFixedFromCatalog')
-                      : ""
-                  }
+                  helperText={t('invoices:messages.servicePriceOnQuote')}
                   inputProps={{ min: 0, step: 0.01 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Box
-                  sx={{
-                    textAlign: 'center',
-                    p: 2,
-                    bgcolor: 'success.50',
-                    borderRadius: 1,
-                  }}
-                >
+                <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
                   <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
                     {formatCurrency((newItem.quantity || 0) * (newItem.unit_price || 0))}
                   </Typography>

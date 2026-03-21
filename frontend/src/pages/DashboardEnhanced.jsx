@@ -28,6 +28,7 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  Tooltip as MuiTooltip,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -323,85 +324,75 @@ function DashboardEnhanced() {
   return (
     <Box p={isMobile ? 2 : 3}>
       {/* En-tête */}
-      <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: 1 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                {!isMobile && <Box sx={{ mr: 3 }}><Mascot pose={aiGreeting ? 'excited' : welcome.pose} animation="wave" size={80} /></Box>}
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Typography variant={isMobile ? 'h5' : 'h4'} sx={{ fontWeight: 700 }}>
-                      {welcome.greeting} ! 👋
-                    </Typography>
-                    {aiGreeting && (
-                      <Chip 
-                        label="IA" 
-                        size="small" 
-                        sx={{ 
-                          bgcolor: 'rgba(255,255,255,0.2)', 
-                          color: 'white', 
-                          fontWeight: 'bold',
-                          fontSize: '0.65rem',
-                          height: 20
-                        }} 
-                      />
-                    )}
-                  </Box>
-                  <Typography variant="body1" sx={{ opacity: 0.95, fontStyle: aiGreeting ? 'italic' : 'normal' }}>
-                    {aiGreeting ? aiGreeting.greeting : `${welcome.message} Voici un aperçu de votre activité.`}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+        {/* Greeting */}
+        <Box>
+          <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
+            {welcome.greeting} 👋
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {aiGreeting ? aiGreeting.greeting : `${welcome.message} Voici un aperçu de votre activité.`}
+          </Typography>
+        </Box>
 
-            <Grid item xs={12} md={6}>
-              <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" sx={{ gap: 1 }}>
-                {PERIOD_OPTIONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    size="small"
-                    onClick={() => handlePeriodChange(option.value)}
-                    variant={period === option.value ? 'contained' : 'outlined'}
-                    sx={{
-                      color: 'white',
-                      borderColor: 'rgba(255,255,255,0.3)',
-                      bgcolor: period === option.value ? 'rgba(255,255,255,0.3)' : 'transparent',
-                      '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
-                      minWidth: 'auto',
-                      px: 1.5,
-                    }}
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-                <Button
-                  variant="outlined"
-                  startIcon={<DateRange />}
-                  onClick={() => setCustomDateDialog(true)}
-                  sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}
-                  size="small"
-                >
-                  Personnalisé
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={exporting ? <CircularProgress size={16} color="inherit" /> : <GetApp />}
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                  disabled={exporting}
-                  sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white' }}
-                  size="small"
-                >
-                  Exporter
-                </Button>
-                <IconButton onClick={fetchDashboardData} sx={{ color: 'white' }} size="small">
-                  <Refresh />
-                </IconButton>
-              </Stack>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+        {/* Controls */}
+        <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+          {/* Period selector — compact chip group */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              bgcolor: 'action.hover',
+              borderRadius: 2,
+              p: 0.5,
+              gap: 0.25,
+              flexWrap: 'wrap',
+            }}
+          >
+            {PERIOD_OPTIONS.map((option) => (
+              <Box
+                key={option.value}
+                onClick={() => handlePeriodChange(option.value)}
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1.5,
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s',
+                  bgcolor: period === option.value ? 'background.paper' : 'transparent',
+                  color: period === option.value ? 'primary.main' : 'text.secondary',
+                  boxShadow: period === option.value ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                  '&:hover': { color: 'text.primary' },
+                }}
+              >
+                {option.label}
+              </Box>
+            ))}
+          </Box>
+
+          {/* Export icon button */}
+          <MuiTooltip title="Exporter">
+            <IconButton
+              size="small"
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              disabled={exporting}
+              sx={{ border: '1px solid', borderColor: 'divider' }}
+            >
+              {exporting ? <CircularProgress size={16} /> : <GetApp fontSize="small" />}
+            </IconButton>
+          </MuiTooltip>
+
+          {/* Refresh */}
+          <MuiTooltip title="Actualiser">
+            <IconButton size="small" onClick={fetchDashboardData} sx={{ border: '1px solid', borderColor: 'divider' }}>
+              <Refresh fontSize="small" />
+            </IconButton>
+          </MuiTooltip>
+        </Stack>
+      </Box>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
         <MenuItem onClick={() => handleExport('pdf')}>

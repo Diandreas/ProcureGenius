@@ -66,7 +66,10 @@
     "emailSent": "Email envoyé avec succès",
     "emailError": "Erreur lors de l'envoi de l'email",
     "emailRequired": "Email destinataire requis",
-    "sending": "Envoi..."
+    "sending": "Envoi...",
+    "priceFixedFromCatalog": "Prix fixé par le catalogue",
+    "priceEditableByProduct": "Prix modifiable à la facturation",
+    "servicePriceOnQuote": "Prix libre — à définir ici"
   },
   "actions": {
     "generateReport": "Rapport PDF"
@@ -119,7 +122,18 @@
     "vatRateField": "Taux de TVA (%)",
     "invoiceStatusField": "Statut de la facture",
     "savingLabel": "Enregistrement...",
-    "generatingLabel": "Génération..."
+    "generatingLabel": "Génération...",
+    "physicalProducts": "Produits physiques",
+    "servicesAndDigital": "Services & Numérique",
+    "searchProduct": "Rechercher un produit",
+    "searchService": "Rechercher un service",
+    "productReference": "Référence produit",
+    "serviceReference": "Référence service",
+    "quantity": "Quantité",
+    "unitPriceExclTax": "Prix unitaire HT",
+    "lineTotal": "Total ligne",
+    "contract": "Contrat",
+    "reference": "Réf."
   },
   "buttons": {
     "generatePdf": "Générer PDF",
