@@ -173,7 +173,7 @@ class DashboardStatsService:
 
         # Formater
         for inv in recent_invoices:
-            client_name = f"{inv.client.first_name} {inv.client.last_name}" if inv.client.first_name else inv.client.company
+            client_name = inv.client.name if inv.client else "Client inconnu"
             activity.append({
                 'type': 'invoice',
                 'description': f"Facture #{inv.invoice_number} créée pour {client_name}",
@@ -190,7 +190,7 @@ class DashboardStatsService:
             })
             
         for client in recent_clients:
-            name = f"{client.first_name} {client.last_name}" if client.first_name else client.company
+            name = client.name if client else "Client inconnu"
             activity.append({
                 'type': 'client',
                 'description': f"Nouveau client ajouté : {name}",
