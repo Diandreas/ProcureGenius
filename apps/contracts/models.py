@@ -89,6 +89,9 @@ class Contract(models.Model):
     alert_days_before_expiry = models.PositiveIntegerField(default=30, verbose_name=_("Alerte (jours avant expiration)"))
     last_alert_sent = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière alerte envoyée"))
 
+    # Organisation propriétaire
+    organization = models.ForeignKey('accounts.Organization', on_delete=models.CASCADE, null=True, blank=True, related_name='contracts', verbose_name=_("Organisation"))
+
     # Métadonnées
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_contracts', verbose_name=_("Créé par"))
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_contracts', verbose_name=_("Approuvé par"))

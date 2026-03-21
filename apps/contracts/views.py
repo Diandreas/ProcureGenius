@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 class ContractViewSet(viewsets.ModelViewSet):
     """ViewSet pour les contrats"""
 
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['contract_number', 'title', 'description', 'supplier__name']
     ordering_fields = ['created_at', 'start_date', 'end_date', 'total_value', 'status']
     ordering = ['-created_at']
 
     def get_queryset(self):
-        queryset = Contract.objects.all()
+        queryset = Contract.objects.filter(organization=self.request.user.organization)
 
         # Filtrer par statut
         status_param = self.request.query_params.get('status')
@@ -56,6 +56,12 @@ class ContractViewSet(viewsets.ModelViewSet):
         elif self.action in ['create', 'update', 'partial_update']:
             return ContractCreateSerializer
         return ContractDetailSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(
+            organization=self.request.user.organization,
+            created_by=self.request.user,
+        )
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -338,7 +344,7 @@ class ContractViewSet(viewsets.ModelViewSet):
 class ContractClauseViewSet(viewsets.ModelViewSet):
     """ViewSet pour les clauses de contrat"""
 
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ContractClauseSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content', 'section_reference']
@@ -346,7 +352,7 @@ class ContractClauseViewSet(viewsets.ModelViewSet):
     ordering = ['contract', 'clause_type']
 
     def get_queryset(self):
-        queryset = ContractClause.objects.all()
+        queryset = ContractClause.objects.filter(contract__organization=self.request.user.organization)
 
         # Filtrer par contrat
         contract_id = self.request.query_params.get('contract')
@@ -422,7 +428,7 @@ class ContractClauseViewSet(viewsets.ModelViewSet):
 class ContractMilestoneViewSet(viewsets.ModelViewSet):
     """ViewSet pour les jalons de contrat"""
 
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ContractMilestoneSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'description']
@@ -430,7 +436,7 @@ class ContractMilestoneViewSet(viewsets.ModelViewSet):
     ordering = ['due_date']
 
     def get_queryset(self):
-        queryset = ContractMilestone.objects.all()
+        queryset = ContractMilestone.objects.filter(contract__organization=self.request.user.organization)
 
         # Filtrer par contrat
         contract_id = self.request.query_params.get('contract')
@@ -465,7 +471,7 @@ class ContractMilestoneViewSet(viewsets.ModelViewSet):
 class ContractDocumentViewSet(viewsets.ModelViewSet):
     """ViewSet pour les documents de contrat"""
 
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ContractDocumentSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'description']
@@ -473,7 +479,7 @@ class ContractDocumentViewSet(viewsets.ModelViewSet):
     ordering = ['-uploaded_at']
 
     def get_queryset(self):
-        queryset = ContractDocument.objects.all()
+        queryset = ContractDocument.objects.filter(contract__organization=self.request.user.organization)
 
         # Filtrer par contrat
         contract_id = self.request.query_params.get('contract')
@@ -494,7 +500,7 @@ class ContractDocumentViewSet(viewsets.ModelViewSet):
 class ContractTemplateViewSet(viewsets.ModelViewSet):
     """ViewSet pour les modèles de contrat"""
 
-    permission_classes = [permissions.AllowAny]  # Temporaire pour le développement
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ContractTemplateSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
