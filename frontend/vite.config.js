@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   // En production: URL du backend Django
   // En développement: localhost pour le serveur de développement
   const BACKEND_URL = mode === 'production'
-    ? 'https://procura.srv696182.hstgr.cloud'  // URL du backend en production
+    ? ''  // URL relative - Nginx proxifie /api/ vers Django sur 127.0.0.1:8000
     : 'http://localhost:8000';  // URL du backend en développement
 
   // #region agent log
