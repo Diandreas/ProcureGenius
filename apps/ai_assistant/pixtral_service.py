@@ -9,7 +9,6 @@ import logging
 from typing import Dict, Any, Union
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from mistralai import Mistral
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -35,6 +34,7 @@ class PixtralService:
         Args:
             api_key: Mistral API key (defaults to settings)
         """
+        from mistralai import Mistral
         self.api_key = api_key or settings.MISTRAL_API_KEY
         self.client = Mistral(api_key=self.api_key)
         self.max_file_size = 10 * 1024 * 1024  # 10MB

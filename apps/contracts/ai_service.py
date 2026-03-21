@@ -4,7 +4,6 @@ Service d'extraction de clauses de contrat avec Mistral AI
 import json
 import logging
 from typing import Dict, List, Any
-from mistralai import Mistral
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -14,6 +13,7 @@ class ContractAIService:
     """Service pour l'extraction et l'analyse de clauses de contrat avec Mistral AI"""
 
     def __init__(self):
+        from mistralai import Mistral
         self.client = Mistral(api_key=settings.MISTRAL_API_KEY)
         self.model = settings.MISTRAL_MODEL
 

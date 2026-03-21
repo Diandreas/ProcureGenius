@@ -5,7 +5,6 @@ import os
 import json
 import time
 from typing import Dict, List, Any, Optional
-from mistralai import Mistral
 from django.conf import settings
 from django.core.cache import cache
 from .action_manager import action_manager
@@ -27,6 +26,7 @@ class MistralService:
         if not api_key:
             raise ValueError("MISTRAL_API_KEY not configured")
 
+        from mistralai import Mistral
         self.client = Mistral(api_key=api_key)
         self.model = getattr(settings, 'MISTRAL_MODEL', 'mistral-large-latest')
         self.tools = self._define_tools()
