@@ -21,7 +21,7 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = ['*']  # À configurer pour production
 
 # Mistral AI Configuration
-MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY', '4Ck3BnQOXSLJb0SpahFmqUt7mjHm8xsV')
+MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY', '')
 MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-large-latest')
 
 # Note: Tenant support désactivé pour SQLite en développement
