@@ -32,6 +32,7 @@ urlpatterns += i18n_patterns(
     path('suppliers/', include('apps.suppliers.urls')),
     # path('analytics/', include('apps.analytics.urls')),  # Temporairement commenté
     path('ai/', include('apps.ai_assistant.urls')),  # IA Assistant activé
+    path('contracts/', include('apps.contracts.urls_html')),  # Contrats HTML
     # path('integrations/', include('apps.integrations.urls')),  # Temporairement commenté
     
     # Fallback pour URLs sans préfixe

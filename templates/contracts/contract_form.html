@@ -1,0 +1,609 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Modifier{% else %}Nouveau{% endif %} Contrat - ProcureGenius{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== WIZARD STEPS ===== */
+    .wizard-steps {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1.25rem 1.5rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .wizard-step {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex: 1;
+        position: relative;
+    }
+    .wizard-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        width: calc(100% - 2.5rem);
+        height: 2px;
+        background: #e5e7eb;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 2.5rem;
+    }
+    .wizard-step.active::after { background: var(--primary-blue); }
+    .step-circle {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        background: #e5e7eb;
+        color: #6b7280;
+        transition: all 0.3s;
+    }
+    .wizard-step.active .step-circle { background: var(--primary-blue); color: white; }
+    .wizard-step.done .step-circle { background: #10b981; color: white; }
+    .step-label { font-size: 0.82rem; font-weight: 600; color: #6b7280; white-space: nowrap; }
+    .wizard-step.active .step-label { color: var(--primary-blue); }
+    .wizard-step.done .step-label { color: #10b981; }
+
+    /* ===== PANELS ===== */
+    .wizard-panel { display: none; }
+    .wizard-panel.active { display: block; }
+
+    /* ===== AI STEP ===== */
+    .ai-card {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 1.5rem;
+    }
+    .ai-card h4 { font-weight: 700; margin-bottom: 0.5rem; }
+    .ai-prompt-area {
+        background: rgba(255,255,255,0.15);
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 10px;
+        color: white;
+        padding: 0.85rem 1rem;
+        width: 100%;
+        resize: vertical;
+        min-height: 110px;
+        font-size: 0.95rem;
+    }
+    .ai-prompt-area::placeholder { color: rgba(255,255,255,0.6); }
+    .ai-prompt-area:focus { outline: none; border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.2); }
+
+    .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.85rem; }
+    .template-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        background: white;
+    }
+    .template-card:hover { border-color: var(--primary-blue); box-shadow: 0 2px 8px rgba(59,130,246,0.2); }
+    .template-card.selected { border-color: var(--primary-blue); background: #eff6ff; }
+    .template-card .template-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .template-card .template-name { font-weight: 600; font-size: 0.85rem; color: #1f2937; }
+    .template-card .template-type { font-size: 0.75rem; color: #6b7280; }
+
+    /* ===== FORM STEP ===== */
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .form-section-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #6b7280;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.6rem;
+        border-bottom: 2px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* ===== AI Loading ===== */
+    .ai-loading { display: none; text-align: center; padding: 2rem; }
+    .ai-loading.show { display: block; }
+    .spinner-ring {
+        width: 50px; height: 50px;
+        border: 4px solid #e5e7eb;
+        border-top-color: var(--primary-blue);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ai-result-preview {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: none;
+    }
+    .ai-result-preview.show { display: block; }
+
+    /* Divider "ou" */
+    .or-divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        color: #9ca3af;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .or-divider::before, .or-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e5e7eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center mb-4 gap-3">
+        <a href="{% url 'contracts:contract_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h4 class="mb-0 fw-bold">{% if is_edit %}Modifier le contrat{% else %}Nouveau contrat{% endif %}</h4>
+            <p class="text-muted mb-0 small">{% if is_edit %}{{ contract.contract_number }}{% else %}Assistant de création avec IA{% endif %}</p>
+        </div>
+    </div>
+
+    <!-- Wizard Steps -->
+    <div class="wizard-steps">
+        {% if not is_edit %}
+        <div class="wizard-step active" id="step-indicator-1">
+            <div class="step-circle">1</div>
+            <span class="step-label d-none d-sm-inline">Description IA</span>
+        </div>
+        <div class="wizard-step" id="step-indicator-2">
+            <div class="step-circle">2</div>
+            <span class="step-label d-none d-sm-inline">Informations</span>
+        </div>
+        <div class="wizard-step" id="step-indicator-3">
+            <div class="step-circle">3</div>
+            <span class="step-label d-none d-sm-inline">Révision & Envoi</span>
+        </div>
+        {% else %}
+        <div class="wizard-step active" id="step-indicator-1">
+            <div class="step-circle"><i class="bi bi-pencil" style="font-size:0.8rem"></i></div>
+            <span class="step-label">Modification du contrat</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <form method="post" action="{% url 'contracts:contract_save' %}" id="contract-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if is_edit %}
+        <input type="hidden" name="contract_id" value="{{ contract.pk }}">
+        {% endif %}
+
+        <!-- ========== STEP 1: IA ========== -->
+        {% if not is_edit %}
+        <div class="wizard-panel active" id="panel-1">
+
+            <!-- AI Card -->
+            <div class="ai-card">
+                <h4><i class="bi bi-stars me-2"></i>Décrivez votre contrat</h4>
+                <p class="mb-3" style="opacity:0.85;font-size:0.9rem">
+                    Décrivez en quelques phrases le contrat que vous souhaitez créer.
+                    L'IA va automatiquement pré-remplir tous les champs pour vous.
+                </p>
+                <textarea class="ai-prompt-area" id="ai-description" rows="4"
+                    placeholder="Ex: Je veux créer un contrat de service avec mon client ABC inc. pour le développement d'une application mobile. Durée 6 mois, budget 25 000$ CAD. Paiement en 3 tranches..."></textarea>
+                <div class="mt-3 d-flex gap-2">
+                    <button type="button" class="btn btn-light fw-semibold" id="btn-ai-generate">
+                        <i class="bi bi-stars me-2"></i>Générer avec l'IA
+                    </button>
+                    <button type="button" class="btn btn-outline-light" id="btn-skip-ai">
+                        Passer cette étape
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Loading -->
+            <div class="ai-loading" id="ai-loading">
+                <div class="spinner-ring"></div>
+                <p class="text-muted">L'IA analyse votre description et génère le contrat…</p>
+            </div>
+
+            <!-- AI Result Preview -->
+            <div class="ai-result-preview" id="ai-result">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                    <strong>Contrat généré avec succès !</strong>
+                </div>
+                <div id="ai-result-summary" class="small text-muted"></div>
+                <button type="button" class="btn btn-success mt-3" id="btn-use-ai-result">
+                    <i class="bi bi-arrow-right me-1"></i>Utiliser ces informations et continuer
+                </button>
+            </div>
+
+            <!-- Ou divider -->
+            <div class="or-divider">ou choisissez un modèle</div>
+
+            <!-- Template selection -->
+            <div class="form-section">
+                <div class="form-section-title"><i class="bi bi-journal-bookmark"></i>Bibliothèque de modèles</div>
+                <div class="template-grid" id="template-grid">
+                    {% for tpl in templates %}
+                    <div class="template-card" data-template-pk="{{ tpl.pk }}" data-template-type="{{ tpl.template_type }}">
+                        <div class="template-icon">
+                            {% if tpl.template_type == 'nda' %}🔒
+                            {% elif tpl.template_type == 'service' %}⚙️
+                            {% elif tpl.template_type == 'purchase' %}🛒
+                            {% elif tpl.template_type == 'maintenance' %}🔧
+                            {% elif tpl.template_type == 'consulting' %}💼
+                            {% elif tpl.template_type == 'partnership' %}🤝
+                            {% elif tpl.template_type == 'employment' %}👤
+                            {% elif tpl.template_type == 'lease' %}🏢
+                            {% else %}📄{% endif %}
+                        </div>
+                        <div class="template-name">{{ tpl.name }}</div>
+                        <div class="template-type">{{ tpl.get_template_type_display }}</div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small">Aucun modèle disponible. <a href="{% url 'contracts:contract_template_library' %}">Créer des modèles</a>.</p>
+                    {% endfor %}
+                </div>
+                {% if templates %}
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-primary" id="btn-use-template" disabled>
+                        <i class="bi bi-arrow-right me-1"></i>Utiliser ce modèle
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <button type="button" class="btn btn-primary" id="btn-next-1">
+                    Continuer sans IA <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ========== STEP 2 (or only step if edit): Informations ========== -->
+        <div class="wizard-panel {% if is_edit %}active{% endif %}" id="panel-2">
+
+            <!-- Hidden fields from AI -->
+            <input type="hidden" name="ai_contract_body" id="h-contract-body">
+            <input type="hidden" name="ai_terms" id="h-terms">
+            <input type="hidden" name="template_id" id="h-template-id">
+
+            <!-- Identification -->
+            <div class="form-section">
+                <div class="form-section-title"><i class="bi bi-info-circle"></i>Identification</div>
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">Titre du contrat <span class="text-danger">*</span></label>
+                        <input type="text" name="title" id="f-title" class="form-control" required
+                            value="{% if is_edit %}{{ contract.title }}{% endif %}" placeholder="Ex: Contrat de développement logiciel - ABC inc.">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Type de contrat</label>
+                        <select name="contract_type" id="f-contract-type" class="form-select">
+                            {% for val, label in contract_types %}
+                            <option value="{{ val }}" {% if is_edit and contract.contract_type == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Description courte</label>
+                        <textarea name="description" id="f-description" class="form-control" rows="2"
+                            placeholder="Résumé du contrat en 1-2 phrases…">{% if is_edit %}{{ contract.description }}{% endif %}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parties -->
+            <div class="form-section">
+                <div class="form-section-title"><i class="bi bi-people"></i>Parties contractantes</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Client (si applicable)</label>
+                        <select name="client_id" class="form-select">
+                            <option value="">— Aucun client —</option>
+                            {% for c in clients %}
+                            <option value="{{ c.pk }}" {% if is_edit and contract.client_id == c.pk %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Fournisseur (si applicable)</label>
+                        <select name="supplier_id" class="form-select">
+                            <option value="">— Aucun fournisseur —</option>
+                            {% for s in suppliers %}
+                            <option value="{{ s.pk }}" {% if is_edit and contract.supplier_id == s.pk %}selected{% endif %}>{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nom de la contrepartie</label>
+                        <input type="text" name="counterpart_name" class="form-control"
+                            value="{% if is_edit %}{{ contract.counterpart_name }}{% endif %}"
+                            placeholder="Nom si non listé ci-dessus">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Devise</label>
+                        <select name="currency" class="form-select">
+                            <option value="CAD" {% if not is_edit or contract.currency == 'CAD' %}selected{% endif %}>CAD – Dollar canadien</option>
+                            <option value="USD" {% if is_edit and contract.currency == 'USD' %}selected{% endif %}>USD – Dollar américain</option>
+                            <option value="EUR" {% if is_edit and contract.currency == 'EUR' %}selected{% endif %}>EUR – Euro</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Durée & valeur -->
+            <div class="form-section">
+                <div class="form-section-title"><i class="bi bi-calendar-range"></i>Durée & Valeur</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Date de début</label>
+                        <input type="date" name="start_date" class="form-control"
+                            value="{% if is_edit %}{{ contract.start_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Date de fin</label>
+                        <input type="date" name="end_date" class="form-control"
+                            value="{% if is_edit %}{{ contract.end_date|date:'Y-m-d' }}{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Valeur totale</label>
+                        <input type="number" name="total_value" class="form-control" step="0.01" min="0"
+                            value="{% if is_edit %}{{ contract.total_value }}{% endif %}" placeholder="0.00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Renouvellement auto</label>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" name="auto_renewal" class="form-check-input" id="auto-renewal"
+                                {% if is_edit and contract.auto_renewal %}checked{% endif %}>
+                            <label class="form-check-label" for="auto-renewal">Renouvellement automatique</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Préavis renouvellement (jours)</label>
+                        <input type="number" name="renewal_notice_days" class="form-control" min="0"
+                            value="{% if is_edit %}{{ contract.renewal_notice_days }}{% else %}30{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Alerte avant expiration (jours)</label>
+                        <input type="number" name="alert_days_before_expiry" class="form-control" min="0"
+                            value="{% if is_edit %}{{ contract.alert_days_before_expiry }}{% else %}30{% endif %}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Corps du contrat -->
+            <div class="form-section">
+                <div class="form-section-title"><i class="bi bi-file-text"></i>Corps du contrat</div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Contenu principal du contrat</label>
+                    <textarea name="contract_body" id="f-contract-body" class="form-control" rows="12"
+                        placeholder="Rédigez ici le corps complet du contrat avec les clauses numérotées…">{% if is_edit %}{{ contract.contract_body }}{% endif %}</textarea>
+                    <small class="text-muted">Le texte pré-rempli par l'IA apparaîtra ici. Vous pouvez l'éditer librement.</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Termes & conditions généraux</label>
+                    <textarea name="terms_and_conditions" id="f-terms" class="form-control" rows="5"
+                        placeholder="Conditions générales applicables…">{% if is_edit %}{{ contract.terms_and_conditions }}{% endif %}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Conditions de paiement</label>
+                    <textarea name="payment_terms" id="f-payment-terms" class="form-control" rows="3"
+                        placeholder="Ex: 50% à la signature, 50% à la livraison…">{% if is_edit %}{{ contract.payment_terms }}{% endif %}</textarea>
+                </div>
+            </div>
+
+            <!-- Notes internes -->
+            <div class="form-section">
+                <div class="form-section-title"><i class="bi bi-lock"></i>Notes internes (non incluses dans le contrat)</div>
+                <textarea name="internal_notes" class="form-control" rows="3"
+                    placeholder="Notes privées visibles uniquement par votre équipe…">{% if is_edit %}{{ contract.internal_notes }}{% endif %}</textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-between align-items-center">
+                {% if not is_edit %}
+                <button type="button" class="btn btn-outline-secondary" id="btn-back-1">
+                    <i class="bi bi-arrow-left me-1"></i>Retour
+                </button>
+                {% else %}
+                <a href="{% url 'contracts:contract_detail' contract.pk %}" class="btn btn-outline-secondary">Annuler</a>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <button type="submit" name="action" value="draft" class="btn btn-outline-primary">
+                        <i class="bi bi-floppy me-1"></i>Enregistrer brouillon
+                    </button>
+                    <button type="submit" name="action" value="submit_review" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i>{% if is_edit %}Sauvegarder{% else %}Soumettre pour révision{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const CSRF = '{{ csrf_token }}';
+    let currentStep = {% if is_edit %}2{% else %}1{% endif %};
+    let aiData = null;
+    let selectedTemplate = null;
+
+    // ===== NAVIGATION =====
+    function goToStep(step) {
+        document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('panel-' + step);
+        if (panel) panel.classList.add('active');
+
+        // Update indicators
+        document.querySelectorAll('[id^="step-indicator-"]').forEach((el, i) => {
+            const n = i + 1;
+            el.classList.remove('active', 'done');
+            if (n < step) el.classList.add('done');
+            else if (n === step) el.classList.add('active');
+        });
+        currentStep = step;
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    const btnNext1 = document.getElementById('btn-next-1');
+    if (btnNext1) btnNext1.addEventListener('click', () => goToStep(2));
+
+    const btnBack1 = document.getElementById('btn-back-1');
+    if (btnBack1) btnBack1.addEventListener('click', () => goToStep(1));
+
+    const btnSkip = document.getElementById('btn-skip-ai');
+    if (btnSkip) btnSkip.addEventListener('click', () => goToStep(2));
+
+    // ===== AI GENERATION =====
+    const btnAI = document.getElementById('btn-ai-generate');
+    if (btnAI) {
+        btnAI.addEventListener('click', async () => {
+            const desc = document.getElementById('ai-description').value.trim();
+            if (!desc) { alert('Veuillez entrer une description du contrat.'); return; }
+
+            document.getElementById('ai-loading').classList.add('show');
+            document.getElementById('ai-result').classList.remove('show');
+            btnAI.disabled = true;
+
+            try {
+                const resp = await fetch('{% url "contracts:contract_ai_generate" %}', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+                    body: JSON.stringify({description: desc})
+                });
+                const json = await resp.json();
+                if (!json.success) throw new Error(json.error || 'Erreur IA');
+
+                aiData = json.data;
+                document.getElementById('ai-result-summary').innerHTML =
+                    `<strong>${aiData.title || '–'}</strong><br>` +
+                    `Type: ${aiData.contract_type || '–'} | ` +
+                    `Durée estimée: ${aiData.suggested_duration_months || '–'} mois | ` +
+                    `Valeur estimée: ${(aiData.total_value_estimate || 0).toLocaleString()} ${aiData.currency || 'CAD'}<br>` +
+                    `<em>${(aiData.description || '').substring(0, 120)}…</em>`;
+                document.getElementById('ai-result').classList.add('show');
+            } catch(e) {
+                alert('Erreur lors de la génération IA: ' + e.message);
+            } finally {
+                document.getElementById('ai-loading').classList.remove('show');
+                btnAI.disabled = false;
+            }
+        });
+    }
+
+    const btnUseAI = document.getElementById('btn-use-ai-result');
+    if (btnUseAI) {
+        btnUseAI.addEventListener('click', () => {
+            if (!aiData) return;
+            applyAIData(aiData);
+            goToStep(2);
+        });
+    }
+
+    function applyAIData(d) {
+        setVal('f-title', d.title || '');
+        setVal('f-description', d.description || '');
+        setVal('f-contract-body', d.contract_body || '');
+        setVal('f-terms', d.terms_and_conditions || '');
+        setVal('f-payment-terms', d.payment_terms || '');
+
+        // Contract type
+        const typeSelect = document.getElementById('f-contract-type');
+        if (typeSelect && d.contract_type) {
+            const opt = typeSelect.querySelector(`option[value="${d.contract_type}"]`);
+            if (opt) typeSelect.value = d.contract_type;
+        }
+
+        // Duration: set end date if no start date
+        if (d.suggested_duration_months) {
+            const startInput = document.querySelector('[name="start_date"]');
+            if (startInput && !startInput.value) {
+                const today = new Date();
+                startInput.value = today.toISOString().split('T')[0];
+                const end = new Date(today);
+                end.setMonth(end.getMonth() + parseInt(d.suggested_duration_months));
+                document.querySelector('[name="end_date"]').value = end.toISOString().split('T')[0];
+            }
+        }
+        if (d.total_value_estimate) {
+            document.querySelector('[name="total_value"]').value = d.total_value_estimate;
+        }
+    }
+
+    function setVal(id, val) {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    }
+
+    // ===== TEMPLATE SELECTION =====
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.addEventListener('click', function() {
+            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedTemplate = this.dataset.templatePk;
+            const btn = document.getElementById('btn-use-template');
+            if (btn) btn.disabled = false;
+        });
+    });
+
+    const btnUseTpl = document.getElementById('btn-use-template');
+    if (btnUseTpl) {
+        btnUseTpl.addEventListener('click', async () => {
+            if (!selectedTemplate) return;
+            btnUseTpl.disabled = true;
+            btnUseTpl.textContent = 'Chargement…';
+            try {
+                const resp = await fetch(`/contracts/templates/${selectedTemplate}/prefill/`);
+                const data = await resp.json();
+                document.getElementById('h-template-id').value = selectedTemplate;
+                setVal('f-title', data.name || '');
+                setVal('f-contract-body', data.content || '');
+                setVal('f-description', data.description || '');
+                const typeSelect = document.getElementById('f-contract-type');
+                if (typeSelect && data.template_type) {
+                    const opt = typeSelect.querySelector(`option[value="${data.template_type}"]`);
+                    if (opt) typeSelect.value = data.template_type;
+                }
+                goToStep(2);
+            } catch(e) {
+                alert('Erreur lors du chargement du modèle.');
+            } finally {
+                btnUseTpl.disabled = false;
+                btnUseTpl.innerHTML = '<i class="bi bi-arrow-right me-1"></i>Utiliser ce modèle';
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

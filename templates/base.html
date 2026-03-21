@@ -67,8 +67,21 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="invoices-link">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'invoice_list' or request.resolver_match.url_name == 'invoice_detail' %}active{% endif %}"
+                           href="{% url 'invoicing:invoice_list' %}" id="invoices-link">
                             <i class="bi bi-receipt me-1"></i> Factures
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'product' in request.resolver_match.url_name|default:'' %}active{% endif %}"
+                           href="{% url 'invoicing:product_list' %}" id="products-link">
+                            <i class="bi bi-box-seam me-1"></i> Produits
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'contract' in request.resolver_match.url_name|default:'' %}active{% endif %}"
+                           href="{% url 'contracts:contract_list' %}" id="contracts-link">
+                            <i class="bi bi-file-earmark-text me-1"></i> Contrats
                         </a>
                     </li>
                     <li class="nav-item">
@@ -173,13 +186,17 @@
             <i class="bi bi-robot tab-icon"></i>
             <span class="tab-label">IA</span>
         </button>
-        <a href="#" class="mobile-tab-item" id="mobile-orders">
-            <i class="bi bi-cart-check tab-icon"></i>
-            <span class="tab-label">Commandes</span>
+        <a href="{% url 'invoicing:product_list' %}" class="mobile-tab-item {% if 'product' in request.resolver_match.url_name|default:'' %}active{% endif %}" id="mobile-products">
+            <i class="bi bi-box-seam tab-icon"></i>
+            <span class="tab-label">Produits</span>
         </a>
-        <a href="#" class="mobile-tab-item" id="mobile-menu">
-            <i class="bi bi-list tab-icon"></i>
-            <span class="tab-label">Menu</span>
+        <a href="{% url 'invoicing:invoice_list' %}" class="mobile-tab-item {% if request.resolver_match.url_name == 'invoice_list' %}active{% endif %}" id="mobile-invoices">
+            <i class="bi bi-receipt tab-icon"></i>
+            <span class="tab-label">Factures</span>
+        </a>
+        <a href="{% url 'contracts:contract_list' %}" class="mobile-tab-item {% if 'contract' in request.resolver_match.url_name|default:'' %}active{% endif %}" id="mobile-contracts">
+            <i class="bi bi-file-earmark-text tab-icon"></i>
+            <span class="tab-label">Contrats</span>
         </a>
     </div>
     {% endif %}

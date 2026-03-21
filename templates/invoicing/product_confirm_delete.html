@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Supprimer {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div style="max-width:500px; margin:0 auto;">
+        <div style="background:white; border-radius:12px; padding:2rem; box-shadow:0 2px 8px rgba(0,0,0,0.08); border:1px solid #f1f5f9;">
+            <div class="text-center mb-3">
+                <i class="bi bi-trash text-danger" style="font-size:2.5rem;"></i>
+            </div>
+            <h4 class="fw-bold text-center mb-1">Supprimer le produit</h4>
+            <p class="text-center text-muted mb-4">
+                Voulez-vous vraiment supprimer <strong>{{ product.name }}</strong> ?
+                Cette action est irréversible. Tous les lots et mouvements de stock associés seront supprimés.
+            </p>
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="{% url 'invoicing:product_detail' product.pk %}" class="btn btn-outline-secondary">
+                    Annuler
+                </a>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Supprimer définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer {{ contract.contract_number }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:520px;margin-top:3rem">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4 text-center">
+            <div style="font-size:3rem;color:#ef4444;margin-bottom:1rem">⚠️</div>
+            <h5 class="fw-bold mb-1">Supprimer ce contrat ?</h5>
+            <p class="text-muted mb-3">
+                <strong>{{ contract.contract_number }}</strong> — {{ contract.title }}<br>
+                <small>Cette action est irréversible.</small>
+            </p>
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="{% url 'contracts:contract_detail' contract.pk %}" class="btn btn-outline-secondary">Annuler</a>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Supprimer définitivement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

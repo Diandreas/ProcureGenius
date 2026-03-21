@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contrats - ProcureGenius{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contract-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.25s ease;
+        border-left: 4px solid transparent;
+    }
+    .contract-card:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+        transform: translateY(-2px);
+    }
+    .contract-card.status-active { border-left-color: #10b981; }
+    .contract-card.status-draft { border-left-color: #9ca3af; }
+    .contract-card.status-pending_review { border-left-color: #f59e0b; }
+    .contract-card.status-expiring_soon { border-left-color: #f97316; }
+    .contract-card.status-terminated { border-left-color: #ef4444; }
+    .contract-card.status-expired { border-left-color: #6b7280; }
+
+    .status-badge {
+        padding: 0.2rem 0.65rem;
+        border-radius: 10px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+    .badge-active { background: #d1fae5; color: #065f46; }
+    .badge-draft { background: #f3f4f6; color: #6b7280; }
+    .badge-pending_review { background: #fef3c7; color: #92400e; }
+    .badge-expiring_soon { background: #ffedd5; color: #9a3412; }
+    .badge-terminated { background: #fee2e2; color: #dc2626; }
+    .badge-expired { background: #e5e7eb; color: #6b7280; }
+
+    .type-badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .contract-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+    .contract-number { font-size: 1.05rem; font-weight: 700; color: var(--primary-blue); text-decoration: none; }
+    .contract-number:hover { text-decoration: underline; }
+    .contract-meta { color: #6b7280; font-size: 0.82rem; line-height: 1.6; }
+    .contract-footer { border-top: 1px solid #f3f4f6; padding-top: 0.85rem; margin-top: 0.75rem;
+        display: flex; justify-content: space-between; align-items: center; }
+
+    .btn-action {
+        padding: 0.3rem 0.65rem; font-size: 0.8rem; border: none; border-radius: 6px;
+        cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+        gap: 0.25rem; transition: all 0.2s ease;
+    }
+    .btn-view { background: #e0f2fe; color: #0369a1; }
+    .btn-view:hover { background: #0369a1; color: white; }
+    .btn-edit { background: #f0fdf4; color: #15803d; }
+    .btn-edit:hover { background: #15803d; color: white; }
+    .btn-pdf { background: #fee2e2; color: #dc2626; }
+    .btn-pdf:hover { background: #dc2626; color: white; }
+
+    .sig-icon { font-size: 0.75rem; }
+    .sig-done { color: #10b981; }
+    .sig-pending { color: #d1d5db; }
+
+    .search-bar { background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-muted mb-0">Gérez vos contrats clients et fournisseurs</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'contracts:contract_template_library' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-journal-bookmark me-1"></i> Modèles
+            </a>
+            <a href="{% url 'contracts:contract_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i> Nouveau Contrat
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ total }}</div>
+                <div class="stat-label">Total</div>
+                <i class="bi bi-file-earmark-text stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-card" style="background: linear-gradient(135deg,#10b981 0%,#059669 100%)">
+                <div class="stat-number">{{ active }}</div>
+                <div class="stat-label">Actifs</div>
+                <i class="bi bi-check-circle stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-card" style="background: linear-gradient(135deg,#f97316 0%,#ea580c 100%)">
+                <div class="stat-number">{{ expiring }}</div>
+                <div class="stat-label">Expirent bientôt</div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-card" style="background: linear-gradient(135deg,#6b7280 0%,#4b5563 100%)">
+                <div class="stat-number">{{ draft }}</div>
+                <div class="stat-label">Brouillons</div>
+                <i class="bi bi-pencil stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recherche & filtres -->
+    <div class="search-bar">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Rechercher par numéro, titre, contrepartie…" value="{{ search }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">Tous les statuts</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="type" class="form-select">
+                    <option value="">Tous les types</option>
+                    {% for val, label in type_choices %}
+                    <option value="{{ val }}" {% if contract_type == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel"></i></button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste -->
+    <div class="row">
+        {% for contract in page_obj %}
+        <div class="col-lg-6 col-xl-4">
+            <div class="contract-card status-{{ contract.status }}">
+                <div class="contract-header">
+                    <div>
+                        <a href="{% url 'contracts:contract_detail' contract.pk %}" class="contract-number">
+                            {{ contract.contract_number }}
+                        </a>
+                        <div class="mt-1">
+                            <span class="type-badge">{{ contract.get_contract_type_display }}</span>
+                        </div>
+                    </div>
+                    <span class="status-badge badge-{{ contract.status }}">{{ contract.get_status_display }}</span>
+                </div>
+
+                <div class="fw-semibold mb-1" style="font-size:0.95rem">{{ contract.title|truncatechars:55 }}</div>
+
+                <div class="contract-meta">
+                    {% if contract.counterpart_display %}
+                    <div><i class="bi bi-building me-1"></i>{{ contract.counterpart_display }}</div>
+                    {% endif %}
+                    {% if contract.start_date %}
+                    <div><i class="bi bi-calendar me-1"></i>
+                        {{ contract.start_date|date:"d/m/Y" }}
+                        {% if contract.end_date %} → {{ contract.end_date|date:"d/m/Y" }}{% endif %}
+                    </div>
+                    {% endif %}
+                    {% if contract.total_value %}
+                    <div><i class="bi bi-currency-dollar me-1"></i>{{ contract.total_value|floatformat:2 }} {{ contract.currency }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="contract-footer">
+                    <!-- Signatures -->
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="sig-icon {% if contract.signed_by_us %}sig-done{% else %}sig-pending{% endif %}" title="Notre signature">
+                            <i class="bi bi-pen{% if contract.signed_by_us %}-fill{% endif %}"></i> Nous
+                        </span>
+                        <span class="text-muted">·</span>
+                        <span class="sig-icon {% if contract.signed_by_counterpart %}sig-done{% else %}sig-pending{% endif %}" title="Signature contrepartie">
+                            <i class="bi bi-pen{% if contract.signed_by_counterpart %}-fill{% endif %}"></i> Eux
+                        </span>
+                    </div>
+                    <!-- Actions -->
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'contracts:contract_detail' contract.pk %}" class="btn-action btn-view"><i class="bi bi-eye"></i></a>
+                        {% if contract.status in 'draft,pending_review' %}
+                        <a href="{% url 'contracts:contract_edit' contract.pk %}" class="btn-action btn-edit"><i class="bi bi-pencil"></i></a>
+                        {% endif %}
+                        <a href="{% url 'contracts:contract_export_pdf' contract.pk %}" class="btn-action btn-pdf" title="Export PDF"><i class="bi bi-file-earmark-pdf"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-file-earmark-text" style="font-size:4rem;color:#e5e7eb"></i>
+                <h3 class="mt-3 text-muted">Aucun contrat trouvé</h3>
+                <p class="text-muted">Créez votre premier contrat ou utilisez un modèle</p>
+                <a href="{% url 'contracts:contract_create' %}" class="btn btn-primary me-2">
+                    <i class="bi bi-plus-circle me-1"></i> Nouveau contrat
+                </a>
+                <a href="{% url 'contracts:contract_template_library' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-journal-bookmark me-1"></i> Voir les modèles
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search }}&status={{ status_filter }}&type={{ contract_type }}"><i class="bi bi-chevron-left"></i></a></li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}&search={{ search }}&status={{ status_filter }}&type={{ contract_type }}">{{ num }}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search }}&status={{ status_filter }}&type={{ contract_type }}"><i class="bi bi-chevron-right"></i></a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- FAB Mobile -->
+<div class="d-block d-md-none">
+    <div class="position-fixed end-0 p-3" style="z-index:1000;bottom:80px">
+        <a href="{% url 'contracts:contract_create' %}" class="btn btn-primary btn-lg rounded-circle shadow-lg">
+            <i class="bi bi-plus" style="font-size:1.5rem"></i>
+        </a>
+    </div>
+</div>
+{% endblock %}

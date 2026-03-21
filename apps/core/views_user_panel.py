@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import json
 
 from django.contrib.auth import get_user_model
-from apps.invoicing.models import Invoice, InvoiceItem
+from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductBatch
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.suppliers.models import Supplier
 
@@ -45,11 +45,30 @@ def user_dashboard(request):
     invoice_stats = user_invoices.values('status').annotate(count=Count('id'))
     invoice_by_status = {stat['status']: stat['count'] for stat in invoice_stats}
 
+    # Stats produits
+    today = timezone.now().date()
+    physical_products = Product.objects.filter(product_type='physical')
+    low_stock_products = [p for p in physical_products if p.is_low_stock and not p.is_out_of_stock]
+    out_stock_products = [p for p in physical_products if p.is_out_of_stock]
+    expired_batches_count = ProductBatch.objects.filter(
+        expiration_date__lt=today,
+        current_quantity__gt=0,
+        is_active=True
+    ).count()
+
+    product_alerts = {
+        'low_stock': len(low_stock_products),
+        'out_stock': len(out_stock_products),
+        'expired_batches': expired_batches_count,
+        'total_products': Product.objects.count(),
+    }
+
     context = {
         'stats': stats,
         'recent_invoices': recent_invoices,
         'recent_purchase_orders': recent_pos,
         'invoice_by_status': invoice_by_status,
+        'product_alerts': product_alerts,
     }
 
     return render(request, 'core/user_panel_tailwind.html', context)

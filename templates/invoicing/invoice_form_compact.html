@@ -894,9 +894,24 @@
         </td>
         <td class="px-6 py-4 text-sm">
             ${product.product_type === 'physical' ? `
-                <div class="flex items-center">
-                    <span class="stock-indicator ${stockInfo.level}"></span>
-                    <span class="${stockInfo.class}">${stockInfo.text}</span>
+                <div>
+                    <div class="flex items-center mb-1">
+                        <span class="stock-indicator ${stockInfo.level}"></span>
+                        <span class="${stockInfo.class}">${stockInfo.text}</span>
+                    </div>
+                    ${product.batches && product.batches.length > 0 ? `
+                    <select class="batch-select text-xs border border-gray-200 rounded px-1 py-0.5 w-full max-w-xs"
+                            data-product-id="${product.id}" style="font-size:0.72rem;">
+                        <option value="">— Lot auto —</option>
+                        ${product.batches.map(b => `
+                            <option value="${b.id}" ${b.is_expired ? 'disabled' : ''}
+                                    style="${b.is_expiring_soon && !b.is_expired ? 'color:#92400e;' : ''}">
+                                ${b.batch_number} (${b.current_quantity} u.)${b.expiration_date ? ' · ' + b.expiration_date : ''}${b.is_expired ? ' ⚠ PÉRIMÉ' : b.is_expiring_soon ? ' ⚠ bientôt' : ''}
+                            </option>
+                        `).join('')}
+                    </select>
+                    <input type="hidden" class="batch-id-input" name="batch_id_${product.id}" value="">
+                    ` : '<span class="text-gray-400 text-xs">Aucun lot</span>'}
                 </div>
             ` : '<span class="text-gray-400">N/A</span>'}
         </td>
@@ -939,6 +954,28 @@
         const decreaseBtn = row.querySelector('.quantity-decrease');
         const increaseBtn = row.querySelector('.quantity-increase');
         const removeBtn = row.querySelector('.remove-product');
+
+        // Sélecteur de lot
+        const batchSelect = row.querySelector('.batch-select');
+        const batchIdInput = row.querySelector('.batch-id-input');
+        if (batchSelect && batchIdInput) {
+            batchSelect.addEventListener('change', (e) => {
+                const selectedBatch = product.batches.find(b => b.id === e.target.value);
+                batchIdInput.value = e.target.value;
+                // Limiter la quantité au stock du lot si sélectionné
+                if (selectedBatch) {
+                    quantityInput.max = selectedBatch.current_quantity;
+                    if (parseInt(quantityInput.value) > selectedBatch.current_quantity) {
+                        quantityInput.value = selectedBatch.current_quantity;
+                        product.quantity = selectedBatch.current_quantity;
+                        updateLineTotal(row, product);
+                        updateSummary();
+                    }
+                } else {
+                    quantityInput.max = product.stock_quantity;
+                }
+            });
+        }
 
         // Gestion de la quantité
         quantityInput.addEventListener('input', (e) => {

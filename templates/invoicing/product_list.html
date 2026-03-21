@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Catalogue Produits - ProcureGenius{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+        border: 1px solid #f1f5f9;
+    }
+    .product-card:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    .product-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+    .product-name {
+        font-weight: 700;
+        color: var(--primary-blue);
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+    }
+    .product-ref {
+        color: #64748b;
+        font-size: 0.8rem;
+        font-family: monospace;
+    }
+    .product-price {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        text-align: right;
+    }
+    .product-price small {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 400;
+    }
+    .product-footer {
+        border-top: 1px solid #f1f5f9;
+        padding-top: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .type-badge {
+        padding: 0.2rem 0.65rem;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .type-physical { background: #dbeafe; color: #1d4ed8; }
+    .type-service { background: #d1fae5; color: #065f46; }
+    .type-digital { background: #ede9fe; color: #5b21b6; }
+    .stock-badge {
+        padding: 0.2rem 0.65rem;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+    .stock-good { background: #d1fae5; color: #065f46; }
+    .stock-low { background: #fef3c7; color: #92400e; }
+    .stock-out { background: #fee2e2; color: #dc2626; }
+    .stock-unlimited { background: #f3f4f6; color: #374151; }
+    .btn-action {
+        padding: 0.3rem 0.65rem;
+        font-size: 0.8rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+    .btn-view { background: #e0f2fe; color: #0369a1; }
+    .btn-view:hover { background: #0369a1; color: white; }
+    .btn-edit { background: #f0fdf4; color: #15803d; }
+    .btn-edit:hover { background: #15803d; color: white; }
+    .btn-del { background: #fee2e2; color: #dc2626; }
+    .btn-del:hover { background: #dc2626; color: white; }
+    .stat-card {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, #00d4ff 100%);
+        border-radius: 12px;
+        padding: 1.25rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .stat-card.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    .stat-card.dark { background: linear-gradient(135deg, #334155 0%, #1e293b 100%); }
+    .stat-number { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 0.8rem; opacity: 0.85; margin-top: 0.3rem; }
+    .stat-icon { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 2.5rem; opacity: 0.2; }
+    .search-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        margin-bottom: 1.5rem;
+        border: 1px solid #f1f5f9;
+    }
+    .fab-mobile {
+        display: none;
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        z-index: 100;
+    }
+    @media (max-width: 768px) {
+        .fab-mobile { display: block; }
+        .btn-add-desktop { display: none; }
+        .product-header { flex-direction: column; gap: 0.5rem; }
+        .product-price { text-align: left; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-muted mb-0">Gérez votre catalogue de produits et services</p>
+        </div>
+        <a href="{% url 'invoicing:product_create' %}" class="btn btn-primary btn-add-desktop">
+            <i class="bi bi-plus-circle me-2"></i> Nouveau Produit
+        </a>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_products }}</div>
+                <div class="stat-label">Total Produits</div>
+                <i class="bi bi-box-seam stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="stat-card warning">
+                <div class="stat-number">{{ low_stock_count }}</div>
+                <div class="stat-label">Stock Bas</div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="stat-card danger">
+                <div class="stat-number">{{ out_stock_count }}</div>
+                <div class="stat-label">Rupture de Stock</div>
+                <i class="bi bi-x-circle stat-icon"></i>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="stat-card dark">
+                <div class="stat-number">{{ expired_batches }}</div>
+                <div class="stat-label">Lots Périmés</div>
+                <i class="bi bi-calendar-x stat-icon"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recherche et filtres -->
+    <div class="search-bar">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <input type="text" name="search" value="{{ search }}" class="form-control"
+                    placeholder="Rechercher par nom ou référence...">
+            </div>
+            <div class="col-md-3">
+                <select name="type" class="form-select">
+                    <option value="">Tous les types</option>
+                    <option value="physical" {% if product_type == 'physical' %}selected{% endif %}>Physique</option>
+                    <option value="service" {% if product_type == 'service' %}selected{% endif %}>Service</option>
+                    <option value="digital" {% if product_type == 'digital' %}selected{% endif %}>Numérique</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="stock" class="form-select">
+                    <option value="">Tout le stock</option>
+                    <option value="low" {% if stock_status == 'low' %}selected{% endif %}>Stock bas</option>
+                    <option value="out" {% if stock_status == 'out' %}selected{% endif %}>Rupture</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-search me-1"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des produits -->
+    {% if page_obj %}
+    <div class="row">
+        {% for product in page_obj %}
+        <div class="col-lg-6 col-xl-4">
+            <div class="product-card">
+                <div class="product-header">
+                    <div>
+                        <div class="product-name">
+                            <a href="{% url 'invoicing:product_detail' product.id %}" class="text-decoration-none" style="color: var(--primary-blue);">
+                                {{ product.name }}
+                            </a>
+                        </div>
+                        <div class="product-ref">Réf: {{ product.reference|default:"—" }}</div>
+                        {% if product.category %}
+                        <div class="text-muted" style="font-size:0.78rem; margin-top: 0.15rem;">
+                            <i class="bi bi-tag me-1"></i>{{ product.category.name }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="product-price">
+                            {{ product.price|floatformat:2 }} $
+                            <br><small>coût: {{ product.cost_price|floatformat:2 }} $</small>
+                        </div>
+                    </div>
+                </div>
+
+                {% if product.description %}
+                <div class="text-muted mb-2" style="font-size:0.82rem;">{{ product.description|truncatechars:90 }}</div>
+                {% endif %}
+
+                <div class="product-footer">
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <span class="type-badge type-{{ product.product_type }}">
+                            {% if product.product_type == 'physical' %}<i class="bi bi-box me-1"></i>Physique
+                            {% elif product.product_type == 'service' %}<i class="bi bi-tools me-1"></i>Service
+                            {% else %}<i class="bi bi-download me-1"></i>Numérique{% endif %}
+                        </span>
+                        {% if product.product_type == 'physical' %}
+                        <span class="stock-badge stock-{{ product.stock_status }}">
+                            {% if product.stock_status == 'good' %}<i class="bi bi-check-circle me-1"></i>{{ product.stock_quantity }} en stock
+                            {% elif product.stock_status == 'low' %}<i class="bi bi-exclamation me-1"></i>{{ product.stock_quantity }} (bas)
+                            {% else %}<i class="bi bi-x-circle me-1"></i>Rupture
+                            {% endif %}
+                        </span>
+                        <span style="font-size:0.75rem; color:#64748b;">
+                            {{ product.batches.count }} lot{{ product.batches.count|pluralize }}
+                        </span>
+                        {% else %}
+                        <span class="stock-badge stock-unlimited"><i class="bi bi-infinity me-1"></i>Illimité</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'invoicing:product_detail' product.id %}" class="btn-action btn-view" title="Voir">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'invoicing:product_edit' product.id %}" class="btn-action btn-edit" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'invoicing:product_delete' product.id %}" class="btn-action btn-del" title="Supprimer">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Pagination" class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search }}&type={{ product_type }}&stock={{ stock_status }}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search }}&type={{ product_type }}&stock={{ stock_status }}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-box-seam text-muted" style="font-size: 3rem;"></i>
+        <h5 class="mt-3 text-muted">Aucun produit trouvé</h5>
+        <p class="text-muted">{% if search or product_type or stock_status %}Essayez d'autres filtres.{% else %}Commencez par créer votre premier produit.{% endif %}</p>
+        <a href="{% url 'invoicing:product_create' %}" class="btn btn-primary mt-2">
+            <i class="bi bi-plus-circle me-2"></i>Créer un produit
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- FAB mobile -->
+<a href="{% url 'invoicing:product_create' %}" class="fab-mobile btn btn-primary rounded-circle shadow-lg"
+   style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">
+    <i class="bi bi-plus"></i>
+</a>
+{% endblock %}

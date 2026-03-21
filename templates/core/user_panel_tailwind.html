@@ -356,6 +356,52 @@
     </div>
 </div>
 
+<!-- Alertes produits -->
+{% if product_alerts.low_stock or product_alerts.out_stock or product_alerts.expired_batches %}
+<div class="mb-4">
+    <div class="bg-white shadow rounded-lg p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <i class="bi bi-box-seam text-blue-600"></i> Alertes Stock
+        </h3>
+        <div class="grid grid-cols-3 gap-3">
+            {% if product_alerts.out_stock %}
+            <a href="{% url 'invoicing:product_list' %}?stock=out" class="flex items-center gap-2 p-2 bg-red-50 rounded-lg border border-red-100 text-decoration-none">
+                <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="bi bi-x-circle text-white" style="font-size:0.9rem;"></i>
+                </div>
+                <div>
+                    <div class="text-lg font-bold text-red-700">{{ product_alerts.out_stock }}</div>
+                    <div class="text-xs text-red-500">Rupture</div>
+                </div>
+            </a>
+            {% endif %}
+            {% if product_alerts.low_stock %}
+            <a href="{% url 'invoicing:product_list' %}?stock=low" class="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg border border-yellow-100 text-decoration-none">
+                <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="bi bi-exclamation-triangle text-white" style="font-size:0.9rem;"></i>
+                </div>
+                <div>
+                    <div class="text-lg font-bold text-yellow-700">{{ product_alerts.low_stock }}</div>
+                    <div class="text-xs text-yellow-600">Stock bas</div>
+                </div>
+            </a>
+            {% endif %}
+            {% if product_alerts.expired_batches %}
+            <a href="{% url 'invoicing:product_list' %}" class="flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-100 text-decoration-none">
+                <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <i class="bi bi-calendar-x text-white" style="font-size:0.9rem;"></i>
+                </div>
+                <div>
+                    <div class="text-lg font-bold text-orange-700">{{ product_alerts.expired_batches }}</div>
+                    <div class="text-xs text-orange-600">Lots périmés</div>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Recent activities -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 compact-section">
     <!-- Factures récentes -->

@@ -7,7 +7,7 @@ from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.utils import timezone
-from .models import Product, Invoice, InvoiceItem
+from .models import Product, ProductBatch, ProductCategory, StockMovement, Invoice, InvoiceItem
 from .forms_simple import InvoiceForm, InvoiceItemForm, InvoiceItemFormSet, InvoiceSearchForm
 import json
 
@@ -111,6 +111,20 @@ def invoice_create(request):
     # Sérialiser les données pour JavaScript
     products_data = []
     for product in products:
+        # Lots disponibles pour les produits physiques
+        batches_data = []
+        if product.product_type == 'physical':
+            from django.utils import timezone as _tz
+            _today = _tz.now().date()
+            for b in product.batches.filter(is_active=True, current_quantity__gt=0).order_by('expiration_date'):
+                batches_data.append({
+                    'id': str(b.id),
+                    'batch_number': b.batch_number,
+                    'current_quantity': b.current_quantity,
+                    'expiration_date': b.expiration_date.isoformat() if b.expiration_date else None,
+                    'is_expired': b.is_expired,
+                    'is_expiring_soon': b.is_expiring_soon,
+                })
         products_data.append({
             'id': str(product.id),
             'name': product.name,
@@ -121,6 +135,7 @@ def invoice_create(request):
             'stock_quantity': product.stock_quantity,
             'low_stock_threshold': product.low_stock_threshold,
             'is_active': product.is_active,
+            'batches': batches_data,
         })
     
     clients_data = []
@@ -407,3 +422,337 @@ def api_invoice_stats(request):
     }
     
     return JsonResponse(stats)
+
+
+# =============================================
+# VUES PRODUITS
+# =============================================
+
+@login_required
+def product_list(request):
+    """Liste des produits avec recherche et filtres"""
+    products = Product.objects.all().order_by('name')
+
+    search = request.GET.get('search', '')
+    product_type = request.GET.get('type', '')
+    stock_status = request.GET.get('stock', '')
+
+    if search:
+        products = products.filter(Q(name__icontains=search) | Q(reference__icontains=search))
+    if product_type:
+        products = products.filter(product_type=product_type)
+    if stock_status == 'low':
+        # low stock: physical with quantity <= threshold
+        products = [p for p in products if p.product_type == 'physical' and p.is_low_stock]
+        total_count = len(products)
+    elif stock_status == 'out':
+        products = [p for p in products if p.product_type == 'physical' and p.is_out_of_stock]
+        total_count = len(products)
+    else:
+        total_count = products.count()
+
+    # Stats
+    from django.utils import timezone as tz
+    all_products = Product.objects.all()
+    total_products = all_products.count()
+    physical_products = all_products.filter(product_type='physical')
+    low_stock_count = sum(1 for p in physical_products if p.is_low_stock)
+    out_stock_count = sum(1 for p in physical_products if p.is_out_of_stock)
+    expired_batches = ProductBatch.objects.filter(
+        expiration_date__lt=tz.now().date(),
+        current_quantity__gt=0,
+        is_active=True
+    ).count()
+
+    paginator = Paginator(products, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    context = {
+        'page_obj': page_obj,
+        'search': search,
+        'product_type': product_type,
+        'stock_status': stock_status,
+        'total_count': total_count,
+        'total_products': total_products,
+        'low_stock_count': low_stock_count,
+        'out_stock_count': out_stock_count,
+        'expired_batches': expired_batches,
+    }
+    return render(request, 'invoicing/product_list.html', context)
+
+
+@login_required
+def product_create(request):
+    """Création d'un produit (2 étapes pour physique, 1 étape pour service/digital)"""
+    if request.method == 'POST':
+        from django import forms as dj_forms
+        product_type = request.POST.get('product_type', 'physical')
+
+        # Construct product from POST
+        try:
+            name = request.POST.get('name', '').strip()
+            description = request.POST.get('description', '').strip()
+            reference = request.POST.get('reference', '').strip() or None
+            price = request.POST.get('price', '0')
+            cost_price = request.POST.get('cost_price', '0')
+            price_editable = request.POST.get('price_editable') == 'on'
+            low_stock_threshold = int(request.POST.get('low_stock_threshold', 5)) if product_type == 'physical' else 0
+            category_id = request.POST.get('category') or None
+            is_active = request.POST.get('is_active') == 'on'
+
+            if not name:
+                messages.error(request, 'Le nom du produit est requis.')
+                return _render_product_form(request)
+
+            # Create product
+            product = Product(
+                name=name,
+                description=description,
+                reference=reference,
+                product_type=product_type,
+                price=price,
+                cost_price=cost_price,
+                price_editable=price_editable,
+                is_active=is_active,
+            )
+            if product_type == 'physical':
+                product.stock_quantity = 0  # stock via lots uniquement
+                product.low_stock_threshold = low_stock_threshold
+            if category_id:
+                try:
+                    product.category = ProductCategory.objects.get(id=category_id)
+                except ProductCategory.DoesNotExist:
+                    pass
+
+            product.save()
+
+            # Étape 2: créer un lot initial si produit physique
+            if product_type == 'physical':
+                batch_number = request.POST.get('batch_number', '').strip()
+                initial_qty = request.POST.get('initial_quantity', '0')
+                expiration_date = request.POST.get('expiration_date', '').strip() or None
+                batch_notes = request.POST.get('batch_notes', '').strip()
+
+                if batch_number and int(initial_qty) > 0:
+                    batch = ProductBatch.objects.create(
+                        product=product,
+                        batch_number=batch_number,
+                        initial_quantity=int(initial_qty),
+                        current_quantity=int(initial_qty),
+                        expiration_date=expiration_date,
+                        notes=batch_notes,
+                    )
+                    # Ajuster le stock via mouvement
+                    product.adjust_stock(
+                        quantity=int(initial_qty),
+                        movement_type='initial',
+                        reference_type='manual',
+                        notes=f"Stock initial - Lot {batch_number}",
+                        user=request.user,
+                        batch=batch,
+                    )
+                    messages.success(request, f'Produit "{product.name}" créé avec le lot {batch_number} ({initial_qty} unités).')
+                else:
+                    messages.success(request, f'Produit "{product.name}" créé. Vous pouvez ajouter des lots depuis la fiche produit.')
+            else:
+                messages.success(request, f'Produit "{product.name}" créé avec succès.')
+
+            return redirect('invoicing:product_detail', pk=product.pk)
+
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la création: {str(e)}')
+
+    return _render_product_form(request)
+
+
+def _render_product_form(request, product=None):
+    categories = ProductCategory.objects.filter(is_active=True).order_by('name')
+    context = {
+        'product': product,
+        'categories': categories,
+        'is_edit': product is not None,
+    }
+    return render(request, 'invoicing/product_form.html', context)
+
+
+@login_required
+def product_detail(request, pk):
+    """Détail d'un produit avec ses lots et mouvements"""
+    product = get_object_or_404(Product, pk=pk)
+    batches = product.batches.filter(is_active=True).order_by('expiration_date', 'created_at')
+    movements = product.stock_movements.select_related('batch', 'created_by').order_by('-created_at')[:20]
+
+    from django.utils import timezone as tz
+    today = tz.now().date()
+    from datetime import timedelta
+    expired = batches.filter(expiration_date__lt=today, current_quantity__gt=0)
+    expiring_soon = batches.filter(
+        expiration_date__gte=today,
+        expiration_date__lte=today + timedelta(days=30),
+        current_quantity__gt=0
+    )
+
+    context = {
+        'product': product,
+        'batches': batches,
+        'movements': movements,
+        'expired_batches': expired,
+        'expiring_soon_batches': expiring_soon,
+    }
+    return render(request, 'invoicing/product_detail.html', context)
+
+
+@login_required
+def product_edit(request, pk):
+    """Modifier un produit"""
+    product = get_object_or_404(Product, pk=pk)
+
+    if request.method == 'POST':
+        try:
+            product.name = request.POST.get('name', product.name).strip()
+            product.description = request.POST.get('description', product.description).strip()
+            ref = request.POST.get('reference', '').strip()
+            product.reference = ref if ref else None
+            product.price = request.POST.get('price', product.price)
+            product.cost_price = request.POST.get('cost_price', product.cost_price)
+            product.price_editable = request.POST.get('price_editable') == 'on'
+            product.is_active = request.POST.get('is_active') == 'on'
+            if product.product_type == 'physical':
+                product.low_stock_threshold = int(request.POST.get('low_stock_threshold', product.low_stock_threshold))
+            category_id = request.POST.get('category') or None
+            if category_id:
+                try:
+                    product.category = ProductCategory.objects.get(id=category_id)
+                except ProductCategory.DoesNotExist:
+                    product.category = None
+            else:
+                product.category = None
+            product.save()
+            messages.success(request, f'Produit "{product.name}" modifié avec succès.')
+            return redirect('invoicing:product_detail', pk=product.pk)
+        except Exception as e:
+            messages.error(request, f'Erreur: {str(e)}')
+
+    return _render_product_form(request, product=product)
+
+
+@login_required
+def product_delete(request, pk):
+    """Supprimer un produit"""
+    product = get_object_or_404(Product, pk=pk)
+    if request.method == 'POST':
+        name = product.name
+        product.delete()
+        messages.success(request, f'Produit "{name}" supprimé.')
+        return redirect('invoicing:product_list')
+    context = {'product': product}
+    return render(request, 'invoicing/product_confirm_delete.html', context)
+
+
+@login_required
+def product_batch_add(request, pk):
+    """Ajouter un lot à un produit physique"""
+    product = get_object_or_404(Product, pk=pk, product_type='physical')
+
+    if request.method == 'POST':
+        batch_number = request.POST.get('batch_number', '').strip()
+        quantity = request.POST.get('quantity', '0')
+        expiration_date = request.POST.get('expiration_date', '').strip() or None
+        notes = request.POST.get('notes', '').strip()
+
+        if not batch_number:
+            messages.error(request, 'Le numéro de lot est requis.')
+        elif ProductBatch.objects.filter(product=product, batch_number=batch_number).exists():
+            messages.error(request, f'Le lot "{batch_number}" existe déjà pour ce produit.')
+        else:
+            try:
+                qty = int(quantity)
+                if qty <= 0:
+                    messages.error(request, 'La quantité doit être supérieure à 0.')
+                else:
+                    batch = ProductBatch.objects.create(
+                        product=product,
+                        batch_number=batch_number,
+                        initial_quantity=qty,
+                        current_quantity=qty,
+                        expiration_date=expiration_date,
+                        notes=notes,
+                    )
+                    product.adjust_stock(
+                        quantity=qty,
+                        movement_type='reception',
+                        reference_type='manual',
+                        notes=f"Réception lot {batch_number}",
+                        user=request.user,
+                        batch=batch,
+                    )
+                    messages.success(request, f'Lot {batch_number} ajouté avec {qty} unités.')
+                    return redirect('invoicing:product_detail', pk=product.pk)
+            except ValueError:
+                messages.error(request, 'Quantité invalide.')
+
+    context = {'product': product}
+    return render(request, 'invoicing/product_batch_form.html', context)
+
+
+@login_required
+def product_batch_write_off(request, batch_pk):
+    """Retirer un lot (périmé ou autre raison)"""
+    batch = get_object_or_404(ProductBatch, pk=batch_pk)
+    product = batch.product
+
+    if request.method == 'POST':
+        reason = request.POST.get('reason', 'expired')
+        qty = batch.current_quantity
+
+        if qty > 0:
+            # Mouvements de perte
+            product.adjust_stock(
+                quantity=-qty,
+                movement_type='loss',
+                reference_type='manual',
+                notes=f"Retrait lot {batch.batch_number} - {dict(StockMovement.LOSS_REASONS).get(reason, reason)}",
+                user=request.user,
+                batch=batch,
+            )
+
+        # Désactiver le lot
+        batch.is_active = False
+        batch.current_quantity = 0
+        batch.save()
+
+        messages.success(request, f'Lot {batch.batch_number} retiré ({qty} unités déduites).')
+        return redirect('invoicing:product_detail', pk=product.pk)
+
+    context = {'batch': batch, 'product': product, 'loss_reasons': StockMovement.LOSS_REASONS}
+    return render(request, 'invoicing/product_batch_write_off.html', context)
+
+
+@login_required
+def api_product_batches(request, pk):
+    """API: retourne les lots disponibles pour un produit"""
+    product = get_object_or_404(Product, pk=pk)
+    from django.utils import timezone as tz
+
+    if product.product_type != 'physical':
+        return JsonResponse({'batches': [], 'product_type': product.product_type})
+
+    today = tz.now().date()
+    batches = ProductBatch.objects.filter(
+        product=product,
+        is_active=True,
+        current_quantity__gt=0
+    ).order_by('expiration_date')
+
+    data = []
+    for b in batches:
+        data.append({
+            'id': str(b.id),
+            'batch_number': b.batch_number,
+            'current_quantity': b.current_quantity,
+            'expiration_date': b.expiration_date.isoformat() if b.expiration_date else None,
+            'is_expired': b.is_expired,
+            'is_expiring_soon': b.is_expiring_soon,
+        })
+
+    return JsonResponse({'batches': data, 'product_type': product.product_type})

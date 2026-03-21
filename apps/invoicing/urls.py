@@ -28,4 +28,14 @@ urlpatterns = [
 
     # Debug URL (temporaire)
     path('debug/organization/', debug_organization_data, name='debug_organization'),
+
+    # Produits
+    path('products/', views.product_list, name='product_list'),
+    path('products/create/', views.product_create, name='product_create'),
+    path('products/<uuid:pk>/', views.product_detail, name='product_detail'),
+    path('products/<uuid:pk>/edit/', views.product_edit, name='product_edit'),
+    path('products/<uuid:pk>/delete/', views.product_delete, name='product_delete'),
+    path('products/<uuid:pk>/batches/add/', views.product_batch_add, name='product_batch_add'),
+    path('products/batches/<uuid:batch_pk>/write-off/', views.product_batch_write_off, name='product_batch_write_off'),
+    path('api/products/<uuid:pk>/batches/', views.api_product_batches, name='api_product_batches'),
 ]

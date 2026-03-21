@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ contract.contract_number }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm 2.5cm;
+            @bottom-center {
+                content: "Page " counter(page) " / " counter(pages);
+                font-size: 9pt;
+                color: #6b7280;
+            }
+        }
+        * { box-sizing: border-box; }
+        body { font-family: "Georgia", serif; font-size: 11pt; color: #1f2937; line-height: 1.7; }
+
+        .header { border-bottom: 3px solid #1e3a8a; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .company-name { font-size: 18pt; font-weight: bold; color: #1e3a8a; }
+        .contract-number { font-size: 13pt; color: #4b5563; margin-top: 0.25rem; }
+        .contract-title { font-size: 15pt; font-weight: bold; color: #1f2937; margin: 1rem 0 0.25rem; }
+        .contract-type-badge {
+            display: inline-block; background: #1e3a8a; color: white;
+            padding: 0.15rem 0.6rem; border-radius: 4px; font-size: 9pt; font-family: Arial, sans-serif;
+        }
+
+        .meta-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 10pt; font-family: Arial, sans-serif; }
+        .meta-table td { padding: 0.35rem 0.5rem; vertical-align: top; }
+        .meta-table .label { font-weight: bold; color: #6b7280; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.05em; width: 35%; }
+        .meta-table .value { color: #1f2937; }
+        .meta-table tr:nth-child(even) td { background: #f9fafb; }
+
+        .section-title {
+            font-size: 12pt; font-weight: bold; color: #1e3a8a; text-transform: uppercase;
+            letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.3rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .contract-body { font-family: Arial, sans-serif; font-size: 10.5pt; white-space: pre-wrap; line-height: 1.8; }
+        .terms-body { font-family: Arial, sans-serif; font-size: 10pt; white-space: pre-wrap; line-height: 1.7; color: #374151; }
+
+        .signature-section { margin-top: 3rem; page-break-inside: avoid; }
+        .sig-table { width: 100%; border-collapse: collapse; }
+        .sig-box { width: 45%; vertical-align: top; padding: 0 0.5rem; }
+        .sig-line { border-top: 1.5px solid #374151; margin-top: 2.5rem; padding-top: 0.4rem; }
+        .sig-name { font-weight: bold; font-size: 10pt; }
+        .sig-label { font-size: 9pt; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; }
+        .sig-date { font-size: 9.5pt; margin-top: 0.25rem; }
+
+        .footer-notes {
+            margin-top: 2rem; padding: 0.75rem; border: 1px solid #e5e7eb;
+            border-radius: 4px; font-size: 9pt; color: #6b7280; font-family: Arial, sans-serif;
+        }
+
+        .watermark-signed {
+            position: fixed; top: 40%; left: 20%; transform: rotate(-35deg);
+            font-size: 60pt; color: rgba(16,185,129,0.08); font-weight: bold;
+            font-family: Arial, sans-serif; z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+{% if contract.is_fully_signed %}
+<div class="watermark-signed">SIGNÉ</div>
+{% endif %}
+
+<!-- En-tête -->
+<div class="header">
+    <div class="company-name">ProcureGenius</div>
+    <div class="contract-number">{{ contract.contract_number }}</div>
+    <div class="contract-title">{{ contract.title }}</div>
+    <div style="margin-top:0.4rem">
+        <span class="contract-type-badge">{{ contract.get_contract_type_display }}</span>
+    </div>
+</div>
+
+<!-- Informations générales -->
+<table class="meta-table">
+    <tr>
+        <td class="label">Contrepartie</td>
+        <td class="value">{{ contract.counterpart_display|default:"—" }}</td>
+        <td class="label">Statut</td>
+        <td class="value">{{ contract.get_status_display }}</td>
+    </tr>
+    <tr>
+        <td class="label">Date de début</td>
+        <td class="value">{{ contract.start_date|date:"d/m/Y"|default:"—" }}</td>
+        <td class="label">Date de fin</td>
+        <td class="value">{{ contract.end_date|date:"d/m/Y"|default:"—" }}</td>
+    </tr>
+    <tr>
+        <td class="label">Valeur totale</td>
+        <td class="value">{% if contract.total_value %}{{ contract.total_value|floatformat:2 }} {{ contract.currency }}{% else %}—{% endif %}</td>
+        <td class="label">Conditions de paiement</td>
+        <td class="value">{{ contract.payment_terms|default:"—" }}</td>
+    </tr>
+    <tr>
+        <td class="label">Créé par</td>
+        <td class="value">{{ contract.created_by.get_full_name|default:contract.created_by.username }}</td>
+        <td class="label">Date de création</td>
+        <td class="value">{{ contract.created_at|date:"d/m/Y" }}</td>
+    </tr>
+</table>
+
+{% if contract.description %}
+<div class="section-title">Description</div>
+<p>{{ contract.description }}</p>
+{% endif %}
+
+{% if contract.contract_body %}
+<div class="section-title">Corps du contrat</div>
+<div class="contract-body">{{ contract.contract_body }}</div>
+{% endif %}
+
+{% if contract.terms_and_conditions %}
+<div class="section-title">Termes et conditions généraux</div>
+<div class="terms-body">{{ contract.terms_and_conditions }}</div>
+{% endif %}
+
+<!-- Signatures -->
+<div class="signature-section">
+    <div class="section-title">Signatures</div>
+    <table class="sig-table">
+        <tr>
+            <td class="sig-box">
+                <div class="sig-label">Notre organisation</div>
+                <div class="sig-line">
+                    {% if contract.signed_by_us %}
+                    <div class="sig-name">{{ contract.signed_by_us_name }}</div>
+                    <div class="sig-date">Signé le {{ contract.signed_by_us_at|date:"d/m/Y" }}</div>
+                    {% else %}
+                    <div class="sig-name">&nbsp;</div>
+                    <div class="sig-date">Date: _______________</div>
+                    {% endif %}
+                </div>
+            </td>
+            <td style="width:10%"></td>
+            <td class="sig-box">
+                <div class="sig-label">{{ contract.counterpart_display|default:"Contrepartie" }}</div>
+                <div class="sig-line">
+                    {% if contract.signed_by_counterpart %}
+                    <div class="sig-name">{{ contract.signed_by_counterpart_name }}</div>
+                    <div class="sig-date">Signé le {{ contract.signed_by_counterpart_at|date:"d/m/Y" }}</div>
+                    {% else %}
+                    <div class="sig-name">&nbsp;</div>
+                    <div class="sig-date">Date: _______________</div>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Notes de bas de page -->
+<div class="footer-notes">
+    Document généré le {{ contract.updated_at|date:"d/m/Y à H:i" }} via ProcureGenius.
+    {% if contract.template %}Basé sur le modèle: {{ contract.template.name }}.{% endif %}
+    Ce document est confidentiel.
+</div>
+
+</body>
+</html>

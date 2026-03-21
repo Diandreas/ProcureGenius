@@ -41,24 +41,43 @@ class Contract(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name=_("Statut"))
 
     # Parties
-    supplier = models.ForeignKey('suppliers.Supplier', on_delete=models.PROTECT, related_name='contracts', verbose_name=_("Fournisseur"))
+    # Fournisseur (peut être null si contrat avec un client)
+    supplier = models.ForeignKey('suppliers.Supplier', on_delete=models.PROTECT, related_name='contracts', verbose_name=_("Fournisseur"), null=True, blank=True)
+    # Client (peut être null si contrat avec un fournisseur)
+    client = models.ForeignKey('accounts.Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts', verbose_name=_("Client"))
+    # Nom de la contrepartie libre (si ni fournisseur ni client enregistré)
+    counterpart_name = models.CharField(max_length=200, blank=True, verbose_name=_("Nom de la contrepartie"))
     internal_contact = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_contracts', verbose_name=_("Contact interne"))
 
+    # Signature
+    signed_by_us = models.BooleanField(default=False, verbose_name=_("Signé par nous"))
+    signed_by_us_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date signature (nous)"))
+    signed_by_us_name = models.CharField(max_length=200, blank=True, verbose_name=_("Signataire (notre côté)"))
+    signed_by_counterpart = models.BooleanField(default=False, verbose_name=_("Signé par la contrepartie"))
+    signed_by_counterpart_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date signature (contrepartie)"))
+    signed_by_counterpart_name = models.CharField(max_length=200, blank=True, verbose_name=_("Signataire (contrepartie)"))
+    signed_pdf = models.FileField(upload_to='contracts/signed/%Y/%m/', null=True, blank=True, verbose_name=_("PDF signé"))
+
+    # Modèle source
+    template = models.ForeignKey('ContractTemplate', on_delete=models.SET_NULL, null=True, blank=True, related_name='generated_contracts', verbose_name=_("Modèle source"))
+    # Contenu généré (HTML/texte du contrat)
+    contract_body = models.TextField(blank=True, verbose_name=_("Corps du contrat"))
+
     # Description et termes
-    description = models.TextField(verbose_name=_("Description"))
+    description = models.TextField(blank=True, verbose_name=_("Description"))
     terms_and_conditions = models.TextField(blank=True, verbose_name=_("Termes et conditions"))
     payment_terms = models.CharField(max_length=200, blank=True, verbose_name=_("Conditions de paiement"))
 
     # Dates
-    start_date = models.DateField(verbose_name=_("Date de début"))
-    end_date = models.DateField(verbose_name=_("Date de fin"))
+    start_date = models.DateField(null=True, blank=True, verbose_name=_("Date de début"))
+    end_date = models.DateField(null=True, blank=True, verbose_name=_("Date de fin"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de modification"))
     approved_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date d'approbation"))
     terminated_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date de résiliation"))
 
     # Montants
-    total_value = models.DecimalField(max_digits=14, decimal_places=2, validators=[MinValueValidator(0)], verbose_name=_("Valeur totale"))
+    total_value = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)], verbose_name=_("Valeur totale"))
     currency = models.CharField(max_length=3, default='CAD', verbose_name=_("Devise"))
 
     # Renouvellement
@@ -160,6 +179,21 @@ class Contract(models.Model):
             self.save(update_fields=['status', 'terminated_at'])
             return True
         return False
+
+    @property
+    def counterpart_display(self):
+        """Retourne le nom de la contrepartie selon le type de contrat"""
+        if self.supplier:
+            return self.supplier.name
+        elif self.client:
+            return self.client.name
+        elif self.counterpart_name:
+            return self.counterpart_name
+        return "Contrepartie non définie"
+
+    @property
+    def is_fully_signed(self):
+        return self.signed_by_us and self.signed_by_counterpart
 
     def update_status(self):
         """Met à jour le statut en fonction des dates"""
@@ -297,6 +331,7 @@ class ContractDocument(models.Model):
 
     DOCUMENT_TYPE_CHOICES = [
         ('contract', _('Contrat principal')),
+        ('signed_contract', _('Contrat signé (PDF)')),
         ('amendment', _('Amendement')),
         ('annex', _('Annexe')),
         ('invoice', _('Facture')),

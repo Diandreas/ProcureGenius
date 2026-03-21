@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Modifier{% else %}Nouveau{% endif %} Produit - ProcureGenius{% endblock %}
+
+{% block extra_css %}
+<style>
+    .wizard-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .wizard-steps {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1.25rem 1.5rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border: 1px solid #f1f5f9;
+    }
+    .step-item {
+        display: flex;
+        align-items: center;
+        flex: 1;
+    }
+    .step-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+    .step-circle.active { background: var(--primary-blue); color: white; }
+    .step-circle.completed { background: #10b981; color: white; }
+    .step-circle.inactive { background: #e2e8f0; color: #94a3b8; }
+    .step-label {
+        margin-left: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .step-label.active { color: var(--primary-blue); }
+    .step-label.completed { color: #10b981; }
+    .step-label.inactive { color: #94a3b8; }
+    .step-connector {
+        flex: 1;
+        height: 2px;
+        background: #e2e8f0;
+        margin: 0 0.5rem;
+        transition: background 0.3s;
+    }
+    .step-connector.done { background: #10b981; }
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border: 1px solid #f1f5f9;
+        margin-bottom: 1.5rem;
+    }
+    .form-section h5 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .type-selector {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .type-option {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .type-option:hover { border-color: var(--primary-blue); background: #f0f9ff; }
+    .type-option.selected { border-color: var(--primary-blue); background: #eff6ff; }
+    .type-option input[type="radio"] { display: none; }
+    .type-option .type-icon { font-size: 1.75rem; margin-bottom: 0.4rem; display: block; }
+    .type-option .type-name { font-weight: 600; font-size: 0.85rem; color: #1e293b; }
+    .type-option .type-desc { font-size: 0.72rem; color: #64748b; margin-top: 0.2rem; }
+    .batch-section { display: none; }
+    .batch-section.visible { display: block; }
+    .page-actions {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+    @media (max-width: 576px) {
+        .type-selector { grid-template-columns: 1fr; }
+        .wizard-steps { flex-direction: column; gap: 0.5rem; }
+        .step-connector { width: 2px; height: 20px; margin: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="wizard-container">
+        <!-- En-tête -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="{% url 'invoicing:product_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h4 class="mb-0 fw-bold">
+                    {% if is_edit %}Modifier "{{ product.name }}"{% else %}Nouveau Produit{% endif %}
+                </h4>
+                <p class="text-muted mb-0" style="font-size:0.85rem;">
+                    {% if is_edit %}Modifiez les informations du produit{% else %}Remplissez les informations du produit{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Indicateur d'étapes (uniquement création physique) -->
+        <div class="wizard-steps" id="wizardSteps">
+            <div class="step-item">
+                <div class="step-circle active" id="step1Circle">1</div>
+                <span class="step-label active" id="step1Label">Informations</span>
+            </div>
+            <div class="step-connector" id="connector1"></div>
+            <div class="step-item">
+                <div class="step-circle inactive" id="step2Circle">2</div>
+                <span class="step-label inactive" id="step2Label">Lot initial</span>
+            </div>
+        </div>
+
+        <form method="post" id="productForm">
+            {% csrf_token %}
+
+            <!-- ÉTAPE 1 : Informations générales -->
+            <div id="step1Content">
+                <!-- Type de produit -->
+                {% if not is_edit %}
+                <div class="form-section">
+                    <h5><i class="bi bi-tag-fill text-primary"></i> Type de produit</h5>
+                    <div class="type-selector">
+                        <label class="type-option selected" id="typePhysical">
+                            <input type="radio" name="product_type" value="physical" checked>
+                            <span class="type-icon">📦</span>
+                            <div class="type-name">Physique</div>
+                            <div class="type-desc">Gestion de stock par lots</div>
+                        </label>
+                        <label class="type-option" id="typeService">
+                            <input type="radio" name="product_type" value="service">
+                            <span class="type-icon">🛠️</span>
+                            <div class="type-name">Service</div>
+                            <div class="type-desc">Prestation, conseil, main d'œuvre</div>
+                        </label>
+                        <label class="type-option" id="typeDigital">
+                            <input type="radio" name="product_type" value="digital">
+                            <span class="type-icon">💾</span>
+                            <div class="type-name">Numérique</div>
+                            <div class="type-desc">Logiciel, licence, fichier</div>
+                        </label>
+                    </div>
+                </div>
+                {% else %}
+                <input type="hidden" name="product_type" value="{{ product.product_type }}">
+                {% endif %}
+
+                <!-- Informations de base -->
+                <div class="form-section">
+                    <h5><i class="bi bi-info-circle text-primary"></i> Informations de base</h5>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Nom du produit <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required
+                                value="{{ product.name|default:'' }}" placeholder="Ex: Masque chirurgical FFP2">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Référence</label>
+                            <input type="text" name="reference" class="form-control"
+                                value="{{ product.reference|default:'' }}" placeholder="Auto-générée si vide">
+                            <div class="form-text">Laissez vide pour auto-générer</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Description</label>
+                            <textarea name="description" class="form-control" rows="3"
+                                placeholder="Description du produit ou service...">{{ product.description|default:'' }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Catégorie</label>
+                            <select name="category" class="form-select">
+                                <option value="">— Sans catégorie —</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if product.category_id == cat.id %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check mt-4 pt-2">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="isActive"
+                                    {% if not product or product.is_active %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="isActive">Produit actif</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prix -->
+                <div class="form-section">
+                    <h5><i class="bi bi-currency-dollar text-success"></i> Prix et marges</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Prix de vente ($) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="price" class="form-control" step="0.01" min="0" required
+                                    value="{{ product.price|default:'0.00' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Prix d'achat ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="cost_price" class="form-control" step="0.01" min="0"
+                                    value="{{ product.cost_price|default:'0.00' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold d-block">&nbsp;</label>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="price_editable" id="priceEditable"
+                                    {% if product.price_editable %}checked{% endif %}>
+                                <label class="form-check-label" for="priceEditable">
+                                    Prix modifiable en facturation
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Seuil stock (visible physique seulement) -->
+                        <div class="col-md-4 physical-only">
+                            <label class="form-label fw-semibold">Seuil stock bas</label>
+                            <input type="number" name="low_stock_threshold" class="form-control" min="0"
+                                value="{{ product.low_stock_threshold|default:'5' }}">
+                            <div class="form-text">Alerte quand le stock descend sous ce niveau</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ÉTAPE 2 : Lot initial (physique uniquement, création uniquement) -->
+            {% if not is_edit %}
+            <div id="step2Content" class="batch-section">
+                <div class="form-section">
+                    <h5><i class="bi bi-layers text-warning"></i> Lot initial de stock</h5>
+                    <p class="text-muted" style="font-size:0.85rem; margin-bottom:1.25rem;">
+                        Facultatif — vous pouvez ajouter des lots plus tard depuis la fiche produit.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Numéro de lot</label>
+                            <input type="text" name="batch_number" class="form-control"
+                                placeholder="Ex: LOT-2026-001">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Quantité initiale</label>
+                            <input type="number" name="initial_quantity" class="form-control" min="1" value="0">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Date de péremption</label>
+                            <input type="date" name="expiration_date" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Notes du lot</label>
+                            <input type="text" name="batch_notes" class="form-control"
+                                placeholder="Remarques sur ce lot (optionnel)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info" style="border-radius:10px; font-size:0.85rem;">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Pour les produits physiques, le stock est géré exclusivement via les lots. Vous ne pourrez pas modifier le stock manuellement.
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="page-actions">
+                {% if is_edit %}
+                    <a href="{% url 'invoicing:product_detail' product.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x me-2"></i>Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check2 me-2"></i>Enregistrer les modifications
+                    </button>
+                {% else %}
+                    <button type="button" id="btnPrev" class="btn btn-outline-secondary" style="display:none;" onclick="prevStep()">
+                        <i class="bi bi-arrow-left me-2"></i>Retour
+                    </button>
+                    <a href="{% url 'invoicing:product_list' %}" class="btn btn-outline-secondary" id="btnCancel">
+                        <i class="bi bi-x me-2"></i>Annuler
+                    </a>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btnNext" class="btn btn-primary" onclick="nextStep()">
+                            Suivant <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                        <button type="submit" id="btnSubmit" class="btn btn-success" style="display:none;">
+                            <i class="bi bi-check2 me-2"></i>Créer le produit
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if not is_edit %}
+<script>
+    let currentStep = 1;
+    let isPhysical = true;
+
+    // Sélection du type de produit
+    document.querySelectorAll('.type-option').forEach(label => {
+        label.addEventListener('click', function() {
+            document.querySelectorAll('.type-option').forEach(l => l.classList.remove('selected'));
+            this.classList.add('selected');
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            isPhysical = radio.value === 'physical';
+            updatePhysicalFields();
+        });
+    });
+
+    function updatePhysicalFields() {
+        document.querySelectorAll('.physical-only').forEach(el => {
+            el.style.display = isPhysical ? '' : 'none';
+        });
+        // Masquer l'étape 2 dans le wizard si non physique
+        const step2Circle = document.getElementById('step2Circle');
+        const step2Label = document.getElementById('step2Label');
+        const connector1 = document.getElementById('connector1');
+        if (!isPhysical) {
+            step2Circle.style.opacity = '0.3';
+            step2Label.style.opacity = '0.3';
+            connector1.style.opacity = '0.3';
+            document.getElementById('btnNext').innerHTML = 'Créer le produit <i class="bi bi-check2 ms-2"></i>';
+        } else {
+            step2Circle.style.opacity = '1';
+            step2Label.style.opacity = '1';
+            connector1.style.opacity = '1';
+            document.getElementById('btnNext').innerHTML = 'Suivant <i class="bi bi-arrow-right ms-2"></i>';
+        }
+    }
+
+    function nextStep() {
+        if (!isPhysical) {
+            // Soumettre directement pour service/digital
+            document.getElementById('productForm').submit();
+            return;
+        }
+        if (currentStep === 1) {
+            // Valider nom et prix
+            const name = document.querySelector('[name="name"]').value.trim();
+            const price = document.querySelector('[name="price"]').value;
+            if (!name) { alert('Le nom du produit est requis.'); return; }
+            if (!price || parseFloat(price) < 0) { alert('Le prix de vente est requis.'); return; }
+
+            currentStep = 2;
+            document.getElementById('step1Content').style.display = 'none';
+            document.getElementById('step2Content').classList.add('visible');
+            document.getElementById('btnNext').style.display = 'none';
+            document.getElementById('btnSubmit').style.display = '';
+            document.getElementById('btnPrev').style.display = '';
+            document.getElementById('btnCancel').style.display = 'none';
+
+            // Update wizard
+            document.getElementById('step1Circle').className = 'step-circle completed';
+            document.getElementById('step1Label').className = 'step-label completed';
+            document.getElementById('step1Circle').innerHTML = '<i class="bi bi-check"></i>';
+            document.getElementById('connector1').classList.add('done');
+            document.getElementById('step2Circle').className = 'step-circle active';
+            document.getElementById('step2Label').className = 'step-label active';
+        }
+    }
+
+    function prevStep() {
+        if (currentStep === 2) {
+            currentStep = 1;
+            document.getElementById('step1Content').style.display = '';
+            document.getElementById('step2Content').classList.remove('visible');
+            document.getElementById('btnNext').style.display = '';
+            document.getElementById('btnSubmit').style.display = 'none';
+            document.getElementById('btnPrev').style.display = 'none';
+            document.getElementById('btnCancel').style.display = '';
+
+            // Reset wizard
+            document.getElementById('step1Circle').className = 'step-circle active';
+            document.getElementById('step1Label').className = 'step-label active';
+            document.getElementById('step1Circle').innerHTML = '1';
+            document.getElementById('connector1').classList.remove('done');
+            document.getElementById('step2Circle').className = 'step-circle inactive';
+            document.getElementById('step2Label').className = 'step-label inactive';
+        }
+    }
+
+    // Init
+    updatePhysicalFields();
+</script>
+{% endif %}
+{% endblock %}
