@@ -185,14 +185,20 @@ class DemographicAnalysisView(APIView):
         if end_date:
             queryset = queryset.filter(order_date__lte=end_date)
 
-        # By gender (exclude unspecified)
+        # By gender (exclude unspecified) — revenue = factures labo PAYÉES uniquement
         by_gender = queryset.filter(
             patient__gender__isnull=False
         ).exclude(
             patient__gender=''
         ).values('patient__gender').annotate(
             count=Count('id'),
-            revenue=Sum('total_price')
+            revenue=Sum(
+                Case(
+                    When(lab_invoice__status='paid', then='lab_invoice__total_amount'),
+                    default=Value(0),
+                    output_field=DecimalField()
+                )
+            )
         ).order_by('-count')
 
         gender_data = []
@@ -224,7 +230,13 @@ class DemographicAnalysisView(APIView):
 
         by_age_group = queryset_with_age.values('age_group').annotate(
             count=Count('id'),
-            revenue=Sum('total_price')
+            revenue=Sum(
+                Case(
+                    When(lab_invoice__status='paid', then='lab_invoice__total_amount'),
+                    default=Value(0),
+                    output_field=DecimalField()
+                )
+            )
         ).order_by('age_group')
 
         age_group_data = []
@@ -242,7 +254,13 @@ class DemographicAnalysisView(APIView):
             patient__gender=''
         ).values('patient__gender', 'age_group').annotate(
             count=Count('id'),
-            revenue=Sum('total_price')
+            revenue=Sum(
+                Case(
+                    When(lab_invoice__status='paid', then='lab_invoice__total_amount'),
+                    default=Value(0),
+                    output_field=DecimalField()
+                )
+            )
         ).order_by('patient__gender', 'age_group')
 
         gender_age_data = []
@@ -478,12 +496,13 @@ class ActivityIndicatorsView(APIView):
 
         # ===== INDICATEURS D'ACTIVITÉ ET DE VOLUME =====
 
-        # N°1: Consultations TERMINÉES sur la période (status='completed' uniquement)
+        # N°1: Consultations PAYÉES sur la période (facture payée = acte réalisé et encaissé)
         consultations_queryset = Consultation.objects.filter(
             organization=organization,
             consultation_date__date__gte=start_date,
             consultation_date__date__lte=end_date,
-            status='completed'
+            status='completed',
+            consultation_invoice__status='paid'
         )
         num_consultations = consultations_queryset.count()
 

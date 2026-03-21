@@ -140,7 +140,11 @@
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages",
       "Read(//d/project/BFMa/ProcureGenius/apps/invoicing/**)",
-      "Read(//d/project/BFMa/ProcureGenius/apps/api/**)"
+      "Read(//d/project/BFMa/ProcureGenius/apps/api/**)",
+      "Read(//d/project/BFMa/ProcureGenius/apps/analytics/**)",
+      "Read(//d/project/BFMa/ProcureGenius/apps/healthcare/**)",
+      "Read(//d/project/BFMa/ProcureGenius/apps/laboratory/**)",
+      "Read(//d/project/BFMa/ProcureGenius/apps/**)"
     ],
     "deny": [],
     "ask": [],

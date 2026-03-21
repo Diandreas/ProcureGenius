@@ -67,12 +67,39 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
         context = super().get_context_data(**kwargs)
         lab_order = self.get_object()
 
-        # Organization data
+        # Organization data — remplacé par sous-traitant si applicable
         org_data = self._get_organization_data(lab_order)
-        context['organization'] = org_data
-        context['logo_base64'] = self._get_logo_base64(org_data)
+
+        subcontractor = getattr(lab_order, 'subcontractor', None)
+        if subcontractor and subcontractor.is_active:
+            # Surcharger logo et entête avec ceux du sous-traitant
+            if subcontractor.logo:
+                import base64
+                try:
+                    with open(subcontractor.logo.path, 'rb') as f:
+                        logo_b64 = base64.b64encode(f.read()).decode('utf-8')
+                    context['logo_base64'] = f"data:image/png;base64,{logo_b64}"
+                except Exception:
+                    context['logo_base64'] = self._get_logo_base64(org_data)
+            else:
+                context['logo_base64'] = self._get_logo_base64(org_data)
+
+            context['organization'] = {
+                **org_data,
+                'name': subcontractor.name,
+                'address': subcontractor.address or org_data.get('address', ''),
+                'phone': subcontractor.phone or org_data.get('phone', ''),
+                'email': subcontractor.email or org_data.get('email', ''),
+                'header_text': subcontractor.header_text,
+                'is_subcontracted': True,
+                'subcontractor_name': subcontractor.name,
+            }
+        else:
+            context['organization'] = org_data
+            context['logo_base64'] = self._get_logo_base64(org_data)
 
         context['lab_order'] = lab_order
+        context['subcontractor'] = subcontractor
         patient = lab_order.patient
         context['patient'] = patient
 

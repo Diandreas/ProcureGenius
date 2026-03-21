@@ -272,6 +272,54 @@ const laboratoryAPI = {
     deletePrescriber: async (id) => {
         await api.delete(`/healthcare/laboratory/prescribers/${id}/`);
     },
+
+    // --- Subcontractor Labs ---
+
+    getSubcontractors: async (params = {}) => {
+        const response = await api.get('/healthcare/laboratory/subcontractors/', { params });
+        return response.data;
+    },
+
+    getSubcontractor: async (id) => {
+        const response = await api.get(`/healthcare/laboratory/subcontractors/${id}/`);
+        return response.data;
+    },
+
+    createSubcontractor: async (data) => {
+        const response = await api.post('/healthcare/laboratory/subcontractors/', data, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
+
+    updateSubcontractor: async (id, data) => {
+        const response = await api.patch(`/healthcare/laboratory/subcontractors/${id}/`, data, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
+
+    deleteSubcontractor: async (id) => {
+        await api.delete(`/healthcare/laboratory/subcontractors/${id}/`);
+    },
+
+    getSubcontractorPrices: async (subcontractorId) => {
+        const response = await api.get(`/healthcare/laboratory/subcontractors/${subcontractorId}/prices/`);
+        return response.data;
+    },
+
+    saveSubcontractorPrices: async (subcontractorId, prices) => {
+        const response = await api.post(
+            `/healthcare/laboratory/subcontractors/${subcontractorId}/prices/bulk-save/`,
+            prices
+        );
+        return response.data;
+    },
+
+    getSubcontractorTests: async (subcontractorId) => {
+        const response = await api.get(`/healthcare/laboratory/subcontractors/${subcontractorId}/tests/`);
+        return response.data;
+    },
 };
 
 export default laboratoryAPI;

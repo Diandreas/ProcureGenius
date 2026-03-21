@@ -66,9 +66,13 @@ const LabOrderForm = () => {
         setFormData(prev => ({ ...prev, patient: newPatient }));
     };
 
+    const [subcontractors, setSubcontractors] = useState([]);
+    const [subcontractorPrices, setSubcontractorPrices] = useState({}); // { test_id: price }
+
     const [formData, setFormData] = useState({
         patient: null,
         prescriber: null,
+        subcontractor: null,
         priority: 'routine',
         tests: [], // Array of test objects
         panels: [], // Array of panel objects (bilans)
@@ -100,18 +104,20 @@ const LabOrderForm = () => {
 
     const fetchOptions = async () => {
         try {
-            const [patData, testData, catData, panelData, prescriberData] = await Promise.all([
+            const [patData, testData, catData, panelData, prescriberData, subData] = await Promise.all([
                 patientAPI.getPatients({ page_size: 1000 }),
                 laboratoryAPI.getTests({ page_size: 1000 }),
                 laboratoryAPI.getCategories(),
                 laboratoryAPI.getPanels({ active_only: true }),
                 laboratoryAPI.getPrescribers({ active_only: true }),
+                laboratoryAPI.getSubcontractors({ active_only: 'true' }),
             ]);
             setPatients(patData.results || patData || []);
             setTests(testData.results || testData || []);
             setCategories(catData.results || catData || []);
             setPanels(Array.isArray(panelData) ? panelData : panelData.results || []);
             setPrescribers(Array.isArray(prescriberData) ? prescriberData : prescriberData.results || []);
+            setSubcontractors(Array.isArray(subData) ? subData : subData.results || []);
         } catch (error) {
             console.error('Error fetching options:', error);
             enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
@@ -162,9 +168,15 @@ const LabOrderForm = () => {
         }
     };
 
+    const getEffectivePrice = (test) => {
+        // Utilise le tarif sous-traitant si disponible, sinon le prix standard
+        const subPrice = subcontractorPrices[test.id];
+        return subPrice !== undefined ? parseFloat(subPrice) : (parseFloat(test.price) || 0);
+    };
+
     const calculateTotal = () => {
         const testsTotal = formData.tests.reduce((sum, test) => {
-            const price = parseFloat(test.price) || 0;
+            const price = getEffectivePrice(test);
             const discount = parseFloat(test.discount) || 0;
             return sum + (price - discount);
         }, 0);
@@ -189,6 +201,7 @@ const LabOrderForm = () => {
             const payload = {
                 patient_id: formData.patient.id,
                 prescriber_id: formData.prescriber?.id || null,
+                subcontractor_id: formData.subcontractor?.id || null,
                 priority: formData.priority,
                 clinical_notes: formData.clinical_notes || '',
                 payment_method: formData.payment_method || 'cash',
@@ -305,6 +318,49 @@ const LabOrderForm = () => {
                                 )}
                                 isOptionEqualToValue={(a, b) => a.id === b.id}
                             />
+
+                            {subcontractors.length > 0 && (
+                                <>
+                                    <Divider sx={{ my: 2 }} />
+                                    <Typography variant="h6" gutterBottom>Sous-traitance</Typography>
+                                    <Autocomplete
+                                        options={[{ id: null, name: 'Réalisé en interne' }, ...subcontractors]}
+                                        getOptionLabel={(option) => option.name}
+                                        value={formData.subcontractor || { id: null, name: 'Réalisé en interne' }}
+                                        onChange={async (_, v) => {
+                                            const sub = v?.id ? v : null;
+                                            setFormData(prev => ({ ...prev, subcontractor: sub }));
+                                            if (sub?.id) {
+                                                try {
+                                                    const data = await laboratoryAPI.getSubcontractorTests(sub.id);
+                                                    const priceMap = {};
+                                                    (data.tests || []).forEach(t => {
+                                                        if (t.has_subcontractor_price) {
+                                                            priceMap[t.id] = t.subcontractor_price;
+                                                        }
+                                                    });
+                                                    setSubcontractorPrices(priceMap);
+                                                } catch { setSubcontractorPrices({}); }
+                                            } else {
+                                                setSubcontractorPrices({});
+                                            }
+                                        }}
+                                        renderInput={(params) => (
+                                            <TextField {...params} label="Laboratoire sous-traitant" size="small" fullWidth
+                                                helperText={formData.subcontractor ? `Tarifs sous-traitance appliqués` : 'Optionnel — laisser vide pour analyse interne'} />
+                                        )}
+                                        isOptionEqualToValue={(a, b) => a.id === b.id}
+                                    />
+                                    {formData.subcontractor && (
+                                        <Chip
+                                            size="small"
+                                            label={`Sous-traité à ${formData.subcontractor.name}`}
+                                            color="warning"
+                                            sx={{ mt: 1 }}
+                                        />
+                                    )}
+                                </>
+                            )}
 
                             <Divider sx={{ my: 2 }} />
 

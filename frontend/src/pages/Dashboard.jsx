@@ -56,6 +56,7 @@ const ACTIVITY_LABELS = {
   healthcare_pharmacy: 'Médicaments',
   standard: 'Soins / Chirurgie / Hosp.',
 };
+const getActivityLabel = (type) => ACTIVITY_LABELS[type] || `Autres (${type || 'non défini'})`;
 
 const QuickLink = ({ title, description, icon, color, to, navigate }) => (
   <Paper
@@ -300,7 +301,7 @@ const Dashboard = () => {
                     <>
                       <ResponsiveContainer width="100%" height={220}>
                         <PieChart>
-                          <Pie data={byActivity.map(a => ({ name: ACTIVITY_LABELS[a.activity_type] || a.activity_type, value: parseFloat(a.revenue || 0) }))}
+                          <Pie data={byActivity.map(a => ({ name: getActivityLabel(a.activity_type), value: parseFloat(a.revenue || 0) }))}
                             cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                             labelLine={false}>
                             {byActivity.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
@@ -323,7 +324,7 @@ const Dashboard = () => {
                                 <TableCell>
                                   <Box display="flex" alignItems="center" gap={1}>
                                     <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: COLORS[i % COLORS.length] }} />
-                                    {ACTIVITY_LABELS[a.activity_type] || a.activity_type}
+                                    {getActivityLabel(a.activity_type)}
                                   </Box>
                                 </TableCell>
                                 <TableCell align="right">{formatCurrency(a.revenue)}</TableCell>

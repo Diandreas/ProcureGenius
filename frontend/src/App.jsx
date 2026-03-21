@@ -26,6 +26,8 @@ import ExamTypesAnalytics from './pages/healthcare/analytics/ExamTypesAnalytics'
 import RevenueAnalyticsDashboard from './pages/healthcare/analytics/RevenueAnalyticsDashboard';
 import PrescriberAnalyticsPage from './pages/healthcare/analytics/PrescriberAnalyticsPage';
 import PrescriberList from './pages/healthcare/laboratory/PrescriberList';
+import SubcontractorList from './pages/healthcare/laboratory/SubcontractorList';
+import SubcontractorPrices from './pages/healthcare/laboratory/SubcontractorPrices';
 
 // Inventory Analytics
 import ReorderAnalytics from './pages/inventory/analytics/ReorderAnalytics';
@@ -822,6 +824,8 @@ function App() {
                               <Route path="/healthcare/laboratory/catalog" element={<ModuleRoute module="laboratory"><LabTestCatalog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/panels" element={<ModuleRoute module="laboratory"><LabPanelCatalog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/prescribers" element={<ModuleRoute module="laboratory"><PrescriberList /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/subcontractors" element={<ModuleRoute module="laboratory"><SubcontractorList /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/subcontractors/:id/prices" element={<ModuleRoute module="laboratory"><SubcontractorPrices /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/opened-reagents" element={<ModuleRoute module="laboratory"><OpenedReagents /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 

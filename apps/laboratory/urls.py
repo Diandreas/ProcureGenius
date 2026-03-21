@@ -58,4 +58,11 @@ urlpatterns = [
     # Prescribers
     path('prescribers/', api.PrescriberListCreateView.as_view(), name='prescriber-list'),
     path('prescribers/<uuid:pk>/', api.PrescriberDetailView.as_view(), name='prescriber-detail'),
+
+    # Subcontractor Labs
+    path('subcontractors/', api.SubcontractorLabListCreateView.as_view(), name='subcontractor-list'),
+    path('subcontractors/<uuid:pk>/', api.SubcontractorLabDetailView.as_view(), name='subcontractor-detail'),
+    path('subcontractors/<uuid:subcontractor_id>/prices/', api.SubcontractorPriceListView.as_view(), name='subcontractor-prices'),
+    path('subcontractors/<uuid:subcontractor_id>/prices/bulk-save/', api.SubcontractorPriceBulkSaveView.as_view(), name='subcontractor-prices-bulk'),
+    path('subcontractors/<uuid:subcontractor_id>/tests/', api.SubcontractorTestsWithPricesView.as_view(), name='subcontractor-tests'),
 ]

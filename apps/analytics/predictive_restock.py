@@ -22,7 +22,7 @@ def predict_stockout_date(product):
             'message': 'Pas de consommation detectee'
         }
 
-    days_remaining = product.stock_quantity / daily_demand
+    days_remaining = product.total_stock / daily_demand
     predicted_date = date.today() + timedelta(days=int(days_remaining))
 
     return {
@@ -52,7 +52,7 @@ def get_restock_urgency(product):
             'message': 'Pas de consommation - pas de risque',
         }
 
-    days_remaining = product.stock_quantity / daily_demand
+    days_remaining = product.total_stock / daily_demand
 
     if days_remaining <= lead_time:
         urgency = 'critical'
@@ -78,15 +78,17 @@ def get_restock_urgency(product):
 
 def get_all_predictions(organization):
     """Get predictions for all physical products, sorted by urgency"""
+    # Inclure les produits avec stock dans les lots (total_stock > 0), pas seulement stock_quantity
     products = Product.objects.filter(
         organization=organization,
         product_type='physical',
         is_active=True,
-        stock_quantity__gt=0
     )
 
     predictions = []
     for product in products:
+        if product.total_stock <= 0:
+            continue
         try:
             stockout = predict_stockout_date(product)
             urgency_info = get_restock_urgency(product)
@@ -96,7 +98,7 @@ def get_all_predictions(organization):
                 'product_id': str(product.id),
                 'product_name': product.name,
                 'product_reference': product.reference or '',
-                'current_stock': product.stock_quantity,
+                'current_stock': product.total_stock,
                 'low_stock_threshold': product.low_stock_threshold,
                 'cost_price': float(product.cost_price or 0),
                 'predicted_stockout_date': stockout['predicted_date'],

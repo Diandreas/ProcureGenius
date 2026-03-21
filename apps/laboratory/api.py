@@ -15,7 +15,7 @@ from .services import LabResultPDFGenerator
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice
 from .serializers import (
     LabTestCategorySerializer,
     LabTestSerializer,
@@ -29,6 +29,9 @@ from .serializers import (
     LabTestPanelSerializer,
     PrescriberSerializer,
     PrescriberListSerializer,
+    SubcontractorLabSerializer,
+    SubcontractorLabListSerializer,
+    SubcontractorPriceSerializer,
 )
 
 
@@ -246,6 +249,27 @@ class LabOrderCreateView(APIView):
             except Prescriber.DoesNotExist:
                 pass
 
+        # Get subcontractor if provided
+        subcontractor = None
+        subcontractor_prices = {}
+        if data.get('subcontractor_id'):
+            try:
+                subcontractor = SubcontractorLab.objects.get(
+                    id=data['subcontractor_id'],
+                    organization=request.user.organization,
+                    is_active=True
+                )
+                # Preload subcontractor prices for fast lookup
+                subcontractor_prices = {
+                    str(sp.lab_test_id): sp.price
+                    for sp in SubcontractorPrice.objects.filter(
+                        subcontractor=subcontractor,
+                        is_active=True
+                    )
+                }
+            except SubcontractorLab.DoesNotExist:
+                pass
+
         # Create order
         order = LabOrder.objects.create(
             organization=request.user.organization,
@@ -256,6 +280,7 @@ class LabOrderCreateView(APIView):
             ordered_by=request.user,
             payment_method=data.get('payment_method', 'cash'),
             prescriber=prescriber,
+            subcontractor=subcontractor,
         )
         
         # Create order items for each test
@@ -301,15 +326,17 @@ class LabOrderCreateView(APIView):
                         id=item_data['test_id'],
                         organization=request.user.organization
                     )
+                    # Use subcontractor price if available, else standard price
+                    item_price = subcontractor_prices.get(str(test.id), test.price)
                     item_discount = Decimal(str(item_data.get('discount', test.discount or 0)))
 
                     LabOrderItem.objects.create(
                         lab_order=order,
                         lab_test=test,
-                        price=test.price,
+                        price=item_price,
                         discount=item_discount,
                     )
-                    total_order_price += test.price
+                    total_order_price += item_price
                     total_order_discount += item_discount
                 except (LabTest.DoesNotExist, KeyError):
                     continue
@@ -317,7 +344,8 @@ class LabOrderCreateView(APIView):
         # Handle legacy test_ids (simple list)
         elif data.get('test_ids') and not data.get('panels_data'):
             for test in tests:
-                item_price = test.price
+                # Use subcontractor price if available
+                item_price = subcontractor_prices.get(str(test.id), test.price)
                 item_discount = test.discount or 0
 
                 LabOrderItem.objects.create(
@@ -1089,3 +1117,154 @@ class PrescriberDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Prescriber.objects.filter(organization=self.request.user.organization)
+
+
+# =============================================================================
+# Subcontractor Lab Views
+# =============================================================================
+
+class SubcontractorLabListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /healthcare/laboratory/subcontractors/  — List subcontractor labs
+    POST /healthcare/laboratory/subcontractors/  — Create subcontractor lab
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return SubcontractorLabListSerializer
+        return SubcontractorLabSerializer
+
+    def get_queryset(self):
+        qs = SubcontractorLab.objects.filter(organization=self.request.user.organization)
+        if self.request.GET.get('active_only') == 'true':
+            qs = qs.filter(is_active=True)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(organization=self.request.user.organization)
+
+
+class SubcontractorLabDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET/PATCH/DELETE /healthcare/laboratory/subcontractors/<uuid>/
+    """
+    serializer_class = SubcontractorLabSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return SubcontractorLab.objects.filter(organization=self.request.user.organization)
+
+
+class SubcontractorPriceListView(generics.ListAPIView):
+    """
+    GET /healthcare/laboratory/subcontractors/<uuid>/prices/
+    Returns all prices for a subcontractor, enriched with test info.
+    """
+    serializer_class = SubcontractorPriceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        subcontractor_id = self.kwargs['subcontractor_id']
+        return SubcontractorPrice.objects.filter(
+            subcontractor_id=subcontractor_id,
+            subcontractor__organization=self.request.user.organization,
+        ).select_related('lab_test', 'lab_test__category')
+
+
+class SubcontractorPriceBulkSaveView(APIView):
+    """
+    POST /healthcare/laboratory/subcontractors/<uuid>/prices/bulk-save/
+    Body: [{lab_test_id, price, turnaround_days, is_active, notes}, ...]
+    Creates or updates prices in bulk.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, subcontractor_id):
+        try:
+            subcontractor = SubcontractorLab.objects.get(
+                id=subcontractor_id,
+                organization=request.user.organization
+            )
+        except SubcontractorLab.DoesNotExist:
+            return Response({'error': 'Sous-traitant introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        items = request.data if isinstance(request.data, list) else request.data.get('prices', [])
+        saved = []
+        errors = []
+
+        for item in items:
+            test_id = item.get('lab_test_id') or item.get('lab_test')
+            price = item.get('price')
+            if not test_id or price is None:
+                errors.append({'error': 'lab_test_id et price sont obligatoires', 'item': item})
+                continue
+            try:
+                test = LabTest.objects.get(id=test_id, organization=request.user.organization)
+                obj, created = SubcontractorPrice.objects.update_or_create(
+                    subcontractor=subcontractor,
+                    lab_test=test,
+                    defaults={
+                        'price': price,
+                        'turnaround_days': item.get('turnaround_days', 3),
+                        'is_active': item.get('is_active', True),
+                        'notes': item.get('notes', ''),
+                    }
+                )
+                saved.append(SubcontractorPriceSerializer(obj, context={'request': request}).data)
+            except LabTest.DoesNotExist:
+                errors.append({'error': f'Examen {test_id} introuvable', 'item': item})
+
+        return Response({'saved': saved, 'errors': errors}, status=status.HTTP_200_OK)
+
+
+class SubcontractorTestsWithPricesView(APIView):
+    """
+    GET /healthcare/laboratory/subcontractors/<uuid>/tests/
+    Returns all active tests with their subcontractor price (if set).
+    Useful for the LabOrderForm to show prices per subcontractor.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, subcontractor_id):
+        try:
+            subcontractor = SubcontractorLab.objects.get(
+                id=subcontractor_id,
+                organization=request.user.organization,
+                is_active=True
+            )
+        except SubcontractorLab.DoesNotExist:
+            return Response({'error': 'Sous-traitant introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        tests = LabTest.objects.filter(
+            organization=request.user.organization,
+            is_active=True
+        ).select_related('category')
+
+        # Build price lookup
+        prices = {
+            sp.lab_test_id: sp
+            for sp in SubcontractorPrice.objects.filter(
+                subcontractor=subcontractor,
+                is_active=True
+            )
+        }
+
+        result = []
+        for test in tests:
+            sp = prices.get(test.id)
+            result.append({
+                'id': str(test.id),
+                'test_code': test.test_code,
+                'name': test.name,
+                'category': test.category.name if test.category else None,
+                'standard_price': float(test.price),
+                'subcontractor_price': float(sp.price) if sp else None,
+                'turnaround_days': sp.turnaround_days if sp else None,
+                'has_subcontractor_price': sp is not None,
+            })
+
+        return Response({
+            'subcontractor': SubcontractorLabListSerializer(subcontractor).data,
+            'tests': result,
+        })

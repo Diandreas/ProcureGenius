@@ -495,6 +495,17 @@ class LabOrder(models.Model):
         verbose_name=_("Facture labo")
     )
 
+    # Sous-traitance
+    subcontractor = models.ForeignKey(
+        'SubcontractorLab',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lab_orders',
+        verbose_name=_("Sous-traitant"),
+        help_text=_("Si renseigné, la commande est sous-traitée à ce laboratoire")
+    )
+
     # Biologist diagnosis (NOUVEAU - Phase 3)
     biologist_diagnosis = models.TextField(
         blank=True,
@@ -1129,3 +1140,89 @@ class Prescriber(models.Model):
     @property
     def full_name(self):
         return f"Dr {self.last_name} {self.first_name}"
+
+
+class SubcontractorLab(models.Model):
+    """
+    Établissement sous-traitant pour analyses de laboratoire.
+    Permet d'externaliser certains examens vers des laboratoires partenaires
+    avec leurs propres tarifs, logo et entête de rapport.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='subcontractor_labs',
+        verbose_name=_("Organisation")
+    )
+    name = models.CharField(max_length=200, verbose_name=_("Nom du laboratoire"))
+    address = models.TextField(blank=True, verbose_name=_("Adresse"))
+    phone = models.CharField(max_length=50, blank=True, verbose_name=_("Téléphone"))
+    email = models.EmailField(blank=True, verbose_name=_("Email"))
+    logo = models.ImageField(
+        upload_to='subcontractors/logos/',
+        blank=True,
+        null=True,
+        verbose_name=_("Logo"),
+        help_text=_("Logo affiché sur les rapports PDF sous-traités")
+    )
+    header_text = models.TextField(
+        blank=True,
+        verbose_name=_("Entête du rapport"),
+        help_text=_("Texte d'entête affiché sur les rapports PDF (adresse complète, accréditations, etc.)")
+    )
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Laboratoire sous-traitant")
+        verbose_name_plural = _("Laboratoires sous-traitants")
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class SubcontractorPrice(models.Model):
+    """
+    Tarif d'un examen chez un laboratoire sous-traitant.
+    Remplace le prix standard LabTest.price lorsque l'ordre est sous-traité.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    subcontractor = models.ForeignKey(
+        SubcontractorLab,
+        on_delete=models.CASCADE,
+        related_name='prices',
+        verbose_name=_("Sous-traitant")
+    )
+    lab_test = models.ForeignKey(
+        LabTest,
+        on_delete=models.CASCADE,
+        related_name='subcontractor_prices',
+        verbose_name=_("Examen")
+    )
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Prix sous-traitance"),
+        help_text=_("Prix facturé au patient pour cet examen chez ce sous-traitant")
+    )
+    turnaround_days = models.IntegerField(
+        default=3,
+        verbose_name=_("Délai (jours)"),
+        help_text=_("Délai de rendu des résultats en jours ouvrables")
+    )
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Tarif sous-traitance")
+        verbose_name_plural = _("Tarifs sous-traitance")
+        unique_together = [['subcontractor', 'lab_test']]
+        ordering = ['lab_test__name']
+
+    def __str__(self):
+        return f"{self.lab_test.name} @ {self.subcontractor.name} — {self.price}"

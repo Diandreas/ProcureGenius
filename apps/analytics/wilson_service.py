@@ -193,11 +193,12 @@ def calculate_product_score(product):
     else:
         reliability_score = 0
 
-    # Stock criticality (0-30)
-    if product.stock_quantity <= 0:
+    # Stock criticality (0-30) — utilise total_stock (lots inclus)
+    current_stock = product.total_stock
+    if current_stock <= 0:
         critical_score = 30
     elif product.low_stock_threshold > 0:
-        ratio = product.stock_quantity / product.low_stock_threshold
+        ratio = current_stock / product.low_stock_threshold
         if ratio <= 0.5:
             critical_score = 30
         elif ratio <= 1.0:
@@ -230,12 +231,12 @@ def get_wilson_analysis(product):
         'product_id': str(product.id),
         'product_name': product.name,
         'product_reference': product.reference or '',
-        'current_stock': product.stock_quantity,
+        'current_stock': product.total_stock,
         'low_stock_threshold': product.low_stock_threshold,
         'cost_price': float(product.cost_price or 0),
         'eoq': eoq,
         'reorder_point': rop,
         'score': score,
-        'should_order': product.stock_quantity <= rop['reorder_point'],
+        'should_order': product.total_stock <= rop['reorder_point'],
         'recommended_order_qty': eoq['eoq'],
     }
