@@ -1423,198 +1423,125 @@ function AIChat() {
 
           {messages.length === 0 ? (
             <Fade in timeout={400}>
-              <Box sx={{ textAlign: 'center', mt: 2, maxWidth: 800, mx: 'auto' }}>
-                {/* Navigation IA rapide */}
-                <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center', gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<DocumentScanner />}
-                    onClick={() => navigate('/ai-chat/document-import')}
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Importer un document
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Assignment />}
-                    onClick={() => navigate('/ai-chat/import-reviews')}
-                    sx={{
-                      px: 3,
-                      py: 1.5,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Imports en attente
-                  </Button>
-                </Box>
-
+              <Box sx={{ textAlign: 'center', mt: { xs: 1, sm: 3 }, maxWidth: 800, mx: 'auto', px: { xs: 1, sm: 0 } }}>
                 {/* Mascotte */}
-                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                  <Mascot pose="excited" animation="wave" size={100} />
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+                  <Mascot pose="excited" animation="wave" size={80} />
                 </Box>
 
                 <Typography
                   variant="h5"
                   gutterBottom
-                  sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}
+                  sx={{
+                    fontWeight: 700,
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    mb: 0.5,
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                  }}
                 >
                   {t('aiChat:welcome.greeting')}
                 </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
-                  sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}
+                  sx={{ mb: 3, maxWidth: 450, mx: 'auto', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
                 >
                   {t('aiChat:welcome.description')}
                 </Typography>
 
-                {/* Widget d'action rapide qui change automatiquement */}
-                <Box sx={{ mt: 1, mb: 1 }}>
-                  {(() => {
-                    const allActions = QUICK_ACTIONS_CATEGORIES.flatMap(category =>
-                      category.actions.map(action => ({
-                        ...action,
-                        categoryColor: category.color,
-                        categoryIcon: category.icon,
-                        categoryName: category.label,
-                      }))
-                    );
-                    const currentAction = allActions[currentWidgetIndex];
-
-                    return currentAction ? (
-                      <Box
-                        onClick={() => handleQuickAction(currentAction)}
-                        sx={{
-                          cursor: 'pointer',
-                          bgcolor: alpha(currentAction.categoryColor, 0.08),
-                          border: `1px solid ${alpha(currentAction.categoryColor, 0.2)}`,
-                          borderRadius: 2,
-                          p: 1.5,
-                          mx: 1,
-                          transition: 'all 0.3s ease',
-                          opacity: widgetVisible ? 1 : 0,
-                          transform: widgetVisible ? 'translateY(0)' : 'translateY(-10px)',
-                          '&:hover': {
-                            bgcolor: alpha(currentAction.categoryColor, 0.12),
-                            borderColor: currentAction.categoryColor,
-                            transform: 'translateY(-2px)',
-                          },
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              bgcolor: alpha(currentAction.categoryColor, 0.15),
-                              color: currentAction.categoryColor,
-                            }}
-                          >
-                            {currentAction.icon}
-                          </Avatar>
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                              <Lightbulb sx={{ fontSize: 14, color: 'warning.main' }} />
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontWeight: 600,
-                                  fontSize: '0.8rem',
-                                  lineHeight: 1.2,
-                                  color: 'text.primary',
-                                }}
-                              >
-                                {currentAction.title}
-                              </Typography>
-                            </Box>
-                            <Typography
-                              variant="caption"
+                {/* Quick Actions Grid — Premium */}
+                <Grid container spacing={1.5} sx={{ maxWidth: 650, mx: 'auto', mb: 3 }}>
+                  {QUICK_ACTIONS_CATEGORIES.flatMap(category =>
+                    category.actions.map(action => (
+                      <Grid item xs={6} sm={4} key={action.id}>
+                        <Card
+                          onClick={() => handleQuickAction(action)}
+                          sx={{
+                            cursor: 'pointer',
+                            bgcolor: isDark ? alpha(theme.palette.common.white, 0.03) : alpha(category.color, 0.04),
+                            border: `1px solid ${alpha(category.color, isDark ? 0.15 : 0.12)}`,
+                            borderRadius: 3,
+                            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                            '&:hover': {
+                              bgcolor: alpha(category.color, isDark ? 0.12 : 0.08),
+                              borderColor: category.color,
+                              transform: 'translateY(-3px)',
+                              boxShadow: `0 8px 24px ${alpha(category.color, 0.2)}`,
+                            },
+                          }}
+                        >
+                          <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } }, textAlign: 'center' }}>
+                            <Avatar
                               sx={{
-                                color: currentAction.categoryColor,
-                                fontSize: '0.7rem',
-                                fontWeight: 500,
+                                width: { xs: 36, sm: 44 },
+                                height: { xs: 36, sm: 44 },
+                                bgcolor: alpha(category.color, 0.12),
+                                color: category.color,
+                                mx: 'auto',
+                                mb: 1,
                               }}
                             >
-                              {currentAction.categoryName}
+                              {action.icon}
+                            </Avatar>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 600,
+                                fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                                color: 'text.primary',
+                                lineHeight: 1.3,
+                                mb: 0.5,
+                              }}
+                            >
+                              {action.title}
                             </Typography>
-                          </Box>
-                          <Box sx={{ textAlign: 'right' }}>
                             <Typography
                               variant="caption"
                               sx={{
                                 color: 'text.secondary',
-                                fontSize: '0.65rem',
-                                display: 'block',
-                                mb: 0.5,
+                                fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                display: { xs: 'none', sm: 'block' },
                               }}
                             >
-                              Cliquez pour remplir
+                              {action.description}
                             </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: 'text.disabled',
-                                  fontSize: '0.6rem',
-                                }}
-                              >
-                                Auto dans 8s
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const allActions = QUICK_ACTIONS_CATEGORIES.flatMap(category => category.actions);
-                                  setWidgetVisible(false);
-                                  setTimeout(() => {
-                                    setCurrentWidgetIndex((prev) => (prev + 1) % allActions.length);
-                                    setWidgetVisible(true);
-                                  }, 150);
-                                }}
-                                sx={{
-                                  width: 20,
-                                  height: 20,
-                                  '&:hover': {
-                                    bgcolor: alpha(theme.palette.action.hover, 0.1),
-                                  },
-                                }}
-                              >
-                                <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                                  ⟳
-                                </Typography>
-                              </IconButton>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Box>
-                    ) : null;
-                  })()}
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))
+                  )}
+                </Grid>
 
-                  {/* Indicateur d'actions disponibles (4 points max) */}
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5, mt: 1 }}>
-                    {Array.from({ length: Math.min(4, QUICK_ACTIONS_CATEGORIES.flatMap(category => category.actions).length) }, (_, i) => (
-                      <Box
-                        key={i}
-                        sx={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          bgcolor: i === (currentWidgetIndex % 4)
-                            ? 'primary.main'
-                            : alpha(theme.palette.text.disabled, 0.3),
-                          transition: 'all 0.3s ease',
-                        }}
-                      />
-                    ))}
-                  </Box>
+                {/* Navigation rapide */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
+                  <Chip
+                    icon={<DocumentScanner sx={{ fontSize: 16 }} />}
+                    label="Importer un document"
+                    onClick={() => navigate('/ai-chat/document-import')}
+                    variant="outlined"
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                      transition: 'all 0.2s',
+                      '&:hover': { transform: 'translateY(-1px)' },
+                    }}
+                  />
+                  <Chip
+                    icon={<Assignment sx={{ fontSize: 16 }} />}
+                    label="Imports en attente"
+                    onClick={() => navigate('/ai-chat/import-reviews')}
+                    variant="outlined"
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                      transition: 'all 0.2s',
+                      '&:hover': { transform: 'translateY(-1px)' },
+                    }}
+                  />
                 </Box>
 
                 {/* Conversations Proactives */}
@@ -1682,11 +1609,16 @@ function AIChat() {
                       p: 1.5,
                       maxWidth: '75%',
                       bgcolor: msg.role === 'user'
-                        ? (isDark ? alpha(theme.palette.common.white, 0.08) : alpha(theme.palette.primary.main, 0.08))
-                        : 'background.paper',
-                      border: 'none',
-                      borderRadius: 3,
-                      boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+                        ? (isDark ? alpha('#6366f1', 0.15) : alpha('#6366f1', 0.08))
+                        : (isDark ? alpha(theme.palette.common.white, 0.04) : 'background.paper'),
+                      border: msg.role === 'user'
+                        ? `1px solid ${alpha('#6366f1', 0.2)}`
+                        : `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                      borderRadius: msg.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                      boxShadow: isDark
+                        ? '0 2px 12px rgba(0,0,0,0.2)'
+                        : '0 2px 12px rgba(0,0,0,0.06)',
+                      backdropFilter: 'blur(10px)',
                     }}
                   >
                     <MessageContent
@@ -1775,10 +1707,48 @@ function AIChat() {
           )}
         </Box>
 
+        {/* Suggestion chips above input */}
+        {messages.length > 0 && (
+          <Box sx={{ maxWidth: 800, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
+            <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' } }}>
+              {[
+                { label: '📊 Stats', prompt: 'Montre-moi les statistiques principales' },
+                { label: '📝 Facture', prompt: 'Créer une nouvelle facture' },
+                { label: '📦 Stock', prompt: 'Quels produits sont en rupture de stock ?' },
+                { label: '💡 Optimiser', prompt: 'Quelles optimisations me suggères-tu ?' },
+              ].map((chip, idx) => (
+                <Chip
+                  key={idx}
+                  label={chip.label}
+                  size="small"
+                  onClick={() => { setMessage(chip.prompt); }}
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    borderRadius: 2,
+                    bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : alpha('#6366f1', 0.06),
+                    border: `1px solid ${alpha('#6366f1', 0.12)}`,
+                    color: 'text.secondary',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      bgcolor: alpha('#6366f1', 0.12),
+                      color: '#6366f1',
+                      borderColor: alpha('#6366f1', 0.3),
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
+
         {/* Zone de saisie moderne et flottante - Design Premium Mobile-First */}
         <Box
           sx={{
             p: { xs: 1.5, sm: 3 },
+            pt: { xs: 0.5, sm: 1 },
             pb: { xs: 2, sm: 4 },
             width: '100%',
           }}
@@ -1794,11 +1764,14 @@ function AIChat() {
               bgcolor: theme.palette.background.paper,
               borderRadius: { xs: '20px', sm: '24px' },
               p: { xs: 1, sm: 1.5 },
-              border: 'none',
-              boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'medium'),
+              border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              boxShadow: isDark
+                ? '0 4px 24px rgba(0,0,0,0.3)'
+                : '0 4px 24px rgba(0,0,0,0.08)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:focus-within': {
-                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}, ${getNeumorphicShadow(isDark ? 'dark' : 'light', 'medium')}`,
+                borderColor: alpha('#6366f1', 0.4),
+                boxShadow: `0 0 0 3px ${alpha('#6366f1', 0.12)}, 0 4px 24px rgba(0,0,0,0.1)`,
                 transform: 'translateY(-1px)'
               }
             }}

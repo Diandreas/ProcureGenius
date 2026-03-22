@@ -52,6 +52,7 @@ import {
   Download,
   Receipt,
   AutoAwesome,
+  AttachMoney,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -309,31 +310,32 @@ function Products() {
         >
         <CardContent sx={{ p: 2 }}>
           {/* Header */}
-          <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+          <Box sx={{ display: 'flex', gap: isMobile ? 1 : 1.5, mb: isMobile ? 1 : 1.5 }}>
             <Avatar
               src={product.image}
               variant="rounded"
               sx={{
-                width: isMobile ? 48 : 56,
-                height: isMobile ? 48 : 56,
+                width: isMobile ? 36 : 56,
+                height: isMobile ? 36 : 56,
                 bgcolor: typeConfig.color,
                 borderRadius: 1,
               }}
             >
-              <TypeIcon />
+              <TypeIcon sx={{ fontSize: isMobile ? 20 : 28 }} />
             </Avatar>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 variant="subtitle2"
                 sx={{
                   fontWeight: 600,
-                  mb: 0.5,
+                  mb: 0.25,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
-                  fontSize: isMobile ? '0.875rem' : '0.95rem',
+                  fontSize: isMobile ? '0.75rem' : '0.95rem',
+                  lineHeight: 1.2
                 }}
               >
                 {product.name}
@@ -341,35 +343,63 @@ function Products() {
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ fontSize: '0.75rem' }}
+                sx={{ fontSize: isMobile ? '0.65rem' : '0.75rem' }}
               >
                 {product.sku || product.reference}
               </Typography>
             </Box>
           </Box>
 
-          {/* Prix */}
+          {/* Prix & Valeur */}
           <Box
             sx={{
               bgcolor: 'primary.50',
               borderRadius: 1,
-              p: 1,
-              mb: 1.5,
+              p: isMobile ? 0.75 : 1,
+              mb: isMobile ? 1 : 1.5,
               textAlign: 'center',
+              position: 'relative'
             }}
           >
             <Typography
-              variant="h6"
+              variant="subtitle1"
               color="primary"
-              sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
+              sx={{ fontWeight: 700, fontSize: isMobile ? '0.9rem' : '1.25rem' }}
             >
               {formatCurrency(product.price || product.unit_price)}
             </Typography>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, alignItems: 'center', mt: -0.5 }}>
+              {product.product_type === 'physical' && product.stock_quantity > 0 && (
+                <Typography 
+                  variant="caption" 
+                  color="text.secondary" 
+                  sx={{ fontSize: isMobile ? '0.55rem' : '0.7rem' }}
+                >
+                  Val: {formatCurrency((product.price || product.unit_price) * product.stock_quantity)}
+                </Typography>
+              )}
+              {product.margin_percent !== undefined && product.margin_percent !== null && (
+                <Chip 
+                  label={`${product.margin_percent}%`}
+                  size="small"
+                  color="success"
+                  variant="soft"
+                  sx={{ 
+                    height: 14, 
+                    fontSize: '0.6rem',
+                    bgcolor: alpha(theme.palette.success.main, 0.1),
+                    color: 'success.dark',
+                    fontWeight: 700
+                  }}
+                />
+              )}
+            </Box>
           </Box>
 
           {/* Infos */}
-          <Stack spacing={0.75}>
-            {product.supplier_name && (
+          <Stack spacing={0.5}>
+            {!isMobile && product.supplier_name && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
                 <Typography
@@ -389,58 +419,49 @@ function Products() {
 
             {product.warehouse_code && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Warehouse sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                <Warehouse sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
+                <Typography variant="body2" sx={{ fontSize: isMobile ? '0.7rem' : '0.8rem' }}>
                   {product.warehouse_code}
-                </Typography>
-              </Box>
-            )}
-
-            {product.category && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Category sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                  {product.category.name}
                 </Typography>
               </Box>
             )}
 
             {product.product_type === 'physical' ? (
               product.stock_quantity !== null && product.stock_quantity !== undefined && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <Inventory sx={{ fontSize: 16, color: 'text.secondary' }} />
-                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                    Stock: {product.stock_quantity}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                  <Inventory sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
+                  <Typography variant="body2" sx={{ fontSize: isMobile ? '0.7rem' : '0.8rem', fontWeight: 600 }}>
+                    {product.stock_quantity}
                   </Typography>
                   {product.stock_quantity === 0 && (
                     <Chip
-                      label={t('products:stockStatus.outOfStock')}
+                      label={isMobile ? "0" : t('products:stockStatus.outOfStock')}
                       size="small"
                       color="error"
-                      sx={{ fontSize: '0.65rem', height: 18 }}
+                      sx={{ fontSize: '0.6rem', height: 16 }}
                     />
                   )}
                   {product.stock_quantity > 0 && product.stock_quantity <= 10 && (
                     <Chip
-                      label={t('products:stockStatus.low')}
+                      label={isMobile ? "!" : t('products:stockStatus.low')}
                       size="small"
                       color="warning"
-                      sx={{ fontSize: '0.65rem', height: 18 }}
+                      sx={{ fontSize: '0.6rem', height: 16 }}
                     />
                   )}
                 </Box>
               )
             ) : (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <TypeIcon sx={{ fontSize: 16, color: typeConfig.color }} />
+                <TypeIcon sx={{ fontSize: isMobile ? 14 : 16, color: typeConfig.color }} />
                 <Chip
                   label={typeConfig.label}
                   size="small"
                   sx={{
                     backgroundColor: typeConfig.color,
                     color: 'white',
-                    fontSize: '0.7rem',
-                    height: 20
+                    fontSize: isMobile ? '0.6rem' : '0.7rem',
+                    height: isMobile ? 18 : 20
                   }}
                 />
               </Box>
@@ -448,41 +469,42 @@ function Products() {
           </Stack>
 
           {/* Footer */}
-          <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
             <Chip
-              label={product.is_active ? t('products:status.active') : t('products:status.inactive')}
+              label={product.is_active ? (isMobile ? "✓" : t('products:status.active')) : (isMobile ? "✗" : t('products:status.inactive'))}
               size="small"
               color={product.is_active ? 'success' : 'default'}
-              sx={{ fontSize: '0.7rem', height: 20 }}
+              sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
             />
             
-            {/* AI Insights Chips */}
-            {(product.ai_insights || []).map((insight, idx) => (
+            {/* Sales Stat */}
+            {product.total_sales_amount > 0 && (
+              <Chip
+                icon={<AttachMoney sx={{ fontSize: '10px !important' }} />}
+                label={isMobile ? formatCurrency(product.total_sales_amount).slice(0, 5) : `${t('common:labels.sales', 'Ventes')}: ${formatCurrency(product.total_sales_amount)}`}
+                size="small"
+                variant="outlined"
+                sx={{ fontSize: '0.6rem', height: isMobile ? 16 : 20, color: 'primary.main', borderColor: alpha(theme.palette.primary.main, 0.3) }}
+              />
+            )}
+
+            {/* AI Insights Chips - Reduits sur mobile */}
+            {(product.ai_insights || []).slice(0, isMobile ? 1 : undefined).map((insight, idx) => (
               <Chip
                 key={idx}
-                icon={<AutoAwesome sx={{ fontSize: '12px !important' }} />}
+                icon={<AutoAwesome sx={{ fontSize: '10px !important' }} />}
                 label={insight.label}
                 size="small"
                 color={insight.type === 'error' ? 'error' : (insight.type === 'warning' ? 'warning' : 'success')}
                 variant="outlined"
                 sx={{ 
-                  fontSize: '0.65rem', 
-                  height: 20,
+                  fontSize: '0.6rem', 
+                  height: isMobile ? 16 : 20,
                   borderColor: theme => alpha(theme.palette[insight.type === 'error' ? 'error' : (insight.type === 'warning' ? 'warning' : 'success')].main, 0.5),
                   bgcolor: theme => alpha(theme.palette[insight.type === 'error' ? 'error' : (insight.type === 'warning' ? 'warning' : 'success')].main, 0.05),
                 }}
               />
             ))}
-
-            {product.total_invoices > 0 && !product.ai_insights?.length && (
-              <Chip
-                icon={<TrendingUp sx={{ fontSize: 14 }} />}
-                label={product.total_invoices}
-                size="small"
-                variant="outlined"
-                sx={{ fontSize: '0.7rem', height: 20 }}
-              />
-            )}
           </Box>
         </CardContent>
       </Card>
@@ -1026,7 +1048,7 @@ function Products() {
         <Grid container spacing={isMobile ? 2 : 3}>
           <AnimatePresence mode="popLayout">
             {filteredProducts.map((product, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
+              <Grid item xs={6} sm={6} md={4} lg={3} key={product.id}>
                 <ProductCard product={product} index={index} />
               </Grid>
             ))}

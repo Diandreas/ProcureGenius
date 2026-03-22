@@ -1,0 +1,113 @@
+{
+  "nav": {
+    "login": "Login",
+    "freeTrial": "Free Trial"
+  },
+  "hero": {
+    "badge": "Pro Access free until April 30",
+    "titleStart": "Artificial Intelligence powering your ",
+    "words": ["business", "enterprise", "startup", "growth"],
+    "subtitle": "Centralize your purchases, invoices, and inventory. Let Procura's AI automate repetitive tasks and provide you with proactive strategic insights.",
+    "ctaPrimary": "Create my account",
+    "ctaSecondary": "See AI in action",
+    "socialProof": "Trusted by +500 professionals"
+  },
+  "stats": {
+    "companies": "Active companies",
+    "documents": "Documents processed",
+    "uptime": "Uptime",
+    "timeSaved": "Saved per week"
+  },
+  "platform": {
+    "badge": "The Complete Platform",
+    "titleStart": "Manage everything, ",
+    "titleHighlight": "unify",
+    "titleEnd": " everything",
+    "subtitle": "Replace your 5 current tools with a single platform. Procura intuitively connects your purchases, sales, and business intelligence.",
+    "features": {
+      "ai": {
+        "title": "AI Copilot",
+        "desc": "Generate reports, ask questions about your data, and automate your workflows by chatting."
+      },
+      "invoices": {
+        "title": "Smart Invoicing",
+        "desc": "1-click creation. Automatic reconciliation with purchase orders and payments."
+      },
+      "ocr": {
+        "title": "OCR Extraction",
+        "desc": "Never manually enter an invoice again. Our AI reads and extracts data from your PDFs instantly."
+      },
+      "inventory": {
+        "title": "Inventory Management",
+        "desc": "Real-time multi-warehouse tracking, threshold alerts, and automatic valuation."
+      },
+      "purchasing": {
+        "title": "Purchasing & Expenses",
+        "desc": "Interactive purchase orders, approval workflows, and budget control."
+      },
+      "suppliers": {
+        "title": "Supplier Portal",
+        "desc": "Collaborate directly with your partners. RFQs and document centralization."
+      },
+      "analytics": {
+        "title": "Business Intelligence",
+        "desc": "Dynamic dashboards. View your margins, expenses, and performance at a glance."
+      },
+      "sync": {
+        "title": "Synchronized",
+        "desc": "Your quotes become orders, which become invoices, which update your stock. Automatically."
+      },
+      "multi": {
+        "title": "Multi-Currency",
+        "desc": "Manage international operations with real-time conversion and exchange rate management."
+      }
+    }
+  },
+  "pricing": {
+    "badge": "Transparent pricing",
+    "title": "A profitable investment",
+    "subtitle": "Choose the right plan for your team's size and ambitions.",
+    "freeUntil": "Free until April 30",
+    "cta": "Start for free",
+    "ctaContact": "Contact us",
+    "plans": {
+      "essential": {
+        "name": "Essential",
+        "price": "0$",
+        "desc": "For freelancers who want to get organized.",
+        "f1": "1 User",
+        "f2": "50 Invoices / month",
+        "f3": "100 Products in stock",
+        "f4": "Email support"
+      },
+      "business": {
+        "name": "Business AI",
+        "popular": "Most Popular",
+        "price": "$49",
+        "desc": "For SMBs who want to accelerate with AI.",
+        "f1": "5 Users included",
+        "f2": "Unlimited Invoices and Purchases",
+        "f3": "Full AI Assistant",
+        "f4": "Unlimited OCR Extraction",
+        "f5": "Stockout Prediction",
+        "f6": "24/7 Priority Support"
+      },
+      "enterprise": {
+        "name": "Custom",
+        "price": "Quote",
+        "desc": "For large organizations with complex needs.",
+        "f1": "Unlimited Users",
+        "f2": "Private Server Deployment",
+        "f3": "AI trained on your data",
+        "f4": "API & ERP Integration",
+        "f5": "Dedicated Account Manager"
+      }
+    }
+  },
+  "footer": {
+    "title": "The future of your management starts here.",
+    "subtitle": "Join hundreds of companies that have already taken the leap.",
+    "cta": "Create a free account",
+    "rights": "© 2026 Procura. All rights reserved."
+  }
+}

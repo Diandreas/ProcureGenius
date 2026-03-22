@@ -221,169 +221,81 @@ function SupplierDetail() {
       bgcolor: 'background.default',
       minHeight: '100vh'
     }}>
-      {/* Header - Caché sur mobile (géré par top navbar) */}
-      <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+      {/* Header - Simple back button on desktop */}
+      <Box sx={{ mb: isMobile ? 1 : 2, display: { xs: 'none', md: 'block' } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <IconButton onClick={() => navigate('/suppliers')} size="medium">
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" fontWeight="bold" sx={{ flex: 1 }}>
+          <Typography variant="h4" fontWeight="bold">
             {supplier.name}
           </Typography>
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              color="success"
-              startIcon={<PictureAsPdf />}
-              onClick={() => setPdfDialogOpen(true)}
-            >
-              {t('suppliers:actions.downloadPdf', 'Rapport PDF')}
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<Edit />}
-              onClick={() => navigate(`/suppliers/${id}/edit`)}
-            >
-              {t('suppliers:actions.edit')}
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<Delete />}
-              onClick={handleDelete}
-            >
-              {t('suppliers:actions.delete')}
-            </Button>
-          </Stack>
         </Box>
       </Box>
 
-      {/* Actions Mobile - Style mobile app compact */}
-      <Box sx={{
-        mb: 1.5,
-        display: { xs: 'flex', md: 'none' },
-        justifyContent: 'flex-end',
-        gap: 0.5,
-        px: 2,
-        py: 1
-      }}>
-        <Tooltip title={t('suppliers:tooltips.editSupplier')}>
-          <IconButton
-            onClick={() => navigate(`/suppliers/${id}/edit`)}
-            size="small"
-            sx={{
-              bgcolor: 'primary.50',
-              color: 'primary.main',
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              '&:hover': {
-                bgcolor: 'primary.main',
-                color: 'white',
-                transform: 'scale(1.05)',
-              },
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}
-          >
-            <Edit sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={t('suppliers:tooltips.deleteSupplier')}>
-          <IconButton
-            onClick={handleDelete}
-            size="small"
-            sx={{
-              bgcolor: 'error.50',
-              color: 'error.main',
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              '&:hover': {
-                bgcolor: 'error.main',
-                color: 'white',
-                transform: 'scale(1.05)',
-              },
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}
-          >
-            <Delete sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
 
-      {/* Quick Actions */}
-      <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-          <Typography variant="h6" fontWeight="600" gutterBottom sx={{ mb: 2 }}>
-            {t('suppliers:actions.quickActions')}
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => navigate(`/purchase-orders/new?supplier=${id}`)}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  py: 1.5,
-                  bgcolor: 'primary.main',
-                  '&:hover': {
-                    bgcolor: 'primary.dark',
-                  }
-                }}
-              >
-                {t('suppliers:actions.newPurchaseOrder')}
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<Inventory2 />}
-                onClick={() => navigate(`/products/new?supplier=${id}`)}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  py: 1.5,
-                  bgcolor: 'success.main',
-                  '&:hover': {
-                    bgcolor: 'success.dark',
-                  }
-                }}
-              >
-                {t('suppliers:actions.addProducts')}
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<Assessment />}
-                onClick={() => handleGenerateReport('pdf')}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  py: 1.5,
-                  bgcolor: 'warning.main',
-                  color: 'white',
-                  '&:hover': {
-                    bgcolor: 'warning.dark',
-                  }
-                }}
-              >
-                {t('suppliers:actions.generateReport')}
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+      {/* Quick Actions - More compact */}
+      <Box sx={{ mb: 2, px: isMobile ? 2 : 0 }}>
+        <Stack direction={isMobile ? "column" : "row"} spacing={1}>
+          <Button
+            fullWidth
+            variant="contained"
+            size="small"
+            startIcon={<Add />}
+            onClick={() => navigate(`/purchase-orders/new?supplier=${id}`)}
+            sx={{
+              borderRadius: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              py: 1,
+              bgcolor: 'primary.main',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: 'primary.dark', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
+            }}
+          >
+            {t('suppliers:actions.newPurchaseOrder')}
+          </Button>
+          <Button
+            fullWidth
+            variant="contained"
+            size="small"
+            startIcon={<Inventory2 />}
+            onClick={() => navigate(`/products/new?supplier=${id}`)}
+            sx={{
+              borderRadius: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              py: 1,
+              bgcolor: 'success.main',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: 'success.dark', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
+            }}
+          >
+            {t('suppliers:actions.addProducts')}
+          </Button>
+          {!isMobile && (
+            <Button
+              fullWidth
+              variant="contained"
+              size="small"
+              startIcon={<Assessment />}
+              onClick={() => handleGenerateReport('pdf')}
+              sx={{
+                borderRadius: 1.5,
+                textTransform: 'none',
+                fontWeight: 600,
+                py: 1,
+                bgcolor: 'warning.main',
+                color: 'white',
+                boxShadow: 'none',
+                '&:hover': { bgcolor: 'warning.dark', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
+              }}
+            >
+              {t('suppliers:actions.generateReport')}
+            </Button>
+          )}
+        </Stack>
+      </Box>
 
       {/* Tabs - Style mobile app */}
       <Tabs
@@ -439,37 +351,33 @@ function SupplierDetail() {
             {/* Card principale - Style mobile app */}
             <Grid item xs={12} md={8}>
               <Card sx={{
-                borderRadius: isMobile ? 3 : 2.5,
-                mb: isMobile ? 2 : 3,
+                borderRadius: isMobile ? 3 : 1.5,
+                mb: isMobile ? 1.5 : 2,
                 background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-                boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.12)' : '0 4px 20px rgba(0,0,0,0.08)',
+                boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : '0 2px 12px rgba(0,0,0,0.06)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid',
-                borderColor: theme => alpha(theme.palette.divider, 0.1),
+                borderColor: theme => alpha(theme.palette.divider, 0.08),
                 position: 'relative',
                 overflow: 'hidden',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  transform: isMobile ? 'translateY(-2px)' : 'translateY(-4px)',
-                  boxShadow: isMobile ? '0 12px 40px rgba(0,0,0,0.15)' : '0 8px 30px rgba(0,0,0,0.12)'
-                },
                 '&::before': {
                   content: '""',
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: 4,
+                  height: 3,
                   background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  borderRadius: '2.5px 2.5px 0 0'
+                  borderRadius: '1.5px 1.5px 0 0'
                 }
               }}>
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+                <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
                   <Avatar
                     sx={{
-                      width: isMobile ? 80 : 100,
-                      height: isMobile ? 80 : 100,
+                      width: isMobile ? 60 : 80,
+                      height: isMobile ? 60 : 80,
                       bgcolor: 'primary.main',
                       borderRadius: 1,
                       fontSize: isMobile ? '2rem' : '2.5rem',
@@ -478,9 +386,58 @@ function SupplierDetail() {
                     {supplier.name?.charAt(0)?.toUpperCase() || '?'}
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" gutterBottom>
-                      {supplier.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+                      <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" sx={{ flex: 1 }}>
+                        {supplier.name}
+                      </Typography>
+                      <Stack direction="row" spacing={0.5}>
+                        <Tooltip title={t('suppliers:actions.downloadPdf', 'Rapport PDF')}>
+                          <IconButton
+                            onClick={() => setPdfDialogOpen(true)}
+                            size="small"
+                            sx={{
+                              p: 0.75,
+                              color: 'success.main',
+                              bgcolor: theme => alpha(theme.palette.success.main, 0.1),
+                              borderRadius: 1.5,
+                              '&:hover': { bgcolor: 'success.main', color: 'white' }
+                            }}
+                          >
+                            <PictureAsPdf sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={t('suppliers:actions.edit')}>
+                          <IconButton
+                            onClick={() => navigate(`/suppliers/${id}/edit`)}
+                            size="small"
+                            sx={{
+                              p: 0.75,
+                              color: 'primary.main',
+                              bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
+                              borderRadius: 1.5,
+                              '&:hover': { bgcolor: 'primary.main', color: 'white' }
+                            }}
+                          >
+                            <Edit sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={t('suppliers:actions.delete')}>
+                          <IconButton
+                            onClick={handleDelete}
+                            size="small"
+                            sx={{
+                              p: 0.75,
+                              color: 'error.main',
+                              bgcolor: theme => alpha(theme.palette.error.main, 0.1),
+                              borderRadius: 1.5,
+                              '&:hover': { bgcolor: 'error.main', color: 'white' }
+                            }}
+                          >
+                            <Delete sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </Box>
                     {parseRating(supplier.rating) > 0 && (
                       <Box sx={{ mb: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
@@ -535,10 +492,10 @@ function SupplierDetail() {
                   </Box>
                 </Box>
 
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 1.5 }} />
 
                 {/* Informations de contact */}
-                <Grid container spacing={isMobile ? 1.5 : 2.5}>
+                <Grid container spacing={1.5}>
                   {supplier.contact_person && (
                     <Grid item xs={12} sm={6}>
                       <Box
@@ -551,12 +508,7 @@ function SupplierDetail() {
                           bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
                           border: '1px solid',
                           borderColor: theme => alpha(theme.palette.primary.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.primary.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
-                          }
+                          transition: 'all 0.2s ease'
                         }}
                       >
                         <Box

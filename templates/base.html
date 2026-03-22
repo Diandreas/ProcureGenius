@@ -449,19 +449,7 @@
                 });
             });
 
-            // Enhanced search with debouncing
-            const searchInputs = document.querySelectorAll('input[type="search"], input[name*="search"]');
-            searchInputs.forEach(input => {
-                let timeoutId;
-                input.addEventListener('input', function () {
-                    clearTimeout(timeoutId);
-                    timeoutId = setTimeout(() => {
-                        // Trigger search
-                        console.log('Searching for:', this.value);
-                        // Add your search logic here
-                    }, 300);
-                });
-            });
+
 
             // Progressive Web App features
             if ('serviceWorker' in navigator) {
@@ -554,6 +542,8 @@
             }).format(amount);
         };
     </script>
+
+    <script src="{% static 'js/search_enhancement.js' %}"></script>
 
     {% block extra_js %}{% endblock %}
 </body>

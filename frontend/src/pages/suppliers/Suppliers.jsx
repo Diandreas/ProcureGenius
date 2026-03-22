@@ -293,11 +293,11 @@ function Suppliers() {
           <motion.div layoutId={`supplier-avatar-${supplier.id}`}>
             <Avatar
               sx={{
-                width: isMobile ? 48 : 56,
-                height: isMobile ? 48 : 56,
+                width: isMobile ? 36 : 56,
+                height: isMobile ? 36 : 56,
                 bgcolor: 'primary.main',
                 borderRadius: 2,
-                fontSize: isMobile ? '1.2rem' : '1.5rem',
+                fontSize: isMobile ? '1rem' : '1.5rem',
                 fontWeight: 'bold',
                 boxShadow: 2,
               }}
@@ -308,46 +308,49 @@ function Suppliers() {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <motion.div layoutId={`supplier-name-${supplier.id}`}>
               <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 600,
-                mb: 0.5,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                fontSize: isMobile ? '0.875rem' : '0.95rem',
-              }}
-            >
-              {supplier.name}
-            </Typography>
+                variant="subtitle2"
+                sx={{
+                  fontWeight: 600,
+                  mb: 0.25,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  fontSize: isMobile ? '0.75rem' : '0.95rem',
+                  lineHeight: 1.2
+                }}
+              >
+                {supplier.name}
+              </Typography>
             </motion.div>
             {parseRating(supplier.rating) > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
                 <Rating
                   value={parseRating(supplier.rating)}
                   readOnly
                   size="small"
-                  sx={{ fontSize: '0.9rem' }}
+                  sx={{ fontSize: isMobile ? '0.75rem' : '0.9rem' }}
                 />
-                <Typography variant="caption" color="text.secondary">
-                  ({parseRating(supplier.rating).toFixed(1)})
-                </Typography>
+                {!isMobile && (
+                  <Typography variant="caption" color="text.secondary">
+                    ({parseRating(supplier.rating).toFixed(1)})
+                  </Typography>
+                )}
               </Box>
             )}
           </Box>
         </Box>
 
         {/* Infos de contact */}
-        <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+        <Stack spacing={0.5} sx={{ mb: 1 }}>
           {supplier.contact_person && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Business sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
               <Typography
                 variant="body2"
                 sx={{
-                  fontSize: '0.8rem',
+                  fontSize: isMobile ? '0.65rem' : '0.8rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -359,36 +362,18 @@ function Suppliers() {
           )}
 
           {supplier.email && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Email sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Email sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
               <Typography
                 variant="body2"
                 sx={{
-                  fontSize: '0.8rem',
+                  fontSize: isMobile ? '0.65rem' : '0.8rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}
               >
                 {supplier.email}
-              </Typography>
-            </Box>
-          )}
-
-          {supplier.phone && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Phone sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {supplier.phone}
-              </Typography>
-            </Box>
-          )}
-
-          {(supplier.city || supplier.province) && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {[supplier.city, supplier.province].filter(Boolean).join(', ')}
               </Typography>
             </Box>
           )}
@@ -400,42 +385,15 @@ function Suppliers() {
             label={getStatusLabel(supplier.status)}
             size="small"
             color={getStatusColor(supplier.status)}
-            sx={{ fontSize: '0.7rem', height: 20 }}
+            sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
           />
           {supplier.is_local && (
             <Chip
-              label="Local"
+              label={isMobile ? "Loc" : "Local"}
               size="small"
               color="success"
               variant="outlined"
-              sx={{ fontSize: '0.65rem', height: 18 }}
-            />
-          )}
-          {supplier.is_minority_owned && (
-            <Chip
-              label={t('suppliers:diversity.minority')}
-              size="small"
-              color="info"
-              variant="outlined"
-              sx={{ fontSize: '0.65rem', height: 18 }}
-            />
-          )}
-          {supplier.is_woman_owned && (
-            <Chip
-              label={t('suppliers:diversity.woman')}
-              size="small"
-              color="secondary"
-              variant="outlined"
-              sx={{ fontSize: '0.65rem', height: 18 }}
-            />
-          )}
-          {supplier.is_indigenous && (
-            <Chip
-              label={t('suppliers:diversity.indigenous')}
-              size="small"
-              color="warning"
-              variant="outlined"
-              sx={{ fontSize: '0.65rem', height: 18 }}
+              sx={{ fontSize: isMobile ? '0.55rem' : '0.65rem', height: isMobile ? 16 : 18 }}
             />
           )}
         </Box>
@@ -1014,10 +972,10 @@ function Suppliers() {
           onAction={() => navigate('/suppliers/new')}
         />
       ) : (
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={isMobile ? 1.5 : 3}>
           <AnimatePresence mode="popLayout">
             {filteredSuppliers.map((supplier, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={supplier.id}>
+              <Grid item xs={6} sm={6} md={4} lg={3} key={supplier.id}>
                 <SupplierCard supplier={supplier} index={index} />
               </Grid>
             ))}

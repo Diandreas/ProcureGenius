@@ -60,6 +60,7 @@ import Help from './pages/Help';
 import FAQ from './pages/FAQ';
 import KeyboardShortcuts from './pages/KeyboardShortcuts';
 import Support from './pages/Support';
+import Landing from './pages/Landing';
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
@@ -718,6 +719,7 @@ function App() {
                       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                       <Routes>
                         {/* Public Routes */}
+                        <Route path="/landing" element={<Landing />} />
                         <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
                         <Route path="/pricing" element={<Pricing />} />
 

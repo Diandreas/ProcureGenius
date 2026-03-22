@@ -215,136 +215,18 @@ function ProductDetail() {
       bgcolor: 'background.default',
       minHeight: '100vh'
     }}>
-      {/* Header - Caché sur mobile (géré par top navbar) */}
+      {/* Header - Simple back button on desktop */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <IconButton onClick={() => navigate('/products')} size="medium">
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" fontWeight="bold" sx={{ flex: 1 }}>
+          <Typography variant="h4" fontWeight="bold">
             {product.name}
           </Typography>
-          <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
-            <IconButton
-              onClick={() => setPdfDialogOpen(true)}
-              sx={{
-                color: 'success.main',
-                '&:hover': {
-                  bgcolor: 'success.light',
-                  color: 'white',
-                }
-              }}
-            >
-              <PictureAsPdf />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('products:tooltips.editProduct')}>
-            <IconButton
-              onClick={() => navigate(`/products/${id}/edit`)}
-              sx={{
-                color: 'primary.main',
-                '&:hover': {
-                  bgcolor: 'primary.light',
-                  color: 'white',
-                }
-              }}
-            >
-              <Edit />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('products:tooltips.deleteProduct')}>
-            <IconButton
-              onClick={handleDelete}
-              sx={{
-                color: 'error.main',
-                '&:hover': {
-                  bgcolor: 'error.light',
-                  color: 'white',
-                }
-              }}
-            >
-              <Delete />
-            </IconButton>
-          </Tooltip>
         </Box>
       </Box>
 
-      {/* Actions Mobile - Style app mobile compact */}
-      <Box sx={{
-        mb: 1.5,
-        display: { xs: 'flex', md: 'none' },
-        justifyContent: 'flex-end',
-        gap: 0.5,
-        px: 2,
-        py: 1
-      }}>
-          <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
-            <IconButton
-              onClick={() => setPdfDialogOpen(true)}
-              size="small"
-              sx={{
-                bgcolor: theme => alpha(theme.palette.success.main, 0.1),
-                color: 'success.main',
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                '&:hover': {
-                  bgcolor: 'success.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease',
-                boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
-              }}
-            >
-              <PictureAsPdf sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('products:tooltips.editProduct')}>
-            <IconButton
-              onClick={() => navigate(`/products/${id}/edit`)}
-              size="small"
-              sx={{
-                bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
-                color: 'primary.main',
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease',
-                boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
-              }}
-            >
-              <Edit sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t('products:tooltips.deleteProduct')}>
-            <IconButton
-              onClick={handleDelete}
-              size="small"
-              sx={{
-                bgcolor: theme => alpha(theme.palette.error.main, 0.1),
-                color: 'error.main',
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                '&:hover': {
-                  bgcolor: 'error.main',
-                  color: 'white',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s ease',
-                boxShadow: theme => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.1)}`
-              }}
-            >
-              <Delete sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-      </Box>
 
       {/* Tabs - Style mobile app */}
       <Tabs
@@ -468,17 +350,66 @@ function ProductDetail() {
                     <TypeIcon sx={{ fontSize: isMobile ? 32 : 48, color: 'white' }} />
                   </Avatar>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      variant={isMobile ? 'h6' : 'h5'}
-                      fontWeight="bold"
-                      gutterBottom
-                      sx={{
-                        fontSize: isMobile ? '1.125rem' : undefined,
-                        lineHeight: isMobile ? 1.3 : undefined
-                      }}
-                    >
-                      {product.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+                      <Typography
+                        variant={isMobile ? 'h6' : 'h5'}
+                        fontWeight="bold"
+                        sx={{
+                          fontSize: isMobile ? '1.125rem' : undefined,
+                          lineHeight: isMobile ? 1.3 : undefined,
+                          flex: 1
+                        }}
+                      >
+                        {product.name}
+                      </Typography>
+                      <Stack direction="row" spacing={0.5}>
+                        <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
+                          <IconButton
+                            onClick={() => setPdfDialogOpen(true)}
+                            size="small"
+                            sx={{
+                              p: 0.75,
+                              color: 'success.main',
+                              bgcolor: theme => alpha(theme.palette.success.main, 0.1),
+                              borderRadius: 1.5,
+                              '&:hover': { bgcolor: 'success.main', color: 'white' }
+                            }}
+                          >
+                            <PictureAsPdf sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={t('products:tooltips.editProduct')}>
+                          <IconButton
+                            onClick={() => navigate(`/products/${id}/edit`)}
+                            size="small"
+                            sx={{
+                              p: 0.75,
+                              color: 'primary.main',
+                              bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
+                              borderRadius: 1.5,
+                              '&:hover': { bgcolor: 'primary.main', color: 'white' }
+                            }}
+                          >
+                            <Edit sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={t('products:tooltips.deleteProduct')}>
+                          <IconButton
+                            onClick={handleDelete}
+                            size="small"
+                            sx={{
+                              p: 0.75,
+                              color: 'error.main',
+                              bgcolor: theme => alpha(theme.palette.error.main, 0.1),
+                              borderRadius: 1.5,
+                              '&:hover': { bgcolor: 'error.main', color: 'white' }
+                            }}
+                          >
+                            <Delete sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </Box>
                     <Typography
                       variant="body2"
                       color="text.secondary"

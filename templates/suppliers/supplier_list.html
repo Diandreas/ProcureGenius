@@ -331,18 +331,6 @@
                 this.style.transform = 'translateY(0)';
             });
         });
-
-        // Auto-submit du formulaire de recherche avec délai
-        const searchInput = document.querySelector('input[name="search"]');
-        if (searchInput) {
-            let timeout;
-            searchInput.addEventListener('input', function () {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    this.form.submit();
-                }, 1000);
-            });
-        }
     });
 </script>
 {% endblock %}

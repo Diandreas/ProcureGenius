@@ -258,11 +258,11 @@ function Clients() {
           <motion.div layoutId={`client-avatar-${client.id}`}>
             <Avatar
               sx={{
-                width: isMobile ? 48 : 56,
-                height: isMobile ? 48 : 56,
+                width: isMobile ? 36 : 56,
+                height: isMobile ? 36 : 56,
                 bgcolor: 'primary.main',
                 borderRadius: 2,
-                fontSize: isMobile ? '1.2rem' : '1.5rem',
+                fontSize: isMobile ? '1rem' : '1.5rem',
                 fontWeight: 'bold',
                 boxShadow: 2,
               }}
@@ -276,13 +276,14 @@ function Clients() {
                 variant="subtitle2"
                 sx={{
                   fontWeight: 600,
-                  mb: 0.5,
+                  mb: 0.25,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
-                  fontSize: isMobile ? '0.875rem' : '0.95rem',
+                  fontSize: isMobile ? '0.75rem' : '0.95rem',
+                  lineHeight: 1.2
                 }}
               >
                 {client.name}
@@ -292,7 +293,7 @@ function Clients() {
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ fontSize: '0.7rem', display: 'block' }}
+                sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', display: 'block' }}
               >
                 {client.legal_name}
               </Typography>
@@ -301,14 +302,14 @@ function Clients() {
         </Box>
 
         {/* Infos de contact */}
-        <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+        <Stack spacing={0.5} sx={{ mb: 1 }}>
           {client.contact_person && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Person sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Person sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
               <Typography
                 variant="body2"
                 sx={{
-                  fontSize: '0.8rem',
+                  fontSize: isMobile ? '0.65rem' : '0.8rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -321,12 +322,12 @@ function Clients() {
           )}
 
           {client.email && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Email sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Email sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
               <Typography
                 variant="body2"
                 sx={{
-                  fontSize: '0.8rem',
+                  fontSize: isMobile ? '0.65rem' : '0.8rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -334,24 +335,6 @@ function Clients() {
                 }}
               >
                 {client.email}
-              </Typography>
-            </Box>
-          )}
-
-          {client.phone && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Phone sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {client.phone}
-              </Typography>
-            </Box>
-          )}
-
-          {client.payment_terms && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <CreditCard sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {client.payment_terms}
               </Typography>
             </Box>
           )}
@@ -421,18 +404,13 @@ function Clients() {
         )}
 
         {/* Footer */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Chip
-            label={client.is_active ? t('clients:status.active') : t('clients:status.inactive')}
+            label={client.is_active ? (isMobile ? "✓" : t('clients:status.active')) : (isMobile ? "✗" : t('clients:status.inactive'))}
             size="small"
             color={client.is_active ? 'success' : 'default'}
-            sx={{ fontSize: '0.7rem', height: 20 }}
+            sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
           />
-          {client.business_number && (
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-              N° {client.business_number}
-            </Typography>
-          )}
         </Box>
       </CardContent>
     </Card>
@@ -986,10 +964,10 @@ function Clients() {
           onAction={() => navigate('/clients/new')}
         />
       ) : (
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={isMobile ? 1.5 : 3}>
           <AnimatePresence mode="popLayout">
             {filteredClients.map((client, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={client.id}>
+              <Grid item xs={6} sm={6} md={4} lg={3} key={client.id}>
                 <ClientCard client={client} index={index} />
               </Grid>
             ))}

@@ -296,14 +296,14 @@ function Invoices() {
         <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
           <Avatar
             sx={{
-              width: isMobile ? 48 : 56,
-              height: isMobile ? 48 : 56,
+              width: isMobile ? 36 : 56,
+              height: isMobile ? 36 : 56,
               bgcolor: 'primary.main',
               borderRadius: 2,
               boxShadow: 2,
             }}
           >
-            <Receipt />
+            <Receipt sx={{ fontSize: isMobile ? 20 : 28 }} />
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
@@ -312,7 +312,10 @@ function Invoices() {
                 fontWeight: 600,
                 mb: 0.5,
                 color: 'primary.main',
-                fontSize: isMobile ? '0.875rem' : '0.95rem',
+                fontSize: isMobile ? '0.75rem' : '0.95rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {invoice.invoice_number}
@@ -321,7 +324,7 @@ function Invoices() {
               variant="caption"
               color="text.secondary"
               sx={{
-                fontSize: '0.75rem',
+                fontSize: isMobile ? '0.65rem' : '0.75rem',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -340,29 +343,29 @@ function Invoices() {
               ? 'rgba(52, 211, 153, 0.1)'
               : 'rgba(16, 185, 129, 0.08)',
             borderRadius: 1,
-            p: 1,
-            mb: 1.5,
+            p: isMobile ? 0.75 : 1,
+            mb: isMobile ? 1 : 1.5,
             textAlign: 'center',
           }}
         >
           <Typography
-            variant="h6"
+            variant="subtitle1"
             color="success.main"
-            sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
+            sx={{ fontWeight: 700, fontSize: isMobile ? '0.9rem' : '1.25rem' }}
           >
             {formatCurrency(invoice.total_amount)}
           </Typography>
         </Box>
 
         {/* Infos */}
-        <Stack spacing={0.75}>
+        <Stack spacing={0.5}>
           {invoice.client_name && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Business sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
               <Typography
                 variant="body2"
                 sx={{
-                  fontSize: '0.8rem',
+                  fontSize: isMobile ? '0.65rem' : '0.8rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -374,22 +377,22 @@ function Invoices() {
           )}
 
           {invoice.due_date && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {t('invoices:labels.dueDate')} {formatDate(invoice.due_date)}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Schedule sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
+              <Typography variant="body2" sx={{ fontSize: isMobile ? '0.65rem' : '0.8rem' }}>
+                {isMobile ? formatDate(invoice.due_date) : `${t('invoices:labels.dueDate')} ${formatDate(invoice.due_date)}`}
               </Typography>
             </Box>
           )}
         </Stack>
 
         {/* Footer */}
-        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
             label={getStatusLabel(invoice.status)}
             size="small"
             color={getStatusColor(invoice.status)}
-            sx={{ fontSize: '0.7rem', height: 20 }}
+            sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
           />
         </Box>
       </CardContent>
@@ -980,10 +983,10 @@ function Invoices() {
           onAction={() => navigate('/invoices/new')}
         />
       ) : (
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={isMobile ? 1.5 : 3}>
           <AnimatePresence mode="popLayout">
             {filteredInvoices.map((invoice, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={invoice.id}>
+              <Grid item xs={6} sm={6} md={4} lg={3} key={invoice.id}>
                 <InvoiceCard invoice={invoice} index={index} />
               </Grid>
             ))}

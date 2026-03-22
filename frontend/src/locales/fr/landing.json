@@ -1,0 +1,113 @@
+{
+  "nav": {
+    "login": "Connexion",
+    "freeTrial": "Essai gratuit"
+  },
+  "hero": {
+    "badge": "Accès Pro gratuit jusqu'au 30 Avril",
+    "titleStart": "L'Intelligence Artificielle au service de votre ",
+    "words": ["entreprise", "business", "start-up", "croissance"],
+    "subtitle": "Centralisez vos achats, factures et stocks. Laissez l'IA de Procura automatiser les tâches répétitives et vous fournir des analyses stratégiques proactives.",
+    "ctaPrimary": "Créer mon compte",
+    "ctaSecondary": "Voir l'IA en action",
+    "socialProof": "Approuvé par +500 professionnels"
+  },
+  "stats": {
+    "companies": "Entreprises actives",
+    "documents": "Documents traités",
+    "uptime": "Disponibilité",
+    "timeSaved": "Gagnées par semaine"
+  },
+  "platform": {
+    "badge": "La Plateforme Complète",
+    "titleStart": "Gérez tout, ",
+    "titleHighlight": "unifiez",
+    "titleEnd": " tout",
+    "subtitle": "Remplacez vos 5 outils actuels par une plateforme unique. Procura connecte intuitivement vos achats, vos ventes et l'intelligence de votre entreprise.",
+    "features": {
+      "ai": {
+        "title": "Copilote IA",
+        "desc": "Générez des rapports, posez des questions sur vos données et automatisez vos flux de travail en discutant."
+      },
+      "invoices": {
+        "title": "Facturation Intelligente",
+        "desc": "Création en 1 clic. Rapprochement automatique avec les bons de commande et paiements."
+      },
+      "ocr": {
+        "title": "Extraction OCR",
+        "desc": "Ne saisissez plus jamais une facture. Notre IA lit et extrait les données de vos PDF instantanément."
+      },
+      "inventory": {
+        "title": "Gestion des Stocks",
+        "desc": "Suivi en temps réel multi-entrepôts, alertes de seuil et valorisation automatique."
+      },
+      "purchasing": {
+        "title": "Achats & Dépenses",
+        "desc": "Bons de commande interactifs, workflows d'approbation et contrôle des budgets."
+      },
+      "suppliers": {
+        "title": "Portail Fournisseurs",
+        "desc": "Collaborez directement avec vos partenaires. Appels d'offres et centralisation documentaire."
+      },
+      "analytics": {
+        "title": "Intelligence Business",
+        "desc": "Tableaux de bord dynamiques. Visualisez vos marges, dépenses et performances en un coup d'œil."
+      },
+      "sync": {
+        "title": "Synchronisé",
+        "desc": "Vos devis deviennent des commandes, qui deviennent des factures, qui mettent à jour vos stocks. Automatiquement."
+      },
+      "multi": {
+        "title": "Multi-Devises",
+        "desc": "Gérez des opérations internationales avec conversion en temps réel et gestion des taux de change."
+      }
+    }
+  },
+  "pricing": {
+    "badge": "Des tarifs transparents",
+    "title": "Un investissement  rentable",
+    "subtitle": "Choisissez le plan adapté à la taille et aux ambitions de votre équipe.",
+    "freeUntil": "Gratuit jusqu'au 30 Avril",
+    "cta": "Commencer gratuitement",
+    "ctaContact": "Contactez-nous",
+    "plans": {
+      "essential": {
+        "name": "Essentiel",
+        "price": "0€",
+        "desc": "Pour les indépendants qui veulent s'organiser.",
+        "f1": "1 Utilisateur",
+        "f2": "50 Factures / mois",
+        "f3": "100 Produits en stock",
+        "f4": "Support par email"
+      },
+      "business": {
+        "name": "Business IA",
+        "popular": "Le plus choisi",
+        "price": "49€",
+        "desc": "Pour les PME qui veulent accélérer avec l'IA.",
+        "f1": "5 Utilisateurs inclus",
+        "f2": "Factures et Achats illimités",
+        "f3": "Assistant IA complet",
+        "f4": "Extraction OCR illimitée",
+        "f5": "Prédiction des ruptures",
+        "f6": "Support prioritaire 24/7"
+      },
+      "enterprise": {
+        "name": "Sur mesure",
+        "price": "Devis",
+        "desc": "Pour les grandes structures aux besoins complexes.",
+        "f1": "Utilisateurs illimités",
+        "f2": "Déploiement sur serveur privé",
+        "f3": "IA entraînée sur vos données",
+        "f4": "Intégration API & ERP",
+        "f5": "Account Manager dédié"
+      }
+    }
+  },
+  "footer": {
+    "title": "L'avenir de votre gestion commence ici.",
+    "subtitle": "Rejoignez les centaines d'entreprises qui ont déjà franchi le pas.",
+    "cta": "Créer un compte gratuit",
+    "rights": "© 2026 Procura. Tous droits réservés."
+  }
+}

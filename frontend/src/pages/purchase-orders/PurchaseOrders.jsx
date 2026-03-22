@@ -260,23 +260,26 @@ function PurchaseOrders() {
         <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
           <Avatar
             sx={{
-              width: isMobile ? 48 : 56,
-              height: isMobile ? 48 : 56,
+              width: isMobile ? 36 : 56,
+              height: isMobile ? 36 : 56,
               bgcolor: 'primary.main',
               borderRadius: 2,
               boxShadow: 2,
             }}
           >
-            <ShoppingCart />
+            <ShoppingCart sx={{ fontSize: isMobile ? 20 : 28 }} />
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="subtitle2"
               sx={{
                 fontWeight: 600,
-                mb: 0.5,
-                fontSize: isMobile ? '0.875rem' : '0.95rem',
+                mb: 0.25,
+                fontSize: isMobile ? '0.75rem' : '0.95rem',
                 color: 'primary.main',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {po.po_number}
@@ -285,7 +288,7 @@ function PurchaseOrders() {
               variant="caption"
               color="text.secondary"
               sx={{
-                fontSize: '0.75rem',
+                fontSize: isMobile ? '0.65rem' : '0.75rem',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -301,28 +304,28 @@ function PurchaseOrders() {
           sx={{
             bgcolor: 'success.50',
             borderRadius: 1,
-            p: 1,
-            mb: 1.5,
+            p: isMobile ? 0.75 : 1,
+            mb: isMobile ? 1 : 1.5,
             textAlign: 'center',
           }}
         >
           <Typography
-            variant="h6"
+            variant="subtitle1"
             color="success.main"
-            sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
+            sx={{ fontWeight: 700, fontSize: isMobile ? '0.9rem' : '1.25rem' }}
           >
             {formatCurrency(po.total_amount)}
           </Typography>
         </Box>
 
-        <Stack spacing={0.75}>
+        <Stack spacing={0.5}>
           {po.supplier_name && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Business sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
               <Typography
                 variant="body2"
                 sx={{
-                  fontSize: '0.8rem',
+                  fontSize: isMobile ? '0.65rem' : '0.8rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -333,21 +336,21 @@ function PurchaseOrders() {
             </Box>
           )}
           {po.delivery_date && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {t('purchaseOrders:labels.delivery')} {formatDate(po.delivery_date)}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Schedule sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
+              <Typography variant="body2" sx={{ fontSize: isMobile ? '0.65rem' : '0.8rem' }}>
+                {isMobile ? formatDate(po.delivery_date) : `${t('purchaseOrders:labels.delivery')} ${formatDate(po.delivery_date)}`}
               </Typography>
             </Box>
           )}
         </Stack>
 
-        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
             label={getStatusLabel(po.status)}
             size="small"
             color={getStatusColor(po.status)}
-            sx={{ fontSize: '0.7rem', height: 20 }}
+            sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
           />
         </Box>
       </CardContent>
@@ -831,10 +834,10 @@ function PurchaseOrders() {
           onAction={() => navigate('/purchase-orders/new')}
         />
       ) : (
-        <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid container spacing={isMobile ? 1.5 : 3}>
           <AnimatePresence mode="popLayout">
             {filteredPurchaseOrders.map((po, index) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={po.id}>
+              <Grid item xs={6} sm={6} md={4} lg={3} key={po.id}>
                 <POCard po={po} index={index} />
               </Grid>
             ))}

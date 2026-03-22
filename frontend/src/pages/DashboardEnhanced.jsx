@@ -39,10 +39,14 @@ import {
   AttachMoney,
   People,
   GetApp,
-  DateRange,
   PictureAsPdf,
   TableChart,
   Refresh,
+  Warning,
+  CheckCircle,
+  Inventory2,
+  NotificationsActive,
+  ErrorOutline,
 } from '@mui/icons-material';
 import { Line, Doughnut } from 'react-chartjs-2';
 import {
@@ -245,35 +249,53 @@ function DashboardEnhanced() {
 
   const financialStats = stats.financial || {};
   const invoiceStats = stats.invoices || {};
+  const poStats = stats.purchase_orders || {};
+  const clientStats = stats.clients || {};
+  const productStats = stats.products || {};
 
   const statsCards = [
     {
       title: 'Revenu Total',
-      value: formatCurrency(financialStats.total_revenue || 0),
-      previous: financialStats.previous_revenue,
+      value: formatCurrency(financialStats.revenue || 0),
+      previous: financialStats.comparison?.previous_revenue,
       icon: <AttachMoney />,
       color: '#10B981',
     },
     {
       title: 'Dépenses',
-      value: formatCurrency(financialStats.total_expenses || 0),
-      previous: financialStats.previous_expenses,
+      value: formatCurrency(financialStats.expenses || 0),
+      previous: financialStats.comparison?.previous_expenses,
       icon: <ShoppingCart />,
       color: '#EF4444',
     },
     {
       title: 'Profit Net',
       value: formatCurrency(financialStats.net_profit || 0),
-      previous: financialStats.previous_profit,
+      previous: financialStats.comparison?.previous_profit,
       icon: <TrendingUp />,
       color: '#3B82F6',
     },
     {
-      title: 'Factures Impayées',
-      value: invoiceStats.unpaid_count || 0,
-      total: invoiceStats.total_count || 0,
+      title: 'Factures Imp.',
+      value: (invoiceStats.by_status?.overdue || 0) + (invoiceStats.by_status?.sent || 0),
+      total: invoiceStats.total || 0,
       icon: <Receipt />,
       color: '#F59E0B',
+    },
+    {
+      title: 'Commandes BC',
+      value: poStats.period?.count || 0,
+      total: poStats.total || 0,
+      previous: poStats.comparison?.previous_count,
+      icon: <Business />,
+      color: '#8B5CF6',
+    },
+    {
+      title: 'Nouv. Clients',
+      value: clientStats.new_in_period || 0,
+      previous: clientStats.comparison?.previous_new,
+      icon: <People />,
+      color: '#EC4899',
     },
   ];
 
@@ -337,41 +359,57 @@ function DashboardEnhanced() {
 
         {/* Controls */}
         <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-          {/* Period selector — compact chip group */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              bgcolor: 'action.hover',
-              borderRadius: 2,
-              p: 0.5,
-              gap: 0.25,
-              flexWrap: 'wrap',
-            }}
-          >
-            {PERIOD_OPTIONS.map((option) => (
-              <Box
-                key={option.value}
-                onClick={() => handlePeriodChange(option.value)}
-                sx={{
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: 1.5,
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s',
-                  bgcolor: period === option.value ? 'background.paper' : 'transparent',
-                  color: period === option.value ? 'primary.main' : 'text.secondary',
-                  boxShadow: period === option.value ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
-                  '&:hover': { color: 'text.primary' },
-                }}
-              >
-                {option.label}
-              </Box>
-            ))}
-          </Box>
+          {/* Period selector */}
+          {isMobile ? (
+            <TextField
+              select
+              size="small"
+              value={period}
+              onChange={(e) => handlePeriodChange(e.target.value)}
+              sx={{ minWidth: 130, '& .MuiInputBase-root': { height: 36, fontSize: '0.875rem', bgcolor: 'background.paper', borderRadius: 2 } }}
+            >
+              {PERIOD_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.875rem' }}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                bgcolor: 'action.hover',
+                borderRadius: 2,
+                p: 0.5,
+                gap: 0.25,
+                flexWrap: 'wrap',
+              }}
+            >
+              {PERIOD_OPTIONS.map((option) => (
+                <Box
+                  key={option.value}
+                  onClick={() => handlePeriodChange(option.value)}
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1.5,
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s',
+                    bgcolor: period === option.value ? 'background.paper' : 'transparent',
+                    color: period === option.value ? 'primary.main' : 'text.secondary',
+                    boxShadow: period === option.value ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                    '&:hover': { color: 'text.primary' },
+                  }}
+                >
+                  {option.label}
+                </Box>
+              ))}
+            </Box>
+          )}
 
           {/* Export icon button */}
           <MuiTooltip title="Exporter">
@@ -407,39 +445,58 @@ function DashboardEnhanced() {
 
       {/* Tabs Navigation */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
-        <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)} aria-label="dashboard tabs">
+        <Tabs 
+          value={currentTab} 
+          onChange={(e, newValue) => setCurrentTab(newValue)} 
+          aria-label="dashboard tabs"
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+        >
           <Tab label="Aperçu Général" />
           <Tab label="Facturation" />
           <Tab label="Performances" />
+          <Tab 
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                Produits & Alertes
+                {(stats.alerts?.length > 0) && (
+                  <Chip size="small" color="error" label={stats.alerts.length} sx={{ height: 20, fontSize: '0.7rem', '& .MuiChip-label': { px: 1, py: 0 } }} />
+                )}
+              </Box>
+            } 
+          />
         </Tabs>
       </Box>
 
       {/* Tab 0: Aperçu Général */}
       <TabPanel value={currentTab} index={0}>
         {/* Stats Cards */}
-        <Grid container spacing={2.5} sx={{ mb: 3 }}>
+        <Grid container spacing={isMobile ? 1.5 : 2.5} sx={{ mb: 3 }}>
           {statsCards.map((stat, index) => {
             const numericValue = typeof stat.value === 'string'
               ? parseFloat(stat.value.replace(/[^0-9.-]/g, '') || 0)
               : stat.value;
-            const comparison = stat.previous !== undefined ? formatComparison(numericValue, stat.previous) : null;
+            const comparison = stat.previous !== undefined && stat.previous !== null ? formatComparison(numericValue, stat.previous) : null;
 
             return (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Card sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider', transition: 'all 0.2s', '&:hover': { borderColor: stat.color, boxShadow: 2, transform: 'translateY(-2px)' } }}>
-                  <CardContent sx={{ p: 2.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                      <Avatar sx={{ bgcolor: `${stat.color}15`, color: stat.color, width: 48, height: 48, borderRadius: 1 }}>
-                        {stat.icon}
+              <Grid item xs={6} sm={4} md={4} lg={2} key={index}>
+                <Card sx={{ height: '100%', borderRadius: 1, border: '1px solid', borderColor: 'divider', transition: 'all 0.2s', '&:hover': { borderColor: stat.color, boxShadow: 2, transform: 'translateY(-2px)' } }}>
+                  <CardContent sx={{ p: isMobile ? 1.5 : 2.5, '&:last-child': { pb: isMobile ? 1.5 : 2.5 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1, flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 1 : 0 }}>
+                      <Avatar sx={{ bgcolor: `${stat.color}15`, color: stat.color, width: isMobile ? 32 : 48, height: isMobile ? 32 : 48, borderRadius: 1 }}>
+                        {React.cloneElement(stat.icon, { fontSize: isMobile ? 'small' : 'medium' })}
                       </Avatar>
-                      <Box sx={{ ml: 1.5, flexGrow: 1 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                      <Box sx={{ ml: isMobile ? 0 : 1.5, flexGrow: 1, width: '100%' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 500, textTransform: 'uppercase', fontSize: isMobile ? '0.65rem' : '0.7rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {stat.title}
                         </Typography>
-                        <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
-                          {stat.value}
-                        </Typography>
-                        {stat.total !== undefined && (
+                        <MuiTooltip title={stat.value}>
+                          <Typography variant={isMobile ? "subtitle1" : "h5"} sx={{ fontWeight: 700, mt: 0.5, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {stat.value}
+                          </Typography>
+                        </MuiTooltip>
+                        {stat.total !== undefined && !isMobile && (
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
                             sur {stat.total} total
                           </Typography>
@@ -447,16 +504,26 @@ function DashboardEnhanced() {
                       </Box>
                     </Box>
                     {comparison && compare && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, flexWrap: 'wrap', gap: 0.5 }}>
                         <Chip
                           icon={comparison.icon}
                           label={`${comparison.value}%`}
                           size="small"
-                          sx={{ bgcolor: `${comparison.color}15`, color: comparison.color, fontWeight: 600, fontSize: '0.7rem', height: 24 }}
+                          sx={{ 
+                            bgcolor: `${comparison.color}15`, 
+                            color: comparison.color, 
+                            fontWeight: 600, 
+                            fontSize: '0.65rem', 
+                            height: 20, 
+                            '& .MuiChip-icon': { fontSize: '0.8rem', ml: 0.5 },
+                            '& .MuiChip-label': { px: 0.5 }
+                          }}
                         />
-                        <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontSize: '0.7rem' }}>
-                          vs période précédente
-                        </Typography>
+                        {!isMobile && (
+                          <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5, fontSize: '0.65rem' }}>
+                            vs préc.
+                          </Typography>
+                        )}
                       </Box>
                     )}
                   </CardContent>
@@ -466,40 +533,42 @@ function DashboardEnhanced() {
           })}
         </Grid>
 
-        <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Tendances quotidiennes</Typography>
+        <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+          <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600, mb: 2 }}>Tendances quotidiennes</Typography>
           <Line data={lineChartData} options={{ responsive: true, plugins: { legend: { position: 'top', align: 'end' } }, scales: { y: { beginAtZero: true } } }} />
         </Paper>
       </TabPanel>
 
       {/* Tab 1: Facturation */}
       <TabPanel value={currentTab} index={1}>
-        <Grid container spacing={2.5}>
+        <Grid container spacing={isMobile ? 1.5 : 2.5}>
           <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>État des factures</Typography>
-              <Doughnut data={donutData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }} />
+            <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600, mb: 2 }}>État des factures</Typography>
+              <Box sx={{ height: isMobile ? 200 : 'auto', display: 'flex', justifyContent: 'center' }}>
+                <Doughnut data={donutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '70%' }} />
+              </Box>
             </Paper>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Résumé Facturation</Typography>
+            <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600, mb: 2 }}>Résumé Facturation</Typography>
               <List disablePadding>
                 <ListItem sx={{ px: 0, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <ListItemText primary="Total Factures" secondary="Période sélectionnée" />
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>{invoiceStats.total_count || 0}</Typography>
+                  <ListItemText primary="Total Factures" secondary="Période sélectionnée" primaryTypographyProps={{ fontSize: isMobile ? '0.9rem' : '1rem' }} secondaryTypographyProps={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }} />
+                  <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600 }}>{invoiceStats.period?.count || 0}</Typography>
                 </ListItem>
                 <ListItem sx={{ px: 0, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <ListItemText primary="Factures Payées" />
-                  <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>{invoiceStats.paid_count || 0}</Typography>
+                  <ListItemText primary="Montant Payé" primaryTypographyProps={{ fontSize: isMobile ? '0.9rem' : '1rem' }} />
+                  <Typography variant={isMobile ? "subtitle1" : "h6"} color="success.main" sx={{ fontWeight: 600 }}>{formatCurrency(invoiceStats.period?.paid_amount || 0)}</Typography>
                 </ListItem>
                 <ListItem sx={{ px: 0, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <ListItemText primary="Factures en Attente" />
-                  <Typography variant="h6" color="warning.main" sx={{ fontWeight: 600 }}>{invoiceStats.pending_count || 0}</Typography>
+                  <ListItemText primary="Montant en Attente" primaryTypographyProps={{ fontSize: isMobile ? '0.9rem' : '1rem' }} />
+                  <Typography variant={isMobile ? "subtitle1" : "h6"} color="warning.main" sx={{ fontWeight: 600 }}>{formatCurrency(invoiceStats.period?.pending_amount || 0)}</Typography>
                 </ListItem>
                 <ListItem sx={{ px: 0, py: 1.5 }}>
-                  <ListItemText primary="Factures en Retard" />
-                  <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>{invoiceStats.overdue_count || 0}</Typography>
+                  <ListItemText primary="Taux de paiement" primaryTypographyProps={{ fontSize: isMobile ? '0.9rem' : '1rem' }} />
+                  <Typography variant={isMobile ? "subtitle1" : "h6"} color="info.main" sx={{ fontWeight: 600 }}>{(invoiceStats.period?.payment_rate || 0).toFixed(1)}%</Typography>
                 </ListItem>
               </List>
             </Paper>
@@ -509,50 +578,101 @@ function DashboardEnhanced() {
 
       {/* Tab 2: Performances */}
       <TabPanel value={currentTab} index={2}>
-        <Grid container spacing={2.5}>
+        <Grid container spacing={isMobile ? 1.5 : 2.5}>
           <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Top 5 Clients</Typography>
+            <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600, mb: 2 }}>Top 5 Clients</Typography>
               <List disablePadding>
-                {(stats.top_clients || []).map((client, index) => (
-                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_clients?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                {(clientStats.top_clients || []).map((client, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (clientStats.top_clients?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                     <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', borderRadius: 1 }}>
-                        <People />
+                      <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', borderRadius: 1, width: isMobile ? 36 : 40, height: isMobile ? 36 : 40 }}>
+                        <People fontSize={isMobile ? "small" : "medium"} />
                       </Avatar>
                     </ListItemAvatar>
-                    <ListItemText primary={client.name} secondary={`${client.invoice_count} facture(s)`} primaryTypographyProps={{ fontWeight: 500 }} />
-                    <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
-                      {formatCurrency(client.total_revenue)}
+                    <ListItemText primary={client.name} secondary={`${client.total_invoices || 0} facture(s)`} primaryTypographyProps={{ fontWeight: 500, fontSize: isMobile ? '0.9rem' : '1rem' }} secondaryTypographyProps={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }} />
+                    <Typography variant={isMobile ? "subtitle1" : "h6"} color="primary" sx={{ fontWeight: 600 }}>
+                      {formatCurrency(client.total_revenue || 0)}
                     </Typography>
                   </ListItem>
                 ))}
-                {(!stats.top_clients || stats.top_clients.length === 0) && (
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>Aucun client trouvé</Typography>
+                {(!clientStats.top_clients || clientStats.top_clients.length === 0) && (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center', fontSize: isMobile ? '0.8rem' : '0.875rem' }}>Aucun client trouvé pour la période</Typography>
                 )}
               </List>
             </Paper>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Top 5 Fournisseurs</Typography>
+            <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600, mb: 2 }}>Top 5 Fournisseurs</Typography>
               <List disablePadding>
-                {(stats.top_suppliers || []).map((supplier, index) => (
-                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.top_suppliers?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                {(stats.suppliers?.top_suppliers || []).map((supplier, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.suppliers?.top_suppliers?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                     <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'success.light', color: 'success.main', borderRadius: 1 }}>
-                        <Business />
+                      <Avatar sx={{ bgcolor: 'success.light', color: 'success.main', borderRadius: 1, width: isMobile ? 36 : 40, height: isMobile ? 36 : 40 }}>
+                        <Business fontSize={isMobile ? "small" : "medium"} />
                       </Avatar>
                     </ListItemAvatar>
-                    <ListItemText primary={supplier.name} secondary={`${supplier.purchase_order_count} BC`} primaryTypographyProps={{ fontWeight: 500 }} />
-                    <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
-                      {formatCurrency(supplier.total_spent)}
+                    <ListItemText primary={supplier.name} secondary={`${supplier.total_orders || 0} BC`} primaryTypographyProps={{ fontWeight: 500, fontSize: isMobile ? '0.9rem' : '1rem' }} secondaryTypographyProps={{ fontSize: isMobile ? '0.75rem' : '0.875rem' }} />
+                    <Typography variant={isMobile ? "subtitle1" : "h6"} color="success.main" sx={{ fontWeight: 600 }}>
+                      {formatCurrency(supplier.total_amount || 0)}
                     </Typography>
                   </ListItem>
                 ))}
-                {(!stats.top_suppliers || stats.top_suppliers.length === 0) && (
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>Aucun fournisseur trouvé</Typography>
+                {(!stats.suppliers?.top_suppliers || stats.suppliers?.top_suppliers.length === 0) && (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center', fontSize: isMobile ? '0.8rem' : '0.875rem' }}>Aucun fournisseur trouvé pour la période</Typography>
                 )}
+              </List>
+            </Paper>
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* Tab 3: Produits & Alertes */}
+      <TabPanel value={currentTab} index={3}>
+        <Grid container spacing={isMobile ? 1.5 : 2.5}>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <ErrorOutline color="error" sx={{ mr: 1 }} />
+                <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600 }}>Alertes ({stats.alerts?.length || 0})</Typography>
+              </Box>
+              <List disablePadding>
+                {(stats.alerts || []).map((alert, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 1.5, borderBottom: index < (stats.alerts?.length || 0) - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: alert.type === 'error' ? 'error.light' : 'warning.light', color: alert.type === 'error' ? 'error.main' : 'warning.main', borderRadius: 1, width: isMobile ? 36 : 40, height: isMobile ? 36 : 40 }}>
+                        <NotificationsActive fontSize={isMobile ? "small" : "medium"} />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText primary={alert.message} primaryTypographyProps={{ fontWeight: 500, fontSize: isMobile ? '0.9rem' : '1rem' }} />
+                  </ListItem>
+                ))}
+                {(!stats.alerts || stats.alerts.length === 0) && (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center', fontSize: isMobile ? '0.8rem' : '0.875rem' }}>Aucune alerte pour l'instant.</Typography>
+                )}
+              </List>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, borderRadius: 1, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Inventory2 color="info" sx={{ mr: 1 }} />
+                <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600 }}>Produits Physiques - Stock</Typography>
+              </Box>
+              <List disablePadding>
+                <ListItem sx={{ px: 0, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <ListItemText primary="Produits en Rupture" primaryTypographyProps={{ fontSize: isMobile ? '0.9rem' : '1rem', color: 'error.main', fontWeight: 500 }} />
+                  <Typography variant={isMobile ? "subtitle1" : "h6"} color="error.main" sx={{ fontWeight: 600 }}>{productStats.stock?.out_of_stock || 0}</Typography>
+                </ListItem>
+                <ListItem sx={{ px: 0, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <ListItemText primary="Produits en Stock Faible" primaryTypographyProps={{ fontSize: isMobile ? '0.9rem' : '1rem', color: 'warning.main', fontWeight: 500 }} />
+                  <Typography variant={isMobile ? "subtitle1" : "h6"} color="warning.main" sx={{ fontWeight: 600 }}>{productStats.stock?.low_stock || 0}</Typography>
+                </ListItem>
+                <ListItem sx={{ px: 0, py: 1.5 }}>
+                  <ListItemText primary="Valeur Totale du Stock" primaryTypographyProps={{ fontSize: isMobile ? '0.9rem' : '1rem' }} />
+                  <Typography variant={isMobile ? "subtitle1" : "h6"} color="info.main" sx={{ fontWeight: 600 }}>{formatCurrency(productStats.stock?.total_value || 0)}</Typography>
+                </ListItem>
               </List>
             </Paper>
           </Grid>
