@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -256,7 +256,7 @@ const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
 };
 
 // ─── Pricing Card ────────────────────────────────────────────────
-const PricingCard = ({ title, price, originalPrice, period, features, isPopular, isFree, ctaText, onCta, delay }) => {
+const PricingCard = ({ t, title, price, originalPrice, period, features, isPopular, isFree, ctaText, onCta, delay }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -310,7 +310,7 @@ const PricingCard = ({ title, price, originalPrice, period, features, isPopular,
               gap: 0.5
             }}
           >
-            <AutoAwesome sx={{ fontSize: 14 }} /> LE PLUS CHOISI
+            <AutoAwesome sx={{ fontSize: 14 }} /> {t('pricing.plans.business.popular', 'LE PLUS CHOISI')}
           </Box>
         )}
         <CardContent sx={{ p: 4, flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -374,7 +374,7 @@ const PricingCard = ({ title, price, originalPrice, period, features, isPopular,
 
           {isFree && (
             <Typography sx={{ color: '#10b981', fontSize: '0.75rem', textAlign: 'center', mt: 1.5, fontWeight: 600 }}>
-              Gratuit jusqu'au 30 Avril
+              {t('pricing.freeUntil')}
             </Typography>
           )}
         </CardContent>
@@ -389,9 +389,24 @@ const PricingCard = ({ title, price, originalPrice, period, features, isPopular,
 export default function Landing() {
   const { t, i18n } = useTranslation('landing');
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const { toggleColorMode } = useColorMode();
   const isDark = theme.palette.mode === 'dark';
+
+  // Handle hash scroll for cases like /landing#pricing-section
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const element = document.getElementById(id);
+      if (element) {
+        // Delay to ensure the section is rendered
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 300);
+      }
+    }
+  }, [location.hash]);
   
   const [scrollY, setScrollY] = useState(0);
 
@@ -456,105 +471,8 @@ export default function Landing() {
         fontFamily: '"Plus Jakarta Sans", "Inter", sans-serif',
       }}
     >
-      <header>
-      <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-        }}
-      >
-        <Box
-          sx={{
-            background: scrollY > 50 ? headerBgActive : headerBgInactive,
-            borderBottom: scrollY > 50 ? `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` : '1px solid transparent',
-            transition: 'all 0.3s',
-            boxShadow: scrollY > 50 ? (isDark ? '0 4px 20px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.03)') : 'none',
-          }}
-        >
-          <Container maxWidth="lg">
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={() => window.scrollTo(0, 0)}>
-                <img 
-                  src="/main.png" 
-                  alt="Procura Logo" 
-                  style={{ width: 32, height: 32, objectFit: 'contain' }}
-                  onError={(e) => { e.target.src = 'https://via.placeholder.com/32'; }} 
-                />
-                <Typography sx={{ fontWeight: 800, fontSize: '1.4rem', letterSpacing: -0.5, color: isDark ? '#fff' : '#0f172a' }}>
-                  Procura
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, alignItems: 'center' }}>
-                <Button 
-                  onClick={() => i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr')}
-                  title="Changer de langue / Switch Language"
-                  sx={{ 
-                    minWidth: 'auto', p: 1, 
-                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
-                    '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }, 
-                    borderRadius: 2 
-                  }}
-                >
-                  <Translate fontSize="small" sx={{ mr: 0.5 }} />
-                  <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>{i18n.language}</Typography>
-                </Button>
-                <Button 
-                  onClick={toggleColorMode} 
-                  sx={{ 
-                    minWidth: 'auto', p: 1, 
-                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
-                    '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }, 
-                    borderRadius: 2 
-                  }}
-                >
-                  {isDark ? <LightMode fontSize="small" /> : <DarkMode fontSize="small" />}
-                </Button>
-                <Button 
-                  onClick={() => navigate('/login')} 
-                  sx={{ 
-                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
-                    textTransform: 'none', 
-                    fontWeight: 600, 
-                    fontSize: '0.95rem', 
-                    '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }, 
-                    borderRadius: 2, 
-                    px: 2 
-                  }}
-                >
-                  {t('nav.login')}
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => navigate('/register')}
-                  sx={{
-                    bgcolor: '#2563eb',
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    fontSize: '0.95rem',
-                    borderRadius: 2.5,
-                    px: { xs: 2.5, sm: 4 },
-                    color: '#fff',
-                    '&:hover': { bgcolor: '#1d4ed8' }
-                  }}
-                >
-                  {t('nav.freeTrial')}
-                </Button>
-              </Box>
-
-            </Box>
-          </Container>
-        </Box>
-      </motion.div>
-      </header>
-      <main>
+      {/* Header is now handled by PublicLayout */}
+      <Box sx={{ pt: 0 }}>
       {/* ─── Hero Section ─── */}
       <Box 
         sx={{
@@ -718,8 +636,8 @@ export default function Landing() {
                 transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
               >
                 <img 
-                    src="/landing.png" 
-                    alt="Procura" 
+                    src="/hero_ai_woman.png" 
+                    alt="Procura AI Career & Business Coach" 
                     style={{ 
                       width: '100%', 
                       maxWidth: 600, 
@@ -822,12 +740,12 @@ export default function Landing() {
             </Grid>
             <Grid item xs={12} md={6}>
               <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-                <Chip label="Interface unifiée" sx={{ mb: 3, bgcolor: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', fontWeight: 700, borderRadius: 2 }} />
+                <Chip label={t('interface.badge')} sx={{ mb: 3, bgcolor: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', fontWeight: 700, borderRadius: 2 }} />
                 <Typography variant="h3" sx={{ fontWeight: 900, mb: 3, fontSize: { xs: '2rem', sm: '2.5rem' } }}>
-                  Gagnez en clarté avec un <Box component="span" sx={{ color: '#2563eb' }}>tableau de bord interactif</Box>
+                  {t('interface.title')}
                 </Typography>
                 <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)', fontSize: '1.1rem', lineHeight: 1.6, mb: 4 }}>
-                  Centralisez vos achats, factures, et suivi d'activités sur une seule vue. Dites adieu aux tableurs et prenez des décisions rapides avec confiance.
+                  {t('interface.desc')}
                 </Typography>
                 <Button 
                   variant="outlined" 
@@ -902,7 +820,7 @@ export default function Landing() {
       </Box>
 
       {/* ─── Pricing ─── */}
-      <Box sx={{ py: { xs: 12, sm: 16 }, position: 'relative', zIndex: 1, bgcolor: bgColor, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }} id="pricing">
+      <Box sx={{ py: { xs: 12, sm: 16 }, position: 'relative', zIndex: 1, bgcolor: bgColor, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }} id="pricing-section">
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 10 }}>
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -922,6 +840,7 @@ export default function Landing() {
           <Grid container spacing={4} justifyContent="center" alignItems="stretch">
             <Grid item xs={12} sm={6} md={4}>
               <PricingCard
+                t={t}
                 title={t('pricing.plans.essential.name')}
                 price={t('pricing.plans.essential.price')}
                 period="par mois, à vie"
@@ -938,6 +857,7 @@ export default function Landing() {
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
               <PricingCard
+                t={t}
                 title={t('pricing.plans.business.name')}
                 price={t('pricing.plans.business.price')}
                 originalPrice="99€/mois"
@@ -959,6 +879,7 @@ export default function Landing() {
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
               <PricingCard
+                t={t}
                 title={t('pricing.plans.enterprise.name')}
                 price={t('pricing.plans.enterprise.price')}
                 period="paiement annuel"
@@ -977,51 +898,8 @@ export default function Landing() {
           </Grid>
         </Container>
       </Box>
-      </main>
-      
-      <footer>
-      {/* ─── Footer ─── */}
-      <Box sx={{ py: 6, borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`, position: 'relative', zIndex: 1, bgcolor: isDark ? '#09090b' : '#f8fafc' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between', gap: 4 }}>
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                <img src="/main.png" alt="Procura" style={{ width: 32, height: 32 }} />
-                <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: isDark ? '#fff' : '#0f172a' }}>
-                  Procura
-                </Typography>
-              </Box>
-              <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.5)', fontSize: '0.85rem', maxWidth: 300 }}>
-                {t('footer.subtitle')}
-              </Typography>
-            </Box>
-            
-            <Box sx={{ display: 'flex', gap: { xs: 4, sm: 8 } }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>Produit</Typography>
-                {['Fonctionnalités', 'Tarifs', 'Sécurité'].map(l => (
-                  <Typography key={l} component="a" href="#" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{l}</Typography>
-                ))}
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>Ressources</Typography>
-                {['Centre d\'aide', 'Blog', 'Contact'].map(l => (
-                  <Typography key={l} component="a" href="#" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{l}</Typography>
-                ))}
-              </Box>
-            </Box>
-          </Box>
-          
-          <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', my: 4 }} />
-          
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)', fontSize: '0.8rem' }}>
-              {t('footer.rights')}
-            </Typography>
-          </Box>
-        </Container>
       </Box>
-      </footer>
+      {/* Footer is now handled by PublicLayout */}
     </Box>
   );
 }

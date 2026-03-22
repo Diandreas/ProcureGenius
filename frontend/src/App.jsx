@@ -53,6 +53,10 @@ import MigrationJobs from './pages/migration/MigrationJobs';
 import MigrationWizard from './pages/migration/MigrationWizard';
 import DataImportPage from './pages/settings/DataImportPage';
 import Pricing from './pages/Pricing';
+import PublicSupport from './pages/public/Support';
+import Documentation from './pages/public/Documentation';
+import PrivacyPolicy from './pages/public/PrivacyPolicy';
+import TermsOfService from './pages/public/TermsOfService';
 import Register from './pages/auth/Register';
 import LoginEnhanced from './pages/auth/LoginEnhanced';
 import OnboardingSetup from './pages/auth/OnboardingSetup';
@@ -65,6 +69,8 @@ import Landing from './pages/Landing';
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
 import ModuleRoute from './components/guards/ModuleRoute';
+
+import PublicLayout from './layouts/PublicLayout';
 
 // PWA
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -719,9 +725,21 @@ function App() {
                       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                       <Routes>
                         {/* Public Routes */}
-                        <Route path="/landing" element={<Landing />} />
-                        <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
-                        <Route path="/pricing" element={<Pricing />} />
+                        <Route element={<PublicLayout />}>
+                          <Route path="/" element={<Navigate to="/landing" replace />} />
+                          <Route path="/landing" element={<Landing />} />
+                          <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
+                          <Route path="/pricing" element={<Navigate to="/landing#pricing-section" replace />} />
+                          <Route path="/terms" element={<TermsOfService />} />
+                          <Route path="/support" element={<PublicSupport />} />
+                          <Route path="/documentation" element={<Documentation />} />
+                          <Route path="/docs" element={<Documentation />} />
+                          <Route path="/privacy" element={<PrivacyPolicy />} />
+                          <Route path="/help" element={<Help />} />
+                          <Route path="/help/:articleId" element={<Help />} />
+                          <Route path="/help/faq" element={<FAQ />} />
+                          <Route path="/help/shortcuts" element={<KeyboardShortcuts />} />
+                        </Route>
 
                         {/* Auth Routes */}
                         <Route element={<AuthLayout />}>
@@ -737,7 +755,6 @@ function App() {
                         {/* Protected Routes */}
                         <Route element={<PrivateRoute />}>
                           <Route element={<MainLayout />}>
-                            <Route path="/" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/dashboard" element={<DashboardEnhanced />} />
                             <Route path="/dashboard-custom" element={<CustomizableDashboard />} />
                             <Route path="/dashboard-old" element={<OldDashboard />} />
@@ -799,13 +816,6 @@ function App() {
                             <Route path="/settings" element={<Settings />} />
                             <Route path="/settings/users" element={<UserManagement />} />
                             <Route path="/settings/import" element={<DataImportPage />} />
-
-                            {/* Help & Documentation */}
-                            <Route path="/help" element={<Help />} />
-                            <Route path="/help/:articleId" element={<Help />} />
-                            <Route path="/help/faq" element={<FAQ />} />
-                            <Route path="/help/shortcuts" element={<KeyboardShortcuts />} />
-                            <Route path="/support" element={<Support />} />
                           </Route>
                         </Route>
 

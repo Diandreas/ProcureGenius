@@ -1,0 +1,72 @@
+{
+  "support": {
+    "title": "Support & Contact",
+    "subtitle": "Notre équipe est à votre disposition pour vous accompagner dans l'utilisation de Procura.",
+    "intro": "Notre équipe d'ingénieurs et d'experts est disponible pour répondre à toutes vos interrogations techniques, commerciales ou fonctionnelles.",
+    "badge": "Toujours à votre écoute",
+    "email": {
+      "title": "Par Email",
+      "desc": "Écrivez-nous à tout moment concernant vos interrogations ou des rapports de bugs. Réponse rapide garantie."
+    },
+    "whatsapp": {
+      "title": "Support WhatsApp",
+      "desc": "Besoin d'aide urgente ? Discutez directement avec un expert technique via WhatsApp."
+    },
+    "youtube": {
+        "title": "Formation et Tutoriels sur YouTube",
+        "desc": "Des vidéos exclusives sur comment maîtriser nos outils d'intelligence artificielle et intégrer Procura à votre entreprise.",
+        "comingSoon": "(Chaîne à venir très prochainement)"
+    }
+  },
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "lastUpdated": "Dernière mise à jour : {{date}}",
+    "intro": "Chez Procura, la sécurité et la confidentialité de vos données constituent notre première priorité. Cette politique de confidentialité détaille quelles informations nous collectons, comment nous les utilisons, et les mesures strictes que nous prenons pour les protéger.",
+    "sections": {
+      "intro": {
+        "title": "1. Introduction",
+        "content": "Cette politique s'applique à tous nos services d'ERP, de gestion financière et à notre assistant IA 'Copilote'."
+      },
+      "data": {
+        "title": "2. Données collectées",
+        "content": "Nous collectons les types d'informations suivants :",
+        "items": [
+          "Données professionnelles : Raison sociale, SIRET, numéros de TVA.",
+          "Informations utilisateurs : Adresses email, noms et fonctions.",
+          "Données analytiques : Journaux de connexion, interactions IA.",
+          "Documents : Bons de commande, reçus, factures PDF."
+        ]
+      },
+      "usage": {
+        "title": "3. Utilisation des données",
+        "content": "Vos données sont uniquement utilisées pour fournir et optimiser les services offerts. Nous ne vendons jamais vos données à des tiers."
+      },
+      "ai": {
+        "title": "4. Intelligence Artificielle",
+        "content": "Vos données privées ne sont pas utilisées pour entraîner publiquement les modèles d'IA externes."
+      },
+      "security": {
+        "title": "5. Sécurité et Hébergement",
+        "content": "Données hébergées en Europe (RGPD) avec chiffrement AES-256."
+      }
+    }
+  },
+  "terms": {
+    "title": "Conditions d'Utilisation",
+    "lastUpdated": "Dernière mise à jour : {{date}}",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptation des conditions",
+        "content": "En utilisant Procura, vous acceptez d'être lié par les présentes conditions générales d'utilisation."
+      },
+      "services": {
+        "title": "2. Description des services",
+        "content": "Procura fournit une plateforme de gestion d'entreprise intégrant l'IA, la facturation et la gestion de stocks."
+      },
+      "accounts": {
+        "title": "3. Comptes utilisateurs",
+        "content": "Vous êtes responsable du maintien de la confidentialité de vos identifiants."
+      }
+    }
+  }
+}

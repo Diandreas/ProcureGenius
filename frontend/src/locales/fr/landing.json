@@ -1,14 +1,15 @@
 {
   "nav": {
     "login": "Connexion",
+    "pricing": "Tarifs",
     "freeTrial": "Essai gratuit"
   },
   "hero": {
-    "badge": "Accès Pro gratuit jusqu'au 30 Avril",
-    "titleStart": "L'Intelligence Artificielle au service de votre ",
-    "words": ["entreprise", "business", "start-up", "croissance"],
-    "subtitle": "Centralisez vos achats, factures et stocks. Laissez l'IA de Procura automatiser les tâches répétitives et vous fournir des analyses stratégiques proactives.",
-    "ctaPrimary": "Créer mon compte",
+    "badge": "L'Intelligence Artificielle à votre service",
+    "titleStart": "L'Intelligence Artificielle qui propulse votre ",
+    "words": ["commerce", "entreprise", "startup", "croissance"],
+    "subtitle": "Centralisez vos achats, factures et stocks. Laissez l'IA de Procura automatiser les tâches répétitives et vous fournir des analyses stratégiques proactifs.",
+    "ctaPrimary": "Démarrer l'essai",
     "ctaSecondary": "Voir l'IA en action",
     "socialProof": "Approuvé par +500 professionnels"
   },
@@ -65,27 +66,27 @@
   },
   "pricing": {
     "badge": "Des tarifs transparents",
-    "title": "Un investissement  rentable",
+    "title": "Un investissement rentable",
     "subtitle": "Choisissez le plan adapté à la taille et aux ambitions de votre équipe.",
-    "freeUntil": "Gratuit jusqu'au 30 Avril",
-    "cta": "Commencer gratuitement",
+    "freeUntil": "Essai de 14 jours inclus",
+    "cta": "Démarrer maintenant",
     "ctaContact": "Contactez-nous",
     "plans": {
       "essential": {
-        "name": "Essentiel",
-        "price": "0€",
+        "name": "Starter",
+        "price": "10€",
         "desc": "Pour les indépendants qui veulent s'organiser.",
-        "f1": "1 Utilisateur",
-        "f2": "50 Factures / mois",
-        "f3": "100 Produits en stock",
+        "f1": "2 Utilisateurs",
+        "f2": "100 Factures / mois",
+        "f3": "Produits en stock illimités",
         "f4": "Support par email"
       },
       "business": {
         "name": "Business IA",
         "popular": "Le plus choisi",
-        "price": "49€",
+        "price": "45€",
         "desc": "Pour les PME qui veulent accélérer avec l'IA.",
-        "f1": "5 Utilisateurs inclus",
+        "f1": "10 Utilisateurs inclus",
         "f2": "Factures et Achats illimités",
         "f3": "Assistant IA complet",
         "f4": "Extraction OCR illimitée",
@@ -104,10 +105,15 @@
       }
     }
   },
+  "interface": {
+    "badge": "Interface unifiée",
+    "title": "Gagnez en clarté avec un tableau de bord interactif",
+    "desc": "Centralisez vos achats, factures, et suivi d'activités sur une seule vue. Dites adieu aux tableurs et prenez des décisions rapides avec confiance."
+  },
   "footer": {
     "title": "L'avenir de votre gestion commence ici.",
     "subtitle": "Rejoignez les centaines d'entreprises qui ont déjà franchi le pas.",
-    "cta": "Créer un compte gratuit",
+    "cta": "Démarrer l'essai",
     "rights": "© 2026 Procura. Tous droits réservés."
   }
 }

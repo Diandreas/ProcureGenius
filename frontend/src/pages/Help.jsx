@@ -53,6 +53,7 @@ const Help = () => {
   const { articleId } = useParams();
   const [searchParams] = useSearchParams();
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   // Gérer le filtre par catégorie depuis l'URL
@@ -92,7 +93,7 @@ const Help = () => {
         navigate('/help/shortcuts');
         break;
       case 'support':
-        window.open('mailto:support@procuregenius.com', '_blank');
+        window.open('mailto:report.makeitreal@gmail.com', '_blank');
         break;
       default:
         break;
@@ -181,7 +182,7 @@ const Help = () => {
         <Box sx={{ mb: 3 }}>
           <Chip
             label={
-              documentationCategories.find((c) => c.id === selectedCategory)?.title ||
+              documentationCategories().find((c) => c.id === selectedCategory)?.title ||
               selectedCategory
             }
             onDelete={() => setSelectedCategory(null)}
@@ -203,8 +204,9 @@ const Help = () => {
                 elevation={0}
                 sx={{
                   mb: 2,
-                  border: 2,
-                  borderColor: alpha(category.color, 0.3),
+                  border: 1,
+                  borderColor: alpha(category.color, 0.2),
+                  borderRadius: 1.5,
                   background: `linear-gradient(135deg, ${alpha(
                     category.color,
                     0.05
@@ -227,8 +229,8 @@ const Help = () => {
                       sx={{
                         width: 48,
                         height: 48,
-                        borderRadius: 2,
-                        backgroundColor: alpha(category.color, 0.15),
+                        borderRadius: 1.5,
+                        backgroundColor: alpha(category.color, 0.1),
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -266,7 +268,9 @@ const Help = () => {
                       sx={{
                         height: '100%',
                         border: 1,
-                        borderColor: 'divider',
+                        borderRadius: 1.5,
+                        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fff',
                         transition: 'all 0.2s',
                         '&:hover': {
                           borderColor: category.color,
@@ -323,12 +327,10 @@ const Help = () => {
           mt: 6,
           p: 4,
           textAlign: 'center',
-          background: `linear-gradient(135deg, ${alpha(
-            theme.palette.primary.main,
-            0.05
-          )} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
+          background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(37,99,235,0.02)',
           border: 1,
-          borderColor: 'divider',
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(37,99,235,0.1)',
+          borderRadius: 3,
         }}
       >
         <Typography variant="h5" fontWeight={600} gutterBottom>
@@ -345,7 +347,7 @@ const Help = () => {
             variant="contained"
             size="large"
             startIcon={<Support />}
-            onClick={() => window.open('mailto:support@procuregenius.com', '_blank')}
+            onClick={() => window.open('mailto:report.makeitreal@gmail.com', '_blank')}
           >
             {t('help:needMoreHelp.contact', 'Contacter le support')}
           </Button>

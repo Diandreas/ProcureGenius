@@ -5,7 +5,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setAuthenticated } from '../../store/slices/authSlice';
+import { setAuthenticated, googleLogin, clearError } from '../../store/slices/authSlice';
+import { useGoogleLogin } from '@react-oauth/google';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -38,6 +40,7 @@ import api from '../../services/api';
 function Register() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation(['auth', 'common']);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -166,10 +169,20 @@ function Register() {
     }
   };
 
-  const handleGoogleSignup = () => {
-    // Redirect to Django allauth Google OAuth endpoint
-    window.location.href = '/accounts/google/login/?process=signup';
-  };
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      try {
+        await dispatch(googleLogin(tokenResponse.access_token)).unwrap();
+        navigate('/dashboard');
+      } catch (err) {
+        setError(err || t('auth:register.messages.error'));
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setError(t('auth:register.messages.serverError'))
+  });
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -235,10 +248,10 @@ function Register() {
 
           {/* Header */}
           <Typography component="h1" variant="h4" align="center" sx={{ mb: 1, fontWeight: 700 }}>
-            Créer un compte
+            {t('auth:register.title')}
           </Typography>
           <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Commencez gratuitement avec ProcureGenius
+            {t('auth:register.welcome')}
           </Typography>
 
           {/* Error Alert */}
@@ -254,7 +267,7 @@ function Register() {
             variant="outlined"
             size="large"
             startIcon={<GoogleIcon />}
-            onClick={handleGoogleSignup}
+            onClick={handleGoogleLogin}
             sx={{
               mb: 2,
               py: 1.5,
@@ -262,20 +275,24 @@ function Register() {
               color: '#4285F4',
               textTransform: 'none',
               fontSize: '1rem',
-              fontWeight: 500,
+              fontWeight: 600,
+              borderRadius: 2.5,
               '&:hover': {
                 borderColor: '#4285F4',
                 backgroundColor: 'rgba(66, 133, 244, 0.04)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 12px rgba(66, 133, 244, 0.1)'
               },
+              transition: 'all 0.2s'
             }}
           >
-            S'inscrire avec Google
+            {t('auth:login.google')}
           </Button>
 
           {/* Divider */}
           <Divider sx={{ my: 3 }}>
             <Typography variant="body2" color="text.secondary">
-              OU
+              {t('auth:login.or')}
             </Typography>
           </Divider>
 
@@ -288,7 +305,7 @@ function Register() {
                   required
                   fullWidth
                   id="firstName"
-                  label="Prénom"
+                  label={t('auth:register.firstName')}
                   name="firstName"
                   autoComplete="given-name"
                   value={formData.firstName}
@@ -309,7 +326,7 @@ function Register() {
                   required
                   fullWidth
                   id="lastName"
-                  label="Nom"
+                  label={t('auth:register.lastName')}
                   name="lastName"
                   autoComplete="family-name"
                   value={formData.lastName}
@@ -323,7 +340,7 @@ function Register() {
                   required
                   fullWidth
                   id="email"
-                  label="Adresse email"
+                  label={t('auth:register.email')}
                   name="email"
                   autoComplete="email"
                   value={formData.email}
@@ -344,7 +361,7 @@ function Register() {
                   required
                   fullWidth
                   id="organizationName"
-                  label="Nom de l'organisation"
+                  label={t('auth:register.companyName')}
                   name="organizationName"
                   value={formData.organizationName}
                   onChange={handleChange}
@@ -364,13 +381,13 @@ function Register() {
                   required
                   fullWidth
                   name="password"
-                  label="Mot de passe"
+                  label={t('auth:register.password')}
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
-                  helperText="Au moins 8 caractères"
+                  helperText={t('auth:login.validation.passwordMinLength')}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -398,7 +415,7 @@ function Register() {
                   required
                   fullWidth
                   name="confirmPassword"
-                  label="Confirmer le mot de passe"
+                  label={t('auth:register.confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
                   autoComplete="new-password"
@@ -433,13 +450,13 @@ function Register() {
                   }
                   label={
                     <Typography variant="body2">
-                      J'accepte les{' '}
-                      <Link href="/terms" target="_blank" sx={{ textDecoration: 'none' }}>
-                        conditions d'utilisation
+                      {t('auth:register.termsAgree')}{' '}
+                      <Link component={RouterLink} to="/terms" target="_blank" sx={{ textDecoration: 'none', fontWeight: 600 }}>
+                        {t('auth:register.termsLink')}
                       </Link>{' '}
-                      et la{' '}
-                      <Link href="/privacy" target="_blank" sx={{ textDecoration: 'none' }}>
-                        politique de confidentialité
+                      {t('auth:register.and')}{' '}
+                      <Link component={RouterLink} to="/privacy" target="_blank" sx={{ textDecoration: 'none', fontWeight: 600 }}>
+                        {t('auth:register.privacyLink')}
                       </Link>
                     </Typography>
                   }
@@ -466,9 +483,9 @@ function Register() {
                 <Link
                   component={RouterLink}
                   to="/login"
-                  sx={{ textDecoration: 'none', fontWeight: 600 }}
+                  sx={{ textDecoration: 'none', fontWeight: 700, color: '#2563eb' }}
                 >
-                  Se connecter
+                  {t('auth:register.signIn')}
                 </Link>
               </Typography>
             </Box>

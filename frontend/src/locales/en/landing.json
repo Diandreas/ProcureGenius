@@ -1,14 +1,15 @@
 {
   "nav": {
     "login": "Login",
+    "pricing": "Pricing",
     "freeTrial": "Free Trial"
   },
   "hero": {
-    "badge": "Pro Access free until April 30",
+    "badge": "Artificial Intelligence at your service",
     "titleStart": "Artificial Intelligence powering your ",
     "words": ["business", "enterprise", "startup", "growth"],
     "subtitle": "Centralize your purchases, invoices, and inventory. Let Procura's AI automate repetitive tasks and provide you with proactive strategic insights.",
-    "ctaPrimary": "Create my account",
+    "ctaPrimary": "Start Trial",
     "ctaSecondary": "See AI in action",
     "socialProof": "Trusted by +500 professionals"
   },
@@ -67,25 +68,25 @@
     "badge": "Transparent pricing",
     "title": "A profitable investment",
     "subtitle": "Choose the right plan for your team's size and ambitions.",
-    "freeUntil": "Free until April 30",
-    "cta": "Start for free",
+    "freeUntil": "14-day trial included",
+    "cta": "Start now",
     "ctaContact": "Contact us",
     "plans": {
       "essential": {
-        "name": "Essential",
-        "price": "0$",
+        "name": "Starter",
+        "price": "10€",
         "desc": "For freelancers who want to get organized.",
-        "f1": "1 User",
-        "f2": "50 Invoices / month",
-        "f3": "100 Products in stock",
+        "f1": "2 Users",
+        "f2": "100 Invoices / month",
+        "f3": "Unlimited Products in stock",
         "f4": "Email support"
       },
       "business": {
         "name": "Business AI",
         "popular": "Most Popular",
-        "price": "$49",
+        "price": "45€",
         "desc": "For SMBs who want to accelerate with AI.",
-        "f1": "5 Users included",
+        "f1": "10 Users included",
         "f2": "Unlimited Invoices and Purchases",
         "f3": "Full AI Assistant",
         "f4": "Unlimited OCR Extraction",
@@ -104,10 +105,15 @@
       }
     }
   },
+  "interface": {
+    "badge": "Unified Interface",
+    "title": "Gain clarity with an interactive dashboard",
+    "desc": "Centralize your purchases, invoices, and activity tracking in a single view. Say goodbye to spreadsheets and make fast decisions with confidence."
+  },
   "footer": {
     "title": "The future of your management starts here.",
     "subtitle": "Join hundreds of companies that have already taken the leap.",
-    "cta": "Create a free account",
+    "cta": "Start your trial",
     "rights": "© 2026 Procura. All rights reserved."
   }
 }
