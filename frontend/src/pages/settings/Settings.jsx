@@ -1330,92 +1330,145 @@ const AppearanceSection = ({ settings, onUpdate }) => {
 };
 
 /**
- * Section Profil - Changement de mot de passe
+ * Section Profil - Informations personnelles + Changement de mot de passe
  */
 const ProfileSection = ({ settings, onUpdate }) => {
   const { t } = useTranslation(['settings', 'common']);
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [showPasswords, setShowPasswords] = useState(false);
+  const token = localStorage.getItem('authToken');
 
-  const handlePasswordChange = (field, value) => {
-    setPasswordData(prev => ({ ...prev, [field]: value }));
+  // Infos personnelles
+  const [profileData, setProfileData] = useState({ first_name: '', last_name: '', email: '', phone: '' });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [profileError, setProfileError] = useState('');
+
+  // Mot de passe
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState('');
+  const [pwError, setPwError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/v1/accounts/profile/', { headers: { Authorization: `Token ${token}` } })
+      .then(r => r.json())
+      .then(data => setProfileData({
+        first_name: data.first_name || '',
+        last_name: data.last_name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+      }));
+  }, []);
+
+  const handleProfileSave = async () => {
+    setProfileLoading(true);
+    setProfileError('');
+    setProfileSuccess('');
+    try {
+      const res = await fetch('/api/v1/accounts/profile/', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Token ${token}` },
+        body: JSON.stringify(profileData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur');
+      setProfileSuccess('Profil mis à jour avec succès.');
+    } catch (e) {
+      setProfileError(e.message);
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
-  const handleSubmitPassword = () => {
+  const handleSubmitPassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('Les mots de passe ne correspondent pas');
+      setPwError('Les mots de passe ne correspondent pas.');
       return;
     }
-    // TODO: Implémenter le changement de mot de passe
-    console.log('Changement de mot de passe:', passwordData);
+    setPwLoading(true);
+    setPwError('');
+    setPwSuccess('');
+    try {
+      const res = await fetch('/api/v1/auth/change-password/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Token ${token}` },
+        body: JSON.stringify({ current_password: passwordData.currentPassword, new_password: passwordData.newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur');
+      if (data.token) localStorage.setItem('authToken', data.token);
+      setPwSuccess('Mot de passe modifié avec succès.');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (e) {
+      setPwError(e.message);
+    } finally {
+      setPwLoading(false);
+    }
   };
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        Profil et Sécurité
-      </Typography>
+      {/* Informations personnelles */}
+      <Typography variant="h6" gutterBottom>Informations personnelles</Typography>
       <Divider sx={{ mb: 3 }} />
-
       <Grid container spacing={3}>
-        {/* Changement de mot de passe */}
+        <Grid item xs={12} md={6}>
+          <TextField fullWidth label="Prénom" value={profileData.first_name}
+            onChange={(e) => setProfileData(p => ({ ...p, first_name: e.target.value }))} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField fullWidth label="Nom" value={profileData.last_name}
+            onChange={(e) => setProfileData(p => ({ ...p, last_name: e.target.value }))} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField fullWidth label="Adresse email" type="email" value={profileData.email}
+            onChange={(e) => setProfileData(p => ({ ...p, email: e.target.value }))} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <TextField fullWidth label="Téléphone" value={profileData.phone}
+            onChange={(e) => setProfileData(p => ({ ...p, phone: e.target.value }))} />
+        </Grid>
+        {profileSuccess && <Grid item xs={12}><Alert severity="success">{profileSuccess}</Alert></Grid>}
+        {profileError && <Grid item xs={12}><Alert severity="error">{profileError}</Alert></Grid>}
         <Grid item xs={12}>
-          <Typography variant="subtitle1" gutterBottom fontWeight={600}>
-            Modifier le mot de passe
-          </Typography>
+          <Button variant="contained" onClick={handleProfileSave} disabled={profileLoading}>
+            {profileLoading ? <CircularProgress size={20} /> : 'Enregistrer le profil'}
+          </Button>
         </Grid>
+      </Grid>
 
+      <Divider sx={{ my: 4 }} />
+
+      {/* Changement de mot de passe */}
+      <Typography variant="h6" gutterBottom>Modifier le mot de passe</Typography>
+      <Divider sx={{ mb: 3 }} />
+      <Grid container spacing={3}>
         <Grid item xs={12} md={4}>
-          <TextField
-            fullWidth
-            type={showPasswords ? 'text' : 'password'}
-            label="Mot de passe actuel"
+          <TextField fullWidth type={showPasswords ? 'text' : 'password'} label="Mot de passe actuel"
             value={passwordData.currentPassword}
-            onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-          />
+            onChange={(e) => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))} />
         </Grid>
-
         <Grid item xs={12} md={4}>
-          <TextField
-            fullWidth
-            type={showPasswords ? 'text' : 'password'}
-            label="Nouveau mot de passe"
+          <TextField fullWidth type={showPasswords ? 'text' : 'password'} label="Nouveau mot de passe"
             value={passwordData.newPassword}
-            onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-          />
+            onChange={(e) => setPasswordData(p => ({ ...p, newPassword: e.target.value }))} />
         </Grid>
-
         <Grid item xs={12} md={4}>
-          <TextField
-            fullWidth
-            type={showPasswords ? 'text' : 'password'}
-            label="Confirmer le mot de passe"
+          <TextField fullWidth type={showPasswords ? 'text' : 'password'} label="Confirmer le mot de passe"
             value={passwordData.confirmPassword}
-            onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-          />
+            onChange={(e) => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))} />
         </Grid>
-
+        {pwSuccess && <Grid item xs={12}><Alert severity="success">{pwSuccess}</Alert></Grid>}
+        {pwError && <Grid item xs={12}><Alert severity="error">{pwError}</Alert></Grid>}
         <Grid item xs={12}>
           <Stack direction="row" spacing={2} alignItems="center">
             <FormControlLabel
-              control={
-                <Switch
-                  checked={showPasswords}
-                  onChange={(e) => setShowPasswords(e.target.checked)}
-                />
-              }
+              control={<Switch checked={showPasswords} onChange={(e) => setShowPasswords(e.target.checked)} />}
               label="Afficher les mots de passe"
             />
-            <Button
-              variant="contained"
-              onClick={handleSubmitPassword}
-              disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
-            >
-              Changer le mot de passe
+            <Button variant="contained" onClick={handleSubmitPassword}
+              disabled={pwLoading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}>
+              {pwLoading ? <CircularProgress size={20} /> : 'Changer le mot de passe'}
             </Button>
           </Stack>
         </Grid>

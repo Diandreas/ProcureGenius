@@ -419,6 +419,36 @@ def api_google_login(request):
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_change_password(request):
+    """
+    Change password for authenticated user.
+    POST /api/v1/auth/change-password/
+    Body: { current_password, new_password }
+    """
+    current_password = request.data.get('current_password', '')
+    new_password = request.data.get('new_password', '')
+
+    if not current_password or not new_password:
+        return Response({'error': 'Les deux mots de passe sont requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = request.user
+    if not user.check_password(current_password):
+        return Response({'error': 'Mot de passe actuel incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if len(new_password) < 8:
+        return Response({'error': 'Le nouveau mot de passe doit contenir au moins 8 caractères.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+    # Regenerate token so session stays valid
+    from rest_framework.authtoken.models import Token as AuthToken
+    AuthToken.objects.filter(user=user).delete()
+    token, _ = AuthToken.objects.get_or_create(user=user)
+    return Response({'success': True, 'token': token.key})
+
+
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def api_contact(request):
     """

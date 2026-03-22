@@ -28,7 +28,7 @@ def _generate_temp_password(length=12):
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def api_profile(request):
     """API profil utilisateur avec permissions et préférences"""
@@ -80,6 +80,24 @@ def api_profile(request):
             'module_access': permissions.module_access,
         }
     })
+
+    if request.method == 'PATCH':
+        data = request.data
+        user = request.user
+        if 'first_name' in data:
+            user.first_name = data['first_name'].strip()
+        if 'last_name' in data:
+            user.last_name = data['last_name'].strip()
+        if 'email' in data:
+            new_email = data['email'].strip()
+            if CustomUser.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+                return Response({'error': 'Cet email est déjà utilisé.'}, status=status.HTTP_400_BAD_REQUEST)
+            user.email = new_email
+            user.username = new_email  # username = email par convention
+        if 'phone' in data:
+            user.phone = data['phone'].strip()
+        user.save()
+        return Response({'success': True, 'message': 'Profil mis à jour.'})
 
 
 @api_view(['GET', 'PUT'])

@@ -38,6 +38,7 @@ urlpatterns = [
     path('auth/forgot-password/', auth_api_views.api_forgot_password, name='api_forgot_password'),
     path('auth/reset-password/', auth_api_views.api_reset_password, name='api_reset_password'),
     path('auth/google/', auth_api_views.api_google_login, name='api_google_login'),
+    path('auth/change-password/', auth_api_views.api_change_password, name='api_change_password'),
     path('contact/', auth_api_views.api_contact, name='api_contact'),
 
     # Accounts & User management APIs
