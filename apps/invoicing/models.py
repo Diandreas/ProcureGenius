@@ -334,11 +334,16 @@ class Product(models.Model):
 
     @property
     def total_stock(self):
-        """Stock total = stock produit + stock des lots disponibles/ouverts"""
-        batch_stock = self.batches.filter(
-            status__in=['available', 'opened']
-        ).aggregate(total=models.Sum('quantity_remaining'))['total'] or 0
-        return self.stock_quantity + batch_stock
+        """
+        Stock réel :
+        - Si le produit a des lots → somme des quantity_remaining des lots actifs (available/opened)
+        - Si aucun lot → stock_quantity (produits anciens sans gestion par lots)
+        """
+        if self.batches.exists():
+            return self.batches.filter(
+                status__in=['available', 'opened']
+            ).aggregate(total=models.Sum('quantity_remaining'))['total'] or 0
+        return self.stock_quantity
 
     @property
     def is_low_stock(self):

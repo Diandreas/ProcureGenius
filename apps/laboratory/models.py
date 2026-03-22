@@ -505,6 +505,15 @@ class LabOrder(models.Model):
         verbose_name=_("Sous-traitant"),
         help_text=_("Si renseigné, la commande est sous-traitée à ce laboratoire")
     )
+    subcontractor_patient = models.ForeignKey(
+        'SubcontractorPatient',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lab_orders',
+        verbose_name=_("Patient sous-traitant"),
+        help_text=_("Patient du laboratoire sous-traitant (distinct des patients du centre de santé)")
+    )
 
     # Biologist diagnosis (NOUVEAU - Phase 3)
     biologist_diagnosis = models.TextField(
@@ -1155,10 +1164,14 @@ class SubcontractorLab(models.Model):
         related_name='subcontractor_labs',
         verbose_name=_("Organisation")
     )
+    # Informations de base
     name = models.CharField(max_length=200, verbose_name=_("Nom du laboratoire"))
     address = models.TextField(blank=True, verbose_name=_("Adresse"))
+    city = models.CharField(max_length=100, blank=True, verbose_name=_("Ville"))
     phone = models.CharField(max_length=50, blank=True, verbose_name=_("Téléphone"))
+    fax = models.CharField(max_length=50, blank=True, verbose_name=_("Fax"))
     email = models.EmailField(blank=True, verbose_name=_("Email"))
+    website = models.URLField(blank=True, verbose_name=_("Site web"))
     logo = models.ImageField(
         upload_to='subcontractors/logos/',
         blank=True,
@@ -1166,10 +1179,24 @@ class SubcontractorLab(models.Model):
         verbose_name=_("Logo"),
         help_text=_("Logo affiché sur les rapports PDF sous-traités")
     )
+    brand_color = models.CharField(
+        max_length=7, default='#2563eb', blank=True,
+        verbose_name=_("Couleur principale"),
+        help_text=_("Couleur utilisée dans les entêtes des rapports (format: #RRGGBB)")
+    )
+    # Identifiants légaux/fiscaux (Cameroun & OHADA)
+    niu = models.CharField(max_length=50, blank=True, verbose_name=_("NIU"), help_text=_("Numéro Identifiant Unique (Cameroun)"))
+    rc_number = models.CharField(max_length=50, blank=True, verbose_name=_("Numéro RC"), help_text=_("Registre de Commerce"))
+    rccm_number = models.CharField(max_length=50, blank=True, verbose_name=_("Numéro RCCM"), help_text=_("Registre du Commerce et du Crédit Mobilier"))
+    tax_number = models.CharField(max_length=50, blank=True, verbose_name=_("Numéro contribuable"))
+    # Coordonnées bancaires
+    bank_name = models.CharField(max_length=200, blank=True, verbose_name=_("Banque"))
+    bank_account = models.CharField(max_length=100, blank=True, verbose_name=_("Numéro de compte"))
+    # Entête libre (accréditations, mentions légales, etc.)
     header_text = models.TextField(
         blank=True,
-        verbose_name=_("Entête du rapport"),
-        help_text=_("Texte d'entête affiché sur les rapports PDF (adresse complète, accréditations, etc.)")
+        verbose_name=_("Entête libre"),
+        help_text=_("Texte libre affiché dans l'entête des rapports (accréditations, mentions légales…)")
     )
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1226,3 +1253,91 @@ class SubcontractorPrice(models.Model):
 
     def __str__(self):
         return f"{self.lab_test.name} @ {self.subcontractor.name} — {self.price}"
+
+
+class SubcontractorDefaultPrice(models.Model):
+    """
+    Tarif par défaut de sous-traitance pour un examen, applicable à tous les
+    sous-traitants qui n'ont pas de tarif spécifique.
+    Sert de tarif pré-rempli lors de la configuration des prix d'un nouveau sous-traitant.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='subcontractor_default_prices',
+        verbose_name=_("Organisation")
+    )
+    lab_test = models.ForeignKey(
+        LabTest,
+        on_delete=models.CASCADE,
+        related_name='subcontractor_default_price',
+        verbose_name=_("Examen")
+    )
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        verbose_name=_("Prix par défaut"),
+        help_text=_("Prix de référence utilisé pour tous les sous-traitants sans tarif spécifique")
+    )
+    is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Tarif sous-traitance par défaut")
+        verbose_name_plural = _("Tarifs sous-traitance par défaut")
+        unique_together = [['organization', 'lab_test']]
+        ordering = ['lab_test__name']
+
+    def __str__(self):
+        return f"{self.lab_test.name} — défaut {self.price}"
+
+
+class SubcontractorPatient(models.Model):
+    """
+    Patient appartenant à un laboratoire sous-traitant.
+    Ces patients sont distincts des patients du centre de santé.
+    Utilisés pour les commandes groupées de sous-traitance.
+    """
+    GENDER_CHOICES = [('M', _('Masculin')), ('F', _('Féminin')), ('O', _('Autre'))]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    subcontractor = models.ForeignKey(
+        SubcontractorLab,
+        on_delete=models.CASCADE,
+        related_name='patients',
+        verbose_name=_("Laboratoire sous-traitant")
+    )
+    first_name = models.CharField(max_length=100, verbose_name=_("Prénom"))
+    last_name = models.CharField(max_length=100, verbose_name=_("Nom"))
+    date_of_birth = models.DateField(null=True, blank=True, verbose_name=_("Date de naissance"))
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, verbose_name=_("Sexe"))
+    phone = models.CharField(max_length=50, blank=True, verbose_name=_("Téléphone"))
+    external_id = models.CharField(
+        max_length=100, blank=True,
+        verbose_name=_("Référence externe"),
+        help_text=_("Identifiant du patient dans le système du sous-traitant")
+    )
+    # Lien vers notre propre Client/Patient (créé automatiquement lors de la première commande)
+    client = models.ForeignKey(
+        'accounts.Client',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='subcontractor_patient_records',
+        verbose_name=_("Patient interne"),
+        help_text=_("Créé automatiquement lors de la première commande pour ce patient")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Patient sous-traitant")
+        verbose_name_plural = _("Patients sous-traitants")
+        ordering = ['last_name', 'first_name']
+
+    def __str__(self):
+        return f"{self.last_name} {self.first_name}"
+
+    @property
+    def full_name(self):
+        return f"{self.last_name} {self.first_name}".strip()

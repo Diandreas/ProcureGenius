@@ -42,7 +42,8 @@ import {
     Description as DescriptionIcon,
     ArrowBack as ArrowBackIcon,
     ArrowForward as ArrowForwardIcon,
-    Today as TodayIcon
+    Today as TodayIcon,
+    SwapHoriz as SubcontractedIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -86,6 +87,7 @@ const LabOrderList = () => {
                 else if (quickFilter === 'processing') params.status = 'in_progress';
                 else if (quickFilter === 'completed') params.status_in = 'completed,results_ready,results_delivered';
                 else if (quickFilter === 'urgent') params.priority = 'urgent';
+                else if (quickFilter === 'subcontracted') params.is_subcontracted = 'true';
             }
 
             const data = await laboratoryAPI.getOrders(params);
@@ -268,8 +270,8 @@ const LabOrderList = () => {
                         transition: 'all 0.3s ease',
                         background: theme => `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
                         border: '2px solid',
-                        borderColor: order.priority === 'urgent' ? 'error.main' : 'divider',
-                        boxShadow: order.priority === 'urgent' ? `0 0 0 1px ${alpha(theme.palette.error.main, 0.1)}` : 'none',
+                        borderColor: order.priority === 'urgent' ? 'error.main' : order.is_subcontracted ? 'secondary.main' : 'divider',
+                        boxShadow: order.priority === 'urgent' ? `0 0 0 1px ${alpha(theme.palette.error.main, 0.1)}` : order.is_subcontracted ? `0 0 0 1px ${alpha(theme.palette.secondary.main, 0.15)}` : 'none',
                         '&:hover': {
                             transform: 'translateY(-4px)',
                             boxShadow: order.priority === 'urgent'
@@ -281,17 +283,18 @@ const LabOrderList = () => {
                     }}
                     onClick={() => navigate(`/healthcare/laboratory/${order.id}`)}
                 >
-                    {/* Priority Banner */}
-                    {order.priority === 'urgent' && (
+                    {/* Priority / Subcontract Banner */}
+                    {(order.priority === 'urgent' || order.is_subcontracted) && (
                         <Box
                             sx={{
                                 position: 'absolute',
                                 top: 0,
                                 left: 0,
                                 right: 0,
-                                height: 6,
-                                background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
-                                boxShadow: `0 2px 8px ${alpha(theme.palette.error.main, 0.3)}`
+                                height: 4,
+                                background: theme => order.priority === 'urgent'
+                                    ? `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`
+                                    : `linear-gradient(90deg, ${theme.palette.secondary.main}, ${theme.palette.secondary.dark})`,
                             }}
                         />
                     )}
@@ -323,6 +326,14 @@ const LabOrderList = () => {
                                             size="small"
                                             color="error"
                                             sx={{ height: 20, fontSize: '0.7rem', fontWeight: 700 }}
+                                        />
+                                    )}
+                                    {order.is_subcontracted && (
+                                        <Chip
+                                            label={`↗ ${order.subcontractor_name || 'Sous-traité'}`}
+                                            size="small"
+                                            color="secondary"
+                                            sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
                                         />
                                     )}
                                 </Stack>
@@ -551,17 +562,20 @@ const LabOrderList = () => {
 
             {/* Filters Grid */}
             <Grid container spacing={2} mb={4}>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={2.4}>
                     <StatCard title="En Attente" icon={PendingIcon} color={theme.palette.text.secondary} filterKey="pending" isActive={quickFilter === 'pending'} />
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={2.4}>
                     <StatCard title="En Cours" icon={ProcessingIcon} color={theme.palette.warning.main} filterKey="processing" isActive={quickFilter === 'processing'} />
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={2.4}>
                     <StatCard title="Terminé" icon={CompletedIcon} color={theme.palette.success.main} filterKey="completed" isActive={quickFilter === 'completed'} />
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={2.4}>
                     <StatCard title="Urgent" icon={UrgentIcon} color={theme.palette.error.main} filterKey="urgent" isActive={quickFilter === 'urgent'} />
+                </Grid>
+                <Grid item xs={6} md={2.4}>
+                    <StatCard title="Sous-traités" icon={SubcontractedIcon} color={theme.palette.secondary.main} filterKey="subcontracted" isActive={quickFilter === 'subcontracted'} />
                 </Grid>
             </Grid>
 

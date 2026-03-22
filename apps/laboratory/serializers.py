@@ -3,7 +3,7 @@ Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
 from decimal import Decimal, InvalidOperation
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient
 
 
 class LabTestParameterSerializer(serializers.ModelSerializer):
@@ -381,10 +381,13 @@ class LabOrderSerializer(serializers.ModelSerializer):
     """Full serializer for LabOrder"""
     items = LabOrderItemSerializer(many=True, read_only=True)
     patient_name = serializers.CharField(source='patient.name', read_only=True)
+    subcontractor_name = serializers.CharField(source='subcontractor.name', read_only=True, default=None)
+    is_subcontracted = serializers.SerializerMethodField()
     patient_number = serializers.CharField(source='patient.patient_number', read_only=True)
     patient_gender = serializers.CharField(source='patient.gender', read_only=True)
     patient_age = serializers.SerializerMethodField()
     ordered_by_name = serializers.SerializerMethodField()
+    sample_collected_by_name = serializers.CharField(source='sample_collected_by.get_full_name', read_only=True, default=None)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -423,6 +426,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'prescriber_commission_rate',
             'sample_collected_at',
             'sample_collected_by',
+            'sample_collected_by_name',
             'results_completed_at',
             'results_entered_by',
             'results_verified_by',
@@ -437,6 +441,9 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'tests_count',
             'all_results_entered',
             'biologist_diagnosis',
+            'subcontractor',
+            'subcontractor_name',
+            'is_subcontracted',
             'diagnosed_by_name',
             'diagnosed_at',
             'created_at',
@@ -449,6 +456,9 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'diagnosed_at'
         ]
     
+    def get_is_subcontracted(self, obj):
+        return obj.subcontractor_id is not None
+
     def get_patient_age(self, obj):
         if obj.patient:
             return obj.patient.get_age()
@@ -496,10 +506,15 @@ class LabOrderListSerializer(serializers.ModelSerializer):
     tests_count = serializers.SerializerMethodField()
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     items = LabOrderListItemSerializer(many=True, read_only=True)
+    subcontractor_name = serializers.CharField(source='subcontractor.name', read_only=True, default=None)
+    is_subcontracted = serializers.SerializerMethodField()
 
     def get_tests_count(self, obj):
         """Get count of items"""
         return obj.items.count() if hasattr(obj, 'items') else 0
+
+    def get_is_subcontracted(self, obj):
+        return obj.subcontractor_id is not None
 
     class Meta:
         model = LabOrder
@@ -517,6 +532,8 @@ class LabOrderListSerializer(serializers.ModelSerializer):
             'total_price',
             'notification_sent',
             'items',
+            'subcontractor_name',
+            'is_subcontracted',
         ]
 
 
@@ -642,16 +659,46 @@ class SubcontractorPriceSerializer(serializers.ModelSerializer):
 class SubcontractorLabSerializer(serializers.ModelSerializer):
     prices_count = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
+    b2b_client_id = serializers.SerializerMethodField()
 
     class Meta:
         model = SubcontractorLab
         fields = [
-            'id', 'name', 'address', 'phone', 'email',
-            'logo', 'logo_url', 'header_text',
-            'is_active', 'prices_count',
+            'id', 'name', 'address', 'city', 'phone', 'fax', 'email', 'website',
+            'logo', 'logo_url', 'brand_color', 'header_text',
+            'niu', 'rc_number', 'rccm_number', 'tax_number',
+            'bank_name', 'bank_account',
+            'is_active', 'prices_count', 'b2b_client_id',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_prices_count(self, obj):
+        return obj.prices.filter(is_active=True).count()
+
+    def get_b2b_client_id(self, obj):
+        from apps.accounts.models import Client
+        client = Client.objects.filter(
+            organization=obj.organization, name=obj.name, client_type='b2b'
+        ).first()
+        return str(client.id) if client else None
+
+    def get_logo_url(self, obj):
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            return obj.logo.url
+        return None
+
+
+class SubcontractorLabListSerializer(serializers.ModelSerializer):
+    prices_count = serializers.SerializerMethodField()
+    logo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SubcontractorLab
+        fields = ['id', 'name', 'city', 'phone', 'email', 'brand_color', 'is_active', 'prices_count', 'logo_url']
 
     def get_prices_count(self, obj):
         return obj.prices.filter(is_active=True).count()
@@ -665,12 +712,39 @@ class SubcontractorLabSerializer(serializers.ModelSerializer):
         return None
 
 
-class SubcontractorLabListSerializer(serializers.ModelSerializer):
-    prices_count = serializers.SerializerMethodField()
+class SubcontractorDefaultPriceSerializer(serializers.ModelSerializer):
+    test_code = serializers.CharField(source='lab_test.code', read_only=True)
+    test_name = serializers.CharField(source='lab_test.name', read_only=True)
+    category_name = serializers.CharField(source='lab_test.category.name', read_only=True)
+    lab_test_id = serializers.UUIDField(source='lab_test.id', read_only=True)
 
     class Meta:
-        model = SubcontractorLab
-        fields = ['id', 'name', 'phone', 'email', 'is_active', 'prices_count']
+        model = SubcontractorDefaultPrice
+        fields = ['id', 'lab_test_id', 'test_code', 'test_name', 'category_name', 'price', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
-    def get_prices_count(self, obj):
-        return obj.prices.filter(is_active=True).count()
+
+class SubcontractorPatientSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(read_only=True)
+    subcontractor_name = serializers.CharField(source='subcontractor.name', read_only=True)
+    client_id = serializers.UUIDField(source='client.id', read_only=True, default=None)
+
+    class Meta:
+        model = SubcontractorPatient
+        fields = [
+            'id', 'subcontractor', 'subcontractor_name',
+            'first_name', 'last_name', 'full_name',
+            'date_of_birth', 'gender', 'phone', 'external_id',
+            'client_id',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'subcontractor', 'created_at', 'updated_at']
+
+
+class SubcontractorPatientListSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(read_only=True)
+    client_id = serializers.UUIDField(source='client.id', read_only=True, default=None)
+
+    class Meta:
+        model = SubcontractorPatient
+        fields = ['id', 'first_name', 'last_name', 'full_name', 'date_of_birth', 'gender', 'phone', 'external_id', 'client_id']

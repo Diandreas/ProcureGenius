@@ -4,6 +4,7 @@ API Views for Laboratory (LIMS) app
 from rest_framework import generics, status, filters
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, BasePermission, SAFE_METHODS
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,7 +16,7 @@ from .services import LabResultPDFGenerator
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient
 from .serializers import (
     LabTestCategorySerializer,
     LabTestSerializer,
@@ -32,6 +33,9 @@ from .serializers import (
     SubcontractorLabSerializer,
     SubcontractorLabListSerializer,
     SubcontractorPriceSerializer,
+    SubcontractorDefaultPriceSerializer,
+    SubcontractorPatientSerializer,
+    SubcontractorPatientListSerializer,
 )
 
 
@@ -131,7 +135,19 @@ class LabOrderListView(generics.ListAPIView):
 
         queryset = LabOrder.objects.filter(
             organization=self.request.user.organization
-        ).select_related('patient').prefetch_related('items', 'items__lab_test')
+        ).select_related('patient', 'subcontractor').prefetch_related('items', 'items__lab_test')
+
+        # Filter by subcontractor
+        subcontractor_id = self.request.query_params.get('subcontractor_id')
+        if subcontractor_id:
+            queryset = queryset.filter(subcontractor_id=subcontractor_id)
+
+        # Filter subcontracted orders only
+        is_subcontracted = self.request.query_params.get('is_subcontracted')
+        if is_subcontracted == 'true':
+            queryset = queryset.filter(subcontractor__isnull=False)
+        elif is_subcontracted == 'false':
+            queryset = queryset.filter(subcontractor__isnull=True)
 
         # Filter by multiple statuses (status_in parameter)
         status_in = self.request.query_params.get('status_in')
@@ -642,7 +658,7 @@ class TodayLabOrdersView(APIView):
     def get(self, request):
         org_orders = LabOrder.objects.filter(
             organization=request.user.organization
-        ).select_related('patient').prefetch_related('items')
+        ).select_related('patient', 'subcontractor').prefetch_related('items')
 
         # Active orders = all non-delivered, non-cancelled (regardless of date)
         active_orders = org_orders.exclude(status__in=['results_delivered', 'cancelled'])
@@ -659,6 +675,7 @@ class TodayLabOrdersView(APIView):
             'in_progress': active_orders.filter(status='in_progress').count(),
             'completed': active_orders.filter(status='completed').count(),
             'results_ready': active_orders.filter(status='results_ready').count(),
+            'subcontracted': active_orders.filter(subcontractor__isnull=False).count(),
             # Today-specific
             'today_total': today_orders.count(),
             'today_delivered': today_orders.filter(status='results_delivered').count(),
@@ -1129,6 +1146,7 @@ class SubcontractorLabListCreateView(generics.ListCreateAPIView):
     POST /healthcare/laboratory/subcontractors/  — Create subcontractor lab
     """
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -1151,6 +1169,7 @@ class SubcontractorLabDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     serializer_class = SubcontractorLabSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         return SubcontractorLab.objects.filter(organization=self.request.user.organization)
@@ -1267,4 +1286,355 @@ class SubcontractorTestsWithPricesView(APIView):
         return Response({
             'subcontractor': SubcontractorLabListSerializer(subcontractor).data,
             'tests': result,
+        })
+
+
+class SubcontractorDefaultPriceView(APIView):
+    """
+    GET  /healthcare/laboratory/subcontractors/default-prices/   — List all tests with default subcontractor price
+    POST /healthcare/laboratory/subcontractors/default-prices/bulk-save/  — Bulk save default prices
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        org = request.user.organization
+        tests = LabTest.objects.filter(
+            organization=org, is_active=True
+        ).select_related('category').order_by('category__name', 'name')
+
+        defaults = {
+            dp.lab_test_id: dp
+            for dp in SubcontractorDefaultPrice.objects.filter(organization=org)
+        }
+
+        result = []
+        for test in tests:
+            dp = defaults.get(test.id)
+            result.append({
+                'id': str(test.id),
+                'test_code': test.test_code,
+                'name': test.name,
+                'category': test.category.name if test.category else None,
+                'standard_price': float(test.price),
+                'default_price': float(dp.price) if dp else None,
+                'is_active': dp.is_active if dp else False,
+                'default_price_id': str(dp.id) if dp else None,
+            })
+        return Response(result)
+
+
+class SubcontractorDefaultPriceBulkSaveView(APIView):
+    """
+    POST /healthcare/laboratory/subcontractors/default-prices/bulk-save/
+    Body: [{lab_test_id, price, is_active}, ...]
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        org = request.user.organization
+        items = request.data if isinstance(request.data, list) else request.data.get('prices', [])
+        saved = 0
+        for item in items:
+            test_id = item.get('lab_test_id') or item.get('id')
+            price = item.get('price')
+            is_active = item.get('is_active', True)
+            if not test_id or price is None:
+                continue
+            try:
+                test = LabTest.objects.get(id=test_id, organization=org)
+                SubcontractorDefaultPrice.objects.update_or_create(
+                    organization=org, lab_test=test,
+                    defaults={'price': price, 'is_active': is_active}
+                )
+                saved += 1
+            except (LabTest.DoesNotExist, Exception):
+                continue
+        return Response({'saved': saved})
+
+
+class SubcontractorPriceBulkActivateView(APIView):
+    """
+    POST /healthcare/laboratory/subcontractors/<uuid>/prices/bulk-activate/
+    Body: {test_ids: [...], is_active: true, use_defaults: true}
+    When use_defaults=true, copies default prices for selected tests.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, subcontractor_id):
+        try:
+            subcontractor = SubcontractorLab.objects.get(
+                id=subcontractor_id, organization=request.user.organization
+            )
+        except SubcontractorLab.DoesNotExist:
+            return Response({'error': 'Sous-traitant introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        test_ids = request.data.get('test_ids', [])
+        is_active = request.data.get('is_active', True)
+        use_defaults = request.data.get('use_defaults', False)
+        activate_all = request.data.get('activate_all', False)
+
+        org = request.user.organization
+        if activate_all:
+            tests = LabTest.objects.filter(organization=org, is_active=True)
+        else:
+            tests = LabTest.objects.filter(id__in=test_ids, organization=org, is_active=True)
+
+        if not tests.exists():
+            return Response({'error': 'Aucun examen trouvé'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Build default prices map
+        defaults_map = {}
+        if use_defaults:
+            defaults_map = {
+                dp.lab_test_id: dp.price
+                for dp in SubcontractorDefaultPrice.objects.filter(organization=org, lab_test__in=tests)
+            }
+
+        saved = 0
+        for test in tests:
+            price = defaults_map.get(test.id, test.price)  # Fallback to standard price
+            obj, created = SubcontractorPrice.objects.get_or_create(
+                subcontractor=subcontractor, lab_test=test,
+                defaults={'price': price, 'is_active': is_active}
+            )
+            if not created:
+                obj.is_active = is_active
+                if use_defaults and test.id in defaults_map:
+                    obj.price = defaults_map[test.id]
+                obj.save(update_fields=['is_active', 'price', 'updated_at'])
+            saved += 1
+
+        return Response({'saved': saved, 'is_active': is_active})
+
+
+class SubcontractorPatientListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /healthcare/laboratory/subcontractors/<uuid>/patients/
+    POST /healthcare/laboratory/subcontractors/<uuid>/patients/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return SubcontractorPatientListSerializer
+        return SubcontractorPatientSerializer
+
+    def get_queryset(self):
+        subcontractor_id = self.kwargs['subcontractor_id']
+        qs = SubcontractorPatient.objects.filter(
+            subcontractor_id=subcontractor_id,
+            subcontractor__organization=self.request.user.organization
+        )
+        search = self.request.GET.get('search')
+        if search:
+            qs = qs.filter(
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(external_id__icontains=search) |
+                Q(phone__icontains=search)
+            )
+        return qs
+
+    def perform_create(self, serializer):
+        subcontractor_id = self.kwargs['subcontractor_id']
+        subcontractor = SubcontractorLab.objects.get(
+            id=subcontractor_id,
+            organization=self.request.user.organization
+        )
+        serializer.save(subcontractor=subcontractor)
+
+
+class SubcontractorPatientDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET/PATCH/DELETE /healthcare/laboratory/subcontractors/<uuid>/patients/<uuid>/
+    """
+    serializer_class = SubcontractorPatientSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return SubcontractorPatient.objects.filter(
+            subcontractor__organization=self.request.user.organization
+        )
+
+
+class SubcontractorBatchOrderView(APIView):
+    """
+    POST /healthcare/laboratory/subcontractors/<uuid>/batch-order/
+    Crée plusieurs commandes labo pour les patients d'un sous-traitant.
+    - Auto-crée un Client interne pour chaque SubcontractorPatient si besoin
+    - Status initial = sample_collected (échantillons déjà prélevés)
+    - Auto-génère les factures
+
+    Body: {
+        rows: [{subcontractor_patient_id, test_ids, priority, clinical_notes}],
+        payment_method: 'cash'
+    }
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, subcontractor_id):
+        from apps.accounts.models import Client
+        from apps.invoicing.models import Invoice, InvoiceItem
+        from decimal import Decimal
+        from django.utils import timezone
+
+        org = request.user.organization
+        try:
+            subcontractor = SubcontractorLab.objects.get(id=subcontractor_id, organization=org)
+        except SubcontractorLab.DoesNotExist:
+            return Response({'error': 'Sous-traitant introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        rows = request.data.get('rows', [])
+        payment_method = request.data.get('payment_method', 'cash')
+
+        if not rows:
+            return Response({'error': 'Aucune ligne fournie'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Build subcontractor price map
+        sub_prices = {
+            sp.lab_test_id: sp.price
+            for sp in SubcontractorPrice.objects.filter(subcontractor=subcontractor, is_active=True)
+        }
+
+        # Get or create a B2B Client record for the subcontractor itself (for invoicing)
+        sub_client, _ = Client.objects.get_or_create(
+            organization=org,
+            name=subcontractor.name,
+            client_type='b2b',
+            defaults={
+                'phone': subcontractor.phone or '',
+                'registration_source': 'external',
+            }
+        )
+
+        success = []
+        errors = []
+        batch_total = Decimal('0')
+        invoice_items_data = []  # [(description, unit_price)]
+
+        for row in rows:
+            sub_patient_id = row.get('subcontractor_patient_id')
+            test_ids = row.get('test_ids', [])
+            priority = row.get('priority', 'routine')
+            clinical_notes = row.get('clinical_notes', '')
+
+            if not sub_patient_id or not test_ids:
+                continue
+
+            try:
+                sub_patient = SubcontractorPatient.objects.get(
+                    id=sub_patient_id, subcontractor=subcontractor
+                )
+            except SubcontractorPatient.DoesNotExist:
+                errors.append({'patient': str(sub_patient_id), 'error': 'Patient introuvable'})
+                continue
+
+            # Get or create internal Client for this subcontractor patient
+            client = sub_patient.client
+            if not client:
+                client = Client.objects.create(
+                    organization=org,
+                    name=sub_patient.full_name,
+                    phone=sub_patient.phone or '',
+                    date_of_birth=sub_patient.date_of_birth,
+                    gender=sub_patient.gender or '',
+                    client_type='patient',
+                    registration_source='external',
+                )
+                sub_patient.client = client
+                sub_patient.save(update_fields=['client'])
+
+            # Fetch tests
+            tests = list(LabTest.objects.filter(id__in=test_ids, organization=org, is_active=True))
+            if not tests:
+                errors.append({'patient': sub_patient.full_name, 'error': 'Aucun examen valide'})
+                continue
+
+            try:
+                order = LabOrder.objects.create(
+                    organization=org,
+                    patient=client,
+                    subcontractor=subcontractor,
+                    subcontractor_patient=sub_patient,
+                    priority=priority,
+                    clinical_notes=clinical_notes,
+                    payment_method=payment_method,
+                    status='sample_collected',
+                    ordered_by=request.user,
+                )
+
+                row_total = Decimal('0')
+                test_names = []
+                for test in tests:
+                    item_price = sub_prices.get(test.id, test.price)
+                    LabOrderItem.objects.create(
+                        lab_order=order,
+                        lab_test=test,
+                        price=item_price,
+                        discount=Decimal('0'),
+                    )
+                    row_total += item_price
+                    test_names.append(test.name)
+
+                order.total_price = row_total
+                order.save(update_fields=['total_price'])
+                batch_total += row_total
+
+                # Collect line for the batch invoice
+                invoice_items_data.append({
+                    'description': f"{sub_patient.full_name} — {', '.join(test_names)}",
+                    'unit_price': row_total,
+                    'order_id': str(order.id),
+                    'order_number': order.order_number,
+                    'patient': sub_patient.full_name,
+                    'total': float(row_total),
+                })
+
+                success.append({
+                    'patient': sub_patient.full_name,
+                    'order_number': order.order_number,
+                    'order_id': str(order.id),
+                    'total': float(row_total),
+                })
+
+            except Exception as e:
+                errors.append({'patient': sub_patient.full_name, 'error': str(e)})
+
+        # Create ONE batch invoice for the subcontractor
+        batch_invoice_id = None
+        if invoice_items_data:
+            try:
+                from django.utils.timezone import now as tz_now
+                batch_invoice = Invoice.objects.create(
+                    organization=org,
+                    client=sub_client,
+                    invoice_type='healthcare_laboratory',
+                    created_by=request.user,
+                    title=f"Sous-traitance — {subcontractor.name} — {tz_now().strftime('%d/%m/%Y')}",
+                    description=f"Dépôt d'échantillons du {tz_now().strftime('%d/%m/%Y')} — {len(invoice_items_data)} patient(s)",
+                    due_date=tz_now().date(),
+                    status='paid',
+                    currency='XAF',
+                    payment_method=payment_method,
+                    subtotal=batch_total,
+                    tax_amount=Decimal('0'),
+                    total_amount=batch_total,
+                )
+                for item in invoice_items_data:
+                    InvoiceItem.objects.create(
+                        invoice=batch_invoice,
+                        description=item['description'],
+                        quantity=1,
+                        unit_price=item['unit_price'],
+                        total_price=item['unit_price'],
+                    )
+                batch_invoice_id = str(batch_invoice.id)
+            except Exception as e:
+                pass  # Invoice failure doesn't block orders
+
+        return Response({
+            'success': success,
+            'errors': errors,
+            'batch_invoice_id': batch_invoice_id,
+            'batch_total': float(batch_total),
         })

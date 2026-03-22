@@ -9,7 +9,7 @@ from django.db.models import Count, Sum, Avg, Q, Max, Min, Case, When, Value, Ch
 from django.db.models.functions import ExtractYear, TruncDate, TruncWeek, TruncMonth, TruncYear
 from django.utils import timezone
 from datetime import date, timedelta, datetime
-from apps.laboratory.models import LabOrder, LabOrderItem, Prescriber
+from apps.laboratory.models import LabOrder, LabOrderItem, Prescriber, SubcontractorLab
 from apps.consultations.models import Consultation
 from apps.accounts.models import Client
 from apps.invoicing.models import Invoice, InvoiceItem
@@ -1243,4 +1243,107 @@ class PrescriberAnalyticsView(APIView):
                 }
                 for t in timeline
             ],
+        })
+
+
+class SubcontractorStatsView(APIView):
+    """
+    GET /analytics/healthcare/subcontractors/
+    Statistiques de sous-traitance : CA, volume, top examens par sous-traitant.
+    Params: start_date, end_date, subcontractor_id
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        subcontractor_id = request.GET.get('subcontractor_id')
+
+        today = date.today()
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else today - timedelta(days=30)
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else today
+
+        # Base: commandes sous-traitées sur la période
+        orders = LabOrder.objects.filter(
+            organization=organization,
+            subcontractor__isnull=False,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date,
+        ).select_related('subcontractor', 'lab_invoice')
+
+        if subcontractor_id:
+            orders = orders.filter(subcontractor_id=subcontractor_id)
+
+        # Stats globales
+        total_orders = orders.count()
+        total_patients = orders.values('patient').distinct().count()
+        paid_revenue = float(
+            orders.filter(lab_invoice__status='paid')
+            .aggregate(total=Sum('lab_invoice__total_amount'))['total'] or 0
+        )
+        pending_revenue = float(
+            orders.exclude(lab_invoice__status='paid')
+            .aggregate(total=Sum('total_price'))['total'] or 0
+        )
+
+        # Stats par sous-traitant
+        per_sub = []
+        subcontractors = SubcontractorLab.objects.filter(
+            organization=organization,
+            is_active=True
+        )
+        if subcontractor_id:
+            subcontractors = subcontractors.filter(id=subcontractor_id)
+
+        for sub in subcontractors:
+            sub_orders = orders.filter(subcontractor=sub)
+            sub_count = sub_orders.count()
+            if sub_count == 0:
+                continue
+            sub_revenue = float(
+                sub_orders.filter(lab_invoice__status='paid')
+                .aggregate(total=Sum('lab_invoice__total_amount'))['total'] or 0
+            )
+            sub_patients = sub_orders.values('patient').distinct().count()
+
+            # Top examens pour ce sous-traitant
+            top_tests = (
+                LabOrderItem.objects.filter(lab_order__in=sub_orders)
+                .values('lab_test__name', 'lab_test__test_code')
+                .annotate(count=Count('id'))
+                .order_by('-count')[:5]
+            )
+
+            # Statuts des ordres
+            status_breakdown = {
+                s['status']: s['count']
+                for s in sub_orders.values('status').annotate(count=Count('id'))
+            }
+
+            per_sub.append({
+                'id': str(sub.id),
+                'name': sub.name,
+                'phone': sub.phone,
+                'orders_count': sub_count,
+                'patients_count': sub_patients,
+                'revenue_paid': sub_revenue,
+                'status_breakdown': status_breakdown,
+                'top_tests': [
+                    {'name': t['lab_test__name'], 'code': t['lab_test__test_code'], 'count': t['count']}
+                    for t in top_tests
+                ],
+            })
+
+        per_sub.sort(key=lambda x: x['revenue_paid'], reverse=True)
+
+        return Response({
+            'period': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
+            'summary': {
+                'total_orders': total_orders,
+                'total_patients': total_patients,
+                'revenue_paid': paid_revenue,
+                'revenue_pending': pending_revenue,
+            },
+            'by_subcontractor': per_sub,
         })

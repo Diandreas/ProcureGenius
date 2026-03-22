@@ -5,7 +5,7 @@ Provides detailed analytics for stock management, reorder quantities, and risk a
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Avg, F, Max, Q, DecimalField, Value, CharField, Case, When, OuterRef, Subquery, IntegerField, ExpressionWrapper
+from django.db.models import Sum, Count, Avg, F, Max, Q, DecimalField, Value, CharField, Case, When, OuterRef, Subquery, IntegerField, ExpressionWrapper, Exists
 from django.db.models.functions import TruncDate, Coalesce
 from datetime import date, timedelta, datetime
 from apps.invoicing.models import Product, ProductBatch, StockMovement, ProductCategory
@@ -16,7 +16,7 @@ from apps.analytics.predictive_restock import get_all_predictions
 def _batch_stock_subquery():
     """
     Subquery: somme des quantity_remaining des lots actifs (available/opened) pour chaque produit.
-    Utiliser avec Coalesce(..., 0) pour éviter NULL.
+    Retourne NULL si aucun lot actif.
     """
     return ProductBatch.objects.filter(
         product=OuterRef('pk'),
@@ -27,14 +27,25 @@ def _batch_stock_subquery():
     ).values('total')
 
 
+def _has_batches_subquery():
+    """Subquery: le produit a-t-il au moins un lot (quel que soit le statut) ?"""
+    return ProductBatch.objects.filter(product=OuterRef('pk')).values('pk')[:1]
+
+
 def annotate_effective_stock(queryset):
     """
-    Annote un queryset Product avec effective_stock = stock_quantity + stock dans les lots actifs.
-    Source de vérité pour les stats de stock.
+    Annote un queryset Product avec effective_stock :
+    - Si le produit a des lots → SUM(lots actifs) uniquement (les lots sont la source de vérité)
+    - Si aucun lot → stock_quantity (produit ancien sans gestion par lots)
     """
     return queryset.annotate(
-        effective_stock=F('stock_quantity') + Coalesce(
-            Subquery(_batch_stock_subquery(), output_field=IntegerField()), 0
+        effective_stock=Case(
+            When(
+                Exists(_has_batches_subquery()),
+                then=Coalesce(Subquery(_batch_stock_subquery(), output_field=IntegerField()), 0)
+            ),
+            default=F('stock_quantity'),
+            output_field=IntegerField()
         )
     )
 

@@ -74,7 +74,7 @@ class PatientListCreateView(generics.ListCreateAPIView):
         queryset = Client.objects.filter(
             organization=user.organization,
             client_type__in=['patient', 'both']
-        )
+        ).exclude(registration_source='external')
         
         # Filter by active status
         is_active = self.request.query_params.get('is_active')

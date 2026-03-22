@@ -143,6 +143,17 @@ const healthcareAnalyticsAPI = {
     const response = await api.get(`/analytics/healthcare/prescribers/?${queryParams.toString()}`);
     return response.data;
   },
+
+  getSubcontractorStats: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    const startDate = formatDate(params.start_date);
+    const endDate = formatDate(params.end_date);
+    if (startDate) queryParams.append('start_date', startDate);
+    if (endDate) queryParams.append('end_date', endDate);
+    if (params.subcontractor_id) queryParams.append('subcontractor_id', params.subcontractor_id);
+    const response = await api.get(`/analytics/healthcare/subcontractors-stats/?${queryParams.toString()}`);
+    return response.data;
+  },
 };
 
 export default healthcareAnalyticsAPI;

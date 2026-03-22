@@ -320,6 +320,62 @@ const laboratoryAPI = {
         const response = await api.get(`/healthcare/laboratory/subcontractors/${subcontractorId}/tests/`);
         return response.data;
     },
+
+    bulkActivateSubcontractorPrices: async (subcontractorId, payload) => {
+        const response = await api.post(
+            `/healthcare/laboratory/subcontractors/${subcontractorId}/prices/bulk-activate/`,
+            payload
+        );
+        return response.data;
+    },
+
+    getSubcontractorDefaultPrices: async () => {
+        const response = await api.get('/healthcare/laboratory/subcontractors/default-prices/');
+        return response.data;
+    },
+
+    saveSubcontractorDefaultPrices: async (prices) => {
+        const response = await api.post(
+            '/healthcare/laboratory/subcontractors/default-prices/bulk-save/',
+            prices
+        );
+        return response.data;
+    },
+
+    // Subcontractor Patients
+    getSubcontractorPatients: async (subcontractorId, params = {}) => {
+        const response = await api.get(`/healthcare/laboratory/subcontractors/${subcontractorId}/patients/`, { params });
+        return response.data;
+    },
+
+    createSubcontractorPatient: async (subcontractorId, data) => {
+        const response = await api.post(`/healthcare/laboratory/subcontractors/${subcontractorId}/patients/`, data);
+        return response.data;
+    },
+
+    updateSubcontractorPatient: async (subcontractorId, patientId, data) => {
+        const response = await api.patch(`/healthcare/laboratory/subcontractors/${subcontractorId}/patients/${patientId}/`, data);
+        return response.data;
+    },
+
+    deleteSubcontractorPatient: async (subcontractorId, patientId) => {
+        await api.delete(`/healthcare/laboratory/subcontractors/${subcontractorId}/patients/${patientId}/`);
+    },
+
+    subcontractorBatchOrder: async (subcontractorId, payload) => {
+        const response = await api.post(
+            `/healthcare/laboratory/subcontractors/${subcontractorId}/batch-order/`,
+            payload
+        );
+        return response.data;
+    },
+
+    getSubcontractorOrders: async (subcontractorId, params = {}) => {
+        const response = await api.get('/healthcare/laboratory/orders/', {
+            params: { subcontractor_id: subcontractorId, ...params }
+        });
+        return response.data;
+    },
 };
 
 export default laboratoryAPI;

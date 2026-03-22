@@ -121,8 +121,6 @@ function MainLayout() {
 
   const menuItems = [
     { text: t('navigation:menu.dashboard'), iconSrc: '/icon/dashboard.png', path: '/dashboard', moduleId: 'dashboard', isCore: false },
-    { text: t('navigation:menu.suppliers'), iconSrc: '/icon/supplier.png', path: '/suppliers', moduleId: 'suppliers', isCore: false },
-    { text: t('navigation:menu.purchaseOrders'), iconSrc: '/icon/purchase-order.png', path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
     { text: t('navigation:menu.invoices'), iconSrc: '/icon/bill.png', path: '/invoices', moduleId: 'invoices', isCore: false },
     { text: t('navigation:menu.products'), iconSrc: '/icon/product.png', path: '/products', moduleId: 'products', isCore: false },
     { text: t('navigation:menu.clients'), iconSrc: '/icon/user.png', path: '/clients', moduleId: 'clients', isCore: false },
@@ -134,6 +132,7 @@ function MainLayout() {
     { text: 'Catalogue Examens', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/catalog', moduleId: 'laboratory', isCore: false },
     { text: 'Bilans', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/panels', moduleId: 'laboratory', isCore: false },
     { text: 'Prescripteurs', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/prescribers', moduleId: 'laboratory', isCore: false },
+    { text: 'Sous-traitants', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/subcontractors', moduleId: 'laboratory', isCore: false },
     { text: 'Réactifs Ouverts', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/opened-reagents', moduleId: 'laboratory', isCore: false },
     { text: 'Pharmacie Stock', iconSrc: '/icon/product.png', path: '/products', moduleId: 'pharmacy', isCore: false },
     { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },
@@ -223,6 +222,28 @@ function MainLayout() {
 
   const getContextualActions = () => {
     const currentPath = location.pathname;
+
+    // Subcontractor pages — show nav buttons in header
+    if (currentPath.startsWith('/healthcare/laboratory/subcontractors')) {
+      const subActions = [
+        {
+          label: 'Tarifs par défaut',
+          onClick: () => navigate('/healthcare/laboratory/subcontractors/default-prices'),
+          active: currentPath === '/healthcare/laboratory/subcontractors/default-prices',
+        },
+        {
+          label: 'Stats',
+          onClick: () => navigate('/healthcare/laboratory/subcontractors/stats'),
+          active: currentPath === '/healthcare/laboratory/subcontractors/stats',
+        },
+        {
+          label: 'Saisie dépôt',
+          onClick: () => navigate('/healthcare/laboratory/subcontractors/batch-order'),
+          active: currentPath === '/healthcare/laboratory/subcontractors/batch-order',
+        },
+      ];
+      return { title: 'Sous-traitance', actions: subActions };
+    }
 
     switch (currentPath) {
       case '/dashboard':
@@ -875,23 +896,29 @@ function MainLayout() {
               ) : (
                 <Button
                   key={index}
-                  variant="outlined"
+                  variant={action.active ? 'contained' : 'outlined'}
+                  disableElevation
                   {...(action.icon && { startIcon: action.icon })}
                   onClick={action.onClick}
                   size="small"
                   sx={{
-                    borderRadius: 2, // Radius 8px standard
+                    borderRadius: 2,
                     fontWeight: 600,
                     px: 2,
                     py: 0.8,
                     fontSize: '0.875rem',
                     mr: 1.5,
                     textTransform: 'none',
-                    borderColor: theme.palette.divider,
-                    color: 'text.primary',
+                    ...(action.active ? {
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                    } : {
+                      borderColor: theme.palette.divider,
+                      color: 'text.primary',
+                    }),
                     '&:hover': {
                       borderColor: theme.palette.primary.main,
-                      bgcolor: alpha(theme.palette.primary.main, 0.04)
+                      bgcolor: action.active ? 'primary.dark' : alpha(theme.palette.primary.main, 0.04)
                     }
                   }}
                 >

@@ -321,8 +321,8 @@ class Client(models.Model):
         if self.name:
             self.name = ' '.join(self.name.split())
 
-        # NOUVEAU: Vérifier que le téléphone est obligatoire pour les patients
-        if self.client_type in ['patient', 'both']:
+        # Vérifier que le téléphone est obligatoire pour les patients (sauf patients externes)
+        if self.client_type in ['patient', 'both'] and self.registration_source != 'external':
             if not self.phone or not self.phone.strip():
                 errors['phone'] = _("Le numéro de téléphone est obligatoire pour les patients.")
 

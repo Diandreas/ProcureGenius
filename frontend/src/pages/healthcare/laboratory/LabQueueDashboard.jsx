@@ -20,6 +20,7 @@ import {
     LocalFireDepartment as FireIcon,
     Timer as TimerIcon,
     DeleteOutline as DeleteIcon,
+    SwapHoriz as SubcontractedIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -193,8 +194,8 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, 
                 mb: 1.5,
                 cursor: 'pointer',
                 borderLeft: 4,
-                borderLeftColor: waitColor,
-                bgcolor: order.priority === 'stat' ? '#fef2f2' : order.priority === 'urgent' ? '#fffbeb' : 'background.paper',
+                borderLeftColor: order.is_subcontracted ? 'secondary.main' : waitColor,
+                bgcolor: order.priority === 'stat' ? '#fef2f2' : order.priority === 'urgent' ? '#fffbeb' : order.is_subcontracted ? '#faf5ff' : 'background.paper',
                 transition: 'all 0.2s',
                 '&:hover': {
                     boxShadow: 3,
@@ -238,6 +239,16 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, 
                                     size="small"
                                     color={pConfig.color}
                                     sx={{ fontWeight: 600, height: 22 }}
+                                />
+                            )}
+                            {order.is_subcontracted && (
+                                <Chip
+                                    icon={<SubcontractedIcon sx={{ fontSize: '14px !important' }} />}
+                                    label={order.subcontractor_name || 'Sous-traité'}
+                                    size="small"
+                                    color="secondary"
+                                    variant="outlined"
+                                    sx={{ fontWeight: 600, height: 22, fontSize: '0.7rem' }}
                                 />
                             )}
                         </Box>
@@ -329,6 +340,7 @@ const LabQueueDashboard = () => {
     const [pendingOrders, setPendingOrders] = useState([]);
     const [inProgressOrders, setInProgressOrders] = useState([]);
     const [resultsOrders, setResultsOrders] = useState([]);
+    const [subcontractedOrders, setSubcontractedOrders] = useState([]);
     const [tabValue, setTabValue] = useState(0);
     const [actionLoading, setActionLoading] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null); // order to confirm delete
@@ -343,6 +355,7 @@ const LabQueueDashboard = () => {
             setPendingOrders(allOrders.filter(o => o.status === 'pending'));
             setInProgressOrders(allOrders.filter(o => ['sample_collected', 'in_progress'].includes(o.status)));
             setResultsOrders(allOrders.filter(o => ['completed', 'results_ready'].includes(o.status)));
+            setSubcontractedOrders(allOrders.filter(o => o.is_subcontracted));
         } catch (error) {
             console.error('Error fetching lab data:', error);
         } finally {
@@ -450,6 +463,15 @@ const LabQueueDashboard = () => {
                         Historique
                     </Button>
                     <Button
+                        variant="outlined"
+                        color="secondary"
+                        startIcon={<SubcontractedIcon />}
+                        onClick={() => navigate('/healthcare/laboratory/subcontractors/batch-order')}
+                        sx={{ borderRadius: 2 }}
+                    >
+                        Saisie sous-traitance
+                    </Button>
+                    <Button
                         data-testid="lab-btn-new-order"
                         variant="contained"
                         startIcon={<AddIcon />}
@@ -468,7 +490,7 @@ const LabQueueDashboard = () => {
 
             {/* Stats Cards */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={true}>
                     <StatCard
                         title="En attente prélèvement"
                         value={stats?.pending || 0}
@@ -477,7 +499,7 @@ const LabQueueDashboard = () => {
                         subtitle={pendingOrders.length > 0 ? `Attente moy. ${formatWaitTime(avgWaitPending)}` : null}
                     />
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={true}>
                     <StatCard
                         title="En cours d'analyse"
                         value={(stats?.sample_collected || 0) + (stats?.in_progress || 0)}
@@ -485,7 +507,7 @@ const LabQueueDashboard = () => {
                         color="info"
                     />
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={true}>
                     <StatCard
                         title="Résultats à traiter"
                         value={(stats?.completed || 0) + (stats?.results_ready || 0)}
@@ -493,13 +515,22 @@ const LabQueueDashboard = () => {
                         color="success"
                     />
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={true}>
                     <StatCard
-                        title="Total commandes actives"
+                        title="Total actives"
                         value={stats?.total || 0}
                         icon={<LabIcon />}
                         color="primary"
                         subtitle={`${stats?.today_delivered || 0} remis aujourd'hui`}
+                    />
+                </Grid>
+                <Grid item xs={6} md={true}>
+                    <StatCard
+                        title="Sous-traités"
+                        value={stats?.subcontracted || 0}
+                        icon={<SubcontractedIcon />}
+                        color="secondary"
+                        subtitle="Analyses externes"
                     />
                 </Grid>
             </Grid>
@@ -559,6 +590,11 @@ const LabQueueDashboard = () => {
                                 <Box sx={{ pr: resultsOrders.length > 0 ? 2 : 0 }}>Résultats</Box>
                             </Badge>
                         } />
+                        <SafeTab label={
+                            <Badge badgeContent={subcontractedOrders.length} color="secondary" max={99}>
+                                <Box sx={{ pr: subcontractedOrders.length > 0 ? 2 : 0 }}>Sous-traités</Box>
+                            </Badge>
+                        } />
                     </Tabs>
                 </Box>
 
@@ -591,6 +627,21 @@ const LabQueueDashboard = () => {
                                 </Typography>
                             )}
                             {renderQueue(resultsOrders, 'Aucun résultat en attente')}
+                        </>
+                    )}
+                    {tabValue === 3 && (
+                        <>
+                            {subcontractedOrders.length > 0 && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {subcontractedOrders.length} commande(s) sous-traitées actives
+                                    </Typography>
+                                    <Button size="small" startIcon={<SubcontractedIcon />} onClick={() => navigate('/healthcare/laboratory/subcontractors')}>
+                                        Gérer les sous-traitants
+                                    </Button>
+                                </Box>
+                            )}
+                            {renderQueue(subcontractedOrders, 'Aucune commande sous-traitée active')}
                         </>
                     )}
                 </CardContent>

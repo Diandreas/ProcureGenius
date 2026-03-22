@@ -61,8 +61,14 @@ urlpatterns = [
 
     # Subcontractor Labs
     path('subcontractors/', api.SubcontractorLabListCreateView.as_view(), name='subcontractor-list'),
+    path('subcontractors/default-prices/', api.SubcontractorDefaultPriceView.as_view(), name='subcontractor-default-prices'),
+    path('subcontractors/default-prices/bulk-save/', api.SubcontractorDefaultPriceBulkSaveView.as_view(), name='subcontractor-default-prices-bulk'),
     path('subcontractors/<uuid:pk>/', api.SubcontractorLabDetailView.as_view(), name='subcontractor-detail'),
     path('subcontractors/<uuid:subcontractor_id>/prices/', api.SubcontractorPriceListView.as_view(), name='subcontractor-prices'),
     path('subcontractors/<uuid:subcontractor_id>/prices/bulk-save/', api.SubcontractorPriceBulkSaveView.as_view(), name='subcontractor-prices-bulk'),
+    path('subcontractors/<uuid:subcontractor_id>/prices/bulk-activate/', api.SubcontractorPriceBulkActivateView.as_view(), name='subcontractor-prices-bulk-activate'),
     path('subcontractors/<uuid:subcontractor_id>/tests/', api.SubcontractorTestsWithPricesView.as_view(), name='subcontractor-tests'),
+    path('subcontractors/<uuid:subcontractor_id>/patients/', api.SubcontractorPatientListCreateView.as_view(), name='subcontractor-patients'),
+    path('subcontractors/<uuid:subcontractor_id>/patients/<uuid:pk>/', api.SubcontractorPatientDetailView.as_view(), name='subcontractor-patient-detail'),
+    path('subcontractors/<uuid:subcontractor_id>/batch-order/', api.SubcontractorBatchOrderView.as_view(), name='subcontractor-batch-order'),
 ]

@@ -27,7 +27,12 @@ import RevenueAnalyticsDashboard from './pages/healthcare/analytics/RevenueAnaly
 import PrescriberAnalyticsPage from './pages/healthcare/analytics/PrescriberAnalyticsPage';
 import PrescriberList from './pages/healthcare/laboratory/PrescriberList';
 import SubcontractorList from './pages/healthcare/laboratory/SubcontractorList';
+import SubcontractorDetail from './pages/healthcare/laboratory/SubcontractorDetail';
 import SubcontractorPrices from './pages/healthcare/laboratory/SubcontractorPrices';
+import SubcontractorStats from './pages/healthcare/laboratory/SubcontractorStats';
+import SubcontractorOrderBatch from './pages/healthcare/laboratory/SubcontractorOrderBatch';
+import SubcontractorPatients from './pages/healthcare/laboratory/SubcontractorPatients';
+import SubcontractorDefaultPrices from './pages/healthcare/laboratory/SubcontractorDefaultPrices';
 
 // Inventory Analytics
 import ReorderAnalytics from './pages/inventory/analytics/ReorderAnalytics';
@@ -825,7 +830,12 @@ function App() {
                               <Route path="/healthcare/laboratory/panels" element={<ModuleRoute module="laboratory"><LabPanelCatalog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/prescribers" element={<ModuleRoute module="laboratory"><PrescriberList /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/subcontractors" element={<ModuleRoute module="laboratory"><SubcontractorList /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/subcontractors/stats" element={<ModuleRoute module="laboratory"><SubcontractorStats /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/subcontractors/batch-order" element={<ModuleRoute module="laboratory"><SubcontractorOrderBatch /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/subcontractors/default-prices" element={<ModuleRoute module="laboratory"><SubcontractorDefaultPrices /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/subcontractors/:id" element={<ModuleRoute module="laboratory"><SubcontractorDetail /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/subcontractors/:id/prices" element={<ModuleRoute module="laboratory"><SubcontractorPrices /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/subcontractors/:id/patients" element={<ModuleRoute module="laboratory"><SubcontractorPatients /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/opened-reagents" element={<ModuleRoute module="laboratory"><OpenedReagents /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 

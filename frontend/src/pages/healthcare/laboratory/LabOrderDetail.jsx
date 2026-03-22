@@ -1025,6 +1025,15 @@ const LabOrderDetail = () => {
                     <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
                         Commande #{order.order_number}
                     </Typography>
+                    {order.is_subcontracted && (
+                        <Chip
+                            label={`Sous-traité — ${order.subcontractor_name || 'Laboratoire externe'}`}
+                            color="secondary"
+                            variant="outlined"
+                            size="small"
+                            sx={{ ml: 1.5, fontWeight: 600 }}
+                        />
+                    )}
                 </Box>
                 <Box>
                     {isAdmin && (
@@ -1170,6 +1179,17 @@ const LabOrderDetail = () => {
                                         <Chip label={getPriorityLabel(order.priority)} color={getPriorityColor(order.priority)} />
                                     </Box>
                                 </Grid>
+                                {order.sample_collected_at && (
+                                    <Grid item xs={12}>
+                                        <Typography variant="caption" color="text.secondary">Prélèvement reçu le</Typography>
+                                        <Typography variant="body2" fontWeight="600">
+                                            {formatDate(order.sample_collected_at)} à {formatTime(order.sample_collected_at)}
+                                            {order.sample_collected_by_name && (
+                                                <Typography component="span" variant="body2" color="text.secondary"> — {order.sample_collected_by_name}</Typography>
+                                            )}
+                                        </Typography>
+                                    </Grid>
+                                )}
                                 {order.clinical_notes && (
                                     <Grid item xs={12}>
                                         <Alert severity="info" sx={{ mt: 1 }}>
