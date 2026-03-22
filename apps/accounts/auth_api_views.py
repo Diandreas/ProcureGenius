@@ -14,6 +14,7 @@ from django.db import transaction
 from .models import CustomUser, Organization, UserPreferences
 from apps.subscriptions.models import SubscriptionPlan, Subscription
 import requests
+import secrets
 from django.utils import timezone
 from datetime import timedelta
 
@@ -348,7 +349,7 @@ def api_google_login(request):
                     organization=organization,
                     role='admin',
                     email_verified=True,
-                    password=CustomUser.objects.make_random_password()
+                    password=secrets.token_urlsafe(16)
                 )
                 
                 # Create OrganizationSettings automatically
@@ -380,6 +381,12 @@ def api_google_login(request):
                 except SubscriptionPlan.DoesNotExist:
                     pass
 
+                # Create UserPreferences so onboarding is triggered on first login
+                UserPreferences.objects.get_or_create(
+                    user=user,
+                    defaults={'onboarding_completed': False}
+                )
+
         # Generate token
         token, _ = Token.objects.get_or_create(user=user)
         
@@ -409,3 +416,65 @@ def api_google_login(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_contact(request):
+    """
+    Contact form with reCAPTCHA v2 verification and email sending.
+
+    POST /api/v1/contact/
+    Body: { name, email, subject, message, recaptcha_token }
+    """
+    name = request.data.get('name', '').strip()
+    email = request.data.get('email', '').strip()
+    subject = request.data.get('subject', '').strip()
+    message = request.data.get('message', '').strip()
+    recaptcha_token = request.data.get('recaptcha_token', '').strip()
+
+    # Basic validation
+    if not all([name, email, subject, message, recaptcha_token]):
+        return Response({'error': 'Tous les champs sont requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Verify reCAPTCHA with Google
+    import os
+    recaptcha_secret = os.getenv('RECAPTCHA_SECRET_KEY', '')
+    verify_response = requests.post(
+        'https://www.google.com/recaptcha/api/siteverify',
+        data={'secret': recaptcha_secret, 'response': recaptcha_token}
+    )
+    verify_data = verify_response.json()
+    if not verify_data.get('success'):
+        return Response({'error': 'Vérification reCAPTCHA échouée. Veuillez réessayer.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Send email
+    try:
+        from django.core.mail import send_mail
+        from django.conf import settings
+
+        recipient = settings.DEFAULT_FROM_EMAIL
+        email_subject = f'[Procura Contact] {subject}'
+        email_body = (
+            f"Nouveau message via le formulaire de contact Procura\n"
+            f"{'='*50}\n"
+            f"Nom : {name}\n"
+            f"Email : {email}\n"
+            f"Sujet : {subject}\n"
+            f"{'='*50}\n\n"
+            f"{message}\n"
+        )
+
+        send_mail(
+            subject=email_subject,
+            message=email_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient],
+            fail_silently=False,
+        )
+        return Response({'success': True, 'message': 'Votre message a été envoyé avec succès.'})
+
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Contact email error: {e}")
+        return Response({'error': 'Erreur lors de l\'envoi du message. Veuillez réessayer.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

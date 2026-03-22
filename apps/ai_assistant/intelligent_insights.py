@@ -67,16 +67,16 @@ class IntelligentInsightsEngine:
             # Factures brouillon de plus de 24h
             threshold = timezone.now() - timedelta(hours=24)
 
-            draft_invoices = Invoice.objects.filter(
+            draft_invoices = list(Invoice.objects.filter(
                 created_by__organization=self.organization,
                 status='draft',
                 created_at__lt=threshold
-            ).select_related('client').order_by('-created_at')[:5]
+            ).select_related('client').order_by('-created_at')[:5])
 
-            if draft_invoices.exists():
-                count = draft_invoices.count()
+            if draft_invoices:
+                count = len(draft_invoices)
                 total_amount = sum(inv.total_amount or 0 for inv in draft_invoices)
-                oldest = draft_invoices.last()
+                oldest = draft_invoices[-1]
                 days_old = (timezone.now() - oldest.created_at).days if oldest else 0
 
                 # Liste des factures pour le détail

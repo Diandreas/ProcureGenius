@@ -16,6 +16,21 @@
         "title": "Formation et Tutoriels sur YouTube",
         "desc": "Des vidéos exclusives sur comment maîtriser nos outils d'intelligence artificielle et intégrer Procura à votre entreprise.",
         "comingSoon": "(Chaîne à venir très prochainement)"
+    },
+    "form": {
+      "title": "Envoyer un message",
+      "subtitle": "Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.",
+      "name": "Nom complet",
+      "email": "Adresse email",
+      "subject": "Sujet",
+      "message": "Votre message",
+      "messagePlaceholder": "Décrivez votre demande en détail...",
+      "submit": "Envoyer le message",
+      "sending": "Envoi en cours...",
+      "successTitle": "Message envoyé !",
+      "successDesc": "Nous avons bien reçu votre message et vous répondrons très bientôt.",
+      "errorTitle": "Erreur d'envoi",
+      "recaptchaRequired": "Veuillez valider le reCAPTCHA."
     }
   },
   "privacy": {

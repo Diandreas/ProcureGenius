@@ -184,7 +184,7 @@ class DashboardStatsService:
         for po in recent_orders:
             activity.append({
                 'type': 'order',
-                'description': f"Commande #{po.order_number} créée pour {po.supplier.name}",
+                'description': f"Commande #{po.po_number} créée pour {po.supplier.name}",
                 'date': po.created_at,
                 'link': f"/purchase-orders/{po.id}"
             })
