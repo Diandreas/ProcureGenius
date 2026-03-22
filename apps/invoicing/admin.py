@@ -1,6 +1,28 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Product, Invoice, InvoiceItem, Payment, PrintTemplate, PrintConfiguration, PrintHistory
+from .models import Product, Invoice, InvoiceItem, Payment, PrintTemplate, PrintConfiguration, PrintHistory, Warehouse, ProductCategory, ProductBatch
+
+
+@admin.register(Warehouse)
+class WarehouseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'city', 'province', 'is_active')
+    search_fields = ('name', 'code', 'city')
+    list_filter = ('is_active', 'province')
+
+
+@admin.register(ProductCategory)
+class ProductCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'parent', 'is_active')
+    search_fields = ('name', 'slug')
+    prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(ProductBatch)
+class ProductBatchAdmin(admin.ModelAdmin):
+    list_display = ('product', 'batch_number', 'expiration_date', 'current_quantity', 'warehouse', 'is_active')
+    list_filter = ('is_active', 'expiration_date', 'warehouse')
+    search_fields = ('batch_number', 'product__name', 'supplier_batch_reference')
+    readonly_fields = ('created_at', 'updated_at')
 
 
 @admin.register(Product)

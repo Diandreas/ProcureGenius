@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Formik, Form } from 'formik';
+import { Formik, Form, FieldArray } from 'formik';
 import * as Yup from 'yup';
 import {
     Box,
@@ -81,6 +81,8 @@ import {
     Search,
     NavigateNext,
     NavigateBefore,
+    DeleteOutline,
+    History,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -107,11 +109,6 @@ function ProductForm() {
         advanced: false,
     });
     const [activeStep, setActiveStep] = useState(0);
-
-    // Batch/lot state for physical products
-    const [createInitialBatch, setCreateInitialBatch] = useState(false);
-    const [batchNumber, setBatchNumber] = useState('');
-    const [batchExpiry, setBatchExpiry] = useState('');
 
     // Modal states
     const [supplierModalOpen, setSupplierModalOpen] = useState(false);
@@ -148,8 +145,8 @@ function ProductForm() {
 
         // Relations et stock
         supplier_id: '',
-        warehouse_id: '',
-        stock_quantity: 0,
+        warehouse_id: '', // Gardé pour rétrocompatibilité backend si nécessaire mais géré via lots
+        lots: [], // Sera peuplé par useEffect si nouveau produit physique
         low_stock_threshold: 5,
 
         // Métadonnées
@@ -174,11 +171,13 @@ function ProductForm() {
         if (productType === 'physical') {
             return Yup.object({
                 ...baseSchema,
-                // Warehouse requis seulement s'il y en a de disponibles
-                warehouse_id: hasWarehouses
-                    ? Yup.string().required(t('products:validation.warehouseRequired'))
-                    : Yup.string().nullable(),
-                stock_quantity: Yup.number().min(0, t('products:validation.stockNegative')).required(t('products:validation.stockRequired')),
+                lots: Yup.array().of(
+                    Yup.object({
+                        batch_number: Yup.string().required(t('products:validation.batchNumberRequired', 'Numéro de lot requis')),
+                        initial_quantity: Yup.number().min(0, t('products:validation.stockNegative')).required(t('products:validation.stockRequired')),
+                        warehouse_id: Yup.string().required(t('products:validation.warehouseRequired')),
+                    })
+                ),
                 low_stock_threshold: Yup.number().min(0, t('products:validation.thresholdNegative')).required(t('products:validation.thresholdRequired')),
             });
         } else {
@@ -242,6 +241,25 @@ function ProductForm() {
                     category_id: productData.category || '',
                     warehouse_id: productData.warehouse || '',
                 });
+            } else {
+                // Nouveau produit : si physique, ajouter un lot par défaut
+                const defaultType = initialValues.product_type || 'physical';
+                if (defaultType === 'physical') {
+                    const year = new Date().getFullYear();
+                    const random = Math.floor(1000 + Math.random() * 9000);
+                    const defaultWarehouseId = (warehousesRes.data.results?.[0]?.id || warehousesRes.data?.[0]?.id || '');
+                    
+                    setInitialValues(prev => ({
+                        ...prev,
+                        lots: [{
+                            batch_number: `LOT-${year}-${random}`,
+                            initial_quantity: 0,
+                            warehouse_id: defaultWarehouseId,
+                            expiration_date: '',
+                            supplier_batch_reference: ''
+                        }]
+                    }));
+                }
             }
         } catch (error) {
             console.error('Erreur lors du chargement:', error);
@@ -474,20 +492,31 @@ function ProductForm() {
                 enqueueSnackbar(t('products:messages.updateSuccess'), { variant: 'success' });
             } else {
                 const createdProduct = await productsAPI.create(cleanedValues);
+                const productId = createdProduct.data.id;
                 enqueueSnackbar(t('products:messages.createSuccess'), { variant: 'success' });
 
-                // Create initial batch/lot if requested
-                if (createInitialBatch && batchNumber.trim()) {
+                // Créer les lots initiaux si définis
+                if (values.product_type === 'physical' && values.lots && values.lots.length > 0) {
                     try {
                         const { productBatchesAPI } = await import('../../services/api');
-                        await productBatchesAPI.create({
-                            product: createdProduct.data.id,
-                            batch_number: batchNumber,
-                            expiration_date: batchExpiry || null,
-                            initial_quantity: parseInt(values.stock_quantity) || 0,
-                        });
+                        const lotPromises = values.lots
+                            .filter(lot => lot.batch_number && lot.batch_number.trim())
+                            .map(lot => productBatchesAPI.create({
+                                product: productId,
+                                batch_number: lot.batch_number,
+                                initial_quantity: parseFloat(lot.initial_quantity) || 0,
+                                warehouse: lot.warehouse_id || null,
+                                expiration_date: lot.expiration_date || null,
+                                supplier_batch_reference: lot.supplier_batch_reference || '',
+                            }));
+                        
+                        if (lotPromises.length > 0) {
+                            await Promise.all(lotPromises);
+                            enqueueSnackbar(`${lotPromises.length} lot(s) initial(aux) créé(s)`, { variant: 'info' });
+                        }
                     } catch (e) {
-                        console.warn('Lot initial non créé:', e);
+                        console.warn('Erreur lors de la création des lots:', e);
+                        enqueueSnackbar('Erreur lors de la création des lots initiaux', { variant: 'warning' });
                     }
                 }
             }
@@ -568,17 +597,26 @@ function ProductForm() {
         </Paper>
     );
 
-    // Step definitions
+    // Step labels
     const getSteps = (productType) => {
-        if (productType === 'physical') return ['Informations', 'Tarification', 'Stock & Lots'];
-        return ['Informations', 'Tarification'];
+        if (productType === 'physical') {
+            return [
+                t('products:steps.info', 'Informations'),
+                t('products:steps.pricing', 'Tarification'),
+                t('products:steps.lots', 'Lots & Stock')
+            ];
+        }
+        return [
+            t('products:steps.info', 'Informations'),
+            t('products:steps.pricing', 'Tarification')
+        ];
     };
 
     // Fields to validate per step (for physical; step 2 only exists for physical)
     const STEP_FIELDS = {
         0: ['name', 'description'],
         1: ['price'],
-        2: ['warehouse_id', 'stock_quantity', 'low_stock_threshold'],
+        2: ['lots', 'low_stock_threshold'],
     };
 
     return (
@@ -669,8 +707,17 @@ function ProductForm() {
                     // Ensure activeStep is within bounds when product type changes
                     const safeActiveStep = Math.min(activeStep, totalSteps - 1);
 
+                    const handleKeyDown = (e) => {
+                        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                            if (!isLastStep) {
+                                e.preventDefault();
+                                handleStepNext();
+                            }
+                        }
+                    };
+
                     return (
-                        <Form>
+                        <Form onKeyDown={handleKeyDown}>
                             {/* Stepper */}
                             <Box sx={{ mb: 3 }}>
                                 <Stepper
@@ -997,218 +1044,190 @@ function ProductForm() {
                                 {safeActiveStep === 2 && values.product_type === 'physical' && (
                                     <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
                                         <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
-                                                <Box sx={{
-                                                    p: 1,
-                                                    borderRadius: 1,
-                                                    bgcolor: 'warning.50',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <Inventory sx={{ fontSize: 22, color: 'warning.main' }} />
+                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                    <Box sx={{
+                                                        p: 1,
+                                                        borderRadius: 1,
+                                                        bgcolor: 'primary.50',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
+                                                    }}>
+                                                        <Inventory sx={{ fontSize: 22, color: 'primary.main' }} />
+                                                    </Box>
+                                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                        Gestion des Lots & Stock Initial
+                                                    </Typography>
                                                 </Box>
-                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                    Stock & Lots
-                                                </Typography>
+                                                <Button
+                                                    startIcon={<History />}
+                                                    size="small"
+                                                    variant="outlined"
+                                                    disabled
+                                                    sx={{ textTransform: 'none', borderRadius: 1.5 }}
+                                                >
+                                                    Journal des mouvements
+                                                </Button>
                                             </Box>
 
-                                            <Grid container spacing={1.5}>
-                                                {/* Entrepôt */}
-                                                <Grid item xs={12}>
-                                                    <Divider sx={{ my: 1 }}>
-                                                        <Chip label={t('products:labels.warehouse', 'Entrepôt')} icon={<Warehouse />} size="small" />
-                                                    </Divider>
-                                                </Grid>
+                                            <Alert severity="info" sx={{ mb: 3, borderRadius: 1.5 }}>
+                                                Le stock est désormais géré exclusivement par lots. Ajoutez un ou plusieurs lots initiaux pour définir le stock de départ.
+                                            </Alert>
 
-                                                <Grid item xs={12} md={6}>
-                                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                                                        <FormControl
-                                                            fullWidth
-                                                            size={isMobile ? "small" : "medium"}
-                                                            required={warehouses.length > 0}
-                                                            error={touched.warehouse_id && Boolean(errors.warehouse_id)}
-                                                        >
-                                                            <InputLabel>{t('products:labels.warehouseMain')} {warehouses.length > 0 ? '' : t('products:labels.optional')}</InputLabel>
-                                                            <Select
-                                                                name="warehouse_id"
-                                                                value={values.warehouse_id}
-                                                                onChange={handleChange}
-                                                                label={`${t('products:labels.warehouseMain')} ${warehouses.length > 0 ? '' : t('products:labels.optional')}`}
-                                                                startAdornment={<Warehouse sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                            >
-                                                                {warehouses.length === 0 ? (
-                                                                    <MenuItem value="">
-                                                                        <em>{t('products:labels.noWarehouseAvailable')}</em>
-                                                                    </MenuItem>
-                                                                ) : (
-                                                                    <>
-                                                                        <MenuItem value="">
-                                                                            <em>{t('products:labels.selectWarehouse')}</em>
-                                                                        </MenuItem>
-                                                                        {warehouses.map((warehouse) => (
-                                                                            <MenuItem key={warehouse.id} value={warehouse.id}>
-                                                                                {warehouse.name} ({warehouse.code}) - {warehouse.city}
-                                                                            </MenuItem>
-                                                                        ))}
-                                                                    </>
-                                                                )}
-                                                            </Select>
-                                                            {touched.warehouse_id && errors.warehouse_id && (
-                                                                <FormHelperText error>{errors.warehouse_id}</FormHelperText>
-                                                            )}
-                                                            {warehouses.length === 0 && (
-                                                                <FormHelperText>
-                                                                    {t('products:messages.noWarehouseAvailable')}
-                                                                </FormHelperText>
-                                                            )}
-                                                        </FormControl>
-                                                        <Tooltip title={t('products:modals.manageWarehouses', 'Gérer les entrepôts')}>
-                                                            <IconButton
-                                                                onClick={() => setWarehouseModalOpen(true)}
-                                                                sx={{
-                                                                    bgcolor: 'primary.main',
-                                                                    color: 'white',
-                                                                    '&:hover': { bgcolor: 'primary.dark' },
-                                                                    mt: isMobile ? 0.5 : 0.75
-                                                                }}
-                                                                size={isMobile ? "small" : "medium"}
-                                                            >
-                                                                <Add />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </Box>
-                                                </Grid>
-
-                                                {/* Stock */}
-                                                <Grid item xs={12}>
-                                                    <Divider sx={{ my: 1 }}>
-                                                        <Chip label={t('products:labels.stockManagement', 'Gestion de stock')} icon={<Inventory />} size="small" />
-                                                    </Divider>
-                                                </Grid>
-
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="stock_quantity"
-                                                        label={t('products:labels.stockQuantity')}
-                                                        type="number"
-                                                        value={values.stock_quantity}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.stock_quantity && Boolean(errors.stock_quantity)}
-                                                        helperText={touched.stock_quantity && errors.stock_quantity}
-                                                        required
-                                                        InputProps={{
-                                                            startAdornment: <Inventory sx={{ mr: 1, color: 'action.active' }} />,
-                                                        }}
-                                                    />
-                                                </Grid>
-
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="low_stock_threshold"
-                                                        label={t('products:labels.lowStockThreshold')}
-                                                        type="number"
-                                                        value={values.low_stock_threshold}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
-                                                        helperText={touched.low_stock_threshold && errors.low_stock_threshold || t('products:messages.alertLowStock')}
-                                                        required
-                                                    />
-                                                </Grid>
-
-                                                {/* Lot initial - only for new products */}
-                                                {!isEdit && (
-                                                    <>
-                                                        <Grid item xs={12}>
-                                                            <Divider sx={{ my: 1 }}>
-                                                                <Chip label="Lot initial" icon={<Schedule />} size="small" />
-                                                            </Divider>
-                                                        </Grid>
-
-                                                        <Grid item xs={12}>
-                                                            <FormControlLabel
-                                                                control={
-                                                                    <Checkbox
-                                                                        checked={createInitialBatch}
-                                                                        onChange={(e) => setCreateInitialBatch(e.target.checked)}
-                                                                    />
-                                                                }
-                                                                label={
-                                                                    <Box>
-                                                                        <Typography variant="body2">Créer un lot initial</Typography>
-                                                                        <Typography variant="caption" color="text.secondary">
-                                                                            Associer un numéro de lot à ce stock initial
-                                                                        </Typography>
-                                                                    </Box>
-                                                                }
-                                                            />
-                                                        </Grid>
-
-                                                        {createInitialBatch && (
-                                                            <>
-                                                                <Grid item xs={12} md={6}>
-                                                                    <TextField
-                                                                        fullWidth
-                                                                        size={isMobile ? "small" : "medium"}
-                                                                        label="Numéro de lot"
-                                                                        value={batchNumber}
-                                                                        onChange={(e) => setBatchNumber(e.target.value)}
-                                                                        required
-                                                                        placeholder="LOT-001"
-                                                                    />
-                                                                </Grid>
-                                                                <Grid item xs={12} md={6}>
-                                                                    <TextField
-                                                                        fullWidth
-                                                                        size={isMobile ? "small" : "medium"}
-                                                                        label="Date d'expiration (optionnel)"
-                                                                        type="date"
-                                                                        value={batchExpiry}
-                                                                        onChange={(e) => setBatchExpiry(e.target.value)}
-                                                                        InputLabelProps={{ shrink: true }}
-                                                                    />
-                                                                </Grid>
-                                                            </>
-                                                        )}
-                                                    </>
-                                                )}
-
-                                                {/* Statut actif - on last step */}
-                                                <Grid item xs={12}>
-                                                    <Divider sx={{ my: 1 }} />
-                                                    <FormControlLabel
-                                                        control={
-                                                            <Checkbox
-                                                                name="is_active"
-                                                                checked={values.is_active}
-                                                                onChange={handleChange}
-                                                                color="success"
-                                                            />
-                                                        }
-                                                        label={
-                                                            <Box display="flex" alignItems="center">
-                                                                {values.is_active ? (
-                                                                    <>
-                                                                        <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-                                                                        {t('products:labels.activeProduct')}
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        <Warning sx={{ mr: 1, color: 'warning.main' }} />
-                                                                        {t('products:labels.inactiveProduct')}
-                                                                    </>
-                                                                )}
+                                            <FieldArray name="lots">
+                                                {({ push, remove }) => (
+                                                    <Box>
+                                                        {values.lots.length === 0 ? (
+                                                            <Box sx={{ 
+                                                                py: 4, 
+                                                                textAlign: 'center', 
+                                                                bgcolor: 'grey.50', 
+                                                                borderRadius: 2,
+                                                                border: '1px dashed',
+                                                                borderColor: 'divider'
+                                                            }}>
+                                                                <Typography color="text.secondary" gutterBottom>
+                                                                    Aucun lot initial défini
+                                                                </Typography>
+                                                                <Button 
+                                                                    variant="contained" 
+                                                                    startIcon={<Add />}
+                                                                    onClick={() => push({ 
+                                                                        batch_number: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`, 
+                                                                        initial_quantity: 0, 
+                                                                        warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+                                                                        expiration_date: '',
+                                                                        supplier_batch_reference: ''
+                                                                    })}
+                                                                    sx={{ borderRadius: 2, textTransform: 'none' }}
+                                                                >
+                                                                    Ajouter un lot initial
+                                                                </Button>
                                                             </Box>
-                                                        }
-                                                    />
-                                                </Grid>
-                                            </Grid>
+                                                        ) : (
+                                                            <Grid container spacing={2}>
+                                                                {values.lots.map((lot, index) => (
+                                                                    <Grid item xs={12} key={index}>
+                                                                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 1.5, position: 'relative', bgcolor: index % 2 === 0 ? 'white' : 'grey.50' }}>
+                                                                            <IconButton 
+                                                                                size="small" 
+                                                                                color="error"
+                                                                                onClick={() => remove(index)}
+                                                                                sx={{ position: 'absolute', top: 8, right: 8 }}
+                                                                            >
+                                                                                <DeleteOutline fontSize="small" />
+                                                                            </IconButton>
+                                                                            <Grid container spacing={2}>
+                                                                                <Grid item xs={12} md={4}>
+                                                                                    <TextField
+                                                                                        fullWidth
+                                                                                        size="small"
+                                                                                        label="Numéro de lot"
+                                                                                        name={`lots.${index}.batch_number`}
+                                                                                        value={lot.batch_number}
+                                                                                        onChange={handleChange}
+                                                                                        error={touched.lots?.[index]?.batch_number && Boolean(errors.lots?.[index]?.batch_number)}
+                                                                                        helperText={touched.lots?.[index]?.batch_number && errors.lots?.[index]?.batch_number}
+                                                                                        required
+                                                                                    />
+                                                                                </Grid>
+                                                                                <Grid item xs={12} md={4}>
+                                                                                    <TextField
+                                                                                        fullWidth
+                                                                                        size="small"
+                                                                                        label="Quantité initiale"
+                                                                                        type="number"
+                                                                                        name={`lots.${index}.initial_quantity`}
+                                                                                        value={lot.initial_quantity}
+                                                                                        onChange={handleChange}
+                                                                                        error={touched.lots?.[index]?.initial_quantity && Boolean(errors.lots?.[index]?.initial_quantity)}
+                                                                                        helperText={touched.lots?.[index]?.initial_quantity && errors.lots?.[index]?.initial_quantity}
+                                                                                        required
+                                                                                    />
+                                                                                </Grid>
+                                                                                <Grid item xs={12} md={4}>
+                                                                                    <FormControl fullWidth size="small" error={touched.lots?.[index]?.warehouse_id && Boolean(errors.lots?.[index]?.warehouse_id)}>
+                                                                                        <InputLabel>Entrepôt</InputLabel>
+                                                                                        <Select
+                                                                                            name={`lots.${index}.warehouse_id`}
+                                                                                            value={lot.warehouse_id}
+                                                                                            onChange={handleChange}
+                                                                                            label="Entrepôt"
+                                                                                        >
+                                                                                            {warehouses.map((w) => (
+                                                                                                <MenuItem key={w.id} value={w.id}>{w.name} ({w.code})</MenuItem>
+                                                                                            ))}
+                                                                                        </Select>
+                                                                                    </FormControl>
+                                                                                </Grid>
+                                                                                <Grid item xs={12} md={6}>
+                                                                                    <TextField
+                                                                                        fullWidth
+                                                                                        size="small"
+                                                                                        label="Date d'expiration"
+                                                                                        type="date"
+                                                                                        name={`lots.${index}.expiration_date`}
+                                                                                        value={lot.expiration_date || ''}
+                                                                                        onChange={handleChange}
+                                                                                        InputLabelProps={{ shrink: true }}
+                                                                                    />
+                                                                                </Grid>
+                                                                                <Grid item xs={12} md={6}>
+                                                                                    <TextField
+                                                                                        fullWidth
+                                                                                        size="small"
+                                                                                        label="Référence fournisseur"
+                                                                                        name={`lots.${index}.supplier_batch_reference`}
+                                                                                        value={lot.supplier_batch_reference}
+                                                                                        onChange={handleChange}
+                                                                                    />
+                                                                                </Grid>
+                                                                            </Grid>
+                                                                        </Paper>
+                                                                    </Grid>
+                                                                ))}
+                                                                <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                                                                    <Button 
+                                                                        variant="outlined"
+                                                                        startIcon={<Add />}
+                                                                        onClick={() => push({ 
+                                                                            batch_number: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`, 
+                                                                            initial_quantity: 0, 
+                                                                            warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+                                                                            expiration_date: '',
+                                                                            supplier_batch_reference: ''
+                                                                        })}
+                                                                        sx={{ borderRadius: 2, textTransform: 'none' }}
+                                                                    >
+                                                                        Ajouter un autre lot
+                                                                    </Button>
+                                                                </Grid>
+                                                            </Grid>
+                                                        )}
+
+                                                        <Divider sx={{ my: 3 }} />
+
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={12} md={6}>
+                                                                <TextField
+                                                                    fullWidth
+                                                                    size="small"
+                                                                    name="low_stock_threshold"
+                                                                    label={t('products:labels.lowStockThreshold')}
+                                                                    type="number"
+                                                                    value={values.low_stock_threshold}
+                                                                    onChange={handleChange}
+                                                                    onBlur={handleBlur}
+                                                                    error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
+                                                                    helperText={touched.low_stock_threshold && errors.low_stock_threshold}
+                                                                    required
+                                                                />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </Box>
+                                                )}
+                                            </FieldArray>
                                         </CardContent>
                                     </Card>
                                 )}

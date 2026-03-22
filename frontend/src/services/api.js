@@ -228,6 +228,18 @@ export const contractsAPI = {
     }),
   statistics: () => api.get('/contracts/statistics/'),
 
+  // Sections (génération IA section par section)
+  sectionDefinitions: (contractType) => api.get('/contracts/section-definitions/', { params: { contract_type: contractType } }),
+  generateSection: (data) => api.post('/contracts/generate-section/', data),
+  generateAllSections: (data) => api.post('/contracts/generate-all-sections/', data),
+  sections: {
+    list: (params) => api.get('/contracts/sections/', { params }),
+    get: (id) => api.get(`/contracts/sections/${id}/`),
+    create: (data) => api.post('/contracts/sections/', data),
+    update: (id, data) => api.patch(`/contracts/sections/${id}/`, data),
+    delete: (id) => api.delete(`/contracts/sections/${id}/`),
+  },
+
   // Clauses
   clauses: {
     list: (params) => api.get('/contracts/clauses/', { params }),

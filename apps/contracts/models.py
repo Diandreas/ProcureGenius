@@ -453,3 +453,167 @@ class ContractTemplate(models.Model):
     def __str__(self):
         return f"{self.name} ({self.get_template_type_display()})"
 
+
+class ContractSection(models.Model):
+    """Section individuelle d'un contrat — permet la génération IA section par section"""
+
+    SECTION_TYPE_CHOICES = [
+        ('parties', _('Parties contractantes')),
+        ('object', _('Objet du contrat')),
+        ('duration', _('Durée du contrat')),
+        ('obligations_provider', _('Obligations du prestataire')),
+        ('obligations_client', _('Obligations du client')),
+        ('financial', _('Conditions financières')),
+        ('payment_schedule', _('Échéancier de paiement')),
+        ('payment_terms', _('Modalités de paiement')),
+        ('delivery', _('Délais et livraison')),
+        ('acceptance', _('Livraison et acceptation')),
+        ('intellectual_property', _('Propriété intellectuelle')),
+        ('warranty', _('Garantie')),
+        ('liability', _('Limitation de responsabilité')),
+        ('confidentiality', _('Confidentialité')),
+        ('data_protection', _('Protection des données')),
+        ('subcontracting', _('Sous-traitance')),
+        ('termination', _('Résiliation')),
+        ('force_majeure', _('Force majeure')),
+        ('applicable_law', _('Droit applicable et litiges')),
+        ('general_provisions', _('Dispositions générales')),
+        ('annexes', _('Annexes')),
+        ('signatures', _('Signatures')),
+        ('receipt_info', _('Informations du reçu')),
+        ('receipt_detail', _('Détail financier du reçu')),
+        ('receipt_confirmation', _('Confirmation et signature')),
+        ('custom', _('Section personnalisée')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='sections', verbose_name=_("Contrat"))
+
+    section_type = models.CharField(max_length=30, choices=SECTION_TYPE_CHOICES, verbose_name=_("Type de section"))
+    title = models.CharField(max_length=200, verbose_name=_("Titre de la section"))
+    content = models.TextField(blank=True, verbose_name=_("Contenu HTML"))
+    order = models.PositiveIntegerField(default=0, verbose_name=_("Ordre"))
+
+    # Métadonnées IA
+    is_ai_generated = models.BooleanField(default=False, verbose_name=_("Généré par IA"))
+    ai_tokens_used = models.PositiveIntegerField(default=0, verbose_name=_("Tokens IA utilisés"))
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Section de contrat")
+        verbose_name_plural = _("Sections de contrat")
+        ordering = ['contract', 'order']
+        unique_together = ['contract', 'section_type']
+
+    def __str__(self):
+        return f"Art. {self.order} — {self.title}"
+
+
+# ============================================
+# Définitions des sections par type de contrat
+# ============================================
+
+CONTRACT_SECTION_DEFINITIONS = {
+    'service': [
+        {'type': 'parties', 'title': 'ARTICLE 1 — PARTIES CONTRACTANTES'},
+        {'type': 'object', 'title': 'ARTICLE 2 — OBJET DU CONTRAT'},
+        {'type': 'duration', 'title': 'ARTICLE 3 — DURÉE DU CONTRAT'},
+        {'type': 'obligations_provider', 'title': 'ARTICLE 4 — OBLIGATIONS DU PRESTATAIRE'},
+        {'type': 'obligations_client', 'title': 'ARTICLE 5 — OBLIGATIONS DU CLIENT'},
+        {'type': 'financial', 'title': 'ARTICLE 6 — CONDITIONS FINANCIÈRES'},
+        {'type': 'intellectual_property', 'title': 'ARTICLE 7 — PROPRIÉTÉ INTELLECTUELLE'},
+        {'type': 'acceptance', 'title': 'ARTICLE 8 — LIVRAISON ET ACCEPTATION'},
+        {'type': 'subcontracting', 'title': 'ARTICLE 9 — SOUS-TRAITANCE'},
+        {'type': 'warranty', 'title': 'ARTICLE 10 — GARANTIE'},
+        {'type': 'liability', 'title': 'ARTICLE 11 — LIMITATION DE RESPONSABILITÉ'},
+        {'type': 'confidentiality', 'title': 'ARTICLE 12 — CONFIDENTIALITÉ'},
+        {'type': 'data_protection', 'title': 'ARTICLE 13 — PROTECTION DES DONNÉES'},
+        {'type': 'termination', 'title': 'ARTICLE 14 — RÉSILIATION'},
+        {'type': 'applicable_law', 'title': 'ARTICLE 15 — DROIT APPLICABLE ET LITIGES'},
+        {'type': 'general_provisions', 'title': 'ARTICLE 16 — DISPOSITIONS GÉNÉRALES'},
+        {'type': 'annexes', 'title': 'ARTICLE 17 — ANNEXES'},
+        {'type': 'signatures', 'title': 'ARTICLE 18 — SIGNATURES'},
+    ],
+    'purchase': [
+        {'type': 'parties', 'title': 'ARTICLE 1 — PARTIES CONTRACTANTES'},
+        {'type': 'object', 'title': 'ARTICLE 2 — OBJET DU CONTRAT'},
+        {'type': 'financial', 'title': 'ARTICLE 3 — PRIX ET CONDITIONS FINANCIÈRES'},
+        {'type': 'payment_terms', 'title': 'ARTICLE 4 — MODALITÉS DE PAIEMENT'},
+        {'type': 'delivery', 'title': 'ARTICLE 5 — LIVRAISON ET TRANSPORT'},
+        {'type': 'warranty', 'title': 'ARTICLE 6 — GARANTIE ET CONFORMITÉ'},
+        {'type': 'liability', 'title': 'ARTICLE 7 — RESPONSABILITÉ'},
+        {'type': 'intellectual_property', 'title': 'ARTICLE 8 — PROPRIÉTÉ INTELLECTUELLE'},
+        {'type': 'confidentiality', 'title': 'ARTICLE 9 — CONFIDENTIALITÉ'},
+        {'type': 'termination', 'title': 'ARTICLE 10 — RÉSILIATION'},
+        {'type': 'applicable_law', 'title': 'ARTICLE 11 — DROIT APPLICABLE ET LITIGES'},
+        {'type': 'general_provisions', 'title': 'ARTICLE 12 — DISPOSITIONS GÉNÉRALES'},
+        {'type': 'signatures', 'title': 'ARTICLE 13 — SIGNATURES'},
+    ],
+    'maintenance': [
+        {'type': 'parties', 'title': 'ARTICLE 1 — PARTIES CONTRACTANTES'},
+        {'type': 'object', 'title': 'ARTICLE 2 — OBJET DU CONTRAT'},
+        {'type': 'duration', 'title': 'ARTICLE 3 — DURÉE ET RENOUVELLEMENT'},
+        {'type': 'obligations_provider', 'title': 'ARTICLE 4 — PRESTATIONS DE MAINTENANCE'},
+        {'type': 'obligations_client', 'title': 'ARTICLE 5 — OBLIGATIONS DU CLIENT'},
+        {'type': 'financial', 'title': 'ARTICLE 6 — CONDITIONS FINANCIÈRES'},
+        {'type': 'payment_terms', 'title': 'ARTICLE 7 — MODALITÉS DE PAIEMENT'},
+        {'type': 'warranty', 'title': 'ARTICLE 8 — NIVEAUX DE SERVICE (SLA)'},
+        {'type': 'liability', 'title': 'ARTICLE 9 — RESPONSABILITÉ ET PÉNALITÉS'},
+        {'type': 'confidentiality', 'title': 'ARTICLE 10 — CONFIDENTIALITÉ'},
+        {'type': 'termination', 'title': 'ARTICLE 11 — RÉSILIATION'},
+        {'type': 'applicable_law', 'title': 'ARTICLE 12 — DROIT APPLICABLE'},
+        {'type': 'signatures', 'title': 'ARTICLE 13 — SIGNATURES'},
+    ],
+    'nda': [
+        {'type': 'parties', 'title': 'ARTICLE 1 — PARTIES CONTRACTANTES'},
+        {'type': 'object', 'title': 'ARTICLE 2 — OBJET ET DÉFINITIONS'},
+        {'type': 'confidentiality', 'title': 'ARTICLE 3 — OBLIGATIONS DE CONFIDENTIALITÉ'},
+        {'type': 'duration', 'title': 'ARTICLE 4 — DURÉE DE L\'OBLIGATION'},
+        {'type': 'termination', 'title': 'ARTICLE 5 — EXCEPTIONS ET EXCLUSIONS'},
+        {'type': 'liability', 'title': 'ARTICLE 6 — SANCTIONS ET RESPONSABILITÉ'},
+        {'type': 'applicable_law', 'title': 'ARTICLE 7 — DROIT APPLICABLE ET LITIGES'},
+        {'type': 'general_provisions', 'title': 'ARTICLE 8 — DISPOSITIONS GÉNÉRALES'},
+        {'type': 'signatures', 'title': 'ARTICLE 9 — SIGNATURES'},
+    ],
+    'lease': [
+        {'type': 'parties', 'title': 'ARTICLE 1 — PARTIES CONTRACTANTES'},
+        {'type': 'object', 'title': 'ARTICLE 2 — OBJET DE LA LOCATION'},
+        {'type': 'duration', 'title': 'ARTICLE 3 — DURÉE ET RENOUVELLEMENT'},
+        {'type': 'financial', 'title': 'ARTICLE 4 — LOYER ET CHARGES'},
+        {'type': 'payment_terms', 'title': 'ARTICLE 5 — MODALITÉS DE PAIEMENT'},
+        {'type': 'obligations_provider', 'title': 'ARTICLE 6 — OBLIGATIONS DU BAILLEUR'},
+        {'type': 'obligations_client', 'title': 'ARTICLE 7 — OBLIGATIONS DU LOCATAIRE'},
+        {'type': 'warranty', 'title': 'ARTICLE 8 — ÉTAT DES LIEUX ET DÉPÔT DE GARANTIE'},
+        {'type': 'termination', 'title': 'ARTICLE 9 — RÉSILIATION'},
+        {'type': 'applicable_law', 'title': 'ARTICLE 10 — DROIT APPLICABLE'},
+        {'type': 'signatures', 'title': 'ARTICLE 11 — SIGNATURES'},
+    ],
+    'partnership': [
+        {'type': 'parties', 'title': 'ARTICLE 1 — PARTIES CONTRACTANTES'},
+        {'type': 'object', 'title': 'ARTICLE 2 — OBJET DU PARTENARIAT'},
+        {'type': 'duration', 'title': 'ARTICLE 3 — DURÉE DU PARTENARIAT'},
+        {'type': 'obligations_provider', 'title': 'ARTICLE 4 — ENGAGEMENTS DE LA PARTIE A'},
+        {'type': 'obligations_client', 'title': 'ARTICLE 5 — ENGAGEMENTS DE LA PARTIE B'},
+        {'type': 'financial', 'title': 'ARTICLE 6 — PARTAGE DES REVENUS ET CHARGES'},
+        {'type': 'intellectual_property', 'title': 'ARTICLE 7 — PROPRIÉTÉ INTELLECTUELLE'},
+        {'type': 'confidentiality', 'title': 'ARTICLE 8 — CONFIDENTIALITÉ'},
+        {'type': 'termination', 'title': 'ARTICLE 9 — RÉSILIATION ET SORTIE'},
+        {'type': 'liability', 'title': 'ARTICLE 10 — RESPONSABILITÉ'},
+        {'type': 'applicable_law', 'title': 'ARTICLE 11 — DROIT APPLICABLE'},
+        {'type': 'signatures', 'title': 'ARTICLE 12 — SIGNATURES'},
+    ],
+    'other': [
+        {'type': 'parties', 'title': 'ARTICLE 1 — PARTIES CONTRACTANTES'},
+        {'type': 'object', 'title': 'ARTICLE 2 — OBJET DU CONTRAT'},
+        {'type': 'duration', 'title': 'ARTICLE 3 — DURÉE'},
+        {'type': 'financial', 'title': 'ARTICLE 4 — CONDITIONS FINANCIÈRES'},
+        {'type': 'payment_terms', 'title': 'ARTICLE 5 — MODALITÉS DE PAIEMENT'},
+        {'type': 'confidentiality', 'title': 'ARTICLE 6 — CONFIDENTIALITÉ'},
+        {'type': 'termination', 'title': 'ARTICLE 7 — RÉSILIATION'},
+        {'type': 'applicable_law', 'title': 'ARTICLE 8 — DROIT APPLICABLE'},
+        {'type': 'signatures', 'title': 'ARTICLE 9 — SIGNATURES'},
+    ],
+}
+

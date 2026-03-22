@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Contract, ContractClause, ContractMilestone, ContractDocument, ContractItem
+from .models import Contract, ContractClause, ContractMilestone, ContractDocument, ContractItem, ContractSection
 
 
 @admin.register(Contract)
@@ -68,3 +68,24 @@ class ContractItemAdmin(admin.ModelAdmin):
     search_fields = ['contract__contract_number', 'product__name', 'product__reference']
     readonly_fields = ['created_at', 'updated_at']
     autocomplete_fields = ['contract', 'product']
+
+
+class ContractSectionInline(admin.TabularInline):
+    model = ContractSection
+    extra = 0
+    ordering = ['order']
+    fields = ['order', 'section_type', 'title', 'is_ai_generated', 'ai_tokens_used']
+    readonly_fields = ['is_ai_generated', 'ai_tokens_used']
+
+
+# Add sections inline to the Contract admin
+ContractAdmin.inlines = [ContractSectionInline]
+
+
+@admin.register(ContractSection)
+class ContractSectionAdmin(admin.ModelAdmin):
+    list_display = ['contract', 'order', 'title', 'section_type', 'is_ai_generated', 'ai_tokens_used']
+    list_filter = ['section_type', 'is_ai_generated']
+    search_fields = ['title', 'content', 'contract__contract_number']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['contract', 'order']

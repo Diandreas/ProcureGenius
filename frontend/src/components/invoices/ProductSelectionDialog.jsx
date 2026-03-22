@@ -162,11 +162,14 @@ function ProductSelectionDialog({
     );
   };
 
+  const needsBatch = newItem.product?.product_type === 'physical' && newItem.product?.batches?.some(b => b.is_active && b.current_quantity > 0);
+
   const isFormValid =
     newItem.description &&
     newItem.quantity > 0 &&
     newItem.unit_price >= 0 &&
-    !stockError;
+    !stockError &&
+    (!needsBatch || newItem.batch);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -245,7 +248,7 @@ function ProductSelectionDialog({
                 <Grid item xs={12}>
                   <Autocomplete
                     options={newItem.product.batches}
-                    getOptionLabel={(option) => option ? `${option.batch_number} (Exp: ${option.expiration_date ? new Date(option.expiration_date).toLocaleDateString() : 'N/A'}, Qté: ${option.current_quantity})` : ''}
+                    getOptionLabel={(option) => option ? `${option.batch_number} ${option.warehouse_name ? `(${option.warehouse_name})` : ''} - Exp: ${option.expiration_date ? new Date(option.expiration_date).toLocaleDateString() : 'N/A'}, Qté: ${option.current_quantity}` : ''}
                     value={newItem.batch || null}
                     onChange={(event, newValue) => {
                       setNewItem({ ...newItem, batch: newValue, batch_number: newValue ? newValue.batch_number : '' });
@@ -261,8 +264,11 @@ function ProductSelectionDialog({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={t('invoices:labels.selectBatchOptional', "Sélectionner un lot (optionnel)")}
+                        label={t('invoices:labels.selectBatchRequired', "Sélectionner un lot *")}
+                        required={true}
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        helperText={!newItem.batch ? t('invoices:messages.batchRequired', "Veuillez sélectionner un lot pour ce produit") : ''}
+                        error={!newItem.batch}
                       />
                     )}
                   />

@@ -290,6 +290,8 @@ class ProductBatch(models.Model):
     expiration_date = models.DateField(null=True, blank=True, verbose_name="Date de péremption")
     initial_quantity = models.IntegerField(default=0, verbose_name="Quantité initiale")
     current_quantity = models.IntegerField(default=0, verbose_name="Quantité actuelle")
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.SET_NULL, null=True, blank=True, related_name='batches', verbose_name="Entrepôt")
+    supplier_batch_reference = models.CharField(max_length=100, blank=True, verbose_name="Référence lot fournisseur")
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Date de modification")

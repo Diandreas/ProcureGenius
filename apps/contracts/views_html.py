@@ -414,19 +414,36 @@ def contract_upload_document(request, pk):
 
 @login_required
 def contract_export_pdf(request, pk):
-    """Exporter le contrat en PDF via WeasyPrint"""
+    """Exporter le contrat en PDF via WeasyPrint avec en-tête entreprise"""
     contract = get_object_or_404(
-        Contract.objects.select_related('supplier', 'client', 'created_by', 'approved_by'),
+        Contract.objects.select_related('supplier', 'client', 'created_by', 'approved_by').prefetch_related('sections'),
         pk=pk
     )
 
-    context = {'contract': contract}
+    # Récupérer l'organisation et le logo
+    organization = getattr(request.user, 'organization', None)
+    logo_base64 = None
+    if organization and hasattr(organization, 'logo') and organization.logo:
+        try:
+            import base64
+            with organization.logo.open('rb') as f:
+                logo_data = f.read()
+                mime = getattr(organization.logo, 'content_type', 'image/png')
+                logo_base64 = f"data:{mime};base64,{base64.b64encode(logo_data).decode()}"
+        except Exception:
+            pass
+
+    context = {
+        'contract': contract,
+        'organization': organization,
+        'logo_base64': logo_base64,
+    }
 
     try:
         from weasyprint import HTML, CSS
         from django.template.loader import render_to_string
 
-        html_content = render_to_string('contracts/contract_pdf.html', context, request=request)
+        html_content = render_to_string('reports/pdf/contract_report.html', context, request=request)
         pdf = HTML(string=html_content, base_url=request.build_absolute_uri('/')).write_pdf()
 
         response = HttpResponse(pdf, content_type='application/pdf')

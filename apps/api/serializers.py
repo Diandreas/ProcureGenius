@@ -119,6 +119,8 @@ class SupplierProductSerializer(serializers.ModelSerializer):
 class ProductBatchSerializer(serializers.ModelSerializer):
     """Serializer pour les lots de produits"""
     product_name = serializers.CharField(source='product.name', read_only=True)
+    warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
+    warehouse_code = serializers.CharField(source='warehouse.code', read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
     is_expiring_soon = serializers.BooleanField(read_only=True)
 
@@ -126,10 +128,17 @@ class ProductBatchSerializer(serializers.ModelSerializer):
         model = ProductBatch
         fields = [
             'id', 'product', 'product_name', 'batch_number', 'expiration_date',
-            'initial_quantity', 'current_quantity', 'created_at', 'updated_at',
+            'initial_quantity', 'current_quantity', 'warehouse', 'warehouse_name',
+            'warehouse_code', 'supplier_batch_reference', 'created_at', 'updated_at',
             'is_active', 'notes', 'is_expired', 'is_expiring_soon'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'current_quantity', 'is_expired', 'is_expiring_soon']
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'current_quantity', 
+            'is_expired', 'is_expiring_soon', 'warehouse_name', 'warehouse_code'
+        ]
+        extra_kwargs = {
+            'warehouse': {'required': False, 'allow_null': True},
+        }
 
 
 class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
@@ -181,6 +190,11 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count', 'ai_insights', 'price_editable'
         ]
+        extra_kwargs = {
+            'warehouse': {'required': False, 'allow_null': True},
+            'stock_quantity': {'required': False},
+            'low_stock_threshold': {'required': False},
+        }
 
     def get_ai_insights(self, obj):
         """Génère des insights rapides pour ce produit"""
@@ -256,14 +270,10 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
                     'warehouse': 'Pas de warehouse pour services/digitaux'
                 })
 
-        # Physiques doivent avoir warehouse si disponible
+        # Les produits physiques peuvent avoir un warehouse optionnel au niveau produit
+        # la gestion se déplace vers les lots (ProductBatch)
         elif product_type == 'physical':
-            from apps.invoicing.models import Warehouse
-            if not attrs.get('warehouse') and not getattr(self.instance, 'warehouse', None):
-                if Warehouse.objects.exists():
-                    raise serializers.ValidationError({
-                        'warehouse': 'Warehouse requis pour produits physiques'
-                    })
+            pass
 
         return attrs
 

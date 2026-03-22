@@ -2,114 +2,324 @@
 
 {% block title %}Contrat {{ contract.contract_number }}{% endblock %}
 
-{% block report_title %}{{ contract.title }}{% endblock %}
-{% block report_subtitle %}Contrat N° {{ contract.contract_number }} | Statut: {{ contract.get_status_display }} {% endblock %}
+{% block report_title %}{{ contract.title|upper }}{% endblock %}
+{% block report_subtitle %}
+    {{ contract.get_contract_type_display }}
+    <br>
+    Réf. : {{ contract.contract_number }}  •  Date : {{ contract.created_at|date:"d F Y" }}
+{% endblock %}
 
 {% block extra_styles %}
 <style>
-    .contract-meta {
+    .contract-notice {
+        text-align: center;
+        font-size: 9pt;
+        color: #475569;
+        font-style: italic;
+        margin-bottom: 25px;
+        padding: 10px 20px;
         background: #f8fafc;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 30px;
+        border-radius: 4px;
         border: 1px solid #e2e8f0;
     }
-    .contract-party {
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #cbd5e1;
+
+    .contract-parties {
+        margin-bottom: 30px;
     }
-    .contract-party h3 {
-        color: #1e293b;
-        font-size: 14pt;
-        margin-bottom: 10px;
+
+    .contract-parties-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
     }
-    .contract-body {
-        font-size: 11pt;
+
+    .party-box {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 6px;
+        border-left: 3px solid #2563eb;
+        font-size: 9pt;
         line-height: 1.6;
+    }
+
+    .party-box.counterpart {
+        border-left-color: #059669;
+    }
+
+    .party-box h4 {
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #2563eb;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+
+    .party-box.counterpart h4 {
+        color: #059669;
+    }
+
+    .party-box .party-name {
+        font-weight: 700;
+        font-size: 10pt;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+
+    .party-box .party-detail {
+        color: #475569;
+    }
+
+    .contract-summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 25px;
+        font-size: 9pt;
+    }
+
+    .contract-summary-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .contract-summary-table td:first-child {
+        font-weight: 600;
+        color: #1e293b;
+        width: 35%;
+        background: #f8fafc;
+    }
+
+    .contract-summary-table td:last-child {
+        color: #334155;
+    }
+
+    /* Sections / Articles */
+    .contract-article {
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+    }
+
+    .contract-article h2 {
+        font-size: 12pt;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #2563eb;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .contract-article-body {
+        font-size: 10pt;
+        line-height: 1.7;
         color: #334155;
         text-align: justify;
     }
-    .contract-body h2 {
+
+    .contract-article-body p {
+        margin-bottom: 8px;
+    }
+
+    .contract-article-body ul,
+    .contract-article-body ol {
+        padding-left: 20px;
+        margin-bottom: 8px;
+    }
+
+    .contract-article-body li {
+        margin-bottom: 4px;
+    }
+
+    .contract-article-body strong {
         color: #0f172a;
-        font-size: 16pt;
-        margin-top: 25px;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #e2e8f0;
+    }
+
+    /* Signatures */
+    .signatures-section {
+        margin-top: 50px;
+        page-break-inside: avoid;
+    }
+
+    .signatures-section h2 {
+        font-size: 12pt;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 10px;
         padding-bottom: 5px;
+        border-bottom: 2px solid #2563eb;
+        text-transform: uppercase;
     }
-    .signatures {
-        margin-top: 60px;
-        display: flex;
-        justify-content: space-between;
+
+    .signatures-intro {
+        font-size: 9pt;
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        font-style: italic;
     }
-    .signature-box {
-        width: 45%;
-        border-top: 1px solid #94a3b8;
-        padding-top: 10px;
+
+    .signatures-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-top: 20px;
     }
-    .signature-box p {
-        margin: 5px 0;
-        font-weight: 600;
+
+    .signature-block {
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 20px;
+    }
+
+    .signature-block h4 {
+        font-size: 9pt;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #2563eb;
+        margin-bottom: 12px;
+        font-weight: 700;
+    }
+
+    .signature-block .sig-line {
+        font-size: 9pt;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+
+    .signature-block .sig-space {
+        height: 60px;
+        margin-top: 15px;
+    }
+
+    .signature-block .sig-underline {
+        border-bottom: 1px solid #94a3b8;
+        padding-bottom: 3px;
+        margin-bottom: 8px;
+        min-height: 18px;
+        font-size: 9pt;
         color: #1e293b;
+        font-weight: 500;
+    }
+
+    /* Ancien contenu (fallback si pas de sections) */
+    .contract-body-legacy {
+        font-size: 10pt;
+        line-height: 1.7;
+        color: #334155;
+        text-align: justify;
+    }
+
+    .contract-body-legacy h2 {
+        font-size: 12pt;
+        font-weight: 700;
+        color: #0f172a;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #2563eb;
+    }
+
+    /* Pied de contrat */
+    .contract-footer-notice {
+        margin-top: 30px;
+        text-align: center;
+        font-size: 8pt;
+        color: #94a3b8;
+        font-style: italic;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 10px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="contract-meta">
-    <div class="info-grid">
-        <div class="info-box">
-            <h3>Informations Générales</h3>
-            <div class="content">
-                <span class="label">Numéro:</span> <span class="value">{{ contract.contract_number }}</span><br>
-                <span class="label">Type:</span> <span class="value">{{ contract.get_contract_type_display }}</span><br>
-                <span class="label">Date de début:</span> <span class="value">{{ contract.start_date|date:"d/m/Y" }}</span><br>
-                <span class="label">Date de fin:</span> <span class="value">{{ contract.end_date|date:"d/m/Y" }}</span>
-            </div>
-        </div>
-        <div class="info-box">
-            <h3>Détails Financiers</h3>
-            <div class="content">
-                <span class="label">Valeur Totale:</span> <span class="value">{{ contract.total_value }} {{ contract.currency }}</span><br>
-                <span class="label">Conditions de paiement:</span> <span class="value">{{ contract.payment_terms|default:"Non spécifié" }}</span><br>
-                {% if contract.auto_renewal %}
-                <span class="label">Renouvellement:</span> <span class="value">Automatique ({{ contract.renewal_notice_days }} jours de préavis)</span>
-                {% endif %}
-            </div>
+{# Notice intégralité #}
+<div class="contract-notice">
+    Ce contrat constitue l'intégralité de l'accord entre les parties. Toute modification doit faire l'objet d'un avenant écrit signé par les deux parties.
+</div>
+
+{# Tableau récapitulatif #}
+<table class="contract-summary-table">
+    <tr>
+        <td>Notre organisation</td>
+        <td>{% if organization %}{{ organization.name }}{% else %}—{% endif %}</td>
+    </tr>
+    <tr>
+        <td>Contrepartie</td>
+        <td>{{ contract.counterpart_display }}</td>
+    </tr>
+    <tr>
+        <td>Type</td>
+        <td>{{ contract.get_contract_type_display }}</td>
+    </tr>
+    {% if contract.start_date %}
+    <tr>
+        <td>Date de début</td>
+        <td>{{ contract.start_date|date:"d/m/Y" }}</td>
+    </tr>
+    {% endif %}
+    {% if contract.end_date %}
+    <tr>
+        <td>Date de fin</td>
+        <td>{{ contract.end_date|date:"d/m/Y" }}</td>
+    </tr>
+    {% endif %}
+    {% if contract.total_value %}
+    <tr>
+        <td>Montant total</td>
+        <td><strong>{{ contract.total_value|floatformat:2 }} {{ contract.currency }}</strong></td>
+    </tr>
+    {% endif %}
+    {% if contract.payment_terms %}
+    <tr>
+        <td>Conditions de paiement</td>
+        <td>{{ contract.payment_terms }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+{# Sections du contrat (nouveau système) #}
+{% if contract.sections.exists %}
+    {% for section in contract.sections.all %}
+    <div class="contract-article">
+        <h2>{{ section.title }}</h2>
+        <div class="contract-article-body">
+            {{ section.content|safe }}
         </div>
     </div>
-</div>
-
-<div class="contract-party">
-    <h3>Entre les soussignés :</h3>
-    <p>
-        <strong>L'Organisation :</strong> {% if organization %}{{ organization.name }}{% else %}______________{% endif %} <br>
-        {% if organization.address %}Adresse : {{ organization.address|striptags }} <br>{% endif %}
-        Ci-après désigné "Le Client"<br><br>
-        
-        <strong>Et</strong><br><br>
-        
-        <strong>Le Fournisseur :</strong> {{ contract.supplier.name }} <br>
-        Adresse : {{ contract.supplier.address|default:"Non spécifiée" }} <br>
-        Contact : {{ contract.supplier.contact_email|default:contract.supplier.email }} <br>
-        Ci-après désigné "Le Prestataire"
-    </p>
-</div>
-
-<div class="contract-body">
-    <h2>1. Objet du Contrat</h2>
-    <p>{{ contract.description|linebreaksbr }}</p>
-
-    {% if contract.terms_and_conditions %}
-    <h2>2. Conditions et Modalités</h2>
-    <div>
-        {{ contract.terms_and_conditions|safe }}
+    {% endfor %}
+{% elif contract.contract_body %}
+    {# Fallback : ancien système monolithique #}
+    <div class="contract-body-legacy">
+        {{ contract.contract_body|safe }}
+    </div>
+{% else %}
+    {# Fallback minimal #}
+    {% if contract.description %}
+    <div class="contract-article">
+        <h2>Objet du contrat</h2>
+        <div class="contract-article-body">
+            <p>{{ contract.description|linebreaksbr }}</p>
+        </div>
     </div>
     {% endif %}
 
-    {% if contract.items.exists %}
-    <h2>3. Articles et Prestations</h2>
+    {% if contract.terms_and_conditions %}
+    <div class="contract-article">
+        <h2>Conditions et Modalités</h2>
+        <div class="contract-article-body">
+            {{ contract.terms_and_conditions|safe }}
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+
+{# Articles/Produits liés #}
+{% if contract.items.exists %}
+<div class="contract-article">
+    <h2>Articles et Prestations</h2>
     <table>
         <thead>
             <tr>
@@ -128,30 +338,60 @@
             {% endfor %}
         </tbody>
     </table>
-    {% endif %}
-    
-    {% if generated_content %}
+</div>
+{% endif %}
+
+{# Contenu généré supplémentaire #}
+{% if generated_content %}
+<div class="contract-article">
     <h2>Dispositions Complémentaires</h2>
-    <div>
+    <div class="contract-article-body">
         {{ generated_content|safe }}
     </div>
-    {% endif %}
+</div>
+{% endif %}
+
+{# Bloc de signatures — toujours affiché #}
+<div class="signatures-section">
+    <div class="signatures-intro">
+        Les soussignés déclarent avoir lu, compris et accepté l'ensemble des termes et conditions du présent contrat.
+        Fait en deux (2) exemplaires originaux.
+    </div>
+    <div class="signatures-grid">
+        <div class="signature-block">
+            <h4>Pour l'Organisation</h4>
+            <div class="sig-line">
+                <strong>{% if organization %}{{ organization.name }}{% else %}________________{% endif %}</strong>
+            </div>
+            {% if organization.address %}
+            <div class="sig-line">{{ organization.address|striptags|truncatewords:12 }}</div>
+            {% endif %}
+            <div class="sig-underline">Nom & Prénom : {% if contract.signed_by_us_name %}{{ contract.signed_by_us_name }}{% endif %}</div>
+            <div class="sig-underline">Qualité : ___________________________</div>
+            <div class="sig-underline">Date : {% if contract.signed_by_us_at %}{{ contract.signed_by_us_at|date:"d/m/Y" }}{% endif %}</div>
+            <div class="sig-space"></div>
+            <div style="font-size: 8pt; font-style: italic; color: #94a3b8; text-align: center;">Signature et Cachet</div>
+        </div>
+        <div class="signature-block">
+            <h4>Pour la Contrepartie</h4>
+            <div class="sig-line">
+                <strong>{{ contract.counterpart_display }}</strong>
+            </div>
+            {% if contract.supplier and contract.supplier.address %}
+            <div class="sig-line">{{ contract.supplier.address|default:"" }}</div>
+            {% endif %}
+            <div class="sig-underline">Nom & Prénom : {% if contract.signed_by_counterpart_name %}{{ contract.signed_by_counterpart_name }}{% endif %}</div>
+            <div class="sig-underline">Qualité : ___________________________</div>
+            <div class="sig-underline">Date : {% if contract.signed_by_counterpart_at %}{{ contract.signed_by_counterpart_at|date:"d/m/Y" }}{% endif %}</div>
+            <div class="sig-space"></div>
+            <div style="font-size: 8pt; font-style: italic; color: #94a3b8; text-align: center;">Signature et Cachet</div>
+        </div>
+    </div>
 </div>
 
-<div class="signatures">
-    <div class="signature-box">
-        <p>Pour le Client</p>
-        <p style="font-size: 9pt; font-weight: normal;">Nom et Fonction :</p>
-        <p style="font-size: 9pt; font-weight: normal;">Date :</p>
-        <p style="height: 60px;"></p>
-        <p style="font-size: 8pt; font-style: italic;">Signature et Cachet</p>
-    </div>
-    <div class="signature-box">
-        <p>Pour le Prestataire</p>
-        <p style="font-size: 9pt; font-weight: normal;">{{ contract.supplier.name }}</p>
-        <p style="font-size: 9pt; font-weight: normal;">Date :</p>
-        <p style="height: 60px;"></p>
-        <p style="font-size: 8pt; font-style: italic;">Signature et Cachet</p>
-    </div>
+<div class="contract-footer-notice">
+    {{ contract.counterpart_display }}  •  Contrat N° {{ contract.contract_number }}
+    <br>
+    Tout avenant ou modification devra être établi par écrit, daté et signé des deux parties pour être valide.
 </div>
 {% endblock %}

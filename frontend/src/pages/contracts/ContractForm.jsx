@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -21,7 +21,6 @@ import {
   Stepper,
   Step,
   StepLabel,
-  StepContent,
   Chip,
   Alert,
   IconButton,
@@ -32,15 +31,17 @@ import {
   useTheme,
   LinearProgress,
   InputAdornment,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Collapse,
 } from '@mui/material';
 import {
   Save,
-  Cancel,
   ArrowBack,
   ArrowForward,
   AutoAwesome,
   AutoFixHigh,
-  RateReview,
   SmartToy,
   Business,
   Person,
@@ -51,11 +52,14 @@ import {
   CloudUpload,
   CheckCircle,
   Description,
-  FileUpload,
-  Close,
-  Send,
   PictureAsPdf,
   Article,
+  ExpandMore,
+  Refresh,
+  Edit as EditIcon,
+  Visibility,
+  DoneAll,
+  Token,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
@@ -78,326 +82,485 @@ const BUILTIN_TEMPLATES = [
     icon: '🔧',
     label: 'Contrat de services',
     type: 'service',
-    description: 'Pour des prestations de services récurrentes ou ponctuelles',
-    prompt: 'Contrat de prestation de services professionnels avec clauses de confidentialité et modalités de paiement nettes 30 jours',
+    description: 'Prestations de services professionnels',
+    prompt: 'Contrat de prestation de services professionnels',
   },
   {
     id: 'purchase',
     icon: '🛒',
     label: "Contrat d'achat",
     type: 'purchase',
-    description: 'Achat de produits ou matières premières auprès d\'un fournisseur',
-    prompt: 'Contrat d\'achat de marchandises avec conditions de livraison, garantie et retour produits',
+    description: 'Achat de produits ou matières premières',
+    prompt: "Contrat d'achat de marchandises",
   },
   {
     id: 'nda',
     icon: '🔒',
-    label: 'Accord de confidentialité (NDA)',
+    label: 'Accord de confidentialité',
     type: 'nda',
-    description: 'Protection des informations confidentielles entre deux parties',
-    prompt: 'Accord de non-divulgation (NDA) bilatéral pour protéger les informations confidentielles échangées dans le cadre d\'une collaboration',
+    description: 'Protection des informations confidentielles',
+    prompt: 'Accord de non-divulgation bilatéral',
   },
   {
     id: 'maintenance',
     icon: '⚙️',
     label: 'Contrat de maintenance',
     type: 'maintenance',
-    description: 'Maintenance et support technique d\'équipements ou systèmes',
-    prompt: 'Contrat de maintenance préventive et corrective avec niveaux de service (SLA) et astreintes',
+    description: 'Maintenance et support technique',
+    prompt: 'Contrat de maintenance avec SLA',
   },
   {
     id: 'lease',
     icon: '🏢',
     label: 'Contrat de location',
     type: 'lease',
-    description: 'Location de locaux, équipements ou véhicules',
-    prompt: 'Contrat de location avec conditions d\'utilisation, dépôt de garantie et modalités de résiliation',
+    description: 'Location de locaux ou équipements',
+    prompt: 'Contrat de location',
   },
   {
     id: 'partnership',
     icon: '🤝',
     label: 'Accord de partenariat',
     type: 'partnership',
-    description: 'Partenariat commercial ou stratégique entre deux entreprises',
-    prompt: 'Accord de partenariat commercial avec partage des responsabilités, revenus et conditions de sortie',
+    description: 'Partenariat commercial ou stratégique',
+    prompt: 'Accord de partenariat commercial',
   },
   {
     id: 'freelance',
     icon: '💻',
     label: 'Contrat freelance',
     type: 'service',
-    description: 'Pour les travailleurs indépendants et consultants',
-    prompt: 'Contrat de mission freelance avec livrables, jalons, tarification horaire et droits de propriété intellectuelle',
+    description: 'Mission freelance avec livrables',
+    prompt: 'Contrat de mission freelance',
   },
   {
     id: 'distribution',
     icon: '📦',
     label: 'Contrat de distribution',
     type: 'other',
-    description: 'Distribution exclusive ou non-exclusive de produits',
-    prompt: 'Contrat de distribution avec territoire exclusif, objectifs de vente et conditions de renouvellement',
+    description: 'Distribution de produits',
+    prompt: 'Contrat de distribution',
   },
 ];
 
 const STEPS = [
-  { label: 'Description avec IA', icon: <SmartToy /> },
+  { label: 'Type & Description', icon: <SmartToy /> },
   { label: 'Informations', icon: <Business /> },
-  { label: 'Contenu', icon: <Gavel /> },
+  { label: 'Sections du contrat', icon: <Gavel /> },
   { label: 'Signatures & Finalisation', icon: <Draw /> },
 ];
 
-// Composant IA Chat intégré
-function AIDescriptionStep({ onDataGenerated, formData, isEditMode }) {
-  const [description, setDescription] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [generating, setGenerating] = useState(false);
-  const [mode, setMode] = useState('template'); // template | chat
+// ===================================================================
+// Étape 1 : Sélection template + description pour l'IA
+// ===================================================================
+function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const messagesEndRef = useRef(null);
-  const { enqueueSnackbar } = useSnackbar();
+  const [description, setDescription] = useState('');
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (formData.contract_type) {
+      const tpl = BUILTIN_TEMPLATES.find(t => t.type === formData.contract_type);
+      if (tpl) setSelectedTemplate(tpl);
     }
-  }, [messages]);
+  }, [formData.contract_type]);
 
-  const handleTemplateSelect = async (tpl) => {
+  const handleTemplateSelect = (tpl) => {
     setSelectedTemplate(tpl);
+    setFormData(prev => ({ ...prev, contract_type: tpl.type }));
     setDescription(tpl.prompt);
-  };
-
-  const handleGenerate = async () => {
-    if (!description.trim()) return;
-    setGenerating(true);
-
-    const userMsg = description;
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
-
-    try {
-      const prompt = `Tu es un assistant juridique IA. Génère un JSON pour décrire un contrat. Réponds UNIQUEMENT avec le bloc JSON, rien d'autre.
-
-DESCRIPTION: ${userMsg}
-
-Format EXACT (JSON valide uniquement, pas de HTML, pas d'explication):
-\`\`\`json
-{
-  "title": "Titre professionnel du contrat",
-  "contract_type": "service",
-  "description": "Description courte de 1-2 phrases",
-  "start_date": "2026-04-01",
-  "end_date": "2027-03-31",
-  "total_value": 5000,
-  "currency": "CAD",
-  "renewal_notice_days": 30,
-  "alert_days_before_expiry": 30
-}
-\`\`\`
-
-Pour contract_type utilise: purchase, service, maintenance, lease, nda, partnership, ou other.`;
-
-      const response = await aiChatAPI.generateText(prompt, 800);
-      const reply = response.data.content;
-
-      const jsonMatch = reply.match(/```json[\r\n]+([\s\S]*?)[\r\n]+```/);
-      if (jsonMatch) {
-        const data = JSON.parse(jsonMatch[1]);
-        onDataGenerated(data);
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: '✅ Informations pré-remplies ! Cliquez sur Suivant pour compléter le contrat. Les clauses seront générées à l\'étape 3.',
-        }]);
-      } else {
-        setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-        enqueueSnackbar('Contenu généré — vérifiez et complétez le formulaire', { variant: 'info' });
-      }
-    } catch (err) {
-      console.error(err);
-      enqueueSnackbar('Erreur de communication avec l\'IA', { variant: 'error' });
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Désolé, une erreur est survenue. Veuillez réessayer.' }]);
-    } finally {
-      setGenerating(false);
-    }
   };
 
   if (isEditMode) {
     return (
       <Alert severity="info" sx={{ borderRadius: 2 }}>
-        L'assistant IA est disponible uniquement lors de la création d'un nouveau contrat.
-        Vous pouvez modifier directement les champs ci-dessous.
+        Vous modifiez un contrat existant. Les sections sont éditables à l'étape 3.
       </Alert>
     );
   }
 
   return (
     <Box>
-      {/* Mode selector */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        <Button
-          variant={mode === 'template' ? 'contained' : 'outlined'}
-          size="small"
-          onClick={() => setMode('template')}
-          startIcon={<Article />}
-        >
-          Choisir un modèle
-        </Button>
-        <Button
-          variant={mode === 'chat' ? 'contained' : 'outlined'}
-          size="small"
-          onClick={() => setMode('chat')}
-          startIcon={<SmartToy />}
-        >
-          Décrire librement
-        </Button>
+      <Typography variant="body2" color="text.secondary" mb={2}>
+        Sélectionnez un type de contrat. L'IA générera chaque section selon les bonnes pratiques juridiques.
+      </Typography>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 1.5, mb: 3 }}>
+        {BUILTIN_TEMPLATES.map(tpl => (
+          <Card
+            key={tpl.id}
+            onClick={() => handleTemplateSelect(tpl)}
+            sx={{
+              cursor: 'pointer',
+              border: '2px solid',
+              borderColor: selectedTemplate?.id === tpl.id ? 'primary.main' : 'divider',
+              transition: 'all 0.2s ease',
+              '&:hover': { borderColor: 'primary.light', transform: 'translateY(-2px)' },
+            }}
+          >
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Typography variant="h5" mb={0.5}>{tpl.icon}</Typography>
+              <Typography variant="subtitle2" fontWeight={700} gutterBottom>{tpl.label}</Typography>
+              <Typography variant="caption" color="text.secondary">{tpl.description}</Typography>
+            </CardContent>
+          </Card>
+        ))}
       </Box>
 
-      {/* Template grid */}
-      {mode === 'template' && (
-        <Box>
+      {selectedTemplate && (
+        <Box sx={{ bgcolor: 'primary.50', borderRadius: 2, p: 2, border: '1px solid', borderColor: 'primary.light' }}>
+          <Typography variant="subtitle2" fontWeight={700} mb={1}>
+            {selectedTemplate.icon} {selectedTemplate.label}
+          </Typography>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Sélectionnez un modèle pour démarrer avec une structure pré-remplie par l'IA :
+            Décrivez brièvement les détails du contrat. L'IA s'en servira pour personnaliser chaque section :
           </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 1.5, mb: 3 }}>
-            {BUILTIN_TEMPLATES.map(tpl => (
-              <Card
-                key={tpl.id}
-                onClick={() => handleTemplateSelect(tpl)}
-                sx={{
-                  cursor: 'pointer',
-                  border: '2px solid',
-                  borderColor: selectedTemplate?.id === tpl.id ? 'primary.main' : 'divider',
-                  transition: 'all 0.2s ease',
-                  '&:hover': { borderColor: 'primary.light', transform: 'translateY(-2px)' },
-                }}
-              >
-                <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <Typography variant="h5" mb={0.5}>{tpl.icon}</Typography>
-                  <Typography variant="subtitle2" fontWeight={700} gutterBottom>{tpl.label}</Typography>
-                  <Typography variant="caption" color="text.secondary">{tpl.description}</Typography>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-
-          {selectedTemplate && (
-            <Box sx={{ bgcolor: 'primary.50', borderRadius: 2, p: 2, border: '1px solid', borderColor: 'primary.light' }}>
-              <Typography variant="subtitle2" fontWeight={700} mb={1}>
-                {selectedTemplate.icon} Modèle sélectionné : {selectedTemplate.label}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" mb={2}>
-                Ajoutez des détails spécifiques (parties, montants, durée...) ou générez directement avec les paramètres par défaut :
-              </Typography>
-              <TextField
-                multiline
-                rows={3}
-                fullWidth
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Précisez les détails : noms des parties, montant, durée, spécificités..."
-                sx={{ mb: 1.5 }}
-              />
-              <Button
-                variant="contained"
-                startIcon={generating ? <CircularProgress size={16} color="inherit" /> : <AutoAwesome />}
-                onClick={handleGenerate}
-                disabled={generating}
-              >
-                {generating ? 'Génération en cours...' : 'Générer le contrat avec l\'IA'}
-              </Button>
-            </Box>
-          )}
+          <TextField
+            multiline
+            rows={3}
+            fullWidth
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Ex: Contrat de développement d'application mobile entre Joel Computech Solution et un client, montant 4541 USD, paiement échelonné sur 3 mois, livraison en 10-14 semaines..."
+            sx={{ mb: 1.5 }}
+          />
+          <Button
+            variant="contained"
+            startIcon={<ArrowForward />}
+            onClick={() => {
+              setFormData(prev => ({
+                ...prev,
+                contract_type: selectedTemplate.type,
+                extra_instructions: description,
+              }));
+              onNext();
+            }}
+          >
+            Suivant — Informations du contrat
+          </Button>
         </Box>
-      )}
-
-      {/* Free description mode */}
-      {mode === 'chat' && (
-        <Box>
-          <Typography variant="body2" color="text.secondary" mb={2}>
-            Décrivez le contrat que vous souhaitez créer en langage naturel. L'IA pré-remplira toutes les sections.
-          </Typography>
-
-          {/* Chat messages */}
-          {messages.length > 0 && (
-            <Box sx={{
-              bgcolor: 'grey.50',
-              borderRadius: 2,
-              p: 2,
-              mb: 2,
-              maxHeight: 250,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.5,
-            }}>
-              {messages.map((msg, i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                  }}
-                >
-                  <Box sx={{
-                    maxWidth: '85%',
-                    p: 1.5,
-                    borderRadius: 2,
-                    bgcolor: msg.role === 'user' ? 'primary.main' : 'white',
-                    color: msg.role === 'user' ? 'white' : 'text.primary',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                    fontSize: '0.875rem',
-                    lineHeight: 1.5,
-                    whiteSpace: 'pre-line',
-                  }}>
-                    {msg.content}
-                  </Box>
-                </Box>
-              ))}
-              {generating && (
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1.5, bgcolor: 'white', borderRadius: 2, width: 'fit-content', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                  <CircularProgress size={16} />
-                  <Typography variant="caption" color="text.secondary">L'IA génère votre contrat...</Typography>
-                </Box>
-              )}
-              <div ref={messagesEndRef} />
-            </Box>
-          )}
-
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-end' }}>
-            <TextField
-              multiline
-              rows={4}
-              fullWidth
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Ex: Contrat de maintenance informatique mensuel avec Acme Corp, 2500$/mois, 12 mois, inclut support téléphonique 24/7 et intervention en 4h..."
-              disabled={generating}
-            />
-            <Button
-              variant="contained"
-              onClick={handleGenerate}
-              disabled={generating || !description.trim()}
-              sx={{ height: 56, minWidth: 56, borderRadius: '10px' }}
-            >
-              {generating ? <CircularProgress size={20} color="inherit" /> : <AutoAwesome />}
-            </Button>
-          </Box>
-
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            Conseil : Mentionnez les parties impliquées, la durée, le montant et l'objet principal pour un meilleur résultat.
-          </Typography>
-        </Box>
-      )}
-
-      {messages.some(m => m.role === 'assistant' && m.content.startsWith('✅')) && (
-        <Alert severity="success" sx={{ mt: 2, borderRadius: 2 }}>
-          Contrat pré-rempli par l'IA. Passez à l'étape suivante pour vérifier et compléter les informations.
-        </Alert>
       )}
     </Box>
   );
 }
 
+// ===================================================================
+// Étape 3 : Sections du contrat (cœur de la refonte)
+// ===================================================================
+function SectionsStep({ formData, sections, setSections, isEditMode }) {
+  const [generating, setGenerating] = useState(false);
+  const [generatingSection, setGeneratingSection] = useState(null);
+  const [totalTokens, setTotalTokens] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const { enqueueSnackbar } = useSnackbar();
+
+  // Charger les définitions de sections si on n'en a pas
+  useEffect(() => {
+    if (sections.length === 0 && formData.contract_type && !isEditMode) {
+      loadSectionDefinitions();
+    }
+  }, [formData.contract_type]);
+
+  const loadSectionDefinitions = async () => {
+    try {
+      const res = await contractsAPI.sectionDefinitions(formData.contract_type);
+      const defs = res.data.sections || [];
+      setSections(defs.map((d, i) => ({
+        section_type: d.type,
+        title: d.title,
+        content: '',
+        order: i + 1,
+        is_ai_generated: false,
+        ai_tokens_used: 0,
+      })));
+    } catch (err) {
+      console.error('Erreur chargement sections:', err);
+    }
+  };
+
+  const buildContext = () => ({
+    title: formData.title || '',
+    contract_type: formData.contract_type || 'service',
+    description: formData.description || formData.extra_instructions || '',
+    counterpart_name: formData.party_type === 'client'
+      ? (formData.client?.name || formData.client?.company_name || '')
+      : formData.party_type === 'supplier'
+        ? (formData.supplier?.name || '')
+        : formData.counterpart_name || '',
+    total_value: formData.total_value || '',
+    currency: formData.currency || 'CAD',
+    start_date: formData.start_date || '',
+    end_date: formData.end_date || '',
+    payment_terms: formData.payment_terms || '',
+    extra_instructions: formData.extra_instructions || '',
+  });
+
+  const handleGenerateAll = async () => {
+    if (!formData.title && !formData.description && !formData.extra_instructions) {
+      enqueueSnackbar('Remplissez le titre ou la description d\'abord (étape 2)', { variant: 'warning' });
+      return;
+    }
+
+    setGenerating(true);
+    setProgress(0);
+    setTotalTokens(0);
+
+    try {
+      const res = await contractsAPI.generateAllSections({
+        contract_type: formData.contract_type || 'service',
+        context: buildContext(),
+      });
+
+      const generatedSections = res.data.sections || [];
+      setSections(generatedSections.map(s => ({
+        ...s,
+        is_ai_generated: true,
+      })));
+      setTotalTokens(res.data.total_tokens || 0);
+      setProgress(100);
+
+      enqueueSnackbar(
+        `${generatedSections.length} sections générées (${res.data.total_tokens} tokens)`,
+        { variant: 'success' }
+      );
+    } catch (err) {
+      console.error(err);
+      enqueueSnackbar('Erreur lors de la génération des sections', { variant: 'error' });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleRegenerateSection = async (index) => {
+    const section = sections[index];
+    setGeneratingSection(index);
+
+    try {
+      const res = await contractsAPI.generateSection({
+        section_type: section.section_type,
+        section_title: section.title,
+        context: buildContext(),
+      });
+
+      const updated = [...sections];
+      updated[index] = {
+        ...updated[index],
+        content: res.data.content,
+        is_ai_generated: true,
+        ai_tokens_used: res.data.tokens_used || 0,
+      };
+      setSections(updated);
+      setTotalTokens(prev => prev + (res.data.tokens_used || 0));
+
+      enqueueSnackbar(`Section "${section.title}" régénérée`, { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar('Erreur lors de la régénération', { variant: 'error' });
+    } finally {
+      setGeneratingSection(null);
+    }
+  };
+
+  const handleSectionContentChange = (index, newContent) => {
+    const updated = [...sections];
+    updated[index] = { ...updated[index], content: newContent };
+    setSections(updated);
+  };
+
+  const allSectionsGenerated = sections.length > 0 && sections.every(s => s.content);
+
+  return (
+    <Box>
+      {/* Header avec bouton générer tout */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box>
+          <Typography variant="h6" fontWeight={700}>
+            Sections du contrat ({sections.length} articles)
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            L'IA génère chaque section individuellement pour une meilleure qualité et économie de tokens
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={generating ? <CircularProgress size={16} color="inherit" /> : <AutoAwesome />}
+          onClick={handleGenerateAll}
+          disabled={generating}
+          color="primary"
+        >
+          {generating ? 'Génération en cours...' : allSectionsGenerated ? 'Tout régénérer' : 'Générer toutes les sections'}
+        </Button>
+      </Box>
+
+      {/* Progress bar pendant la génération */}
+      {generating && (
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress sx={{ borderRadius: 2 }} />
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+            Génération des {sections.length} sections en cours...
+          </Typography>
+        </Box>
+      )}
+
+      {/* Stats tokens */}
+      {totalTokens > 0 && (
+        <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }} icon={<Token />}>
+          Total tokens utilisés : <strong>{totalTokens.toLocaleString()}</strong> — {sections.filter(s => s.is_ai_generated).length}/{sections.length} sections générées par IA
+        </Alert>
+      )}
+
+      {/* Liste des sections */}
+      {sections.length === 0 ? (
+        <Alert severity="warning" sx={{ borderRadius: 2 }}>
+          Aucune section définie. Revenez à l'étape 1 pour sélectionner un type de contrat.
+        </Alert>
+      ) : (
+        <Stack spacing={1}>
+          {sections.map((section, index) => (
+            <SectionEditor
+              key={`${section.section_type}-${index}`}
+              section={section}
+              index={index}
+              isRegenerating={generatingSection === index}
+              onRegenerate={() => handleRegenerateSection(index)}
+              onContentChange={(content) => handleSectionContentChange(index, content)}
+            />
+          ))}
+        </Stack>
+      )}
+
+      {/* Notes internes */}
+      {sections.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="subtitle2" fontWeight={700} mb={1}>Notes internes (non incluses dans le contrat)</Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={2}
+            name="internal_notes"
+            value={formData.internal_notes || ''}
+            onChange={e => {/* handled by parent */}}
+            placeholder="Notes confidentielles..."
+            size="small"
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ===================================================================
+// Éditeur individuel de section
+// ===================================================================
+function SectionEditor({ section, index, isRegenerating, onRegenerate, onContentChange }) {
+  const [expanded, setExpanded] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+
+  const hasContent = Boolean(section.content && section.content.trim());
+
+  return (
+    <Accordion
+      expanded={expanded}
+      onChange={() => setExpanded(!expanded)}
+      sx={{
+        border: '1px solid',
+        borderColor: hasContent ? 'success.light' : 'warning.light',
+        borderRadius: '8px !important',
+        '&:before': { display: 'none' },
+        boxShadow: 'none',
+      }}
+    >
+      <AccordionSummary
+        expandIcon={<ExpandMore />}
+        sx={{
+          '& .MuiAccordionSummary-content': { alignItems: 'center', gap: 1.5 },
+          minHeight: 48,
+        }}
+      >
+        <Chip
+          label={`Art. ${section.order}`}
+          size="small"
+          color={hasContent ? 'success' : 'default'}
+          variant={hasContent ? 'filled' : 'outlined'}
+          sx={{ fontWeight: 700, minWidth: 60 }}
+        />
+        <Typography variant="subtitle2" fontWeight={600} sx={{ flex: 1 }}>
+          {section.title}
+        </Typography>
+        {hasContent && section.is_ai_generated && (
+          <Chip label="IA" size="small" color="primary" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+        )}
+        {!hasContent && (
+          <Chip label="Vide" size="small" color="warning" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+        )}
+      </AccordionSummary>
+
+      <AccordionDetails sx={{ pt: 0 }}>
+        {/* Actions */}
+        <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={isRegenerating ? <CircularProgress size={14} /> : <Refresh />}
+            onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+            disabled={isRegenerating}
+          >
+            {hasContent ? 'Régénérer' : 'Générer'} avec IA
+          </Button>
+          {hasContent && (
+            <Button
+              size="small"
+              variant={editMode ? 'contained' : 'text'}
+              startIcon={editMode ? <Visibility /> : <EditIcon />}
+              onClick={() => setEditMode(!editMode)}
+            >
+              {editMode ? 'Aperçu' : 'Modifier'}
+            </Button>
+          )}
+        </Stack>
+
+        {/* Contenu */}
+        {hasContent ? (
+          editMode ? (
+            <Box sx={{
+              '.ql-editor': { minHeight: 150, fontSize: '0.85rem' },
+              '.ql-container': { borderRadius: '0 0 6px 6px' },
+              '.ql-toolbar': { borderRadius: '6px 6px 0 0' }
+            }}>
+              <ReactQuill
+                theme="snow"
+                value={section.content}
+                onChange={onContentChange}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                bgcolor: 'grey.50',
+                borderRadius: 1.5,
+                p: 2,
+                fontSize: '0.85rem',
+                lineHeight: 1.7,
+                '& p': { mb: 1 },
+                '& ul, & ol': { pl: 3, mb: 1 },
+                '& strong': { fontWeight: 600 },
+              }}
+              dangerouslySetInnerHTML={{ __html: section.content }}
+            />
+          )
+        ) : (
+          <Box sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>
+            <Typography variant="body2">
+              Cliquez sur "Générer avec IA" pour remplir cette section automatiquement
+            </Typography>
+          </Box>
+        )}
+      </AccordionDetails>
+    </Accordion>
+  );
+}
+
+// ===================================================================
 // Composant section signature
+// ===================================================================
 function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
   const fileInputRef = useRef(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
@@ -418,7 +581,6 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
       </Typography>
 
       <Grid container spacing={3} mb={3}>
-        {/* Notre signature */}
         <Grid item xs={12} md={6}>
           <Box sx={{ border: '1.5px solid', borderColor: 'divider', borderRadius: 2, p: 2.5 }}>
             <Typography variant="subtitle2" fontWeight={700} mb={2} color="primary">
@@ -458,11 +620,10 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
           </Box>
         </Grid>
 
-        {/* Signature contrepartie */}
         <Grid item xs={12} md={6}>
           <Box sx={{ border: '1.5px solid', borderColor: 'divider', borderRadius: 2, p: 2.5 }}>
             <Typography variant="subtitle2" fontWeight={700} mb={2} color="secondary">
-              Contrepartie (client / fournisseur)
+              Contrepartie
             </Typography>
             <Stack spacing={2}>
               <FormControlLabel
@@ -523,10 +684,10 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
           <Box>
             <PictureAsPdf sx={{ fontSize: 40, mb: 1, color: 'text.secondary' }} />
             <Typography variant="subtitle2" fontWeight={600} mb={0.5}>
-              Importer le PDF signé par les deux parties
+              Importer le PDF signé
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-              Gardez une trace du contrat signé pour une traçabilité complète. Formats acceptés: PDF
+              Formats acceptés: PDF
             </Typography>
             <Button
               variant="outlined"
@@ -538,44 +699,22 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
           </Box>
         )}
       </Box>
-
-      {/* Export */}
-      <Box sx={{ mt: 3 }}>
-        <Typography variant="subtitle2" fontWeight={600} mb={1.5} color="text.secondary">
-          Exporter le contrat
-        </Typography>
-        <Stack direction="row" spacing={1.5}>
-          <Chip
-            icon={<PictureAsPdf />}
-            label="Exporter en PDF"
-            clickable
-            color="error"
-            variant="outlined"
-            size="small"
-          />
-          <Chip
-            icon={<Description />}
-            label="Exporter en Word"
-            clickable
-            color="primary"
-            variant="outlined"
-            size="small"
-          />
-        </Stack>
-      </Box>
     </Box>
   );
 }
 
+// ===================================================================
+// COMPOSANT PRINCIPAL
+// ===================================================================
 function ContractForm() {
   const { t } = useTranslation(['contracts', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
-  const [isGenerating, setIsGenerating] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [signedPdfFile, setSignedPdfFile] = useState(null);
+  const [sections, setSections] = useState([]);
 
   const { currentContract, loading } = useSelector((state) => state.contracts);
   const { suppliers } = useSelector((state) => state.suppliers);
@@ -589,7 +728,7 @@ function ContractForm() {
   const [formData, setFormData] = useState({
     title: '',
     contract_type: 'service',
-    party_type: 'client', // client | supplier
+    party_type: 'client',
     supplier: null,
     client: null,
     counterpart_name: '',
@@ -610,6 +749,7 @@ function ContractForm() {
     signed_by_counterpart: false,
     signed_by_counterpart_name: '',
     signed_by_counterpart_at: '',
+    extra_instructions: '',
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -619,7 +759,7 @@ function ContractForm() {
     dispatch(fetchClients());
     if (isEditMode) {
       dispatch(fetchContract(id));
-      setActiveStep(1); // En mode édition, commencer à l'étape infos
+      setActiveStep(1);
     }
   }, [id, isEditMode, dispatch]);
 
@@ -628,7 +768,7 @@ function ContractForm() {
       setFormData({
         title: currentContract.title || '',
         contract_type: currentContract.contract_type || 'service',
-        party_type: currentContract.client ? 'client' : 'supplier',
+        party_type: currentContract.client ? 'client' : currentContract.supplier ? 'supplier' : 'other',
         supplier: suppliers.find(s => s.id === currentContract.supplier) || null,
         client: clients.find(c => c.id === currentContract.client) || null,
         counterpart_name: currentContract.counterpart_name || '',
@@ -649,51 +789,21 @@ function ContractForm() {
         signed_by_counterpart: currentContract.signed_by_counterpart || false,
         signed_by_counterpart_name: currentContract.signed_by_counterpart_name || '',
         signed_by_counterpart_at: currentContract.signed_by_counterpart_at || '',
+        extra_instructions: '',
       });
+      // Charger les sections existantes
+      if (currentContract.sections && currentContract.sections.length > 0) {
+        setSections(currentContract.sections.map(s => ({
+          section_type: s.section_type,
+          title: s.title,
+          content: s.content,
+          order: s.order,
+          is_ai_generated: s.is_ai_generated,
+          ai_tokens_used: s.ai_tokens_used || 0,
+        })));
+      }
     }
   }, [currentContract, isEditMode, suppliers, clients]);
-
-  const handleAIDataGenerated = (data) => {
-    setFormData(prev => ({
-      ...prev,
-      title: data.title || prev.title,
-      contract_type: data.contract_type || prev.contract_type,
-      description: data.description || prev.description,
-      start_date: data.start_date || prev.start_date,
-      end_date: data.end_date || prev.end_date,
-      total_value: data.total_value || prev.total_value,
-      currency: data.currency || prev.currency,
-      terms_and_conditions: data.terms_and_conditions || prev.terms_and_conditions,
-      payment_terms: data.payment_terms || prev.payment_terms,
-      renewal_notice_days: data.renewal_notice_days || prev.renewal_notice_days,
-      alert_days_before_expiry: data.alert_days_before_expiry || prev.alert_days_before_expiry,
-    }));
-    enqueueSnackbar('Contrat pré-rempli par l\'IA — vérifiez les informations', { variant: 'success' });
-  };
-
-  const handleGenerateSection = async (field) => {
-    if (!formData.title && !formData.description) {
-      enqueueSnackbar('Remplissez le titre ou la description d\'abord', { variant: 'warning' });
-      return;
-    }
-    setIsGenerating(true);
-    try {
-      const fieldLabel = field === 'terms_and_conditions' ? 'Conditions Générales du contrat' : 'Conditions et Modalités de Paiement';
-      const prompt = `Tu es un expert en rédaction juridique. Génère un texte professionnel pour la section "${fieldLabel}" d'un contrat.
-Type: ${formData.contract_type}. Titre: ${formData.title}. Description: ${formData.description}.
-Montant: ${formData.total_value} ${formData.currency}. Durée: ${formData.start_date} au ${formData.end_date}.
-IMPORTANT: Format HTML sémantique uniquement (utilise <h3>, <p>, <strong>, <ul>, <li>, <br>). Pas de markdown.
-${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confidentialité, résiliation, règlement des litiges, et un tableau de signatures à la fin.' : 'Inclure: montant, échéances, mode de paiement, pénalités de retard.'}`;
-
-      const response = await aiChatAPI.generateText(prompt, 3000);
-      setFormData(prev => ({ ...prev, [field]: response.data.content }));
-      enqueueSnackbar('Section générée avec succès', { variant: 'success' });
-    } catch (err) {
-      enqueueSnackbar('Erreur lors de la génération', { variant: 'error' });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -712,16 +822,16 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
         ...formData,
         supplier: formData.party_type === 'supplier' ? formData.supplier?.id : null,
         client: formData.party_type === 'client' ? formData.client?.id : null,
+        sections_data: sections,
       };
-      // Remove non-API fields
       delete payload.party_type;
+      delete payload.extra_instructions;
 
       if (isEditMode) {
         await dispatch(updateContract({ id, data: payload })).unwrap();
         enqueueSnackbar('Contrat mis à jour avec succès', { variant: 'success' });
       } else {
         const result = await dispatch(createContract(payload)).unwrap();
-        // Upload signed PDF if provided
         if (signedPdfFile && result?.id) {
           const formDataUpload = new FormData();
           formDataUpload.append('signed_pdf', signedPdfFile);
@@ -748,9 +858,10 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
     switch (step) {
       case 0:
         return (
-          <AIDescriptionStep
-            onDataGenerated={handleAIDataGenerated}
+          <TemplateStep
             formData={formData}
+            setFormData={setFormData}
+            onNext={handleNext}
             isEditMode={isEditMode}
           />
         );
@@ -766,7 +877,7 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="Ex: Contrat de maintenance — Acme Corp 2024"
+                placeholder="Ex: Contrat de prestation — Développement App Mobile"
               />
             </Grid>
             <Grid item xs={12} md={4}>
@@ -784,7 +895,6 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
               </FormControl>
             </Grid>
 
-            {/* Type de partie */}
             <Grid item xs={12}>
               <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Contrepartie du contrat</Typography>
               <Stack direction="row" spacing={1} mb={2}>
@@ -852,7 +962,7 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Décrivez brièvement l'objet et le contexte de ce contrat..."
+                placeholder="Décrivez l'objet et le contexte du contrat..."
               />
             </Grid>
 
@@ -900,7 +1010,7 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
                         <MenuItem value="CAD">CAD</MenuItem>
                         <MenuItem value="USD">USD</MenuItem>
                         <MenuItem value="EUR">EUR</MenuItem>
-                        <MenuItem value="MAD">MAD</MenuItem>
+                        <MenuItem value="XAF">XAF</MenuItem>
                       </Select>
                     </InputAdornment>
                   ),
@@ -908,82 +1018,28 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
                 inputProps={{ min: 0, step: 0.01 }}
               />
             </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Conditions de paiement"
+                name="payment_terms"
+                value={formData.payment_terms}
+                onChange={handleChange}
+                placeholder="Ex: 50% à la signature, 50% à la livraison — Net 30 jours"
+              />
+            </Grid>
           </Grid>
         );
 
       case 2:
         return (
-          <Box>
-            {/* Conditions générales */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-              <Typography variant="subtitle1" fontWeight={700}>Conditions générales et clauses</Typography>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={isGenerating ? <CircularProgress size={14} /> : <AutoFixHigh />}
-                onClick={() => handleGenerateSection('terms_and_conditions')}
-                disabled={isGenerating}
-              >
-                Rédiger avec l'IA
-              </Button>
-            </Box>
-            <Box sx={{
-              mb: 3,
-              '.ql-editor': { minHeight: 280, fontSize: '0.9rem' },
-              '.ql-container': { borderRadius: '0 0 8px 8px' },
-              '.ql-toolbar': { borderRadius: '8px 8px 0 0' }
-            }}>
-              <ReactQuill
-                theme="snow"
-                value={formData.terms_and_conditions}
-                onChange={val => setFormData(prev => ({ ...prev, terms_and_conditions: val }))}
-                placeholder="Rédigez les conditions générales... ou utilisez l'IA pour les générer automatiquement."
-              />
-            </Box>
-
-            <Divider sx={{ my: 2.5 }} />
-
-            {/* Conditions de paiement */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-              <Typography variant="subtitle1" fontWeight={700}>Conditions de paiement</Typography>
-              <Button
-                size="small"
-                variant="text"
-                startIcon={isGenerating ? <CircularProgress size={14} /> : <RateReview />}
-                onClick={() => handleGenerateSection('payment_terms')}
-                disabled={isGenerating}
-              >
-                Générer avec l'IA
-              </Button>
-            </Box>
-            <Box sx={{
-              mb: 3,
-              '.ql-editor': { minHeight: 130, fontSize: '0.9rem' },
-              '.ql-container': { borderRadius: '0 0 8px 8px' },
-              '.ql-toolbar': { borderRadius: '8px 8px 0 0' }
-            }}>
-              <ReactQuill
-                theme="snow"
-                value={formData.payment_terms}
-                onChange={val => setFormData(prev => ({ ...prev, payment_terms: val }))}
-                placeholder="Ex: 50% à la signature, 50% à la livraison. Paiement net 30 jours..."
-              />
-            </Box>
-
-            <Divider sx={{ my: 2.5 }} />
-
-            {/* Notes internes */}
-            <Typography variant="subtitle1" fontWeight={700} mb={1.5}>Notes internes</Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={2}
-              name="internal_notes"
-              value={formData.internal_notes}
-              onChange={handleChange}
-              placeholder="Notes confidentielles (non incluses dans le contrat exporté)..."
-            />
-          </Box>
+          <SectionsStep
+            formData={formData}
+            sections={sections}
+            setSections={setSections}
+            isEditMode={isEditMode}
+          />
         );
 
       case 3:
@@ -997,7 +1053,6 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
 
             <Divider sx={{ my: 3 }} />
 
-            {/* Renouvellement & alertes */}
             <Typography variant="h6" fontWeight={700} mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CalendarToday fontSize="small" color="primary" />
               Renouvellement & Alertes
@@ -1037,7 +1092,6 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
               </Grid>
             </Grid>
 
-            {/* Résumé */}
             <Divider sx={{ my: 3 }} />
             <Typography variant="h6" fontWeight={700} mb={2}>Résumé du contrat</Typography>
             <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2.5 }}>
@@ -1071,10 +1125,16 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Sections</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {sections.filter(s => s.content).length}/{sections.length} générées
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Signatures</Typography>
                   <Stack direction="row" spacing={0.5}>
-                    {formData.signed_by_us && <Chip label="Nous ✓" size="small" color="success" />}
-                    {formData.signed_by_counterpart && <Chip label="Contrepartie ✓" size="small" color="success" />}
+                    {formData.signed_by_us && <Chip label="Nous" size="small" color="success" />}
+                    {formData.signed_by_counterpart && <Chip label="Contrepartie" size="small" color="success" />}
                     {!formData.signed_by_us && !formData.signed_by_counterpart && (
                       <Typography variant="body2" color="text.secondary">Non signé</Typography>
                     )}
@@ -1091,7 +1151,7 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
   };
 
   return (
-    <Box sx={{ p: { xs: 1, md: 3 }, maxWidth: 900, mx: 'auto' }}>
+    <Box sx={{ p: { xs: 1, md: 3 }, maxWidth: 960, mx: 'auto' }}>
       {/* Header */}
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <IconButton onClick={() => navigate('/contracts')} size="small">
@@ -1102,7 +1162,7 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
             {isEditMode ? 'Modifier le contrat' : 'Nouveau contrat'}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {isEditMode ? 'Mettez à jour les informations du contrat' : 'Créez un contrat en quelques étapes avec l\'aide de l\'IA'}
+            {isEditMode ? 'Mettez à jour les informations du contrat' : 'Créez un contrat professionnel avec génération IA section par section'}
           </Typography>
         </Box>
       </Box>
@@ -1141,7 +1201,6 @@ ${field === 'terms_and_conditions' ? 'Inclure: objet, durée, obligations, confi
         </Button>
 
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          {/* Toujours permettre de sauvegarder dès l'étape 1 */}
           {activeStep >= 1 && (
             <Button
               variant="outlined"

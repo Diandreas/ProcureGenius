@@ -3,12 +3,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Q, Count, Sum
-from .models import Contract, ContractClause, ContractMilestone, ContractDocument, ContractTemplate
+from .models import Contract, ContractClause, ContractMilestone, ContractDocument, ContractTemplate, ContractSection, CONTRACT_SECTION_DEFINITIONS
 from .serializers import (
     ContractListSerializer, ContractDetailSerializer, ContractCreateSerializer,
     ContractClauseSerializer, ContractMilestoneSerializer, ContractDocumentSerializer,
     ClauseExtractionRequestSerializer, ClauseExtractionResponseSerializer,
-    ContractApprovalSerializer, ContractRenewalSerializer, ContractTemplateSerializer
+    ContractApprovalSerializer, ContractRenewalSerializer, ContractTemplateSerializer,
+    ContractSectionSerializer
 )
 from .ai_service import ContractAIService
 import logging
@@ -339,6 +340,102 @@ class ContractViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+
+    @action(detail=False, methods=['get'], url_path='section-definitions')
+    def section_definitions(self, request):
+        """Retourne les définitions de sections pour un type de contrat donné"""
+        contract_type = request.query_params.get('contract_type', 'service')
+        definitions = CONTRACT_SECTION_DEFINITIONS.get(contract_type, CONTRACT_SECTION_DEFINITIONS['other'])
+        return Response({
+            'contract_type': contract_type,
+            'sections': definitions,
+        })
+
+    @action(detail=False, methods=['post'], url_path='generate-section')
+    def generate_section(self, request):
+        """Génère le contenu d'UNE section via IA (économe en tokens)"""
+        section_type = request.data.get('section_type')
+        section_title = request.data.get('section_title')
+        context = request.data.get('context', {})
+
+        if not section_type or not section_title:
+            return Response(
+                {'error': 'section_type et section_title requis'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Enrichir le contexte avec les infos de l'organisation
+        org = request.user.organization
+        if org:
+            context.setdefault('organization_name', org.name or '')
+            if hasattr(org, 'address') and org.address:
+                from django.utils.html import strip_tags
+                context.setdefault('organization_address', strip_tags(org.address))
+
+        try:
+            ai_service = ContractAIService()
+            result = ai_service.generate_section(section_type, section_title, context)
+            return Response({
+                'status': 'success',
+                'section_type': section_type,
+                'title': section_title,
+                'content': result['content'],
+                'tokens_used': result['tokens_used'],
+            })
+        except Exception as e:
+            logger.error(f"Erreur génération section: {e}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'], url_path='generate-all-sections')
+    def generate_all_sections(self, request):
+        """Génère TOUTES les sections d'un contrat via IA, une par une"""
+        contract_type = request.data.get('contract_type', 'service')
+        context = request.data.get('context', {})
+
+        # Enrichir le contexte avec les infos de l'organisation
+        org = request.user.organization
+        if org:
+            context.setdefault('organization_name', org.name or '')
+            if hasattr(org, 'address') and org.address:
+                from django.utils.html import strip_tags
+                context.setdefault('organization_address', strip_tags(org.address))
+
+        try:
+            ai_service = ContractAIService()
+            sections = ai_service.generate_all_sections(contract_type, context)
+            total_tokens = sum(s.get('tokens_used', 0) for s in sections)
+
+            return Response({
+                'status': 'success',
+                'contract_type': contract_type,
+                'sections': sections,
+                'total_tokens': total_tokens,
+                'sections_count': len(sections),
+            })
+        except Exception as e:
+            logger.error(f"Erreur génération toutes sections: {e}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ContractSectionViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les sections de contrat"""
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ContractSectionSerializer
+
+    def get_queryset(self):
+        queryset = ContractSection.objects.filter(contract__organization=self.request.user.organization)
+        contract_id = self.request.query_params.get('contract')
+        if contract_id:
+            queryset = queryset.filter(contract_id=contract_id)
+        return queryset.select_related('contract').order_by('order')
 
 
 class ContractClauseViewSet(viewsets.ModelViewSet):

@@ -44,7 +44,7 @@ import {
   WarningAmber,
   ErrorOutline,
 } from '@mui/icons-material';
-import { productBatchesAPI, productsAPI } from '../services/api';
+import { productBatchesAPI, productsAPI, warehousesAPI } from '../services/api';
 import { formatDate } from '../utils/formatters';
 import { useSnackbar } from 'notistack';
 
@@ -156,8 +156,31 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
   const [expirationDate, setExpirationDate] = useState('');
   const [initialQuantity, setInitialQuantity] = useState('');
   const [supplierBatchRef, setSupplierBatchRef] = useState('');
+  const [warehouseId, setWarehouseId] = useState('');
+  const [warehouses, setWarehouses] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+
+  // Générer un numéro de lot par défaut
+  useEffect(() => {
+    if (!batchNumber) {
+      const year = new Date().getFullYear();
+      const random = Math.floor(1000 + Math.random() * 9000);
+      setBatchNumber(`LOT-${year}-${random}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchWarehouses = async () => {
+      try {
+        const res = await warehousesAPI.list();
+        setWarehouses(res.data.results || res.data);
+      } catch (err) {
+        console.error("Error fetching warehouses", err);
+      }
+    };
+    fetchWarehouses();
+  }, []);
 
   const handleCreate = async () => {
     if (!batchNumber.trim()) {
@@ -172,6 +195,7 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
         expiration_date: expirationDate || null,
         initial_quantity: initialQuantity ? parseInt(initialQuantity) : 0,
         supplier_batch_reference: supplierBatchRef,
+        warehouse: warehouseId || null,
       });
       enqueueSnackbar('Lot créé avec succès', { variant: 'success' });
       onSuccess();
@@ -220,6 +244,19 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
             fullWidth
             size="small"
           />
+          <FormControl fullWidth size="small">
+            <InputLabel>Entrepôt</InputLabel>
+            <Select
+              value={warehouseId}
+              label="Entrepôt"
+              onChange={e => setWarehouseId(e.target.value)}
+            >
+              <MenuItem value=""><em>Aucun</em></MenuItem>
+              {warehouses.map(w => (
+                <MenuItem key={w.id} value={w.id}>{w.name} ({w.code})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button onClick={onCancel} size="small">Annuler</Button>
@@ -422,9 +459,14 @@ function ProductBatchesTab({ productId }) {
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                     <Box>
                       <Typography variant="subtitle2" fontWeight={700}>Lot {batch.batch_number}</Typography>
-                      {batch.supplier_batch_reference && (
-                        <Typography variant="caption" color="text.secondary">Réf frs: {batch.supplier_batch_reference}</Typography>
-                      )}
+                      <Stack direction="row" spacing={1}>
+                        {batch.supplier_batch_reference && (
+                          <Typography variant="caption" color="text.secondary">Réf frs: {batch.supplier_batch_reference}</Typography>
+                        )}
+                        {batch.warehouse_name && (
+                          <Typography variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>Loc: {batch.warehouse_name}</Typography>
+                        )}
+                      </Stack>
                     </Box>
                     <Stack direction="row" spacing={0.5}>
                       {expStatus && <Chip label={expStatus.label} size="small" color={expStatus.color} icon={expStatus.icon} />}
@@ -480,6 +522,7 @@ function ProductBatchesTab({ productId }) {
             <TableHead sx={{ bgcolor: 'grey.50' }}>
               <TableRow>
                 <TableCell><strong>Numéro de lot</strong></TableCell>
+                <TableCell><strong>Entrepôt</strong></TableCell>
                 <TableCell><strong>Stock actuel</strong></TableCell>
                 <TableCell><strong>Utilisation</strong></TableCell>
                 <TableCell><strong>Date d'expiration</strong></TableCell>
@@ -508,6 +551,9 @@ function ProductBatchesTab({ productId }) {
                   >
                     <TableCell>
                       <Typography variant="body2" fontWeight={700}>{batch.batch_number}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="primary.main" fontWeight={500}>{batch.warehouse_name || '—'}</Typography>
                     </TableCell>
                     <TableCell>
                       <Typography

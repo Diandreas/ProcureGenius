@@ -1,7 +1,8 @@
 # Signals pour la gestion automatique des factures
 from django.db.models.signals import post_save, post_delete, pre_delete, pre_save
 from django.dispatch import receiver
-from .models import Invoice, InvoiceItem
+from .models import Invoice, InvoiceItem, ProductBatch
+from django.db.models import Sum
 from apps.accounts.models import Client
 from apps.purchase_orders.models import PurchaseOrder
 
@@ -70,7 +71,7 @@ def update_purchase_order_status_auto(sender, instance, **kwargs):
 
 @receiver(post_save, sender=PurchaseOrder)
 def update_supplier_activity_on_po(sender, instance, created, **kwargs):
-    """Met à jour l'activité du fournisseur quand un purchase order est créé/modifié"""
+    """Met à jour l'activité du fournisseur quand un purchase order est créé/modifiée"""
     if instance.supplier:
         try:
             from django.utils import timezone
@@ -95,3 +96,18 @@ def update_supplier_rating_on_invoice(sender, instance, created, **kwargs):
             SupplierRatingService.update_supplier_rating(instance.purchase_order.supplier)
         except Exception:
             pass
+
+
+@receiver([post_save, post_delete], sender=ProductBatch)
+def sync_product_stock_on_batch_change(sender, instance, **kwargs):
+    """Synchronise la quantité en stock du produit avec la somme de ses lots"""
+    try:
+        product = instance.product
+        if product.product_type == 'physical':
+            # Calculer la somme des lots actifs
+            total_stock = product.batches.filter(is_active=True).aggregate(Sum('current_quantity'))['current_quantity__sum'] or 0
+            # Mettre à jour le produit
+            product.stock_quantity = total_stock
+            product.save(update_fields=['stock_quantity', 'updated_at'])
+    except Exception:
+        pass

@@ -442,40 +442,84 @@ function ContractDetail() {
           </Card>
         </Grid>
 
-        {/* Informations générales */}
+        {/* Contenu du contrat */}
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {t('contracts:detail.sections.description')}
-              </Typography>
-              <Typography variant="body1" paragraph>
-                {currentContract.description}
-              </Typography>
-
-              {currentContract.terms_and_conditions && (
+              {/* Sections structurées (nouveau système) */}
+              {currentContract.sections && currentContract.sections.length > 0 ? (
                 <>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                    {t('contracts:detail.sections.terms')}
+                  <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    Sections du contrat
+                    <Chip label={`${currentContract.sections.length} articles`} size="small" color="primary" variant="outlined" />
                   </Typography>
-                  <Box 
-                    className="ql-editor-view"
-                    sx={{ typography: 'body1', '& p': { mb: 2 }, '& ul, & ol': { mb: 2, pl: 3 } }}
-                    dangerouslySetInnerHTML={{ __html: currentContract.terms_and_conditions }} 
-                  />
+                  {currentContract.sections.map((section, idx) => (
+                    <Accordion key={section.id || idx} defaultExpanded={idx === 0} sx={{ boxShadow: 'none', '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: '8px !important', mb: 1 }}>
+                      <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Chip label={`Art. ${section.order}`} size="small" sx={{ mr: 1.5, fontWeight: 700, minWidth: 55 }} />
+                        <Typography variant="subtitle2" fontWeight={600}>{section.title}</Typography>
+                        {section.is_ai_generated && (
+                          <Chip label="IA" size="small" color="primary" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 20 }} />
+                        )}
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Box
+                          sx={{
+                            fontSize: '0.9rem',
+                            lineHeight: 1.7,
+                            '& p': { mb: 1 },
+                            '& ul, & ol': { pl: 3, mb: 1 },
+                            '& strong': { fontWeight: 600 },
+                          }}
+                          dangerouslySetInnerHTML={{ __html: section.content }}
+                        />
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
                 </>
-              )}
-
-              {currentContract.payment_terms && (
+              ) : (
                 <>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                    {t('contracts:detail.sections.paymentTerms')}
+                  {/* Fallback : ancien affichage */}
+                  <Typography variant="h6" gutterBottom>
+                    {t('contracts:detail.sections.description')}
                   </Typography>
-                  <Box 
-                    className="ql-editor-view"
-                    sx={{ typography: 'body1', '& p': { mb: 2 }, '& ul, & ol': { mb: 2, pl: 3 } }}
-                    dangerouslySetInnerHTML={{ __html: currentContract.payment_terms }} 
-                  />
+                  <Typography variant="body1" paragraph>
+                    {currentContract.description}
+                  </Typography>
+
+                  {currentContract.contract_body && (
+                    <Box
+                      className="ql-editor-view"
+                      sx={{ typography: 'body1', '& p': { mb: 2 }, '& ul, & ol': { mb: 2, pl: 3 }, '& h2': { mt: 3, mb: 1.5 } }}
+                      dangerouslySetInnerHTML={{ __html: currentContract.contract_body }}
+                    />
+                  )}
+
+                  {currentContract.terms_and_conditions && (
+                    <>
+                      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                        {t('contracts:detail.sections.terms')}
+                      </Typography>
+                      <Box
+                        className="ql-editor-view"
+                        sx={{ typography: 'body1', '& p': { mb: 2 }, '& ul, & ol': { mb: 2, pl: 3 } }}
+                        dangerouslySetInnerHTML={{ __html: currentContract.terms_and_conditions }}
+                      />
+                    </>
+                  )}
+
+                  {currentContract.payment_terms && (
+                    <>
+                      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                        {t('contracts:detail.sections.paymentTerms')}
+                      </Typography>
+                      <Box
+                        className="ql-editor-view"
+                        sx={{ typography: 'body1', '& p': { mb: 2 }, '& ul, & ol': { mb: 2, pl: 3 } }}
+                        dangerouslySetInnerHTML={{ __html: currentContract.payment_terms }}
+                      />
+                    </>
+                  )}
                 </>
               )}
             </CardContent>
