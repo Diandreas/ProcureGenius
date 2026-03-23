@@ -144,7 +144,8 @@
       "Read(//d/project/BFMa/ProcureGenius/apps/analytics/**)",
       "Read(//d/project/BFMa/ProcureGenius/apps/healthcare/**)",
       "Read(//d/project/BFMa/ProcureGenius/apps/laboratory/**)",
-      "Read(//d/project/BFMa/ProcureGenius/apps/**)"
+      "Read(//d/project/BFMa/ProcureGenius/apps/**)",
+      "Bash(node_modules/.bin/eslint src/pages/accounting/ --ext .jsx)"
     ],
     "deny": [],
     "ask": [],

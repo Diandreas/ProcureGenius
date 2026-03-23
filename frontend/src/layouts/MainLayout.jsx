@@ -39,6 +39,11 @@ import {
   Lightbulb,
   Menu as MenuIcon,
   Assignment,
+  AccountBalance,
+  ListAlt,
+  BarChart,
+  MenuBook,
+  TrendingUp,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { authAPI } from '../services/api';
@@ -137,6 +142,14 @@ function MainLayout() {
     { text: 'Pharmacie Stock', iconSrc: '/icon/product.png', path: '/products', moduleId: 'pharmacy', isCore: false },
     { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
+
+    // Comptabilité
+    { text: 'Comptabilité', iconSrc: '/icon/bill.png', path: '/accounting', moduleId: 'dashboard', isCore: false, section: 'accounting' },
+    { text: 'Plan comptable', iconSrc: '/icon/bill.png', path: '/accounting/chart-of-accounts', moduleId: 'dashboard', isCore: false, section: 'accounting' },
+    { text: 'Écritures', iconSrc: '/icon/bill.png', path: '/accounting/entries', moduleId: 'dashboard', isCore: false, section: 'accounting' },
+    { text: 'Balance', iconSrc: '/icon/analysis.png', path: '/accounting/reports/trial-balance', moduleId: 'dashboard', isCore: false, section: 'accounting' },
+    { text: 'Grand livre', iconSrc: '/icon/analysis.png', path: '/accounting/reports/general-ledger', moduleId: 'dashboard', isCore: false, section: 'accounting' },
+    { text: 'Compte de résultat', iconSrc: '/icon/analysis.png', path: '/accounting/reports/income-statement', moduleId: 'dashboard', isCore: false, section: 'accounting' },
 
     // { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
   ];

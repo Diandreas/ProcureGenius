@@ -81,6 +81,16 @@ import FAQ from './pages/FAQ';
 import KeyboardShortcuts from './pages/KeyboardShortcuts';
 import Support from './pages/Support';
 
+// Accounting Pages
+import AccountingDashboard from './pages/accounting/AccountingDashboard';
+import ChartOfAccounts from './pages/accounting/ChartOfAccounts';
+import JournalEntries from './pages/accounting/JournalEntries';
+import JournalEntryForm from './pages/accounting/JournalEntryForm';
+import JournalEntryDetail from './pages/accounting/JournalEntryDetail';
+import TrialBalance from './pages/accounting/TrialBalance';
+import GeneralLedger from './pages/accounting/GeneralLedger';
+import IncomeStatement from './pages/accounting/IncomeStatement';
+
 // Healthcare Pages
 import PatientList from './pages/healthcare/patients/PatientList';
 import PatientForm from './pages/healthcare/patients/PatientForm';
@@ -849,6 +859,16 @@ function App() {
                               <Route path="/healthcare/consultations/new" element={<ModuleRoute module="consultations"><ConsultationForm /></ModuleRoute>} />
                               <Route path="/healthcare/consultations/:id" element={<ModuleRoute module="consultations"><ConsultationDetail /></ModuleRoute>} />
                               <Route path="/healthcare/consultations/:id/edit" element={<ModuleRoute module="consultations"><ConsultationForm /></ModuleRoute>} />
+
+                              {/* Comptabilité */}
+                              <Route path="/accounting" element={<AccountingDashboard />} />
+                              <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
+                              <Route path="/accounting/entries" element={<JournalEntries />} />
+                              <Route path="/accounting/entries/new" element={<JournalEntryForm />} />
+                              <Route path="/accounting/entries/:id" element={<JournalEntryDetail />} />
+                              <Route path="/accounting/reports/trial-balance" element={<TrialBalance />} />
+                              <Route path="/accounting/reports/general-ledger" element={<GeneralLedger />} />
+                              <Route path="/accounting/reports/income-statement" element={<IncomeStatement />} />
                             </Route>
                           </Route>
 

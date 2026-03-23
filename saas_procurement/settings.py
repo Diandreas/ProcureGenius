@@ -48,6 +48,8 @@ TENANT_APPS = [
     'apps.laboratory',
     'apps.pharmacy',
     'apps.consultations',
+    # Comptabilité
+    'apps.accounting',
 ]
 
 SHARED_APPS = [
