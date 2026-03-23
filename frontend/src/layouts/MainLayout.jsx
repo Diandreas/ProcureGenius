@@ -38,12 +38,6 @@ import {
   Notifications,
   Lightbulb,
   Menu as MenuIcon,
-  Assignment,
-  AccountBalance,
-  ListAlt,
-  BarChart,
-  MenuBook,
-  TrendingUp,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { authAPI } from '../services/api';
@@ -144,12 +138,13 @@ function MainLayout() {
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
 
     // Comptabilité
-    { text: 'Comptabilité', iconSrc: '/icon/bill.png', path: '/accounting', moduleId: 'dashboard', isCore: false, section: 'accounting' },
-    { text: 'Plan comptable', iconSrc: '/icon/bill.png', path: '/accounting/chart-of-accounts', moduleId: 'dashboard', isCore: false, section: 'accounting' },
-    { text: 'Écritures', iconSrc: '/icon/bill.png', path: '/accounting/entries', moduleId: 'dashboard', isCore: false, section: 'accounting' },
-    { text: 'Balance', iconSrc: '/icon/analysis.png', path: '/accounting/reports/trial-balance', moduleId: 'dashboard', isCore: false, section: 'accounting' },
-    { text: 'Grand livre', iconSrc: '/icon/analysis.png', path: '/accounting/reports/general-ledger', moduleId: 'dashboard', isCore: false, section: 'accounting' },
-    { text: 'Compte de résultat', iconSrc: '/icon/analysis.png', path: '/accounting/reports/income-statement', moduleId: 'dashboard', isCore: false, section: 'accounting' },
+    { divider: true, sectionLabel: 'Comptabilité' },
+    { text: 'Comptabilité', iconSrc: '/icon/bill.png', path: '/accounting', moduleId: 'dashboard', isCore: true },
+    { text: 'Plan comptable', iconSrc: '/icon/bill.png', path: '/accounting/chart-of-accounts', moduleId: 'dashboard', isCore: true },
+    { text: 'Écritures', iconSrc: '/icon/bill.png', path: '/accounting/entries', moduleId: 'dashboard', isCore: true },
+    { text: 'Balance', iconSrc: '/icon/analysis.png', path: '/accounting/reports/trial-balance', moduleId: 'dashboard', isCore: true },
+    { text: 'Grand livre', iconSrc: '/icon/analysis.png', path: '/accounting/reports/general-ledger', moduleId: 'dashboard', isCore: true },
+    { text: 'Compte de résultat', iconSrc: '/icon/analysis.png', path: '/accounting/reports/income-statement', moduleId: 'dashboard', isCore: true },
 
     // { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
   ];
@@ -226,6 +221,7 @@ function MainLayout() {
   const currentModule = useMemo(() => {
     const path = location.pathname;
     for (const item of menuItems) {
+      if (!item.path) continue;
       if (path.startsWith(item.path) || path === item.path) {
         return item.moduleId;
       }
@@ -405,6 +401,7 @@ function MainLayout() {
         <Box>
           <List disablePadding>
             {menuItems.filter(item => {
+              if (item.divider) return true;
               if (item.isCore) return true;
               if (!hasModule(item.moduleId)) return false;
 
@@ -424,7 +421,20 @@ function MainLayout() {
               }
 
               return true;
-            }).map((item) => {
+            }).map((item, idx) => {
+              if (item.divider) {
+                return (
+                  <Box key={`divider-${idx}`} sx={{ px: 1, pt: 2, pb: 0.5 }}>
+                    <Divider sx={{ mb: 1 }} />
+                    {item.sectionLabel && (
+                      <Typography variant="caption" sx={{ px: 1, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.disabled', fontSize: '0.7rem' }}>
+                        {item.sectionLabel}
+                      </Typography>
+                    )}
+                  </Box>
+                );
+              }
+
               const isSelected = location.pathname === item.path ||
                 (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
 
