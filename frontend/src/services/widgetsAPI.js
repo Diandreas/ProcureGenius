@@ -19,6 +19,9 @@ export async function getWidgetData(widgetName, params = {}) {
 
     const queryParams = new URLSearchParams();
     if (params.period) queryParams.append('period', params.period);
+    if (params.start_date) queryParams.append('start_date', params.start_date);
+    if (params.end_date) queryParams.append('end_date', params.end_date);
+    if (params.compare) queryParams.append('compare', params.compare);
 
     const response = await api.get(`${endpoint}?${queryParams.toString()}`);
     return response.data;

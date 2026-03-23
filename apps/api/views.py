@@ -1670,7 +1670,8 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 batch.quantity_remaining -= abs_qty
             else:
                 batch.quantity_remaining += quantity
-            
+
+            batch.save(update_fields=['quantity_remaining'])
             batch.update_status()
 
         # Ajuster le stock produit

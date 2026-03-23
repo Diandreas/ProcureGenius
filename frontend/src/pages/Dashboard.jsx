@@ -53,8 +53,9 @@ const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 const ACTIVITY_LABELS = {
   healthcare_consultation: 'Consultation',
   healthcare_laboratory: 'Laboratoire',
-  healthcare_pharmacy: 'Médicaments',
-  standard: 'Soins / Chirurgie / Hosp.',
+  healthcare_pharmacy: 'Pharmacie — Ordonnance',
+  healthcare_services: 'Soins / Chirurgie / Hosp.',
+  standard: 'Propharmacie — Vente comptoir',
 };
 const getActivityLabel = (type) => ACTIVITY_LABELS[type] || `Autres (${type || 'non défini'})`;
 
@@ -95,6 +96,9 @@ const Dashboard = () => {
   const [activityData, setActivityData] = useState(null);
   const [revenueData, setRevenueData] = useState(null);
   const [labServiceData, setLabServiceData] = useState(null);  // CA labo par catégorie
+  const [pharmacyServiceData, setPharmacyServiceData] = useState(null);  // CA pharmacie par produit
+  const [productSaleData, setProductSaleData] = useState(null);  // CA vente produits par catégorie
+  const [servicesData, setServicesData] = useState(null);  // CA soins/chirurgie/hosp
   const [labStageData, setLabStageData] = useState(null);
   const [demographicsData, setDemographicsData] = useState(null);
   const [inventoryStats, setInventoryStats] = useState({});
@@ -110,11 +114,13 @@ const Dashboard = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const [activity, revenue, labService, labStage, demographics, inventory, unified] = await Promise.all([
+      const [activity, revenue, labService, pharmacyService, productSale, servicesSale, labStage, demographics, inventory, unified] = await Promise.all([
         healthcareAnalyticsAPI.getActivityIndicators(dateRange).catch(() => null),
         healthcareAnalyticsAPI.getEnhancedRevenue({ ...dateRange, period: 'month' }).catch(() => null),
-        // Catégories labo uniquement (invoice_type=healthcare_laboratory)
         healthcareAnalyticsAPI.getServiceRevenue({ ...dateRange, invoice_type: 'healthcare_laboratory' }).catch(() => null),
+        healthcareAnalyticsAPI.getServiceRevenue({ ...dateRange, invoice_type: 'healthcare_pharmacy' }).catch(() => null),
+        healthcareAnalyticsAPI.getServiceRevenue({ ...dateRange, invoice_type: 'standard' }).catch(() => null),
+        healthcareAnalyticsAPI.getServiceRevenue({ ...dateRange, invoice_type: 'healthcare_services' }).catch(() => null),
         healthcareAnalyticsAPI.getLabStageTiming(dateRange).catch(() => null),
         healthcareAnalyticsAPI.getDemographics(dateRange).catch(() => null),
         inventoryAnalyticsAPI.getDashboardStats(dateRange).catch(() => ({})),
@@ -124,6 +130,9 @@ const Dashboard = () => {
       setActivityData(activity);
       setRevenueData(revenue);
       setLabServiceData(labService);
+      setPharmacyServiceData(pharmacyService);
+      setProductSaleData(productSale);
+      setServicesData(servicesSale);
       setLabStageData(labStage);
       setDemographicsData(demographics);
       setInventoryStats(inventory);
@@ -145,6 +154,24 @@ const Dashboard = () => {
 
   // Catégories labo — déjà filtrées par invoice_type=healthcare_laboratory côté backend
   const labCategories = (labServiceData?.by_category || []);
+
+  // Top produits pharmacie (par produit vendu)
+  const pharmacyTopProducts = (pharmacyServiceData?.by_service || []).slice(0, 10);
+  const pharmacyTotalRevenue = pharmacyServiceData?.total_revenue || 0;
+
+  // Catégories vente produits (standard)
+  const productSaleCategories = (productSaleData?.by_category || []).slice(0, 10);
+  const productSaleTotalRevenue = productSaleData?.total_revenue || 0;
+
+  // KPIs par type d'activité
+  const pharmacyRevenue = byActivity.find(a => a.activity_type === 'healthcare_pharmacy')?.revenue || 0;
+  const labRevenue = byActivity.find(a => a.activity_type === 'healthcare_laboratory')?.revenue || 0;
+  const productRevenue = byActivity.find(a => a.activity_type === 'standard')?.revenue || 0;
+  const servicesRevenue = byActivity.find(a => a.activity_type === 'healthcare_services')?.revenue || 0;
+
+  // Soins par catégorie
+  const servicesCategories = (servicesData?.by_category || []).slice(0, 10);
+  const servicesTotalRevenue = servicesData?.total_revenue || 0;
 
   // Revenue timeline for chart
   const revenueTimeline = financial?.revenue_timeline || [];
@@ -268,8 +295,8 @@ const Dashboard = () => {
         {/* ── TAB 1 : REVENUS ── */}
         {tabValue === 1 && (
           <>
-            {/* KPI cards */}
-            <Grid container spacing={3} mb={3}>
+            {/* KPI cards — ligne 1 */}
+            <Grid container spacing={3} mb={2}>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="CA Total (factures payées)"
                   value={loading ? '...' : formatCurrency(revenueData?.total_stats?.total_revenue)}
@@ -289,6 +316,29 @@ const Dashboard = () => {
                 <StatCard title="CA Consultations"
                   value={loading ? '...' : formatCurrency(byActivity.find(a => a.activity_type === 'healthcare_consultation')?.revenue)}
                   icon={<MedicalIcon />} color="#8b5cf6" loading={loading} />
+              </Grid>
+            </Grid>
+            {/* KPI cards — ligne 2 : détail par flux */}
+            <Grid container spacing={2} mb={3}>
+              <Grid item xs={6} md={3}>
+                <StatCard title="CA Laboratoire"
+                  value={loading ? '...' : formatCurrency(labRevenue)}
+                  icon={<ScienceIcon />} color="#ef4444" loading={loading} />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <StatCard title="CA Pharmacie ordonnance"
+                  value={loading ? '...' : formatCurrency(pharmacyRevenue)}
+                  icon={<HospitalIcon />} color="#10b981" loading={loading} />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <StatCard title="CA Soins / Chirurgie"
+                  value={loading ? '...' : formatCurrency(servicesRevenue)}
+                  icon={<MedicalIcon />} color="#8b5cf6" loading={loading} />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <StatCard title="CA Propharmacie comptoir"
+                  value={loading ? '...' : formatCurrency(productRevenue)}
+                  icon={<InventoryIcon />} color="#f59e0b" loading={loading} />
               </Grid>
             </Grid>
 
@@ -394,6 +444,147 @@ const Dashboard = () => {
                 </Paper>
               </Grid>
             </Grid>
+
+            {/* Pharmacie + Vente produits côte-à-côte */}
+            <Grid container spacing={3} mt={1}>
+              {/* CA Pharmacie par produit */}
+              <Grid item xs={12} md={6}>
+                <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <SectionTitle>CA Pharmacie ordonnance — Top Médicaments</SectionTitle>
+                    <Chip label={formatCurrency(pharmacyTotalRevenue)} color="success" size="small" />
+                  </Box>
+                  {loading ? <CircularProgress size={32} /> : pharmacyTopProducts.length > 0 ? (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Médicament / Produit</TableCell>
+                            <TableCell align="right">Qté</TableCell>
+                            <TableCell align="right">CA</TableCell>
+                            <TableCell align="right">%</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {pharmacyTopProducts.map((p, i) => {
+                            const pct = pharmacyTotalRevenue > 0 ? ((parseFloat(p.revenue || 0) / pharmacyTotalRevenue) * 100).toFixed(1) : '0';
+                            return (
+                              <TableRow key={i}>
+                                <TableCell>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: COLORS[i % COLORS.length], flexShrink: 0 }} />
+                                    <Typography variant="caption">{p.service_name || '—'}</Typography>
+                                  </Box>
+                                </TableCell>
+                                <TableCell align="right"><Typography variant="caption">{p.count}</Typography></TableCell>
+                                <TableCell align="right"><Typography variant="caption">{formatCurrency(p.revenue)}</Typography></TableCell>
+                                <TableCell align="right"><Typography variant="caption" color="text.secondary">{pct}%</Typography></TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography color="text.secondary" variant="body2">Aucune vente pharmacie sur la période.</Typography>
+                  )}
+                </Paper>
+              </Grid>
+
+              {/* CA Vente produits par catégorie */}
+              <Grid item xs={12} md={6}>
+                <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <SectionTitle>CA Propharmacie — Vente comptoir par Catégorie</SectionTitle>
+                    <Chip label={formatCurrency(productSaleTotalRevenue)} color="warning" size="small" />
+                  </Box>
+                  {loading ? <CircularProgress size={32} /> : productSaleCategories.length > 0 ? (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Catégorie</TableCell>
+                            <TableCell align="right">Qté</TableCell>
+                            <TableCell align="right">CA</TableCell>
+                            <TableCell align="right">%</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {productSaleCategories.map((c, i) => {
+                            const pct = productSaleTotalRevenue > 0 ? ((parseFloat(c.revenue || 0) / productSaleTotalRevenue) * 100).toFixed(1) : '0';
+                            return (
+                              <TableRow key={i}>
+                                <TableCell>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: COLORS[i % COLORS.length], flexShrink: 0 }} />
+                                    <Typography variant="caption">{c.category_name || '—'}</Typography>
+                                  </Box>
+                                </TableCell>
+                                <TableCell align="right"><Typography variant="caption">{c.count}</Typography></TableCell>
+                                <TableCell align="right"><Typography variant="caption">{formatCurrency(c.revenue)}</Typography></TableCell>
+                                <TableCell align="right"><Typography variant="caption" color="text.secondary">{pct}%</Typography></TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography color="text.secondary" variant="body2">Aucune vente de produits sur la période.</Typography>
+                  )}
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Soins / Chirurgie / Hosp. */}
+            {(servicesCategories.length > 0 || servicesRevenue > 0) && (
+              <Grid container spacing={3} mt={1}>
+                <Grid item xs={12}>
+                  <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                      <SectionTitle>CA Soins / Petite Chirurgie / Hospitalisation — par Catégorie</SectionTitle>
+                      <Chip label={formatCurrency(servicesTotalRevenue)} color="secondary" size="small" />
+                    </Box>
+                    {loading ? <CircularProgress size={32} /> : servicesCategories.length > 0 ? (
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Catégorie</TableCell>
+                              <TableCell align="right">Qté</TableCell>
+                              <TableCell align="right">CA</TableCell>
+                              <TableCell align="right">%</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {servicesCategories.map((c, i) => {
+                              const pct = servicesTotalRevenue > 0 ? ((parseFloat(c.revenue || 0) / servicesTotalRevenue) * 100).toFixed(1) : '0';
+                              return (
+                                <TableRow key={i}>
+                                  <TableCell>
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: COLORS[i % COLORS.length], flexShrink: 0 }} />
+                                      <Typography variant="caption">{c.category_name || '—'}</Typography>
+                                    </Box>
+                                  </TableCell>
+                                  <TableCell align="right"><Typography variant="caption">{c.count}</Typography></TableCell>
+                                  <TableCell align="right"><Typography variant="caption">{formatCurrency(c.revenue)}</Typography></TableCell>
+                                  <TableCell align="right"><Typography variant="caption" color="text.secondary">{pct}%</Typography></TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Typography color="text.secondary" variant="body2">
+                        Aucune facturation soins/chirurgie sur la période. Utilisez le type "Soins / Petite chirurgie / Hospitalisation" lors de la création de factures pour ce flux.
+                      </Typography>
+                    )}
+                  </Paper>
+                </Grid>
+              </Grid>
+            )}
           </>
         )}
 

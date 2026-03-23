@@ -388,6 +388,8 @@ class LabOrderSerializer(serializers.ModelSerializer):
     patient_age = serializers.SerializerMethodField()
     ordered_by_name = serializers.SerializerMethodField()
     sample_collected_by_name = serializers.CharField(source='sample_collected_by.get_full_name', read_only=True, default=None)
+    results_entered_by_name = serializers.CharField(source='results_entered_by.get_full_name', read_only=True, default=None)
+    results_verified_by_name = serializers.CharField(source='results_verified_by.get_full_name', read_only=True, default=None)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -429,7 +431,9 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'sample_collected_by_name',
             'results_completed_at',
             'results_entered_by',
+            'results_entered_by_name',
             'results_verified_by',
+            'results_verified_by_name',
             'results_verified_at',
             'notification_sent',
             'notification_sent_at',

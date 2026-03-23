@@ -1179,15 +1179,53 @@ const LabOrderDetail = () => {
                                         <Chip label={getPriorityLabel(order.priority)} color={getPriorityColor(order.priority)} />
                                     </Box>
                                 </Grid>
-                                {order.sample_collected_at && (
+                                {/* Timestamps des étapes du workflow */}
+                                {(order.sample_collected_at || order.results_completed_at || order.results_verified_at) && (
                                     <Grid item xs={12}>
-                                        <Typography variant="caption" color="text.secondary">Prélèvement reçu le</Typography>
-                                        <Typography variant="body2" fontWeight="600">
-                                            {formatDate(order.sample_collected_at)} à {formatTime(order.sample_collected_at)}
-                                            {order.sample_collected_by_name && (
-                                                <Typography component="span" variant="body2" color="text.secondary"> — {order.sample_collected_by_name}</Typography>
-                                            )}
+                                        <Typography variant="caption" color="text.secondary" fontWeight="700" display="block" mb={0.5}>
+                                            Horodatage des étapes
                                         </Typography>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pl: 1, borderLeft: '2px solid', borderColor: 'divider' }}>
+                                            <Box display="flex" alignItems="baseline" gap={1}>
+                                                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 130 }}>📋 Commande créée</Typography>
+                                                <Typography variant="body2" fontWeight="600">
+                                                    {formatDate(order.order_date || order.created_at)} {formatTime(order.order_date || order.created_at)}
+                                                </Typography>
+                                            </Box>
+                                            {order.sample_collected_at && (
+                                                <Box display="flex" alignItems="baseline" gap={1}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ minWidth: 130 }}>🧪 Prélevé le</Typography>
+                                                    <Typography variant="body2" fontWeight="600">
+                                                        {formatDate(order.sample_collected_at)} à {formatTime(order.sample_collected_at)}
+                                                        {order.sample_collected_by_name && (
+                                                            <Typography component="span" variant="body2" color="text.secondary"> — {order.sample_collected_by_name}</Typography>
+                                                        )}
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                            {order.results_completed_at && (
+                                                <Box display="flex" alignItems="baseline" gap={1}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ minWidth: 130 }}>📝 Résultats saisis le</Typography>
+                                                    <Typography variant="body2" fontWeight="600">
+                                                        {formatDate(order.results_completed_at)} à {formatTime(order.results_completed_at)}
+                                                        {order.results_entered_by_name && (
+                                                            <Typography component="span" variant="body2" color="text.secondary"> — {order.results_entered_by_name}</Typography>
+                                                        )}
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                            {order.results_verified_at && (
+                                                <Box display="flex" alignItems="baseline" gap={1}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ minWidth: 130 }}>✅ Validé le</Typography>
+                                                    <Typography variant="body2" fontWeight="600">
+                                                        {formatDate(order.results_verified_at)} à {formatTime(order.results_verified_at)}
+                                                        {order.results_verified_by_name && (
+                                                            <Typography component="span" variant="body2" color="text.secondary"> — {order.results_verified_by_name}</Typography>
+                                                        )}
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                        </Box>
                                     </Grid>
                                 )}
                                 {order.clinical_notes && (

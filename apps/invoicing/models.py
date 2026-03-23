@@ -676,10 +676,11 @@ class Invoice(models.Model):
     ]
 
     INVOICE_TYPES = [
-        ('standard', _('Standard')),
+        ('standard', _('Vente de produits')),
         ('healthcare_consultation', _('Consultation médicale')),
         ('healthcare_laboratory', _('Laboratoire')),
-        ('healthcare_pharmacy', _('Pharmacie')),
+        ('healthcare_pharmacy', _('Pharmacie / Médicaments')),
+        ('healthcare_services', _('Soins / Petite chirurgie / Hospitalisation')),
         ('credit_note', _('Avoir - Note de crédit')),
     ]
 

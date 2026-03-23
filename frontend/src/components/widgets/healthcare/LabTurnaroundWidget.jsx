@@ -11,7 +11,7 @@ import {
 } from '@mui/icons-material';
 import * as widgetsAPI from '../../../services/widgetsAPI';
 
-const LabTurnaroundWidget = ({ period = 'last_30_days' }) => {
+const LabTurnaroundWidget = ({ period = 'last_30_days', dateRange }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [orderBy, setOrderBy] = useState('count');
@@ -21,7 +21,10 @@ const LabTurnaroundWidget = ({ period = 'last_30_days' }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await widgetsAPI.getWidgetData('lab_orders_status', { period });
+        const params = { period };
+        if (dateRange?.start_date) params.start_date = dateRange.start_date;
+        if (dateRange?.end_date) params.end_date = dateRange.end_date;
+        const response = await widgetsAPI.getWidgetData('lab_orders_status', params);
         if (response.success) {
           setData(response.data?.laboratory?.by_test_type || []);
         }
@@ -32,7 +35,7 @@ const LabTurnaroundWidget = ({ period = 'last_30_days' }) => {
       }
     };
     fetchData();
-  }, [period]);
+  }, [period, dateRange]);
 
   const handleSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -61,13 +64,20 @@ const LabTurnaroundWidget = ({ period = 'last_30_days' }) => {
 
   const totalOverdue = data.reduce((s, t) => s + (t.overdue_count || 0), 0);
 
+  const fmtHours = (h) => {
+    if (h == null) return '—';
+    if (h < 1) return `${Math.round(h * 60)} min`;
+    if (h < 24) return `${h.toFixed(1)} h`;
+    return `${(h / 24).toFixed(1)} j`;
+  };
+
   return (
-    <Paper sx={{ height: '100%' }}>
+    <Paper elevation={0} sx={{ height: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
       {/* Header */}
       <Box sx={{ p: 2, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <ClockIcon sx={{ color: 'primary.main' }} />
-          <Typography variant="subtitle1" fontWeight="700">Delais par Test</Typography>
+          <Typography variant="subtitle1" fontWeight="700">Délais par Examen</Typography>
         </Stack>
         {totalOverdue > 0 && (
           <Chip
@@ -138,11 +148,11 @@ const LabTurnaroundWidget = ({ period = 'last_30_days' }) => {
                     </TableCell>
                     <TableCell align="center">
                       <Typography variant="body2" fontWeight={700}>
-                        {t.avg_turnaround_hours != null ? t.avg_turnaround_hours : '\u2014'}
+                        {fmtHours(t.avg_turnaround_hours)}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
-                      <Typography variant="body2" color="text.secondary">{t.estimated_turnaround_hours}</Typography>
+                      <Typography variant="body2" color="text.secondary">{fmtHours(t.estimated_turnaround_hours)}</Typography>
                     </TableCell>
                     <TableCell align="center">
                       {variance != null ? (

@@ -804,6 +804,85 @@ class ServiceRevenueAnalyticsView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    def _lab_revenue_by_category(self, organization, start_date, end_date, period):
+        """
+        Pour healthcare_laboratory : les InvoiceItem n'ont pas de product FK.
+        On passe par LabOrderItem → LabTest → LabTestCategory.
+        """
+        from apps.laboratory.models import LabOrderItem
+        qs = LabOrderItem.objects.filter(
+            lab_order__organization=organization,
+            lab_order__lab_invoice__status='paid',
+        )
+        if start_date:
+            qs = qs.filter(lab_order__lab_invoice__created_at__date__gte=start_date)
+        if end_date:
+            qs = qs.filter(lab_order__lab_invoice__created_at__date__lte=end_date)
+
+        # Par catégorie
+        by_cat = qs.values(
+            'lab_test__category__id', 'lab_test__category__name'
+        ).annotate(
+            revenue=Sum('price'),
+            count=Count('id'),
+        ).order_by('-revenue')
+
+        total_revenue = float(qs.aggregate(t=Sum('price'))['t'] or 0)
+
+        categories_data = []
+        for c in by_cat:
+            rev = float(c['revenue'] or 0)
+            categories_data.append({
+                'category_id': str(c['lab_test__category__id']) if c['lab_test__category__id'] else None,
+                'category_name': c['lab_test__category__name'] or 'Non catégorisé',
+                'revenue': rev,
+                'count': c['count'] or 0,
+                'transactions': c['count'] or 0,
+                'unique_services': 0,
+                'revenue_percent': round(rev / total_revenue * 100, 1) if total_revenue > 0 else 0,
+            })
+
+        # Par test (service)
+        by_test = qs.values(
+            'lab_test__id', 'lab_test__name', 'lab_test__category__name'
+        ).annotate(
+            revenue=Sum('price'),
+            count=Count('id'),
+        ).order_by('-revenue')[:50]
+
+        services_data = []
+        for s in by_test:
+            rev = float(s['revenue'] or 0)
+            services_data.append({
+                'service_id': str(s['lab_test__id']),
+                'service_name': s['lab_test__name'] or 'N/A',
+                'product_type': 'lab_test',
+                'category': s['lab_test__category__name'] or 'Non catégorisé',
+                'revenue': rev,
+                'count': s['count'] or 0,
+                'transactions': s['count'] or 0,
+                'avg_price': round(rev / s['count'], 2) if s['count'] else 0,
+                'revenue_percent': round(rev / total_revenue * 100, 1) if total_revenue > 0 else 0,
+            })
+
+        # Timeline
+        trunc_func = {'day': TruncDate, 'week': TruncWeek, 'month': TruncMonth}.get(period, TruncMonth)
+        timeline_qs = qs.annotate(
+            period_date=trunc_func('lab_order__lab_invoice__created_at')
+        ).values('period_date').annotate(
+            revenue=Sum('price'), count=Count('id')
+        ).order_by('period_date')
+        timeline_data = [
+            {
+                'date': t['period_date'].strftime('%Y-%m-%d') if hasattr(t['period_date'], 'strftime') else str(t['period_date']),
+                'revenue': float(t['revenue'] or 0),
+                'count': t['count'] or 0,
+            }
+            for t in timeline_qs
+        ]
+
+        return total_revenue, categories_data, services_data, timeline_data
+
     def get(self, request):
         organization = request.user.organization
         start_date = request.GET.get('start_date')
@@ -812,6 +891,21 @@ class ServiceRevenueAnalyticsView(APIView):
         service_id = request.GET.get('service_id')
         category_id = request.GET.get('category_id')
         invoice_type_filter = request.GET.get('invoice_type')  # ex: 'healthcare_laboratory'
+
+        # === Cas spécial : labo — InvoiceItem.product est null, on passe par LabOrderItem ===
+        if invoice_type_filter == 'healthcare_laboratory':
+            total_revenue, categories_data, services_data, timeline_data = self._lab_revenue_by_category(
+                organization, start_date, end_date, period
+            )
+            return Response({
+                'total_revenue': total_revenue,
+                'total_transactions': sum(c['count'] for c in categories_data),
+                'by_service': services_data,
+                'by_category': categories_data,
+                'timeline': timeline_data,
+                'period': period,
+                'filters': {'categories': [], 'selected_service_id': service_id, 'selected_category_id': category_id},
+            })
 
         # Base queryset: invoice items from paid invoices (hors avoirs)
         queryset = InvoiceItem.objects.filter(
@@ -829,6 +923,9 @@ class ServiceRevenueAnalyticsView(APIView):
             queryset = queryset.filter(product__category_id=category_id)
         if invoice_type_filter:
             queryset = queryset.filter(invoice__invoice_type=invoice_type_filter)
+        # For physical product sales (propharmacie), exclude description-only items (no product FK)
+        if invoice_type_filter == 'standard':
+            queryset = queryset.filter(product__isnull=False)
 
         # === Revenue by service/product ===
         by_service = queryset.values(
@@ -850,7 +947,7 @@ class ServiceRevenueAnalyticsView(APIView):
                 'service_id': str(s['product__id']),
                 'service_name': s['product__name'] or 'N/A',
                 'product_type': s['product__product_type'] or 'N/A',
-                'category': s['product__category__name'] or 'Non categorise',
+                'category': s['product__category__name'] or 'Non catégorisé',
                 'revenue': rev,
                 'count': s['count'] or 0,
                 'transactions': s['transactions'],
@@ -876,7 +973,7 @@ class ServiceRevenueAnalyticsView(APIView):
             rev = float(c['revenue'] or 0)
             categories_data.append({
                 'category_id': str(c['product__category__id']) if c['product__category__id'] else None,
-                'category_name': c['product__category__name'] or 'Non categorise',
+                'category_name': c['product__category__name'] or 'Non catégorisé',
                 'revenue': rev,
                 'count': c['count'] or 0,
                 'transactions': c['transactions'],
@@ -946,32 +1043,50 @@ class LabOrdersStatusWidgetView(APIView):
     def get(self, request):
         organization = request.user.organization
         period = request.GET.get('period', 'last_30_days')
+        start_date_param = request.GET.get('start_date')
+        end_date_param = request.GET.get('end_date')
 
-        period_days = {'last_7_days': 7, 'last_30_days': 30, 'last_90_days': 90}
-        days = period_days.get(period, 30)
-        start_dt = timezone.now() - timedelta(days=days)
+        # Use explicit date range if provided, else fall back to period
+        if start_date_param:
+            try:
+                start_date_val = date.fromisoformat(start_date_param)
+            except (ValueError, AttributeError):
+                start_date_val = date.today() - timedelta(days=30)
+        else:
+            period_days = {'last_7_days': 7, 'last_30_days': 30, 'last_90_days': 90}
+            days = period_days.get(period, 30)
+            start_date_val = date.today() - timedelta(days=days)
+
+        end_date_val = None
+        if end_date_param:
+            try:
+                end_date_val = date.fromisoformat(end_date_param)
+            except (ValueError, AttributeError):
+                end_date_val = None
 
         orders = LabOrder.objects.filter(
             organization=organization,
-            order_date__gte=start_dt
+            order_date__date__gte=start_date_val
         )
+        if end_date_val:
+            orders = orders.filter(order_date__date__lte=end_date_val)
 
         total_orders = orders.count()
         revenue = orders.aggregate(total=Sum('total_price'))['total'] or 0
 
         # Critical: items flagged is_critical
-        critical_results = LabOrderItem.objects.filter(
-            lab_order__organization=organization,
-            lab_order__order_date__gte=start_dt,
-            is_critical=True
-        ).count()
+        # Build base item filter matching the same date range
+        item_date_filter = Q(lab_order__organization=organization, lab_order__order_date__date__gte=start_date_val)
+        if end_date_val:
+            item_date_filter &= Q(lab_order__order_date__date__lte=end_date_val)
+
+        critical_results = LabOrderItem.objects.filter(item_date_filter, is_critical=True).count()
 
         # Avg turnaround: (result_entered_at - order_date) in hours for completed items
         avg_turnaround_hours = None
         try:
             avg_result = LabOrderItem.objects.filter(
-                lab_order__organization=organization,
-                lab_order__order_date__gte=start_dt,
+                item_date_filter,
                 result_entered_at__isnull=False
             ).annotate(
                 turnaround=ExpressionWrapper(
@@ -985,8 +1100,7 @@ class LabOrdersStatusWidgetView(APIView):
         except Exception:
             # Fallback: calculate in Python (compatible with all DB backends)
             items = LabOrderItem.objects.filter(
-                lab_order__organization=organization,
-                lab_order__order_date__gte=start_dt,
+                item_date_filter,
                 result_entered_at__isnull=False
             ).select_related('lab_order').values_list('result_entered_at', 'lab_order__order_date')
             durations = [
@@ -1005,8 +1119,7 @@ class LabOrdersStatusWidgetView(APIView):
         by_test_type = []
         try:
             items_qs = LabOrderItem.objects.filter(
-                lab_order__organization=organization,
-                lab_order__order_date__gte=start_dt,
+                item_date_filter,
             ).select_related('lab_test', 'lab_test__category')
 
             # Group by test
