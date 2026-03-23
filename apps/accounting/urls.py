@@ -19,6 +19,8 @@ urlpatterns = [
     path('reports/trial-balance/', views.TrialBalanceView.as_view(), name='trial-balance'),
     path('reports/general-ledger/', views.GeneralLedgerView.as_view(), name='general-ledger'),
     path('reports/income-statement/', views.IncomeStatementView.as_view(), name='income-statement'),
+    path('reports/balance-sheet/', views.BalanceSheetView.as_view(), name='balance-sheet'),
+    path('reports/sig/', views.SIGView.as_view(), name='sig'),
 
     # Dashboard
     path('dashboard/', views.AccountingDashboardView.as_view(), name='accounting-dashboard'),

@@ -102,7 +102,7 @@ class Command(BaseCommand):
                     defaults={
                         'name': name,
                         'account_type': atype,
-                        'is_system': True,
+                        'is_system': False,
                         'is_active': True,
                     }
                 )
@@ -111,7 +111,7 @@ class Command(BaseCommand):
                 elif reset:
                     acc.name = name
                     acc.account_type = atype
-                    acc.is_system = True
+                    acc.is_system = False
                     acc.save(update_fields=['name', 'account_type', 'is_system'])
                     accounts_updated += 1
 

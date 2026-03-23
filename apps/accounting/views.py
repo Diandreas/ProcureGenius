@@ -76,9 +76,6 @@ class AccountDetailView(APIView):
         acc = self._get_account(request, pk)
         if not acc:
             return Response({'error': 'Compte introuvable'}, status=status.HTTP_404_NOT_FOUND)
-        if acc.is_system and ('code' in request.data or 'account_type' in request.data):
-            return Response({'error': 'Compte système : code et type non modifiables'},
-                            status=status.HTTP_400_BAD_REQUEST)
         serializer = AccountSerializer(acc, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -89,13 +86,9 @@ class AccountDetailView(APIView):
         acc = self._get_account(request, pk)
         if not acc:
             return Response({'error': 'Compte introuvable'}, status=status.HTTP_404_NOT_FOUND)
-        if acc.is_system:
-            return Response({'error': 'Compte système non supprimable'},
-                            status=status.HTTP_400_BAD_REQUEST)
         if acc.lines.exists():
-            acc.is_active = False
-            acc.save(update_fields=['is_active'])
-            return Response({'message': 'Compte désactivé (mouvements existants)'})
+            return Response({'error': 'Impossible de supprimer : ce compte a des transactions associées'},
+                            status=status.HTTP_400_BAD_REQUEST)
         acc.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -556,6 +549,255 @@ class AccountingDashboardView(APIView):
             },
             'pending_entries': entries_count,
             'monthly_chart': monthly,
+        })
+
+
+class SIGView(APIView):
+    """Soldes Intermédiaires de Gestion"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        org = request.user.organization
+        start, end = _parse_date_range(request, default_days=365)
+
+        def net_by_codes(prefixes_revenue=None, prefixes_expense=None):
+            """Calcule (crédit - débit) pour les produits et (débit - crédit) pour les charges
+            sur les comptes dont le code commence par un des préfixes donnés."""
+            total = Decimal('0')
+            lines = []
+
+            if prefixes_revenue:
+                q = Q()
+                for p in prefixes_revenue:
+                    q |= Q(account__code__startswith=p)
+                qs = (
+                    JournalEntryLine.objects
+                    .filter(q, entry__organization=org, entry__status='posted',
+                            entry__date__gte=start, entry__date__lte=end,
+                            account__account_type='revenue')
+                    .values('account__code', 'account__name')
+                    .annotate(d=Sum('debit'), c=Sum('credit'))
+                    .order_by('account__code')
+                )
+                for r in qs:
+                    amt = (r['c'] or Decimal('0')) - (r['d'] or Decimal('0'))
+                    lines.append({'code': r['account__code'], 'name': r['account__name'], 'amount': str(amt)})
+                    total += amt
+
+            if prefixes_expense:
+                q = Q()
+                for p in prefixes_expense:
+                    q |= Q(account__code__startswith=p)
+                qs = (
+                    JournalEntryLine.objects
+                    .filter(q, entry__organization=org, entry__status='posted',
+                            entry__date__gte=start, entry__date__lte=end,
+                            account__account_type='expense')
+                    .values('account__code', 'account__name')
+                    .annotate(d=Sum('debit'), c=Sum('credit'))
+                    .order_by('account__code')
+                )
+                for r in qs:
+                    amt = (r['d'] or Decimal('0')) - (r['c'] or Decimal('0'))
+                    lines.append({'code': r['account__code'], 'name': r['account__name'], 'amount': str(-amt)})
+                    total -= amt
+
+            return total, lines
+
+        # ── 1. Chiffre d'affaires (70-75) ──────────────────────────────
+        ca, ca_lines = net_by_codes(prefixes_revenue=['70', '71', '72', '73', '74', '75'])
+
+        # ── 2. Coût des ventes / Achats consommés (60) ─────────────────
+        achats, achats_lines = net_by_codes(prefixes_expense=['60'])
+        marge_brute = ca + achats  # achats est négatif dans total
+
+        # ── 3. Services extérieurs (61, 62) ────────────────────────────
+        services, services_lines = net_by_codes(prefixes_expense=['61', '62'])
+        valeur_ajoutee = marge_brute + services
+
+        # ── 4. Charges de personnel (63, 64) ───────────────────────────
+        personnel, personnel_lines = net_by_codes(prefixes_expense=['63', '64'])
+        ebe = valeur_ajoutee + personnel  # EBE = VA - charges personnel
+
+        # ── 5. Autres charges d'exploitation (65) ──────────────────────
+        autres_charges, autres_lines = net_by_codes(prefixes_expense=['65'])
+
+        # ── 6. Dotations aux amortissements (68) ───────────────────────
+        dotations, dotations_lines = net_by_codes(prefixes_expense=['68'])
+        resultat_exploitation = ebe + autres_charges + dotations
+
+        # ── 7. Résultat financier (66 charges / 76 produits) ───────────
+        ch_fin, ch_fin_lines = net_by_codes(prefixes_expense=['66'])
+        pr_fin, pr_fin_lines = net_by_codes(prefixes_revenue=['76'])
+        resultat_financier = pr_fin + ch_fin
+        resultat_courant = resultat_exploitation + resultat_financier
+
+        # ── 8. Résultat exceptionnel (67 charges / 77 produits) ────────
+        ch_exc, ch_exc_lines = net_by_codes(prefixes_expense=['67'])
+        pr_exc, pr_exc_lines = net_by_codes(prefixes_revenue=['77'])
+        resultat_exceptionnel = pr_exc + ch_exc
+        resultat_net = resultat_courant + resultat_exceptionnel
+
+        def s(v): return str(v)
+
+        return Response({
+            'start_date': str(start),
+            'end_date': str(end),
+            'soldes': [
+                {
+                    'label': "Chiffre d'affaires",
+                    'description': 'Comptes 70 à 75',
+                    'montant': s(ca),
+                    'lines': ca_lines,
+                },
+                {
+                    'label': 'Marge brute',
+                    'description': 'CA − Achats consommés (60)',
+                    'montant': s(marge_brute),
+                    'lines': achats_lines,
+                    'sous_total': True,
+                },
+                {
+                    'label': 'Valeur ajoutée',
+                    'description': 'Marge brute − Services extérieurs (61, 62)',
+                    'montant': s(valeur_ajoutee),
+                    'lines': services_lines,
+                    'sous_total': True,
+                },
+                {
+                    'label': 'EBE (Excédent Brut d\'Exploitation)',
+                    'description': 'VA − Charges de personnel (63, 64)',
+                    'montant': s(ebe),
+                    'lines': personnel_lines,
+                    'sous_total': True,
+                },
+                {
+                    'label': 'Résultat d\'exploitation',
+                    'description': 'EBE − Autres charges (65) − Dotations amort. (68)',
+                    'montant': s(resultat_exploitation),
+                    'lines': autres_lines + dotations_lines,
+                    'sous_total': True,
+                },
+                {
+                    'label': 'Résultat financier',
+                    'description': 'Produits fin. (76) − Charges fin. (66)',
+                    'montant': s(resultat_financier),
+                    'lines': pr_fin_lines + ch_fin_lines,
+                },
+                {
+                    'label': 'Résultat courant',
+                    'description': 'Résultat exploitation + Résultat financier',
+                    'montant': s(resultat_courant),
+                    'lines': [],
+                    'sous_total': True,
+                },
+                {
+                    'label': 'Résultat exceptionnel',
+                    'description': 'Produits excep. (77) − Charges excep. (67)',
+                    'montant': s(resultat_exceptionnel),
+                    'lines': pr_exc_lines + ch_exc_lines,
+                },
+                {
+                    'label': 'Résultat net',
+                    'description': 'Résultat courant + Résultat exceptionnel',
+                    'montant': s(resultat_net),
+                    'lines': [],
+                    'sous_total': True,
+                    'final': True,
+                },
+            ],
+        })
+
+
+class BalanceSheetView(APIView):
+    """Bilan comptable — Actif / Passif / Capitaux propres à une date donnée"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        org = request.user.organization
+        today = date.today()
+        end_str = request.GET.get('end_date')
+        try:
+            as_of = date.fromisoformat(end_str) if end_str else today
+        except ValueError:
+            as_of = today
+
+        def get_account_balance(account_type):
+            """Retourne le solde cumulé depuis l'origine jusqu'à as_of"""
+            rows = (
+                JournalEntryLine.objects
+                .filter(
+                    entry__organization=org,
+                    entry__status='posted',
+                    entry__date__lte=as_of,
+                    account__account_type=account_type,
+                )
+                .values('account__id', 'account__code', 'account__name')
+                .annotate(total_debit=Sum('debit'), total_credit=Sum('credit'))
+                .order_by('account__code')
+            )
+            lines = []
+            total = Decimal('0')
+            for r in rows:
+                d = r['total_debit'] or Decimal('0')
+                c = r['total_credit'] or Decimal('0')
+                # Actif : solde débiteur (débit - crédit)
+                # Passif/Capitaux : solde créditeur (crédit - débit)
+                if account_type == 'asset':
+                    balance = d - c
+                else:
+                    balance = c - d
+                if balance != 0:
+                    lines.append({
+                        'code': r['account__code'],
+                        'name': r['account__name'],
+                        'balance': str(balance),
+                    })
+                    total += balance
+            return lines, total
+
+        asset_lines, total_assets = get_account_balance('asset')
+        liability_lines, total_liabilities = get_account_balance('liability')
+        equity_lines, total_equity = get_account_balance('equity')
+
+        # Résultat net de l'exercice (produits - charges) intégré dans les capitaux
+        revenue_total = (
+            JournalEntryLine.objects
+            .filter(entry__organization=org, entry__status='posted',
+                    entry__date__lte=as_of, account__account_type='revenue')
+            .aggregate(d=Sum('debit'), c=Sum('credit'))
+        )
+        expense_total = (
+            JournalEntryLine.objects
+            .filter(entry__organization=org, entry__status='posted',
+                    entry__date__lte=as_of, account__account_type='expense')
+            .aggregate(d=Sum('debit'), c=Sum('credit'))
+        )
+        rev = (revenue_total['c'] or Decimal('0')) - (revenue_total['d'] or Decimal('0'))
+        exp = (expense_total['d'] or Decimal('0')) - (expense_total['c'] or Decimal('0'))
+        net_result = rev - exp
+
+        total_passif = total_liabilities + total_equity + net_result
+        is_balanced = abs(total_assets - total_passif) < Decimal('0.01')
+
+        return Response({
+            'as_of': str(as_of),
+            'assets': {
+                'lines': asset_lines,
+                'total': str(total_assets),
+            },
+            'liabilities': {
+                'lines': liability_lines,
+                'total': str(total_liabilities),
+            },
+            'equity': {
+                'lines': equity_lines,
+                'total': str(total_equity),
+            },
+            'net_result': str(net_result),
+            'total_assets': str(total_assets),
+            'total_passif': str(total_passif),
+            'is_balanced': is_balanced,
         })
 
 

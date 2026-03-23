@@ -90,6 +90,8 @@ import JournalEntryDetail from './pages/accounting/JournalEntryDetail';
 import TrialBalance from './pages/accounting/TrialBalance';
 import GeneralLedger from './pages/accounting/GeneralLedger';
 import IncomeStatement from './pages/accounting/IncomeStatement';
+import BalanceSheet from './pages/accounting/BalanceSheet';
+import SIG from './pages/accounting/SIG';
 
 // Healthcare Pages
 import PatientList from './pages/healthcare/patients/PatientList';
@@ -869,6 +871,8 @@ function App() {
                               <Route path="/accounting/reports/trial-balance" element={<TrialBalance />} />
                               <Route path="/accounting/reports/general-ledger" element={<GeneralLedger />} />
                               <Route path="/accounting/reports/income-statement" element={<IncomeStatement />} />
+                              <Route path="/accounting/reports/balance-sheet" element={<BalanceSheet />} />
+                              <Route path="/accounting/reports/sig" element={<SIG />} />
                             </Route>
                           </Route>
 

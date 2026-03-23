@@ -7,6 +7,8 @@ import {
   Balance as BalanceIcon,
   MenuBook as LedgerIcon,
   TrendingUp as ResultIcon,
+  AccountBalance as BilanIcon,
+  Insights as SIGIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '../../components/navigation/BackButton';
@@ -18,6 +20,8 @@ const NAV_ITEMS = [
   { label: 'Balance', path: '/accounting/reports/trial-balance', icon: <BalanceIcon fontSize="small" /> },
   { label: 'Grand livre', path: '/accounting/reports/general-ledger', icon: <LedgerIcon fontSize="small" /> },
   { label: 'Compte de résultat', path: '/accounting/reports/income-statement', icon: <ResultIcon fontSize="small" /> },
+  { label: 'Bilan', path: '/accounting/reports/balance-sheet', icon: <BilanIcon fontSize="small" /> },
+  { label: 'SIG', path: '/accounting/reports/sig', icon: <SIGIcon fontSize="small" /> },
 ];
 
 export default function AccountingNav({ title, subtitle, action }) {

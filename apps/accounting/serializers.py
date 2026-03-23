@@ -6,18 +6,22 @@ from .models import Account, AccountingJournal, JournalEntry, JournalEntryLine
 class AccountSerializer(serializers.ModelSerializer):
     account_type_display = serializers.CharField(source='get_account_type_display', read_only=True)
     children_count = serializers.SerializerMethodField()
+    has_transactions = serializers.SerializerMethodField()
 
     class Meta:
         model = Account
         fields = [
             'id', 'code', 'name', 'account_type', 'account_type_display',
             'parent', 'is_active', 'is_system', 'notes',
-            'children_count', 'created_at',
+            'children_count', 'has_transactions', 'created_at',
         ]
         read_only_fields = ['id', 'created_at', 'is_system']
 
     def get_children_count(self, obj):
         return obj.children.filter(is_active=True).count()
+
+    def get_has_transactions(self, obj):
+        return obj.lines.exists()
 
 
 class AccountingJournalSerializer(serializers.ModelSerializer):

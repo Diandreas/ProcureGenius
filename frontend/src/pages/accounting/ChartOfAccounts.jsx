@@ -135,10 +135,7 @@ export default function ChartOfAccounts() {
                   <TableCell>
                     <Typography variant="body2" fontFamily="monospace" fontWeight={600}>{acc.code}</Typography>
                   </TableCell>
-                  <TableCell>
-                    {acc.name}
-                    {acc.is_system && <Chip label="système" size="small" sx={{ ml: 1, fontSize: 10 }} />}
-                  </TableCell>
+                  <TableCell>{acc.name}</TableCell>
                   <TableCell>
                     <Chip label={TYPE_LABELS[acc.account_type]} size="small" color={TYPE_COLORS[acc.account_type] || 'default'} />
                   </TableCell>
@@ -151,7 +148,13 @@ export default function ChartOfAccounts() {
                     <Tooltip title="Modifier">
                       <IconButton size="small" onClick={() => openEdit(acc)}><Edit fontSize="small" /></IconButton>
                     </Tooltip>
-                    {!acc.is_system && (
+                    {acc.has_transactions ? (
+                      <Tooltip title="Impossible de supprimer : ce compte a des transactions associées">
+                        <span>
+                          <IconButton size="small" color="error" disabled><Delete fontSize="small" /></IconButton>
+                        </span>
+                      </Tooltip>
+                    ) : (
                       <Tooltip title="Supprimer">
                         <IconButton size="small" color="error" onClick={() => handleDelete(acc)}><Delete fontSize="small" /></IconButton>
                       </Tooltip>
@@ -178,14 +181,14 @@ export default function ChartOfAccounts() {
             <Box display="flex" gap={2}>
               <TextField label="Numéro *" value={form.code}
                 onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-                disabled={editing?.is_system} sx={{ width: 150 }} placeholder="ex: 7100" />
+                sx={{ width: 150 }} placeholder="ex: 7100" />
               <TextField label="Intitulé *" value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
             </Box>
             <FormControl fullWidth>
               <InputLabel>Type *</InputLabel>
               <Select value={form.account_type} onChange={(e) => setForm((f) => ({ ...f, account_type: e.target.value }))}
-                disabled={editing?.is_system} label="Type *">
+                label="Type *">
                 {Object.entries(TYPE_LABELS).map(([k, v]) => <MenuItem key={k} value={k}>{v}</MenuItem>)}
               </Select>
             </FormControl>

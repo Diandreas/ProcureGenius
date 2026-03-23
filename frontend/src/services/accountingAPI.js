@@ -27,6 +27,8 @@ const accountingAPI = {
   getTrialBalance: (params = {}) => api.get(`${BASE}/reports/trial-balance/`, { params }),
   getGeneralLedger: (params = {}) => api.get(`${BASE}/reports/general-ledger/`, { params }),
   getIncomeStatement: (params = {}) => api.get(`${BASE}/reports/income-statement/`, { params }),
+  getBalanceSheet: (params = {}) => api.get(`${BASE}/reports/balance-sheet/`, { params }),
+  getSIG: (params = {}) => api.get(`${BASE}/reports/sig/`, { params }),
 
   // ── Dashboard ───────────────────────────────────────────────────
   getDashboard: () => api.get(`${BASE}/dashboard/`),

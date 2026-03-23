@@ -145,6 +145,8 @@ function MainLayout() {
     { text: 'Balance', iconSrc: '/icon/analysis.png', path: '/accounting/reports/trial-balance', moduleId: 'dashboard', isCore: true },
     { text: 'Grand livre', iconSrc: '/icon/analysis.png', path: '/accounting/reports/general-ledger', moduleId: 'dashboard', isCore: true },
     { text: 'Compte de résultat', iconSrc: '/icon/analysis.png', path: '/accounting/reports/income-statement', moduleId: 'dashboard', isCore: true },
+    { text: 'Bilan comptable', iconSrc: '/icon/analysis.png', path: '/accounting/reports/balance-sheet', moduleId: 'dashboard', isCore: true },
+    { text: 'SIG', iconSrc: '/icon/analysis.png', path: '/accounting/reports/sig', moduleId: 'dashboard', isCore: true },
 
     // { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
   ];
