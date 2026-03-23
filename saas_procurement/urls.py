@@ -13,6 +13,7 @@ urlpatterns = [
 
     # APIs REST
     path('api/v1/', include('apps.api.urls')),
+    path('api/v1/accounting/', include('apps.accounting.urls')),
 
     # Authentification
     path('api/accounts/', include('apps.accounts.urls')),  # API endpoints custom

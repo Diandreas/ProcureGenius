@@ -66,6 +66,18 @@ import KeyboardShortcuts from './pages/KeyboardShortcuts';
 import Support from './pages/Support';
 import Landing from './pages/Landing';
 
+// Accounting Pages
+import AccountingDashboard from './pages/accounting/AccountingDashboard';
+import ChartOfAccounts from './pages/accounting/ChartOfAccounts';
+import JournalEntries from './pages/accounting/JournalEntries';
+import JournalEntryForm from './pages/accounting/JournalEntryForm';
+import JournalEntryDetail from './pages/accounting/JournalEntryDetail';
+import TrialBalance from './pages/accounting/TrialBalance';
+import GeneralLedger from './pages/accounting/GeneralLedger';
+import IncomeStatement from './pages/accounting/IncomeStatement';
+import BalanceSheet from './pages/accounting/BalanceSheet';
+import SIG from './pages/accounting/SIG';
+
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
 import ModuleRoute from './components/guards/ModuleRoute';
@@ -802,6 +814,18 @@ function App() {
                             <Route path="/contracts/new" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
                             <Route path="/contracts/:id" element={<ModuleRoute module="contracts"><ContractDetail /></ModuleRoute>} />
                             <Route path="/contracts/:id/edit" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
+
+                            {/* Comptabilité */}
+                            <Route path="/accounting" element={<AccountingDashboard />} />
+                            <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
+                            <Route path="/accounting/entries" element={<JournalEntries />} />
+                            <Route path="/accounting/entries/new" element={<JournalEntryForm />} />
+                            <Route path="/accounting/entries/:id" element={<JournalEntryDetail />} />
+                            <Route path="/accounting/reports/trial-balance" element={<TrialBalance />} />
+                            <Route path="/accounting/reports/general-ledger" element={<GeneralLedger />} />
+                            <Route path="/accounting/reports/income-statement" element={<IncomeStatement />} />
+                            <Route path="/accounting/reports/balance-sheet" element={<BalanceSheet />} />
+                            <Route path="/accounting/reports/sig" element={<SIG />} />
 
                             {/* Data Migration */}
                             <Route path="/migration/jobs" element={<MigrationJobs />} />

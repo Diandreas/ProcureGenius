@@ -124,6 +124,17 @@ function MainLayout() {
     { text: t('navigation:menu.eSourcing'), iconSrc: '/icon/market.png', path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
     { text: t('navigation:menu.contracts'), iconSrc: '/icon/contract.png', path: '/contracts', moduleId: 'contracts', isCore: false },
     { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
+
+    // Comptabilité
+    { divider: true, sectionLabel: 'Comptabilité' },
+    { text: 'Comptabilité', iconSrc: '/icon/bill.png', path: '/accounting', moduleId: 'dashboard', isCore: true },
+    { text: 'Plan comptable', iconSrc: '/icon/bill.png', path: '/accounting/chart-of-accounts', moduleId: 'dashboard', isCore: true },
+    { text: 'Écritures', iconSrc: '/icon/bill.png', path: '/accounting/entries', moduleId: 'dashboard', isCore: true },
+    { text: 'Balance', iconSrc: '/icon/analysis.png', path: '/accounting/reports/trial-balance', moduleId: 'dashboard', isCore: true },
+    { text: 'Grand livre', iconSrc: '/icon/analysis.png', path: '/accounting/reports/general-ledger', moduleId: 'dashboard', isCore: true },
+    { text: 'Compte de résultat', iconSrc: '/icon/analysis.png', path: '/accounting/reports/income-statement', moduleId: 'dashboard', isCore: true },
+    { text: 'Bilan comptable', iconSrc: '/icon/analysis.png', path: '/accounting/reports/balance-sheet', moduleId: 'dashboard', isCore: true },
+    { text: 'SIG', iconSrc: '/icon/analysis.png', path: '/accounting/reports/sig', moduleId: 'dashboard', isCore: true },
   ];
 
   const [userPermissions, setUserPermissions] = useState(null);
@@ -354,7 +365,20 @@ function MainLayout() {
       {/* Navigation */}
       <Box sx={{ flexGrow: 1, overflow: 'auto', py: 2, px: 2 }}>
         <List disablePadding>
-          {menuItems.filter(item => item.isCore || hasModule(item.moduleId)).map((item) => {
+          {menuItems.filter(item => item.divider || item.isCore || hasModule(item.moduleId)).map((item, idx) => {
+            if (item.divider) {
+              return (
+                <Box key={`divider-${idx}`} sx={{ px: 1, pt: 2, pb: 0.5 }}>
+                  <Divider sx={{ mb: 1 }} />
+                  {item.sectionLabel && (
+                    <Typography variant="caption" sx={{ px: 1, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.disabled', fontSize: '0.7rem' }}>
+                      {item.sectionLabel}
+                    </Typography>
+                  )}
+                </Box>
+              );
+            }
+
             const isSelected = location.pathname === item.path ||
               (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
 
