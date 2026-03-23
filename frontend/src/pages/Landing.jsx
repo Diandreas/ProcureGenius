@@ -386,6 +386,77 @@ const PricingCard = ({ t, title, price, originalPrice, period, features, isPopul
 // ═════════════════════════════════════════════════════════════════
 // MAIN LANDING COMPONENT
 // ═════════════════════════════════════════════════════════════════
+// ─── Country → Currency mapping ──────────────────────────────────
+const COUNTRY_CURRENCY_MAP = {
+  // Afrique de l'Ouest (UEMOA)
+  SN: 'XOF', ML: 'XOF', BF: 'XOF', CI: 'XOF', TG: 'XOF', BJ: 'XOF', GW: 'XOF', NE: 'XOF',
+  // Afrique Centrale (CEMAC)
+  CM: 'XAF', CG: 'XAF', GA: 'XAF', CF: 'XAF', TD: 'XAF', GQ: 'XAF',
+  // Maghreb
+  MA: 'MAD', TN: 'TND', DZ: 'DZD',
+  // Autres Afrique
+  NG: 'NGN', ZA: 'ZAR', GH: 'GHS', KE: 'KES', EG: 'EGP',
+  // Europe (hors eurozone)
+  GB: 'GBP', CH: 'CHF',
+  // Amériques
+  US: 'USD', CA: 'CAD', BR: 'BRL', MX: 'MXN',
+  // Asie
+  JP: 'JPY', IN: 'INR', SG: 'SGD', HK: 'HKD', CN: 'CNY',
+  // Moyen-Orient
+  AE: 'AED', SA: 'SAR',
+};
+
+// Taux de conversion approximatifs par rapport à l'EUR
+const EUR_RATES = {
+  EUR: 1, USD: 1.08, GBP: 0.86, CHF: 0.96, CAD: 1.47,
+  XOF: 655.96, XAF: 655.96, MAD: 10.8, TND: 3.35, DZD: 144,
+  NGN: 1780, ZAR: 20, GHS: 16, KES: 140, EGP: 52,
+  JPY: 163, INR: 91, SGD: 1.45, HKD: 8.4, CNY: 7.8,
+  AED: 3.97, SAR: 4.05, BRL: 5.5, MXN: 18.5,
+};
+
+const usePricingCurrency = () => {
+  const [currency, setCurrency] = useState('EUR');
+
+  useEffect(() => {
+    const cached = sessionStorage.getItem('pricingCurrency');
+    if (cached) { setCurrency(cached); return; }
+
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(data => {
+        const detected = COUNTRY_CURRENCY_MAP[data.country_code] || 'EUR';
+        setCurrency(detected);
+        sessionStorage.setItem('pricingCurrency', detected);
+      })
+      .catch(() => {}); // fallback EUR
+  }, []);
+
+  const convertPrice = (eurAmount) => {
+    if (currency === 'EUR') return null; // use translation default
+    const rate = EUR_RATES[currency] || 1;
+    return Math.round(eurAmount * rate);
+  };
+
+  return { currency, convertPrice };
+};
+
+const CURRENCY_SYMBOLS_SIMPLE = {
+  EUR: '€', USD: '$', GBP: '£', CHF: 'CHF', CAD: 'C$',
+  XOF: 'FCFA', XAF: 'FCFA', MAD: 'DH', TND: 'TND', DZD: 'DZD',
+  NGN: '₦', ZAR: 'R', GHS: 'GH₵', KES: 'KSh', EGP: 'E£',
+  JPY: '¥', INR: '₹', SGD: 'S$', HKD: 'HK$', CNY: '¥',
+  AED: 'AED', SAR: 'SR', BRL: 'R$', MXN: 'MX$',
+};
+
+const SYMBOL_AFTER = ['EUR', 'XOF', 'XAF', 'MAD', 'TND', 'DZD', 'CHF', 'AED', 'SAR'];
+
+const formatPriceCurrency = (amount, currency) => {
+  const sym = CURRENCY_SYMBOLS_SIMPLE[currency] || currency;
+  const formatted = amount.toLocaleString('fr-FR');
+  return SYMBOL_AFTER.includes(currency) ? `${formatted} ${sym}` : `${sym}${formatted}`;
+};
+
 export default function Landing() {
   const { t, i18n } = useTranslation('landing');
   const navigate = useNavigate();
@@ -393,6 +464,7 @@ export default function Landing() {
   const theme = useTheme();
   const { toggleColorMode } = useColorMode();
   const isDark = theme.palette.mode === 'dark';
+  const { currency, convertPrice } = usePricingCurrency();
 
   // Handle hash scroll for cases like /landing#pricing-section
   useEffect(() => {
@@ -834,6 +906,11 @@ export default function Landing() {
               <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', maxWidth: 600, mx: 'auto', fontSize: '1.15rem' }}>
                 {t('pricing.subtitle')}
               </Typography>
+              {currency !== 'EUR' && (
+                <Typography sx={{ mt: 2, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)', fontSize: '0.85rem' }}>
+                  Prix indicatifs en {CURRENCY_SYMBOLS_SIMPLE[currency] || currency} ({currency}) · Facturation en EUR
+                </Typography>
+              )}
             </motion.div>
           </Box>
 
@@ -842,7 +919,7 @@ export default function Landing() {
               <PricingCard
                 t={t}
                 title={t('pricing.plans.essential.name')}
-                price={t('pricing.plans.essential.price')}
+                price={convertPrice(10) !== null ? formatPriceCurrency(convertPrice(10), currency) : t('pricing.plans.essential.price')}
                 period="par mois, à vie"
                 features={[
                   t('pricing.plans.essential.f1'),
@@ -859,8 +936,8 @@ export default function Landing() {
               <PricingCard
                 t={t}
                 title={t('pricing.plans.business.name')}
-                price={t('pricing.plans.business.price')}
-                originalPrice="99€/mois"
+                price={convertPrice(45) !== null ? formatPriceCurrency(convertPrice(45), currency) : t('pricing.plans.business.price')}
+                originalPrice={convertPrice(99) !== null ? formatPriceCurrency(convertPrice(99), currency) + '/mois' : '99€/mois'}
                 period="par mois"
                 isPopular
                 isFree
