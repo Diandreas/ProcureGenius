@@ -185,7 +185,7 @@
                         <tr>
                             <td style="font-weight: 600;">{{ p.name }}</td>
                             <td style="font-weight: 700; text-align: left; {% if 'H' in p.flag or 'L' in p.flag %}color: #dc2626;{% endif %}">
-                                {{ p.result_numeric|default:p.result_text|default:"—" }}
+                                {% if p.result_numeric is not None %}{{ p.result_numeric|floatformat:"4" }}{% else %}{{ p.result_text|default:"—" }}{% endif %}
                                 {% if 'H' in p.flag %} (H){% elif 'L' in p.flag %} (L){% endif %}
                             </td>
                             <td style="color: #4b5563;">{{ p.unit|default:"—" }}</td>

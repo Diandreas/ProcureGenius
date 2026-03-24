@@ -180,7 +180,7 @@
             <div class="test-value">
                 Résultat: {{ item.result_value }}
                 {% if item.result_numeric and item.result_unit %}
-                {{ item.result_numeric }} {{ item.result_unit }}
+                {{ item.result_numeric|floatformat:"4" }} {{ item.result_unit }}
                 {% endif %}
             </div>
             {% if item.reference_range %}

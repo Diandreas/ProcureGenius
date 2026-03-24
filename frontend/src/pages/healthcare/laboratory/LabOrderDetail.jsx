@@ -1335,10 +1335,11 @@ const LabOrderDetail = () => {
 
                                     const minVal = (refMin !== null && refMin !== undefined && refMin !== '') ? parseFloat(refMin) : null;
                                     const maxVal = (refMax !== null && refMax !== undefined && refMax !== '') ? parseFloat(refMax) : null;
+                                    const fmt = (v) => v.toFixed(4);
 
-                                    if (minVal !== null && maxVal !== null) return `${minVal} – ${maxVal}`;
-                                    if (minVal !== null) return `≥ ${minVal}`;
-                                    if (maxVal !== null) return `≤ ${maxVal}`;
+                                    if (minVal !== null && maxVal !== null) return `${fmt(minVal)} – ${fmt(maxVal)}`;
+                                    if (minVal !== null) return `≥ ${fmt(minVal)}`;
+                                    if (maxVal !== null) return `≤ ${fmt(maxVal)}`;
                                     return '—';
                                 };
 
@@ -1450,7 +1451,7 @@ const LabOrderDetail = () => {
                                                                                     )
                                                                                 ) : (
                                                                                     <Typography variant="body2" fontWeight={isNumeric ? 700 : 400} sx={flagStyle}>
-                                                                                        {displayVal !== '' && displayVal !== null ? String(displayVal) : '—'}
+                                                                                        {displayVal !== '' && displayVal !== null ? (isNumeric ? parseFloat(displayVal).toFixed(4) : String(displayVal)) : '—'}
                                                                                     </Typography>
                                                                                 )}
                                                                             </TableCell>
