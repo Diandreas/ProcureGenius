@@ -1,7 +1,14 @@
+import os
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.accounts.models import Organization
 import uuid
+
+
+def organization_logo_upload(instance, filename):
+    """Generate a short UUID-based filename for org logos, keeping the extension."""
+    ext = os.path.splitext(filename)[1].lower() or '.png'
+    return f'organization/logos/{uuid.uuid4().hex}{ext}'
 
 
 class Core(models.Model):
@@ -43,7 +50,7 @@ class OrganizationSettings(models.Model):
         verbose_name=_("Site web")
     )
     company_logo = models.ImageField(
-        upload_to='organization/logos/',
+        upload_to=organization_logo_upload,
         blank=True,
         null=True,
         verbose_name=_("Logo")
