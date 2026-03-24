@@ -821,3 +821,34 @@ class SyncInvoiceView(APIView):
             })
         return Response({'error': 'Impossible de générer l\'écriture (comptes manquants ?)'},
                         status=status.HTTP_400_BAD_REQUEST)
+
+
+class SetupAccountingView(APIView):
+    """
+    POST /accounting/setup/
+    Initialise le plan comptable et les journaux par défaut pour l'organisation.
+    Idempotent — ne supprime rien, ne modifie pas les comptes existants.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        org = getattr(request.user, 'organization', None)
+        if not org:
+            return Response({'error': 'Aucune organisation associée'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from .setup_utils import setup_accounting_for_org
+        accounts_created, journals_created = setup_accounting_for_org(org)
+
+        return Response({
+            'message': 'Plan comptable initialisé',
+            'accounts_created': accounts_created,
+            'journals_created': journals_created,
+        })
+
+    def get(self, request):
+        """Vérifie si un plan comptable existe déjà"""
+        org = getattr(request.user, 'organization', None)
+        if not org:
+            return Response({'has_chart': False})
+        count = Account.objects.filter(organization=org, is_active=True).count()
+        return Response({'has_chart': count > 0, 'account_count': count})

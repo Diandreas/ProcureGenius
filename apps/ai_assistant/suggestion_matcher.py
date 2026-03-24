@@ -103,6 +103,18 @@ class SuggestionMatcher:
                     data=insight.get('data', {})
                 )
                 logger.info(f"Created push notification for {user.username}: {insight['title']}")
+
+                # Envoyer aussi en push natif navigateur
+                try:
+                    from .web_push_service import notify_insight_ia
+                    notify_insight_ia(
+                        user,
+                        title=insight['title'],
+                        message=insight['message'],
+                        url=insight.get('action_url', '/ai-chat'),
+                    )
+                except Exception:
+                    pass
         except Exception as e:
             logger.error(f"Error creating notification: {e}")
 

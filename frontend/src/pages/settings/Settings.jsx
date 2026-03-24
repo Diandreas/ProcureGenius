@@ -70,6 +70,7 @@ import {
   CheckCircle,
   Warning,
   Person as PersonIcon,
+  ChevronRight,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
@@ -81,6 +82,7 @@ import { settingsAPI } from '../../services/settingsAPI';
 import { printTemplatesAPI } from '../../services/printTemplatesAPI';
 import { printConfigurationsAPI } from '../../services/printConfigurationsAPI';
 import ModulesManager from '../../components/settings/ModulesManager';
+import PushNotificationSettings from '../../components/settings/PushNotificationSettings';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 
@@ -423,15 +425,35 @@ const Settings = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  // Configuration des onglets - Fusionnés pour tablette
-  const tabs = [
-    { label: t('settings:tabs.general'), icon: <BusinessIcon /> },
-    { label: 'Modules', icon: <AppsIcon /> },
-    { label: t('settings:tabs.print'), icon: <PrintIcon /> },
-    { label: 'Mail', icon: <EmailIcon /> },
-    { label: 'Migration', icon: <BackupIcon /> },
-    { label: 'Profil', icon: <PersonIcon /> },
+  // Navigation items — groupés par thème
+  const NAV_GROUPS = [
+    {
+      label: 'Entreprise',
+      items: [
+        { id: 0, label: t('settings:tabs.general'), icon: <BusinessIcon fontSize="small" />, description: 'Nom, coordonnées, logo' },
+        { id: 1, label: 'Modules', icon: <AppsIcon fontSize="small" />, description: 'Activer / désactiver les modules' },
+      ],
+    },
+    {
+      label: 'Personnalisation',
+      items: [
+        { id: 2, label: t('settings:tabs.print'), icon: <PrintIcon fontSize="small" />, description: 'Format, templates documents' },
+        { id: 3, label: 'Notifications', icon: <NotificationsIcon fontSize="small" />, description: 'Alertes email et push' },
+        { id: 4, label: 'Email / SMTP', icon: <EmailIcon fontSize="small" />, description: 'Serveur d\'envoi d\'emails' },
+      ],
+    },
+    {
+      label: 'Compte',
+      items: [
+        { id: 5, label: 'Profil & Sécurité', icon: <PersonIcon fontSize="small" />, description: 'Informations personnelles, mot de passe' },
+        { id: 6, label: 'Apparence', icon: <AppearanceIcon fontSize="small" />, description: 'Langue, thème, formats' },
+        { id: 7, label: 'Données', icon: <BackupIcon fontSize="small" />, description: 'Import, export, migration' },
+      ],
+    },
   ];
+
+  const allItems = NAV_GROUPS.flatMap(g => g.items);
+  const activeItem = allItems.find(i => i.id === activeTab) || allItems[0];
 
   // Loading state
   if (loading) {
@@ -451,137 +473,203 @@ const Settings = () => {
   }
 
   return (
-    <Box p={{ xs: 1.5, sm: 2, md: 3 }}>
-      <Card
-        sx={{
-          borderRadius: 1,
-          background: '#ffffff',
-          border: '1px solid #e0e0e0',
-          boxShadow: 'none',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Navigation par onglets */}
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-          variant={isMobile ? 'fullWidth' : 'fullWidth'}
-          sx={{
-            borderBottom: 1,
-            borderColor: 'divider',
-            minHeight: { xs: 48, sm: 56, md: 64 },
-            '& .MuiTab-root': {
-              minHeight: { xs: 48, sm: 56, md: 64 },
-              minWidth: 0,
-              padding: { xs: '6px 4px', sm: '8px 12px', md: '12px 16px' },
-              textTransform: 'none',
-              fontSize: { xs: '0.7rem', sm: '0.85rem', md: '0.95rem' },
-              flex: 1,
-            },
-            '& .MuiTab-iconWrapper': {
-              marginBottom: isMobile ? '2px !important' : undefined,
-              marginRight: isMobile ? 0 : '8px',
-            },
-          }}
-        >
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              label={tab.label}
-              icon={tab.icon}
-              iconPosition={isMobile ? 'top' : 'start'}
+    <Box p={{ xs: 2, sm: 2, md: 3 }}>
+      {/* Header page */}
+      <Box mb={3}>
+        <Typography variant="h5" fontWeight={700}>Paramètres</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Gérez votre organisation, vos préférences et votre compte.
+        </Typography>
+      </Box>
+
+      {/* Sélecteur mobile — select compact */}
+      {isMobile && (
+        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+          <Select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            renderValue={(val) => {
+              const item = allItems.find(i => i.id === val);
+              return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {item?.icon}
+                  <Typography variant="body2" fontWeight={600}>{item?.label}</Typography>
+                </Box>
+              );
+            }}
+          >
+            {NAV_GROUPS.map((group) => [
+              <MenuItem disabled key={group.label} sx={{ opacity: 1, py: 0.5 }}>
+                <Typography variant="caption" color="text.disabled" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.07em', fontSize: '0.65rem' }}>
+                  {group.label}
+                </Typography>
+              </MenuItem>,
+              ...group.items.map((item) => (
+                <MenuItem key={item.id} value={item.id} sx={{ gap: 1.5 }}>
+                  <Box sx={{ color: 'text.secondary', display: 'flex' }}>{item.icon}</Box>
+                  {item.label}
+                </MenuItem>
+              )),
+            ])}
+          </Select>
+        </FormControl>
+      )}
+
+      {/* Layout : sidebar + content sur md+ */}
+      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+
+        {/* ── Sidebar (sm+) ── */}
+        {!isMobile && (
+          <Box sx={{ width: 210, flexShrink: 0, position: 'sticky', top: 80 }}>
+            <Box
               sx={{
-                '& .MuiSvgIcon-root': {
-                  fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.4rem' },
-                },
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                overflow: 'hidden',
+                bgcolor: 'background.paper',
               }}
-            />
-          ))}
-        </Tabs>
-
-        {/* Contenu de la section active */}
-        <Box p={{ xs: 2, sm: 2.5, md: 3 }}>
-          {/* Section Général */}
-          {activeTab === 0 && (
-            <GeneralSection
-              settings={settings}
-              onUpdate={handleUpdateSetting}
-              onFileSelect={handleFileSelect}
-              logoFormat={logoFormat}
-              setLogoFormat={setLogoFormat}
-            />
-          )}
-
-          {/* Section Modules */}
-          {activeTab === 1 && (
-            <ModulesManager />
-          )}
-
-          {/* Section Impression */}
-          {activeTab === 2 && (
-            <PrintSection
-              settings={settings}
-              printTemplate={printTemplate}
-              printConfiguration={printConfiguration}
-              onUpdateTemplate={handleUpdateTemplate}
-              onUpdateConfiguration={handleUpdateConfiguration}
-              onUpdate={handleUpdateSetting}
-            />
-          )}
-
-          {/* Section Notifications - Fusionné (Notifications + Email) */}
-          {activeTab === 3 && (
-            <>
-              <NotificationSection
-                settings={settings}
-                onUpdate={handleUpdateSetting}
-              />
-              <Divider sx={{ my: 4 }} />
-              <EmailSection
-                settings={settings}
-                showSnackbar={showSnackbar}
-              />
-            </>
-          )}
-
-          {/* Section Migration de données */}
-          {activeTab === 4 && (
-            <DataSection
-              settings={settings}
-              showSnackbar={showSnackbar}
-            />
-          )}
-
-          {/* Section Profil - Fusionné (Profil + Apparence) */}
-          {activeTab === 5 && (
-            <>
-              <ProfileSection
-                settings={settings}
-                onUpdate={handleUpdateSetting}
-              />
-              <Divider sx={{ my: 4 }} />
-              <AppearanceSection
-                settings={settings}
-                onUpdate={handleUpdateSetting}
-              />
-            </>
-          )}
-
-          {/* Bouton de sauvegarde */}
-          <Box mt={4}>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<SaveIcon />}
-              onClick={handleSaveAll}
-              disabled={saving}
-              fullWidth={isMobile}
             >
-              {saving ? t('common:labels.loading') : t('settings:buttons.save')}
-            </Button>
+              {NAV_GROUPS.map((group, gi) => (
+                <Box key={gi}>
+                  {gi > 0 && <Divider />}
+                  <Box px={2} pt={gi === 0 ? 2 : 1.5} pb={0.5}>
+                    <Typography variant="caption" fontWeight={700} color="text.disabled" sx={{ textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem' }}>
+                      {group.label}
+                    </Typography>
+                  </Box>
+                  {group.items.map((item) => (
+                    <Box
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        mx: 1,
+                        mb: 0.25,
+                        px: 1.5,
+                        py: 0.9,
+                        borderRadius: 1.5,
+                        cursor: 'pointer',
+                        bgcolor: activeTab === item.id ? 'primary.50' : 'transparent',
+                        color: activeTab === item.id ? 'primary.main' : 'text.secondary',
+                        fontWeight: activeTab === item.id ? 600 : 400,
+                        transition: 'background 0.12s',
+                        '&:hover': {
+                          bgcolor: activeTab === item.id ? 'primary.100' : 'action.hover',
+                          color: activeTab === item.id ? 'primary.main' : 'text.primary',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', color: 'inherit' }}>{item.icon}</Box>
+                      <Typography variant="body2" fontWeight="inherit" color="inherit" noWrap>
+                        {item.label}
+                      </Typography>
+                    </Box>
+                  ))}
+                  {gi === NAV_GROUPS.length - 1 && <Box pb={1.5} />}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* ── Main content ── */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              overflow: 'hidden',
+              bgcolor: 'background.paper',
+            }}
+          >
+            {/* Section header — simple, pas de fond coloré */}
+            <Box
+              sx={{
+                px: { xs: 2.5, md: 3 },
+                py: 2,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+              }}
+            >
+              <Box sx={{ color: 'primary.main', display: 'flex' }}>{activeItem.icon}</Box>
+              <Box>
+                <Typography variant="subtitle1" fontWeight={700} lineHeight={1.3}>{activeItem.label}</Typography>
+                <Typography variant="caption" color="text.secondary">{activeItem.description}</Typography>
+              </Box>
+            </Box>
+
+            {/* Section content */}
+            <Box p={{ xs: 2, sm: 2.5, md: 3 }}>
+              {activeTab === 0 && (
+                <GeneralSection
+                  settings={settings}
+                  onUpdate={handleUpdateSetting}
+                  onFileSelect={handleFileSelect}
+                  logoFormat={logoFormat}
+                  setLogoFormat={setLogoFormat}
+                />
+              )}
+              {activeTab === 1 && <ModulesManager />}
+              {activeTab === 2 && (
+                <PrintSection
+                  settings={settings}
+                  printTemplate={printTemplate}
+                  printConfiguration={printConfiguration}
+                  onUpdateTemplate={handleUpdateTemplate}
+                  onUpdateConfiguration={handleUpdateConfiguration}
+                  onUpdate={handleUpdateSetting}
+                />
+              )}
+              {activeTab === 3 && (
+                <>
+                  <NotificationSection settings={settings} onUpdate={handleUpdateSetting} />
+                  <Divider sx={{ my: 4 }} />
+                  <PushNotificationSettings />
+                </>
+              )}
+              {activeTab === 4 && (
+                <EmailSection settings={settings} showSnackbar={showSnackbar} />
+              )}
+              {activeTab === 5 && (
+                <>
+                  <ProfileSection settings={settings} onUpdate={handleUpdateSetting} />
+                  <Divider sx={{ my: 4 }} />
+                  {/* Changement mot de passe inclus dans ProfileSection */}
+                </>
+              )}
+              {activeTab === 6 && (
+                <AppearanceSection settings={settings} onUpdate={handleUpdateSetting} />
+              )}
+              {activeTab === 7 && (
+                <DataSection settings={settings} showSnackbar={showSnackbar} />
+              )}
+
+              {/* Bouton de sauvegarde (masqué pour onglets sans save global) */}
+              {[0, 2, 6].includes(activeTab) && (
+                <Box mt={4}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    startIcon={<SaveIcon />}
+                    onClick={handleSaveAll}
+                    disabled={saving}
+                    fullWidth={isMobile}
+                  >
+                    {saving ? t('common:labels.loading') : t('settings:buttons.save')}
+                  </Button>
+                </Box>
+              )}
+            </Box>
           </Box>
         </Box>
-      </Card>
+      </Box>
 
       {/* Modal de cropping d'image */}
       <Dialog
@@ -637,7 +725,7 @@ const Settings = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar pour les notifications */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
@@ -657,16 +745,9 @@ const Settings = () => {
  */
 const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoFormat }) => {
   const { t } = useTranslation(['settings', 'common']);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        {t('settings:general.title')}
-      </Typography>
-      <Divider sx={{ mb: 2 }} />
-
       <Grid container spacing={2}>
         {/* Informations entreprise */}
         <Grid item xs={12} md={6}>
@@ -725,19 +806,19 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
 
         {/* Logo et Branding */}
         <Grid item xs={12}>
-          <Stack spacing={1.5}>
-            <Typography variant="caption" color="text.secondary" fontWeight={500}>
-              Format du logo
+          <Stack spacing={1}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Logo &amp; Marque
             </Typography>
-            {/* Format selector */}
-            <Stack direction="row" spacing={1} flexWrap="wrap">
+            <Divider />
+            <Stack direction="row" spacing={1} flexWrap="wrap" pt={0.5}>
               {LOGO_FORMATS.map((fmt) => (
                 <Box
                   key={fmt.value}
                   onClick={() => setLogoFormat(fmt.value)}
                   sx={{
                     px: 1.5,
-                    py: 0.75,
+                    py: 0.5,
                     borderRadius: 1.5,
                     border: '1.5px solid',
                     borderColor: logoFormat === fmt.value ? 'primary.main' : 'divider',
@@ -755,14 +836,12 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                 </Box>
               ))}
             </Stack>
-
-            {/* Logo preview + upload */}
-            <Stack direction="row" alignItems="flex-start" spacing={2}>
+            <Stack direction="row" alignItems="center" spacing={2}>
               <Box
                 sx={{
-                  width: logoFormat === 'landscape' ? 200 : logoFormat === 'portrait' ? 90 : 120,
-                  height: logoFormat === 'landscape' ? 50 : logoFormat === 'portrait' ? 120 : 120,
-                  borderRadius: 2,
+                  width: logoFormat === 'landscape' ? 160 : logoFormat === 'portrait' ? 72 : 80,
+                  height: logoFormat === 'landscape' ? 40 : logoFormat === 'portrait' ? 96 : 80,
+                  borderRadius: 1.5,
                   border: '2px dashed',
                   borderColor: settings.companyLogo ? 'transparent' : 'divider',
                   overflow: 'hidden',
@@ -771,7 +850,6 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                   justifyContent: 'center',
                   bgcolor: settings.companyLogo ? 'transparent' : 'action.hover',
                   flexShrink: 0,
-                  transition: 'all 0.2s',
                 }}
               >
                 {settings.companyLogo ? (
@@ -782,7 +860,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                     sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />
                 ) : (
-                  <Typography variant="caption" color="text.secondary" textAlign="center" px={1}>
+                  <Typography variant="caption" color="text.disabled" textAlign="center" px={1}>
                     Aperçu
                   </Typography>
                 )}
@@ -792,7 +870,6 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                 component="label"
                 startIcon={<CloudUploadIcon />}
                 size="small"
-                sx={{ alignSelf: 'center' }}
               >
                 {settings.companyLogo ? 'Changer le logo' : t('settings:logo.choose')}
                 <input
@@ -810,309 +887,280 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
           </Stack>
         </Grid>
 
-        {/* Couleur de marque - Compact */}
+        {/* Couleur de marque */}
         <Grid item xs={12} md={6}>
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" spacing={1} alignItems="center">
             <TextField
               type="color"
               value={settings.brandColor || '#2563eb'}
               onChange={(e) => onUpdate('brandColor', e.target.value)}
-              sx={{ width: 80 }}
+              sx={{ width: 56, '& .MuiInputBase-root': { height: 36 } }}
             />
             <TextField
               fullWidth
+              size="small"
               label="Couleur de marque"
               value={settings.brandColor || '#2563eb'}
               onChange={(e) => onUpdate('brandColor', e.target.value)}
-              size="small"
             />
           </Stack>
         </Grid>
 
-        {/* Section Informations légales et fiscales - Accordion */}
+        {/* Informations légales et fiscales */}
         <Grid item xs={12}>
-          <Accordion defaultExpanded={false}>
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {t('settings:general.legalInfo')}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                {/* Région fiscale */}
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            {t('settings:general.legalInfo')}
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{t('settings:general.taxRegion')}</InputLabel>
+                <Select
+                  value={settings.taxRegion || 'international'}
+                  onChange={(e) => onUpdate('taxRegion', e.target.value)}
+                  label={t('settings:general.taxRegion')}
+                >
+                  <MenuItem value="international">{t('settings:general.taxRegions.international')}</MenuItem>
+                  <MenuItem value="cameroon">{t('settings:general.taxRegions.cameroon')}</MenuItem>
+                  <MenuItem value="ohada">{t('settings:general.taxRegions.ohada')}</MenuItem>
+                  <MenuItem value="canada">{t('settings:general.taxRegions.canada')}</MenuItem>
+                  <MenuItem value="usa">{t('settings:general.taxRegions.usa')}</MenuItem>
+                  <MenuItem value="eu">{t('settings:general.taxRegions.eu')}</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{t('settings:general.defaultCurrency')}</InputLabel>
+                <Select
+                  value={settings.defaultCurrency || 'CAD'}
+                  onChange={(e) => onUpdate('defaultCurrency', e.target.value)}
+                  label={t('settings:general.defaultCurrency')}
+                >
+                  <MenuItem value="CAD">CAD - Dollar canadien</MenuItem>
+                  <MenuItem value="USD">USD - Dollar américain</MenuItem>
+                  <MenuItem value="EUR">EUR - Euro</MenuItem>
+                  <MenuItem value="GBP">GBP - Livre sterling</MenuItem>
+                  <MenuItem value="XAF">XAF - Franc CFA (Afrique centrale)</MenuItem>
+                  <MenuItem value="XOF">XOF - Franc CFA (Afrique de l'Ouest)</MenuItem>
+                  <MenuItem value="MAD">MAD - Dirham marocain</MenuItem>
+                  <MenuItem value="TND">TND - Dinar tunisien</MenuItem>
+                  <MenuItem value="NGN">NGN - Naira nigérian</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            {(settings.taxRegion === 'cameroon' || settings.taxRegion === 'ohada') && (
+              <>
                 <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{t('settings:general.taxRegion')}</InputLabel>
-                    <Select
-                      value={settings.taxRegion || 'international'}
-                      onChange={(e) => onUpdate('taxRegion', e.target.value)}
-                      label={t('settings:general.taxRegion')}
-                    >
-                      <MenuItem value="international">{t('settings:general.taxRegions.international')}</MenuItem>
-                      <MenuItem value="cameroon">{t('settings:general.taxRegions.cameroon')}</MenuItem>
-                      <MenuItem value="ohada">{t('settings:general.taxRegions.ohada')}</MenuItem>
-                      <MenuItem value="canada">{t('settings:general.taxRegions.canada')}</MenuItem>
-                      <MenuItem value="usa">{t('settings:general.taxRegions.usa')}</MenuItem>
-                      <MenuItem value="eu">{t('settings:general.taxRegions.eu')}</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('settings:general.niu')}
+                    placeholder="Ex: M123456789"
+                    value={settings.companyNiu || ''}
+                    onChange={(e) => onUpdate('companyNiu', e.target.value)}
+                    helperText={t('settings:general.niuHelper')}
+                  />
                 </Grid>
-
-                {/* Devise par défaut */}
                 <Grid item xs={12} md={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{t('settings:general.defaultCurrency')}</InputLabel>
-                    <Select
-                      value={settings.defaultCurrency || 'CAD'}
-                      onChange={(e) => onUpdate('defaultCurrency', e.target.value)}
-                      label={t('settings:general.defaultCurrency')}
-                    >
-                      <MenuItem value="CAD">CAD - Dollar canadien</MenuItem>
-                      <MenuItem value="USD">USD - Dollar américain</MenuItem>
-                      <MenuItem value="EUR">EUR - Euro</MenuItem>
-                      <MenuItem value="GBP">GBP - Livre sterling</MenuItem>
-                      <MenuItem value="XAF">XAF - Franc CFA (Afrique centrale)</MenuItem>
-                      <MenuItem value="XOF">XOF - Franc CFA (Afrique de l'Ouest)</MenuItem>
-                      <MenuItem value="MAD">MAD - Dirham marocain</MenuItem>
-                      <MenuItem value="TND">TND - Dinar tunisien</MenuItem>
-                      <MenuItem value="NGN">NGN - Naira nigérian</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('settings:general.rcNumber')}
+                    placeholder="Ex: RC/YDE/2024/A/123"
+                    value={settings.companyRcNumber || ''}
+                    onChange={(e) => onUpdate('companyRcNumber', e.target.value)}
+                    helperText={t('settings:general.rcHelper')}
+                  />
                 </Grid>
-
-                {/* Identifiants fiscaux Cameroun/OHADA */}
-                {(settings.taxRegion === 'cameroon' || settings.taxRegion === 'ohada') && (
-                  <>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label={t('settings:general.niu')}
-                        placeholder="Ex: M123456789"
-                        value={settings.companyNiu || ''}
-                        onChange={(e) => onUpdate('companyNiu', e.target.value)}
-                        helperText={t('settings:general.niuHelper')}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label={t('settings:general.rcNumber')}
-                        placeholder="Ex: RC/YDE/2024/A/123"
-                        value={settings.companyRcNumber || ''}
-                        onChange={(e) => onUpdate('companyRcNumber', e.target.value)}
-                        helperText={t('settings:general.rcHelper')}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label={t('settings:general.rccmNumber')}
-                        placeholder="Ex: RCCM/YDE/2024/A/123"
-                        value={settings.companyRccmNumber || ''}
-                        onChange={(e) => onUpdate('companyRccmNumber', e.target.value)}
-                        helperText={t('settings:general.rccmHelper')}
-                      />
-                    </Grid>
-                  </>
-                )}
-
-                {/* Identifiants fiscaux Canada */}
-                {settings.taxRegion === 'canada' && (
-                  <>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label={t('settings:general.neq')}
-                        placeholder="Ex: 1234567890"
-                        value={settings.companyNeq || ''}
-                        onChange={(e) => onUpdate('companyNeq', e.target.value)}
-                        helperText={t('settings:general.neqHelper')}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label={t('settings:general.gstNumber')}
-                        placeholder="Ex: 123456789 RT0001"
-                        value={settings.companyGstNumber || ''}
-                        onChange={(e) => onUpdate('companyGstNumber', e.target.value)}
-                        helperText={t('settings:general.gstHelper')}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        label={t('settings:general.qstNumber')}
-                        placeholder="Ex: 1234567890 TQ0001"
-                        value={settings.companyQstNumber || ''}
-                        onChange={(e) => onUpdate('companyQstNumber', e.target.value)}
-                        helperText={t('settings:general.qstHelper')}
-                      />
-                    </Grid>
-                  </>
-                )}
-
-                {/* Identifiants fiscaux USA */}
-                {settings.taxRegion === 'usa' && (
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label={t('settings:general.taxNumber')}
-                      placeholder="Ex: 12-3456789"
-                      value={settings.companyTaxNumber || ''}
-                      onChange={(e) => onUpdate('companyTaxNumber', e.target.value)}
-                      helperText={t('settings:general.taxNumberHelper')}
-                    />
-                  </Grid>
-                )}
-
-                {/* Identifiants fiscaux UE */}
-                {settings.taxRegion === 'eu' && (
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label={t('settings:general.vatNumber')}
-                      placeholder="Ex: FR12345678901"
-                      value={settings.companyVatNumber || ''}
-                      onChange={(e) => onUpdate('companyVatNumber', e.target.value)}
-                      helperText={t('settings:general.vatHelper')}
-                    />
-                  </Grid>
-                )}
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('settings:general.rccmNumber')}
+                    placeholder="Ex: RCCM/YDE/2024/A/123"
+                    value={settings.companyRccmNumber || ''}
+                    onChange={(e) => onUpdate('companyRccmNumber', e.target.value)}
+                    helperText={t('settings:general.rccmHelper')}
+                  />
+                </Grid>
+              </>
+            )}
+            {settings.taxRegion === 'canada' && (
+              <>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('settings:general.neq')}
+                    placeholder="Ex: 1234567890"
+                    value={settings.companyNeq || ''}
+                    onChange={(e) => onUpdate('companyNeq', e.target.value)}
+                    helperText={t('settings:general.neqHelper')}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('settings:general.gstNumber')}
+                    placeholder="Ex: 123456789 RT0001"
+                    value={settings.companyGstNumber || ''}
+                    onChange={(e) => onUpdate('companyGstNumber', e.target.value)}
+                    helperText={t('settings:general.gstHelper')}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('settings:general.qstNumber')}
+                    placeholder="Ex: 1234567890 TQ0001"
+                    value={settings.companyQstNumber || ''}
+                    onChange={(e) => onUpdate('companyQstNumber', e.target.value)}
+                    helperText={t('settings:general.qstHelper')}
+                  />
+                </Grid>
+              </>
+            )}
+            {settings.taxRegion === 'usa' && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label={t('settings:general.taxNumber')}
+                  placeholder="Ex: 12-3456789"
+                  value={settings.companyTaxNumber || ''}
+                  onChange={(e) => onUpdate('companyTaxNumber', e.target.value)}
+                  helperText={t('settings:general.taxNumberHelper')}
+                />
               </Grid>
-            </AccordionDetails>
-          </Accordion>
+            )}
+            {settings.taxRegion === 'eu' && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label={t('settings:general.vatNumber')}
+                  placeholder="Ex: FR12345678901"
+                  value={settings.companyVatNumber || ''}
+                  onChange={(e) => onUpdate('companyVatNumber', e.target.value)}
+                  helperText={t('settings:general.vatHelper')}
+                />
+              </Grid>
+            )}
+          </Grid>
         </Grid>
 
-        {/* Coordonnées bancaires - Accordion */}
+        {/* Coordonnées bancaires */}
         <Grid item xs={12}>
-          <Accordion defaultExpanded={false}>
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {t('settings:general.bankInfo')}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={t('settings:general.bankName')}
-                    placeholder={t('settings:general.bankNamePlaceholder')}
-                    value={settings.companyBankName || ''}
-                    onChange={(e) => onUpdate('companyBankName', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={t('settings:general.bankAccount')}
-                    placeholder={t('settings:general.bankAccountPlaceholder')}
-                    value={settings.companyBankAccount || ''}
-                    onChange={(e) => onUpdate('companyBankAccount', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={t('settings:general.bankSwift')}
-                    placeholder={t('settings:general.bankSwiftPlaceholder')}
-                    value={settings.companyBankSwift || ''}
-                    onChange={(e) => onUpdate('companyBankSwift', e.target.value)}
-                    helperText={t('settings:general.bankSwiftHelper')}
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            {t('settings:general.bankInfo')}
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('settings:general.bankName')}
+                placeholder={t('settings:general.bankNamePlaceholder')}
+                value={settings.companyBankName || ''}
+                onChange={(e) => onUpdate('companyBankName', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('settings:general.bankAccount')}
+                placeholder={t('settings:general.bankAccountPlaceholder')}
+                value={settings.companyBankAccount || ''}
+                onChange={(e) => onUpdate('companyBankAccount', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('settings:general.bankSwift')}
+                placeholder={t('settings:general.bankSwiftPlaceholder')}
+                value={settings.companyBankSwift || ''}
+                onChange={(e) => onUpdate('companyBankSwift', e.target.value)}
+                helperText={t('settings:general.bankSwiftHelper')}
+              />
+            </Grid>
+          </Grid>
         </Grid>
 
-        {/* Paramètres de facturation - Accordion */}
+        {/* Paramètres de facturation */}
         <Grid item xs={12}>
-          <Accordion defaultExpanded={false}>
-            <AccordionSummary expandIcon={<ExpandMore />}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Receipt sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{t('settings:billing.title')}</Typography>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                {/* Taux de taxes */}
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={t('settings:billing.gstHstRate')}
-                    type="number"
-                    value={settings.gstHstRate || 5}
-                    onChange={(e) => onUpdate('gstHstRate', parseFloat(e.target.value))}
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            {t('settings:billing.title')}
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('settings:billing.gstHstRate')}
+                type="number"
+                value={settings.gstHstRate || 5}
+                onChange={(e) => onUpdate('gstHstRate', parseFloat(e.target.value))}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('settings:billing.qstRate')}
+                type="number"
+                value={settings.qstRate || 9.975}
+                onChange={(e) => onUpdate('qstRate', parseFloat(e.target.value))}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('settings:billing.defaultTaxRate')}
+                type="number"
+                value={settings.defaultTaxRate || 15}
+                onChange={(e) => onUpdate('defaultTaxRate', parseFloat(e.target.value))}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={settings.enableTaxCalculation ?? true}
+                    onChange={(e) => onUpdate('enableTaxCalculation', e.target.checked)}
                   />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={t('settings:billing.qstRate')}
-                    type="number"
-                    value={settings.qstRate || 9.975}
-                    onChange={(e) => onUpdate('qstRate', parseFloat(e.target.value))}
-                  />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label={t('settings:billing.defaultTaxRate')}
-                    type="number"
-                    value={settings.defaultTaxRate || 15}
-                    onChange={(e) => onUpdate('defaultTaxRate', parseFloat(e.target.value))}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={settings.enableTaxCalculation ?? true}
-                        onChange={(e) => onUpdate('enableTaxCalculation', e.target.checked)}
-                      />
-                    }
-                    label={t('settings:billing.enableTaxCalculation')}
-                  />
-                </Grid>
-
-                {/* Préfixes */}
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label={t('settings:billing.invoicePrefix')}
-                    value={settings.invoicePrefix || 'FAC-'}
-                    onChange={(e) => onUpdate('invoicePrefix', e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label={t('settings:billing.poPrefix')}
-                    value={settings.poPrefix || 'BC-'}
-                    onChange={(e) => onUpdate('poPrefix', e.target.value)}
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
+                }
+                label={t('settings:billing.enableTaxCalculation')}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('settings:billing.invoicePrefix')}
+                value={settings.invoicePrefix || 'FAC-'}
+                onChange={(e) => onUpdate('invoicePrefix', e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label={t('settings:billing.poPrefix')}
+                value={settings.poPrefix || 'BC-'}
+                onChange={(e) => onUpdate('poPrefix', e.target.value)}
+              />
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     </Box>
@@ -1127,23 +1175,15 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        {t('settings:print.title')}
-      </Typography>
-      <Divider sx={{ mb: 3 }} />
-
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Configuration d'impression pour les factures et documents
-      </Alert>
-
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         {/* Format de papier */}
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
+          <FormControl fullWidth size="small">
             <InputLabel>{t('settings:print.paperSize')}</InputLabel>
             <Select
               value={settings?.paperSize || 'A4'}
               onChange={(e) => onUpdate('paperSize', e.target.value)}
+              label={t('settings:print.paperSize')}
             >
               <MenuItem value="A4">A4 (210 × 297 mm)</MenuItem>
               <MenuItem value="Letter">Letter (8.5 × 11 in)</MenuItem>
@@ -1157,11 +1197,12 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
 
         {/* Orientation */}
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
+          <FormControl fullWidth size="small">
             <InputLabel>{t('settings:print.orientation')}</InputLabel>
             <Select
               value={settings?.paperOrientation || 'portrait'}
               onChange={(e) => onUpdate('paperOrientation', e.target.value)}
+              label={t('settings:print.orientation')}
             >
               <MenuItem value="portrait">{t('settings:print.portrait')}</MenuItem>
               <MenuItem value="landscape">{t('settings:print.landscape')}</MenuItem>
@@ -1180,7 +1221,7 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
             }
             label="Afficher le QR Code"
           />
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -1 }}>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -0.5 }}>
             Ajoute un QR code sur les documents imprimés
           </Typography>
         </Grid>
@@ -1196,7 +1237,7 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
             }
             label="Afficher le Code-barres"
           />
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -1 }}>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -0.5 }}>
             Ajoute un code-barres sur les documents imprimés
           </Typography>
         </Grid>
@@ -1213,11 +1254,9 @@ const NotificationSection = ({ settings, onUpdate }) => {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        {t('settings:notificationsSection.title')}
+      <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1.5}>
+        Alertes in-app
       </Typography>
-      <Divider sx={{ mb: 3 }} />
-
       <Stack spacing={2}>
         <FormControlLabel
           control={
@@ -1268,18 +1307,14 @@ const AppearanceSection = ({ settings, onUpdate }) => {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        {t('settings:appearance.title')}
-      </Typography>
-      <Divider sx={{ mb: 3 }} />
-
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
+          <FormControl fullWidth size="small">
             <InputLabel>{t('settings:appearance.theme')}</InputLabel>
             <Select
               value={settings.theme || 'light'}
               onChange={(e) => onUpdate('theme', e.target.value)}
+              label={t('settings:appearance.theme')}
             >
               <MenuItem value="light">{t('settings:appearance.themeLight')}</MenuItem>
               <MenuItem value="dark">{t('settings:appearance.themeDark')}</MenuItem>
@@ -1288,11 +1323,12 @@ const AppearanceSection = ({ settings, onUpdate }) => {
           </FormControl>
         </Grid>
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
+          <FormControl fullWidth size="small">
             <InputLabel>{t('settings:general.language')}</InputLabel>
             <Select
               value={settings.language || 'fr'}
               onChange={(e) => onUpdate('language', e.target.value)}
+              label={t('settings:general.language')}
             >
               <MenuItem value="fr">{t('settings:general.languageFr')}</MenuItem>
               <MenuItem value="en">{t('settings:general.languageEn')}</MenuItem>
@@ -1300,11 +1336,12 @@ const AppearanceSection = ({ settings, onUpdate }) => {
           </FormControl>
         </Grid>
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
+          <FormControl fullWidth size="small">
             <InputLabel>{t('settings:appearance.dateFormat')}</InputLabel>
             <Select
               value={settings.dateFormat || 'DD/MM/YYYY'}
               onChange={(e) => onUpdate('dateFormat', e.target.value)}
+              label={t('settings:appearance.dateFormat')}
             >
               <MenuItem value="DD/MM/YYYY">DD/MM/YYYY</MenuItem>
               <MenuItem value="MM/DD/YYYY">MM/DD/YYYY</MenuItem>
@@ -1313,11 +1350,12 @@ const AppearanceSection = ({ settings, onUpdate }) => {
           </FormControl>
         </Grid>
         <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
+          <FormControl fullWidth size="small">
             <InputLabel>{t('settings:appearance.timeFormat')}</InputLabel>
             <Select
               value={settings.timeFormat || '24h'}
               onChange={(e) => onUpdate('timeFormat', e.target.value)}
+              label={t('settings:appearance.timeFormat')}
             >
               <MenuItem value="24h">{t('settings:appearance.timeFormat24')}</MenuItem>
               <MenuItem value="12h">{t('settings:appearance.timeFormat12')}</MenuItem>
@@ -1409,66 +1447,70 @@ const ProfileSection = ({ settings, onUpdate }) => {
   return (
     <Box>
       {/* Informations personnelles */}
-      <Typography variant="h6" gutterBottom>Informations personnelles</Typography>
-      <Divider sx={{ mb: 3 }} />
-      <Grid container spacing={3}>
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        Informations personnelles
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
+      <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth label="Prénom" value={profileData.first_name}
+          <TextField fullWidth size="small" label="Prénom" value={profileData.first_name}
             onChange={(e) => setProfileData(p => ({ ...p, first_name: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth label="Nom" value={profileData.last_name}
+          <TextField fullWidth size="small" label="Nom" value={profileData.last_name}
             onChange={(e) => setProfileData(p => ({ ...p, last_name: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth label="Adresse email" type="email" value={profileData.email}
+          <TextField fullWidth size="small" label="Adresse email" type="email" value={profileData.email}
             onChange={(e) => setProfileData(p => ({ ...p, email: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth label="Téléphone" value={profileData.phone}
+          <TextField fullWidth size="small" label="Téléphone" value={profileData.phone}
             onChange={(e) => setProfileData(p => ({ ...p, phone: e.target.value }))} />
         </Grid>
-        {profileSuccess && <Grid item xs={12}><Alert severity="success">{profileSuccess}</Alert></Grid>}
-        {profileError && <Grid item xs={12}><Alert severity="error">{profileError}</Alert></Grid>}
+        {profileSuccess && <Grid item xs={12}><Alert severity="success" sx={{ py: 0 }}>{profileSuccess}</Alert></Grid>}
+        {profileError && <Grid item xs={12}><Alert severity="error" sx={{ py: 0 }}>{profileError}</Alert></Grid>}
         <Grid item xs={12}>
-          <Button variant="contained" onClick={handleProfileSave} disabled={profileLoading}>
-            {profileLoading ? <CircularProgress size={20} /> : 'Enregistrer le profil'}
+          <Button variant="contained" size="small" onClick={handleProfileSave} disabled={profileLoading}>
+            {profileLoading ? <CircularProgress size={16} /> : 'Enregistrer le profil'}
           </Button>
         </Grid>
       </Grid>
 
-      <Divider sx={{ my: 4 }} />
+      <Divider sx={{ my: 3 }} />
 
       {/* Changement de mot de passe */}
-      <Typography variant="h6" gutterBottom>Modifier le mot de passe</Typography>
-      <Divider sx={{ mb: 3 }} />
-      <Grid container spacing={3}>
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        Modifier le mot de passe
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
+      <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
-          <TextField fullWidth type={showPasswords ? 'text' : 'password'} label="Mot de passe actuel"
+          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label="Mot de passe actuel"
             value={passwordData.currentPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={4}>
-          <TextField fullWidth type={showPasswords ? 'text' : 'password'} label="Nouveau mot de passe"
+          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label="Nouveau mot de passe"
             value={passwordData.newPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, newPassword: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={4}>
-          <TextField fullWidth type={showPasswords ? 'text' : 'password'} label="Confirmer le mot de passe"
+          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label="Confirmer le mot de passe"
             value={passwordData.confirmPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))} />
         </Grid>
-        {pwSuccess && <Grid item xs={12}><Alert severity="success">{pwSuccess}</Alert></Grid>}
-        {pwError && <Grid item xs={12}><Alert severity="error">{pwError}</Alert></Grid>}
+        {pwSuccess && <Grid item xs={12}><Alert severity="success" sx={{ py: 0 }}>{pwSuccess}</Alert></Grid>}
+        {pwError && <Grid item xs={12}><Alert severity="error" sx={{ py: 0 }}>{pwError}</Alert></Grid>}
         <Grid item xs={12}>
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
             <FormControlLabel
-              control={<Switch checked={showPasswords} onChange={(e) => setShowPasswords(e.target.checked)} />}
-              label="Afficher les mots de passe"
+              control={<Switch size="small" checked={showPasswords} onChange={(e) => setShowPasswords(e.target.checked)} />}
+              label={<Typography variant="body2">Afficher les mots de passe</Typography>}
             />
-            <Button variant="contained" onClick={handleSubmitPassword}
+            <Button variant="contained" size="small" onClick={handleSubmitPassword}
               disabled={pwLoading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}>
-              {pwLoading ? <CircularProgress size={20} /> : 'Changer le mot de passe'}
+              {pwLoading ? <CircularProgress size={16} /> : 'Changer le mot de passe'}
             </Button>
           </Stack>
         </Grid>
@@ -1555,159 +1597,125 @@ const DataSection = ({ settings, showSnackbar }) => {
 
   return (
     <Box>
-      {/* Section Import - Mise en avant */}
-      <Box sx={{ mb: 4 }}>
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
-          <CloudUploadIcon color="primary" />
-          <Typography variant="h6" fontWeight={600}>
-            Importer des données
-          </Typography>
-        </Box>
-
-        <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-          Importez facilement vos données depuis des fichiers Excel ou CSV.
-          Notre système détecte automatiquement les colonnes et suggère le mapping.
-        </Alert>
-
-        <Grid container spacing={2}>
-          {importTypes.map((type) => (
-            <Grid item xs={12} sm={4} key={type.key}>
-              <Paper
-                onClick={() => navigate('/settings/import')}
+      {/* Import */}
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        Importer des données
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
+      <Grid container spacing={2} mb={2}>
+        {importTypes.map((type) => (
+          <Grid item xs={12} sm={4} key={type.key}>
+            <Paper
+              onClick={() => navigate('/settings/import')}
+              variant="outlined"
+              sx={{
+                p: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                cursor: 'pointer',
+                borderRadius: 2,
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: type.color,
+                  bgcolor: `${type.color}08`,
+                },
+              }}
+            >
+              <Box
                 sx={{
-                  p: 3,
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  borderRadius: 3,
-                  border: '2px solid transparent',
-                  transition: 'all 0.25s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: `0 8px 24px ${type.color}20`,
-                    borderColor: type.color,
-                  },
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  bgcolor: `${type.color}18`,
+                  color: type.color,
                 }}
               >
-                <Box
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mx: 'auto',
-                    mb: 2,
-                    background: `linear-gradient(135deg, ${type.color}, ${type.color}cc)`,
-                    color: 'white',
-                  }}
-                >
-                  {type.icon}
-                </Box>
-                <Typography variant="subtitle1" fontWeight={600}>
+                {React.cloneElement(type.icon, { sx: { fontSize: 20 } })}
+              </Box>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>
                   {type.label}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="caption" color="text.secondary">
                   {type.description}
                 </Typography>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
+              </Box>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+      <Button
+        variant="contained"
+        size="small"
+        startIcon={<CloudUploadIcon />}
+        onClick={() => navigate('/settings/import')}
+      >
+        Ouvrir l'assistant d'import
+      </Button>
 
-        <Box textAlign="center" mt={3}>
+      <Divider sx={{ my: 3 }} />
+
+      {/* Export */}
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        Exporter vos données
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
+      <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+        {hasModule('suppliers') && (
           <Button
-            variant="contained"
-            size="large"
-            startIcon={<CloudUploadIcon />}
-            onClick={() => navigate('/settings/import')}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #2563eb, #1e40af)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #1e40af, #1e3a8a)',
-              },
-            }}
+            variant="outlined"
+            size="small"
+            startIcon={exporting ? <CircularProgress size={14} /> : <LocalShippingIcon />}
+            onClick={handleExportSuppliers}
+            disabled={exporting}
           >
-            Ouvrir l'assistant d'import
+            Fournisseurs (CSV)
           </Button>
-        </Box>
-      </Box>
+        )}
+        {hasModule('clients') && (
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={exporting ? <CircularProgress size={14} /> : <PeopleIcon />}
+            onClick={handleExportClients}
+            disabled={exporting}
+          >
+            Clients (CSV)
+          </Button>
+        )}
+        {hasModule('products') && (
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={exporting ? <CircularProgress size={14} /> : <InventoryIcon />}
+            onClick={handleExportProducts}
+            disabled={exporting}
+          >
+            Produits (CSV)
+          </Button>
+        )}
+      </Stack>
 
-      <Divider sx={{ my: 4 }} />
+      <Divider sx={{ my: 3 }} />
 
-      {/* Section Export */}
-      <Box sx={{ mb: 4 }}>
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
-          <FileDownloadIcon color="primary" />
-          <Typography variant="h6" fontWeight={600}>
-            Exporter vos données
-          </Typography>
-        </Box>
-
-        <Typography variant="body2" color="text.secondary" paragraph>
-          Exportez vos données pour sauvegarde ou migration vers un autre système.
-        </Typography>
-
-        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-          {hasModule('suppliers') && (
-            <Button
-              variant="outlined"
-              startIcon={exporting ? <CircularProgress size={16} /> : <LocalShippingIcon />}
-              onClick={handleExportSuppliers}
-              disabled={exporting}
-            >
-              Exporter Fournisseurs (CSV)
-            </Button>
-          )}
-          {hasModule('clients') && (
-            <Button
-              variant="outlined"
-              startIcon={exporting ? <CircularProgress size={16} /> : <PeopleIcon />}
-              onClick={handleExportClients}
-              disabled={exporting}
-            >
-              Exporter Clients (CSV)
-            </Button>
-          )}
-          {hasModule('products') && (
-            <Button
-              variant="outlined"
-              startIcon={exporting ? <CircularProgress size={16} /> : <InventoryIcon />}
-              onClick={handleExportProducts}
-              disabled={exporting}
-            >
-              Exporter Produits (CSV)
-            </Button>
-          )}
-        </Stack>
-      </Box>
-
-      <Divider sx={{ my: 4 }} />
-
-      {/* Section Historique */}
-      <Box>
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
-          <HistoryIcon color="primary" />
-          <Typography variant="h6" fontWeight={600}>
-            Historique des imports
-          </Typography>
-        </Box>
-
-        <Typography variant="body2" color="text.secondary" paragraph>
-          Consultez l'historique de vos imports et leur statut.
-        </Typography>
-
-        <Button
-          variant="outlined"
-          startIcon={<HistoryIcon />}
-          onClick={() => navigate('/migration/jobs')}
-        >
-          Voir l'historique complet
-        </Button>
-      </Box>
+      {/* Historique */}
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        Historique des imports
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<HistoryIcon />}
+        onClick={() => navigate('/migration/jobs')}
+      >
+        Voir l'historique complet
+      </Button>
     </Box>
   );
 };
@@ -1901,17 +1909,16 @@ const EmailSection = ({ settings, showSnackbar }) => {
 
   return (
     <Box>
-      <Typography variant="h6" fontWeight={600} gutterBottom>
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
         Configuration SMTP
       </Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
-        Configurez les paramètres SMTP pour envoyer des emails (factures, notifications, etc.)
-      </Typography>
+      <Divider sx={{ mb: 2 }} />
 
-      <Grid container spacing={3} sx={{ mt: 1 }}>
+      <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            size="small"
             label="Serveur SMTP"
             value={emailConfig?.smtp_host || ''}
             onChange={(e) => setEmailConfig({ ...emailConfig, smtp_host: e.target.value })}
@@ -1921,6 +1928,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            size="small"
             label="Port SMTP"
             type="number"
             value={emailConfig?.smtp_port || 587}
@@ -1930,6 +1938,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            size="small"
             label="Nom d'utilisateur"
             value={emailConfig?.smtp_username || ''}
             onChange={(e) => setEmailConfig({ ...emailConfig, smtp_username: e.target.value })}
@@ -1939,6 +1948,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            size="small"
             label="Mot de passe"
             type="password"
             value={emailConfig?.smtp_password || ''}
@@ -1947,30 +1957,33 @@ const EmailSection = ({ settings, showSnackbar }) => {
           />
         </Grid>
         <Grid item xs={12}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Stack direction="row" spacing={1} flexWrap="wrap">
             <FormControlLabel
               control={
                 <Switch
+                  size="small"
                   checked={emailConfig?.use_tls !== false}
                   onChange={(e) => setEmailConfig({ ...emailConfig, use_tls: e.target.checked })}
                 />
               }
-              label="Utiliser TLS"
+              label={<Typography variant="body2">Utiliser TLS</Typography>}
             />
             <FormControlLabel
               control={
                 <Switch
+                  size="small"
                   checked={emailConfig?.use_ssl || false}
                   onChange={(e) => setEmailConfig({ ...emailConfig, use_ssl: e.target.checked })}
                 />
               }
-              label="Utiliser SSL"
+              label={<Typography variant="body2">Utiliser SSL</Typography>}
             />
-          </Box>
+          </Stack>
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            size="small"
             label="Email expéditeur"
             type="email"
             value={emailConfig?.default_from_email || ''}
@@ -1981,6 +1994,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            size="small"
             label="Nom expéditeur"
             value={emailConfig?.default_from_name || ''}
             onChange={(e) => setEmailConfig({ ...emailConfig, default_from_name: e.target.value })}
@@ -1989,44 +2003,44 @@ const EmailSection = ({ settings, showSnackbar }) => {
         </Grid>
       </Grid>
 
-      <Divider sx={{ my: 3 }} />
+      <Divider sx={{ my: 2 }} />
 
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap" mb={2}>
         <Chip
+          size="small"
           label={emailConfig?.is_verified ? 'Vérifié' : 'Non vérifié'}
           color={emailConfig?.is_verified ? 'success' : 'default'}
           icon={emailConfig?.is_verified ? <CheckCircle /> : undefined}
         />
         {emailConfig?.last_verified_at && (
-          <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
+          <Typography variant="caption" color="text.secondary">
             Dernière vérification: {new Date(emailConfig.last_verified_at).toLocaleString()}
           </Typography>
         )}
-      </Box>
+      </Stack>
 
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
-        spacing={2}
-        sx={{
-          mt: 3,
-          flexWrap: 'wrap',
-          alignItems: { xs: 'stretch', sm: 'center' }
-        }}
+        spacing={1.5}
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        flexWrap="wrap"
       >
         <Button
           variant="contained"
+          size="small"
           onClick={handleSave}
           disabled={saving}
-          startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
+          startIcon={saving ? <CircularProgress size={14} /> : <SaveIcon />}
           fullWidth={isMobile}
         >
           Sauvegarder
         </Button>
         <Button
           variant="outlined"
+          size="small"
           onClick={handleVerify}
           disabled={testing}
-          startIcon={testing ? <CircularProgress size={16} /> : <CheckCircle />}
+          startIcon={testing ? <CircularProgress size={14} /> : <CheckCircle />}
           fullWidth={isMobile}
         >
           Vérifier la connexion
@@ -2037,16 +2051,14 @@ const EmailSection = ({ settings, showSnackbar }) => {
           type="email"
           value={testEmail}
           onChange={(e) => setTestEmail(e.target.value)}
-          sx={{
-            flex: { xs: '1 1 100%', sm: '1 1 auto' },
-            maxWidth: { xs: '100%', sm: 300 }
-          }}
+          sx={{ flex: { xs: '1 1 100%', sm: '1 1 auto' }, maxWidth: { xs: '100%', sm: 260 } }}
         />
         <Button
           variant="outlined"
+          size="small"
           onClick={handleTest}
           disabled={testing || !testEmail}
-          startIcon={testing ? <CircularProgress size={16} /> : <EmailIcon />}
+          startIcon={testing ? <CircularProgress size={14} /> : <EmailIcon />}
           fullWidth={isMobile}
         >
           Envoyer test

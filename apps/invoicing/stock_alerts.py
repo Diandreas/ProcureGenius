@@ -91,6 +91,20 @@ ProcureGenius - Système de gestion des achats
         except Exception as e:
             print(f"Erreur envoi email alerte stock: {e}")
 
+        # Push notification native
+        try:
+            from apps.ai_assistant.web_push_service import notify_stock_bas
+            users = User.objects.filter(is_staff=True, is_active=True)
+            for user in users:
+                notify_stock_bas(
+                    user, product.name,
+                    int(product.stock_quantity),
+                    int(product.low_stock_threshold),
+                    product_id=str(product.id)
+                )
+        except Exception:
+            pass
+
     @staticmethod
     def send_out_of_stock_alert(product, recipients=None):
         """
@@ -136,6 +150,15 @@ ProcureGenius - Système de gestion des achats
             )
         except Exception as e:
             print(f"Erreur envoi email alerte rupture: {e}")
+
+        # Push notification native
+        try:
+            from apps.ai_assistant.web_push_service import notify_stock_rupture
+            users = User.objects.filter(is_staff=True, is_active=True)
+            for user in users:
+                notify_stock_rupture(user, product.name, product_id=str(product.id))
+        except Exception:
+            pass
 
     @staticmethod
     def check_and_send_alerts():

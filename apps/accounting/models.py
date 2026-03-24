@@ -104,10 +104,11 @@ class JournalEntry(models.Model):
     ]
 
     SOURCE_CHOICES = [
-        ('manual',         _('Saisie manuelle')),
-        ('invoice',        _('Facture')),
-        ('payment',        _('Paiement')),
-        ('purchase_order', _('Bon de commande')),
+        ('manual',            _('Saisie manuelle')),
+        ('invoice',           _('Facture')),
+        ('invoice_reversal',  _('Extourne facture')),
+        ('payment',           _('Paiement')),
+        ('purchase_order',    _('Bon de commande')),
     ]
 
     id             = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

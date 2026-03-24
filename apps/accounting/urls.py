@@ -27,4 +27,7 @@ urlpatterns = [
 
     # Sync depuis facture
     path('sync-invoice/<uuid:invoice_id>/', views.SyncInvoiceView.as_view(), name='sync-invoice'),
+
+    # Initialisation du plan comptable par défaut
+    path('setup/', views.SetupAccountingView.as_view(), name='setup-accounting'),
 ]

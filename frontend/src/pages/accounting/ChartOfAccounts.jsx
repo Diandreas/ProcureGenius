@@ -5,7 +5,7 @@ import {
   TableContainer, Paper, Chip, IconButton, Tooltip, Dialog,
   DialogTitle, DialogContent, DialogActions, CircularProgress, Alert,
 } from '@mui/material';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Add, Edit, Delete, AutoFixHigh } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import accountingAPI from '../../services/accountingAPI';
 import AccountingNav from './AccountingNav';
@@ -28,7 +28,24 @@ export default function ChartOfAccounts() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [initializing, setInitializing] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+
+  const handleInitSetup = async () => {
+    setInitializing(true);
+    try {
+      const r = await accountingAPI.initSetup();
+      enqueueSnackbar(
+        `Plan comptable initialisé — ${r.data.accounts_created} comptes et ${r.data.journals_created} journaux créés`,
+        { variant: 'success' }
+      );
+      load();
+    } catch {
+      enqueueSnackbar('Erreur lors de l\'initialisation', { variant: 'error' });
+    } finally {
+      setInitializing(false);
+    }
+  };
 
   const load = () => {
     setLoading(true);
@@ -116,6 +133,28 @@ export default function ChartOfAccounts() {
 
       {loading && <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>}
       {error && <Alert severity="error">{error}</Alert>}
+
+      {/* Banner : plan comptable vide → proposer l'initialisation */}
+      {!loading && !error && accounts.length === 0 && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={initializing ? <CircularProgress size={14} color="inherit" /> : <AutoFixHigh />}
+              onClick={handleInitSetup}
+              disabled={initializing}
+            >
+              Initialiser
+            </Button>
+          }
+        >
+          <strong>Aucun plan comptable trouvé.</strong> Cliquez sur "Initialiser" pour créer automatiquement
+          les comptes et journaux standards (modifiables ensuite selon vos besoins).
+        </Alert>
+      )}
 
       {!loading && !error && (
         <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>

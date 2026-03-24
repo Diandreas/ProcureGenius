@@ -12,8 +12,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('accounts', '0002_client_marital_profession_antecedents'),
-        ('invoicing', '0007_add_healthcare_services_invoice_type'),
+        ('accounts', '0014_change_payment_terms_default_to_cash'),
+        ('invoicing', '0024_productbatch_supplier_batch_reference_and_more'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

@@ -12,6 +12,9 @@ from .serializers import ChatRequestSerializer, ConversationSerializer, MessageS
 # from .services import MistralService, ActionExecutor
 # from .ocr_service import OCRService
 from .action_manager import action_manager
+from .throttles import AIUserRateThrottle, AIOrgRateThrottle, AIBurstRateThrottle
+from .sanitizer import sanitize_user_input, detect_injection_attempt
+from .token_monitor import token_monitor
 import asyncio
 import logging
 
@@ -21,27 +24,56 @@ logger = logging.getLogger(__name__)
 class ChatView(APIView):
     """Endpoint principal pour le chat avec l'IA"""
     permission_classes = [IsAuthenticated]
-    
+    throttle_classes = [AIUserRateThrottle, AIOrgRateThrottle, AIBurstRateThrottle]
+
     def post(self, request):
         """Envoyer un message à l'IA"""
         serializer = ChatRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
         user_message = serializer.validated_data['message']
         conversation_id = serializer.validated_data.get('conversation_id')
         confirmation_data = serializer.validated_data.get('confirmation_data')
 
+        # Sanitisation anti-injection
+        user_message = sanitize_user_input(user_message)
+        detect_injection_attempt(serializer.validated_data['message'])
+
+        # Verification quota abonnement IA
+        org = getattr(request.user, 'organization', None)
+        if org:
+            try:
+                from apps.subscriptions.quota_service import QuotaService
+                quota = QuotaService.check_quota(org, 'ai_requests', raise_exception=False)
+                if not quota['can_proceed']:
+                    return Response({
+                        'error': 'quota_exceeded',
+                        'message': "Quota de requetes IA atteint pour ce mois. Passez au plan superieur.",
+                    }, status=status.HTTP_402_PAYMENT_REQUIRED)
+            except Exception:
+                pass  # Si le module quota n'est pas configure, on continue
+
+            # Verification budget tokens
+            budget_status = token_monitor.check_budget(org.id)
+            if not budget_status['allowed']:
+                return Response({
+                    'error': 'budget_exceeded',
+                    'message': budget_status['reason'],
+                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
         try:
-            # Récupérer ou créer la conversation
+            # Récupérer ou créer la conversation (filtre par org pour isolation multi-tenant)
+            user_org = getattr(request.user, 'organization', None)
             if conversation_id:
-                conversation = Conversation.objects.get(
-                    id=conversation_id,
-                    user=request.user
-                )
+                conv_filter = {'id': conversation_id, 'user': request.user}
+                if user_org:
+                    conv_filter['organization'] = user_org
+                conversation = Conversation.objects.get(**conv_filter)
             else:
                 conversation = Conversation.objects.create(
                     user=request.user,
+                    organization=user_org,
                     title=user_message[:50] + "..." if len(user_message) > 50 else user_message
                 )
             
@@ -348,6 +380,10 @@ class ChatView(APIView):
                         if not function_name:
                             logger.error(f"Cannot extract function name from tool_call: {tool_call}")
 
+                        # Valider les parametres d'outil avant execution
+                        from .tool_schemas import validate_tool_params
+                        _valid, arguments, _errors = validate_tool_params(function_name, arguments)
+
                         logger.info(f"Executing function: {function_name} with params: {arguments}")
 
                         action_result = async_to_sync(executor.execute)(
@@ -535,20 +571,166 @@ class ChatView(APIView):
                 'action_buttons': action_buttons  # Boutons cliquables
             }
 
+            # Incrementer le quota IA apres succes
+            if org:
+                try:
+                    from apps.subscriptions.quota_service import QuotaService
+                    QuotaService.increment_usage(org, 'ai_requests')
+                except Exception:
+                    pass
+
             return Response(response_data, status=status.HTTP_200_OK)
-            
+
         except Conversation.DoesNotExist:
             return Response(
-                {'error': 'Conversation not found'},
+                {'error': 'conversation_not_found', 'message': 'Conversation introuvable.'},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
-            import traceback
-            error_trace = traceback.format_exc()
-            logger.error(f"Chat error: {e}\n{error_trace}")
+            logger.error(f"Chat error: {e}", exc_info=True)
             return Response(
-                {'error': 'An error occurred while processing your request', 'detail': str(e)},
+                {'error': 'service_unavailable', 'message': "Une erreur est survenue. Veuillez reessayer."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class StreamingChatView(APIView):
+    """Endpoint streaming pour le chat IA — retourne les chunks en temps reel via SSE."""
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [AIUserRateThrottle, AIOrgRateThrottle, AIBurstRateThrottle]
+
+    def post(self, request):
+        from django.http import StreamingHttpResponse
+
+        serializer = ChatRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_message = serializer.validated_data['message']
+        conversation_id = serializer.validated_data.get('conversation_id')
+
+        # Sanitisation
+        user_message = sanitize_user_input(user_message)
+        detect_injection_attempt(serializer.validated_data['message'])
+
+        # Budget / quota checks
+        org = getattr(request.user, 'organization', None)
+        if org:
+            try:
+                from apps.subscriptions.quota_service import QuotaService
+                quota = QuotaService.check_quota(org, 'ai_requests', raise_exception=False)
+                if not quota['can_proceed']:
+                    return Response({
+                        'error': 'quota_exceeded',
+                        'message': "Quota de requetes IA atteint pour ce mois.",
+                    }, status=status.HTTP_402_PAYMENT_REQUIRED)
+            except Exception:
+                pass
+
+            budget_status = token_monitor.check_budget(org.id)
+            if not budget_status['allowed']:
+                return Response({
+                    'error': 'budget_exceeded',
+                    'message': budget_status['reason'],
+                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        try:
+            # Get or create conversation
+            user_org = getattr(request.user, 'organization', None)
+            if conversation_id:
+                conv_filter = {'id': conversation_id, 'user': request.user}
+                if user_org:
+                    conv_filter['organization'] = user_org
+                conversation = Conversation.objects.get(**conv_filter)
+            else:
+                conversation = Conversation.objects.create(
+                    user=request.user,
+                    organization=user_org,
+                    title=user_message[:50] + "..." if len(user_message) > 50 else user_message,
+                )
+
+            # Save user message
+            Message.objects.create(
+                conversation=conversation,
+                role='user',
+                content=user_message,
+            )
+
+            # Get history
+            history = list(
+                Message.objects.filter(conversation=conversation)
+                .order_by('created_at')
+                .values('role', 'content')[:-1]
+            )
+
+            from .services import MistralService
+            mistral_service = MistralService()
+
+            user = request.user
+            conv_id = str(conversation.id)
+
+            import json as _json
+
+            def event_stream():
+                full_content = ""
+                tokens_used = 0
+                try:
+                    for chunk in mistral_service.chat_stream(
+                        message=user_message,
+                        conversation_history=history,
+                        user_context={'user_id': user.id},
+                    ):
+                        if chunk['type'] == 'chunk':
+                            full_content += chunk['content']
+                            yield f"data: {_json.dumps({'type': 'chunk', 'content': chunk['content']})}\n\n"
+                        elif chunk['type'] == 'done':
+                            tokens_used = chunk.get('tokens_used', 0)
+                        elif chunk['type'] == 'error':
+                            yield f"data: {_json.dumps({'type': 'error', 'message': 'Une erreur est survenue.'})}\n\n"
+
+                    # Save AI response after stream completes
+                    ai_msg = Message.objects.create(
+                        conversation_id=conv_id,
+                        role='assistant',
+                        content=full_content,
+                        metadata={'tokens_used': tokens_used, 'streamed': True},
+                    )
+                    conversation.last_message_at = timezone.now()
+                    conversation.save()
+
+                    # Increment quota
+                    _org = getattr(user, 'organization', None)
+                    if _org:
+                        try:
+                            from apps.subscriptions.quota_service import QuotaService
+                            QuotaService.increment_usage(_org, 'ai_requests')
+                        except Exception:
+                            pass
+
+                    yield f"data: {_json.dumps({'type': 'done', 'conversation_id': conv_id, 'message_id': str(ai_msg.id), 'tokens_used': tokens_used})}\n\n"
+
+                except Exception as e:
+                    logger.error(f"Streaming error: {e}", exc_info=True)
+                    yield f"data: {_json.dumps({'type': 'error', 'message': 'Une erreur est survenue.'})}\n\n"
+
+            response = StreamingHttpResponse(
+                event_stream(),
+                content_type='text/event-stream',
+            )
+            response['Cache-Control'] = 'no-cache'
+            response['X-Accel-Buffering'] = 'no'
+            return response
+
+        except Conversation.DoesNotExist:
+            return Response(
+                {'error': 'conversation_not_found', 'message': 'Conversation introuvable.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            logger.error(f"StreamingChat error: {e}", exc_info=True)
+            return Response(
+                {'error': 'service_unavailable', 'message': "Une erreur est survenue. Veuillez reessayer."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -557,17 +739,22 @@ class ConversationListView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
+        user_org = getattr(request.user, 'organization', None)
+        conv_filter = {'user': request.user}
+        if user_org:
+            conv_filter['organization'] = user_org
         conversations = Conversation.objects.filter(
-            user=request.user
+            **conv_filter
         ).order_by('-last_message_at')
-        
+
         serializer = ConversationSerializer(conversations, many=True)
         return Response(serializer.data)
-    
+
     def post(self, request):
         """Créer une nouvelle conversation"""
         conversation = Conversation.objects.create(
             user=request.user,
+            organization=getattr(request.user, 'organization', None),
             title=request.data.get('title', 'Nouvelle conversation')
         )
         serializer = ConversationSerializer(conversation)
@@ -621,6 +808,7 @@ class ConversationDetailView(APIView):
 class DocumentAnalysisView(APIView):
     """Analyse de documents (factures, bons de commande scannés)"""
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIUserRateThrottle, AIOrgRateThrottle]
     parser_classes = [MultiPartParser, JSONParser]
     
     def post(self, request):
@@ -1023,6 +1211,7 @@ class QuickActionsView(APIView):
 class VoiceTranscriptionView(APIView):
     """Transcription de messages vocaux pour l'assistant IA"""
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIUserRateThrottle, AIOrgRateThrottle]
     parser_classes = [MultiPartParser]
 
     def post(self, request):
@@ -2062,6 +2251,7 @@ class ImportReviewRejectView(APIView):
 class GenerateTextView(APIView):
     """Endpoint for direct text/JSON generation without tool calling (used by contract form, etc.)"""
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AIUserRateThrottle, AIOrgRateThrottle]
 
     def post(self, request):
         prompt = request.data.get('prompt', '')
@@ -2096,3 +2286,129 @@ class GenerateTextView(APIView):
         except Exception as e:
             logger.error(f"GenerateTextView error: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Web Push Notifications
+# ─────────────────────────────────────────────────────────────────────────────
+
+class PushSubscribeView(APIView):
+    """POST /api/ai/push/subscribe/ — Enregistre une subscription push navigateur."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .models import PushSubscription
+        from django.conf import settings
+
+        endpoint = request.data.get('endpoint')
+        p256dh = request.data.get('p256dh')
+        auth = request.data.get('auth')
+
+        if not all([endpoint, p256dh, auth]):
+            return Response({'error': 'endpoint, p256dh et auth sont requis.'}, status=400)
+
+        user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
+        # Détecter un nom d'appareil lisible
+        if 'Chrome' in user_agent:
+            browser = 'Chrome'
+        elif 'Firefox' in user_agent:
+            browser = 'Firefox'
+        elif 'Safari' in user_agent:
+            browser = 'Safari'
+        elif 'Edge' in user_agent:
+            browser = 'Edge'
+        else:
+            browser = 'Navigateur'
+
+        if 'Windows' in user_agent:
+            os_name = 'Windows'
+        elif 'Android' in user_agent:
+            os_name = 'Android'
+        elif 'iPhone' in user_agent or 'iPad' in user_agent:
+            os_name = 'iOS'
+        elif 'Mac' in user_agent:
+            os_name = 'macOS'
+        elif 'Linux' in user_agent:
+            os_name = 'Linux'
+        else:
+            os_name = ''
+
+        device_name = f"{browser}{' — ' + os_name if os_name else ''}"
+
+        sub, created = PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={
+                'user': request.user,
+                'organization': getattr(request.user, 'organization', None),
+                'p256dh': p256dh,
+                'auth': auth,
+                'user_agent': user_agent,
+                'device_name': device_name,
+                'is_active': True,
+            }
+        )
+
+        return Response({
+            'success': True,
+            'created': created,
+            'device_name': device_name,
+            'vapid_public_key': getattr(settings, 'VAPID_PUBLIC_KEY', ''),
+        }, status=201 if created else 200)
+
+
+class PushUnsubscribeView(APIView):
+    """POST /api/ai/push/unsubscribe/ — Désactive une subscription push."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .models import PushSubscription
+        endpoint = request.data.get('endpoint')
+        if not endpoint:
+            return Response({'error': 'endpoint requis.'}, status=400)
+
+        PushSubscription.objects.filter(
+            user=request.user, endpoint=endpoint
+        ).update(is_active=False)
+
+        return Response({'success': True})
+
+
+class PushVapidKeyView(APIView):
+    """GET /api/ai/push/vapid-key/ — Retourne la clé publique VAPID."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.conf import settings
+        return Response({'vapid_public_key': getattr(settings, 'VAPID_PUBLIC_KEY', '')})
+
+
+class NotificationPreferencesView(APIView):
+    """GET/PUT /api/ai/push/preferences/ — Lit et met à jour les préférences push."""
+    permission_classes = [IsAuthenticated]
+
+    PREF_FIELDS = [
+        'push_stock_rupture', 'push_quota_atteint', 'push_facture_retard',
+        'push_stock_bas', 'push_facture_brouillon', 'push_bc_retard',
+        'push_lot_expirant', 'push_insight_ia',
+        'push_resume_hebdo', 'resume_hebdo_jour', 'resume_hebdo_heure',
+    ]
+
+    def get(self, request):
+        from .models import NotificationPreferences
+        prefs = NotificationPreferences.get_or_create_for_user(request.user)
+        data = {f: getattr(prefs, f) for f in self.PREF_FIELDS}
+        return Response(data)
+
+    def put(self, request):
+        from .models import NotificationPreferences
+        prefs = NotificationPreferences.get_or_create_for_user(request.user)
+        for field in self.PREF_FIELDS:
+            if field in request.data:
+                val = request.data[field]
+                # Forcer bool pour les champs booléens
+                if field.startswith('push_'):
+                    val = bool(val)
+                setattr(prefs, field, val)
+        prefs.save()
+        data = {f: getattr(prefs, f) for f in self.PREF_FIELDS}
+        return Response(data)

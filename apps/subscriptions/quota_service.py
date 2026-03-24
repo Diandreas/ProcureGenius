@@ -150,6 +150,15 @@ class QuotaService:
             'remaining': remaining,
         }
 
+        # Push notification quand quota ≥ 90%
+        if limit and limit > 0 and percentage >= 90:
+            try:
+                from apps.ai_assistant.push_triggers import push_quota_alert
+                for user in organization.users.filter(is_active=True):
+                    push_quota_alert(user, quota_type, used, limit)
+            except Exception:
+                pass
+
         # Raise exception if quota exceeded
         if not can_proceed and raise_exception:
             quota_info = cls.QUOTA_TYPES.get(quota_type, {})

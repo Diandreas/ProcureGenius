@@ -35,6 +35,10 @@ const accountingAPI = {
 
   // ── Sync facture ────────────────────────────────────────────────
   syncInvoice: (invoiceId) => api.post(`${BASE}/sync-invoice/${invoiceId}/`),
+
+  // ── Setup plan comptable ─────────────────────────────────────────
+  checkSetup: () => api.get(`${BASE}/setup/`),
+  initSetup: () => api.post(`${BASE}/setup/`),
 };
 
 export default accountingAPI;

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Button, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, Paper, Chip, CircularProgress, Alert, Card, CardContent,
-  Grid,
+  Grid, Stack,
 } from '@mui/material';
-import { CheckCircle, Cancel } from '@mui/icons-material';
+import { CheckCircle, Cancel, OpenInNew } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import accountingAPI from '../../services/accountingAPI';
@@ -14,6 +14,24 @@ import AccountingNav from './AccountingNav';
 
 const STATUS_COLORS = { draft: 'default', posted: 'success', cancelled: 'error' };
 const STATUS_LABELS = { draft: 'Brouillon', posted: 'Validée', cancelled: 'Annulée' };
+const SOURCE_LABELS = {
+  manual: 'Saisie manuelle',
+  invoice: 'Facture client',
+  invoice_reversal: 'Extourne facture',
+  payment: 'Paiement client',
+  purchase_order: 'Bon de commande',
+};
+
+function getSourceUrl(entry) {
+  if (entry.source === 'invoice' || entry.source === 'invoice_reversal' || entry.source === 'payment') {
+    if (entry.source_invoice_id) return `/invoices/${entry.source_invoice_id}`;
+    if (entry.reference) return `/invoices?search=${entry.reference}`;
+  }
+  if (entry.source === 'purchase_order') {
+    return `/purchase-orders?search=${entry.reference || ''}`;
+  }
+  return null;
+}
 
 export default function JournalEntryDetail() {
   const { id } = useParams();
@@ -81,7 +99,20 @@ export default function JournalEntryDetail() {
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <Typography variant="caption" color="text.secondary">Source</Typography>
-                  <Typography variant="body1">{entry.source_display}</Typography>
+                  <Box display="flex" alignItems="center" gap={0.5} mt={0.25}>
+                    <Typography variant="body1">{SOURCE_LABELS[entry.source] || entry.source_display}</Typography>
+                    {getSourceUrl(entry) && (
+                      <Chip
+                        label={entry.reference || 'Voir document'}
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        icon={<OpenInNew sx={{ fontSize: '0.75rem !important' }} />}
+                        onClick={() => navigate(getSourceUrl(entry))}
+                        sx={{ cursor: 'pointer', fontSize: '0.7rem', ml: 0.5 }}
+                      />
+                    )}
+                  </Box>
                 </Grid>
                 <Grid item xs={12} sm={8}>
                   <Typography variant="caption" color="text.secondary">Libellé</Typography>

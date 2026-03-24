@@ -128,6 +128,38 @@ class TokenMonitor:
             except Exception as e:
                 logger.error(f"Failed to send alert email: {e}")
 
+    def check_budget(self, organization_id: int) -> Dict:
+        """
+        Verifie si le budget tokens est depasse AVANT un appel IA.
+        Retourne {'allowed': bool, 'reason': str, 'usage': dict}
+        """
+        now = datetime.now()
+        hour_key = f"tokens_hour_{now.strftime('%Y%m%d_%H')}_{organization_id}"
+        day_key = f"tokens_day_{now.strftime('%Y%m%d')}_{organization_id}"
+
+        hourly = cache.get(hour_key, 0)
+        daily = cache.get(day_key, 0)
+
+        if hourly >= self.hourly_budget:
+            return {
+                'allowed': False,
+                'reason': "Budget horaire de tokens IA atteint. Reessayez dans quelques minutes.",
+                'usage': {'hourly': hourly, 'daily': daily}
+            }
+
+        if daily >= self.daily_budget:
+            return {
+                'allowed': False,
+                'reason': "Budget journalier de tokens IA atteint. Reessayez demain.",
+                'usage': {'hourly': hourly, 'daily': daily}
+            }
+
+        return {
+            'allowed': True,
+            'reason': '',
+            'usage': {'hourly': hourly, 'daily': daily}
+        }
+
     def get_usage_stats(self, organization_id: int) -> Dict:
         """Récupère les statistiques d'utilisation"""
         now = datetime.now()

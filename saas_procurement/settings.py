@@ -24,6 +24,11 @@ ALLOWED_HOSTS = ['*']  # À configurer pour production
 MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY', '')
 MISTRAL_MODEL = os.getenv('MISTRAL_MODEL', 'mistral-large-latest')
 
+# Web Push Notifications (VAPID)
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
+VAPID_CLAIMS_EMAIL = os.getenv('VAPID_CLAIMS_EMAIL', 'admin@procura.app')
+
 # Note: Tenant support désactivé pour SQLite en développement
 # DATABASE_ROUTERS = (
 #     'django_tenants.routers.TenantSyncRouter',
@@ -150,6 +155,27 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Toronto'
 
+# Celery Beat — tâches périodiques push notifications
+from celery.schedules import crontab  # noqa: E402
+
+CELERY_BEAT_SCHEDULE = {
+    # Vérifications quotidiennes à 9h (heure de Toronto)
+    'daily-push-checks': {
+        'task': 'ai_assistant.daily_push_checks',
+        'schedule': crontab(hour=9, minute=0),
+    },
+    # Résumé hebdo chaque lundi à 8h
+    'weekly-push-summary': {
+        'task': 'ai_assistant.weekly_push_summary',
+        'schedule': crontab(hour=8, minute=0, day_of_week='monday'),
+    },
+    # Nettoyage hebdo des vieilles conversations IA (dimanche 3h)
+    'cleanup-old-conversations': {
+        'task': 'ai_assistant.cleanup_old_conversations',
+        'schedule': crontab(hour=3, minute=0, day_of_week='sunday'),
+    },
+}
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -212,6 +238,11 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
+    'DEFAULT_THROTTLE_RATES': {
+        'ai_user': '100/hour',
+        'ai_org': '500/hour',
+        'ai_burst': '10/minute',
+    },
 }
 
 # CORS settings

@@ -91,7 +91,7 @@ class Command(BaseCommand):
         reset = options.get('reset', False)
 
         for org in orgs:
-            self.stdout.write(f'\n📊 Organisation : {org.name}')
+            self.stdout.write(f'\n[*] Organisation : {org.name}')
             accounts_created = 0
             accounts_updated = 0
 
@@ -127,9 +127,9 @@ class Command(BaseCommand):
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'  ✓ {accounts_created} comptes créés, {accounts_updated} mis à jour'
-                    f' | {journals_created} journaux créés'
+                    f'  OK {accounts_created} comptes crees, {accounts_updated} mis a jour'
+                    f' | {journals_created} journaux crees'
                 )
             )
 
-        self.stdout.write(self.style.SUCCESS('\n✅ Setup comptabilité terminé.'))
+        self.stdout.write(self.style.SUCCESS('\nSetup comptabilite termine.'))

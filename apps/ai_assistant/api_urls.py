@@ -6,6 +6,7 @@ app_name = 'ai_assistant_api'
 urlpatterns = [
     # Chat endpoints
     path('chat/', views.ChatView.as_view(), name='chat'),
+    path('chat/stream/', views.StreamingChatView.as_view(), name='chat_stream'),
     path('conversations/', views.ConversationListView.as_view(), name='conversations'),
     path('conversations/<uuid:conversation_id>/', views.ConversationDetailView.as_view(), name='conversation_detail'),
 
@@ -24,10 +25,16 @@ urlpatterns = [
     path('suggestions/<uuid:suggestion_id>/dismiss/', views.SuggestionDismissView.as_view(), name='suggestion_dismiss'),
     path('suggestions/<uuid:suggestion_id>/action-taken/', views.SuggestionActionTakenView.as_view(), name='suggestion_action_taken'),
 
-    # Notifications push IA
+    # Notifications push IA (in-app)
     path('notifications/', views.AINotificationsView.as_view(), name='notifications'),
     path('notifications/count/', views.AINotificationsCountView.as_view(), name='notifications_count'),
     path('notifications/<uuid:notification_id>/mark-read/', views.AINotificationMarkReadView.as_view(), name='notification_mark_read'),
+
+    # Web Push (native browser push)
+    path('push/vapid-key/', views.PushVapidKeyView.as_view(), name='push_vapid_key'),
+    path('push/subscribe/', views.PushSubscribeView.as_view(), name='push_subscribe'),
+    path('push/unsubscribe/', views.PushUnsubscribeView.as_view(), name='push_unsubscribe'),
+    path('push/preferences/', views.NotificationPreferencesView.as_view(), name='push_preferences'),
 
     # Import Reviews
     path('import-reviews/', views.ImportReviewListView.as_view(), name='import_reviews_list'),

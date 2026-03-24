@@ -155,47 +155,72 @@ async function networkFirstStrategy(request) {
   }
 }
 
-// Gestion des notifications push
+// ─── Gestion des Push Notifications ─────────────────────────────
 self.addEventListener('push', (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (e) {
+    payload = { title: 'Procura', body: event.data ? event.data.text() : 'Nouvelle notification' };
+  }
+
+  const title = payload.title || 'Procura';
+  const category = payload.category || 'important';
+
+  // Icône selon catégorie
+  const icon = category === 'critique' ? '/icon-192.png' : '/icon-192.png';
+
   const options = {
-    body: event.data ? event.data.text() : 'Nouvelle notification',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    vibrate: [100, 50, 100],
+    body: payload.body || '',
+    icon,
+    badge: '/badge-72.png',
+    tag: payload.tag || 'procura-notification',
     data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
+      url: payload.url || '/',
+      type: payload.type || '',
+      ...( payload.data || {} ),
     },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Voir',
-        icon: '/icon-192.png'
-      },
-      {
-        action: 'close',
-        title: 'Fermer',
-        icon: '/icon-192.png'
-      }
-    ]
+    requireInteraction: payload.requireInteraction || false,
+    vibrate: payload.vibrate || [100, 50, 100],
+    actions: payload.url ? [
+      { action: 'open', title: 'Voir' },
+      { action: 'dismiss', title: 'Ignorer' },
+    ] : [
+      { action: 'dismiss', title: 'Fermer' },
+    ],
   };
 
   event.waitUntil(
-    self.registration.showNotification('Application de Gestion', options)
+    self.registration.showNotification(title, options)
   );
 });
 
 // Gestion des clics sur les notifications
 self.addEventListener('notificationclick', (event) => {
-  if (DEBUG) console.log('Notification cliquée:', event.action);
   event.notification.close();
 
-  if (event.action === 'explore') {
-    // Ouvrir l'application
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
+  if (event.action === 'dismiss') return;
+
+  const targetUrl = (event.notification.data && event.notification.data.url)
+    ? event.notification.data.url
+    : '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Si l'app est déjà ouverte, focus + navigate
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.focus();
+          client.postMessage({ type: 'PUSH_NAVIGATE', url: targetUrl });
+          return;
+        }
+      }
+      // Sinon ouvrir une nouvelle fenêtre
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
 });
 
 // Synchronisation en arrière-plan

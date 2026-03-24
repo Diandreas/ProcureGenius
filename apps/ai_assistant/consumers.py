@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import Conversation, Message
 from .services import MistralService
+from .sanitizer import sanitize_user_input, detect_injection_attempt
 
 User = get_user_model()
 
@@ -59,10 +60,15 @@ class AIChatConsumer(AsyncWebsocketConsumer):
     async def handle_user_message(self, data):
         """Traite un message utilisateur"""
         user_message = data.get('message', '').strip()
-        
+        stream = data.get('stream', False)
+
         if not user_message:
             return
-        
+
+        # Sanitisation anti-injection
+        detect_injection_attempt(user_message)
+        user_message = sanitize_user_input(user_message)
+
         try:
             # Sauvegarder le message utilisateur
             user_msg = await self.save_user_message(user_message)
@@ -91,9 +97,13 @@ class AIChatConsumer(AsyncWebsocketConsumer):
                 }
             )
             
-            # Traiter avec l'IA
-            ai_response = await self.process_with_ai(user_message)
-            
+            if stream:
+                # Streaming mode: send chunks via WebSocket
+                ai_response = await self.process_with_ai_stream(user_message)
+            else:
+                # Classic mode: wait for full response
+                ai_response = await self.process_with_ai(user_message)
+
             # Arrêter l'indicateur de frappe
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -103,10 +113,10 @@ class AIChatConsumer(AsyncWebsocketConsumer):
                     'typing': False
                 }
             )
-            
+
             # Sauvegarder et diffuser la réponse IA
             ai_msg = await self.save_ai_message(ai_response)
-            
+
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -261,6 +271,58 @@ class AIChatConsumer(AsyncWebsocketConsumer):
 
         return ai_service.process_user_request(user_message, user_context)
     
+    @database_sync_to_async
+    def process_with_ai_stream(self, user_message):
+        """Traite le message avec streaming — envoie les chunks au WebSocket en temps reel."""
+        import asyncio
+        ai_service = MistralService()
+        conversation = Conversation.objects.get(id=self.conversation_id)
+
+        user_context = {
+            'user_id': self.user.id,
+            'organization': self.user.organization if hasattr(self.user, 'organization') else None,
+            'conversation_history': [
+                {'role': msg.role, 'content': msg.content}
+                for msg in conversation.messages.order_by('created_at')[-10:]
+            ],
+        }
+
+        full_content = ""
+        tokens_used = 0
+
+        for chunk in ai_service.chat_stream(
+            message=user_message,
+            conversation_history=user_context['conversation_history'],
+            user_context={'user_id': self.user.id},
+        ):
+            if chunk['type'] == 'chunk':
+                full_content += chunk['content']
+                # Send chunk directly to WebSocket (sync context, use channel_layer sync)
+                from asgiref.sync import async_to_sync
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'stream_chunk',
+                        'content': chunk['content'],
+                    }
+                )
+            elif chunk['type'] == 'done':
+                tokens_used = chunk.get('tokens_used', 0)
+
+        return {
+            'message': full_content,
+            'tokens': tokens_used,
+            'model': 'mistral-large',
+            'action_result': None,
+        }
+
+    async def stream_chunk(self, event):
+        """Envoie un chunk de streaming au WebSocket"""
+        await self.send(text_data=json.dumps({
+            'type': 'stream_chunk',
+            'content': event['content'],
+        }))
+
     @database_sync_to_async
     def rate_ai_message(self, message_id, rating, feedback):
         """Note un message IA"""

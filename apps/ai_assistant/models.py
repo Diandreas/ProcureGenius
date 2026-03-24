@@ -10,11 +10,16 @@ class Conversation(models.Model):
     """Conversation avec l'assistant IA"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("Utilisateur"))
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='ai_conversations', null=True, blank=True,
+        verbose_name=_("Organisation")
+    )
     title = models.CharField(max_length=200, verbose_name=_("Titre"))
     created_at = models.DateTimeField(auto_now_add=True)
     last_message_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True, verbose_name=_("Active"))
-    
+
     # Champs pour conversations proactives
     is_proactive = models.BooleanField(default=False, verbose_name=_("Conversation proactive"))
     proactive_source_id = models.UUIDField(null=True, blank=True, verbose_name=_("ID source proactive"))
@@ -465,3 +470,68 @@ class ProactiveConversation(models.Model):
         self.status = 'dismissed'
         self.dismissed_at = timezone.now()
         self.save()
+
+
+class PushSubscription(models.Model):
+    """Souscription Web Push d'un navigateur/appareil utilisateur"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='push_subscriptions')
+    organization = models.ForeignKey('accounts.Organization', on_delete=models.CASCADE, null=True, blank=True)
+
+    # Données de subscription envoyées par le navigateur
+    endpoint = models.TextField(unique=True)
+    p256dh = models.TextField()   # clé publique
+    auth = models.TextField()     # clé d'authentification
+
+    # Infos appareil
+    user_agent = models.CharField(max_length=500, blank=True)
+    device_name = models.CharField(max_length=100, blank=True)  # ex: "Chrome - Windows"
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Souscription Push"
+        verbose_name_plural = "Souscriptions Push"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.device_name or 'Appareil inconnu'}"
+
+
+class NotificationPreferences(models.Model):
+    """Préférences de notifications push par utilisateur"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='notification_preferences')
+
+    # ── Critique (non désactivable côté UX, mais stocké quand même) ──
+    push_stock_rupture = models.BooleanField(default=True)
+    push_quota_atteint = models.BooleanField(default=True)
+    push_facture_retard = models.BooleanField(default=True)
+
+    # ── Important (activé par défaut, désactivable) ──
+    push_stock_bas = models.BooleanField(default=True)
+    push_facture_brouillon = models.BooleanField(default=True)
+    push_bc_retard = models.BooleanField(default=True)
+    push_lot_expirant = models.BooleanField(default=True)
+    push_insight_ia = models.BooleanField(default=True)
+
+    # ── Résumé hebdo ──
+    push_resume_hebdo = models.BooleanField(default=True)
+    resume_hebdo_jour = models.IntegerField(default=1)   # 1=lundi
+    resume_hebdo_heure = models.IntegerField(default=8)  # 8h00
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Préférences notifications"
+        verbose_name_plural = "Préférences notifications"
+
+    def __str__(self):
+        return f"Prefs notifications - {self.user.username}"
+
+    @classmethod
+    def get_or_create_for_user(cls, user):
+        prefs, _ = cls.objects.get_or_create(user=user)
+        return prefs

@@ -62,6 +62,9 @@ rapidfuzz>=3.0.0
 # Internationalisation
 django-modeltranslation==0.18.11
 
+# Web Push Notifications
+pywebpush==2.0.0
+
 # Utilitaires
 python-dotenv==1.0.0
 django-extensions==3.2.3

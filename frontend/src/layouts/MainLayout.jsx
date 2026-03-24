@@ -125,16 +125,8 @@ function MainLayout() {
     { text: t('navigation:menu.contracts'), iconSrc: '/icon/contract.png', path: '/contracts', moduleId: 'contracts', isCore: false },
     { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
 
-    // Comptabilité
-    { divider: true, sectionLabel: 'Comptabilité' },
-    { text: 'Comptabilité', iconSrc: '/icon/bill.png', path: '/accounting', moduleId: 'dashboard', isCore: true },
-    { text: 'Plan comptable', iconSrc: '/icon/bill.png', path: '/accounting/chart-of-accounts', moduleId: 'dashboard', isCore: true },
-    { text: 'Écritures', iconSrc: '/icon/bill.png', path: '/accounting/entries', moduleId: 'dashboard', isCore: true },
-    { text: 'Balance', iconSrc: '/icon/analysis.png', path: '/accounting/reports/trial-balance', moduleId: 'dashboard', isCore: true },
-    { text: 'Grand livre', iconSrc: '/icon/analysis.png', path: '/accounting/reports/general-ledger', moduleId: 'dashboard', isCore: true },
-    { text: 'Compte de résultat', iconSrc: '/icon/analysis.png', path: '/accounting/reports/income-statement', moduleId: 'dashboard', isCore: true },
-    { text: 'Bilan comptable', iconSrc: '/icon/analysis.png', path: '/accounting/reports/balance-sheet', moduleId: 'dashboard', isCore: true },
-    { text: 'SIG', iconSrc: '/icon/analysis.png', path: '/accounting/reports/sig', moduleId: 'dashboard', isCore: true },
+    { divider: true },
+    { text: 'Comptabilité', iconSrc: '/icon/analysis.png', path: '/accounting', moduleId: 'dashboard', isCore: true, matchPrefix: '/accounting' },
   ];
 
   const [userPermissions, setUserPermissions] = useState(null);
@@ -380,7 +372,7 @@ function MainLayout() {
             }
 
             const isSelected = location.pathname === item.path ||
-              (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+              (item.matchPrefix ? location.pathname.startsWith(item.matchPrefix) : (item.path !== '/dashboard' && location.pathname.startsWith(item.path)));
 
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
