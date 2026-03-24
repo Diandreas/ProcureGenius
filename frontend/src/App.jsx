@@ -657,35 +657,13 @@ function App() {
 
   // Fonction pour déterminer si l'onboarding est nécessaire
   const checkIfOnboardingNeeded = (userData) => {
-    // 1. Vérifier si onboarding_completed n'est pas explicitement true
+    // Règle principale : si onboarding_completed est explicitement true → pas besoin
     if (userData.preferences?.onboarding_completed === true) {
       return false;
     }
-
-    // 2. Vérifier si les informations essentielles sont vides
-    const organization = userData.organization;
-
-    // Si pas d'organisation, onboarding nécessaire
-    if (!organization) {
-      return true;
-    }
-
-    // Si le nom de l'organisation est vide ou générique, onboarding nécessaire
-    if (!organization.name || organization.name.startsWith('Organization ')) {
-      return true;
-    }
-
-    // 3. Vérifier les informations de l'utilisateur
-    const user = userData;
-
-    // Si le prénom ou nom est vide/générique, onboarding nécessaire
-    if (!user.first_name || !user.last_name ||
-      user.first_name === 'User' || user.last_name === 'User') {
-      return true;
-    }
-
-    // 4. Si toutes les vérifications passent, pas besoin d'onboarding
-    return false;
+    // Dans tous les autres cas (undefined, false, null) → afficher l'onboarding
+    // Cela couvre les nouveaux comptes et les comptes qui n'ont jamais fini l'onboarding
+    return true;
   };
 
   const checkOnboardingStatus = async () => {
@@ -696,18 +674,25 @@ function App() {
         return;
       }
 
+      // Si on est déjà sur /onboarding, ne pas re-checker
+      if (window.location.pathname === '/onboarding') {
+        setOnboardingChecked(true);
+        return;
+      }
+
       const response = await fetch('/api/v1/accounts/profile/', {
         headers: { 'Authorization': `Token ${authToken}` },
       });
 
       if (response.ok) {
         const data = await response.json();
-
-        // Vérifier si l'onboarding est nécessaire
         const needsOnboarding = checkIfOnboardingNeeded(data);
 
-        if (needsOnboarding && window.location.pathname !== '/onboarding') {
-          window.location.href = '/onboarding';
+        if (needsOnboarding) {
+          // Mettre onboardingChecked à true D'ABORD pour que le Router soit monté,
+          // puis rediriger — sinon la route /onboarding n'existe pas encore
+          setOnboardingChecked(true);
+          window.location.replace('/onboarding');
           return;
         }
       }

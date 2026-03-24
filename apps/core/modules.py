@@ -18,9 +18,10 @@ class Modules:
     E_SOURCING = 'e-sourcing'
     CONTRACTS = 'contracts'
     ANALYTICS = 'analytics'
-    
-    # Always available to admins (not controllable by profiles)
+    ACCOUNTING = 'accounting'
     AI_ASSISTANT = 'ai-assistant'
+
+    # Admin-only (not selectable in onboarding)
     INTEGRATIONS = 'integrations'
     DATA_MIGRATION = 'data-migration'
 
@@ -81,11 +82,22 @@ MODULE_METADATA = {
         'icon': 'analytics',
         'always_enabled': False,
     },
+    Modules.ACCOUNTING: {
+        'name': _('Comptabilité'),
+        'description': _('Écritures comptables en partie double, plan comptable'),
+        'icon': 'account_balance',
+        'always_enabled': False,
+    },
+    Modules.AI_ASSISTANT: {
+        'name': _('Assistant IA'),
+        'description': _('Automatisation intelligente de toutes vos tâches'),
+        'icon': 'smart_toy',
+        'always_enabled': False,
+    },
 }
 
-# Admin-only modules (always available)
+# Admin-only modules (not selectable by users)
 ADMIN_MODULES = [
-    Modules.AI_ASSISTANT,
     Modules.INTEGRATIONS,
     Modules.DATA_MIGRATION,
 ]
@@ -128,6 +140,8 @@ PROFILE_MODULES = {
         Modules.INVOICES,
         Modules.PRODUCTS,
         Modules.CLIENTS,
+        Modules.ACCOUNTING,
+        Modules.AI_ASSISTANT,
     ],
     ProfileTypes.STRATEGIC: [
         Modules.DASHBOARD,
@@ -137,6 +151,8 @@ PROFILE_MODULES = {
         Modules.E_SOURCING,
         Modules.CONTRACTS,
         Modules.ANALYTICS,
+        Modules.ACCOUNTING,
+        Modules.AI_ASSISTANT,
     ],
     ProfileTypes.ENTERPRISE: [
         Modules.DASHBOARD,
@@ -148,6 +164,8 @@ PROFILE_MODULES = {
         Modules.E_SOURCING,
         Modules.CONTRACTS,
         Modules.ANALYTICS,
+        Modules.ACCOUNTING,
+        Modules.AI_ASSISTANT,
     ],
 }
 

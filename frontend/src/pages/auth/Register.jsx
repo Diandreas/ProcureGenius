@@ -130,11 +130,13 @@ function Register() {
         }));
 
         // Redirect to onboarding setup
+        // window.location.replace force un rechargement complet pour que
+        // checkOnboardingStatus dans App.jsx voit le nouveau token et
+        // que le Router soit correctement monté avec la route /onboarding
         if (response.data.requires_onboarding) {
-          navigate('/onboarding');
+          window.location.replace('/onboarding');
         } else {
-          // Fallback: redirect to dashboard if onboarding already completed
-          navigate('/dashboard');
+          window.location.replace('/dashboard');
         }
       } else {
         // Fallback: show success and redirect to login

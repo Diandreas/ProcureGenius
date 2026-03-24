@@ -29,7 +29,6 @@ import {
 } from '@mui/material';
 import {
   Business,
-  Upload,
   CheckCircle,
   Dashboard as DashboardIcon,
   ShoppingCart,
@@ -43,23 +42,90 @@ import {
   CelebrationOutlined,
   LocationOn,
   AccountBalance,
+  SmartToy,
+  Description,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 
 const steps = ['Entreprise', 'Fiscal', 'Modules'];
 
-// Modules disponibles
+// Modules disponibles — doit correspondre exactement aux codes dans apps/core/modules.py
 const AVAILABLE_MODULES = [
-  { id: 'dashboard', name: 'Tableau de bord', icon: <DashboardIcon />, required: true },
-  { id: 'suppliers', name: 'Fournisseurs', icon: <Business />, recommended: true },
-  { id: 'purchase-orders', name: 'Bons de commande', icon: <ShoppingCart />, recommended: true },
-  { id: 'invoices', name: 'Factures', icon: <Receipt />, recommended: true },
-  { id: 'products', name: 'Produits & Stock', icon: <Inventory /> },
-  { id: 'clients', name: 'Clients', icon: <People /> },
-  { id: 'e-sourcing', name: 'E-Sourcing (RFQ)', icon: <CompareArrows /> },
-  { id: 'contracts', name: 'Contrats', icon: <Gavel /> },
-  { id: 'analytics', name: 'Analytics', icon: <Analytics /> },
+  {
+    id: 'dashboard',
+    name: 'Tableau de bord',
+    description: 'Vue d\'ensemble, statistiques et activité récente',
+    icon: <DashboardIcon />,
+    required: true,
+  },
+  {
+    id: 'suppliers',
+    name: 'Fournisseurs',
+    description: 'Gestion de votre base fournisseurs',
+    icon: <Business />,
+    recommended: true,
+  },
+  {
+    id: 'purchase-orders',
+    name: 'Bons de commande',
+    description: 'Création et suivi des commandes fournisseurs',
+    icon: <ShoppingCart />,
+    recommended: true,
+    requires: 'suppliers',
+  },
+  {
+    id: 'invoices',
+    name: 'Factures',
+    description: 'Facturation clients et suivi des paiements',
+    icon: <Receipt />,
+    recommended: true,
+  },
+  {
+    id: 'clients',
+    name: 'Clients',
+    description: 'Gestion de votre portefeuille clients',
+    icon: <People />,
+    recommended: true,
+  },
+  {
+    id: 'products',
+    name: 'Produits & Stock',
+    description: 'Catalogue produits et gestion des stocks',
+    icon: <Inventory />,
+  },
+  {
+    id: 'accounting',
+    name: 'Comptabilité',
+    description: 'Écritures comptables en partie double, plan comptable',
+    icon: <AccountBalance />,
+  },
+  {
+    id: 'analytics',
+    name: 'Analytics',
+    description: 'Rapports, analyses et tableaux de bord avancés',
+    icon: <Analytics />,
+  },
+  {
+    id: 'contracts',
+    name: 'Contrats',
+    description: 'Gestion et suivi des contrats fournisseurs',
+    icon: <Description />,
+    requires: 'suppliers',
+  },
+  {
+    id: 'e-sourcing',
+    name: 'E-Sourcing (RFQ)',
+    description: 'Appels d\'offres et mise en concurrence des fournisseurs',
+    icon: <CompareArrows />,
+    requires: 'suppliers',
+  },
+  {
+    id: 'ai-assistant',
+    name: 'Assistant IA',
+    description: 'Automatisation intelligente de toutes vos tâches',
+    icon: <SmartToy />,
+  },
 ];
 
 // Régions fiscales
@@ -107,8 +173,8 @@ function OnboardingSetup() {
     defaultCurrency: 'CAD',
     defaultTaxRate: 15,
 
-    // Étape 2 : Modules
-    selectedModules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices'],
+    // Étape 2 : Modules — sélection par défaut recommandée
+    selectedModules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'clients'],
   });
 
   const handleChange = (field, value) => {
@@ -128,12 +194,30 @@ function OnboardingSetup() {
   };
 
   const handleModuleToggle = (moduleId) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedModules: prev.selectedModules.includes(moduleId)
-        ? prev.selectedModules.filter(id => id !== moduleId && id !== 'dashboard')
-        : [...prev.selectedModules, moduleId],
-    }));
+    const module = AVAILABLE_MODULES.find(m => m.id === moduleId);
+    setFormData(prev => {
+      const current = prev.selectedModules;
+      if (current.includes(moduleId)) {
+        // Désactiver ce module + tous ceux qui en dépendent
+        const dependents = AVAILABLE_MODULES
+          .filter(m => m.requires === moduleId)
+          .map(m => m.id);
+        return {
+          ...prev,
+          selectedModules: current.filter(id => id !== moduleId && !dependents.includes(id)),
+        };
+      } else {
+        // Activer ce module + sa dépendance si nécessaire
+        const toAdd = [moduleId];
+        if (module?.requires && !current.includes(module.requires)) {
+          toAdd.push(module.requires);
+        }
+        return {
+          ...prev,
+          selectedModules: [...current, ...toAdd],
+        };
+      }
+    });
   };
 
   const handleNext = () => {
@@ -158,7 +242,7 @@ function OnboardingSetup() {
       settingsFormData.append('company_name', formData.companyName);
       settingsFormData.append('tax_region', formData.taxRegion);
       settingsFormData.append('default_currency', formData.defaultCurrency);
-      settingsFormData.append('default_tax_rate', formData.defaultTaxRate);
+      settingsFormData.append('default_tax_rate', isNaN(formData.defaultTaxRate) ? 0 : formData.defaultTaxRate);
 
       if (formData.logo) {
         settingsFormData.append('company_logo', formData.logo);
@@ -181,6 +265,7 @@ function OnboardingSetup() {
       settingsFormData.append('enabled_modules', JSON.stringify(formData.selectedModules));
 
       // Use correct endpoint for organization settings
+      console.log('Onboarding POST data:', Object.fromEntries(settingsFormData));
       await api.post('/accounts/organization/settings/', settingsFormData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -222,7 +307,9 @@ function OnboardingSetup() {
       setActiveStep(3);
     } catch (error) {
       console.error('Onboarding error:', error);
-      enqueueSnackbar('Erreur lors de la sauvegarde. Veuillez réessayer.', { variant: 'error' });
+      const errorMsg = error.response?.data?.error || error.response?.data?.detail || error.message || 'Erreur inconnue';
+      console.error('Onboarding error detail:', errorMsg, 'Status:', error.response?.status, 'Data:', error.response?.data);
+      enqueueSnackbar(`Erreur: ${errorMsg}`, { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -494,6 +581,9 @@ function OnboardingSetup() {
                 const isSelected = formData.selectedModules.includes(module.id);
                 const isRequired = module.required;
                 const isRecommended = module.recommended;
+                const depName = module.requires
+                  ? AVAILABLE_MODULES.find(m => m.id === module.requires)?.name
+                  : null;
 
                 return (
                   <Grid item xs={12} sm={6} md={4} key={module.id}>
@@ -505,6 +595,7 @@ function OnboardingSetup() {
                         borderColor: isSelected ? 'primary.main' : 'divider',
                         bgcolor: isSelected ? 'primary.50' : 'background.paper',
                         transition: 'all 0.15s ease',
+                        height: '100%',
                         '&:hover': {
                           borderColor: isRequired ? 'divider' : 'primary.main',
                           transform: isRequired ? 'none' : 'translateY(-2px)',
@@ -513,7 +604,7 @@ function OnboardingSetup() {
                       }}
                       onClick={() => !isRequired && handleModuleToggle(module.id)}
                     >
-                      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
                         <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
                           <Box
                             sx={{
@@ -529,17 +620,25 @@ function OnboardingSetup() {
                             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                               {module.name}
                             </Typography>
-                            <Box sx={{ mt: 0.75 }}>
+                            {module.description && (
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, lineHeight: 1.4 }}>
+                                {module.description}
+                              </Typography>
+                            )}
+                            <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                               {isRequired && (
                                 <Chip label="Requis" size="small" color="primary" variant="outlined" />
                               )}
                               {!isRequired && isRecommended && (
-                                <Chip label="Recommandé" size="small" color="secondary" variant="outlined" />
+                                <Chip label="Recommandé" size="small" color="success" variant="outlined" />
+                              )}
+                              {depName && (
+                                <Chip label={`Nécessite : ${depName}`} size="small" color="default" variant="outlined" />
                               )}
                             </Box>
                           </Box>
                           {isSelected && (
-                            <CheckCircle color="primary" fontSize="small" sx={{ flexShrink: 0, mt: 0.25 }} />
+                            <CheckCircle color="primary" fontSize="small" sx={{ flexShrink: 0, mt: 0.25, ml: 0.5 }} />
                           )}
                         </Box>
                       </CardContent>
@@ -550,8 +649,8 @@ function OnboardingSetup() {
             </Grid>
 
             <Alert severity="info" sx={{ mt: 3, borderRadius: 2 }}>
-              {formData.selectedModules.length} module(s) sélectionné(s). Vous pourrez activer ou désactiver
-              des modules à tout moment depuis les paramètres.
+              <strong>{formData.selectedModules.length} module(s) sélectionné(s).</strong>{' '}
+              Vous pourrez activer ou désactiver des modules à tout moment depuis les Paramètres.
             </Alert>
           </Box>
         );
