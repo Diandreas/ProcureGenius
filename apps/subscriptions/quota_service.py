@@ -103,17 +103,13 @@ class QuotaService:
         subscription = cls.get_subscription(organization)
 
         if not subscription:
-            # No subscription = default to free plan restrictions
-            if raise_exception:
-                raise QuotaExceededException(
-                    detail=_('No active subscription found. Please subscribe to continue.')
-                )
+            # No subscription = allow access (free tier, no limits enforced yet)
             return {
-                'can_proceed': False,
+                'can_proceed': True,
                 'used': 0,
-                'limit': 0,
-                'percentage': 100,
-                'remaining': 0,
+                'limit': None,
+                'percentage': 0,
+                'remaining': -1,
             }
 
         # Check if subscription is active
