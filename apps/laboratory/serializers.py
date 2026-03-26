@@ -196,6 +196,7 @@ class LabTestSerializer(serializers.ModelSerializer):
             'is_active',
             'requires_approval',
             'use_large_layout',
+            'show_on_new_page',
             'has_parameters',
             'parameters',
             'linked_product',

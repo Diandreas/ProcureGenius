@@ -82,7 +82,7 @@ class LabTestAdmin(admin.ModelAdmin):
             'fields': ('estimated_turnaround_hours', 'methodology')
         }),
         ('Status', {
-            'fields': ('is_active', 'requires_approval')
+            'fields': ('is_active', 'requires_approval', 'use_large_layout', 'show_on_new_page')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),

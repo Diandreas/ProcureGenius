@@ -208,7 +208,7 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
                     'large_items': []
                 }
             
-            if entry['item'].lab_test.use_large_layout:
+            if entry['item'].lab_test.use_large_layout or entry['item'].lab_test.show_on_new_page:
                 categories_data[cat_id]['large_items'].append(entry)
             elif entry['parameter_results_grouped']:
                 categories_data[cat_id]['compound_items'].append(entry)

@@ -237,6 +237,11 @@ class LabTest(models.Model):
         verbose_name=_("Utiliser un affichage large"),
         help_text=_("Affiche le résultat sur toute la largeur (recommandé pour la bactériologie)")
     )
+    show_on_new_page = models.BooleanField(
+        default=False,
+        verbose_name=_("Afficher seul sur une page"),
+        help_text=_("Force le passage à une nouvelle page pour cet examen dans le rapport PDF")
+    )
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

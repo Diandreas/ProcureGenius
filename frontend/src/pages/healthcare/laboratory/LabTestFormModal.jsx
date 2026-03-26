@@ -67,6 +67,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
         fasting_required: false, fasting_hours: '', preparation_instructions: '',
         estimated_turnaround_hours: '', methodology: '', is_active: true, requires_approval: false,
         use_large_layout: false,
+        show_on_new_page: false,
         linked_product: '',
         result_template: '',
     });
@@ -93,6 +94,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                     is_active: test.is_active !== undefined ? test.is_active : true,
                     requires_approval: test.requires_approval || false,
                     use_large_layout: test.use_large_layout || false,
+                    show_on_new_page: test.show_on_new_page || false,
                     linked_product: test.linked_product || '',
                     result_template: test.result_template || '',
                 });
@@ -127,6 +129,8 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                     base_unit: '', conversion_factor: 1.0,
                     fasting_required: false, fasting_hours: '', preparation_instructions: '',
                     estimated_turnaround_hours: '', methodology: '', is_active: true, requires_approval: false,
+                    use_large_layout: false,
+                    show_on_new_page: false,
                     linked_product: '',
                 }));
                 setParameters([]);
@@ -471,6 +475,12 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                             <FormControlLabel 
                                 control={<Checkbox checked={formData.use_large_layout} onChange={handleChange} name="use_large_layout" />} 
                                 label="Affichage large (Bactériologie)" 
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FormControlLabel 
+                                control={<Checkbox checked={formData.show_on_new_page} onChange={handleChange} name="show_on_new_page" />} 
+                                label="Afficher seul sur une page" 
                             />
                         </Grid>
                     </Grid>

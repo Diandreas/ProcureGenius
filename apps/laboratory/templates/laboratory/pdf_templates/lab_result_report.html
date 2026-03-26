@@ -78,6 +78,8 @@
 
     .standalone-box {
         margin: 0;
+    }
+    .page-break {
         page-break-before: always;
     }
     .box-header {
@@ -204,16 +206,73 @@
         {% endfor %}
     {% endif %}
 
-    {# 3. EXAMENS LARGE (BACTÉRIO) #}
+    {# 3. EXAMENS STANDALONE (LARGE OU FORCÉ NOUVELLE PAGE) #}
     {% if category.large_items %}
         {% for entry in category.large_items %}
-            {% with item=entry.item %}
-            <div class="standalone-box">
+            {% with item=entry.item grouped=entry.parameter_results_grouped %}
+            <div class="standalone-box {% if item.lab_test.show_on_new_page %}page-break{% endif %}">
                 <div class="box-header">{{ item.lab_test.name }}</div>
                 <div class="box-content">
-                    <div class="rich-content" style="font-size: 9.5pt; line-height: 1.4;">
-                        {{ item.result_value|safe }}
-                    </div>
+                    {% if grouped %}
+                        {# Render compound table even if standalone #}
+                        <table class="compound-param-table">
+                            <thead>
+                                <tr class="compound-header">
+                                    <th style="width: 35%">Paramètre</th>
+                                    <th style="width: 20%">Résultat</th>
+                                    <th style="width: 15%">Unités</th>
+                                    <th style="width: 30%">Valeurs de Référence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for group in grouped %}
+                                    {% if group.group_name != 'Paramètres' %}
+                                    <tr><td colspan="4" class="compound-group-title">{{ group.group_name }}</td></tr>
+                                    {% endif %}
+                                    {% for p in group.parameters %}
+                                    <tr>
+                                        <td style="font-weight: 600;">{{ p.name }}</td>
+                                        <td style="font-weight: 700; text-align: left; {% if 'H' in p.flag or 'L' in p.flag %}color: #dc2626;{% endif %}">
+                                            {% if p.result_numeric is not None %}{{ p.result_numeric|floatformat:"4" }}{% else %}{{ p.result_text|default:"—" }}{% endif %}
+                                            {% if 'H' in p.flag %} (H){% elif 'L' in p.flag %} (L){% endif %}
+                                        </td>
+                                        <td style="color: #4b5563;">{{ p.unit|default:"—" }}</td>
+                                        <td style="font-size: 7.5pt; color: #6b7280;">{{ p.ref_display|default:"—" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% elif item.lab_test.use_large_layout %}
+                        <div class="rich-content" style="font-size: 9.5pt; line-height: 1.4;">
+                            {{ item.result_value|safe }}
+                        </div>
+                    {% else %}
+                        {# Simple result layout but in a standalone box #}
+                        <table class="compact-table" style="margin-bottom: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">Examen</th>
+                                    <th style="width: 25%">Résultat</th>
+                                    <th style="width: 10%">Unités</th>
+                                    <th style="width: 25%">Référence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ item.lab_test.name }}</td>
+                                    <td style="font-weight: 700;">{{ item.result_value|safe }}</td>
+                                    <td>{{ item.lab_test.unit_of_measurement|default:"—" }}</td>
+                                    <td style="font-size: 7.5pt; color: #6b7280;">
+                                        {% if patient.gender == 'M' %}{{ item.lab_test.normal_range_male|default:item.lab_test.normal_range_general|default:"—" }}
+                                        {% elif patient.gender == 'F' %}{{ item.lab_test.normal_range_female|default:item.lab_test.normal_range_general|default:"—" }}
+                                        {% else %}{{ item.lab_test.normal_range_general|default:"—" }}{% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    {% endif %}
+
                     {% if item.technician_notes or item.interpretation %}
                     <div style="margin-top: 10px; padding-top: 6px; border-top: 1px solid #e5e7eb; font-size: 7.5pt; color: #374151;">
                         {% if item.interpretation %}<strong>Interprétation :</strong> {{ item.interpretation|striptags }}<br>{% endif %}
