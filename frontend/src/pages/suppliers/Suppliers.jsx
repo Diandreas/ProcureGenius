@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSharedElement } from '../../contexts/SharedElementContext';
+import { alpha } from '@mui/material/styles';
 import {
   Box,
   Card,
@@ -33,7 +34,6 @@ import {
   Alert,
   Divider,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import {
   Search,
   FilterList,
@@ -57,6 +57,7 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, parseRating } from '../../utils/formatters';
+import { useHeader } from '../../contexts/HeaderContext';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
@@ -69,6 +70,7 @@ function Suppliers() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { registerSharedElement } = useSharedElement();
+  const { setPageHeader } = useHeader();
 
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -166,6 +168,40 @@ function Suppliers() {
       delete window.handleSupplierReport;
     };
   }, [handleGenerateBulkReport]);
+
+  // Set the page header via Context
+  useEffect(() => {
+    setPageHeader({
+      title: t('suppliers:title', 'Fournisseurs'),
+      // Action pour le bouton mobile à gauche
+      action: {
+        label: t('navigation:topBar.new', 'Nouveau'),
+        icon: <Business />,
+        onClick: () => navigate('/suppliers/new'),
+        color: 'primary',
+        variant: 'contained'
+      },
+      // Actions pour le desktop à droite
+      actions: (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Business />}
+          onClick={() => navigate('/suppliers/new')}
+          sx={{
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            px: { xs: 2, sm: 3 },
+            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+          }}
+        >
+          {t('navigation:topBar.newSupplier', 'Nouveau fournisseur')}
+        </Button>
+      )
+    });
+    return () => setPageHeader({ title: '', actions: null });
+  }, [t, navigate, theme.palette.primary, setPageHeader]);
 
   const filteredSuppliers = suppliers.filter(supplier => {
     const matchesSearch = !searchTerm ||
@@ -868,26 +904,26 @@ function Suppliers() {
             <Box sx={{
               display: 'flex',
               gap: 1,
-              flexWrap: 'wrap',
               alignItems: 'stretch',
             }}>
               <TextField
                 size="small"
-                placeholder={t('suppliers:search.placeholder')}
+                placeholder={isMobile ? t('suppliers:search.placeholder_mobile', 'Chercher...') : t('suppliers:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search />
+                      <Search sx={{ fontSize: isMobile ? 20 : 24 }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
-                  flex: '1 1 auto',
-                  minWidth: isMobile ? '100%' : '250px',
+                  flex: 1,
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
+                    height: 40,
+                    fontSize: isMobile ? '0.875rem' : '1rem',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',

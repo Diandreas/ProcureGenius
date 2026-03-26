@@ -109,5 +109,12 @@ def sync_product_stock_on_batch_change(sender, instance, **kwargs):
             # Mettre à jour le produit
             product.stock_quantity = total_stock
             product.save(update_fields=['stock_quantity', 'updated_at'])
+            
+            # Déclencher les alertes si nécessaire
+            try:
+                from .stock_alerts import check_stock_after_movement
+                check_stock_after_movement(product)
+            except Exception:
+                pass
     except Exception:
         pass

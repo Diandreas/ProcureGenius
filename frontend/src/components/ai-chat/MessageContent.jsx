@@ -28,6 +28,7 @@ import ListModal from './ListModal';
 import ChartRenderer from './ChartRenderer';
 import ConfirmationModal from './ConfirmationModal';
 import PreviewCard from './PreviewCard';
+import PremiumModal from '../ui/PremiumModal';
 
 const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, onAddArtifact }) => {
   const navigate = useNavigate();
@@ -507,9 +508,9 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
 
 
                     {/* Confirmation d'entité - Preview Card + Modal */}
-                    {result.result?.needs_confirmation && (
+                    {(result.result?.needs_confirmation || result.result?.requires_confirmation) && (
                       <Box sx={{ mt: 2 }}>
-                        {!showPreview && !confirmationModalOpen && (
+                        {!showPreview && !confirmationModalOpen && !actionButtons?.length && (
                           <Button
                             variant="contained"
                             size="small"
@@ -517,46 +518,63 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
                             sx={{
                               textTransform: 'none',
                               fontSize: '0.875rem',
+                              borderRadius: 2,
+                              background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                              boxShadow: (theme) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+                              '&:hover': {
+                                transform: 'translateY(-1px)',
+                                boxShadow: (theme) => `0 6px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
+                              }
                             }}
                           >
                             📝 Vérifier et Confirmer
                           </Button>
                         )}
 
-                        {showPreview && previewData && (
-                          <>
-                            {/* Nested Preview Cards - e.g., new client when creating invoice */}
-                            {result.result.nested_previews && result.result.nested_previews.length > 0 && (
-                              <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 600 }}>
-                                  📦 Entités associées qui seront créées:
-                                </Typography>
-                                {result.result.nested_previews.map((nestedPreview, idx) => (
-                                  <PreviewCard
-                                    key={idx}
-                                    entityType={nestedPreview.entity_type}
-                                    draftData={nestedPreview.draft_data}
-                                    isNested={true}
-                                    nestedMessage={nestedPreview.message}
-                                    // Nested previews are read-only, no actions
-                                    onQuickConfirm={null}
-                                    onModify={null}
-                                    onCancel={null}
-                                  />
-                                ))}
-                              </Box>
-                            )}
+                        <PremiumModal
+                          open={showPreview && !!previewData}
+                          onClose={handleCancel}
+                          title={previewData?.title || 'Vérification de l\'entité'}
+                          maxWidth="md"
+                        >
+                          {previewData && (
+                            <>
+                              {/* Nested Previews */}
+                              {previewData.nested_previews && previewData.nested_previews.length > 0 && (
+                                <Box sx={{ mb: 3 }}>
+                                  <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary', fontWeight: 600 }}>
+                                    📦 Entités associées qui seront créées:
+                                  </Typography>
+                                  <Grid container spacing={2}>
+                                    {previewData.nested_previews.map((nestedPreview, idx) => (
+                                      <Grid item xs={12} sm={6} key={idx}>
+                                        <PreviewCard
+                                          entityType={nestedPreview.entity_type}
+                                          draftData={nestedPreview.draft_data}
+                                          isNested={true}
+                                          nestedMessage={nestedPreview.message}
+                                          onQuickConfirm={null}
+                                          onModify={null}
+                                          onCancel={null}
+                                        />
+                                      </Grid>
+                                    ))}
+                                  </Grid>
+                                  <Divider sx={{ my: 3 }} />
+                                </Box>
+                              )}
 
-                            {/* Main Entity Preview Card */}
-                            <PreviewCard
-                              entityType={result.result.entity_type}
-                              draftData={result.result.draft_data}
-                              onQuickConfirm={handleQuickConfirm}
-                              onModify={handleModify}
-                              onCancel={handleCancel}
-                            />
-                          </>
-                        )}
+                              {/* Main Entity Preview */}
+                              <PreviewCard
+                                entityType={previewData.entity_type}
+                                draftData={previewData.draft_data}
+                                onQuickConfirm={handleQuickConfirm}
+                                onModify={handleModify}
+                                onCancel={handleCancel}
+                              />
+                            </>
+                          )}
+                        </PremiumModal>
 
                         {confirmationModalOpen && previewData && (
                           <ConfirmationModal
@@ -878,7 +896,7 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
               disabled={buttonsDisabled}
               onClick={() => {
                 setButtonsDisabled(true);
-                onButtonClick && onButtonClick(index);
+                onButtonClick && onButtonClick(index, btn.params);
               }}
               sx={{
                 textTransform: 'none',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -27,6 +27,7 @@ import {
   Divider,
   LinearProgress,
   Button,
+  Stack,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fadeInUp, staggerContainer } from '../../animations/variants/scroll-reveal';
@@ -79,221 +80,11 @@ import Mascot from '../../components/Mascot';
 import VoiceRecorder from '../../components/VoiceRecorder';
 import ProactiveConversationCard from '../../components/AI/ProactiveConversationCard';
 import ArtifactsPanel from '../../components/ai-chat/ArtifactsPanel';
+import { useHeader } from '../../contexts/HeaderContext';
+import { useAINotifications } from '../../components/AI/AINotificationProvider';
 
 // Composant Header compact avec navigation IA - Design Premium Mobile-First
-const StatsHeader = ({ stats, onNotificationsClick, onSuggestionsClick, onImportReviewsClick, onArtifactsClick, artifactsCount, onHistoryClick, conversationsCount }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const navigate = useNavigate();
-  const isMobile = window.innerWidth < 600;
-
-  return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={fadeInUp}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: { xs: 0.5, sm: 1 },
-          p: { xs: 0.75, sm: 1 },
-          mb: 1.5,
-          bgcolor: theme.palette.background.paper,
-          borderRadius: '20px',
-          border: 'none',
-          boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-      >
-      {/* Bouton Historique - Design moderne */}
-      <Tooltip title="Historique des conversations">
-        <Button
-          size="small"
-          startIcon={<History sx={{ fontSize: { xs: 16, sm: 18 } }} />}
-          onClick={onHistoryClick}
-          sx={{
-            px: { xs: 1.5, sm: 2 },
-            py: 0.75,
-            borderRadius: '12px',
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: { xs: '0.75rem', sm: '0.813rem' },
-            color: 'primary.main',
-            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.08),
-            border: 'none',
-            minWidth: 'auto',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              bgcolor: alpha(theme.palette.primary.main, 0.2),
-              transform: 'scale(1.005)',
-            },
-          }}
-        >
-          {isMobile ? '' : 'Historique'}
-          {conversationsCount > 0 && (
-            <Box
-              component="span"
-              sx={{
-                ml: isMobile ? 0 : 0.75,
-                px: 0.75,
-                py: 0.25,
-                borderRadius: '8px',
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                bgcolor: alpha(theme.palette.primary.main, 0.2),
-                color: 'primary.main',
-              }}
-            >
-              {conversationsCount}
-            </Box>
-          )}
-        </Button>
-      </Tooltip>
-
-      <Box sx={{ flexGrow: 1 }} />
-
-      {/* Actions avec effet pill group */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0.5,
-          p: 0.5,
-          borderRadius: '14px',
-          bgcolor: alpha(isDark ? '#ffffff' : '#000000', 0.03),
-        }}
-      >
-        {/* Import Reviews */}
-        <Tooltip title="Imports en attente">
-          <IconButton
-            size="small"
-            onClick={onImportReviewsClick}
-            sx={{
-              p: { xs: 0.6, sm: 0.75 },
-              borderRadius: '10px',
-              bgcolor: alpha('#10b981', 0.12),
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: alpha('#10b981', 0.2),
-                transform: 'scale(1.05)',
-              }
-            }}
-          >
-            <Assignment sx={{ fontSize: { xs: 16, sm: 18 }, color: '#10b981' }} />
-          </IconButton>
-        </Tooltip>
-
-        {/* Notifications */}
-        <Tooltip title="Notifications IA">
-          <IconButton
-            size="small"
-            onClick={onNotificationsClick}
-            sx={{
-              p: { xs: 0.6, sm: 0.75 },
-              borderRadius: '10px',
-              bgcolor: stats?.notifications_count > 0
-                ? alpha('#f59e0b', 0.15)
-                : 'transparent',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: alpha('#f59e0b', 0.2),
-                transform: 'scale(1.05)',
-              }
-            }}
-          >
-            <Badge
-              badgeContent={stats?.notifications_count || 0}
-              color="warning"
-              max={9}
-              sx={{
-                '& .MuiBadge-badge': {
-                  fontSize: '0.6rem',
-                  height: 16,
-                  minWidth: 16,
-                }
-              }}
-            >
-              <Notifications sx={{ fontSize: { xs: 16, sm: 18 } }} />
-            </Badge>
-          </IconButton>
-        </Tooltip>
-
-        {/* Suggestions */}
-        <Tooltip title="Suggestions actives">
-          <IconButton
-            size="small"
-            onClick={onSuggestionsClick}
-            sx={{
-              p: { xs: 0.6, sm: 0.75 },
-              borderRadius: '10px',
-              bgcolor: stats?.suggestions_count > 0
-                ? alpha('#8b5cf6', 0.15)
-                : 'transparent',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: alpha('#8b5cf6', 0.2),
-                transform: 'scale(1.05)',
-              }
-            }}
-          >
-            <Badge
-              badgeContent={stats?.suggestions_count || 0}
-              color="secondary"
-              max={9}
-              sx={{
-                '& .MuiBadge-badge': {
-                  fontSize: '0.6rem',
-                  height: 16,
-                  minWidth: 16,
-                }
-              }}
-            >
-              <Lightbulb sx={{ fontSize: { xs: 16, sm: 18 } }} />
-            </Badge>
-          </IconButton>
-        </Tooltip>
-
-        {/* Artifacts / Visualisations */}
-        <Tooltip title="Visualisations & Graphiques">
-          <IconButton
-            size="small"
-            onClick={onArtifactsClick}
-            sx={{
-              p: { xs: 0.6, sm: 0.75 },
-              borderRadius: '10px',
-              bgcolor: artifactsCount > 0
-                ? alpha('#3b82f6', 0.15)
-                : 'transparent',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: alpha('#3b82f6', 0.2),
-                transform: 'scale(1.05)',
-              }
-            }}
-          >
-            <Badge
-              badgeContent={artifactsCount || 0}
-              color="primary"
-              max={9}
-              sx={{
-                '& .MuiBadge-badge': {
-                  fontSize: '0.6rem',
-                  height: 16,
-                  minWidth: 16,
-                }
-              }}
-            >
-              <BarChart sx={{ fontSize: { xs: 16, sm: 18 } }} />
-            </Badge>
-          </IconButton>
-        </Tooltip>
-      </Box>
-    </Box>
-    </motion.div>
-  );
-};
+// SuggestionsPanel and other sub-components remain...
 
 // Composant Panel Latéral Suggestions
 const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
@@ -401,152 +192,6 @@ const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
   );
 };
 
-// Composant Centre de Notifications IA
-const NotificationsCenter = ({ open, onClose, notifications, onMarkRead }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const [filter, setFilter] = useState('all');
-
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case 'alert': return <Warning sx={{ color: '#f59e0b', fontSize: 24 }} />;
-      case 'insight': return <TipsAndUpdates sx={{ color: '#3b82f6', fontSize: 24 }} />;
-      case 'achievement': return <EmojiEvents sx={{ color: '#10b981', fontSize: 24 }} />;
-      default: return <Lightbulb sx={{ color: '#8b5cf6', fontSize: 24 }} />;
-    }
-  };
-
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'alert': return '#f59e0b';
-      case 'insight': return '#3b82f6';
-      case 'achievement': return '#10b981';
-      default: return '#8b5cf6';
-    }
-  };
-
-  const filteredNotifications = notifications?.filter(n =>
-    filter === 'all' || n.type === filter
-  ) || [];
-
-  const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
-
-  return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      sx={{
-        '& .MuiDrawer-paper': {
-          width: 450,
-          bgcolor: 'background.paper',
-        },
-      }}
-    >
-      <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box>
-            <Typography variant="h6" fontWeight={600}>
-              Centre de Notifications IA
-            </Typography>
-            {unreadCount > 0 && (
-              <Typography variant="caption" color="text.secondary">
-                {unreadCount} notification{unreadCount > 1 ? 's' : ''} non lue{unreadCount > 1 ? 's' : ''}
-              </Typography>
-            )}
-          </Box>
-          <IconButton onClick={onClose} size="small">
-            <Close fontSize="small" />
-          </IconButton>
-        </Box>
-
-        <Tabs
-          value={filter}
-          onChange={(e, v) => setFilter(v)}
-          variant="fullWidth"
-          sx={{ mb: 2, minHeight: 40 }}
-        >
-          <Tab label={`Tout (${notifications?.length || 0})`} value="all" sx={{ minHeight: 40 }} />
-          <Tab label={`Alertes (${notifications?.filter(n => n.type === 'alert').length || 0})`} value="alert" sx={{ minHeight: 40 }} />
-          <Tab label={`Insights (${notifications?.filter(n => n.type === 'insight').length || 0})`} value="insight" sx={{ minHeight: 40 }} />
-          <Tab label={`Succès (${notifications?.filter(n => n.type === 'achievement').length || 0})`} value="achievement" sx={{ minHeight: 40 }} />
-        </Tabs>
-
-        <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-          {filteredNotifications.length > 0 ? (
-            <List dense disablePadding>
-              {filteredNotifications.map((notif) => (
-                <Card
-                  key={notif.id}
-                  sx={{
-                    mb: 2,
-                    bgcolor: notif.is_read
-                      ? 'transparent'
-                      : alpha(getTypeColor(notif.type), 0.08),
-                    border: notif.is_read ? `1px solid ${theme.palette.divider}` : `2px solid ${getTypeColor(notif.type)}`,
-                    borderRadius: 2,
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 4px 12px rgba(0,0,0,0.1)',
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 2 }}>
-                    <Box sx={{ display: 'flex', gap: 1.5, mb: 1 }}>
-                      {getTypeIcon(notif.type)}
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" fontWeight={notif.is_read ? 500 : 600} gutterBottom>
-                          {notif.title}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          {notif.message}
-                        </Typography>
-                        <Typography variant="caption" color="text.disabled">
-                          {formatDateTime(notif.created_at)}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {!notif.is_read && (
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => onMarkRead(notif.id)}
-                          startIcon={<CheckCircle />}
-                          sx={{
-                            borderColor: getTypeColor(notif.type),
-                            color: getTypeColor(notif.type),
-                            '&:hover': {
-                              borderColor: getTypeColor(notif.type),
-                              bgcolor: alpha(getTypeColor(notif.type), 0.1),
-                            }
-                          }}
-                        >
-                          Marquer comme lu
-                        </Button>
-                      </Box>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </List>
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Notifications sx={{ fontSize: 64, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Aucune notification
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {filter === 'all' ? 'Vous êtes à jour !' : `Aucune notification de type "${filter}"`}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      </Box>
-    </Drawer>
-  );
-};
 
 // Composant Historique Amélioré des Conversations
 const ConversationsHistory = ({ open, onClose, conversations, onSelectConversation, onDeleteConversation, onNewConversation, currentConversationId }) => {
@@ -960,10 +605,12 @@ function AIChat() {
   const { t } = useTranslation(['aiChat', 'common']);
   const location = useLocation();
   const navigate = useNavigate();
+  const { chatId } = useParams();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { setPageHeader } = useHeader();
 
   // States principaux
   const [message, setMessage] = useState('');
@@ -974,13 +621,13 @@ function AIChat() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [typingIndicator, setTypingIndicator] = useState(false);
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
   // States pour les nouvelles fonctionnalités
   const [usageStats, setUsageStats] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [suggestionsPanelOpen, setSuggestionsPanelOpen] = useState(false);
-  const [notificationsPanelOpen, setNotificationsPanelOpen] = useState(false);
+  const { unreadCount, openCenter: openNotificationsCenter } = useAINotifications();
   const [currentWidgetIndex, setCurrentWidgetIndex] = useState(0);
   const [widgetVisible, setWidgetVisible] = useState(true);
   const [proactiveConversations, setProactiveConversations] = useState([]);
@@ -999,16 +646,35 @@ function AIChat() {
     }
   };
 
+  // Initialiser la conversation sur la base de l'URL
+  useEffect(() => {
+    if (chatId) {
+      if (!currentConversation || currentConversation.id.toString() !== chatId) {
+        aiChatAPI.getConversation(chatId).then((response) => {
+          setMessages(response.data.messages);
+          setCurrentConversation(response.data.conversation);
+        }).catch(err => {
+          console.error('Erreur chargement conversation URL', err);
+          navigate('/ai-chat', { replace: true });
+        });
+      }
+    } else {
+      if (currentConversation) {
+        setCurrentConversation(null);
+        setMessages([]);
+      }
+    }
+  }, [chatId]);
+
   // Charger les données au montage
   useEffect(() => {
     fetchConversations();
     fetchUsageStats();
     fetchSuggestions();
-    fetchNotifications();
     fetchProactiveConversations();
 
     // Écouter les événements depuis MainLayout
-    const handleOpenNotifications = () => setNotificationsPanelOpen(true);
+    const handleOpenNotifications = () => openNotificationsCenter();
     const handleOpenSuggestions = () => setSuggestionsPanelOpen(true);
     const handleOpenConversations = () => setDrawerOpen(true);
 
@@ -1031,7 +697,39 @@ function AIChat() {
       window.removeEventListener('ai-chat-open-conversations', handleOpenConversations);
       window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
     };
-  }, [location]);
+  }, []); // Run only on mount
+
+  // Mettre à jour le header global
+  useEffect(() => {
+    const artifactsCount = artifacts.filter(a => !a.archived).length;
+    const conversationsCount = conversations.length;
+
+    setPageHeader({
+      title: t('aiChat:title', 'Assistant IA'),
+      actions: (
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Button
+            size="small"
+            startIcon={<Add sx={{ fontSize: 18 }} />}
+            onClick={startNewConversation}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 600,
+              px: { xs: 1.5, sm: 2 },
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              color: 'white',
+              '&:hover': {
+                background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+              }
+            }}
+          >
+            {t('aiChat:topBar.newConversation', 'Nouveau')}
+          </Button>
+        </Stack>
+      )
+    });
+  }, [t, theme, navigate, setPageHeader]);
 
   // Effet pour changer automatiquement les widgets
   useEffect(() => {
@@ -1126,6 +824,7 @@ function AIChat() {
       setMessages(response.data.messages);
       setCurrentConversation(response.data.conversation);
       setDrawerOpen(false);
+      navigate(`/ai-chat/${conversationId}`);
     } catch (error) {
       enqueueSnackbar(t('aiChat:messages.loadConversationError'), { variant: 'error' });
     }
@@ -1135,6 +834,7 @@ function AIChat() {
     setCurrentConversation(null);
     setMessages([]);
     setDrawerOpen(false);
+    navigate('/ai-chat');
   };
 
   const handleSendMessage = async (messageText = null, confirmationData = null) => {
@@ -1185,6 +885,7 @@ function AIChat() {
       if (!currentConversation) {
         setCurrentConversation({ id: response.data.conversation_id });
         fetchConversations();
+        navigate(`/ai-chat/${response.data.conversation_id}`, { replace: true });
       }
 
       // Refresh stats after AI interaction
@@ -1381,13 +1082,6 @@ function AIChat() {
         onActionClick={handleSuggestionAction}
       />
 
-      {/* Notifications History */}
-      <NotificationsCenter
-        open={notificationsPanelOpen}
-        onClose={() => setNotificationsPanelOpen(false)}
-        notifications={notifications}
-        onMarkRead={handleMarkNotificationRead}
-      />
 
       {/* Artifacts Panel - Style Claude.ai */}
       <ArtifactsPanel
@@ -1404,18 +1098,82 @@ function AIChat() {
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
+        bgcolor: 'background.default',
       }}>
-        {/* Header avec actions rapides */}
-        <StatsHeader
-          stats={usageStats}
-          onNotificationsClick={() => setNotificationsPanelOpen(true)}
-          onSuggestionsClick={() => setSuggestionsPanelOpen(true)}
-          onImportReviewsClick={() => navigate('/ai-chat/import-reviews')}
-          onArtifactsClick={() => setArtifactsPanelOpen(true)}
-          artifactsCount={artifacts.filter(a => !a.archived).length}
-          onHistoryClick={() => setDrawerOpen(true)}
-          conversationsCount={conversations.length}
-        />
+        {/* Barre d'outils Interne IA - Style Épuré */}
+        <Box sx={{
+          px: 2,
+          py: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          bgcolor: alpha(theme.palette.background.paper, 0.5),
+          backdropFilter: 'blur(8px)',
+        }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Button
+              size="small"
+              startIcon={<History sx={{ fontSize: 16 }} />}
+              onClick={() => setDrawerOpen(true)}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                color: 'text.secondary',
+                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.05), color: 'primary.main' }
+              }}
+            >
+              {t('aiChat:sidebar.history', 'Historique')}
+            </Button>
+            <Divider orientation="vertical" flexItem sx={{ height: 16, my: 'auto' }} />
+            <IconButton size="small" onClick={() => navigate('/ai-chat/import-reviews')} title="Imports">
+              <Assignment sx={{ fontSize: 18, color: 'text.secondary' }} />
+            </IconButton>
+          </Stack>
+
+          <Stack direction="row" spacing={1} alignItems="center">
+            {/* Notifications */}
+            <IconButton size="small" onClick={() => openNotificationsCenter()} sx={{ color: unreadCount > 0 ? 'warning.main' : 'text.secondary' }}>
+              <Badge badgeContent={unreadCount} color="warning" variant="dot">
+                <Notifications sx={{ fontSize: 18 }} />
+              </Badge>
+            </IconButton>
+
+            {/* Suggestions */}
+            <IconButton size="small" onClick={() => setSuggestionsPanelOpen(true)} sx={{ color: usageStats?.suggestions_count > 0 ? 'secondary.main' : 'text.secondary' }}>
+              <Badge badgeContent={usageStats?.suggestions_count || 0} color="secondary" variant="dot">
+                <Lightbulb sx={{ fontSize: 18 }} />
+              </Badge>
+            </IconButton>
+
+            {/* Visualisations - Toujours conditionnel */}
+            {artifacts.filter(a => !a.archived).length > 0 && (
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<Analytics sx={{ fontSize: 16 }} />}
+                onClick={() => setArtifactsPanelOpen(true)}
+                sx={{
+                  borderRadius: '8px',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  color: 'primary.main',
+                  borderColor: alpha(theme.palette.primary.main, 0.3),
+                  bgcolor: alpha(theme.palette.primary.main, 0.05),
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    borderColor: 'primary.main',
+                  }
+                }}
+              >
+                Visualisations ({artifacts.filter(a => !a.archived).length})
+              </Button>
+            )}
+          </Stack>
+        </Box>
 
         {/* Messages */}
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>

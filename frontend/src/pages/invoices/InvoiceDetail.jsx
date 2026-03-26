@@ -73,6 +73,7 @@ import { invoicesAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
+import { useHeader } from '../../contexts/HeaderContext';
 
 function InvoiceDetail() {
   const { t } = useTranslation(['invoices', 'common']);
@@ -111,11 +112,77 @@ function InvoiceDetail() {
     product_reference: ''
   });
 
+  const { setPageHeader } = useHeader();
+
   useEffect(() => {
     if (id) {
       fetchInvoice();
     }
   }, [id]);
+
+  // Update Global Header
+  useEffect(() => {
+    if (invoice) {
+      setPageHeader({
+        title: isMobile ? invoice.invoice_number : '',
+        showTitle: isMobile,
+        actions: isMobile ? (
+          <Stack direction="row" spacing={0.5}>
+            <IconButton
+              onClick={() => setPdfDialogOpen(true)}
+              size="small"
+              sx={{ color: 'primary.main' }}
+            >
+              <PictureAsPdf fontSize="small" />
+            </IconButton>
+            <IconButton
+              onClick={() => {
+                const defaultMessage = t('invoices:dialogs.sendEmail.defaultMessage', {
+                  name: invoice.client?.name || 'Client',
+                  number: invoice.invoice_number
+                });
+                setEmailData({
+                  recipient_email: invoice.client?.email || '',
+                  custom_message: defaultMessage
+                });
+                setSendEmailDialogOpen(true);
+              }}
+              disabled={!invoice.client?.email}
+              size="small"
+              sx={{ color: 'info.main' }}
+            >
+              <Email fontSize="small" />
+            </IconButton>
+            <IconButton
+              onClick={handleEdit}
+              size="small"
+              sx={{ color: 'grey.700' }}
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+            {(invoice.status === 'sent' || isOverdue()) && (
+              <IconButton
+                onClick={() => setMarkPaidDialogOpen(true)}
+                size="small"
+                sx={{ color: 'success.main' }}
+              >
+                <Payment fontSize="small" />
+              </IconButton>
+            )}
+            <IconButton
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              size="small"
+              sx={{ color: 'text.secondary' }}
+            >
+              <MoreVert fontSize="small" />
+            </IconButton>
+          </Stack>
+        ) : null
+      });
+    }
+    
+    return () => setPageHeader(null);
+  }, [invoice, isMobile, id, t]);
 
   // Ouvrir le modal d'email si demandé depuis la navigation
   useEffect(() => {
@@ -503,7 +570,12 @@ function InvoiceDetail() {
   const actualStatus = isOverdue() ? 'overdue' : invoice.status;
 
   return (
-    <Box p={{ xs: 1.5, sm: 2, md: 3 }}>
+    <Box sx={{ 
+      p: { xs: 0, sm: 2, md: 3 },
+      pb: isMobile ? 12 : 3, // Space for mobile nav
+      bgcolor: 'background.default',
+      minHeight: '100vh'
+    }}>
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

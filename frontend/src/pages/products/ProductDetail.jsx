@@ -58,6 +58,7 @@ import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
 import ProductBatchesTab from '../../components/ProductBatchesTab';
 import { generateProductReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import { useHeader } from '../../contexts/HeaderContext';
 
 // Configuration des types de produits (harmonisé avec ProductCard)
 const TYPE_CONFIG = {
@@ -98,10 +99,49 @@ function ProductDetail() {
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
 
+  const { setPageHeader } = useHeader();
+
   useEffect(() => {
     fetchProduct();
     fetchStatistics();
   }, [id]);
+
+  // Update Global Header
+  useEffect(() => {
+    if (product) {
+      setPageHeader({
+        title: isMobile ? product.name : '',
+        showTitle: isMobile,
+        actions: isMobile ? (
+          <Stack direction="row" spacing={0.5}>
+            <IconButton
+              onClick={() => setPdfDialogOpen(true)}
+              size="small"
+              sx={{ color: 'success.main' }}
+            >
+              <PictureAsPdf fontSize="small" />
+            </IconButton>
+            <IconButton
+              onClick={() => navigate(`/products/${id}/edit`)}
+              size="small"
+              sx={{ color: 'primary.main' }}
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+            <IconButton
+              onClick={handleDelete}
+              size="small"
+              sx={{ color: 'error.main' }}
+            >
+              <Delete fontSize="small" />
+            </IconButton>
+          </Stack>
+        ) : null
+      });
+    }
+    
+    return () => setPageHeader(null);
+  }, [product, isMobile, id]);
 
   const fetchProduct = async () => {
     setLoading(true);
@@ -212,6 +252,7 @@ function ProductDetail() {
   return (
     <Box sx={{
       p: { xs: 0, sm: 2, md: 3 },
+      pb: isMobile ? 12 : 3, // Space for mobile nav
       bgcolor: 'background.default',
       minHeight: '100vh'
     }}>
@@ -331,17 +372,17 @@ function ProductDetail() {
                 <Box sx={{
                   display: 'flex',
                   gap: isMobile ? 1.5 : 2,
-                  mb: isMobile ? 2 : 3,
+                  mb: isMobile ? 1.5 : 3,
                   alignItems: 'flex-start'
                 }}>
                   <Avatar
                     src={product.image}
                     variant="rounded"
                     sx={{
-                      width: isMobile ? 64 : 100,
-                      height: isMobile ? 64 : 100,
+                      width: isMobile ? 70 : 100,
+                      height: isMobile ? 70 : 100,
                       bgcolor: typeConfig.color,
-                      borderRadius: isMobile ? 2 : 1,
+                      borderRadius: isMobile ? 2.5 : 1,
                       boxShadow: theme => isMobile 
                         ? `0 4px 12px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.4 : 0.15)}`
                         : 'none',
@@ -355,60 +396,97 @@ function ProductDetail() {
                         variant={isMobile ? 'h6' : 'h5'}
                         fontWeight="bold"
                         sx={{
-                          fontSize: isMobile ? '1.125rem' : undefined,
-                          lineHeight: isMobile ? 1.3 : undefined,
-                          flex: 1
+                          display: 'block', // Always show name on card
+                          mb: isMobile ? 1 : 0
                         }}
                       >
                         {product.name}
                       </Typography>
-                      <Stack direction="row" spacing={0.5}>
-                        <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
+                      
+                      {isMobile && (
+                        <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
                           <IconButton
                             onClick={() => setPdfDialogOpen(true)}
                             size="small"
                             sx={{
-                              p: 0.75,
+                              p: 1,
                               color: 'success.main',
-                              bgcolor: theme => alpha(theme.palette.success.main, 0.1),
-                              borderRadius: 1.5,
-                              '&:hover': { bgcolor: 'success.main', color: 'white' }
+                              bgcolor: theme => alpha(theme.palette.success.main, 0.08),
+                              boxShadow: theme => theme.palette.mode === 'dark' 
+                                ? '4px 4px 8px rgba(0,0,0,0.4), -2px -2px 8px rgba(255,255,255,0.05)'
+                                : '4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.8)',
+                              borderRadius: 2,
                             }}
                           >
-                            <PictureAsPdf sx={{ fontSize: 18 }} />
+                            <PictureAsPdf sx={{ fontSize: 20 }} />
                           </IconButton>
-                        </Tooltip>
-                        <Tooltip title={t('products:tooltips.editProduct')}>
                           <IconButton
                             onClick={() => navigate(`/products/${id}/edit`)}
                             size="small"
                             sx={{
-                              p: 0.75,
+                              p: 1,
                               color: 'primary.main',
-                              bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
-                              borderRadius: 1.5,
-                              '&:hover': { bgcolor: 'primary.main', color: 'white' }
+                              bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+                              boxShadow: theme => theme.palette.mode === 'dark' 
+                                ? '4px 4px 8px rgba(0,0,0,0.4), -2px -2px 8px rgba(255,255,255,0.05)'
+                                : '4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.8)',
+                              borderRadius: 2,
                             }}
                           >
-                            <Edit sx={{ fontSize: 18 }} />
+                            <Edit sx={{ fontSize: 20 }} />
                           </IconButton>
-                        </Tooltip>
-                        <Tooltip title={t('products:tooltips.deleteProduct')}>
-                          <IconButton
-                            onClick={handleDelete}
-                            size="small"
-                            sx={{
-                              p: 0.75,
-                              color: 'error.main',
-                              bgcolor: theme => alpha(theme.palette.error.main, 0.1),
-                              borderRadius: 1.5,
-                              '&:hover': { bgcolor: 'error.main', color: 'white' }
-                            }}
-                          >
-                            <Delete sx={{ fontSize: 18 }} />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
+                        </Stack>
+                      )}
+                      
+                      {!isMobile && (
+                        <Stack direction="row" spacing={0.5}>
+                          <Tooltip title={t('products:tooltips.downloadPdfReport', 'Télécharger le rapport PDF')}>
+                            <IconButton
+                              onClick={() => setPdfDialogOpen(true)}
+                              size="small"
+                              sx={{
+                                p: 0.75,
+                                color: 'success.main',
+                                bgcolor: theme => alpha(theme.palette.success.main, 0.1),
+                                borderRadius: 1.5,
+                                '&:hover': { bgcolor: 'success.main', color: 'white' }
+                              }}
+                            >
+                              <PictureAsPdf sx={{ fontSize: 18 }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={t('products:tooltips.editProduct')}>
+                            <IconButton
+                              onClick={() => navigate(`/products/${id}/edit`)}
+                              size="small"
+                              sx={{
+                                p: 0.75,
+                                color: 'primary.main',
+                                bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
+                                borderRadius: 1.5,
+                                '&:hover': { bgcolor: 'primary.main', color: 'white' }
+                              }}
+                            >
+                              <Edit sx={{ fontSize: 18 }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={t('products:tooltips.deleteProduct')}>
+                            <IconButton
+                              onClick={handleDelete}
+                              size="small"
+                              sx={{
+                                p: 0.75,
+                                color: 'error.main',
+                                bgcolor: theme => alpha(theme.palette.error.main, 0.1),
+                                borderRadius: 1.5,
+                                '&:hover': { bgcolor: 'error.main', color: 'white' }
+                              }}
+                            >
+                              <Delete sx={{ fontSize: 18 }} />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      )}
                     </Box>
                     <Typography
                       variant="body2"

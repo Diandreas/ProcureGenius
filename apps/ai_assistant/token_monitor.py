@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
 from datetime import datetime, timedelta
+from django.utils import timezone
 from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class TokenMonitor:
             user_id: ID de l'utilisateur
             organization_id: ID de l'organisation
         """
-        now = datetime.now()
+        now = timezone.now()
         hour_key = f"tokens_hour_{now.strftime('%Y%m%d_%H')}_{organization_id}"
         day_key = f"tokens_day_{now.strftime('%Y%m%d')}_{organization_id}"
 
@@ -108,7 +109,7 @@ class TokenMonitor:
         })
 
         # Éviter spam: 1 email max par heure
-        alert_key = f"alert_sent_{level}_{org_id}_{datetime.now().strftime('%Y%m%d_%H')}"
+        alert_key = f"alert_sent_{level}_{org_id}_{timezone.now().strftime('%Y%m%d_%H')}"
         if cache.get(alert_key):
             return
 
@@ -133,7 +134,7 @@ class TokenMonitor:
         Verifie si le budget tokens est depasse AVANT un appel IA.
         Retourne {'allowed': bool, 'reason': str, 'usage': dict}
         """
-        now = datetime.now()
+        now = timezone.now()
         hour_key = f"tokens_hour_{now.strftime('%Y%m%d_%H')}_{organization_id}"
         day_key = f"tokens_day_{now.strftime('%Y%m%d')}_{organization_id}"
 
@@ -162,7 +163,7 @@ class TokenMonitor:
 
     def get_usage_stats(self, organization_id: int) -> Dict:
         """Récupère les statistiques d'utilisation"""
-        now = datetime.now()
+        now = timezone.now()
         hour_key = f"tokens_hour_{now.strftime('%Y%m%d_%H')}_{organization_id}"
         day_key = f"tokens_day_{now.strftime('%Y%m%d')}_{organization_id}"
 

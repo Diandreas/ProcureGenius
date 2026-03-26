@@ -3,6 +3,7 @@ Service pour matcher les suggestions proactives avec les utilisateurs
 Combine suggestions statiques et analyses intelligentes en temps réel
 """
 from datetime import datetime, timedelta
+from django.utils import timezone
 from django.db.models import Count, Q
 from .models import ProactiveSuggestion, UserSuggestionHistory, AINotification
 from .intelligent_insights import generate_intelligent_suggestions
@@ -29,7 +30,7 @@ class SuggestionMatcher:
         # Vérifier fréquence (max 1/jour) pour suggestions statiques seulement
         last_shown = UserSuggestionHistory.objects.filter(
             user=user,
-            displayed_at__gte=datetime.now() - timedelta(days=1)
+            displayed_at__gte=timezone.now() - timedelta(days=1)
         ).exists()
 
         matched = []
@@ -89,7 +90,7 @@ class SuggestionMatcher:
             recent_notif = AINotification.objects.filter(
                 user=user,
                 title=insight['title'],
-                created_at__gte=datetime.now() - timedelta(days=1)
+                created_at__gte=timezone.now() - timedelta(days=1)
             ).exists()
 
             if not recent_notif:
@@ -211,10 +212,13 @@ class SuggestionMatcher:
     @staticmethod
     def mark_suggestion_displayed(user, suggestion):
         """Marque une suggestion comme affichée"""
+        if isinstance(suggestion, dict):
+            return
+            
         UserSuggestionHistory.objects.get_or_create(
             user=user,
             suggestion=suggestion,
-            defaults={'displayed_at': datetime.now()}
+            defaults={'displayed_at': timezone.now()}
         )
 
     @staticmethod
@@ -225,7 +229,7 @@ class SuggestionMatcher:
                 user=user,
                 suggestion_id=suggestion_id
             )
-            history.dismissed_at = datetime.now()
+            history.dismissed_at = timezone.now()
             history.save()
             return True
         except UserSuggestionHistory.DoesNotExist:

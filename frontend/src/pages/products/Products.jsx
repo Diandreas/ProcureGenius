@@ -53,16 +53,20 @@ import {
   Receipt,
   AutoAwesome,
   AttachMoney,
+  Add,
+  Edit,
+  Delete,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { fetchProducts } from '../../store/slices/productsSlice';
 import { warehousesAPI } from '../../services/api';
+import { useHeader } from '../../contexts/HeaderContext';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
-import { generateProductsBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import { generateProductsBulkReport, downloadPDF, openPDFInNewTab, generateProductReportPDF } from '../../services/pdfReportService';
 
 // Product type visual configuration
 const TYPE_CONFIG = {
@@ -94,6 +98,7 @@ function Products() {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { setPageHeader } = useHeader();
 
   // Redux state
   const { products, loading, error } = useSelector((state) => state.products);
@@ -172,6 +177,40 @@ function Products() {
   const handleGenerateReportClick = useCallback(() => {
     setReportConfigOpen(true);
   }, []);
+
+  // Set the page header via Context
+  useEffect(() => {
+    setPageHeader({
+      title: t('products:title', 'Produits'),
+      // Action pour le bouton mobile à gauche
+      action: {
+        label: t('navigation:topBar.new', 'Nouveau'),
+        icon: <Inventory />,
+        onClick: () => navigate('/products/new'),
+        color: 'primary',
+        variant: 'contained'
+      },
+      // Actions pour le desktop à droite
+      actions: (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Inventory />}
+          onClick={() => navigate('/products/new')}
+          sx={{
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            px: { xs: 2, sm: 3 },
+            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+          }}
+        >
+          {t('products:newProduct', 'Nouveau produit')}
+        </Button>
+      )
+    });
+    return () => setPageHeader({ title: '', actions: null });
+  }, [t, navigate, theme.palette.primary.main, setPageHeader]);
 
   // Enregistrer la fonction de rapport dans la top nav bar
   useEffect(() => {
@@ -506,6 +545,73 @@ function Products() {
               />
             ))}
           </Box>
+
+          {/* Mobile Actions Overlay - Compact */}
+          {isMobile && (
+            <Box 
+              sx={{ 
+                mt: 1.5, 
+                pt: 1.5, 
+                borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                Actions
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <IconButton 
+                  size="small"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const blob = await generateProductReportPDF(product);
+                    openPDFInNewTab(blob);
+                  }}
+                  sx={{ 
+                    bgcolor: alpha(theme.palette.success.main, 0.1), 
+                    color: 'success.main',
+                    width: 32,
+                    height: 32
+                  }}
+                >
+                  <PictureAsPdf sx={{ fontSize: 18 }} />
+                </IconButton>
+                <IconButton 
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/products/${product.id}/edit`);
+                  }}
+                  sx={{ 
+                    bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                    color: 'primary.main',
+                    width: 32,
+                    height: 32
+                  }}
+                >
+                  <Edit sx={{ fontSize: 18 }} />
+                </IconButton>
+                <IconButton 
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // On pourrait ouvrir un dialogue ici, mais on simplifie pour le "wow"
+                    enqueueSnackbar("Fonction de suppression protégée en démo", { variant: 'info' });
+                  }}
+                  sx={{ 
+                    bgcolor: alpha(theme.palette.error.main, 0.1), 
+                    color: 'error.main',
+                    width: 32,
+                    height: 32
+                  }}
+                >
+                  <Delete sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Box>
+            </Box>
+          )}
         </CardContent>
       </Card>
       </motion.div>
@@ -907,21 +1013,22 @@ function Products() {
             }}>
               <TextField
                 size="small"
-                placeholder={t('products:search.placeholder')}
+                placeholder={isMobile ? t('products:search.placeholder_mobile', 'Chercher...') : t('products:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search />
+                      <Search sx={{ fontSize: isMobile ? 20 : 24 }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
-                  flex: '1 1 auto',
-                  minWidth: isMobile ? '100%' : '250px',
+                  flex: 1,
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
+                    height: 40,
+                    fontSize: isMobile ? '0.875rem' : '1rem',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',

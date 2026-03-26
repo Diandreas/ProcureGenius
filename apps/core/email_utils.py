@@ -252,12 +252,135 @@ def send_welcome_registration_email(user, organization):
             to=[user.email],
         )
         email.attach_alternative(html_body, "text/html")
-        email.send(fail_silently=True)
+        
+        # Désactiver le fail_silently pour voir les erreurs réelles dans les logs
+        email.send(fail_silently=False)
 
-        logger.info(f"Welcome email sent to {user.email}")
+        logger.info(f"Welcome email successfully sent to {user.email}")
         return True
 
     except Exception as e:
-        logger.error(f"Failed to send welcome email to {user.email}: {e}")
+        logger.error(f"FATAL: Failed to send welcome email to {user.email}: {e}", exc_info=True)
+        return False
+
+
+def send_password_reset_email(user, token):
+    """
+    Envoie un email de réinitialisation de mot de passe.
+    """
+    try:
+        app_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        from_email = settings.DEFAULT_FROM_EMAIL
+        
+        # Le lien vers le frontend avec le token
+        reset_url = f"{app_url}/reset-password?token={token}&email={user.email}"
+
+        subject = "Réinitialisation de votre mot de passe - Procura"
+
+        html_body = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; background:#f5f5f5; padding: 20px;">
+  <div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <div style="background:#1976d2;padding:24px;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:24px;">Procura</h1>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="color:#333;">Réinitialisation de mot de passe</h2>
+      <p style="color:#555;">Bonjour {user.first_name or user.username},</p>
+      <p style="color:#555;">Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte Procura.</p>
+      <p style="color:#555;">Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe :</p>
+      
+      <p style="text-align:center;margin:32px 0;">
+        <a href="{reset_url}" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
+          Réinitialiser mon mot de passe
+        </a>
+      </p>
+      
+      <p style="color:#888;font-size:13px;">Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email en toute sécurité. Votre mot de passe actuel restera inchangé.</p>
+      <p style="color:#888;font-size:13px;">Ce lien expirera dans 24 heures.</p>
+    </div>
+    <div style="background:#f5f5f5;padding:16px;text-align:center;">
+      <p style="color:#aaa;font-size:12px;margin:0;">Procura — Gestion des achats intelligente</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=f"Cliquez sur ce lien pour réinitialiser votre mot de passe : {reset_url}",
+            from_email=from_email,
+            to=[user.email],
+        )
+        email.attach_alternative(html_body, "text/html")
+        email.send(fail_silently=False)
+
+        logger.info(f"Password reset email sent to {user.email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {user.email}: {e}")
+        return False
+
+
+def send_verification_email(user, token):
+    """
+    Envoie un email de vérification d'adresse email.
+    """
+    try:
+        app_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        from_email = settings.DEFAULT_FROM_EMAIL
+        
+        verify_url = f"{app_url}/verify-email?token={token}&email={user.email}"
+
+        subject = "Vérifiez votre adresse email - Procura"
+
+        html_body = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; background:#f5f5f5; padding: 20px;">
+  <div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <div style="background:#1976d2;padding:24px;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:24px;">Procura</h1>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="color:#333;">Vérification de votre email</h2>
+      <p style="color:#555;">Bonjour {user.first_name or user.username},</p>
+      <p style="color:#555;">Merci de vous être inscrit sur Procura. Pour finaliser la création de votre compte, veuillez confirmer votre adresse email.</p>
+      
+      <p style="text-align:center;margin:32px 0;">
+        <a href="{verify_url}" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
+          Confirmer mon email
+        </a>
+      </p>
+      
+      <p style="color:#888;font-size:13px;">Si vous n'avez pas créé de compte sur Procura, vous pouvez ignorer cet email.</p>
+    </div>
+    <div style="background:#f5f5f5;padding:16px;text-align:center;">
+      <p style="color:#aaa;font-size:12px;margin:0;">Procura — Gestion des achats intelligente</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=f"Cliquez sur ce lien pour vérifier votre email : {verify_url}",
+            from_email=from_email,
+            to=[user.email],
+        )
+        email.attach_alternative(html_body, "text/html")
+        email.send(fail_silently=False)
+
+        logger.info(f"Verification email sent to {user.email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send verification email to {user.email}: {e}")
         return False
 

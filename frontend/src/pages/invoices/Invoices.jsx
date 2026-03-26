@@ -51,11 +51,14 @@ import {
   Download,
   AutoAwesome,
   CloudUpload,
+  Edit,
+  Delete,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { fetchInvoices } from '../../store/slices/invoicesSlice';
 import { formatDate } from '../../utils/formatters';
+import { useHeader } from '../../contexts/HeaderContext';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
@@ -64,6 +67,7 @@ import DateNavigator from '../../components/common/DateNavigator';
 import SmartInvoiceUpload from '../../components/SmartInvoiceUpload';
 import Mascot from '../../components/Mascot';
 import { generateInvoicesBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import { generateInvoicePDF, openPDFInNewTab as openSinglePDF } from '../../services/pdfService';
 
 function Invoices() {
   const { t } = useTranslation(['invoices', 'common']);
@@ -73,6 +77,7 @@ function Invoices() {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { setPageHeader } = useHeader();
 
   // Redux state
   const { invoices, loading, error } = useSelector((state) => state.invoices);
@@ -109,6 +114,60 @@ function Invoices() {
   const handleGenerateReportClick = useCallback(() => {
     setReportConfigOpen(true);
   }, []);
+
+  // Update global header via Context
+  useEffect(() => {
+    setPageHeader({
+      title: t('invoices:title', 'Factures'),
+      // Action pour le bouton mobile à gauche
+      action: {
+        label: t('navigation:topBar.new', 'Nouveau'),
+        icon: <Receipt />,
+        onClick: () => navigate('/invoices/new'),
+        color: 'primary',
+        variant: 'contained'
+      },
+      // Actions pour le desktop à droite
+      actions: (
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<AutoAwesome />}
+            onClick={() => setShowSmartUpload(prev => !prev)}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: { xs: 1.5, sm: 2 },
+              borderWidth: 2,
+              display: { xs: 'none', sm: 'flex' },
+              '&:hover': { borderWidth: 2 }
+            }}
+          >
+            {showSmartUpload ? 'Fermer' : 'Smart Upload IA'}
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Receipt />}
+            onClick={() => navigate('/invoices/new')}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: { xs: 1.5, sm: 3 },
+              boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+            }}
+          >
+            {t('invoices:newInvoice')}
+          </Button>
+        </Stack>
+      )
+    });
+
+    return () => setPageHeader({ title: '', actions: null });
+  }, [t, navigate, showSmartUpload, theme.palette.primary.main, setPageHeader]);
 
   // Enregistrer la fonction de rapport dans la top nav bar
   useEffect(() => {
@@ -395,6 +454,72 @@ function Invoices() {
             sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
           />
         </Box>
+
+        {/* Mobile Actions Overlay - Compact */}
+        {isMobile && (
+          <Box 
+            sx={{ 
+              mt: 1.5, 
+              pt: 1.5, 
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+              display: 'flex', 
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              Actions
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <IconButton 
+                size="small"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  const blob = await generateInvoicePDF(invoice);
+                  openSinglePDF(blob);
+                }}
+                sx={{ 
+                  bgcolor: alpha(theme.palette.success.main, 0.1), 
+                  color: 'success.main',
+                  width: 32,
+                  height: 32
+                }}
+              >
+                <PictureAsPdf sx={{ fontSize: 18 }} />
+              </IconButton>
+              <IconButton 
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/invoices/${invoice.id}/edit`);
+                }}
+                sx={{ 
+                  bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                  color: 'primary.main',
+                  width: 32,
+                  height: 32
+                }}
+              >
+                <Edit sx={{ fontSize: 18 }} />
+              </IconButton>
+              <IconButton 
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  enqueueSnackbar("Fonction de suppression protégée en démo", { variant: 'info' });
+                }}
+                sx={{ 
+                  bgcolor: alpha(theme.palette.error.main, 0.1), 
+                  color: 'error.main',
+                  width: 32,
+                  height: 32
+                }}
+              >
+                <Delete sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Box>
+          </Box>
+        )}
       </CardContent>
     </Card>
       </motion.div>
@@ -418,65 +543,6 @@ function Invoices() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-
-      {/* Header with Title and Smart Action */}
-      <Box sx={{
-        mb: 3,
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        justifyContent: 'space-between',
-        alignItems: isMobile ? 'flex-start' : 'center',
-        gap: 2
-      }}>
-        <Box>
-          <Typography variant="h4" fontWeight="800" gutterBottom sx={{
-            background: theme => `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '-0.5px'
-          }}>
-            {t('invoices:title')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Gérez vos factures et encaissements en toute simplicité
-          </Typography>
-        </Box>
-
-        <Stack direction="row" spacing={1.5}>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<AutoAwesome />}
-            onClick={() => setShowSmartUpload(!showSmartUpload)}
-            sx={{
-              borderRadius: 2.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 2,
-              borderWidth: 2,
-              '&:hover': { borderWidth: 2 }
-            }}
-          >
-            {showSmartUpload ? 'Fermer' : 'Smart Upload IA'}
-          </Button>
-
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Receipt />}
-            onClick={() => navigate('/invoices/new')}
-            sx={{
-              borderRadius: 2.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              px: 3,
-              boxShadow: theme => `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
-            }}
-          >
-            {t('invoices:newInvoice')}
-          </Button>
-        </Stack>
-      </Box>
 
       {/* Smart Upload Section */}
       <AnimatePresence>
@@ -857,30 +923,32 @@ function Invoices() {
         }}
       >
         <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-          <Stack spacing={2}>
+          <Stack spacing={isMobile ? 1.5 : 2}>
             <Box sx={{
               display: 'flex',
               gap: 1,
-              flexWrap: 'wrap',
-              alignItems: 'stretch',
+              alignItems: 'center',
+              flexWrap: 'nowrap'
             }}>
               <TextField
                 size="small"
-                placeholder={t('invoices:search.placeholder')}
+                placeholder={isMobile ? t('invoices:search.placeholder_mobile', 'Chercher...') : t('invoices:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search />
+                      <Search sx={{ fontSize: isMobile ? 20 : 24 }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
-                  flex: '1 1 auto',
-                  minWidth: isMobile ? 'calc(100% - 140px)' : '200px',
+                  flex: 1,
+                  minWidth: isMobile ? 'calc(100% - 100px)' : '200px',
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
+                    height: 40,
+                    fontSize: isMobile ? '0.875rem' : '1rem',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
@@ -891,24 +959,26 @@ function Invoices() {
                   }
                 }}
               />
-              <DateNavigator
-                value={selectedDate}
-                onChange={setSelectedDate}
-              />
+              {!isMobile && (
+                <DateNavigator
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                />
+              )}
               <IconButton
                 onClick={() => setShowFilters(!showFilters)}
                 sx={{
-                  bgcolor: showFilters ? 'primary.main' : 'transparent',
-                  color: showFilters ? 'white' : 'inherit',
+                  bgcolor: (showFilters || selectedDate || statusFilter) ? 'primary.main' : 'transparent',
+                  color: (showFilters || selectedDate || statusFilter) ? 'white' : 'inherit',
                   borderRadius: 2,
-                  minWidth: 40,
+                  width: 40,
                   height: 40,
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: showFilters
+                  boxShadow: (showFilters || selectedDate || statusFilter)
                     ? theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
                     : 'none',
                   '&:hover': {
-                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
+                    bgcolor: (showFilters || selectedDate || statusFilter) ? 'primary.dark' : 'action.hover',
                     transform: 'scale(1.05)',
                   },
                   '&:active': {
@@ -942,32 +1012,50 @@ function Invoices() {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>{t('invoices:filters.statusLabel')}</InputLabel>
-                      <Select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        label={t('invoices:filters.statusLabel')}
-                        sx={{
-                          borderRadius: 2,
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                          },
-                        }}
-                      >
-                        <MenuItem value="">{t('invoices:filters.all')}</MenuItem>
-                        <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
-                        <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
-                        <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
-                        <MenuItem value="overdue">{t('invoices:status.overdue')}</MenuItem>
-                        <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
-                      </Select>
-                    </FormControl>
+                <Stack spacing={2} sx={{ pt: 1, pb: 1 }}>
+                  {isMobile && (
+                    <Box sx={{ 
+                      p: 1.5, 
+                      bgcolor: theme => alpha(theme.palette.primary.main, 0.05),
+                      borderRadius: 2,
+                      border: theme => `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                    }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main', mb: 1, display: 'block' }}>
+                        {t('invoices:filters.period', 'Période')}
+                      </Typography>
+                      <DateNavigator
+                        value={selectedDate}
+                        onChange={setSelectedDate}
+                      />
+                    </Box>
+                  )}
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>{t('invoices:filters.statusLabel')}</InputLabel>
+                        <Select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          label={t('invoices:filters.statusLabel')}
+                          sx={{
+                            borderRadius: 2,
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
+                            },
+                          }}
+                        >
+                          <MenuItem value="">{t('invoices:filters.all')}</MenuItem>
+                          <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
+                          <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
+                          <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
+                          <MenuItem value="overdue">{t('invoices:status.overdue')}</MenuItem>
+                          <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
                   </Grid>
-                </Grid>
+                </Stack>
               </motion.div>
             )}
           </Stack>

@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { aiChatAPI } from '../services/api';
 import IconImage from './IconImage';
+import { Plus, LayoutGrid, Settings, ChevronRight } from 'lucide-react';
+import { Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider as MuiDivider } from '@mui/material';
 
 function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const { t } = useTranslation(['navigation']);
@@ -12,6 +14,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [notificationsCount, setNotificationsCount] = useState(0);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   // Pages où cacher la tab bar pour une meilleure UX
   const shouldHideTabBar = () => {
@@ -64,34 +67,35 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     return null;
   }
 
-  // Couleur beige/crème chaude
-  const bgColor = '#fef7ed';
-
   const allNavigationItems = [
-    { label: t('navigation:mobile.dashboard'), value: '/dashboard', icon: '/icon/dashboard.png', moduleId: 'dashboard', isCore: true },
-    { label: t('navigation:mobile.suppliers'), value: '/suppliers', icon: '/icon/supplier.png', moduleId: 'suppliers', isCore: false },
-    { label: t('navigation:mobile.orders'), value: '/purchase-orders', icon: '/icon/purchase-order.png', moduleId: 'purchase-orders', isCore: false },
-    { label: t('navigation:mobile.invoices'), value: '/invoices', icon: '/icon/bill.png', moduleId: 'invoices', isCore: false },
-    { label: t('navigation:mobile.products'), value: '/products', icon: '/icon/product.png', moduleId: 'products', isCore: false },
-    { label: t('navigation:mobile.clients'), value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
+    { label: t('navigation:mobile.dashboard', 'Dashboard'), value: '/dashboard', icon: '/icon/dashboard.png', moduleId: 'dashboard', isCore: true },
+    { label: t('navigation:mobile.invoices', 'Factures'), value: '/invoices', icon: '/icon/bill.png', moduleId: 'invoices', isCore: false },
+    { label: 'Produits', value: '/products', icon: '/icon/product.png', moduleId: 'products', isCore: false },
+    { label: 'Clients', value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
+    { label: t('navigation:mobile.suppliers', 'Fournisseurs'), value: '/suppliers', icon: '/icon/supplier.png', moduleId: 'suppliers', isCore: false },
+    { label: t('navigation:mobile.orders', 'Commandes'), value: '/purchase-orders', icon: '/icon/purchase-order.png', moduleId: 'purchase-orders', isCore: false },
+    { label: 'Contrats', value: '/contracts', icon: '/icon/contract.png', moduleId: 'contracts', isCore: false },
+    { label: 'Comptabilité', value: '/accounting', icon: '/icon/analysis.png', moduleId: 'dashboard', isCore: true },
   ];
-
-  const aiItem = {
-    label: t('navigation:mobile.ai'),
-    value: '/ai-chat',
-    icon: '/icon/ai-assistant.png',
-    moduleId: 'dashboard',
-    isCore: true
-  };
 
   const navigationItems = allNavigationItems.filter(item => {
     if (item.isCore) return true;
     return enabledModules.includes(item.moduleId);
   });
 
-  const halfLength = Math.ceil(navigationItems.length / 2);
-  const leftItems = navigationItems.slice(0, halfLength);
-  const rightItems = navigationItems.slice(halfLength);
+  // 2 à gauche, 2 à droite max - le reste dans le menu "Plus"
+  const leftItems = navigationItems.slice(0, 2);
+  const rightItems = navigationItems.slice(2, 4);
+  const extraItems = navigationItems.slice(4);
+
+  const aiItem = {
+    label: t('navigation:mobile.ai', 'IA'),
+    value: '/ai-chat',
+    icon: '/icon/ai-assistant.png',
+  };
+
+  // Couleur beige/crème chaude
+  const bgColor = '#fef7ed';
 
   const currentPath = location.pathname.startsWith(aiItem.value)
     ? aiItem.value
@@ -100,7 +104,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const isAIActive = location.pathname.startsWith(aiItem.value);
 
   // Icon wrapper component avec neumorphisme doux
-  const NavIcon = ({ src, alt, isSelected }) => (
+  const NavIcon = ({ src, IconComponent, alt, isSelected }) => (
     <Box
       sx={{
         width: 32,
@@ -125,18 +129,26 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
         }
       }}
     >
-      <Box
-        component="img"
-        src={src}
-        alt={alt}
-        sx={{
-          width: 22,
-          height: 22,
-          objectFit: 'contain',
-          filter: isSelected ? 'brightness(1.2)' : 'none',
-          transition: 'filter 0.3s ease',
-        }}
-      />
+      {IconComponent ? (
+        <IconComponent 
+          size={18} 
+          color={isSelected ? theme.palette.primary.main : theme.palette.text.secondary} 
+          strokeWidth={isSelected ? 2.5 : 2}
+        />
+      ) : (
+        <Box
+          component="img"
+          src={src}
+          alt={alt}
+          sx={{
+            width: 22,
+            height: 22,
+            objectFit: 'contain',
+            filter: isSelected ? 'brightness(1.2)' : 'none',
+            transition: 'filter 0.3s ease',
+          }}
+        />
+      )}
     </Box>
   );
 
@@ -219,7 +231,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
                   key={item.value}
                   label={item.label}
                   value={item.value}
-                  icon={<NavIcon src={item.icon} alt={item.label} isSelected={isSelected} />}
+                  icon={<NavIcon src={item.icon} IconComponent={item.IconComponent} alt={item.label} isSelected={isSelected} />}
                   data-tutorial={`menu-${item.moduleId}`}
                 />
               );
@@ -319,8 +331,12 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
         <Box sx={{ display: 'flex', flex: 1 }}>
           <BottomNavigation
             value={currentPath}
-            onChange={(_event, newValue) => navigate(newValue)}
             showLabels
+            onChange={(_event, newValue) => {
+              if (newValue !== '__plus__') {
+                navigate(newValue);
+              }
+            }}
             sx={{
               backgroundColor: 'transparent',
               width: '100%',
@@ -353,14 +369,66 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
                   key={item.value}
                   label={item.label}
                   value={item.value}
-                  icon={<NavIcon src={item.icon} alt={item.label} isSelected={isSelected} />}
+                  icon={<NavIcon src={item.icon} IconComponent={item.IconComponent} alt={item.label} isSelected={isSelected} />}
                   data-tutorial={`menu-${item.moduleId}`}
                 />
               );
             })}
+            {/* Bouton Plus toujours affiché à la fin */}
+            <BottomNavigationAction
+              label="Plus"
+              value="__plus__"
+              icon={<NavIcon IconComponent={Plus} alt="Plus" isSelected={false} />}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMoreMenuOpen(true); }}
+            />
           </BottomNavigation>
         </Box>
       </Box>
+
+      {/* Bottom Sheet Menu "Plus" */}
+      <Drawer
+        anchor="bottom"
+        open={moreMenuOpen}
+        onClose={() => setMoreMenuOpen(false)}
+        sx={{
+          '& .MuiDrawer-paper': {
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            maxHeight: '70vh',
+            px: 1,
+            pb: 2,
+          }
+        }}
+      >
+        <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: 'divider', mx: 'auto', mt: 1.5, mb: 1 }} />
+        <List dense>
+          {/* Items supplémentaires */}
+          {extraItems.map((item) => (
+            <ListItem key={item.value} disablePadding>
+              <ListItemButton
+                onClick={() => { navigate(item.value); setMoreMenuOpen(false); }}
+                sx={{ borderRadius: 2, py: 1.2 }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <Box component="img" src={item.icon} alt={item.label} sx={{ width: 24, height: 24, objectFit: 'contain' }} />
+                </ListItemIcon>
+                <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 500 }} />
+                <ChevronRight size={16} color={theme.palette.text.secondary} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+          {/* Items standards toujours présents */}
+          <MuiDivider sx={{ my: 1 }} />
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => { navigate('/settings'); setMoreMenuOpen(false); }} sx={{ borderRadius: 2, py: 1.2 }}>
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <Settings size={22} color={theme.palette.text.secondary} />
+              </ListItemIcon>
+              <ListItemText primary="Paramètres" primaryTypographyProps={{ fontWeight: 500 }} />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Drawer>
     </Paper>
   );
 }

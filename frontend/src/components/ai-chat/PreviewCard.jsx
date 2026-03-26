@@ -10,6 +10,7 @@ import {
   Chip,
   alpha,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Receipt,
@@ -44,6 +45,7 @@ const PreviewCard = ({
   isNested = false,
   nestedMessage = '',
 }) => {
+  draftData = draftData || {};
   // Configuration par type d'entité
   const entityConfig = {
     invoice: {
@@ -51,10 +53,10 @@ const PreviewCard = ({
       color: '#10b981',
       bgColor: '#f0fdf4',
       title: 'Facture',
-      getPreviewTitle: (data) => `Facture pour ${data.client_name || 'Client'}`,
+      getPreviewTitle: (data) => `Facture pour ${data?.client_name || 'Client'}`,
       getPreviewSubtitle: (data) => {
-        const total = data.total_amount || (data.items || []).reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-        return `Montant: ${formatCurrency(total)} • Échéance: ${data.due_date || 'N/A'}`;
+        const total = data?.total_amount || (data?.items || []).reduce((sum, item) => sum + ((item?.quantity || 0) * (item?.unit_price || 0)), 0);
+        return `Montant: ${formatCurrency(total)} • Échéance: ${data?.due_date || 'N/A'}`;
       },
       fields: [
         { label: 'Client', value: 'client_name', icon: <Person /> },
@@ -70,11 +72,11 @@ const PreviewCard = ({
       color: '#2563eb',
       bgColor: '#eff6ff',
       title: 'Client',
-      getPreviewTitle: (data) => data.name || 'Nouveau Client',
+      getPreviewTitle: (data) => data?.name || 'Nouveau Client',
       getPreviewSubtitle: (data) => {
         const parts = [];
-        if (data.email) parts.push(data.email);
-        if (data.phone) parts.push(data.phone);
+        if (data?.email) parts.push(data.email);
+        if (data?.phone) parts.push(data.phone);
         return parts.join(' • ') || 'Aucun contact';
       },
       fields: [
@@ -91,11 +93,12 @@ const PreviewCard = ({
       color: '#06b6d4',
       bgColor: '#ecfeff',
       title: 'Fournisseur',
-      getPreviewTitle: (data) => data.name || 'Nouveau Fournisseur',
+      getPreviewTitle: (data) => data?.name || 'Nouveau Fournisseur',
       getPreviewSubtitle: (data) => {
+        if (!data) return 'Aucun contact';
         const parts = [];
-        if (data.contact_person) parts.push(`Contact: ${data.contact_person}`);
-        if (data.email) parts.push(data.email);
+        if (data?.contact_person) parts.push(`Contact: ${data.contact_person}`);
+        if (data?.email) parts.push(data.email);
         return parts.join(' • ') || 'Aucun contact';
       },
       fields: [
@@ -112,10 +115,10 @@ const PreviewCard = ({
       color: '#f59e0b',
       bgColor: '#fffbeb',
       title: 'Bon de Commande',
-      getPreviewTitle: (data) => `BC pour ${data.supplier_name || 'Fournisseur'}`,
+      getPreviewTitle: (data) => `BC pour ${data?.supplier_name || 'Fournisseur'}`,
       getPreviewSubtitle: (data) => {
-        const total = data.total_amount || (data.items || []).reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-        return `Montant: ${formatCurrency(total)} • Livraison: ${data.expected_delivery_date || 'N/A'}`;
+        const total = data?.total_amount || (data?.items || []).reduce((sum, item) => sum + ((item?.quantity || 0) * (item?.unit_price || 0)), 0);
+        return `Montant: ${formatCurrency(total)} • Livraison: ${data?.expected_delivery_date || 'N/A'}`;
       },
       fields: [
         { label: 'Fournisseur', value: 'supplier_name', icon: <Business /> },
@@ -129,9 +132,9 @@ const PreviewCard = ({
       color: '#a855f7',
       bgColor: '#faf5ff',
       title: 'Produit',
-      getPreviewTitle: (data) => data.name || 'Nouveau Produit',
+      getPreviewTitle: (data) => data?.name || 'Nouveau Produit',
       getPreviewSubtitle: (data) =>
-        `Réf: ${data.reference || 'N/A'} • Prix: ${formatCurrency(data.price)}`,
+        `Réf: ${data?.reference || 'N/A'} • Prix: ${formatCurrency(data?.price)}`,
       fields: [
         { label: 'Nom', value: 'name', icon: <Inventory /> },
         { label: 'Référence', value: 'reference', icon: <Description /> },
@@ -160,7 +163,7 @@ const PreviewCard = ({
 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const isMobile = theme.breakpoints.down('sm');
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Adapt bgColor for dark mode
   const getBgColor = (lightColor) => {
@@ -240,7 +243,7 @@ const PreviewCard = ({
 
             <Grid container spacing={{ xs: 1.5, sm: 2 }}>
               {config.fields.map((field) => {
-                const value = draftData[field.value];
+                const value = draftData?.[field.value];
                 if (!value) return null; // Skip empty fields
 
                 return (
@@ -289,9 +292,9 @@ const PreviewCard = ({
                     >
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {item.name || item.product_name || 'Article'}
+                          {item?.name || item?.product_name || 'Article'}
                         </Typography>
-                        {item.description && (
+                        {item?.description && (
                           <Typography variant="caption" color="text.secondary">
                             {item.description}
                           </Typography>
@@ -299,10 +302,10 @@ const PreviewCard = ({
                       </Box>
                       <Box sx={{ textAlign: 'right', ml: 2 }}>
                         <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                          {item.quantity} × {formatCurrency(item.unit_price)}
+                          {item?.quantity || 1} × {formatCurrency(item?.unit_price || 0)}
                         </Typography>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: config.color }}>
-                          {formatCurrency(item.quantity * item.unit_price)}
+                          {formatCurrency((item?.quantity || 1) * (item?.unit_price || 0))}
                         </Typography>
                       </Box>
                     </Box>
@@ -322,7 +325,7 @@ const PreviewCard = ({
                     </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 700, color: config.color }}>
                       {formatCurrency(
-                        draftData.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0)
+                        draftData?.items?.reduce((sum, item) => sum + ((item?.quantity || 1) * (item?.unit_price || 0)), 0) || 0
                       )}
                     </Typography>
                   </Box>
@@ -350,8 +353,7 @@ const PreviewCard = ({
                 color="error"
                 startIcon={<Cancel />}
                 onClick={onCancel}
-                sx={{ textTransform: 'none', fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                fullWidth={{ xs: true, sm: false }}
+                sx={{ textTransform: 'none', fontSize: { xs: '0.875rem', sm: '1rem' }, width: { xs: '100%', sm: 'auto' } }}
               >
                 Annuler
               </Button>
@@ -364,12 +366,12 @@ const PreviewCard = ({
                   fontSize: { xs: '0.875rem', sm: '1rem' },
                   borderColor: config.color,
                   color: config.color,
+                  width: { xs: '100%', sm: 'auto' },
                   '&:hover': {
                     borderColor: config.color,
                     bgcolor: getBgColor(config.bgColor),
                   },
                 }}
-                fullWidth={{ xs: true, sm: false }}
               >
                 Modifier
               </Button>
@@ -381,12 +383,12 @@ const PreviewCard = ({
                   textTransform: 'none',
                   fontSize: { xs: '0.875rem', sm: '1rem' },
                   bgcolor: config.color,
+                  width: { xs: '100%', sm: 'auto' },
                   '&:hover': {
                     bgcolor: config.color,
                     opacity: 0.9,
                   },
                 }}
-                fullWidth={{ xs: true, sm: false }}
               >
                 ✓ Confirmer
               </Button>

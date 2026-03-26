@@ -56,6 +56,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { fetchClients } from '../../store/slices/clientsSlice';
+import { useHeader } from '../../contexts/HeaderContext';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
@@ -71,6 +72,7 @@ function Clients() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { registerSharedElement } = useSharedElement();
+  const { setPageHeader } = useHeader();
 
   // Redux state
   const { clients, loading, error } = useSelector((state) => state.clients);
@@ -104,6 +106,40 @@ function Clients() {
   const handleGenerateReportClick = useCallback(() => {
     setReportConfigOpen(true);
   }, []);
+
+  // Set the page header via Context
+  useEffect(() => {
+    setPageHeader({
+      title: t('clients:title', 'Clients'),
+      // Action pour le bouton mobile à gauche
+      action: {
+        label: t('navigation:topBar.new', 'Nouveau'),
+        icon: <Person />,
+        onClick: () => navigate('/clients/new'),
+        color: 'primary',
+        variant: 'contained'
+      },
+      // Actions pour le desktop à droite
+      actions: (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Person />}
+          onClick={() => navigate('/clients/new')}
+          sx={{
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            px: { xs: 2, sm: 3 },
+            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+          }}
+        >
+          {t('navigation:topBar.newClient', 'Nouveau client')}
+        </Button>
+      )
+    });
+    return () => setPageHeader({ title: '', actions: null });
+  }, [t, navigate, theme.palette.primary, setPageHeader]);
 
   // Enregistrer la fonction de rapport dans la top nav bar
   useEffect(() => {
@@ -840,26 +876,26 @@ function Clients() {
             <Box sx={{
               display: 'flex',
               gap: 1,
-              flexWrap: 'wrap',
               alignItems: 'stretch',
             }}>
               <TextField
                 size="small"
-                placeholder={t('clients:search.placeholder')}
+                placeholder={isMobile ? t('clients:search.placeholder_mobile', 'Chercher...') : t('clients:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search />
+                      <Search sx={{ fontSize: isMobile ? 20 : 24 }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
-                  flex: '1 1 auto',
-                  minWidth: isMobile ? '100%' : '250px',
+                  flex: 1,
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
+                    height: 40,
+                    fontSize: isMobile ? '0.875rem' : '1rem',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',

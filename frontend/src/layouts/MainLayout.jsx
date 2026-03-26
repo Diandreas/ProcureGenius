@@ -42,12 +42,13 @@ import {
 import { logout } from '../store/slices/authSlice';
 import { useModules } from '../contexts/ModuleContext';
 import { useColorMode } from '../App';
+import { useHeader } from '../contexts/HeaderContext';
 import MobileBottomNav from '../components/MobileBottomNav';
 import ModuleActivationDialog from '../components/ModuleActivationDialog';
 import IconImage from '../components/IconImage';
 import TutorialButton from '../components/tutorial/TutorialButton';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
-import AINotificationProvider from '../components/AI/AINotificationProvider';
+import AINotificationProvider, { useAINotifications } from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
@@ -56,6 +57,29 @@ import PeriodSelector from '../components/dashboard/PeriodSelector';
 const drawerWidth = 240;
 
 const CORE_MODULES = ['dashboard'];
+
+// Composant pour l'item de menu des notifications dans le profil
+const NotificationsMenuItem = ({ handleMenuClose }) => {
+  const { unreadCount, openCenter } = useAINotifications();
+  const { t } = useTranslation(['navigation']);
+
+  return (
+    <MenuItem
+      onClick={() => {
+        openCenter();
+        handleMenuClose();
+      }}
+      sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5 }}
+    >
+      <ListItemIcon sx={{ minWidth: 32 }}>
+        <Badge badgeContent={unreadCount} color="warning" sx={{ '& .MuiBadge-badge': { fontSize: '0.65rem', height: 16, minWidth: 16 } }}>
+          <Notifications fontSize="small" />
+        </Badge>
+      </ListItemIcon>
+      {t('navigation:userMenu.notifications', 'Notifications IA')}
+    </MenuItem>
+  );
+};
 
 function MainLayout() {
   const { t } = useTranslation(['navigation', 'common']);
@@ -69,6 +93,7 @@ function MainLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { toggleColorMode, mode } = useColorMode();
+  const { headerConfig } = useHeader();
   const isAIChatPage = location.pathname === '/ai-chat' || location.pathname.startsWith('/ai-chat/');
 
   const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
@@ -94,7 +119,11 @@ function MainLayout() {
       }
     };
     window.addEventListener('ai-chat-stats-update', handleAIStatsUpdate);
-    return () => window.removeEventListener('ai-chat-stats-update', handleAIStatsUpdate);
+    window.addEventListener('toggle-mobile-drawer', () => setMobileOpen(prev => !prev));
+    return () => {
+      window.removeEventListener('ai-chat-stats-update', handleAIStatsUpdate);
+      window.removeEventListener('toggle-mobile-drawer', () => setMobileOpen(prev => !prev));
+    };
   }, []);
 
   // Handlers pour les boutons AI Chat
@@ -294,7 +323,13 @@ function MainLayout() {
     }
   };
 
-  const contextualActions = useMemo(() => getContextualActions(), [location.pathname, isMobile, dashboardPeriod]);
+  const contextualActions = useMemo(() => {
+    // If a page explicitly sets a title or actions via context, it overrides the default routing logic
+    if (headerConfig && (headerConfig.title || headerConfig.action || headerConfig.actions)) {
+      return headerConfig;
+    }
+    return getContextualActions();
+  }, [headerConfig, location.pathname, isMobile, dashboardPeriod]);
 
   const drawer = (
     <Box sx={{
@@ -504,8 +539,11 @@ function MainLayout() {
           position="fixed"
           elevation={0}
           sx={{
-            width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
-            ml: { md: `${drawerWidth}px` },
+            width: { xs: 'calc(100% - 32px)', md: `calc(100% - ${drawerWidth}px)` },
+            ml: { xs: '16px', md: `${drawerWidth}px` },
+            mr: { xs: '16px', md: 0 },
+            mt: { xs: 1.5, md: 0 },
+            borderRadius: { xs: 2.5, md: 0 },
             bgcolor: 'background.paper',
             border: 'none',
             boxShadow: getNeumorphicShadow(mode === 'dark' ? 'dark' : 'light', 'soft'),
@@ -648,7 +686,7 @@ function MainLayout() {
                       edge="start"
                       onClick={handleDrawerToggle}
                       sx={{
-                        display: { xs: 'flex', md: 'none' },
+                        display: { xs: 'none', md: 'none' }, // Masqué sur mobile car géré par le bottom nav
                         mr: { xs: 0, sm: 2 },
                         borderRadius: 1,
                         p: 0.75,
@@ -688,8 +726,8 @@ function MainLayout() {
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       letterSpacing: '-0.02em',
-                      // Cacher sur mobile pour les pages principales seulement
-                      display: { xs: showTitleOnMobile ? 'block' : 'none', md: 'block' },
+                      // Toujours afficher le titre (y compris sur pages principales sur mobile)
+                      display: 'block',
                     }}
                   >
                     {contextualActions?.title || 'Procura'}
@@ -801,50 +839,62 @@ function MainLayout() {
             )}
 
             {/* Contextual Actions - Boutons Rectangles Adoucis */}
-            {contextualActions?.actions?.map((action, index) => (
-              action.isIconOnly ? (
-                <Tooltip key={index} title={action.tooltip || action.label}>
-                  <IconButton
-                    onClick={action.onClick}
-                    size="small"
-                    sx={{
-                      color: 'text.secondary',
-                      mr: 1,
-                      p: 1,
-                      borderRadius: 2,
-                      '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08) }
-                    }}
-                  >
-                    {action.icon}
-                  </IconButton>
-                </Tooltip>
+            <Box sx={{ 
+              display: { 
+                xs: contextualActions?.action ? 'none' : 'flex', 
+                md: 'flex' 
+              }, 
+              alignItems: 'center', 
+              gap: 1 
+            }}>
+              {React.isValidElement(contextualActions?.actions) ? (
+                contextualActions.actions
               ) : (
-                <Button
-                  key={index}
-                  variant="outlined"
-                  startIcon={action.icon}
-                  onClick={action.onClick}
-                  size="small"
-                  sx={{
-                    borderRadius: 2, // Radius 8px standard
-                    fontWeight: 600,
-                    px: 2,
-                    py: 0.8,
-                    fontSize: '0.875rem',
-                    mr: 1.5,
-                    textTransform: 'none',
-                    borderColor: theme.palette.divider,
-                    color: 'text.primary',
-                    '&:hover': {
-                      borderColor: theme.palette.primary.main,
-                      bgcolor: alpha(theme.palette.primary.main, 0.04)
-                    }
-                  }}
-                >
-                  {action.label}
-                </Button>
-              )
-            ))}
+                contextualActions?.actions?.map((action, index) => (
+                  action.isIconOnly ? (
+                    <Tooltip key={index} title={action.tooltip || action.label}>
+                      <IconButton
+                        onClick={action.onClick}
+                        size="small"
+                        sx={{
+                          color: 'text.secondary',
+                          mr: 1,
+                          p: 1,
+                          borderRadius: 2,
+                          '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08) }
+                        }}
+                      >
+                        {action.icon}
+                      </IconButton>
+                    </Tooltip>
+                  ) : (
+                    <Button
+                      key={index}
+                      variant="outlined"
+                      startIcon={action.icon}
+                      onClick={action.onClick}
+                      size="small"
+                      sx={{
+                        borderRadius: 2, // Radius 8px standard
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 2,
+                        py: 0.75,
+                        display: { xs: 'none', sm: 'inline-flex' }, // Hide text buttons on mobile if list is long
+                        color: 'text.primary',
+                        borderColor: alpha(theme.palette.divider, 0.1),
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: alpha(theme.palette.primary.main, 0.04)
+                        }
+                      }}
+                    >
+                      {action.label}
+                    </Button>
+                  )
+                ))
+              )}
+            </Box>
 
             {/* Legacy Primary Action - Bouton Premium avec effet Glow */}
             {contextualActions?.action && !contextualActions?.actions && (
@@ -1020,6 +1070,11 @@ function MainLayout() {
                 </ListItemIcon>
                 {t('navigation:userMenu.settings')}
               </MenuItem>
+              
+              <Divider sx={{ my: 0.5 }} />
+              
+              <NotificationsMenuItem handleMenuClose={handleMenuClose} />
+              
               <Divider sx={{ my: 0.5 }} />
               <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5, color: 'error.main' }}>
                 <ListItemIcon sx={{ minWidth: 32, color: 'error.main' }}>

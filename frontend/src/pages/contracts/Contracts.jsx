@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, IconButton, TextField, InputAdornment,
   FormControl, InputLabel, Select, MenuItem, Grid, Chip, Avatar, Stack,
-  CircularProgress, useMediaQuery, useTheme, Tabs, Tab,
+  CircularProgress, useMediaQuery, useTheme, Tabs, Tab, Button,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Search, FilterList, Description, AttachMoney, CheckCircle, Schedule,
 } from '@mui/icons-material';
@@ -16,6 +17,7 @@ import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import ContractTemplatesTab from '../../components/ContractTemplatesTab';
+import { useHeader } from '../../contexts/HeaderContext';
 
 function Contracts() {
   const { t } = useTranslation(['contracts', 'common']);
@@ -29,6 +31,7 @@ function Contracts() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { setPageHeader } = useHeader();
 
   useEffect(() => {
     fetchContracts();
@@ -45,6 +48,31 @@ function Contracts() {
       setLoading(false);
     }
   };
+
+  // Set the page header via Context
+  useEffect(() => {
+    setPageHeader({
+      title: t('contracts:title', t('navigation:menu.contracts')),
+      actions: (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Description />}
+          onClick={() => navigate('/contracts/new')}
+          sx={{
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            px: { xs: 2, sm: 3 },
+            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+          }}
+        >
+          {t('navigation:topBar.newContract', 'Nouveau contrat')}
+        </Button>
+      )
+    });
+    return () => setPageHeader({ title: '', actions: null });
+  }, [t, navigate, theme.palette.primary, setPageHeader]);
 
   const getStatusColor = (status) => {
     const colors = { draft: 'default', active: 'success', expired: 'error', cancelled: 'error' };

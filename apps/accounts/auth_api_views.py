@@ -132,12 +132,36 @@ def api_register(request):
             try:
                 from apps.core.email_utils import send_welcome_registration_email
                 send_welcome_registration_email(user, organization)
+                
+                # Envoyer aussi l'email de vérification si nécessaire
+                from django.contrib.auth.tokens import default_token_generator
+                v_token = default_token_generator.make_token(user)
+                from apps.core.email_utils import send_verification_email
+                send_verification_email(user, v_token)
             except Exception as e:
                 import logging
-                logging.getLogger(__name__).warning(f"Could not send welcome email: {e}")
+                logging.getLogger(__name__).warning(f"Could not send registration emails: {e}")
+
+            # Créer une notification in-app de bienvenue
+            try:
+                from apps.ai_assistant.models import AINotification
+                AINotification.objects.create(
+                    user=user,
+                    organization=organization,
+                    notification_type='achievement',
+                    title=_("Bienvenue sur Procura !"),
+                    message=_("Votre espace de travail est prêt. Explorez vos tableaux de bord et commencez à gérer vos achats."),
+                    action_label=_("Commencer"),
+                    action_url="/dashboard",
+                    priority=10
+                )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Could not create welcome notification: {e}")
 
             return Response({
-                'message': _('Inscription réussie! Configurons votre espace de travail.'),
+                'message': _('Inscription réussie! Bienvenue sur Procura.'),
+                'token': token.key,
                 'user': {
                     'id': str(user.id),
                     'email': user.email,
@@ -252,12 +276,47 @@ def api_verify_email(request):
 
     Body:
         {
+            "email": "user@example.com",
             "token": "verification-token-here"
         }
     """
-    # TODO: Implement email verification logic
-    # This would check the token and mark user.email_verified = True
-    pass
+    email = request.data.get('email', '').lower().strip()
+    token = request.data.get('token', '')
+
+    if not email or not token:
+        return Response({'error': 'Email et token sont requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = CustomUser.objects.filter(email=email).first()
+    if not user:
+        return Response({'error': 'Utilisateur non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if user.email_verified:
+        return Response({'message': 'Email déjà vérifié'})
+
+    # Vérifier le token
+    from django.contrib.auth.tokens import default_token_generator
+    if not default_token_generator.check_token(user, token):
+        return Response({'error': 'Token invalide ou expiré'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Marquer comme vérifié
+    user.email_verified = True
+    user.save(update_fields=['email_verified'])
+
+    # Créer une notification de succès
+    try:
+        from apps.ai_assistant.models import AINotification
+        AINotification.objects.create(
+            user=user,
+            notification_type='achievement',
+            title=_("Email vérifié !"),
+            message=_("Votre adresse email a été vérifiée avec succès. Vous avez maintenant accès à toutes les fonctionnalités."),
+            priority=5
+        )
+    except:
+        pass
+
+    return Response({'message': 'Votre adresse email a été vérifiée avec succès.'})
+
 
 
 @api_view(['POST'])
@@ -273,8 +332,29 @@ def api_forgot_password(request):
             "email": "user@example.com"
         }
     """
-    # TODO: Implement password reset email sending
-    pass
+    email = request.data.get('email', '').lower().strip()
+    if not email:
+        return Response({'error': 'Email est requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = CustomUser.objects.filter(email=email).first()
+    if not user:
+        # On ne révèle pas si l'utilisateur existe ou non pour des raisons de sécurité
+        return Response({'message': 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.'})
+
+    # Générer le token de réinitialisation (Django standard)
+    from django.contrib.auth.tokens import default_token_generator
+    token = default_token_generator.make_token(user)
+
+    # Envoyer l'email
+    try:
+        from apps.core.email_utils import send_password_reset_email
+        send_password_reset_email(user, token)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Could not send password reset email: {e}")
+        return Response({'error': 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({'message': 'Un lien de réinitialisation a été envoyé à votre adresse email.'})
 
 
 @api_view(['POST'])
@@ -287,12 +367,52 @@ def api_reset_password(request):
 
     Body:
         {
+            "email": "user@example.com",
             "token": "reset-token",
             "new_password": "newpassword"
         }
     """
-    # TODO: Implement password reset logic
-    pass
+    email = request.data.get('email', '').lower().strip()
+    token = request.data.get('token', '')
+    new_password = request.data.get('new_password', '')
+
+    if not all([email, token, new_password]):
+        return Response({'error': 'Tous les champs sont requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = CustomUser.objects.filter(email=email).first()
+    if not user:
+        return Response({'error': 'Lien invalide ou expiré'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Vérifier le token
+    from django.contrib.auth.tokens import default_token_generator
+    if not default_token_generator.check_token(user, token):
+        return Response({'error': 'Lien invalide ou expiré'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Changer le mot de passe
+    if len(new_password) < 8:
+        return Response({'error': 'Le mot de passe doit contenir au moins 8 caractères'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+
+    # Supprimer les tokens existants pour forcer la reconnexion partout
+    Token.objects.filter(user=user).delete()
+
+    # Créer une notification in-app pour confirmer le changement
+    try:
+        from apps.ai_assistant.models import AINotification
+        AINotification.objects.create(
+            user=user,
+            notification_type='alert',
+            title=_("Mot de passe modifié"),
+            message=_("Votre mot de passe a été modifié avec succès."),
+            priority=5
+        )
+    except:
+        pass
+
+    return Response({'message': 'Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.'})
+
 
 
 @api_view(['POST'])

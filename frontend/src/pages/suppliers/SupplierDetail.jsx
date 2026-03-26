@@ -62,6 +62,7 @@ import { suppliersAPI } from '../../services/api';
 import reportsAPI from '../../services/reportsAPI';
 import { getStatusColor, getStatusLabel, formatDate, parseRating } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import { useHeader } from '../../contexts/HeaderContext';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
@@ -83,10 +84,47 @@ function SupplierDetail() {
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
 
+  const { setHeaderConfig } = useHeader();
+
   useEffect(() => {
     fetchSupplier();
     fetchStatistics();
   }, [id]);
+
+  // Global Header Integration
+  useEffect(() => {
+    if (isMobile && supplier) {
+      setHeaderConfig({
+        title: supplier.name,
+        showBackButton: true,
+        onBack: () => navigate('/suppliers'),
+        rightActions: [
+          {
+            icon: <PictureAsPdf />,
+            onClick: () => setPdfDialogOpen(true),
+            label: t('suppliers:actions.downloadPdf')
+          },
+          {
+            icon: <Edit />,
+            onClick: () => navigate(`/suppliers/${id}/edit`),
+            label: t('suppliers:actions.edit')
+          },
+          {
+            icon: <Delete />,
+            onClick: handleDelete,
+            label: t('suppliers:actions.delete'),
+            color: 'error'
+          }
+        ]
+      });
+    }
+
+    return () => {
+      if (isMobile) {
+        setHeaderConfig(null);
+      }
+    };
+  }, [isMobile, supplier, id, t]);
 
   const fetchSupplier = async () => {
     setLoading(true);
@@ -218,6 +256,7 @@ function SupplierDetail() {
   return (
     <Box sx={{
       p: { xs: 0, sm: 2, md: 3 },
+      pb: { xs: 12, sm: 2, md: 3 }, // Space for mobile nav
       bgcolor: 'background.default',
       minHeight: '100vh'
     }}>
@@ -390,7 +429,7 @@ function SupplierDetail() {
                       <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" sx={{ flex: 1 }}>
                         {supplier.name}
                       </Typography>
-                      <Stack direction="row" spacing={0.5}>
+                      <Stack direction="row" spacing={0.5} sx={{ display: isMobile ? 'none' : 'flex' }}>
                         <Tooltip title={t('suppliers:actions.downloadPdf', 'Rapport PDF')}>
                           <IconButton
                             onClick={() => setPdfDialogOpen(true)}

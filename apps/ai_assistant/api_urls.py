@@ -28,7 +28,7 @@ urlpatterns = [
     # Notifications push IA (in-app)
     path('notifications/', views.AINotificationsView.as_view(), name='notifications'),
     path('notifications/count/', views.AINotificationsCountView.as_view(), name='notifications_count'),
-    path('notifications/<uuid:notification_id>/mark-read/', views.AINotificationMarkReadView.as_view(), name='notification_mark_read'),
+    path('notifications/<int:notification_id>/mark-read/', views.AINotificationMarkReadView.as_view(), name='notification_mark_read'),
 
     # Web Push (native browser push)
     path('push/vapid-key/', views.PushVapidKeyView.as_view(), name='push_vapid_key'),

@@ -375,7 +375,7 @@ class Subscription(models.Model):
         return can_proceed, used, limit
 
     def increment_usage(self, quota_type):
-        """Incrémente le compteur d'utilisation"""
+        """Incrémente le compteur d'utilisation et alerte si proche de la limite"""
         if quota_type == 'invoices':
             self.invoices_this_month += 1
         elif quota_type == 'purchase_orders':
@@ -384,6 +384,23 @@ class Subscription(models.Model):
             self.ai_requests_this_month += 1
 
         self.save(update_fields=[f'{quota_type}_this_month', 'updated_at'])
+
+        # Déclencher alerte quota si > 90%
+        try:
+            can_proceed, used, limit = self.check_quota(quota_type)
+            if limit and limit > 0 and (used / limit) >= 0.9:
+                from apps.ai_assistant.push_triggers import push_quota_alert
+                # Envoyer l'alerte à tous les admins/managers
+                from apps.accounts.models import CustomUser
+                admins = CustomUser.objects.filter(
+                    organization=self.organization, 
+                    role__in=['admin', 'manager'],
+                    is_active=True
+                )
+                for admin in admins:
+                    push_quota_alert(admin, quota_type, used, limit)
+        except Exception:
+            pass
 
     def reset_monthly_quotas(self):
         """Réinitialise les quotas mensuels (appelé par tâche cron)"""

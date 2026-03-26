@@ -2499,8 +2499,8 @@ class ActionExecutor:
                 client_created = False
 
                 # Si un client_id est fourni directement, l'utiliser
-                if params.get('use_existing_client_id'):
-                    client_id = params.get('use_existing_client_id')
+                client_id = params.get('use_existing_client_id') or params.get('client_id')
+                if client_id:
                     client = Client.objects.get(id=client_id, organization=organization)
                 else:
                     # Rechercher clients similaires
@@ -2515,8 +2515,9 @@ class ActionExecutor:
                     if similar_clients and organization:
                         similar_clients = [(c, s, r) for c, s, r in similar_clients if c.organization == organization]
 
-                    # STRATÉGIE: Demander confirmation SI match trouvé ET pas de force_create
-                    if similar_clients and not params.get('force_create_client', False):
+                    # STRATÉGIE: Demander confirmation SI match trouvé ET pas de force_create_client
+                    # Note: On accepte aussi 'force_create' comme synonyme si on est déjà dans un flux de confirmation
+                    if similar_clients and not (params.get('force_create_client', False) or params.get('force_create', False)):
                         # RETOURNER POUR CONFIRMATION avec boutons cliquables
                         return {
                             'success': False,
@@ -2604,7 +2605,7 @@ class ActionExecutor:
                     due_date=due_date,
                     subtotal=amount,
                     total_amount=amount,
-                    status='draft'
+                    status='sent'  # Changé de 'draft' à 'sent' pour déclencher l'écriture comptable
                 )
 
                 # 2. AJOUTER ITEMS avec création auto des produits
@@ -2662,6 +2663,7 @@ class ActionExecutor:
                     'invoice_number': invoice.invoice_number,
                     'client_name': client.name,
                     'client_created': client_created,
+                    'accounting_entry': 'Générée (Journal des Ventes)',
                     'url': f'/invoices/{invoice.id}'
                 }
 
@@ -2676,6 +2678,7 @@ class ActionExecutor:
             if result.get('client_created'):
                 message_parts.append(f"✓ Client '{result.get('client_name', 'Inconnu')}' créé automatiquement")
             message_parts.append(f"✓ Facture '{result.get('invoice_number', 'N/A')}' créée pour {result.get('client_name', 'Inconnu')}")
+            message_parts.append(f"⚙️ Écriture comptable générée automatiquement dans le journal des ventes.")
 
             return {
                 'success': True,
@@ -2780,62 +2783,71 @@ class ActionExecutor:
                 supplier_phone = params.get('supplier_phone', '')
 
                 # Entity matching pour fournisseurs
-                similar_suppliers = entity_matcher.find_similar_suppliers(
-                    name=supplier_name,
-                    email=supplier_email if supplier_email else None,
-                    phone=supplier_phone if supplier_phone else None
-                )
+                supplier = None
+                supplier_created = False
 
-                # Filtrer par organisation si nécessaire
-                if similar_suppliers and organization:
-                    similar_suppliers = [(s, sc, r) for s, sc, r in similar_suppliers if s.organization == organization]
-
-                # IMPORTANT: Ne PAS auto-sélectionner - demander confirmation à l'utilisateur
-                if similar_suppliers and not params.get('force_create_supplier', False):
-                    # RETOURNER ERREUR POUR CONFIRMATION
-                    return {
-                        'success': False,
-                        'requires_confirmation': True,
-                        'error': 'similar_entities_found',
-                        'entity_type': 'supplier',
-                        'similar_entities': [
-                            {
-                                'id': str(s.id),
-                                'name': s.name,
-                                'email': s.email or '',
-                                'phone': s.phone or '',
-                                'similarity': int(score * 100),  # Convertir en pourcentage int
-                                'reason': entity_matcher.format_match_reason(reason)
-                            }
-                            for s, score, reason in similar_suppliers[:3]  # Top 3 matches
-                        ],
-                        'message': f'Fournisseur similaire trouvé : "{similar_suppliers[0][0].name}" ({int(similar_suppliers[0][1]*100)}% de similarité). Voulez-vous utiliser le fournisseur existant ou en créer un nouveau ?',
-                        'pending_confirmation': {
-                            'action': 'create_purchase_order',
-                            'original_params': params,
-                            'entity_type': 'supplier',
-                            'suggested_entity_id': str(similar_suppliers[0][0].id),
-                            'choices': {
-                                'use_existing': {'use_existing_supplier_id': str(similar_suppliers[0][0].id)},
-                                'force_create': {'force_create_supplier': True},
-                                'cancel': None
-                            }
-                        }
-                    }
-                elif similar_suppliers and params.get('use_existing_supplier_id'):
-                    # Utiliser le fournisseur existant spécifié par l'utilisateur
-                    supplier_id = params.get('use_existing_supplier_id')
+                # Si un supplier_id est fourni directement, l'utiliser
+                supplier_id = params.get('use_existing_supplier_id') or params.get('supplier_id')
+                if supplier_id:
                     supplier = Supplier.objects.get(id=supplier_id, organization=organization)
                 else:
-                    # Créer nouveau fournisseur (pas de match OU force_create_supplier=True)
-                    supplier = Supplier.objects.create(
+                    # Entity matching pour fournisseurs
+                    similar_suppliers = entity_matcher.find_similar_suppliers(
                         name=supplier_name,
-                        email=supplier_email,
-                        phone=supplier_phone,
-                        organization=organization,
-                        status='pending',
-                        is_active=True
+                        email=supplier_email if supplier_email else None,
+                        phone=supplier_phone if supplier_phone else None
                     )
+
+                    # Filtrer par organisation si nécessaire
+                    if similar_suppliers and organization:
+                        similar_suppliers = [(s, sc, r) for s, sc, r in similar_suppliers if s.organization == organization]
+
+                    # IMPORTANT: Ne PAS auto-sélectionner - demander confirmation à l'utilisateur
+                    if similar_suppliers and not (params.get('force_create_supplier', False) or params.get('force_create', False)):
+                        # RETOURNER ERREUR POUR CONFIRMATION
+                        return {
+                            'success': False,
+                            'requires_confirmation': True,
+                            'error': 'similar_entities_found',
+                            'entity_type': 'supplier',
+                            'similar_entities': [
+                                {
+                                    'id': str(s.id),
+                                    'name': s.name,
+                                    'email': s.email or '',
+                                    'phone': s.phone or '',
+                                    'similarity': int(score * 100),  # Convertir en pourcentage int
+                                    'reason': entity_matcher.format_match_reason(reason)
+                                }
+                                for s, score, reason in similar_suppliers[:3]  # Top 3 matches
+                            ],
+                            'message': f'Fournisseur similaire trouvé : "{similar_suppliers[0][0].name}" ({int(similar_suppliers[0][1]*100)}% de similarité). Voulez-vous utiliser le fournisseur existant ou en créer un nouveau ?',
+                            'pending_confirmation': {
+                                'action': 'create_purchase_order',
+                                'original_params': params,
+                                'entity_type': 'supplier',
+                                'suggested_entity_id': str(similar_suppliers[0][0].id),
+                                'options': [
+                                    {'id': 'use_existing', 'label': f'Utiliser {similar_suppliers[0][0].name}', 'supplier_id': str(similar_suppliers[0][0].id)},
+                                    {'id': 'force_create', 'label': 'Créer un nouveau fournisseur quand même'},
+                                    {'id': 'cancel', 'label': 'Annuler'}
+                                ]
+                            }
+                        }
+                    elif similar_suppliers and params.get('use_existing_supplier_id'):
+                        # Utiliser le fournisseur existant spécifié par l'utilisateur
+                        supplier_id = params.get('use_existing_supplier_id')
+                        supplier = Supplier.objects.get(id=supplier_id, organization=organization)
+                    else:
+                        # Créer nouveau fournisseur (pas de match OU force_create_supplier=True)
+                        supplier = Supplier.objects.create(
+                            name=supplier_name,
+                            email=supplier_email,
+                            phone=supplier_phone,
+                            organization=organization,
+                            status='pending',
+                            is_active=True
+                        )
 
                 # Préparer les données
                 description = params.get('description', '')
@@ -2891,7 +2903,7 @@ class ActionExecutor:
                     expected_delivery_date=delivery_date,
                     total_amount=total_amount,
                     subtotal=total_amount,
-                    status='draft'
+                    status='received'  # Changé de 'draft' à 'received' pour déclencher l'écriture comptable
                 )
 
                 # 2. AJOUTER ITEMS avec création auto des produits

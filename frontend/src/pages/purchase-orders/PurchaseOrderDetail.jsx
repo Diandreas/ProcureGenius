@@ -76,6 +76,7 @@ import { settingsAPI } from '../../services/settingsAPI';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
+import { useHeader } from '../../contexts/HeaderContext';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 
@@ -112,9 +113,77 @@ function PurchaseOrderDetail() {
     product_reference: ''
   });
 
+  const { setPageHeader } = useHeader();
+
   useEffect(() => {
     fetchPurchaseOrder();
   }, [id]);
+
+  // Update Global Header
+  useEffect(() => {
+    if (purchaseOrder) {
+      setPageHeader({
+        title: isMobile ? purchaseOrder.po_number : '',
+        showTitle: isMobile,
+        actions: isMobile ? (
+          <Stack direction="row" spacing={0.5}>
+            <IconButton
+              onClick={() => setPdfDialogOpen(true)}
+              size="small"
+              sx={{ color: 'primary.main' }}
+            >
+              <PictureAsPdf fontSize="small" />
+            </IconButton>
+            <IconButton
+              onClick={() => {
+                const currentLanguage = i18n.language || 'fr';
+                const lang = currentLanguage.split('-')[0];
+                const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
+                  name: purchaseOrder.supplier?.name || (lang === 'en' ? 'Supplier' : 'Fournisseur'),
+                  number: purchaseOrder.po_number
+                });
+                setEmailData({
+                  recipient_email: purchaseOrder.supplier?.email || '',
+                  custom_message: defaultMessage
+                });
+                setSendEmailDialogOpen(true);
+              }}
+              disabled={!purchaseOrder.supplier?.email}
+              size="small"
+              sx={{ color: 'info.main' }}
+            >
+              <Email fontSize="small" />
+            </IconButton>
+            <IconButton
+              onClick={handleEdit}
+              size="small"
+              sx={{ color: 'grey.700' }}
+            >
+              <Edit fontSize="small" />
+            </IconButton>
+            {purchaseOrder.status === 'draft' && (
+              <IconButton
+                onClick={() => setApproveDialogOpen(true)}
+                size="small"
+                sx={{ color: 'success.main' }}
+              >
+                <Done fontSize="small" />
+              </IconButton>
+            )}
+            <IconButton
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              size="small"
+              sx={{ color: 'text.secondary' }}
+            >
+              <MoreVert fontSize="small" />
+            </IconButton>
+          </Stack>
+        ) : null
+      });
+    }
+    
+    return () => setPageHeader(null);
+  }, [purchaseOrder, isMobile, id, t]);
 
   // Charger les paramètres d'organisation pour détecter le format thermal
   useEffect(() => {
@@ -279,7 +348,12 @@ function PurchaseOrderDetail() {
   }
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
+    <Box sx={{ 
+      p: { xs: 0, sm: 2, md: 3 },
+      pb: isMobile ? 12 : 3, // Space for mobile nav
+      bgcolor: 'background.default',
+      minHeight: '100vh'
+    }}>
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>

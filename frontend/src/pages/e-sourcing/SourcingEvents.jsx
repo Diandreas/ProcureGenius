@@ -35,6 +35,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Add,
   Search,
@@ -68,6 +69,7 @@ import { fr } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
+import { useHeader } from '../../contexts/HeaderContext';
 
 function SourcingEvents() {
   const { t } = useTranslation(['eSourcing', 'common']);
@@ -76,6 +78,7 @@ function SourcingEvents() {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { setPageHeader } = useHeader();
 
   const { events, loading, totalCount } = useSelector((state) => state.eSourcing);
 
@@ -99,6 +102,31 @@ function SourcingEvents() {
     };
     dispatch(fetchSourcingEvents(params));
   };
+
+  // Set the page header via Context
+  useEffect(() => {
+    setPageHeader({
+      title: t('eSourcing:title', t('navigation:menu.eSourcing')),
+      actions: (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Add />}
+          onClick={() => navigate('/e-sourcing/events/new')}
+          sx={{
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            px: { xs: 2, sm: 3 },
+            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+          }}
+        >
+          {t('eSourcing:actions.newEvent')}
+        </Button>
+      )
+    });
+    return () => setPageHeader({ title: '', actions: null });
+  }, [t, navigate, theme.palette.primary, setPageHeader]);
 
   const handleQuickFilterClick = (filterValue) => {
     if (quickFilter === filterValue) {
@@ -415,16 +443,6 @@ function SourcingEvents() {
 
       <Card>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => navigate('/e-sourcing/events/new')}
-            >
-              {t('eSourcing:actions.newEvent')}
-            </Button>
-          </Box>
-
           <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
             <TextField
               placeholder={t('common:search')}

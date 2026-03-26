@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Box, Typography, Divider, Tabs, Tab, useMediaQuery, useTheme, IconButton, Tooltip,
 } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Dashboard as DashboardIcon,
   AccountTree as PlanIcon,
@@ -12,8 +13,8 @@ import {
   AccountBalance as BilanIcon,
   Insights as SIGIcon,
 } from '@mui/icons-material';
-import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '../../components/navigation/BackButton';
+import { useHeader } from '../../contexts/HeaderContext';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/accounting', icon: <DashboardIcon />, exact: true },
@@ -32,42 +33,22 @@ export default function AccountingNav({ title, subtitle, action }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const { setPageHeader } = useHeader();
+
   const activeIndex = NAV_ITEMS.findIndex((item) =>
     item.exact ? pathname === item.path : pathname.startsWith(item.path)
   );
   const currentTab = activeIndex === -1 ? false : activeIndex;
 
-  return (
-    <Box mb={3}>
-      {/* Header */}
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        mb={1.5}
-        flexWrap="wrap"
-        gap={1}
-      >
-        <Box display="flex" alignItems="center" gap={1} minWidth={0}>
-          <BackButton to="/dashboard" tooltip="Retour au tableau de bord" />
-          <Box minWidth={0}>
-            <Typography
-              variant={isMobile ? 'h6' : 'h5'}
-              fontWeight={700}
-              noWrap
-            >
-              {title}
-            </Typography>
-            {subtitle && (
-              <Typography variant="body2" color="text.secondary" noWrap>
-                {subtitle}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-        {action && <Box flexShrink={0}>{action}</Box>}
-      </Box>
+  React.useEffect(() => {
+    setPageHeader({
+      title: title || 'Comptabilité',
+      actions: action || null
+    });
+  }, [title, action, setPageHeader]);
 
+  return (
+    <Box mb={2}>
       {/* Navigation tabs — scroll horizontal sur mobile */}
       {isMobile ? (
         // Mobile : icônes seules dans un scroll horizontal

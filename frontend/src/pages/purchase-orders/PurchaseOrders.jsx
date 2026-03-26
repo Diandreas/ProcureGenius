@@ -19,17 +19,21 @@ import {
   Print,
   Download,
   Receipt,
+  Edit,
+  Delete,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { purchaseOrdersAPI } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import { useHeader } from '../../contexts/HeaderContext';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import DateNavigator from '../../components/common/DateNavigator';
 import { generatePurchaseOrdersBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import { generatePurchaseOrderPDF, openPDFInNewTab as openSinglePDF } from '../../services/pdfService';
 
 function PurchaseOrders() {
   const { t } = useTranslation(['purchaseOrders', 'common']);
@@ -54,6 +58,7 @@ function PurchaseOrders() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { setPageHeader } = useHeader();
 
   useEffect(() => {
     fetchPurchaseOrders();
@@ -96,6 +101,40 @@ function PurchaseOrders() {
       window.dispatchEvent(new CustomEvent('clear-report-action'));
     };
   }, [handleGenerateReportClick, t]);
+
+  // Set the page header via Context
+  useEffect(() => {
+    setPageHeader({
+      title: t('purchaseOrders:title', 'Commandes'),
+      // Action pour le bouton mobile à gauche
+      action: {
+        label: t('navigation:topBar.new', 'Nouveau'),
+        icon: <ShoppingCart />,
+        onClick: () => navigate('/purchase-orders/new'),
+        color: 'primary',
+        variant: 'contained'
+      },
+      // Actions pour le desktop à droite
+      actions: (
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<ShoppingCart />}
+          onClick={() => navigate('/purchase-orders/new')}
+          sx={{
+            borderRadius: 2.5,
+            textTransform: 'none',
+            fontWeight: 600,
+            px: { xs: 2, sm: 3 },
+            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+          }}
+        >
+          {t('navigation:topBar.newPurchaseOrder', 'Nouveau bon')}
+        </Button>
+      )
+    });
+    return () => setPageHeader({ title: '', actions: null });
+  }, [t, navigate, theme.palette.primary, setPageHeader]);
 
   const handleConfigureReport = async () => {
     setReportConfigOpen(false);
@@ -353,6 +392,72 @@ function PurchaseOrders() {
             sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
           />
         </Box>
+
+        {/* Mobile Actions Overlay - Compact */}
+        {isMobile && (
+          <Box 
+            sx={{ 
+              mt: 1.5, 
+              pt: 1.5, 
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+              display: 'flex', 
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              Actions
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <IconButton 
+                size="small"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  const blob = await generatePurchaseOrderPDF(po);
+                  openSinglePDF(blob);
+                }}
+                sx={{ 
+                  bgcolor: alpha(theme.palette.success.main, 0.1), 
+                  color: 'success.main',
+                  width: 32,
+                  height: 32
+                }}
+              >
+                <PictureAsPdf sx={{ fontSize: 18 }} />
+              </IconButton>
+              <IconButton 
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/purchase-orders/${po.id}/edit`);
+                }}
+                sx={{ 
+                  bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                  color: 'primary.main',
+                  width: 32,
+                  height: 32
+                }}
+              >
+                <Edit sx={{ fontSize: 18 }} />
+              </IconButton>
+              <IconButton 
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  enqueueSnackbar("Fonction de suppression protégée en démo", { variant: 'info' });
+                }}
+                sx={{ 
+                  bgcolor: alpha(theme.palette.error.main, 0.1), 
+                  color: 'error.main',
+                  width: 32,
+                  height: 32
+                }}
+              >
+                <Delete sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Box>
+          </Box>
+        )}
       </CardContent>
     </Card>
       </motion.div>
@@ -714,26 +819,28 @@ function PurchaseOrders() {
             <Box sx={{
               display: 'flex',
               gap: 1,
-              flexWrap: 'wrap',
-              alignItems: 'stretch',
+              alignItems: 'center',
+              flexWrap: 'nowrap'
             }}>
               <TextField
                 size="small"
-                placeholder={t('purchaseOrders:search.placeholder')}
+                placeholder={isMobile ? t('purchaseOrders:search.placeholder_mobile', 'Chercher...') : t('purchaseOrders:search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <Search />
+                      <Search sx={{ fontSize: isMobile ? 20 : 24 }} />
                     </InputAdornment>
                   ),
                 }}
                 sx={{
-                  flex: '1 1 auto',
-                  minWidth: isMobile ? 'calc(100% - 140px)' : '200px',
+                  flex: 1,
+                  minWidth: isMobile ? 'calc(100% - 100px)' : '200px',
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
+                    height: 40,
+                    fontSize: isMobile ? '0.875rem' : '1rem',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                       boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
@@ -744,24 +851,26 @@ function PurchaseOrders() {
                   }
                 }}
               />
-              <DateNavigator
-                value={selectedDate}
-                onChange={setSelectedDate}
-              />
+              {!isMobile && (
+                <DateNavigator
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                />
+              )}
               <IconButton
                 onClick={() => setShowFilters(!showFilters)}
                 sx={{
-                  bgcolor: showFilters ? 'primary.main' : 'transparent',
-                  color: showFilters ? 'white' : 'inherit',
+                  bgcolor: (showFilters || selectedDate || statusFilter) ? 'primary.main' : 'transparent',
+                  color: (showFilters || selectedDate || statusFilter) ? 'white' : 'inherit',
                   borderRadius: 2,
-                  minWidth: 40,
+                  width: 40,
                   height: 40,
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: showFilters
+                  boxShadow: (showFilters || selectedDate || statusFilter)
                     ? theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
                     : 'none',
                   '&:hover': {
-                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
+                    bgcolor: (showFilters || selectedDate || statusFilter) ? 'primary.dark' : 'action.hover',
                     transform: 'scale(1.05)',
                   },
                   '&:active': {
@@ -795,31 +904,49 @@ function PurchaseOrders() {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>{t('purchaseOrders:filters.statusLabel')}</InputLabel>
-                      <Select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        label={t('purchaseOrders:filters.statusLabel')}
-                        sx={{
-                          borderRadius: 2,
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                          },
-                        }}
-                      >
-                        <MenuItem value="">{t('purchaseOrders:filters.allStatuses')}</MenuItem>
-                        <MenuItem value="draft">{t('purchaseOrders:status.draft')}</MenuItem>
-                        <MenuItem value="sent">{t('purchaseOrders:status.sent')}</MenuItem>
-                        <MenuItem value="approved">{t('purchaseOrders:status.approved')}</MenuItem>
-                        <MenuItem value="cancelled">{t('purchaseOrders:status.cancelled')}</MenuItem>
-                      </Select>
-                    </FormControl>
+                <Stack spacing={2} sx={{ pt: 1, pb: 1 }}>
+                  {isMobile && (
+                    <Box sx={{ 
+                      p: 1.5, 
+                      bgcolor: theme => alpha(theme.palette.primary.main, 0.05),
+                      borderRadius: 2,
+                      border: theme => `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
+                    }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main', mb: 1, display: 'block' }}>
+                        {t('purchaseOrders:filters.period', 'Période')}
+                      </Typography>
+                      <DateNavigator
+                        value={selectedDate}
+                        onChange={setSelectedDate}
+                      />
+                    </Box>
+                  )}
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>{t('purchaseOrders:filters.statusLabel')}</InputLabel>
+                        <Select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          label={t('purchaseOrders:filters.statusLabel')}
+                          sx={{
+                            borderRadius: 2,
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
+                            },
+                          }}
+                        >
+                          <MenuItem value="">{t('purchaseOrders:filters.allStatuses')}</MenuItem>
+                          <MenuItem value="draft">{t('purchaseOrders:status.draft')}</MenuItem>
+                          <MenuItem value="sent">{t('purchaseOrders:status.sent')}</MenuItem>
+                          <MenuItem value="approved">{t('purchaseOrders:status.approved')}</MenuItem>
+                          <MenuItem value="cancelled">{t('purchaseOrders:status.cancelled')}</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
                   </Grid>
-                </Grid>
+                </Stack>
               </motion.div>
             )}
           </Stack>

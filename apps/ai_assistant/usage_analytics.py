@@ -3,6 +3,7 @@ Service d'analytics pour l'utilisation de l'IA
 """
 from django.db.models import Sum, Count, Avg
 from datetime import datetime, timedelta
+from django.utils import timezone
 from .models import AIUsageLog
 
 
@@ -49,7 +50,7 @@ class UsageAnalytics:
             Dict avec summary, breakdown, top_users, daily_trend
         """
         # Calculer date de début selon période
-        now = datetime.now()
+        now = timezone.now()
         if period == 'day':
             start_date = now - timedelta(days=1)
         elif period == 'week':
@@ -131,7 +132,7 @@ class UsageAnalytics:
     @staticmethod
     def get_user_usage_summary(user_id, days=30):
         """Résumé d'utilisation pour un utilisateur spécifique"""
-        start_date = datetime.now() - timedelta(days=days)
+        start_date = timezone.now() - timedelta(days=days)
 
         qs = AIUsageLog.objects.filter(
             user_id=user_id,
@@ -166,7 +167,7 @@ class UsageAnalytics:
         from .token_monitor import TokenMonitor
         from django.core.cache import cache
 
-        now = datetime.now()
+        now = timezone.now()
 
         # Clés Redis pour tokens actuels
         hour_key = f"tokens_hour_{now.strftime('%Y%m%d_%H')}_{organization_id}"

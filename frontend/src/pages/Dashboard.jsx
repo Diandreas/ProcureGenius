@@ -46,6 +46,9 @@ import { useTranslation } from 'react-i18next';
 import { analyticsAPI } from '../services/analyticsAPI';
 import useCurrency from '../hooks/useCurrency';
 import LoadingState from '../components/LoadingState';
+import { getNeumorphicShadow } from '../styles/neumorphism/mixins';
+
+import { useHeader } from '../contexts/HeaderContext';
 
 ChartJS.register(
   CategoryScale,
@@ -93,34 +96,9 @@ function Dashboard() {
     }
   };
 
+  const { setHeaderConfig } = useHeader();
+
   const welcome = getWelcomeMessage();
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [period, compare]);
-
-  // Listen for period changes from top nav bar
-  useEffect(() => {
-    const handlePeriodChange = (event) => {
-      if (event.detail?.period) {
-        setPeriod(event.detail.period);
-      }
-    };
-    const handleRefresh = () => {
-      fetchDashboardData();
-    };
-    window.addEventListener('dashboard-period-change', handlePeriodChange);
-    window.addEventListener('dashboard-refresh', handleRefresh);
-    return () => {
-      window.removeEventListener('dashboard-period-change', handlePeriodChange);
-      window.removeEventListener('dashboard-refresh', handleRefresh);
-    };
-  }, []);
-
-  // Notify top nav bar of current period
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('dashboard-period-change', { detail: { period } }));
-  }, [period]);
 
   const fetchDashboardData = async () => {
     try {
@@ -142,6 +120,24 @@ function Dashboard() {
   const handlePeriodChange = (newPeriod) => {
     setPeriod(newPeriod);
   };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [period, compare]);
+
+  // Configure header via context
+  useEffect(() => {
+    setHeaderConfig({
+      title: t('dashboard:title', 'Dashboard'),
+      periodControls: {
+        currentPeriod: period,
+        onPeriodChange: handlePeriodChange,
+        onRefresh: fetchDashboardData,
+      }
+    });
+    // Clean up on unmount
+    return () => setHeaderConfig(null);
+  }, [period, t]);
 
   const formatComparison = (value, previousValue) => {
     if (!previousValue || previousValue === 0) return null;
@@ -247,9 +243,53 @@ function Dashboard() {
   const donutData = prepareDonutData();
 
   return (
-    <Box p={isMobile ? 2 : 3}>
-      {/* Stats Cards */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+    <Box p={isMobile ? 1.5 : 3} sx={{ pb: isMobile ? 10 : 3 }}>
+      {/* Welcome Banner - Premium Look */}
+      <Box sx={{ mb: 3 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2.2, sm: 4 },
+            borderRadius: isMobile ? 3 : 4,
+            background: mode => mode === 'dark' 
+              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+              : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.8)} 100%)`,
+            color: 'white',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: -50,
+              right: -50,
+              width: 200,
+              height: 200,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.1)',
+              filter: 'blur(40px)',
+            }
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <Typography sx={{ fontWeight: 800, mb: isMobile ? 0.3 : 1, fontSize: isMobile ? '1.1rem' : '2.125rem' }}>
+              {welcome.greeting}, {stats.user_name || 'Utilisateur'} !
+            </Typography>
+            {!isMobile && (
+              <Typography variant="body1" sx={{ opacity: 0.9, maxWidth: 600 }}>
+                {welcome.message}
+              </Typography>
+            )}
+          </motion.div>
+        </Paper>
+      </Box>
+
+      {/* Stats Cards - Grid 2x2 on Mobile */}
+      <Grid container spacing={isMobile ? 1.5 : 2.5} sx={{ mb: 3 }}>
         {statsCards.map((stat, index) => {
           const numericValue = typeof stat.value === 'string'
             ? parseFloat(stat.value.replace(/[^0-9.-]/g, '') || 0)
@@ -257,38 +297,60 @@ function Dashboard() {
           const comparison = stat.previous !== undefined ? formatComparison(numericValue, stat.previous) : null;
 
           return (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card sx={{ borderRadius: '4px', border: '1px solid', borderColor: 'grey.200', boxShadow: 'none', transition: 'all 0.2s', '&:hover': { borderColor: stat.color, transform: 'translateY(-2px)' } }}>
-                <CardContent sx={{ p: 2.5 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                    <Avatar sx={{ bgcolor: `${stat.color}15`, color: stat.color, width: 48, height: 48, borderRadius: 1 }}>
-                      {stat.icon}
+            <Grid item xs={6} sm={6} md={3} key={index}>
+              <Card 
+                sx={{ 
+                  borderRadius: isMobile ? 2.5 : 3, 
+                  border: 'none',
+                  boxShadow: theme => getNeumorphicShadow(theme.palette.mode, isMobile ? 'soft' : 'medium'),
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  height: '100%',
+                  bgcolor: 'background.paper',
+                  '&:hover': { 
+                    transform: 'translateY(-4px)',
+                  } 
+                }}
+              >
+                <CardContent sx={{ p: isMobile ? 1 : 2.5, '&:last-child': { pb: isMobile ? 1 : 2.5 } }}>
+                  <Box sx={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', alignItems: 'center', gap: isMobile ? 0.8 : 1.5, mb: 1, textAlign: isMobile ? 'left' : 'center' }}>
+                    <Avatar 
+                      sx={{ 
+                        width: isMobile ? 36 : 48,
+                        height: isMobile ? 36 : 48,
+                        bgcolor: `${stat.color}15`, 
+                        color: stat.color, 
+                        boxShadow: theme => theme.palette.mode === 'dark'
+                          ? '4px 4px 10px rgba(0,0,0,0.3), -2px -2px 10px rgba(255,255,255,0.05)'
+                          : '4px 4px 10px rgba(0,0,0,0.1), -4px -4px 10px rgba(255,255,255,0.8)',
+                      }}
+                    >
+                      {React.cloneElement(stat.icon, { fontSize: isMobile ? 'small' : 'medium' })}
                     </Avatar>
-                    <Box sx={{ ml: 1.5, flexGrow: 1 }}>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: isMobile ? '0.65rem' : '0.75rem', opacity: 0.8, display: 'block' }}>
                         {stat.title}
                       </Typography>
-                      <Typography variant="h5" sx={{ fontWeight: 700, mt: 0.5 }}>
+                      <Typography variant={isMobile ? "subtitle2" : "h6"} sx={{ fontWeight: 800 }}>
                         {stat.value}
                       </Typography>
-                      {stat.total !== undefined && (
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                          sur {stat.total} total
-                        </Typography>
-                      )}
                     </Box>
                   </Box>
+                  
                   {comparison && compare && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, justifyContent: isMobile ? 'center' : 'flex-start' }}>
                       <Chip
                         icon={comparison.icon}
                         label={`${comparison.value}%`}
                         size="small"
-                        sx={{ bgcolor: `${comparison.color}15`, color: comparison.color, fontWeight: 600, fontSize: '0.7rem', height: 24 }}
+                        sx={{ 
+                          bgcolor: `${comparison.color}15`, 
+                          color: comparison.color, 
+                          fontWeight: 700, 
+                          fontSize: '0.6rem', 
+                          height: 20,
+                          '& .MuiChip-icon': { fontSize: 12, ml: 0.5 }
+                        }}
                       />
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontSize: '0.7rem' }}>
-                        vs période précédente
-                      </Typography>
                     </Box>
                   )}
                 </CardContent>
@@ -302,34 +364,60 @@ function Dashboard() {
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: '4px', border: '1px solid', borderColor: 'grey.200' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Tendances</Typography>
-            <Line
-              data={lineChartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: { position: 'top', align: 'end' },
-                  tooltip: { mode: 'index', intersect: false }
-                },
-                scales: {
-                  y: { beginAtZero: true },
-                  x: { grid: { display: false } }
-                },
-                interaction: { mode: 'nearest', axis: 'x', intersect: false }
-              }}
-              style={{ height: '300px' }}
-            />
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, fontSize: isMobile ? '1rem' : '1.25rem' }}>Tendances</Typography>
+            <Box sx={{ height: isMobile ? 220 : 300, width: '100%' }}>
+              <Line
+                data={lineChartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { 
+                      position: 'top', 
+                      align: 'end',
+                      display: !isMobile, // Hide legend on mobile to save space
+                    },
+                    tooltip: { 
+                      mode: 'index', 
+                      intersect: false,
+                      padding: 12,
+                      bodySpacing: 8,
+                    }
+                  },
+                  scales: {
+                    y: { 
+                      beginAtZero: true,
+                      grid: { color: theme.palette.divider, drawBorder: false },
+                      ticks: { fontSize: 10 }
+                    },
+                    x: { 
+                      grid: { display: false },
+                      ticks: { fontSize: 10 }
+                    }
+                  },
+                  interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }}
+              />
+            </Box>
           </Paper>
         </Grid>
       </Grid>
 
       {/* Top Clients, Activité Récente et Alertes */}
-      <Grid container spacing={2.5}>
+      <Grid container spacing={isMobile ? 2 : 2.5}>
         {/* Top Clients */}
         <Grid item xs={12} md={4}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: '4px', border: '1px solid', borderColor: 'grey.200', height: '100%' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>{t('dashboard:labels.topClients')}</Typography>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: isMobile ? 2 : 3, 
+              borderRadius: 3, 
+              boxShadow: getNeumorphicShadow(theme.palette.mode, 'soft'),
+              bgcolor: 'background.paper',
+              height: '100%' 
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, fontSize: isMobile ? '1.1rem' : '1.25rem' }}>{t('dashboard:labels.topClients')}</Typography>
             {stats.top_clients && stats.top_clients.length > 0 ? (
               <List disablePadding>
                 {(stats.top_clients || []).slice(0, 5).map((client, index) => (
@@ -359,8 +447,17 @@ function Dashboard() {
 
         {/* Activité Récente */}
         <Grid item xs={12} md={4}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: '4px', border: '1px solid', borderColor: 'grey.200', height: '100%' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Activité Récente</Typography>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: isMobile ? 2 : 3, 
+              borderRadius: 3, 
+              boxShadow: getNeumorphicShadow(theme.palette.mode, 'soft'),
+              bgcolor: 'background.paper',
+              height: '100%' 
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, fontSize: isMobile ? '1.1rem' : '1.25rem' }}>Activité Récente</Typography>
             {stats.recent_activity && stats.recent_activity.length > 0 ? (
               <List disablePadding>
                 {stats.recent_activity.map((activity, index) => (
@@ -387,8 +484,17 @@ function Dashboard() {
 
         {/* Alertes */}
         <Grid item xs={12} md={4}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: '4px', border: '1px solid', borderColor: 'grey.200', height: '100%' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Alertes</Typography>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: isMobile ? 2 : 3, 
+              borderRadius: 3, 
+              boxShadow: getNeumorphicShadow(theme.palette.mode, 'soft'),
+              bgcolor: 'background.paper',
+              height: '100%' 
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, fontSize: isMobile ? '1.1rem' : '1.25rem' }}>Alertes</Typography>
             {stats.alerts && stats.alerts.length > 0 ? (
               <List disablePadding>
                 {stats.alerts.map((alert, index) => (

@@ -10,6 +10,7 @@ import { SharedElementProvider } from './contexts/SharedElementContext';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
 import { fetchSettings } from './store/slices/settingsSlice';
+import { HeaderProvider } from './contexts/HeaderContext';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -717,9 +718,10 @@ function App() {
               <AppInitializer>
                 <ModuleProvider>
                   <SharedElementProvider>
-                    <AdSenseScript />
-                    {onboardingChecked && (
-                      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <HeaderProvider>
+                      <AdSenseScript />
+                      {onboardingChecked && (
+                        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                       <Routes>
                         {/* Public Routes */}
                         <Route element={<PublicLayout />}>
@@ -818,6 +820,7 @@ function App() {
 
                             {/* AI Chat */}
                             <Route path="/ai-chat" element={<AIChat />} />
+                            <Route path="/ai-chat/:chatId" element={<AIChat />} />
                             <Route path="/ai-chat/import-reviews" element={<ImportReviews />} />
                             <Route path="/ai-chat/document-import" element={<DocumentImport />} />
 
@@ -831,9 +834,10 @@ function App() {
                         {/* 404 */}
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
-                        <PWAInstallPrompt />
-                      </Router>
-                    )}
+                      <PWAInstallPrompt />
+                    </Router>
+                      )}
+                    </HeaderProvider>
                   </SharedElementProvider>
                 </ModuleProvider>
               </AppInitializer>

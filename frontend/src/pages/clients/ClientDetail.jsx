@@ -58,6 +58,7 @@ import ClientProductsTable from '../../components/clients/ClientProductsTable';
 import { generateClientReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import { useHeader } from '../../contexts/HeaderContext';
 
 function ClientDetail() {
   const { t } = useTranslation(['clients', 'common']);
@@ -111,6 +112,8 @@ function ClientDetail() {
     }, 50); // 50ms delay to ensure smooth transition
   };
 
+  const { setHeaderConfig } = useHeader();
+
   useEffect(() => {
     // Only start fetching after we've processed the shared element
     const fetchClientData = async () => {
@@ -120,6 +123,41 @@ function ClientDetail() {
 
     fetchClientData();
   }, [id]);
+
+  // Global Header Integration
+  useEffect(() => {
+    if (isMobile && client) {
+      setHeaderConfig({
+        title: client.name,
+        showBackButton: true,
+        onBack: () => navigate('/clients'),
+        rightActions: [
+          {
+            icon: <PictureAsPdf />,
+            onClick: () => setPdfDialogOpen(true),
+            label: t('clients:tooltips.downloadPdfReport')
+          },
+          {
+            icon: <Edit />,
+            onClick: () => navigate(`/clients/${id}/edit`),
+            label: t('clients:tooltips.editClient')
+          },
+          {
+            icon: <Delete />,
+            onClick: handleDeleteClick,
+            label: t('clients:tooltips.deleteClient'),
+            color: 'error'
+          }
+        ]
+      });
+    }
+
+    return () => {
+      if (isMobile) {
+        setHeaderConfig(null);
+      }
+    };
+  }, [isMobile, client, id, t]);
 
   const fetchClient = async () => {
     setLoading(true);
@@ -430,6 +468,7 @@ function ClientDetail() {
       <Box
         sx={{
           p: { xs: 1.5, sm: 2, md: 3 },
+          pb: { xs: 12, sm: 2, md: 3 }, // Space for mobile nav
           opacity: isAnimating ? 0 : 1,
           transition: 'opacity 0.2s ease',
         }}
@@ -505,36 +544,6 @@ function ClientDetail() {
         </Box>
       </Box>
 
-      {/* Actions Mobile - Affiché uniquement sur mobile */}
-      <Box sx={{ mb: 2, display: { xs: 'flex', md: 'none' }, justifyContent: 'flex-end', gap: 1 }}>
-        <Tooltip title={t('clients:tooltips.downloadPdfReport')}>
-          <IconButton
-            onClick={() => setPdfDialogOpen(true)}
-            size="small"
-            sx={{ color: 'success.main' }}
-          >
-            <PictureAsPdf />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={t('clients:tooltips.editClient')}>
-          <IconButton
-            onClick={() => navigate(`/clients/${id}/edit`)}
-            size="small"
-            sx={{ color: 'primary.main' }}
-          >
-            <Edit />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={t('clients:tooltips.deleteClient')}>
-          <IconButton
-            onClick={handleDeleteClick}
-            size="small"
-            sx={{ color: 'error.main' }}
-          >
-            <Delete />
-          </IconButton>
-        </Tooltip>
-      </Box>
 
       {/* Tabs */}
       <Tabs

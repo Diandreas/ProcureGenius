@@ -135,11 +135,51 @@ def send_push_to_user(user, push_type: str, title: str, body: str,
     """
     Envoie un push à tous les appareils actifs d'un utilisateur.
     Vérifie les préférences avant envoi.
+    Crée également une notification in-app (AINotification).
     Retourne le nombre de pushs envoyés avec succès.
     """
-    from .models import PushSubscription, NotificationPreferences
+    from .models import PushSubscription, NotificationPreferences, AINotification
 
-    # Vérifier les préférences
+    # 1. Créer la notification in-app (visible dans le dashboard)
+    try:
+        # Éviter les doublons trop fréquents pour le même tag
+        recent_exists = False
+        if tag:
+            from django.utils import timezone
+            from datetime import timedelta
+            recent_exists = AINotification.objects.filter(
+                user=user,
+                data__tag=tag,
+                created_at__gte=timezone.now() - timedelta(hours=1)
+            ).exists()
+
+        if not recent_exists:
+            # Mapper push_type vers notification_type
+            notif_type_map = {
+                'stock_rupture': 'alert',
+                'stock_bas': 'alert',
+                'quota_atteint': 'alert',
+                'facture_retard': 'alert',
+                'bc_retard': 'alert',
+                'insight_ia': 'insight',
+                'resume_hebdo': 'insight',
+            }
+            notif_type = notif_type_map.get(push_type, 'suggestion')
+            
+            AINotification.objects.create(
+                user=user,
+                organization=getattr(user, 'organization', None),
+                notification_type=notif_type,
+                title=title,
+                message=body,
+                action_url=url,
+                action_label=_("Voir") if url != '/' else "",
+                data={'tag': tag, **(data or {})}
+            )
+    except Exception as e:
+        logger.error(f"Erreur création AINotification dans send_push_to_user: {e}")
+
+    # 2. Vérifier les préférences pour le push native
     pref_field, _ = PUSH_TYPE_TO_PREF.get(push_type, ('', ''))
     if pref_field:
         try:
@@ -150,6 +190,7 @@ def send_push_to_user(user, push_type: str, title: str, body: str,
         except Exception:
             pass  # Si erreur lecture prefs, on envoie quand même
 
+    # 3. Envoi push native (navigateur/mobile)
     subscriptions = PushSubscription.objects.filter(user=user, is_active=True)
     sent = 0
     for sub in subscriptions:
@@ -157,6 +198,7 @@ def send_push_to_user(user, push_type: str, title: str, body: str,
             sent += 1
 
     return sent
+
 
 
 def send_push_to_organization(organization, push_type: str, title: str, body: str,

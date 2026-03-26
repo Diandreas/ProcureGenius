@@ -23,6 +23,9 @@ import {
   Fade,
   Zoom,
   Slide,
+  Grid,
+  Paper,
+  Tooltip,
 } from '@mui/material';
 import {
   Close,
@@ -35,18 +38,34 @@ import {
   Visibility,
   Edit,
   GetApp,
+  Email,
+  Phone,
+  Euro,
+  CalendarToday,
+  Description,
+  ChevronRight,
+  ArrowForward,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
+import { fadeInUp, scaleIn } from '../../animations/variants/scroll-reveal';
+import { hoverLift, buttonPress } from '../../animations/variants/micro-interactions';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Zoom ref={ref} {...props} />;
 });
 
+/**
+ * ListModal amélioré - Style Premium "Procura"
+ * Offre une expérience visuelle de haut calibre pour lister les résultats de recherche IA
+ */
 const ListModal = ({ open, onClose, title, items, entityType }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = React.useState('');
+  const isDark = theme.palette.mode === 'dark';
 
   // Filtrer les éléments selon la recherche
   const filteredItems = items?.filter(item => {
@@ -57,113 +76,113 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
       item.email?.toLowerCase().includes(searchLower) ||
       item.invoice_number?.toLowerCase().includes(searchLower) ||
       item.po_number?.toLowerCase().includes(searchLower) ||
-      item.reference?.toLowerCase().includes(searchLower)
+      item.reference?.toLowerCase().includes(searchLower) ||
+      item.company?.toLowerCase().includes(searchLower)
     );
   }) || [];
 
-  // Obtenir l'icône selon le type d'entité
-  const getIcon = () => {
-    switch (entityType) {
-      case 'client': return <Person />;
-      case 'supplier': return <Business />;
-      case 'invoice': return <Receipt />;
-      case 'purchase_order': return <ShoppingCart />;
-      case 'product': return <Inventory />;
-      default: return <Person />;
-    }
+  // Configuration par type d'entité (aligné sur ConfirmationModal et PreviewCard)
+  const entityConfig = {
+    client: {
+      icon: <Person />,
+      color: theme.palette.primary.main,
+      title: 'Client',
+      urlPrefix: '/clients',
+    },
+    supplier: {
+      icon: <Business />,
+      color: theme.palette.info.main,
+      title: 'Fournisseur',
+      urlPrefix: '/suppliers',
+    },
+    invoice: {
+      icon: <Receipt />,
+      color: theme.palette.success.main,
+      title: 'Facture',
+      urlPrefix: '/invoices',
+    },
+    purchase_order: {
+      icon: <ShoppingCart />,
+      color: theme.palette.warning.main,
+      title: 'Bon de Commande',
+      urlPrefix: '/purchase-orders',
+    },
+    product: {
+      icon: <Inventory />,
+      color: theme.palette.secondary.main,
+      title: 'Produit',
+      urlPrefix: '/products',
+    },
   };
 
-  // Obtenir la couleur selon le type
-  const getColor = () => {
-    switch (entityType) {
-      case 'client': return theme.palette.primary.main;
-      case 'supplier': return theme.palette.info.main;
-      case 'invoice': return theme.palette.success.main;
-      case 'purchase_order': return theme.palette.warning.main;
-      case 'product': return theme.palette.secondary.main;
-      default: return theme.palette.grey[500];
-    }
-  };
-
-  // Obtenir l'URL pour voir les détails
-  // (même logique qu'avant)
-  const getDetailUrl = (item) => {
-    switch (entityType) {
-      case 'client': return `/clients/${item.id}`;
-      case 'supplier': return `/suppliers/${item.id}`;
-      case 'invoice': return `/invoices/${item.id}`;
-      case 'purchase_order': return `/purchase-orders/${item.id}`;
-      case 'product': return `/products/${item.id}`;
-      default: return null;
-    }
-  };
-
-  // Rendu des détails et actions (fonctions existantes)...
-  // Je vais réutiliser les fonctions existantes `renderItemDetails` et `renderItemActions` si possible
-  // Mais je dois m'assurer qu'elles sont dans la portée ou copiées.
-  // Pour éviter de tout re-écrire, je vais copier le corps des fonctions helper mais dans le nouveau style si nécessaire.
-  // Ici je remplace tout le composant pour bien structurer.
+  const config = entityConfig[entityType] || entityConfig.client;
+  const entityColor = config.color;
 
   const renderItemDetails = (item) => {
     switch (entityType) {
       case 'client':
       case 'supplier':
         return (
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem', color: 'text.primary' }}>
-              {item.name}
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2, mb: 0.5 }}>
+              {item.name || item.company}
             </Typography>
-            {item.email && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                {item.email}
-              </Typography>
-            )}
-            {item.phone && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
-                📞 {item.phone}
-              </Typography>
-            )}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 0.5 }}>
+              {item.email && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Email sx={{ fontSize: 14, color: 'text.disabled' }} />
+                  <Typography variant="caption" color="text.secondary">
+                    {item.email}
+                  </Typography>
+                </Box>
+              )}
+              {item.phone && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Phone sx={{ fontSize: 14, color: 'text.disabled' }} />
+                  <Typography variant="caption" color="text.secondary">
+                    {item.phone}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
         );
 
       case 'invoice':
         return (
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                 {item.invoice_number}
               </Typography>
-              {item.status && (
-                <Chip
-                  label={item.status}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                    backgroundColor: item.status === 'paid' ? alpha(theme.palette.success.main, 0.1) : item.status === 'pending' ? alpha(theme.palette.warning.main, 0.1) : alpha(theme.palette.error.main, 0.1),
-                    color: item.status === 'paid' ? 'success.dark' : item.status === 'pending' ? 'warning.dark' : 'error.dark',
-                    border: '1px solid',
-                    borderColor: item.status === 'paid' ? alpha(theme.palette.success.main, 0.2) : item.status === 'pending' ? alpha(theme.palette.warning.main, 0.2) : alpha(theme.palette.error.main, 0.2),
-                  }}
-                />
-              )}
+              <Chip
+                label={item.status || 'Brouillon'}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  bgcolor: alpha(entityColor, 0.1),
+                  color: entityColor,
+                  border: `1px solid ${alpha(entityColor, 0.2)}`,
+                }}
+              />
             </Box>
-            {item.client_name && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
-                Client: {item.client_name}
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              {item.client_name ? `Client: ${item.client_name}` : 'Client non spécifié'}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: entityColor }}>
+                {formatCurrency(item.total_amount || 0)}
               </Typography>
-            )}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: 0.5 }}>
-              {item.total_amount && (
-                <Typography variant="caption" sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'success.main' }}>
-                  {formatCurrency(item.total_amount)}
-                </Typography>
-              )}
               {item.due_date && (
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                  Échéance: {formatDate(item.due_date)}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <CalendarToday sx={{ fontSize: 12, color: 'text.disabled' }} />
+                  <Typography variant="caption" color="text.secondary">
+                    {formatDate(item.due_date)}
+                  </Typography>
+                </Box>
               )}
             </Box>
           </Box>
@@ -171,42 +190,39 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
 
       case 'purchase_order':
         return (
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                 {item.po_number}
               </Typography>
-              {item.status && (
-                <Chip
-                  label={item.status}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                    backgroundColor: item.status === 'received' ? alpha(theme.palette.success.main, 0.1) : item.status === 'pending' ? alpha(theme.palette.warning.main, 0.1) : alpha(theme.palette.info.main, 0.1),
-                    color: item.status === 'received' ? 'success.dark' : item.status === 'pending' ? 'warning.dark' : 'info.dark',
-                    border: '1px solid',
-                    borderColor: 'transparent'
-                  }}
-                />
-              )}
+              <Chip
+                label={item.status || 'En attente'}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  bgcolor: alpha(entityColor, 0.1),
+                  color: entityColor,
+                  border: `1px solid ${alpha(entityColor, 0.2)}`,
+                }}
+              />
             </Box>
-            {item.supplier_name && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
-                Fournisseur: {item.supplier_name}
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              {item.supplier_name ? `Fournisseur: ${item.supplier_name}` : 'Fournisseur non spécifié'}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: entityColor }}>
+                {formatCurrency(item.total_amount || 0)}
               </Typography>
-            )}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mt: 0.5 }}>
-              {item.total_amount && (
-                <Typography variant="caption" sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'primary.main', display: 'block' }}>
-                  {formatCurrency(item.total_amount)}
-                </Typography>
-              )}
-              {item.delivery_date && (
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block' }}>
-                  Livraison: {formatDate(item.delivery_date)}
-                </Typography>
+              {item.expected_delivery_date && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <CalendarToday sx={{ fontSize: 12, color: 'text.disabled' }} />
+                  <Typography variant="caption" color="text.secondary">
+                    {formatDate(item.expected_delivery_date)}
+                  </Typography>
+                </Box>
               )}
             </Box>
           </Box>
@@ -214,119 +230,112 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
 
       case 'product':
         return (
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+          <Box sx={{ flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                 {item.name}
               </Typography>
               {item.score !== undefined && (
                 <Chip
-                  label={`${item.score}%`}
+                  label={`${item.score}% match`}
                   size="small"
-                  sx={{
-                    height: 18,
-                    fontSize: '0.65rem',
-                    backgroundColor: item.score >= 80 ? alpha(theme.palette.success.main, 0.1) : item.score >= 50 ? alpha(theme.palette.warning.main, 0.1) : alpha(theme.palette.error.main, 0.1),
-                    color: item.score >= 80 ? 'success.dark' : item.score >= 50 ? 'warning.dark' : 'error.dark',
-                    fontWeight: 700,
-                    border: '1px solid',
-                    borderColor: item.score >= 80 ? alpha(theme.palette.success.main, 0.3) : item.score >= 50 ? alpha(theme.palette.warning.main, 0.3) : alpha(theme.palette.error.main, 0.3),
-                  }}
+                  color={item.score >= 80 ? "success" : item.score >= 50 ? "warning" : "error"}
+                  variant="outlined"
+                  sx={{ height: 18, fontSize: '0.6rem', fontWeight: 700 }}
                 />
               )}
             </Box>
-            {item.reference && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
-                Réf: {item.reference}
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+              Réf: {item.reference || 'N/A'}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 800, color: 'success.main' }}>
+                {formatCurrency(item.price || 0)}
               </Typography>
-            )}
-            <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
-              {item.price && (
-                <Typography variant="caption" sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'success.main' }}>
-                  {formatCurrency(item.price)}
-                </Typography>
-              )}
-              {item.stock_quantity !== undefined && (
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                  Stock: {item.stock_quantity}
-                </Typography>
-              )}
+              <Typography variant="caption" color="text.secondary" sx={{ bgcolor: alpha(theme.palette.divider, 0.5), px: 1, borderRadius: 1 }}>
+                Stock: {item.stock_quantity || 0}
+              </Typography>
             </Box>
           </Box>
         );
 
       default:
         return (
-          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-            {item.name || item.title || 'Sans nom'}
-          </Typography>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              {item.name || item.title || 'Élément sans nom'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              ID: {item.id}
+            </Typography>
+          </Box>
         );
     }
   };
 
   const renderItemActions = (item) => {
-    const detailUrl = getDetailUrl(item);
-    if (!detailUrl) return null;
+    const detailUrl = `${config.urlPrefix}/${item.id}`;
 
     return (
       <Box sx={{ display: 'flex', gap: 1 }}>
-        <IconButton
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(detailUrl);
-            onClose();
-          }}
-          sx={{
-            p: 0.8,
-            bgcolor: alpha(theme.palette.primary.main, 0.05),
-            color: 'primary.main',
-            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.15) }
-          }}
-        >
-          <Visibility fontSize="small" />
-        </IconButton>
-        <IconButton
-          size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`${detailUrl}/edit`);
-            onClose();
-          }}
-          sx={{
-            p: 0.8,
-            bgcolor: alpha(theme.palette.secondary.main, 0.05),
-            color: 'secondary.main',
-            '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.15) }
-          }}
-        >
-          <Edit fontSize="small" />
-        </IconButton>
-        {(entityType === 'invoice' || entityType === 'purchase_order') && (
+        <Tooltip title="Voir les détails">
           <IconButton
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              const pdfUrl = entityType === 'invoice'
-                ? `/api/invoices/${item.id}/pdf/`
-                : `/api/purchase-orders/${item.id}/pdf/`;
-              window.open(pdfUrl, '_blank');
+              navigate(detailUrl);
+              onClose();
             }}
             sx={{
-              p: 0.8,
-              bgcolor: alpha(theme.palette.success.main, 0.05),
-              color: 'success.main',
-              '&:hover': { bgcolor: alpha(theme.palette.success.main, 0.15) }
+              bgcolor: alpha(theme.palette.primary.main, 0.08),
+              color: 'primary.main',
+              '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.15) }
             }}
           >
-            <GetApp fontSize="small" />
+            <Visibility fontSize="small" />
           </IconButton>
+        </Tooltip>
+        <Tooltip title="Modifier">
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`${detailUrl}/edit`);
+              onClose();
+            }}
+            sx={{
+              bgcolor: alpha(theme.palette.secondary.main, 0.08),
+              color: 'secondary.main',
+              '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.15) }
+            }}
+          >
+            <Edit fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        {(entityType === 'invoice' || entityType === 'purchase_order') && (
+          <Tooltip title="Télécharger PDF">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                const pdfUrl = entityType === 'invoice'
+                  ? `/api/invoices/${item.id}/pdf/`
+                  : `/api/purchase-orders/${item.id}/pdf/`;
+                window.open(pdfUrl, '_blank');
+              }}
+              sx={{
+                bgcolor: alpha(theme.palette.success.main, 0.08),
+                color: 'success.main',
+                '&:hover': { bgcolor: alpha(theme.palette.success.main, 0.15) }
+              }}
+            >
+              <GetApp fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )}
       </Box>
     );
   };
-
-  const entityColor = getColor();
 
   return (
     <Dialog
@@ -338,162 +347,272 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
       PaperProps={{
         elevation: 0,
         sx: {
-          borderRadius: 3,
+          borderRadius: 4,
           maxHeight: '85vh',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05)',
           overflow: 'hidden',
-          background: theme.palette.mode === 'dark' ? '#1e293b' : '#ffffff',
+          background: isDark ? '#0f172a' : '#ffffff',
         },
       }}
       BackdropProps={{
-        sx: { backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0,0,0,0.4)' }
+        sx: { backdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.5)' }
       }}
     >
+      {/* Header Premium */}
       <Box sx={{
-        background: `linear-gradient(135deg, ${alpha(entityColor, 0.1)} 0%, ${alpha(entityColor, 0.02)} 100%)`,
-        pb: 1
+        background: isDark 
+          ? `linear-gradient(135deg, ${alpha(entityColor, 0.15)} 0%, ${alpha('#000', 0.2)} 100%)`
+          : `linear-gradient(135deg, ${alpha(entityColor, 0.08)} 0%, ${alpha(entityColor, 0.02)} 100%)`,
+        position: 'relative',
+        pt: 4,
+        pb: 3,
+        px: 4
       }}>
-        <DialogTitle sx={{ pb: 1, pt: 3, px: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {/* Décoration de fond */}
+        <Box sx={{
+          position: 'absolute',
+          top: -20,
+          right: -20,
+          width: 150,
+          height: 150,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${alpha(entityColor, 0.15)} 0%, transparent 70%)`,
+          zIndex: 0
+        }} />
+
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <motion.div variants={scaleIn} initial="hidden" animate="visible">
               <Avatar sx={{
                 bgcolor: entityColor,
-                boxShadow: `0 8px 16px ${alpha(entityColor, 0.3)}`,
-                width: 48,
-                height: 48
+                boxShadow: `0 12px 24px ${alpha(entityColor, 0.4)}`,
+                width: 60,
+                height: 60,
+                border: '2px solid white'
               }}>
-                {getIcon()}
+                {React.cloneElement(config.icon, { sx: { fontSize: 30 } })}
               </Avatar>
-              <Box>
-                <Typography variant="h6" sx={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
-                  {title}
-                </Typography>
+            </motion.div>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 0.5 }}>
+                {title}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Chip 
+                  label={`${filteredItems.length} résultat${filteredItems.length !== 1 ? 's' : ''}`}
+                  size="small"
+                  sx={{ 
+                    bgcolor: alpha(entityColor, 0.1), 
+                    color: entityColor, 
+                    fontWeight: 700,
+                    height: 22,
+                    fontSize: '0.7rem'
+                  }}
+                />
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                  {filteredItems.length} résultat{filteredItems.length !== 1 ? 's' : ''} trouvé{filteredItems.length !== 1 ? 's' : ''}
+                  trouvé{filteredItems.length !== 1 ? 's' : ''} dans votre base de données
                 </Typography>
               </Box>
             </Box>
-            <IconButton onClick={onClose} size="small" sx={{
-              bgcolor: 'rgba(0,0,0,0.05)', '&:hover': { bgcolor: 'rgba(0,0,0,0.1)', color: 'error.main' }
-            }}>
-              <Close />
-            </IconButton>
           </Box>
-        </DialogTitle>
+          <IconButton 
+            onClick={onClose} 
+            sx={{ 
+              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+              '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main' },
+              transition: 'all 0.2s'
+            }}
+          >
+            <Close />
+          </IconButton>
+        </Box>
 
-        {/* Barre de recherche */}
-        <Box sx={{ px: 3, pb: 2, mt: 1 }}>
+        {/* Barre de recherche style Moderne */}
+        <Box sx={{ mt: 3, position: 'relative', zIndex: 1 }}>
           <TextField
             fullWidth
-            size="small"
-            placeholder="Rechercher dans la liste..."
+            placeholder="Filtrer les résultats..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            variant="outlined"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search fontSize="small" color="action" />
+                  <Search sx={{ color: entityColor }} />
                 </InputAdornment>
               ),
               sx: {
-                bgcolor: theme.palette.background.paper,
+                bgcolor: isDark ? alpha('#fff', 0.05) : '#ffffff',
                 borderRadius: 3,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' },
-                '&:hover fieldset': { borderColor: alpha(entityColor, 0.5) },
-                '&.Mui-focused fieldset': { borderColor: entityColor }
+                height: 50,
+                boxShadow: isDark ? 'none' : '0 4px 12px rgba(0,0,0,0.05)',
+                '& fieldset': { border: 'none' },
+                '&:hover fieldset': { border: 'none' },
+                transition: 'all 0.3s',
+                '&.Mui-focused': {
+                  boxShadow: `0 8px 24px ${alpha(entityColor, 0.15)}`,
+                  transform: 'translateY(-2px)'
+                }
               }
             }}
           />
         </Box>
       </Box>
 
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      <DialogContent sx={{ p: 0, bgcolor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : '#f8fafc' }}>
-        {/* Liste des éléments */}
-        <List sx={{ p: 1.5 }}>
+      <DialogContent sx={{ 
+        p: 3, 
+        bgcolor: isDark ? '#0f172a' : '#f8fafc',
+        '&::-webkit-scrollbar': { width: 8 },
+        '&::-webkit-scrollbar-thumb': { bgcolor: alpha(entityColor, 0.2), borderRadius: 4 },
+      }}>
+        <AnimatePresence mode="popLayout">
           {filteredItems.length === 0 ? (
-            <Box sx={{ p: 6, textAlign: 'center', opacity: 0.6 }}>
-              <Box sx={{
-                width: 64, height: 64, borderRadius: '50%', bgcolor: 'rgba(0,0,0,0.04)',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', mb: 2
-              }}>
-                <Search sx={{ fontSize: 32, color: 'text.secondary' }} />
-              </Box>
-              <Typography variant="body1" color="text.secondary" fontWeight={500}>
-                Aucun résultat ne correspond à votre recherche
-              </Typography>
-            </Box>
-          ) : (
-            filteredItems.map((item, index) => (
-              <React.Fragment key={item.id || index}>
-                <ListItem
-                  disablePadding
-                  sx={{ mb: 1 }}
-                  secondaryAction={renderItemActions(item)}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <Box sx={{ py: 8, textAlign: 'center' }}>
+                <Avatar sx={{ 
+                  width: 80, height: 80, mx: 'auto', mb: 3, 
+                  bgcolor: alpha(theme.palette.divider, 0.1),
+                  color: 'text.disabled'
+                }}>
+                  <Search sx={{ fontSize: 40 }} />
+                </Avatar>
+                <Typography variant="h6" color="text.primary" fontWeight={700}>
+                  Aucun résultat
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Nous n'avons rien trouvé correspondant à "{searchQuery}"
+                </Typography>
+                <Button 
+                  onClick={() => setSearchQuery('')} 
+                  sx={{ mt: 3, textTransform: 'none', fontWeight: 700 }}
                 >
-                  <ListItemButton
-                    onClick={() => {
-                      const url = getDetailUrl(item);
-                      if (url) {
-                        navigate(url);
-                        onClose();
-                      }
-                    }}
-                    sx={{
-                      py: 2,
-                      px: 2.5,
-                      borderRadius: 2.5,
-                      bgcolor: theme.palette.background.paper,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 0 0 1px rgba(0,0,0,0.03)',
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        backgroundColor: theme.palette.background.paper,
-                        boxShadow: `0 8px 20px rgba(0,0,0,0.06), 0 0 0 1px ${alpha(entityColor, 0.3)}`,
-                        transform: 'translateY(-2px)'
-                      },
-                    }}
+                  Effacer la recherche
+                </Button>
+              </Box>
+            </motion.div>
+          ) : (
+            <Grid container spacing={2}>
+              {filteredItems.map((item, index) => (
+                <Grid item xs={12} key={item.id || index}>
+                  <motion.div
+                    variants={fadeInUp}
+                    initial="hidden"
+                    animate="visible"
+                    custom={index}
+                    layout
                   >
-                    <ListItemAvatar sx={{ minWidth: 56 }}>
-                      <Avatar
-                        sx={{
-                          bgcolor: alpha(entityColor, 0.1),
-                          color: entityColor,
-                          width: 44,
-                          height: 44,
-                          borderRadius: 2,
-                          fontWeight: 700
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 0,
+                        borderRadius: 3,
+                        overflow: 'hidden',
+                        border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                        bgcolor: theme.palette.background.paper,
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+                          borderColor: alpha(entityColor, 0.4),
+                          transform: 'translateY(-4px)',
+                          '& .arrow-icon': {
+                            transform: 'translateX(4px)',
+                            opacity: 1,
+                            color: entityColor
+                          }
+                        },
+                      }}
+                    >
+                      <ListItemButton
+                        onClick={() => {
+                          navigate(`${config.urlPrefix}/${item.id}`);
+                          onClose();
                         }}
+                        sx={{ p: 2.5, alignItems: 'flex-start' }}
                       >
-                        {item.name ? item.name.substring(0, 1).toUpperCase() : getIcon()}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={renderItemDetails(item)}
-                      sx={{ pr: 12, my: 0 }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              </React.Fragment>
-            ))
+                        <ListItemAvatar sx={{ minWidth: 64 }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: alpha(entityColor, 0.1),
+                              color: entityColor,
+                              width: 48,
+                              height: 48,
+                              borderRadius: 2.5,
+                              fontWeight: 800,
+                              fontSize: '1.25rem',
+                              border: `1px solid ${alpha(entityColor, 0.2)}`
+                            }}
+                          >
+                            {item.name ? item.name.substring(0, 1).toUpperCase() : config.icon}
+                          </Avatar>
+                        </ListItemAvatar>
+                        
+                        {renderItemDetails(item)}
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, ml: 2 }}>
+                          {renderItemActions(item)}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.disabled', transition: 'all 0.2s' }} className="arrow-icon">
+                            <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Détails
+                            </Typography>
+                            <ArrowForward sx={{ fontSize: 14 }} />
+                          </Box>
+                        </Box>
+                      </ListItemButton>
+                    </Paper>
+                  </motion.div>
+                </Grid>
+              ))}
+            </Grid>
           )}
-        </List>
+        </AnimatePresence>
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, bgcolor: theme.palette.background.paper, borderTop: `1px solid ${theme.palette.divider}` }}>
-        <Button
-          onClick={onClose}
-          sx={{
-            borderRadius: 2,
-            px: 3,
-            textTransform: 'none',
-            fontWeight: 600,
-            color: 'text.secondary'
-          }}
-        >
-          Fermer
-        </Button>
+      <DialogActions sx={{ 
+        p: 3, 
+        bgcolor: theme.palette.background.paper, 
+        borderTop: `1px solid ${theme.palette.divider}`,
+        justifyContent: 'space-between'
+      }}>
+        <Typography variant="caption" color="text.disabled" sx={{ fontStyle: 'italic' }}>
+          Astuce: Cliquez sur une carte pour accéder directement à la fiche complète.
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            onClick={onClose}
+            variant="outlined"
+            sx={{
+              borderRadius: 2.5,
+              px: 4,
+              py: 1,
+              textTransform: 'none',
+              fontWeight: 700,
+              color: 'text.secondary',
+              borderColor: theme.palette.divider
+            }}
+          >
+            Fermer
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onClose}
+            sx={{
+              borderRadius: 2.5,
+              px: 4,
+              py: 1,
+              textTransform: 'none',
+              fontWeight: 700,
+              bgcolor: entityColor,
+              '&:hover': { bgcolor: alpha(entityColor, 0.9) },
+              boxShadow: `0 8px 20px ${alpha(entityColor, 0.3)}`
+            }}
+          >
+            Terminer
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );

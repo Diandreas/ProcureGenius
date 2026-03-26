@@ -25,6 +25,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useMediaQuery,
+  useTheme,
+  Grid,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -43,6 +46,8 @@ function ContractTemplatesTab() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [viewDialog, setViewDialog] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentTemplate, setCurrentTemplate] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -174,6 +179,50 @@ function ContractTemplatesTab() {
           actionLabel="Créer un modèle"
           onAction={() => handleOpenDialog()}
         />
+      ) : isMobile ? (
+        <Grid container spacing={2}>
+          {templates.map((template) => (
+            <Grid item xs={12} key={template.id}>
+              <Card variant="outlined" sx={{ borderRadius: 3, position: 'relative' }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <DescriptionIcon color="primary" sx={{ fontSize: 20 }} />
+                      <Typography variant="subtitle1" fontWeight={700}>
+                        {template.name}
+                      </Typography>
+                    </Box>
+                    <Chip
+                      label={template.is_active ? 'Actif' : 'Inactif'}
+                      size="small"
+                      color={template.is_active ? 'success' : 'default'}
+                      sx={{ height: 20, fontSize: '0.65rem' }}
+                    />
+                  </Box>
+
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {template.description || 'Aucune description'}
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Chip label={getTemplateTypeLabel(template.template_type)} size="small" variant="outlined" sx={{ height: 24, fontSize: '0.7rem' }} />
+                    <Box>
+                      <IconButton size="small" onClick={() => { setCurrentTemplate(template); setViewDialog(true); }}>
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" onClick={() => handleOpenDialog(template)} color="primary">
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error" onClick={() => handleDelete(template.id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       ) : (
         <TableContainer component={Paper} variant="outlined">
           <Table>

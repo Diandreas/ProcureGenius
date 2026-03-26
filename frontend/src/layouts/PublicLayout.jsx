@@ -61,7 +61,7 @@ export default function PublicLayout() {
                   style={{ width: 32, height: 32, objectFit: 'contain' }}
                   onError={(e) => { e.target.src = 'https://via.placeholder.com/32'; }} 
                 />
-                <Typography sx={{ fontWeight: 800, fontSize: '1.4rem', letterSpacing: -0.5, color: isDark ? '#fff' : '#0f172a' }}>
+                <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.1rem', sm: '1.4rem' }, letterSpacing: -0.5, color: isDark ? '#fff' : '#0f172a', display: { xs: 'none', xsm: 'block', sm: 'block' } }}>
                   Procura
                 </Typography>
               </Box>
@@ -129,7 +129,7 @@ export default function PublicLayout() {
                     color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
                     textTransform: 'none', 
                     fontWeight: 600, 
-                    fontSize: '0.95rem', 
+                    fontSize: { xs: '0.85rem', sm: '0.95rem' }, 
                     '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }, 
                     borderRadius: 2, 
                     px: { xs: 1, sm: 2 } 
@@ -144,9 +144,9 @@ export default function PublicLayout() {
                     bgcolor: '#2563eb',
                     textTransform: 'none',
                     fontWeight: 700,
-                    fontSize: '0.95rem',
+                    fontSize: { xs: '0.8rem', sm: '0.95rem' },
                     borderRadius: 2.5,
-                    px: { xs: 2, sm: 4 },
+                    px: { xs: 1.5, sm: 4 },
                     color: '#fff',
                     '&:hover': { bgcolor: '#1d4ed8' }
                   }}

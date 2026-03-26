@@ -480,6 +480,9 @@ class ChatView(APIView):
                                 final_response += f"**Choisissez une option ci-dessous:**"
 
                                 # Ajouter les boutons d'action dans les métadonnées pour le frontend
+                                pending_conf = action_result.get('pending_confirmation', {})
+                                original_params = pending_conf.get('original_params', {})
+                                
                                 action_results[-1]['action_buttons'] = [
                                     {
                                         'label': f"✓ Utiliser {similar[0].get('name', 'entité')}",
@@ -487,7 +490,8 @@ class ChatView(APIView):
                                         'style': 'primary',
                                         'params': {
                                             f'use_existing_{entity_type}_id': suggested_entity_id,
-                                            'force_create': False
+                                            'force_create': False,
+                                            **original_params
                                         }
                                     },
                                     {
@@ -495,7 +499,8 @@ class ChatView(APIView):
                                         'action': 'force_create',
                                         'style': 'secondary',
                                         'params': {
-                                            f'force_create_{entity_type}': True
+                                            f'force_create_{entity_type}': True,
+                                            **original_params
                                         }
                                     },
                                     {
@@ -1574,15 +1579,28 @@ class ProactiveSuggestionsView(APIView):
                 suggestion_matcher.mark_suggestion_displayed(request.user, suggestion)
 
             # Sérialiser
-            suggestions_data = [{
-                'id': str(suggestion.id),
-                'type': suggestion.suggestion_type,
-                'title': suggestion.title,
-                'message': suggestion.message,
-                'action_label': suggestion.action_label,
-                'action_url': suggestion.action_url,
-                'priority': suggestion.priority
-            } for suggestion in suggestions]
+            suggestions_data = []
+            for suggestion in suggestions:
+                if isinstance(suggestion, dict):
+                    suggestions_data.append({
+                        'id': suggestion.get('id', 'intelligent_insight'),
+                        'type': suggestion.get('type', 'intelligent'),
+                        'title': suggestion.get('title', ''),
+                        'message': suggestion.get('message', ''),
+                        'action_label': suggestion.get('action_label', ''),
+                        'action_url': suggestion.get('action_url', ''),
+                        'priority': suggestion.get('priority', 5)
+                    })
+                else:
+                    suggestions_data.append({
+                        'id': str(suggestion.id),
+                        'type': getattr(suggestion, 'suggestion_type', 'suggestion'),
+                        'title': getattr(suggestion, 'title', ''),
+                        'message': getattr(suggestion, 'message', ''),
+                        'action_label': getattr(suggestion, 'action_label', ''),
+                        'action_url': getattr(suggestion, 'action_url', ''),
+                        'priority': getattr(suggestion, 'priority', 5)
+                    })
 
             # Ajouter les ProactiveConversations avec actions d'envoi d'email
             email_conversations = ProactiveConversation.objects.filter(
