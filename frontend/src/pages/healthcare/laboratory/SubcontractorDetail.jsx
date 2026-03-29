@@ -399,11 +399,17 @@ const SubcontractorDetail = () => {
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
-                                            <Chip
-                                                size="small"
-                                                label={inv.status === 'paid' ? 'Payée' : inv.status === 'pending' ? 'En attente' : inv.status}
-                                                color={inv.status === 'paid' ? 'success' : inv.status === 'overdue' ? 'error' : 'warning'}
-                                            />
+                                            {(() => {
+                                                const INV_LABELS = { draft: 'Brouillon', sent: 'Envoyée', paid: 'Payée', overdue: 'En retard', cancelled: 'Annulée' };
+                                                const INV_COLORS = { draft: 'default', sent: 'info', paid: 'success', overdue: 'error', cancelled: 'default' };
+                                                return (
+                                                    <Chip
+                                                        size="small"
+                                                        label={INV_LABELS[inv.status] || inv.status}
+                                                        color={INV_COLORS[inv.status] || 'warning'}
+                                                    />
+                                                );
+                                            })()}
                                         </TableCell>
                                         <TableCell>
                                             <Tooltip title="Voir la facture">

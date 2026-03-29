@@ -11,6 +11,7 @@ import accountingAPI from '../../services/accountingAPI';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import AccountingNav from './AccountingNav';
+import useCurrentUser from '../../hooks/useCurrentUser';
 
 const STATUS_COLORS = { draft: 'default', posted: 'success', cancelled: 'error' };
 const STATUS_LABELS = { draft: 'Brouillon', posted: 'Validée', cancelled: 'Annulée' };
@@ -25,6 +26,7 @@ export default function JournalEntries() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { format } = useCurrency();
+  const { isAdmin } = useCurrentUser();
 
   const load = (f = filters) => {
     setLoading(true);
@@ -77,11 +79,11 @@ export default function JournalEntries() {
       <AccountingNav
         title="Écritures Comptables"
         subtitle={`${entries.length} écriture(s)`}
-        action={
+        action={isAdmin ? (
           <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/accounting/entries/new')}>
             Nouvelle écriture
           </Button>
-        }
+        ) : null}
       />
 
       {/* Filtres */}

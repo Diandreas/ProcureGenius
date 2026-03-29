@@ -4,12 +4,13 @@ import {
   InputLabel, Table, TableHead, TableBody, TableRow, TableCell,
   Paper, IconButton, Alert, CircularProgress, Card, CardContent, Divider, Chip,
 } from '@mui/material';
-import { Add, Delete, Save, CheckCircle } from '@mui/icons-material';
+import { Add, Delete, Save, CheckCircle, Lock } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
 import AccountingNav from './AccountingNav';
+import useCurrentUser from '../../hooks/useCurrentUser';
 
 const EMPTY_LINE = { account: '', description: '', debit: '', credit: '' };
 
@@ -27,6 +28,7 @@ export default function JournalEntryForm() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { format } = useCurrency();
+  const { isAdmin, loading: userLoading } = useCurrentUser();
 
   useEffect(() => {
     Promise.all([accountingAPI.getJournals(), accountingAPI.getAccounts({ active: 'true' })])
@@ -88,6 +90,26 @@ export default function JournalEntryForm() {
       setSaving(false);
     }
   };
+
+  if (userLoading) return <Box p={4} display="flex" justifyContent="center"><CircularProgress /></Box>;
+
+  if (!isAdmin) {
+    return (
+      <Box p={3} maxWidth={960}>
+        <AccountingNav title="Nouvelle Écriture Comptable" subtitle="Saisie en partie double" />
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={8} gap={2}>
+          <Lock sx={{ fontSize: 64, color: 'text.disabled' }} />
+          <Typography variant="h6" color="text.secondary">Accès restreint</Typography>
+          <Typography variant="body2" color="text.disabled" textAlign="center">
+            Seul l'administrateur peut créer des écritures comptables manuelles.
+          </Typography>
+          <Button variant="outlined" onClick={() => navigate('/accounting/entries')} sx={{ mt: 1 }}>
+            Retour aux écritures
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box p={3} maxWidth={960}>
