@@ -13,6 +13,8 @@ const accountingAPI = {
   // ── Journaux ────────────────────────────────────────────────────
   getJournals: () => api.get(`${BASE}/journals/`),
   createJournal: (data) => api.post(`${BASE}/journals/`, data),
+  updateJournal: (id, data) => api.patch(`${BASE}/journals/${id}/`, data),
+  deleteJournal: (id) => api.delete(`${BASE}/journals/${id}/`),
 
   // ── Écritures ───────────────────────────────────────────────────
   getEntries: (params = {}) => api.get(`${BASE}/entries/`, { params }),

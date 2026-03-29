@@ -9,6 +9,7 @@ import {
   TrendingUp as ResultIcon,
   AccountBalance as BilanIcon,
   Insights as SIGIcon,
+  LibraryBooks as JournalsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '../../components/navigation/BackButton';
@@ -16,6 +17,7 @@ import BackButton from '../../components/navigation/BackButton';
 const NAV_ITEMS = [
   { label: 'Tableau de bord', path: '/accounting', icon: <DashboardIcon fontSize="small" />, exact: true },
   { label: 'Plan comptable', path: '/accounting/chart-of-accounts', icon: <PlanIcon fontSize="small" /> },
+  { label: 'Journaux', path: '/accounting/journals', icon: <JournalsIcon fontSize="small" /> },
   { label: 'Écritures', path: '/accounting/entries', icon: <EntriesIcon fontSize="small" /> },
   { label: 'Balance', path: '/accounting/reports/trial-balance', icon: <BalanceIcon fontSize="small" /> },
   { label: 'Grand livre', path: '/accounting/reports/general-ledger', icon: <LedgerIcon fontSize="small" /> },

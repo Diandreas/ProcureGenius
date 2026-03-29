@@ -84,6 +84,7 @@ import Support from './pages/Support';
 // Accounting Pages
 import AccountingDashboard from './pages/accounting/AccountingDashboard';
 import ChartOfAccounts from './pages/accounting/ChartOfAccounts';
+import Journals from './pages/accounting/Journals';
 import JournalEntries from './pages/accounting/JournalEntries';
 import JournalEntryForm from './pages/accounting/JournalEntryForm';
 import JournalEntryDetail from './pages/accounting/JournalEntryDetail';
@@ -865,6 +866,7 @@ function App() {
                               {/* Comptabilité */}
                               <Route path="/accounting" element={<AccountingDashboard />} />
                               <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
+                              <Route path="/accounting/journals" element={<Journals />} />
                               <Route path="/accounting/entries" element={<JournalEntries />} />
                               <Route path="/accounting/entries/new" element={<JournalEntryForm />} />
                               <Route path="/accounting/entries/:id" element={<JournalEntryDetail />} />

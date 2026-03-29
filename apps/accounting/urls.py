@@ -8,6 +8,7 @@ urlpatterns = [
 
     # Journaux
     path('journals/', views.JournalListCreateView.as_view(), name='journal-list'),
+    path('journals/<uuid:pk>/', views.JournalDetailView.as_view(), name='journal-detail'),
 
     # Écritures
     path('entries/', views.JournalEntryListCreateView.as_view(), name='entry-list'),

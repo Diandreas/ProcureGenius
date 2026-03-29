@@ -114,6 +114,37 @@ class JournalListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class JournalDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk, org):
+        try:
+            return AccountingJournal.objects.get(pk=pk, organization=org)
+        except AccountingJournal.DoesNotExist:
+            return None
+
+    def patch(self, request, pk):
+        org = request.user.organization
+        journal = self.get_object(pk, org)
+        if not journal:
+            return Response({'error': 'Journal introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AccountingJournalSerializer(journal, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        org = request.user.organization
+        journal = self.get_object(pk, org)
+        if not journal:
+            return Response({'error': 'Journal introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        if journal.entries.exists():
+            return Response({'error': 'Ce journal contient des écritures et ne peut pas être supprimé.'}, status=status.HTTP_400_BAD_REQUEST)
+        journal.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 # ─────────────────────────────────────────────
 #  Écritures Comptables
 # ─────────────────────────────────────────────

@@ -111,6 +111,23 @@ export default function JournalEntryForm() {
     );
   }
 
+  if (!userLoading && isAdmin && journals.length === 0) {
+    return (
+      <Box p={3} maxWidth={960}>
+        <AccountingNav title="Nouvelle Écriture Comptable" subtitle="Saisie en partie double" />
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={8} gap={2}>
+          <Typography variant="h6" color="text.secondary">Aucun journal comptable configuré</Typography>
+          <Typography variant="body2" color="text.disabled" textAlign="center">
+            Vous devez d'abord créer au moins un journal avant de saisir des écritures.
+          </Typography>
+          <Button variant="contained" onClick={() => navigate('/accounting/journals')} sx={{ mt: 1 }}>
+            Créer un journal
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box p={3} maxWidth={960}>
       <AccountingNav title="Nouvelle Écriture Comptable" subtitle="Saisie en partie double" />
