@@ -1391,13 +1391,25 @@ class SubcontractorStatsView(APIView):
         # Stats globales
         total_orders = orders.count()
         total_patients = orders.values('patient').distinct().count()
+
+        # Les factures sous-traitance sont des factures batch liées au client B2B du sous-traitant
+        # On les retrouve via invoice_type='healthcare_laboratory' et les noms des sous-traitants
+        sub_names = list(orders.values_list('subcontractor__name', flat=True).distinct())
+        batch_invoices = Invoice.objects.filter(
+            organization=organization,
+            invoice_type='healthcare_laboratory',
+            client__name__in=sub_names,
+            client__client_type='b2b',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+        )
         paid_revenue = float(
-            orders.filter(lab_invoice__status='paid')
-            .aggregate(total=Sum('lab_invoice__total_amount'))['total'] or 0
+            batch_invoices.filter(status='paid')
+            .aggregate(total=Sum('total_amount'))['total'] or 0
         )
         pending_revenue = float(
-            orders.exclude(lab_invoice__status='paid')
-            .aggregate(total=Sum('total_price'))['total'] or 0
+            batch_invoices.exclude(status='paid')
+            .aggregate(total=Sum('total_amount'))['total'] or 0
         )
 
         # Stats par sous-traitant
@@ -1414,9 +1426,17 @@ class SubcontractorStatsView(APIView):
             sub_count = sub_orders.count()
             if sub_count == 0:
                 continue
+            sub_invoices = Invoice.objects.filter(
+                organization=organization,
+                invoice_type='healthcare_laboratory',
+                client__name=sub.name,
+                client__client_type='b2b',
+                created_at__date__gte=start_date,
+                created_at__date__lte=end_date,
+            )
             sub_revenue = float(
-                sub_orders.filter(lab_invoice__status='paid')
-                .aggregate(total=Sum('lab_invoice__total_amount'))['total'] or 0
+                sub_invoices.filter(status='paid')
+                .aggregate(total=Sum('total_amount'))['total'] or 0
             )
             sub_patients = sub_orders.values('patient').distinct().count()
 
