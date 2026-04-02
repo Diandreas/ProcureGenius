@@ -133,7 +133,7 @@ const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
                   sx={{
                     mb: 1.5,
                     bgcolor: isDark ? alpha(theme.palette.common.white, 0.03) : '#f8fafc',
-                    border: `1px solid ${theme.palette.divider}`,
+                    border: theme => `1px solid ${alpha(theme.palette.divider, 0.4)}`,
                     borderRadius: 2,
                   }}
                 >
@@ -257,122 +257,104 @@ const ConversationsHistory = ({ open, onClose, conversations, onSelectConversati
     const isActive = currentConversationId === conv.id;
 
     return (
-      <Card
+      <Box
         key={conv.id}
         onClick={() => onSelectConversation(conv.id)}
+        className="conv-item"
         sx={{
-          mb: 1,
+          mb: 0.5,
           cursor: 'pointer',
+          px: 1.5,
+          py: 1.25,
+          borderRadius: 1.5,
           bgcolor: isActive
-            ? alpha(theme.palette.primary.main, isDark ? 0.2 : 0.1)
+            ? alpha(theme.palette.primary.main, isDark ? 0.14 : 0.07)
             : 'transparent',
-          border: isActive
+          borderLeft: isActive
             ? `2px solid ${theme.palette.primary.main}`
-            : `1px solid ${theme.palette.divider}`,
-          borderRadius: 2,
-          transition: 'all 0.2s',
+            : '2px solid transparent',
+          transition: 'all 0.15s ease',
           '&:hover': {
-            bgcolor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.05),
-            borderColor: theme.palette.primary.main,
-            transform: 'translateX(4px)',
+            bgcolor: isActive
+              ? alpha(theme.palette.primary.main, isDark ? 0.18 : 0.09)
+              : alpha(theme.palette.text.primary, 0.04),
+            '& .conv-delete': { opacity: 1 },
           },
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 1,
         }}
       >
-        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
-            <Typography
-              variant="body2"
-              fontWeight={isActive ? 600 : 500}
-              sx={{
-                flex: 1,
-                color: 'text.primary',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-              }}
-            >
-              {conv.title}
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={(e) => handleDelete(conv.id, e)}
-              sx={{
-                ml: 0.5,
-                opacity: 0.6,
-                '&:hover': { opacity: 1, color: 'error.main' }
-              }}
-            >
-              <Delete fontSize="small" />
-            </IconButton>
-          </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="body2"
+            fontWeight={isActive ? 600 : 400}
+            sx={{
+              color: isActive ? 'primary.main' : 'text.primary',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              fontSize: '0.825rem',
+              lineHeight: 1.4,
+              mb: 0.25,
+            }}
+          >
+            {conv.title}
+          </Typography>
 
-          {conv.summary && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: 'block',
-                mb: 0.5,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {conv.summary}
-            </Typography>
-          )}
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AccessTime sx={{ fontSize: 12, color: 'text.disabled' }} />
-            <Typography variant="caption" color="text.disabled" fontSize="0.688rem">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
               {formatDateTime(conv.last_message_at)}
             </Typography>
-            {conv.message_count && (
-              <Chip
-                label={`${conv.message_count} messages`}
-                size="small"
-                sx={{
-                  height: 16,
-                  fontSize: '0.65rem',
-                  ml: 'auto',
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: 'primary.main',
-                }}
-              />
+            {conv.message_count > 0 && (
+              <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
+                · {conv.message_count} msg
+              </Typography>
             )}
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+
+        <IconButton
+          className="conv-delete"
+          size="small"
+          onClick={(e) => handleDelete(conv.id, e)}
+          sx={{
+            opacity: 0,
+            transition: 'opacity 0.15s',
+            width: 24,
+            height: 24,
+            flexShrink: 0,
+            mt: 0.25,
+            color: 'text.disabled',
+            '&:hover': { color: 'error.main', bgcolor: alpha('#ef4444', 0.1) }
+          }}
+        >
+          <Delete sx={{ fontSize: 14 }} />
+        </IconButton>
+      </Box>
     );
   };
 
-  const renderGroup = (title, conversations, icon) => {
+  const renderGroup = (title, conversations) => {
     if (conversations.length === 0) return null;
 
     return (
-      <Box sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, px: 0.5 }}>
-          {icon}
-          <Typography
-            variant="caption"
-            fontWeight={600}
-            color="text.secondary"
-            sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
-          >
-            {title}
-          </Typography>
-          <Chip
-            label={conversations.length}
-            size="small"
-            sx={{
-              height: 18,
-              fontSize: '0.65rem',
-              bgcolor: alpha(theme.palette.text.secondary, 0.1),
-            }}
-          />
-        </Box>
+      <Box sx={{ mb: 2.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            display: 'block',
+            px: 1.5,
+            mb: 0.75,
+            color: 'text.disabled',
+            fontSize: '0.68rem',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+          }}
+        >
+          {title}
+        </Typography>
         {conversations.map(renderConversationItem)}
       </Box>
     );
@@ -388,46 +370,52 @@ const ConversationsHistory = ({ open, onClose, conversations, onSelectConversati
       onClose={onClose}
       sx={{
         '& .MuiDrawer-paper': {
-          width: 380,
-          bgcolor: 'background.paper',
-          borderRight: 'none',
-          boxShadow: isDark ? '4px 0 20px rgba(0,0,0,0.3)' : '4px 0 20px rgba(0,0,0,0.08)',
+          width: 320,
+          bgcolor: isDark ? alpha(theme.palette.background.paper, 0.97) : theme.palette.background.default,
+          borderRight: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+          boxShadow: isDark ? '6px 0 24px rgba(0,0,0,0.25)' : '6px 0 24px rgba(0,0,0,0.05)',
         },
       }}
     >
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+        <Box sx={{ px: 2, pt: 2.5, pb: 2, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.4)}` }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <History sx={{ color: 'primary.main' }} />
-              <Box>
-                <Typography variant="h6" fontWeight={600}>
-                  Historique
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {totalCount} conversation{totalCount > 1 ? 's' : ''} {todayCount > 0 && `· ${todayCount} aujourd'hui`}
-                </Typography>
-              </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ lineHeight: 1.2, fontSize: '0.95rem' }}>
+                Historique
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>
+                {totalCount} conversation{totalCount !== 1 ? 's' : ''}
+                {todayCount > 0 && ` · ${todayCount} aujourd'hui`}
+              </Typography>
             </Box>
-            <IconButton onClick={onClose} size="small">
-              <Close fontSize="small" />
+            <IconButton onClick={onClose} size="small" sx={{ color: 'text.disabled', '&:hover': { color: 'text.primary' } }}>
+              <Close sx={{ fontSize: 18 }} />
             </IconButton>
           </Box>
 
           {/* Nouvelle conversation */}
           <Button
-            variant="contained"
-            startIcon={<Add />}
+            variant="outlined"
+            startIcon={<Add sx={{ fontSize: 16 }} />}
             onClick={onNewConversation}
             fullWidth
             sx={{
-              mb: 2,
-              py: 1,
-              borderRadius: 2,
+              mb: 1.5,
+              py: 0.875,
+              borderRadius: 1.5,
               textTransform: 'none',
-              fontWeight: 600,
-              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
+              fontWeight: 500,
+              fontSize: '0.825rem',
+              borderColor: alpha(theme.palette.primary.main, 0.35),
+              color: 'primary.main',
+              boxShadow: 'none',
+              '&:hover': {
+                borderColor: theme.palette.primary.main,
+                bgcolor: alpha(theme.palette.primary.main, 0.06),
+                boxShadow: 'none',
+              },
             }}
           >
             Nouvelle conversation
@@ -437,73 +425,47 @@ const ConversationsHistory = ({ open, onClose, conversations, onSelectConversati
           <TextField
             fullWidth
             size="small"
-            placeholder="Rechercher dans l'historique..."
+            placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
-              startAdornment: <Search sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
+              startAdornment: <Search sx={{ mr: 0.75, color: 'text.disabled', fontSize: 16 }} />,
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : alpha(theme.palette.common.black, 0.02),
+                borderRadius: 1.5,
+                fontSize: '0.8rem',
+                bgcolor: 'transparent',
+                '& fieldset': { borderColor: alpha(theme.palette.divider, 0.5) },
+                '&:hover fieldset': { borderColor: alpha(theme.palette.divider, 0.8) },
               },
             }}
           />
         </Box>
 
         {/* Liste des conversations */}
-        <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+        <Box sx={{ flexGrow: 1, overflow: 'auto', px: 1, py: 1.5 }}>
           {filteredConversations.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <History sx={{ fontSize: 64, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <History sx={{ fontSize: 40, color: 'text.disabled', mb: 1.5, opacity: 0.3 }} />
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem' }}>
                 {searchQuery ? 'Aucun résultat' : 'Aucune conversation'}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {searchQuery ? 'Essayez une autre recherche' : 'Commencez une nouvelle conversation'}
-              </Typography>
+              {!searchQuery && (
+                <Typography variant="caption" color="text.disabled">
+                  Commencez une nouvelle conversation
+                </Typography>
+              )}
             </Box>
           ) : (
             <>
-              {renderGroup(
-                "Aujourd'hui",
-                groupedConversations.today,
-                <CalendarToday sx={{ fontSize: 14, color: 'primary.main' }} />
-              )}
-              {renderGroup(
-                'Hier',
-                groupedConversations.yesterday,
-                <AccessTime sx={{ fontSize: 14, color: 'warning.main' }} />
-              )}
-              {renderGroup(
-                'Cette semaine',
-                groupedConversations.thisWeek,
-                <CalendarToday sx={{ fontSize: 14, color: 'info.main' }} />
-              )}
-              {renderGroup(
-                'Plus ancien',
-                groupedConversations.older,
-                <History sx={{ fontSize: 14, color: 'text.secondary' }} />
-              )}
+              {renderGroup("Aujourd'hui", groupedConversations.today)}
+              {renderGroup('Hier', groupedConversations.yesterday)}
+              {renderGroup('Cette semaine', groupedConversations.thisWeek)}
+              {renderGroup('Plus ancien', groupedConversations.older)}
             </>
           )}
         </Box>
-
-        {/* Footer avec statistiques */}
-        {totalCount > 0 && (
-          <Box
-            sx={{
-              p: 2,
-              borderTop: `1px solid ${theme.palette.divider}`,
-              bgcolor: isDark ? alpha(theme.palette.common.white, 0.02) : alpha(theme.palette.common.black, 0.01),
-            }}
-          >
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center' }}>
-              📊 Total: {totalCount} conversation{totalCount > 1 ? 's' : ''}
-            </Typography>
-          </Box>
-        )}
       </Box>
     </Drawer>
   );
@@ -1100,16 +1062,15 @@ function AIChat() {
         width: '100%',
         bgcolor: 'background.default',
       }}>
-        {/* Barre d'outils Interne IA - Style Épuré */}
+        {/* Barre d'outils interne */}
         <Box sx={{
           px: 2,
-          py: 1,
+          py: 0.75,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          bgcolor: alpha(theme.palette.background.paper, 0.5),
-          backdropFilter: 'blur(8px)',
+          borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.35)}`,
+          bgcolor: 'background.paper',
         }}>
           <Stack direction="row" spacing={1} alignItems="center">
             <Button
@@ -1180,126 +1141,135 @@ function AIChat() {
           {/* Zone de conversation */}
 
           {messages.length === 0 ? (
-            <Fade in timeout={400}>
-              <Box sx={{ textAlign: 'center', mt: { xs: 1, sm: 3 }, maxWidth: 800, mx: 'auto', px: { xs: 1, sm: 0 } }}>
-                {/* Mascotte */}
-                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
-                  <Mascot pose="excited" animation="wave" size={80} />
+            <Fade in timeout={500}>
+              <Box sx={{ mt: { xs: 2, sm: 4 }, maxWidth: 680, mx: 'auto', px: { xs: 2, sm: 0 } }}>
+
+                {/* Header section — épuré, axé sur le texte */}
+                <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+                  {/* Indicateur IA minimal */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Box sx={{
+                      width: 8, height: 8, borderRadius: '50%', bgcolor: '#10b981',
+                      boxShadow: '0 0 0 3px rgba(16,185,129,0.2)',
+                      animation: 'aiPulse 2.5s ease-in-out infinite',
+                      '@keyframes aiPulse': {
+                        '0%, 100%': { boxShadow: '0 0 0 3px rgba(16,185,129,0.2)' },
+                        '50%': { boxShadow: '0 0 0 6px rgba(16,185,129,0.08)' },
+                      }
+                    }} />
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#10b981', letterSpacing: '0.05em', fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                      Procura IA · En ligne
+                    </Typography>
+                  </Box>
+
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 400,
+                      fontStyle: 'italic',
+                      fontFamily: '"Georgia", "Times New Roman", serif',
+                      color: 'text.primary',
+                      lineHeight: 1.25,
+                      mb: 1,
+                      fontSize: { xs: '1.5rem', sm: '1.9rem' },
+                      letterSpacing: '-0.02em',
+                    }}
+                  >
+                    {t('aiChat:welcome.greeting')}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                      lineHeight: 1.6,
+                      maxWidth: 460,
+                    }}
+                  >
+                    {t('aiChat:welcome.description')}
+                  </Typography>
                 </Box>
 
-                <Typography
-                  variant="h5"
-                  gutterBottom
-                  sx={{
-                    fontWeight: 700,
-                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    mb: 0.5,
-                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                  }}
-                >
-                  {t('aiChat:welcome.greeting')}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 3, maxWidth: 450, mx: 'auto', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
-                >
-                  {t('aiChat:welcome.description')}
-                </Typography>
-
-                {/* Quick Actions Grid — Premium */}
-                <Grid container spacing={1.5} sx={{ maxWidth: 650, mx: 'auto', mb: 3 }}>
-                  {QUICK_ACTIONS_CATEGORIES.flatMap(category =>
-                    category.actions.map(action => (
-                      <Grid item xs={6} sm={4} key={action.id}>
-                        <Card
+                {/* Quick Actions — rangées de chips compacts */}
+                <Box sx={{ mb: { xs: 2.5, sm: 3 } }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.disabled', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem', mb: 1.5, display: 'block' }}>
+                    Actions rapides
+                  </Typography>
+                  <Box sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 1,
+                  }}>
+                    {QUICK_ACTIONS_CATEGORIES.flatMap(category =>
+                      category.actions.map(action => (
+                        <Box
+                          key={action.id}
                           onClick={() => handleQuickAction(action)}
                           sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.75,
+                            px: 1.5,
+                            py: 0.875,
+                            borderRadius: '10px',
+                            border: theme => `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                            bgcolor: 'background.paper',
                             cursor: 'pointer',
-                            bgcolor: isDark ? alpha(theme.palette.common.white, 0.03) : alpha(category.color, 0.04),
-                            border: `1px solid ${alpha(category.color, isDark ? 0.15 : 0.12)}`,
-                            borderRadius: 3,
-                            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                            transition: 'all 0.18s ease',
                             '&:hover': {
-                              bgcolor: alpha(category.color, isDark ? 0.12 : 0.08),
                               borderColor: category.color,
-                              transform: 'translateY(-3px)',
-                              boxShadow: `0 8px 24px ${alpha(category.color, 0.2)}`,
+                              bgcolor: alpha(category.color, 0.05),
+                              transform: 'translateY(-1px)',
+                              boxShadow: `0 4px 12px ${alpha(category.color, 0.12)}`,
+                              '& .action-icon': { color: category.color },
+                              '& .action-label': { color: 'text.primary' },
                             },
                           }}
                         >
-                          <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } }, textAlign: 'center' }}>
-                            <Avatar
-                              sx={{
-                                width: { xs: 36, sm: 44 },
-                                height: { xs: 36, sm: 44 },
-                                bgcolor: alpha(category.color, 0.12),
-                                color: category.color,
-                                mx: 'auto',
-                                mb: 1,
-                              }}
-                            >
-                              {action.icon}
-                            </Avatar>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontWeight: 600,
-                                fontSize: { xs: '0.75rem', sm: '0.8rem' },
-                                color: 'text.primary',
-                                lineHeight: 1.3,
-                                mb: 0.5,
-                              }}
-                            >
-                              {action.title}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'text.secondary',
-                                fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                                display: { xs: 'none', sm: 'block' },
-                              }}
-                            >
-                              {action.description}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    ))
-                  )}
-                </Grid>
+                          <Box className="action-icon" sx={{ color: 'text.disabled', display: 'flex', transition: 'color 0.18s', '& svg': { fontSize: 15 } }}>
+                            {action.icon}
+                          </Box>
+                          <Typography className="action-label" variant="caption" sx={{ fontWeight: 500, color: 'text.secondary', fontSize: '0.775rem', whiteSpace: 'nowrap', transition: 'color 0.18s', lineHeight: 1 }}>
+                            {action.title}
+                          </Typography>
+                        </Box>
+                      ))
+                    )}
+                  </Box>
+                </Box>
 
-                {/* Navigation rapide */}
-                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
-                  <Chip
-                    icon={<DocumentScanner sx={{ fontSize: 16 }} />}
-                    label="Importer un document"
+                {/* Navigation rapide — import docs */}
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Box
                     onClick={() => navigate('/ai-chat/document-import')}
-                    variant="outlined"
                     sx={{
-                      borderRadius: 2,
-                      fontWeight: 500,
-                      fontSize: '0.75rem',
-                      transition: 'all 0.2s',
-                      '&:hover': { transform: 'translateY(-1px)' },
+                      display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                      px: 1.5, py: 0.75,
+                      borderRadius: '8px',
+                      border: theme => `1px dashed ${alpha(theme.palette.divider, 0.5)}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.18s',
+                      '&:hover': { borderColor: 'primary.main', bgcolor: theme => alpha(theme.palette.primary.main, 0.04) },
                     }}
-                  />
-                  <Chip
-                    icon={<Assignment sx={{ fontSize: 16 }} />}
-                    label="Imports en attente"
+                  >
+                    <DocumentScanner sx={{ fontSize: 14, color: 'text.disabled' }} />
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>Importer un document</Typography>
+                  </Box>
+                  <Box
                     onClick={() => navigate('/ai-chat/import-reviews')}
-                    variant="outlined"
                     sx={{
-                      borderRadius: 2,
-                      fontWeight: 500,
-                      fontSize: '0.75rem',
-                      transition: 'all 0.2s',
-                      '&:hover': { transform: 'translateY(-1px)' },
+                      display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                      px: 1.5, py: 0.75,
+                      borderRadius: '8px',
+                      border: theme => `1px dashed ${alpha(theme.palette.divider, 0.5)}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.18s',
+                      '&:hover': { borderColor: 'primary.main', bgcolor: theme => alpha(theme.palette.primary.main, 0.04) },
                     }}
-                  />
+                  >
+                    <Assignment sx={{ fontSize: 14, color: 'text.disabled' }} />
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>Imports en attente</Typography>
+                  </Box>
                 </Box>
 
                 {/* Conversations Proactives */}
@@ -1324,150 +1294,152 @@ function AIChat() {
               </Box>
             </Fade>
           ) : (
-            <List sx={{ maxWidth: 800, mx: 'auto', p: 0 }}>
+            <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 1, sm: 2 } }}>
               <AnimatePresence mode="popLayout">
-                {messages.map((msg, index) => (
-                  <motion.div
-                    key={index}
-                    variants={messageIn}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    layout
-                  >
-                    <ListItem
-                      sx={{
-                        flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-                        alignItems: 'flex-start',
-                        mb: 2,
-                        p: 0,
-                      }}
+                {messages.map((msg, index) => {
+                  const isUser = msg.role === 'user';
+                  const isConsecutive = index > 0 && messages[index - 1].role === msg.role;
+                  return (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      layout
                     >
-                  {msg.role === 'user' ? (
-                    <Avatar
-                      sx={{
-                        bgcolor: isDark ? alpha(theme.palette.primary.main, 0.2) : alpha(theme.palette.primary.main, 0.1),
-                        color: isDark ? theme.palette.primary.light : theme.palette.primary.main,
-                        ml: 1.5,
-                        mr: 0,
-                        width: 32,
-                        height: 32,
-                      }}
-                    >
-                      <Person sx={{ fontSize: 18 }} />
-                    </Avatar>
-                  ) : (
-                    <Box sx={{ ml: 0, mr: 1.5, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Mascot pose="happy" animation="float" size={32} />
-                    </Box>
-                  )}
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 1.5,
-                      maxWidth: '75%',
-                      bgcolor: msg.role === 'user'
-                        ? (isDark ? alpha('#6366f1', 0.15) : alpha('#6366f1', 0.08))
-                        : (isDark ? alpha(theme.palette.common.white, 0.04) : 'background.paper'),
-                      border: msg.role === 'user'
-                        ? `1px solid ${alpha('#6366f1', 0.2)}`
-                        : `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-                      borderRadius: msg.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                      boxShadow: isDark
-                        ? '0 2px 12px rgba(0,0,0,0.2)'
-                        : '0 2px 12px rgba(0,0,0,0.06)',
-                      backdropFilter: 'blur(10px)',
-                    }}
-                  >
-                    <MessageContent
-                      content={msg.content}
-                      actionResults={msg.action_results}
-                      actionButtons={msg.action_buttons}
-                      onButtonClick={(buttonIndex, confirmationData) => {
-                        if (confirmationData) {
-                          // Pour les confirmations avec données - envoyer les données de confirmation
-                          handleSendMessage('Confirmer la création', confirmationData);
-                        } else {
-                          const responseMap = { 0: '1', 1: '2', 2: '3' };
-                          handleSendMessage(responseMap[buttonIndex] || '1');
-                        }
-                      }}
-                      onAddArtifact={(artifact) => {
-                        addArtifact(artifact);
-                        enqueueSnackbar('Graphique ajouté aux visualisations', { variant: 'success' });
-                      }}
-                    />
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ mt: 1, display: 'block', fontSize: '0.625rem', opacity: 0.7 }}
-                    >
-                      {formatDateTime(msg.created_at)}
-                    </Typography>
-                  </Paper>
-                </ListItem>
-              </motion.div>
-            ))}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: isUser ? 'row-reverse' : 'row',
+                          alignItems: 'flex-end',
+                          gap: 1,
+                          mb: isConsecutive ? 0.5 : 2,
+                        }}
+                      >
+                        {/* Avatar — only shown on first in a group */}
+                        <Box sx={{ width: 26, flexShrink: 0, mb: 0.25 }}>
+                          {!isConsecutive && (
+                            isUser ? (
+                              <Box sx={{
+                                width: 26, height: 26, borderRadius: '50%',
+                                bgcolor: isDark ? alpha('#6366f1', 0.25) : alpha('#6366f1', 0.1),
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>
+                                <Person sx={{ fontSize: 14, color: '#6366f1' }} />
+                              </Box>
+                            ) : (
+                              <Mascot pose="happy" animation="none" size={26} />
+                            )
+                          )}
+                        </Box>
 
-              {/* Indicateur de frappe */}
-              {typingIndicator && (
-                <motion.div
-                  variants={messageIn}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                >
-                  <ListItem sx={{ alignItems: 'flex-start', mb: 2, p: 0 }}>
-                    <Box sx={{ mr: 1.5, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Mascot pose="thinking" animation="pulse" size={32} />
-                    </Box>
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 1.5,
-                      bgcolor: 'background.paper',
-                      border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      {[0, 1, 2].map((i) => (
+                        {/* Bubble */}
                         <Box
-                          key={i}
                           sx={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: '50%',
-                            bgcolor: 'primary.main',
-                            animation: 'pulse 1.4s infinite',
-                            animationDelay: `${i * 0.2}s`,
-                            '@keyframes pulse': {
-                              '0%, 100%': { opacity: 0.4, transform: 'scale(1)' },
-                              '50%': { opacity: 1, transform: 'scale(1.2)' },
-                            },
+                            maxWidth: { xs: '88%', sm: '78%' },
+                            ...(isUser ? {
+                              bgcolor: isDark ? '#4f46e5' : '#6366f1',
+                              color: '#fff',
+                              borderRadius: '16px 16px 4px 16px',
+                              px: 2,
+                              py: 1.25,
+                              boxShadow: isDark
+                                ? '0 2px 12px rgba(99,102,241,0.3)'
+                                : '0 2px 10px rgba(99,102,241,0.2)',
+                            } : {
+                              bgcolor: isDark
+                                ? alpha(theme.palette.common.white, 0.05)
+                                : theme.palette.background.paper,
+                              borderRadius: '4px 16px 16px 16px',
+                              px: 2,
+                              py: 1.25,
+                              boxShadow: isDark
+                                ? '0 1px 6px rgba(0,0,0,0.2)'
+                                : '0 1px 4px rgba(0,0,0,0.06)',
+                            }),
                           }}
-                        />
-                      ))}
+                        >
+                          <MessageContent
+                            content={msg.content}
+                            actionResults={msg.action_results}
+                            actionButtons={msg.action_buttons}
+                            onButtonClick={(buttonIndex, confirmationData) => {
+                              if (confirmationData) {
+                                handleSendMessage('Confirmer la création', confirmationData);
+                              } else {
+                                const responseMap = { 0: '1', 1: '2', 2: '3' };
+                                handleSendMessage(responseMap[buttonIndex] || '1');
+                              }
+                            }}
+                            onAddArtifact={(artifact) => {
+                              addArtifact(artifact);
+                              enqueueSnackbar('Graphique ajouté aux visualisations', { variant: 'success' });
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              mt: 0.5,
+                              display: 'block',
+                              fontSize: '0.58rem',
+                              opacity: 0.4,
+                              color: isUser ? '#fff' : 'text.secondary',
+                              textAlign: isUser ? 'right' : 'left',
+                            }}
+                          >
+                            {formatDateTime(msg.created_at)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </motion.div>
+                  );
+                })}
+
+                {/* Indicateur de frappe */}
+                {typingIndicator && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, mb: 2 }}>
+                      <Box sx={{ width: 26, flexShrink: 0 }}>
+                        <Mascot pose="thinking" animation="pulse" size={26} />
+                      </Box>
+                      <Box sx={{
+                        px: 2, py: 1.25,
+                        bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : theme.palette.background.paper,
+                        borderRadius: '4px 16px 16px 16px',
+                        boxShadow: isDark ? '0 1px 6px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.06)',
+                        display: 'flex', alignItems: 'center', gap: 0.5,
+                      }}>
+                        {[0, 1, 2].map((i) => (
+                          <Box key={i} sx={{
+                            width: 5, height: 5, borderRadius: '50%',
+                            bgcolor: 'text.disabled',
+                            animation: 'typingDot 1.4s ease-in-out infinite',
+                            animationDelay: `${i * 0.2}s`,
+                            '@keyframes typingDot': {
+                              '0%, 60%, 100%': { opacity: 0.3, transform: 'translateY(0)' },
+                              '30%': { opacity: 1, transform: 'translateY(-4px)' },
+                            },
+                          }} />
+                        ))}
+                      </Box>
                     </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.813rem', ml: 0.5 }}>
-                      {t('aiChat:messages.assistantThinking')}
-                    </Typography>
-                  </Paper>
-                </ListItem>
-              </motion.div>
-            )}
-            </AnimatePresence>
-            <div ref={messagesEndRef} />
-            </List>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div ref={messagesEndRef} />
+            </Box>
           )}
         </Box>
 
-        {/* Suggestion chips above input */}
+        {/* Suggestion chips */}
         {messages.length > 0 && (
-          <Box sx={{ maxWidth: 800, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
+          <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
             <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' } }}>
               {[
                 { label: '📊 Stats', prompt: 'Montre-moi les statistiques principales' },
@@ -1475,62 +1447,60 @@ function AIChat() {
                 { label: '📦 Stock', prompt: 'Quels produits sont en rupture de stock ?' },
                 { label: '💡 Optimiser', prompt: 'Quelles optimisations me suggères-tu ?' },
               ].map((chip, idx) => (
-                <Chip
+                <Box
                   key={idx}
-                  label={chip.label}
-                  size="small"
-                  onClick={() => { setMessage(chip.prompt); }}
+                  onClick={() => setMessage(chip.prompt)}
                   sx={{
-                    fontSize: '0.7rem',
-                    fontWeight: 500,
-                    borderRadius: 2,
-                    bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : alpha('#6366f1', 0.06),
-                    border: `1px solid ${alpha('#6366f1', 0.12)}`,
-                    color: 'text.secondary',
+                    px: 1.25, py: 0.5,
+                    borderRadius: '8px',
+                    border: theme => `1px solid ${alpha(theme.palette.divider, 0.45)}`,
+                    bgcolor: 'background.paper',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    transition: 'all 0.2s',
+                    transition: 'all 0.15s ease',
                     '&:hover': {
-                      bgcolor: alpha('#6366f1', 0.12),
-                      color: '#6366f1',
-                      borderColor: alpha('#6366f1', 0.3),
+                      borderColor: '#6366f1',
+                      bgcolor: alpha('#6366f1', 0.05),
                     },
                   }}
-                />
+                >
+                  <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 500, color: 'text.secondary' }}>
+                    {chip.label}
+                  </Typography>
+                </Box>
               ))}
             </Box>
           </Box>
         )}
 
-        {/* Zone de saisie moderne et flottante - Design Premium Mobile-First */}
+        {/* Zone de saisie */}
         <Box
           sx={{
             p: { xs: 1.5, sm: 3 },
             pt: { xs: 0.5, sm: 1 },
-            pb: { xs: 2, sm: 4 },
+            pb: { xs: 2, sm: 3 },
             width: '100%',
           }}
         >
           <Paper
             elevation={0}
             sx={{
-              maxWidth: 800,
+              maxWidth: 720,
               mx: 'auto',
               display: 'flex',
-              gap: { xs: 0.75, sm: 1.5 },
+              gap: { xs: 0.75, sm: 1 },
               alignItems: 'flex-end',
               bgcolor: theme.palette.background.paper,
-              borderRadius: { xs: '20px', sm: '24px' },
-              p: { xs: 1, sm: 1.5 },
-              border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              borderRadius: '16px',
+              p: { xs: '10px 12px', sm: '12px 14px' },
+              border: theme => `1px solid ${alpha(theme.palette.divider, 0.4)}`,
               boxShadow: isDark
-                ? '0 4px 24px rgba(0,0,0,0.3)'
-                : '0 4px 24px rgba(0,0,0,0.08)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                ? '0 2px 16px rgba(0,0,0,0.2)'
+                : '0 2px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03)',
+              transition: 'border-color 0.2s, box-shadow 0.2s',
               '&:focus-within': {
-                borderColor: alpha('#6366f1', 0.4),
-                boxShadow: `0 0 0 3px ${alpha('#6366f1', 0.12)}, 0 4px 24px rgba(0,0,0,0.1)`,
-                transform: 'translateY(-1px)'
+                borderColor: alpha('#6366f1', 0.5),
+                boxShadow: `0 0 0 3px ${alpha('#6366f1', 0.1)}, 0 2px 16px rgba(0,0,0,0.08)`,
               }
             }}
           >

@@ -294,6 +294,110 @@ function Invoices() {
   const draftInvoices = invoices.filter(i => i.status === 'draft').length;
   const totalAmount = invoices.reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
 
+  const statusColorMap = { paid: '#10b981', sent: '#3b82f6', overdue: '#ef4444', draft: '#94a3b8', cancelled: '#94a3b8' };
+
+  const InvoiceRow = ({ invoice, index, isLast }) => {
+    const statusColor = statusColorMap[invoice.status] || '#94a3b8';
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, delay: index * 0.03 }}
+      >
+        <Box
+          onClick={() => navigate(`/invoices/${invoice.id}`)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            px: isMobile ? 1.5 : 2.5,
+            py: isMobile ? 1.25 : 1,
+            cursor: 'pointer',
+            borderBottom: isLast ? 'none' : theme => `1px solid ${alpha(theme.palette.divider, 0.35)}`,
+            borderLeft: `3px solid ${statusColor}`,
+            transition: 'background 0.15s ease',
+            '&:hover': {
+              bgcolor: theme => alpha(theme.palette.action.hover, 0.5),
+              '& .invoice-actions': { opacity: 1 },
+            },
+            minHeight: isMobile ? 52 : 48,
+          }}
+        >
+          {isMobile ? (
+            <>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem', mb: 0.25 }}>
+                  {invoice.invoice_number}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.7rem' }}>
+                  {invoice.client_name || invoice.title}
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
+                  {formatCurrency(invoice.total_amount)}
+                </Typography>
+                <Chip label={getStatusLabel(invoice.status)} size="small" sx={{ height: 16, fontSize: '0.58rem', mt: 0.25, bgcolor: alpha(statusColor, 0.12), color: statusColor, border: 'none' }} />
+              </Box>
+            </>
+          ) : (
+            <>
+              {/* Invoice number */}
+              <Box sx={{ width: 130, flexShrink: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem', color: 'text.primary', fontFamily: 'monospace' }}>
+                  {invoice.invoice_number}
+                </Typography>
+              </Box>
+              {/* Title + client */}
+              <Box sx={{ flex: 1, minWidth: 0, pr: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.825rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {invoice.title}
+                </Typography>
+                {invoice.client_name && (
+                  <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>
+                    {invoice.client_name}
+                  </Typography>
+                )}
+              </Box>
+              {/* Amount */}
+              <Box sx={{ width: 110, textAlign: 'right', flexShrink: 0, pr: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.875rem' }}>
+                  {formatCurrency(invoice.total_amount)}
+                </Typography>
+              </Box>
+              {/* Status */}
+              <Box sx={{ width: 100, flexShrink: 0, pr: 2 }}>
+                <Chip
+                  label={getStatusLabel(invoice.status)}
+                  size="small"
+                  sx={{ height: 20, fontSize: '0.68rem', bgcolor: alpha(statusColor, 0.1), color: statusColor, border: `1px solid ${alpha(statusColor, 0.2)}` }}
+                />
+              </Box>
+              {/* Due date */}
+              <Box sx={{ width: 90, flexShrink: 0, pr: 2 }}>
+                {invoice.due_date && (
+                  <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>
+                    {formatDate(invoice.due_date)}
+                  </Typography>
+                )}
+              </Box>
+              {/* Hover actions */}
+              <Box className="invoice-actions" sx={{ opacity: 0, transition: 'opacity 0.15s', display: 'flex', gap: 0.5, flexShrink: 0 }}>
+                <IconButton size="small" onClick={async (e) => { e.stopPropagation(); const blob = await generateInvoicePDF(invoice); openSinglePDF(blob); }} sx={{ width: 28, height: 28, color: 'text.disabled', '&:hover': { color: 'success.main' } }}>
+                  <PictureAsPdf sx={{ fontSize: 15 }} />
+                </IconButton>
+                <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/invoices/${invoice.id}/edit`); }} sx={{ width: 28, height: 28, color: 'text.disabled', '&:hover': { color: 'primary.main' } }}>
+                  <Edit sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Box>
+            </>
+          )}
+        </Box>
+      </motion.div>
+    );
+  };
+
+  // Keep old InvoiceCard for any backward reference but InvoiceRow is used in the list
   const InvoiceCard = ({ invoice, index }) => {
     const statusColor = invoice.status === 'paid' ? '#10b981' : invoice.status === 'sent' ? '#2563eb' : '#f59e0b';
 
