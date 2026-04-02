@@ -392,12 +392,13 @@ function Products() {
           {/* Prix & Valeur */}
           <Box
             sx={{
-              bgcolor: 'primary.50',
-              borderRadius: 1,
+              bgcolor: theme => alpha(theme.palette.primary.main, 0.07),
+              borderRadius: 2,
               p: isMobile ? 0.75 : 1,
               mb: isMobile ? 1 : 1.5,
               textAlign: 'center',
-              position: 'relative'
+              position: 'relative',
+              border: theme => `1px solid ${alpha(theme.palette.primary.main, 0.12)}`,
             }}
           >
             <Typography

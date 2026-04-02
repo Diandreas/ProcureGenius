@@ -54,7 +54,10 @@
     "productUnavailable": "Produit non disponible",
     "ref": "Réf",
     "generatingLabel": "Génération du rapport en cours...",
-    "lastActivity": "Dernière activité"
+    "lastActivity": "Dernière activité",
+    "autoStatusTitle": "Statut automatique",
+    "autoStatusDescription": "Le statut du client est calculé automatiquement selon son activité récente.",
+    "manualStatus": "Forcer le statut manuellement"
   },
   "stats": {
     "totalRevenue": "CA Total",

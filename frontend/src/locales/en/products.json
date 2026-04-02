@@ -127,6 +127,8 @@
         "deleteError": "Error deleting product",
         "productNotFound": "Product not found",
         "deleteConfirmation": "Delete {{name}}?",
+        "createProductDescription": "Fill in the details of your new product or service.",
+        "editProductDescription": "Update the details of your product or service.",
         "createSuccess": "Product created successfully",
         "updateSuccess": "Product updated successfully",
         "saveError": "Error saving product",

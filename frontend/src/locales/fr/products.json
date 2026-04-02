@@ -137,6 +137,8 @@
         "deleteError": "Erreur lors de la suppression",
         "productNotFound": "Produit introuvable",
         "deleteConfirmation": "Supprimer {{name}} ?",
+        "createProductDescription": "Remplissez les informations de votre nouveau produit ou service.",
+        "editProductDescription": "Modifiez les informations de votre produit ou service.",
         "createSuccess": "Produit créé avec succès",
         "updateSuccess": "Produit modifié avec succès",
         "saveError": "Erreur lors de l'enregistrement",

@@ -51,6 +51,7 @@ import {
     ListItemIcon,
     Autocomplete,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
     Save,
     Cancel,
@@ -109,6 +110,8 @@ function ProductForm() {
         advanced: false,
     });
     const [activeStep, setActiveStep] = useState(0);
+    const isLastStepRef = useRef(false);
+    const [currentProductType, setCurrentProductType] = useState('physical');
 
     // Modal states
     const [supplierModalOpen, setSupplierModalOpen] = useState(false);
@@ -457,6 +460,11 @@ function ProductForm() {
 
 
     const handleSubmit = async (values, { setSubmitting }) => {
+        // Guard: only submit on the last step
+        if (!isLastStepRef.current) {
+            setSubmitting(false);
+            return;
+        }
         try {
             // Nettoyer les valeurs selon le type de produit
             const cleanedValues = {
@@ -559,43 +567,64 @@ function ProductForm() {
         );
     }
 
-    const ProductTypeSelector = ({ value, onChange }) => (
-        <Paper elevation={0} sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ mb: 2 }}>
-                {t('products:productTypes.title')}
-            </Typography>
-            <ToggleButtonGroup
-                value={value}
-                exclusive
-                onChange={(e, newValue) => newValue && onChange({ target: { name: 'product_type', value: newValue } })}
-                fullWidth
-                size={isMobile ? "small" : "medium"}
-                orientation={isMobile ? "vertical" : "horizontal"}
-            >
-                <ToggleButton value="physical" sx={{ justifyContent: 'flex-start', px: 2 }}>
-                    <Inventory sx={{ mr: 1 }} />
-                    <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.physical')}</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.physicalDesc')}</Typography>}
-                    </Box>
-                </ToggleButton>
-                <ToggleButton value="digital" sx={{ justifyContent: 'flex-start', px: 2 }}>
-                    <CloudDownload sx={{ mr: 1 }} />
-                    <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.digital')}</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.digitalDesc')}</Typography>}
-                    </Box>
-                </ToggleButton>
-                <ToggleButton value="service" sx={{ justifyContent: 'flex-start', px: 2 }}>
-                    <Build sx={{ mr: 1 }} />
-                    <Box textAlign="left">
-                        <Typography variant="body2" fontWeight="bold">{t('products:productTypes.service')}</Typography>
-                        {!isMobile && <Typography variant="caption" display="block">{t('products:productTypes.serviceDesc')}</Typography>}
-                    </Box>
-                </ToggleButton>
-            </ToggleButtonGroup>
-        </Paper>
-    );
+    const ProductTypeSelector = ({ value, onChange }) => {
+        const types = [
+            { key: 'physical', icon: <Inventory sx={{ fontSize: 22 }} />, color: '#3b82f6', label: t('products:productTypes.physical'), desc: t('products:productTypes.physicalDesc') },
+            { key: 'digital', icon: <CloudDownload sx={{ fontSize: 22 }} />, color: '#8b5cf6', label: t('products:productTypes.digital'), desc: t('products:productTypes.digitalDesc') },
+            { key: 'service', icon: <Build sx={{ fontSize: 22 }} />, color: '#10b981', label: t('products:productTypes.service'), desc: t('products:productTypes.serviceDesc') },
+        ];
+        return (
+            <Box>
+                <Typography variant="caption" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', mb: 1.5, display: 'block' }}>
+                    {t('products:productTypes.title')}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1.5, flexDirection: isMobile ? 'column' : 'row' }}>
+                    {types.map(type => {
+                        const isSelected = value === type.key;
+                        return (
+                            <Box
+                                key={type.key}
+                                onClick={() => onChange({ target: { name: 'product_type', value: type.key } })}
+                                sx={{
+                                    flex: 1,
+                                    border: `2px solid ${isSelected ? type.color : 'transparent'}`,
+                                    borderRadius: 2.5,
+                                    p: 2,
+                                    cursor: 'pointer',
+                                    bgcolor: isSelected ? `${type.color}12` : 'background.default',
+                                    transition: 'all 0.18s',
+                                    '&:hover': { bgcolor: `${type.color}12`, borderColor: `${type.color}80` },
+                                    display: 'flex',
+                                    alignItems: isMobile ? 'center' : 'flex-start',
+                                    flexDirection: isMobile ? 'row' : 'column',
+                                    gap: isMobile ? 1.5 : 1,
+                                }}
+                            >
+                                <Box sx={{
+                                    width: 40, height: 40, borderRadius: 2,
+                                    bgcolor: isSelected ? type.color : 'action.disabledBackground',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: isSelected ? 'white' : 'text.secondary',
+                                    flexShrink: 0,
+                                    transition: 'all 0.18s',
+                                }}>
+                                    {type.icon}
+                                </Box>
+                                <Box>
+                                    <Typography variant="body2" sx={{ fontWeight: 700, color: isSelected ? type.color : 'text.primary', lineHeight: 1.3 }}>
+                                        {type.label}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2, display: 'block' }}>
+                                        {type.desc}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        );
+                    })}
+                </Box>
+            </Box>
+        );
+    };
 
     // Step labels
     const getSteps = (productType) => {
@@ -649,8 +678,8 @@ function ProductForm() {
             </Box>
             <Box sx={{ px: isMobile ? 2 : 0 }}>
 
-            {/* Message d'information si warehouses manquants */}
-            {warehouses.length === 0 && (
+            {/* Message d'information si warehouses manquants (seulement pour produits physiques) */}
+            {warehouses.length === 0 && currentProductType === 'physical' && (
                 <Alert
                     severity="info"
                     sx={{
@@ -675,7 +704,7 @@ function ProductForm() {
                 onSubmit={handleSubmit}
                 enableReinitialize
             >
-                {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue, validateForm, setTouched }) => {
+                {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue, validateForm, setTouched, submitForm }) => {
                     // Update refs to access from modals
                     formikRef.current.setFieldValue = setFieldValue;
                     formikRef.current.values = values;
@@ -683,6 +712,7 @@ function ProductForm() {
                     const steps = getSteps(values.product_type);
                     const totalSteps = steps.length;
                     const isLastStep = activeStep === totalSteps - 1;
+                    isLastStepRef.current = isLastStep;
 
                     const handleStepNext = async () => {
                         const stepFieldsList = STEP_FIELDS[activeStep] || [];
@@ -709,72 +739,145 @@ function ProductForm() {
 
                     const handleKeyDown = (e) => {
                         if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-                            if (!isLastStep) {
-                                e.preventDefault();
+                            e.preventDefault();
+                            if (isLastStep) {
+                                submitForm();
+                            } else {
                                 handleStepNext();
                             }
                         }
                     };
 
                     return (
-                        <Form onKeyDown={handleKeyDown}>
-                            {/* Stepper */}
-                            <Box sx={{ mb: 3 }}>
-                                <Stepper
-                                    activeStep={safeActiveStep}
-                                    alternativeLabel={!isMobile}
-                                    orientation={isMobile ? 'vertical' : 'horizontal'}
-                                    sx={{
-                                        '& .MuiStepLabel-root .Mui-completed': { color: 'primary.main' },
-                                        '& .MuiStepLabel-root .Mui-active': { color: 'primary.main' },
-                                    }}
-                                >
-                                    {steps.map((label, index) => (
-                                        <Step key={label}>
-                                            <StepLabel>{label}</StepLabel>
-                                        </Step>
-                                    ))}
-                                </Stepper>
-                            </Box>
+                        <form onKeyDown={handleKeyDown} onSubmit={(e) => e.preventDefault()}>
+                            {/* Layout: sidebar steps + content */}
+                            <Box sx={{
+                                display: 'flex',
+                                gap: { xs: 0, md: 3 },
+                                alignItems: 'flex-start',
+                                flexDirection: { xs: 'column', md: 'row' },
+                            }}>
 
-                            {/* Step Content */}
-                            <Box sx={{ maxWidth: 860, mx: 'auto' }}>
+                            {/* LEFT: Steps sidebar (desktop only) */}
+                            {!isMobile && (
+                                <Box sx={{
+                                    width: 220,
+                                    flexShrink: 0,
+                                    position: 'sticky',
+                                    top: 80,
+                                }}>
+                                    <Box sx={{
+                                        bgcolor: 'background.paper',
+                                        borderRadius: 3,
+                                        border: theme => `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+                                        overflow: 'hidden',
+                                    }}>
+                                        {steps.map((label, index) => {
+                                            const isActive = safeActiveStep === index;
+                                            const isDone = safeActiveStep > index;
+                                            return (
+                                                <Box
+                                                    key={label}
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1.5,
+                                                        px: 2,
+                                                        py: 1.75,
+                                                        borderBottom: index < steps.length - 1 ? theme => `1px solid ${alpha(theme.palette.divider, 0.5)}` : 'none',
+                                                        bgcolor: isActive ? theme => alpha(theme.palette.primary.main, 0.06) : 'transparent',
+                                                        borderLeft: isActive ? theme => `3px solid ${theme.palette.primary.main}` : '3px solid transparent',
+                                                        transition: 'all 0.2s',
+                                                    }}
+                                                >
+                                                    <Box sx={{
+                                                        width: 28, height: 28,
+                                                        borderRadius: '50%',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        bgcolor: isDone ? 'success.main' : isActive ? 'primary.main' : theme => alpha(theme.palette.text.disabled, 0.15),
+                                                        color: isDone || isActive ? 'white' : 'text.disabled',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 700,
+                                                        flexShrink: 0,
+                                                    }}>
+                                                        {isDone ? '✓' : index + 1}
+                                                    </Box>
+                                                    <Typography variant="body2" sx={{
+                                                        fontWeight: isActive ? 700 : 500,
+                                                        color: isActive ? 'primary.main' : isDone ? 'text.primary' : 'text.disabled',
+                                                        fontSize: '0.875rem',
+                                                    }}>
+                                                        {label}
+                                                    </Typography>
+                                                </Box>
+                                            );
+                                        })}
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {/* Mobile stepper bar */}
+                            {isMobile && (
+                                <Box sx={{ width: '100%', mb: 2, px: 2 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        {steps.map((label, index) => (
+                                            <Box key={label} sx={{ display: 'flex', alignItems: 'center', flex: index < steps.length - 1 ? 1 : 'none' }}>
+                                                <Box sx={{
+                                                    width: 28, height: 28, borderRadius: '50%',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    bgcolor: safeActiveStep > index ? 'success.main' : safeActiveStep === index ? 'primary.main' : theme => alpha(theme.palette.text.disabled, 0.15),
+                                                    color: safeActiveStep >= index ? 'white' : 'text.disabled',
+                                                    fontSize: '0.75rem', fontWeight: 700, flexShrink: 0,
+                                                }}>
+                                                    {safeActiveStep > index ? '✓' : index + 1}
+                                                </Box>
+                                                {index < steps.length - 1 && (
+                                                    <Box sx={{ flex: 1, height: 2, mx: 0.5, bgcolor: safeActiveStep > index ? 'success.main' : theme => alpha(theme.palette.divider, 1) }} />
+                                                )}
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                    <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700, px: 0.5 }}>
+                                        {steps[safeActiveStep]} — Étape {safeActiveStep + 1}/{steps.length}
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            {/* RIGHT: Step Content */}
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
 
                                 {/* STEP 0: Informations */}
                                 {safeActiveStep === 0 && (
-                                    <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2.5}>
+                                    <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
+                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                                     <Box sx={{
-                                                        p: 1,
-                                                        borderRadius: 1,
-                                                        bgcolor: 'primary.50',
+                                                        width: 36, height: 36,
+                                                        borderRadius: 2,
+                                                        bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center'
                                                     }}>
-                                                        <Description sx={{ fontSize: 22, color: 'primary.main' }} />
+                                                        <Description sx={{ fontSize: 20, color: 'primary.main' }} />
                                                     </Box>
-                                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                        {t('products:labels.generalInfo')}
-                                                    </Typography>
+                                                    <Box>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                                                            {t('products:labels.generalInfo')}
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Type, nom et description
+                                                        </Typography>
+                                                    </Box>
                                                 </Box>
-                                                {!isMobile && (
-                                                    <Chip
-                                                        size="small"
-                                                        label={t('products:labels.mandatory')}
-                                                        color="primary"
-                                                        variant="outlined"
-                                                        sx={{ borderRadius: 1 }}
-                                                    />
-                                                )}
                                             </Box>
 
                                             {/* Product Type Selector */}
                                             <Box sx={{ mb: 2.5 }}>
                                                 <ProductTypeSelector value={values.product_type} onChange={(e) => {
                                                     handleChange(e);
+                                                    setCurrentProductType(e.target.value);
                                                     // Reset step if type changes and step would be out of bounds
                                                     const newSteps = getSteps(e.target.value);
                                                     if (activeStep >= newSteps.length) {
@@ -844,22 +947,25 @@ function ProductForm() {
 
                                 {/* STEP 1: Tarification */}
                                 {safeActiveStep === 1 && (
-                                    <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
+                                    <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
+                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
                                                 <Box sx={{
-                                                    p: 1,
-                                                    borderRadius: 1,
-                                                    bgcolor: 'success.50',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
+                                                    width: 36, height: 36,
+                                                    borderRadius: 2,
+                                                    bgcolor: theme => alpha(theme.palette.success.main, 0.1),
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
                                                 }}>
-                                                    <AttachMoney sx={{ fontSize: 22, color: 'success.main' }} />
+                                                    <AttachMoney sx={{ fontSize: 20, color: 'success.main' }} />
                                                 </Box>
-                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                    {t('products:labels.pricing')}
-                                                </Typography>
+                                                <Box>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                                                        {t('products:labels.pricing')}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Prix de vente, coût et catégorie
+                                                    </Typography>
+                                                </Box>
                                             </Box>
 
                                             <Grid container spacing={1.5}>
@@ -1042,33 +1148,25 @@ function ProductForm() {
 
                                 {/* STEP 2: Stock & Lots (physical only) */}
                                 {safeActiveStep === 2 && values.product_type === 'physical' && (
-                                    <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                    <Box sx={{
-                                                        p: 1,
-                                                        borderRadius: 1,
-                                                        bgcolor: 'primary.50',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        <Inventory sx={{ fontSize: 22, color: 'primary.main' }} />
-                                                    </Box>
-                                                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                                        Gestion des Lots & Stock Initial
+                                    <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
+                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                                                <Box sx={{
+                                                    width: 36, height: 36,
+                                                    borderRadius: 2,
+                                                    bgcolor: theme => alpha(theme.palette.warning.main, 0.1),
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                }}>
+                                                    <Inventory sx={{ fontSize: 20, color: 'warning.main' }} />
+                                                </Box>
+                                                <Box>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                                                        Lots &amp; Stock Initial
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Définissez le stock de départ par lot
                                                     </Typography>
                                                 </Box>
-                                                <Button
-                                                    startIcon={<History />}
-                                                    size="small"
-                                                    variant="outlined"
-                                                    disabled
-                                                    sx={{ textTransform: 'none', borderRadius: 1.5 }}
-                                                >
-                                                    Journal des mouvements
-                                                </Button>
                                             </Box>
 
                                             <Alert severity="info" sx={{ mb: 3, borderRadius: 1.5 }}>
@@ -1234,8 +1332,8 @@ function ProductForm() {
 
                                 {/* For service/digital: is_active on last step (step 1) */}
                                 {safeActiveStep === 1 && values.product_type !== 'physical' && (
-                                    <Card sx={{ mb: 2.5, borderRadius: 1.5, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: 'none' }}>
-                                        <CardContent sx={{ p: isMobile ? 2.5 : 3 }}>
+                                    <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
+                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
                                             <Divider sx={{ mb: 2 }} />
                                             <FormControlLabel
                                                 control={
@@ -1269,20 +1367,23 @@ function ProductForm() {
                                 {/* Navigation Buttons */}
                                 <Box sx={{
                                     display: 'flex',
-                                    gap: 2,
+                                    gap: 1.5,
                                     justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    mt: 1,
                                     position: isMobile ? 'fixed' : 'relative',
                                     bottom: isMobile ? 0 : 'auto',
                                     left: isMobile ? 0 : 'auto',
                                     right: isMobile ? 0 : 'auto',
-                                    backgroundColor: isMobile ? 'background.paper' : 'transparent',
+                                    bgcolor: isMobile ? 'background.paper' : 'transparent',
                                     p: isMobile ? 2 : 0,
                                     zIndex: isMobile ? 1000 : 1,
-                                    boxShadow: isMobile ? 4 : 0,
+                                    boxShadow: isMobile ? '0 -1px 12px rgba(0,0,0,0.08)' : 0,
                                     width: isMobile ? '100%' : 'auto',
                                     margin: isMobile ? '-16px' : 0,
                                 }}>
                                     <Button
+                                        type="button"
                                         variant="outlined"
                                         startIcon={activeStep === 0 ? <Cancel /> : <NavigateBefore />}
                                         onClick={handleStepBack}
@@ -1293,15 +1394,17 @@ function ProductForm() {
 
                                     {isLastStep ? (
                                         <Button
-                                            type="submit"
+                                            type="button"
                                             variant="contained"
-                                            startIcon={<Save />}
+                                            startIcon={isSubmitting ? null : <Save />}
                                             disabled={isSubmitting}
+                                            onClick={() => submitForm()}
                                         >
                                             {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('products:actions.modify') : t('products:actions.create'))}
                                         </Button>
                                     ) : (
                                         <Button
+                                            type="button"
                                             variant="contained"
                                             endIcon={<NavigateNext />}
                                             onClick={handleStepNext}
@@ -1311,8 +1414,9 @@ function ProductForm() {
                                         </Button>
                                     )}
                                 </Box>
-                            </Box>
-                        </Form>
+                            </Box>{/* end content */}
+                            </Box>{/* end sidebar layout */}
+                        </form>
                     );
                 }}
             </Formik>

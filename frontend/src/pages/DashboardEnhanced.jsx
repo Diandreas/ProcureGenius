@@ -481,50 +481,76 @@ function DashboardEnhanced() {
 
             return (
               <Grid item xs={6} sm={4} md={4} lg={2} key={index}>
-                <Card sx={{ height: '100%', borderRadius: 1, border: '1px solid', borderColor: 'divider', transition: 'all 0.2s', '&:hover': { borderColor: stat.color, boxShadow: 2, transform: 'translateY(-2px)' } }}>
+                <Card sx={{
+                  height: '100%',
+                  borderRadius: 3,
+                  border: 'none',
+                  background: theme.palette.mode === 'light'
+                    ? `linear-gradient(135deg, #ffffff 0%, ${stat.color}08 100%)`
+                    : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${stat.color}12 100%)`,
+                  boxShadow: theme.palette.mode === 'light'
+                    ? `0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px ${stat.color}20`
+                    : `0 2px 12px rgba(0,0,0,0.25), 0 0 0 1px ${stat.color}25`,
+                  transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)',
+                  cursor: 'default',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: theme.palette.mode === 'light'
+                      ? `0 8px 24px rgba(0,0,0,0.1), 0 0 0 1px ${stat.color}40`
+                      : `0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px ${stat.color}40`,
+                  }
+                }}>
                   <CardContent sx={{ p: isMobile ? 1.5 : 2.5, '&:last-child': { pb: isMobile ? 1.5 : 2.5 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1, flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 1 : 0 }}>
-                      <Avatar sx={{ bgcolor: `${stat.color}15`, color: stat.color, width: isMobile ? 32 : 48, height: isMobile ? 32 : 48, borderRadius: 1 }}>
-                        {React.cloneElement(stat.icon, { fontSize: isMobile ? 'small' : 'medium' })}
-                      </Avatar>
-                      <Box sx={{ ml: isMobile ? 0 : 1.5, flexGrow: 1, width: '100%' }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 500, textTransform: 'uppercase', fontSize: isMobile ? '0.65rem' : '0.7rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {stat.title}
-                        </Typography>
-                        <MuiTooltip title={stat.value}>
-                          <Typography variant={isMobile ? "subtitle1" : "h5"} sx={{ fontWeight: 700, mt: 0.5, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {stat.value}
-                          </Typography>
-                        </MuiTooltip>
-                        {stat.total !== undefined && !isMobile && (
-                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                            sur {stat.total} total
-                          </Typography>
-                        )}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Box sx={{
+                        width: isMobile ? 36 : 44,
+                        height: isMobile ? 36 : 44,
+                        borderRadius: 2.5,
+                        bgcolor: `${stat.color}18`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        {React.cloneElement(stat.icon, { fontSize: isMobile ? 'small' : 'medium', style: { color: stat.color } })}
                       </Box>
+                      {comparison && compare && (
+                        <Box sx={{
+                          display: 'flex', alignItems: 'center', gap: 0.25,
+                          bgcolor: `${comparison.color}12`,
+                          color: comparison.color,
+                          borderRadius: 1.5, px: 0.75, py: 0.25,
+                          fontSize: '0.65rem', fontWeight: 700,
+                        }}>
+                          {comparison.icon}
+                          {comparison.value}%
+                        </Box>
+                      )}
                     </Box>
-                    {comparison && compare && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, flexWrap: 'wrap', gap: 0.5 }}>
-                        <Chip
-                          icon={comparison.icon}
-                          label={`${comparison.value}%`}
-                          size="small"
-                          sx={{ 
-                            bgcolor: `${comparison.color}15`, 
-                            color: comparison.color, 
-                            fontWeight: 600, 
-                            fontSize: '0.65rem', 
-                            height: 20, 
-                            '& .MuiChip-icon': { fontSize: '0.8rem', ml: 0.5 },
-                            '& .MuiChip-label': { px: 0.5 }
-                          }}
-                        />
-                        {!isMobile && (
-                          <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5, fontSize: '0.65rem' }}>
-                            vs préc.
-                          </Typography>
-                        )}
-                      </Box>
+                    <MuiTooltip title={stat.value}>
+                      <Typography sx={{
+                        fontWeight: 700,
+                        fontSize: isMobile ? '1rem' : '1.35rem',
+                        lineHeight: 1.2,
+                        color: 'text.primary',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        mb: 0.5,
+                      }}>
+                        {stat.value}
+                      </Typography>
+                    </MuiTooltip>
+                    <Typography sx={{
+                      fontSize: isMobile ? '0.65rem' : '0.72rem',
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      {stat.title}
+                    </Typography>
+                    {stat.total !== undefined && !isMobile && (
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', mt: 0.25, display: 'block' }}>
+                        sur {stat.total} total
+                      </Typography>
                     )}
                   </CardContent>
                 </Card>
@@ -533,9 +559,26 @@ function DashboardEnhanced() {
           })}
         </Grid>
 
-        <Paper elevation={0} sx={{ p: isMobile ? 2 : 3, borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-          <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 600, mb: 2 }}>Tendances quotidiennes</Typography>
-          <Line data={lineChartData} options={{ responsive: true, plugins: { legend: { position: 'top', align: 'end' } }, scales: { y: { beginAtZero: true } } }} />
+        <Paper elevation={0} sx={{
+          p: isMobile ? 2 : 3,
+          borderRadius: 3,
+          border: '1px solid',
+          borderColor: 'divider',
+          background: theme.palette.mode === 'light' ? '#ffffff' : theme.palette.background.paper,
+          boxShadow: theme.palette.mode === 'light' ? '0 2px 12px rgba(0,0,0,0.05)' : '0 2px 12px rgba(0,0,0,0.2)',
+        }}>
+          <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ fontWeight: 700, mb: 2.5, color: 'text.primary' }}>Tendances quotidiennes</Typography>
+          <Line data={lineChartData} options={{
+            responsive: true,
+            plugins: {
+              legend: { position: 'top', align: 'end' },
+              tooltip: { mode: 'index', intersect: false, padding: 10 },
+            },
+            scales: {
+              y: { beginAtZero: true, grid: { color: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)' } },
+              x: { grid: { display: false } },
+            },
+          }} />
         </Paper>
       </TabPanel>
 

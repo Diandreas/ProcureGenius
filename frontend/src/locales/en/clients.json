@@ -47,7 +47,10 @@
         "productUnavailable": "Product unavailable",
         "ref": "Ref",
         "generatingLabel": "Generating report...",
-        "lastActivity": "Last Activity"
+        "lastActivity": "Last Activity",
+        "autoStatusTitle": "Automatic Status",
+        "autoStatusDescription": "The client status is automatically calculated based on recent activity.",
+        "manualStatus": "Force status manually"
     },
     "stats": {
         "totalRevenue": "Total Revenue",

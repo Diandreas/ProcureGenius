@@ -336,16 +336,16 @@ function MainLayout() {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      bgcolor: 'background.paper',
-      borderRight: `1px solid ${theme.palette.divider}`,
     }}>
       {/* Logo */}
       <Box sx={{
-        px: 3,
-        py: 3,
+        px: 2.5,
+        py: 2.5,
         display: 'flex',
         alignItems: 'center',
-        gap: 2,
+        gap: 1.5,
+        borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+        mb: 0.5,
       }}>
         <Box
           component="img"
@@ -416,30 +416,29 @@ function MainLayout() {
                   onClick={() => handleModuleClick(item)}
                   data-tutorial={`menu-${item.moduleId}`}
                   sx={{
-                    minHeight: 48,
-                    px: 2,
-                    borderRadius: 3,
+                    minHeight: 44,
+                    px: 1.5,
+                    borderRadius: 2.5,
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     position: 'relative',
                     overflow: 'hidden',
                     '&:hover': {
-                      bgcolor: alpha(theme.palette.primary.main, 0.08),
-                      transform: 'translateX(4px)',
+                      bgcolor: alpha(theme.palette.primary.main, 0.07),
                     },
                     '&.Mui-selected': {
-                      bgcolor: alpha(theme.palette.primary.main, 0.12),
-                      '&:before': {
-                        content: '""',
-                        position: 'absolute',
-                        left: 0,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        height: '50%',
-                        width: 4,
-                        borderRadius: '0 4px 4px 0',
-                        bgcolor: 'primary.main',
+                      bgcolor: mode === 'light'
+                        ? alpha(theme.palette.primary.main, 0.1)
+                        : alpha(theme.palette.primary.main, 0.18),
+                      boxShadow: mode === 'light'
+                        ? `inset 3px 0 0 ${theme.palette.primary.main}`
+                        : `inset 3px 0 0 ${theme.palette.primary.light}`,
+                      '& .MuiListItemText-primary': {
+                        color: mode === 'light' ? 'primary.main' : 'primary.light',
+                        fontWeight: 700,
                       },
-                      '& .MuiListItemText-primary': { color: 'primary.main', fontWeight: 700 },
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.primary.main, 0.14),
+                      },
                     },
                   }}
                 >
@@ -545,8 +544,10 @@ function MainLayout() {
             mt: { xs: 1.5, md: 0 },
             borderRadius: { xs: 2.5, md: 0 },
             bgcolor: 'background.paper',
-            border: 'none',
-            boxShadow: getNeumorphicShadow(mode === 'dark' ? 'dark' : 'light', 'soft'),
+            borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+            boxShadow: mode === 'light'
+              ? '0 1px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)'
+              : '0 1px 8px rgba(0,0,0,0.3)',
             color: 'text.primary',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
@@ -1114,7 +1115,9 @@ function MainLayout() {
               '& .MuiDrawer-paper': {
                 boxSizing: 'border-box',
                 width: drawerWidth,
-                bgcolor: 'background.paper',
+                bgcolor: mode === 'light' ? '#f8fafc' : 'background.paper',
+                borderRight: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+                boxShadow: mode === 'light' ? '1px 0 0 rgba(0,0,0,0.04)' : 'none',
               },
             }}
             open
