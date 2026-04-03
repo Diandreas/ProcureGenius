@@ -176,6 +176,9 @@ const Dashboard = () => {
   // Revenue timeline for chart
   const revenueTimeline = financial?.revenue_timeline || [];
 
+  // Patients timeline (évolution par jour)
+  const patientsTimeline = patients?.timeline || [];
+
   // Demographics charts
   const genderData = (demographicsData?.by_gender || []).map(item => ({
     name: item.gender === 'M' ? 'Homme' : item.gender === 'F' ? 'Femme' : 'Non spécifié',
@@ -240,6 +243,11 @@ const Dashboard = () => {
                   icon={<HospitalIcon />} color="#14b8a6" loading={loading} />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Patients Récurrents" value={loading ? '...' : patients?.recurring ?? 0}
+                  icon={<PeopleIcon />} color="#f97316" loading={loading}
+                  subtitle="≥ 2 visites sur la période" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="Coût Moyen / Patient" value={loading ? '...' : formatCurrency(financial.avg_cost_per_patient)}
                   icon={<MoneyIcon />} color="#f59e0b" loading={loading} />
               </Grid>
@@ -254,7 +262,7 @@ const Dashboard = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="Actes Médicaux" value={loading ? '...' : actVol?.medical_acts?.total ?? 0}
                   icon={<AssessmentIcon />} color="#6366f1" loading={loading}
-                  subtitle="Consult. + Labo + Soins" />
+                  subtitle="Consultations + Examens Labo + Pharmacie" />
               </Grid>
             </Grid>
 
@@ -276,7 +284,7 @@ const Dashboard = () => {
 
             {/* Consultations timeline */}
             {(actVol?.consultations?.timeline || []).length > 0 && (
-              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
                 <SectionTitle>Évolution des Consultations</SectionTitle>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={actVol.consultations.timeline}>
@@ -286,6 +294,26 @@ const Dashboard = () => {
                     <Tooltip />
                     <Bar dataKey="count" fill="#10b981" name="Consultations" radius={[3, 3, 0, 0]} />
                   </BarChart>
+                </ResponsiveContainer>
+              </Paper>
+            )}
+
+            {/* Patients timeline */}
+            {patientsTimeline.length > 0 && (
+              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                <SectionTitle>Évolution du Nombre de Patients par Jour</SectionTitle>
+                <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+                  Patients uniques enregistrés à l'accueil (toutes activités)
+                </Typography>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={patientsTimeline}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={2} dot={false} name="Patients / jour" />
+                  </LineChart>
                 </ResponsiveContainer>
               </Paper>
             )}
@@ -352,8 +380,8 @@ const Dashboard = () => {
                       <ResponsiveContainer width="100%" height={220}>
                         <PieChart>
                           <Pie data={byActivity.map(a => ({ name: getActivityLabel(a.activity_type), value: parseFloat(a.revenue || 0) }))}
-                            cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            labelLine={false}>
+                            cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                            labelLine={true}>
                             {byActivity.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                           </Pie>
                           <Tooltip formatter={v => formatCurrency(v)} />
@@ -394,7 +422,10 @@ const Dashboard = () => {
               {/* Lab sub-categories */}
               <Grid item xs={12} md={7}>
                 <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
-                  <SectionTitle>CA Laboratoire par Catégorie</SectionTitle>
+                  <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                    <Typography variant="h6" fontWeight="700" mt={1}>CA Laboratoire par Catégorie</Typography>
+                    <Chip label={formatCurrency(labServiceData?.total_revenue || 0)} color="error" size="small" />
+                  </Box>
                   {loading ? <CircularProgress size={32} /> : (
                     <>
                       <Box mb={2}>
@@ -700,14 +731,18 @@ const Dashboard = () => {
               {demographicsData?.by_gender?.length > 0 && (
                 <Grid item xs={12}>
                   <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <SectionTitle>Détail Démographique</SectionTitle>
+                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                      <Typography variant="h6" fontWeight="700" mt={1}>Détail Démographique</Typography>
+                      {demographicsData?.total_patients > 0 && (
+                        <Chip label={`${demographicsData.total_patients} patients`} color="primary" size="small" />
+                      )}
+                    </Box>
                     <TableContainer>
                       <Table size="small">
                         <TableHead>
                           <TableRow>
                             <TableCell>Genre</TableCell>
-                            <TableCell align="right">Examens</TableCell>
-                            <TableCell align="right">CA</TableCell>
+                            <TableCell align="right">Patients</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -715,7 +750,6 @@ const Dashboard = () => {
                             <TableRow key={i}>
                               <TableCell>{row.gender === 'M' ? 'Homme' : row.gender === 'F' ? 'Femme' : 'Non spécifié'}</TableCell>
                               <TableCell align="right">{row.count}</TableCell>
-                              <TableCell align="right">{formatCurrency(row.revenue)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>

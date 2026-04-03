@@ -167,56 +167,62 @@ class ExamTypesByPeriodView(APIView):
 
 class DemographicAnalysisView(APIView):
     """
-    Get demographic analysis of exams (by gender, age groups)
-    Query params: start_date, end_date, group_by
+    Get demographic analysis of patients (consultations + labo + pharmacie) by gender and age groups.
+    Query params: start_date, end_date
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         organization = request.user.organization
-        queryset = LabOrder.objects.filter(organization=organization)
-
-        # Apply filters
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
 
-        if start_date:
-            queryset = queryset.filter(order_date__gte=start_date)
-        if end_date:
-            queryset = queryset.filter(order_date__lte=end_date)
+        from apps.pharmacy.models import PharmacyDispensing
 
-        # By gender (exclude unspecified) — revenue = factures labo PAYÉES uniquement
-        by_gender = queryset.filter(
-            patient__gender__isnull=False
-        ).exclude(
-            patient__gender=''
-        ).values('patient__gender').annotate(
-            count=Count('id'),
-            revenue=Sum(
-                Case(
-                    When(lab_invoice__status='paid', then='lab_invoice__total_amount'),
-                    default=Value(0),
-                    output_field=DecimalField()
-                )
-            )
+        # Collecter les IDs de tous les patients ayant eu une interaction dans la période
+        lab_qs = LabOrder.objects.filter(organization=organization)
+        consult_qs = Consultation.objects.filter(organization=organization, status='completed')
+        pharma_qs = PharmacyDispensing.objects.filter(
+            organization=organization, status='dispensed', patient__isnull=False
+        )
+
+        if start_date:
+            lab_qs = lab_qs.filter(order_date__date__gte=start_date)
+            consult_qs = consult_qs.filter(consultation_date__date__gte=start_date)
+            pharma_qs = pharma_qs.filter(dispensed_at__date__gte=start_date)
+        if end_date:
+            lab_qs = lab_qs.filter(order_date__date__lte=end_date)
+            consult_qs = consult_qs.filter(consultation_date__date__lte=end_date)
+            pharma_qs = pharma_qs.filter(dispensed_at__date__lte=end_date)
+
+        patient_ids = (
+            set(lab_qs.values_list('patient_id', flat=True)) |
+            set(consult_qs.values_list('patient_id', flat=True)) |
+            set(pharma_qs.values_list('patient_id', flat=True))
+        )
+
+        # Requêtes démographiques sur les patients uniques
+        from apps.accounts.models import Client
+        patients_qs = Client.objects.filter(id__in=patient_ids)
+
+        # Par genre
+        by_gender = patients_qs.filter(
+            gender__isnull=False
+        ).exclude(gender='').exclude(gender='Non spécifié').values('gender').annotate(
+            count=Count('id')
         ).order_by('-count')
 
-        gender_data = []
-        for g in by_gender:
-            # Skip "Non spécifié" explicitly if it exists in data
-            if g['patient__gender'] == 'Non spécifié':
-                continue
-                
-            gender_data.append({
-                'gender': g['patient__gender'],
-                'count': g['count'],
-                'revenue': float(g['revenue']) if g['revenue'] else 0
-            })
+        gender_data = [
+            {'gender': g['gender'], 'count': g['count']}
+            for g in by_gender
+        ]
 
-        # Calculate age groups with refined ranges
+        # Par tranche d'âge
         current_year = date.today().year
-        queryset_with_age = queryset.annotate(
-            age=current_year - ExtractYear('patient__date_of_birth'),
+        patients_with_age = patients_qs.filter(
+            date_of_birth__isnull=False
+        ).annotate(
+            age=current_year - ExtractYear('date_of_birth'),
             age_group=Case(
                 When(age__lt=12, then=Value('0-11 ans (Enfants)')),
                 When(age__lt=18, then=Value('12-17 ans (Adolescents)')),
@@ -228,55 +234,29 @@ class DemographicAnalysisView(APIView):
             )
         )
 
-        by_age_group = queryset_with_age.values('age_group').annotate(
-            count=Count('id'),
-            revenue=Sum(
-                Case(
-                    When(lab_invoice__status='paid', then='lab_invoice__total_amount'),
-                    default=Value(0),
-                    output_field=DecimalField()
-                )
-            )
+        by_age_group = patients_with_age.values('age_group').annotate(
+            count=Count('id')
         ).order_by('age_group')
 
-        age_group_data = []
-        for a in by_age_group:
-            age_group_data.append({
-                'age_group': a['age_group'],
-                'count': a['count'],
-                'revenue': float(a['revenue']) if a['revenue'] else 0
-            })
+        age_group_data = [
+            {'age_group': a['age_group'], 'count': a['count']}
+            for a in by_age_group
+        ]
 
-        # Combined: gender and age group (exclude unspecified gender)
-        by_gender_and_age = queryset_with_age.filter(
-            patient__gender__isnull=False
-        ).exclude(
-            patient__gender=''
-        ).values('patient__gender', 'age_group').annotate(
-            count=Count('id'),
-            revenue=Sum(
-                Case(
-                    When(lab_invoice__status='paid', then='lab_invoice__total_amount'),
-                    default=Value(0),
-                    output_field=DecimalField()
-                )
-            )
-        ).order_by('patient__gender', 'age_group')
+        # Genre × âge
+        by_gender_and_age = patients_with_age.filter(
+            gender__isnull=False
+        ).exclude(gender='').exclude(gender='Non spécifié').values(
+            'gender', 'age_group'
+        ).annotate(count=Count('id')).order_by('gender', 'age_group')
 
-        gender_age_data = []
-        for ga in by_gender_and_age:
-            # Skip "Non spécifié"
-            if ga['patient__gender'] == 'Non spécifié':
-                continue
-                
-            gender_age_data.append({
-                'gender': ga['patient__gender'],
-                'age_group': ga['age_group'],
-                'count': ga['count'],
-                'revenue': float(ga['revenue']) if ga['revenue'] else 0
-            })
+        gender_age_data = [
+            {'gender': ga['gender'], 'age_group': ga['age_group'], 'count': ga['count']}
+            for ga in by_gender_and_age
+        ]
 
         return Response({
+            'total_patients': len(patient_ids),
             'by_gender': gender_data,
             'by_age_group': age_group_data,
             'by_gender_and_age': gender_age_data
@@ -648,15 +628,52 @@ class ActivityIndicatorsView(APIView):
             for item in revenue_timeline_qs
         ]
 
-        # Patients uniques sur la période (avec consultation ou examen)
+        # Patients uniques sur la période (consultation + labo + pharmacie)
         consult_patient_ids = set(consultations_queryset.values_list('patient_id', flat=True))
         lab_patient_ids = set(LabOrder.objects.filter(
             organization=organization,
             order_date__date__gte=start_date,
             order_date__date__lte=end_date
         ).values_list('patient_id', flat=True))
-        total_patients = len(consult_patient_ids | lab_patient_ids)
+        try:
+            from apps.pharmacy.models import PharmacyDispensing as PD
+            pharma_patient_ids = set(PD.objects.filter(
+                organization=organization,
+                dispensed_at__date__gte=start_date,
+                dispensed_at__date__lte=end_date,
+                status='dispensed',
+                patient__isnull=False
+            ).values_list('patient_id', flat=True))
+        except Exception:
+            pharma_patient_ids = set()
+        total_patients = len(consult_patient_ids | lab_patient_ids | pharma_patient_ids)
         avg_cost_per_patient = round(total_revenue / total_patients, 2) if total_patients > 0 else 0
+
+        # Patients récurrents = patients avec >= 2 visites (PatientVisit) dans la période
+        recurring_patients = PatientVisit.objects.filter(
+            organization=organization,
+            arrived_at__date__gte=start_date,
+            arrived_at__date__lte=end_date
+        ).values('patient').annotate(
+            visit_count=Count('id')
+        ).filter(visit_count__gte=2).count()
+
+        # Timeline patients uniques par jour (via PatientVisit)
+        patients_timeline_qs = PatientVisit.objects.filter(
+            organization=organization,
+            arrived_at__date__gte=start_date,
+            arrived_at__date__lte=end_date
+        ).annotate(
+            period_date=TruncDate('arrived_at')
+        ).values('period_date').annotate(
+            count=Count('patient', distinct=True)
+        ).order_by('period_date')
+
+        patients_timeline = [
+            {'date': item['period_date'].strftime('%Y-%m-%d'), 'count': item['count']}
+            for item in patients_timeline_qs
+        ]
+
 
         return Response({
             'period': period,
@@ -707,6 +724,8 @@ class ActivityIndicatorsView(APIView):
 
             'patients': {
                 'total': total_patients,
+                'recurring': recurring_patients,
+                'timeline': patients_timeline,
             }
         })
 
@@ -806,35 +825,44 @@ class ServiceRevenueAnalyticsView(APIView):
 
     def _lab_revenue_by_category(self, organization, start_date, end_date, period):
         """
-        Pour healthcare_laboratory : les InvoiceItem n'ont pas de product FK.
-        On passe par LabOrderItem → LabTest → LabTestCategory.
+        Pour healthcare_laboratory : on passe par InvoiceItem des factures labo payées.
+        Cela garantit que la somme des catégories = total de la facture (kit prélèvement
+        et bilans forfaitaires inclus), contrairement à LabOrderItem qui ne couvre que
+        les tests individuels.
         """
-        from apps.laboratory.models import LabOrderItem
-        qs = LabOrderItem.objects.filter(
-            lab_order__organization=organization,
-            lab_order__lab_invoice__status='paid',
-        )
+        # InvoiceItem des factures labo payées
+        inv_qs = InvoiceItem.objects.filter(
+            invoice__created_by__organization=organization,
+            invoice__invoice_type='healthcare_laboratory',
+            invoice__status='paid',
+        ).exclude(invoice__invoice_type='credit_note')
         if start_date:
-            qs = qs.filter(lab_order__lab_invoice__created_at__date__gte=start_date)
+            inv_qs = inv_qs.filter(invoice__created_at__date__gte=start_date)
         if end_date:
-            qs = qs.filter(lab_order__lab_invoice__created_at__date__lte=end_date)
+            inv_qs = inv_qs.filter(invoice__created_at__date__lte=end_date)
 
-        # Par catégorie
-        by_cat = qs.values(
-            'lab_test__category__id', 'lab_test__category__name'
+        # Total = somme de tous les InvoiceItem (tests + kit prélèvement + bilans)
+        total_revenue = float(inv_qs.aggregate(t=Sum('total_price'))['t'] or 0)
+
+        # Par catégorie de produit
+        # - Items liés à un product → product__category__name
+        # - Items sans product (bilans forfaitaires description-only) → 'Bilans forfaitaires'
+        by_cat = inv_qs.values(
+            'product__category__id', 'product__category__name'
         ).annotate(
-            revenue=Sum('price'),
+            revenue=Sum('total_price'),
             count=Count('id'),
         ).order_by('-revenue')
-
-        total_revenue = float(qs.aggregate(t=Sum('price'))['t'] or 0)
 
         categories_data = []
         for c in by_cat:
             rev = float(c['revenue'] or 0)
+            cat_name = c['product__category__name']
+            if not cat_name:
+                cat_name = 'Bilans forfaitaires' if c['product__category__id'] is None else 'Non catégorisé'
             categories_data.append({
-                'category_id': str(c['lab_test__category__id']) if c['lab_test__category__id'] else None,
-                'category_name': c['lab_test__category__name'] or 'Non catégorisé',
+                'category_id': str(c['product__category__id']) if c['product__category__id'] else None,
+                'category_name': cat_name,
                 'revenue': rev,
                 'count': c['count'] or 0,
                 'transactions': c['count'] or 0,
@@ -842,22 +870,23 @@ class ServiceRevenueAnalyticsView(APIView):
                 'revenue_percent': round(rev / total_revenue * 100, 1) if total_revenue > 0 else 0,
             })
 
-        # Par test (service)
-        by_test = qs.values(
-            'lab_test__id', 'lab_test__name', 'lab_test__category__name'
+        # Par service (InvoiceItem.description ou product.name)
+        by_service = inv_qs.values(
+            'product__id', 'product__name', 'product__category__name', 'description'
         ).annotate(
-            revenue=Sum('price'),
+            revenue=Sum('total_price'),
             count=Count('id'),
         ).order_by('-revenue')[:50]
 
         services_data = []
-        for s in by_test:
+        for s in by_service:
             rev = float(s['revenue'] or 0)
+            name = s['product__name'] or s['description'] or 'N/A'
             services_data.append({
-                'service_id': str(s['lab_test__id']),
-                'service_name': s['lab_test__name'] or 'N/A',
+                'service_id': str(s['product__id']) if s['product__id'] else None,
+                'service_name': name,
                 'product_type': 'lab_test',
-                'category': s['lab_test__category__name'] or 'Non catégorisé',
+                'category': s['product__category__name'] or 'Non catégorisé',
                 'revenue': rev,
                 'count': s['count'] or 0,
                 'transactions': s['count'] or 0,
@@ -867,10 +896,10 @@ class ServiceRevenueAnalyticsView(APIView):
 
         # Timeline
         trunc_func = {'day': TruncDate, 'week': TruncWeek, 'month': TruncMonth}.get(period, TruncMonth)
-        timeline_qs = qs.annotate(
-            period_date=trunc_func('lab_order__lab_invoice__created_at')
+        timeline_qs = inv_qs.annotate(
+            period_date=trunc_func('invoice__created_at')
         ).values('period_date').annotate(
-            revenue=Sum('price'), count=Count('id')
+            revenue=Sum('total_price'), count=Count('id')
         ).order_by('period_date')
         timeline_data = [
             {
@@ -1072,7 +1101,10 @@ class LabOrdersStatusWidgetView(APIView):
             orders = orders.filter(order_date__date__lte=end_date_val)
 
         total_orders = orders.count()
-        revenue = orders.aggregate(total=Sum('total_price'))['total'] or 0
+        # CA = uniquement les factures labo PAYÉES (cohérence avec onglet Revenus)
+        revenue = orders.filter(
+            lab_invoice__status='paid'
+        ).aggregate(total=Sum('lab_invoice__total_amount'))['total'] or 0
 
         # Critical: items flagged is_critical
         # Build base item filter matching the same date range
