@@ -1080,6 +1080,7 @@ class ServiceRevenueAnalyticsView(APIView):
         service_id = request.GET.get('service_id')
         category_id = request.GET.get('category_id')
         invoice_type_filter = request.GET.get('invoice_type')  # ex: 'healthcare_laboratory'
+        include_standard = request.GET.get('include_standard') == 'true'
 
         # === Cas spécial : labo — InvoiceItem.product est null, on passe par LabOrderItem ===
         if invoice_type_filter == 'healthcare_laboratory':
@@ -1111,21 +1112,55 @@ class ServiceRevenueAnalyticsView(APIView):
         if category_id:
             queryset = queryset.filter(product__category_id=category_id)
 
+        # Mapping catégories → type d'activité (pour décomposer les factures standard)
+        PHARMACY_CATS = ['medicaments', 'consommables laboratoire', 'materiel medical']
+        SERVICES_CATS = ['soins infirmiers', 'actes medicaux', 'surveillance', 'autres services']
+
         if invoice_type_filter == 'healthcare_consultation':
-            # Consultation : items dont le produit ou la description contient "consultation"
-            # dans TOUTES les factures (certaines consultations sont facturées en "standard")
+            # Consultation : items contenant "consultation" dans toutes les factures
             queryset = queryset.filter(
                 Q(product__name__icontains='consultation') |
                 Q(product__category__name__icontains='consultation') |
                 Q(description__icontains='consultation')
             )
+        elif invoice_type_filter == 'healthcare_pharmacy':
+            # Pharmacie : factures healthcare_pharmacy + items médicaments/matériel dans standard
+            cat_q = Q()
+            for cat in PHARMACY_CATS:
+                cat_q |= Q(product__category__name__icontains=cat)
+            if include_standard:
+                queryset = queryset.filter(
+                    Q(invoice__invoice_type='healthcare_pharmacy') |
+                    (Q(invoice__invoice_type='standard') & cat_q)
+                )
+            else:
+                queryset = queryset.filter(invoice__invoice_type='healthcare_pharmacy')
+        elif invoice_type_filter == 'healthcare_services':
+            # Soins : factures healthcare_services + items soins/actes dans standard
+            cat_q = Q()
+            for cat in SERVICES_CATS:
+                cat_q |= Q(product__category__name__icontains=cat)
+            if include_standard:
+                queryset = queryset.filter(
+                    Q(invoice__invoice_type='healthcare_services') |
+                    (Q(invoice__invoice_type='standard') & cat_q)
+                ).exclude(
+                    Q(product__name__icontains='consultation') |
+                    Q(product__category__name__icontains='consultation')
+                )
+            else:
+                queryset = queryset.filter(invoice__invoice_type='healthcare_services')
         elif invoice_type_filter == 'standard':
-            # Propharmacie : factures standard, exclure les items consultation et les items sans produit
+            # Propharmacie : items sans catégorie connue dans standard
+            all_known_cats = PHARMACY_CATS + SERVICES_CATS + ['consultations']
+            cat_q = Q()
+            for cat in all_known_cats:
+                cat_q |= Q(product__category__name__icontains=cat)
             queryset = queryset.filter(
                 invoice__invoice_type='standard'
-            ).filter(product__isnull=False).exclude(
+            ).filter(product__isnull=False).exclude(cat_q).exclude(
                 Q(product__name__icontains='consultation') |
-                Q(product__category__name__icontains='consultation')
+                Q(description__icontains='consultation')
             )
         elif invoice_type_filter:
             queryset = queryset.filter(invoice__invoice_type=invoice_type_filter)
