@@ -908,7 +908,8 @@ class EnhancedRevenueAnalyticsView(APIView):
                 # Catégorie inconnue → propharmacie comptoir
                 _add_activity('standard', item.total_price)
 
-        # Sous-traitance labo : depuis LabOrder (pas les factures)
+        # Sous-traitance labo : informationnel uniquement (INCLUSE dans CA Labo healthcare_laboratory)
+        # On ne l'ajoute PAS à activity_acc pour éviter le double comptage
         sub_qs = LabOrder.objects.filter(
             organization=organization,
             subcontractor__isnull=False,
@@ -919,8 +920,6 @@ class EnhancedRevenueAnalyticsView(APIView):
             sub_qs = sub_qs.filter(order_date__date__lte=end_date)
         subcontract_rev = float(sub_qs.aggregate(t=Sum('total_price'))['t'] or 0)
         subcontract_cnt = sub_qs.count()
-        if subcontract_rev > 0:
-            _add_activity('subcontracting', subcontract_rev, subcontract_cnt)
 
         by_activity = sorted(
             [{'invoice_type': act, 'revenue': round(v['revenue'], 2), 'count': v['count'],
@@ -972,6 +971,12 @@ class EnhancedRevenueAnalyticsView(APIView):
                 'count': item['count'],
                 'avg_amount': float(item['avg_amount'] or 0)
             } for item in by_activity],
+            # Sous-traitance : sous-ensemble du CA Laboratoire (déjà inclus, pas additif)
+            'subcontracting_info': {
+                'revenue': subcontract_rev,
+                'count': subcontract_cnt,
+                'label': 'Sous-traitance Labo (incluse dans CA Laboratoire)',
+            },
             'timeline': [{
                 'date': item['period_date'].strftime('%Y-%m-%d') if hasattr(item['period_date'], 'strftime') else str(item['period_date']),
                 'revenue': float(item['revenue'] or 0),

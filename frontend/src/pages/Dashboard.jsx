@@ -174,6 +174,9 @@ const Dashboard = () => {
   const pharmacyCategories = (pharmacyServiceData?.by_category || []).slice(0, 10);
   const pharmacyTotalRevenue = pharmacyServiceData?.total_revenue || 0;
 
+  // Sous-traitance : sous-ensemble du CA Labo (incluse, NON additive)
+  const subcontractingInfo = revenueData?.subcontracting_info || { revenue: 0, count: 0 };
+
   // KPIs par type d'activité
   // Pharmacie = healthcare_pharmacy + standard (propharmacie comptoir) fusionnés
   const pharmacyRevenue = (byActivity.find(a => a.activity_type === 'healthcare_pharmacy')?.revenue || 0)
@@ -423,9 +426,9 @@ const Dashboard = () => {
               </Grid>
               <Grid item xs={6} md={3}>
                 <StatCard title="Sous-traitance Labo"
-                  value={loading ? '...' : formatCurrency(byActivity.find(a => a.activity_type === 'subcontracting')?.revenue || 0)}
+                  value={loading ? '...' : formatCurrency(subcontractingInfo.revenue)}
                   icon={<ShippingIcon />} color="#6366f1" loading={loading}
-                  subtitle={`${byActivity.find(a => a.activity_type === 'subcontracting')?.count ?? 0} examens · inclus dans CA Labo`} />
+                  subtitle={`${subcontractingInfo.count ?? 0} examens · inclus dans CA Labo`} />
               </Grid>
             </Grid>
 
@@ -493,7 +496,7 @@ const Dashboard = () => {
                       </Box>
                       {labCategories.length > 0 ? (() => {
                         const totalLab = labCategories.reduce((s, x) => s + parseFloat(x.revenue || 0), 0);
-                        const subcontractRev = byActivity.find(a => a.activity_type === 'subcontracting')?.revenue || 0;
+                        const subcontractRev = subcontractingInfo.revenue || 0;
                         return (
                           <TableContainer>
                             <Table size="small">
@@ -526,7 +529,7 @@ const Dashboard = () => {
                                   <TableRow sx={{ bgcolor: 'action.hover' }}>
                                     <TableCell sx={{ color: 'text.secondary', fontStyle: 'italic' }}>dont Sous-traitance</TableCell>
                                     <TableCell align="right" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>{formatCurrency(subcontractRev)}</TableCell>
-                                    <TableCell align="right" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>{byActivity.find(a => a.activity_type === 'subcontracting')?.count || 0}</TableCell>
+                                    <TableCell align="right" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>{subcontractingInfo.count || 0}</TableCell>
                                     <TableCell align="right" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
                                       {totalLab > 0 ? ((subcontractRev / totalLab) * 100).toFixed(1) : '0'}%
                                     </TableCell>

@@ -328,6 +328,15 @@ const RevenueAnalyticsDashboard = () => {
                         </Grid>
                     </Grid>
 
+                    {/* Sous-traitance info banner (sous-ensemble du CA Labo) */}
+                    {data.subcontracting_info?.revenue > 0 && (
+                        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" color="info.main" fontWeight={600}>
+                                Sous-traitance Labo : {formatCurrency(data.subcontracting_info.revenue)} ({data.subcontracting_info.count} examens) — déjà incluse dans CA Laboratoire
+                            </Typography>
+                        </Box>
+                    )}
+
                     {/* Activity Breakdown */}
                     <Grid container spacing={3} sx={{ mb: 3 }}>
                         {data.by_activity.map((activity, index) => (
