@@ -487,21 +487,32 @@ class ActivityIndicatorsView(APIView):
 
         # ===== INDICATEURS D'ACTIVITÉ ET DE VOLUME =====
 
-        # N°1: Consultations PAYÉES — uniquement les factures healthcare_consultation payées
-        from apps.invoicing.models import Invoice as InvoiceModel
+        # N°1: Consultations PAYÉES
+        # = nombre d'items "Consultation Médecin" dans toutes les factures payées
+        # (cherche dans product__name, product__category__name, et description pour les items sans produit lié)
+        from apps.invoicing.models import Invoice as InvoiceModel, InvoiceItem as InvoiceItemModel
+        from django.db.models import Q as DQ
 
-        paid_consult_invoices = InvoiceModel.objects.filter(
+        paid_base = InvoiceModel.objects.filter(
             created_by__organization=organization,
-            invoice_type='healthcare_consultation',
             status='paid',
             created_at__date__gte=start_date,
             created_at__date__lte=end_date,
         )
-        num_consultations = paid_consult_invoices.count()
 
-        # Timeline : date de la facture consultation
-        consultations_timeline = paid_consult_invoices.annotate(
-            period_date=TruncDate('created_at')
+        consult_items_qs = InvoiceItemModel.objects.filter(
+            invoice__in=paid_base
+        ).filter(
+            DQ(product__name__icontains='consultation') |
+            DQ(product__category__name__icontains='consultation') |
+            DQ(description__icontains='consultation')
+        )
+
+        num_consultations = consult_items_qs.count()
+
+        # Timeline : date de la facture
+        consultations_timeline = consult_items_qs.annotate(
+            period_date=TruncDate('invoice__created_at')
         ).values('period_date').annotate(
             count=Count('id')
         ).order_by('period_date')
@@ -602,10 +613,14 @@ class ActivityIndicatorsView(APIView):
         total_revenue_agg = paid_invoices.aggregate(total=Sum('total_amount'))
         total_revenue = float(total_revenue_agg['total'] or 0)
 
-        # CA par type de facture — source unique, pas de décomposition d'items
-        consultation_revenue = float(paid_invoices.filter(
-            invoice_type='healthcare_consultation'
-        ).aggregate(total=Sum('total_amount'))['total'] or 0)
+        # CA consultation = items "Consultation Médecin" dans toutes les factures payées
+        consultation_revenue = float(InvoiceItem.objects.filter(
+            invoice__in=paid_invoices
+        ).filter(
+            Q(product__name__icontains='consultation') |
+            Q(product__category__name__icontains='consultation') |
+            Q(description__icontains='consultation')
+        ).aggregate(total=Sum('total_price'))['total'] or 0)
 
         lab_revenue = float(paid_invoices.filter(
             invoice_type='healthcare_laboratory'
@@ -791,11 +806,34 @@ class EnhancedRevenueAnalyticsView(APIView):
         )
 
         # Répartition CA par type de facture — source unique, pas de décomposition d'items
-        by_activity = list(invoices.values('invoice_type').annotate(
-            revenue=Sum('total_amount'),
-            count=Count('id'),
-            avg_amount=Avg('total_amount')
-        ).order_by('-revenue'))
+        # CA par activité — basé sur les items pour les consultations, sur les factures pour le reste
+        consult_rev = float(InvoiceItem.objects.filter(invoice__in=invoices).filter(
+            Q(product__name__icontains='consultation') |
+            Q(product__category__name__icontains='consultation') |
+            Q(description__icontains='consultation')
+        ).aggregate(t=Sum('total_price'))['t'] or 0)
+        consult_count = InvoiceItem.objects.filter(invoice__in=invoices).filter(
+            Q(product__name__icontains='consultation') |
+            Q(product__category__name__icontains='consultation') |
+            Q(description__icontains='consultation')
+        ).count()
+
+        activity_acc = {}
+        for inv_type_data in invoices.values('invoice_type').annotate(
+            revenue=Sum('total_amount'), count=Count('id')
+        ):
+            act = inv_type_data['invoice_type']
+            activity_acc[act] = {'revenue': float(inv_type_data['revenue'] or 0), 'count': inv_type_data['count']}
+
+        # Injecter le CA consultation calculé depuis les items
+        activity_acc['healthcare_consultation'] = {'revenue': consult_rev, 'count': consult_count}
+
+        by_activity = sorted(
+            [{'invoice_type': act, 'revenue': v['revenue'], 'count': v['count'],
+              'avg_amount': v['revenue'] / v['count'] if v['count'] else 0}
+             for act, v in activity_acc.items() if v['revenue'] > 0],
+            key=lambda x: x['revenue'], reverse=True
+        )
 
         # Time-based aggregation
         trunc_func = {
