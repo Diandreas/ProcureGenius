@@ -56,6 +56,7 @@ const ACTIVITY_LABELS = {
   healthcare_pharmacy: 'Pharmacie — Ordonnance',
   healthcare_services: 'Soins / Chirurgie / Hosp.',
   standard: 'Propharmacie — Vente comptoir',
+  subcontracting: 'Sous-traitance Labo',
 };
 const getActivityLabel = (type) => ACTIVITY_LABELS[type] || `Autres (${type || 'non défini'})`;
 
@@ -407,6 +408,12 @@ const Dashboard = () => {
                 <StatCard title="CA Propharmacie comptoir"
                   value={loading ? '...' : formatCurrency(productRevenue)}
                   icon={<InventoryIcon />} color="#f59e0b" loading={loading} />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <StatCard title="Sous-traitance Labo"
+                  value={loading ? '...' : formatCurrency(byActivity.find(a => a.activity_type === 'subcontracting')?.revenue || 0)}
+                  icon={<ShippingIcon />} color="#6366f1" loading={loading}
+                  subtitle={`${byActivity.find(a => a.activity_type === 'subcontracting')?.count ?? 0} examens`} />
               </Grid>
             </Grid>
 

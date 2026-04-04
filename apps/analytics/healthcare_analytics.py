@@ -844,32 +844,90 @@ class EnhancedRevenueAnalyticsView(APIView):
             avg_invoice_amount=Avg('total_amount')
         )
 
-        # Répartition CA par type de facture — source unique, pas de décomposition d'items
-        # CA par activité — basé sur les items pour les consultations, sur les factures pour le reste
-        consult_rev = float(InvoiceItem.objects.filter(invoice__in=invoices).filter(
-            Q(product__name__icontains='consultation') |
-            Q(product__category__name__icontains='consultation') |
-            Q(description__icontains='consultation')
-        ).aggregate(t=Sum('total_price'))['t'] or 0)
-        consult_count = InvoiceItem.objects.filter(invoice__in=invoices).filter(
-            Q(product__name__icontains='consultation') |
-            Q(product__category__name__icontains='consultation') |
-            Q(description__icontains='consultation')
-        ).count()
+        # Répartition CA par activité réelle — via les items pour toutes les factures
+        # Les factures standard regroupent médicaments, soins, consultations → on décompose par catégorie d'item
+        # Mapping catégorie → activité normalisée
+        CAT_TO_ACTIVITY = {
+            'consultations':             'healthcare_consultation',
+            'soins infirmiers':          'healthcare_services',
+            'actes medicaux':            'healthcare_services',
+            'surveillance':              'healthcare_services',
+            'autres services':           'healthcare_services',
+            'medicaments':               'healthcare_pharmacy',
+            'consommables laboratoire':  'healthcare_laboratory',
+            'materiel medical':          'standard',
+        }
+        # Consultation détectée aussi via nom produit/description (items sans catégorie)
+        CONSULT_KEYWORDS = ['consultation']
 
         activity_acc = {}
-        for inv_type_data in invoices.values('invoice_type').annotate(
-            revenue=Sum('total_amount'), count=Count('id')
-        ):
-            act = inv_type_data['invoice_type']
-            activity_acc[act] = {'revenue': float(inv_type_data['revenue'] or 0), 'count': inv_type_data['count']}
 
-        # Injecter le CA consultation calculé depuis les items
-        activity_acc['healthcare_consultation'] = {'revenue': consult_rev, 'count': consult_count}
+        def _add_activity(act, rev, cnt=1):
+            if act not in activity_acc:
+                activity_acc[act] = {'revenue': 0.0, 'count': 0}
+            activity_acc[act]['revenue'] += float(rev or 0)
+            activity_acc[act]['count'] += int(cnt or 0)
+
+        # Factures healthcare_* directes (labo, pharmacie, services) → montant total de la facture
+        for inv_type in ['healthcare_laboratory', 'healthcare_pharmacy', 'healthcare_services']:
+            agg = invoices.filter(invoice_type=inv_type).aggregate(
+                rev=Sum('total_amount'), cnt=Count('id')
+            )
+            if agg['rev']:
+                _add_activity(inv_type, agg['rev'], agg['cnt'])
+
+        # Tous les items des factures healthcare_consultation + standard → décomposer par catégorie
+        all_items = InvoiceItem.objects.filter(
+            invoice__in=invoices.filter(
+                invoice_type__in=['healthcare_consultation', 'standard']
+            )
+        ).select_related('product__category')
+
+        for item in all_items:
+            cat_name = (
+                item.product.category.name if item.product and item.product.category else None
+            ) or ''
+            cat_lower = cat_name.strip().lower()
+            prod_name = (
+                (item.product.name if item.product else None) or item.description or ''
+            ).lower()
+
+            # Détecter consultation via catégorie OU nom produit/description
+            if any(k in cat_lower for k in CONSULT_KEYWORDS) or any(k in prod_name for k in CONSULT_KEYWORDS):
+                _add_activity('healthcare_consultation', item.total_price)
+                continue
+
+            # Mapper via catégorie
+            matched = None
+            for key, act in CAT_TO_ACTIVITY.items():
+                if key in cat_lower:
+                    matched = act
+                    break
+            if matched:
+                _add_activity(matched, item.total_price)
+            else:
+                # Catégorie inconnue → propharmacie comptoir
+                _add_activity('standard', item.total_price)
+
+        # Sous-traitance labo : depuis LabOrder (pas les factures)
+        subcontract_rev = float(LabOrder.objects.filter(
+            organization=organization,
+            subcontractor__isnull=False,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date,
+        ).aggregate(t=Sum('total_price'))['t'] or 0)
+        subcontract_cnt = LabOrder.objects.filter(
+            organization=organization,
+            subcontractor__isnull=False,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date,
+        ).count()
+        if subcontract_rev > 0:
+            _add_activity('subcontracting', subcontract_rev, subcontract_cnt)
 
         by_activity = sorted(
-            [{'invoice_type': act, 'revenue': v['revenue'], 'count': v['count'],
-              'avg_amount': v['revenue'] / v['count'] if v['count'] else 0}
+            [{'invoice_type': act, 'revenue': round(v['revenue'], 2), 'count': v['count'],
+              'avg_amount': round(v['revenue'] / v['count'], 2) if v['count'] else 0}
              for act, v in activity_acc.items() if v['revenue'] > 0],
             key=lambda x: x['revenue'], reverse=True
         )
