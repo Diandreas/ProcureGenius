@@ -823,11 +823,44 @@ class EnhancedRevenueAnalyticsView(APIView):
         )
 
         # Revenue PER activity (by invoice_type)
-        by_activity = invoices.values('invoice_type').annotate(
+        by_activity_raw = list(invoices.values('invoice_type').annotate(
             revenue=Sum('total_amount'),
             count=Count('id'),
             avg_amount=Avg('total_amount')
-        ).order_by('-revenue')
+        ).order_by('-revenue'))
+
+        # Ajuster le CA consultation : ajouter les items "consultation" dans les factures non-healthcare_consultation
+        consult_items_extra = InvoiceItem.objects.filter(
+            invoice__in=invoices.exclude(invoice_type='healthcare_consultation')
+        ).filter(
+            Q(product__name__icontains='consultation') |
+            Q(product__category__name__icontains='consultation') |
+            Q(description__icontains='consultation')
+        ).aggregate(
+            extra_revenue=Sum('total_price'),
+            extra_count=Count('id')
+        )
+        extra_rev = float(consult_items_extra['extra_revenue'] or 0)
+        extra_count = consult_items_extra['extra_count'] or 0
+
+        # Injecter dans la ligne healthcare_consultation
+        by_activity = []
+        consult_found = False
+        for item in by_activity_raw:
+            if item['invoice_type'] == 'healthcare_consultation':
+                consult_found = True
+                item['revenue'] = float(item['revenue'] or 0) + extra_rev
+                item['count'] = item['count'] + extra_count
+                item['avg_amount'] = item['revenue'] / item['count'] if item['count'] else 0
+            by_activity.append(item)
+        if not consult_found and (extra_rev > 0 or extra_count > 0):
+            by_activity.append({
+                'invoice_type': 'healthcare_consultation',
+                'revenue': extra_rev,
+                'count': extra_count,
+                'avg_amount': extra_rev / extra_count if extra_count else 0,
+            })
+        by_activity.sort(key=lambda x: x['revenue'], reverse=True)
 
         # Time-based aggregation
         trunc_func = {
