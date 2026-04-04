@@ -487,34 +487,21 @@ class ActivityIndicatorsView(APIView):
 
         # ===== INDICATEURS D'ACTIVITÉ ET DE VOLUME =====
 
-        # N°1: Consultations PAYÉES sur la période
-        # Source : items de consultation dans les factures payées (toutes types confondus)
-        # — couvre les factures healthcare_consultation ET les factures standard qui incluent l'acte de consultation
-        from apps.invoicing.models import InvoiceItem as InvoiceItemModel, Invoice as InvoiceModel
-        from django.db.models import Q as DQ
+        # N°1: Consultations PAYÉES — uniquement les factures healthcare_consultation payées
+        from apps.invoicing.models import Invoice as InvoiceModel
 
-        paid_invoices_base = InvoiceModel.objects.filter(
+        paid_consult_invoices = InvoiceModel.objects.filter(
             created_by__organization=organization,
+            invoice_type='healthcare_consultation',
             status='paid',
             created_at__date__gte=start_date,
             created_at__date__lte=end_date,
-        ).exclude(invoice_type='credit_note')
-
-        # Items de consultation : produit ou catégorie contient "consultation" (insensible à la casse)
-        # On exclut les items purement fournitures/médicaments dans les factures healthcare_consultation
-        consult_items_qs = InvoiceItemModel.objects.filter(
-            invoice__in=paid_invoices_base
-        ).filter(
-            DQ(product__name__icontains='consultation') |
-            DQ(product__category__name__icontains='consultation') |
-            DQ(description__icontains='consultation')
         )
+        num_consultations = paid_consult_invoices.count()
 
-        num_consultations = consult_items_qs.count()
-
-        # Timeline : date de la facture
-        consultations_timeline = consult_items_qs.annotate(
-            period_date=TruncDate('invoice__created_at')
+        # Timeline : date de la facture consultation
+        consultations_timeline = paid_consult_invoices.annotate(
+            period_date=TruncDate('created_at')
         ).values('period_date').annotate(
             count=Count('id')
         ).order_by('period_date')
@@ -615,42 +602,22 @@ class ActivityIndicatorsView(APIView):
         total_revenue_agg = paid_invoices.aggregate(total=Sum('total_amount'))
         total_revenue = float(total_revenue_agg['total'] or 0)
 
-        from apps.invoicing.models import InvoiceItem
-        from django.db.models import Q
-
-        # CA consultation (factures healthcare_consultation payées)
-        consultation_invoices_revenue = float(paid_invoices.filter(
+        # CA par type de facture — source unique, pas de décomposition d'items
+        consultation_revenue = float(paid_invoices.filter(
             invoice_type='healthcare_consultation'
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        # Chercher les items de consultation dans les factures non-consultation (standard, etc.)
-        consultation_items_revenue = float(InvoiceItem.objects.filter(
-            invoice__in=paid_invoices.exclude(invoice_type='healthcare_consultation')
-        ).filter(
-            Q(product__category__name__icontains='consultation') |
-            Q(product__name__icontains='consultation') |
-            Q(description__icontains='consultation')
-        ).aggregate(total=Sum('total_price'))['total'] or 0)
-
-        consultation_revenue = consultation_invoices_revenue + consultation_items_revenue
-
-        # CA laboratoire (factures healthcare_laboratory payées)
         lab_revenue = float(paid_invoices.filter(
             invoice_type='healthcare_laboratory'
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        # CA pharmacie (factures healthcare_pharmacy payées)
         pharmacy_revenue = float(paid_invoices.filter(
             invoice_type='healthcare_pharmacy'
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        # CA autres (standard) — soins, chirurgie, hospitalisation
-        other_revenue_raw = float(paid_invoices.filter(
-            invoice_type='standard'
+        other_revenue = float(paid_invoices.filter(
+            invoice_type__in=['standard', 'healthcare_services']
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
-        
-        # Soustraire la part des consultations facturées en standard pour éviter de compter en double
-        other_revenue = max(0, other_revenue_raw - consultation_items_revenue)
 
         # Moyennes par acte
         avg_consultation_cost = consultation_revenue / num_consultations if num_consultations > 0 else 0
@@ -823,45 +790,12 @@ class EnhancedRevenueAnalyticsView(APIView):
             avg_invoice_amount=Avg('total_amount')
         )
 
-        # Revenue PER activity (by invoice_type)
-        by_activity_raw = list(invoices.values('invoice_type').annotate(
+        # Répartition CA par type de facture — source unique, pas de décomposition d'items
+        by_activity = list(invoices.values('invoice_type').annotate(
             revenue=Sum('total_amount'),
             count=Count('id'),
             avg_amount=Avg('total_amount')
         ).order_by('-revenue'))
-
-        # Ajuster le CA consultation : ajouter les items "consultation" dans les factures non-healthcare_consultation
-        consult_items_extra = InvoiceItem.objects.filter(
-            invoice__in=invoices.exclude(invoice_type='healthcare_consultation')
-        ).filter(
-            Q(product__name__icontains='consultation') |
-            Q(product__category__name__icontains='consultation') |
-            Q(description__icontains='consultation')
-        ).aggregate(
-            extra_revenue=Sum('total_price'),
-            extra_count=Count('id')
-        )
-        extra_rev = float(consult_items_extra['extra_revenue'] or 0)
-        extra_count = consult_items_extra['extra_count'] or 0
-
-        # Injecter dans la ligne healthcare_consultation
-        by_activity = []
-        consult_found = False
-        for item in by_activity_raw:
-            if item['invoice_type'] == 'healthcare_consultation':
-                consult_found = True
-                item['revenue'] = float(item['revenue'] or 0) + extra_rev
-                item['count'] = item['count'] + extra_count
-                item['avg_amount'] = item['revenue'] / item['count'] if item['count'] else 0
-            by_activity.append(item)
-        if not consult_found and (extra_rev > 0 or extra_count > 0):
-            by_activity.append({
-                'invoice_type': 'healthcare_consultation',
-                'revenue': extra_rev,
-                'count': extra_count,
-                'avg_amount': extra_rev / extra_count if extra_count else 0,
-            })
-        by_activity.sort(key=lambda x: x['revenue'], reverse=True)
 
         # Time-based aggregation
         trunc_func = {
