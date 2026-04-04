@@ -622,9 +622,43 @@ class ActivityIndicatorsView(APIView):
             Q(description__icontains='consultation')
         ).aggregate(total=Sum('total_price'))['total'] or 0)
 
-        lab_revenue = float(paid_invoices.filter(
-            invoice_type='healthcare_laboratory'
-        ).aggregate(total=Sum('total_amount'))['total'] or 0)
+        # CA labo = toutes les factures healthcare_laboratory payées
+        lab_invoices_paid = paid_invoices.filter(invoice_type='healthcare_laboratory')
+        lab_revenue = float(lab_invoices_paid.aggregate(total=Sum('total_amount'))['total'] or 0)
+
+        # Décomposition labo : examens vs kits de prélèvement
+        lab_items_all = InvoiceItem.objects.filter(invoice__in=lab_invoices_paid)
+        kit_revenue = float(lab_items_all.filter(
+            Q(product__name__icontains='kit') |
+            Q(product__category__name__icontains='kit') |
+            Q(description__icontains='kit') |
+            Q(product__name__icontains='prélèvement') |
+            Q(product__category__name__icontains='prélèvement') |
+            Q(description__icontains='prélèvement')
+        ).aggregate(total=Sum('total_price'))['total'] or 0)
+        exams_revenue = lab_revenue - kit_revenue
+
+        # CA sous-traitance = LabOrders sous-traités sur la période (depuis LabOrder.total_price)
+        subcontract_orders = LabOrder.objects.filter(
+            organization=organization,
+            subcontractor__isnull=False,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date,
+        )
+        subcontract_revenue = float(subcontract_orders.aggregate(
+            total=Sum('total_price'))['total'] or 0)
+        subcontract_count = subcontract_orders.count()
+
+        # Stats par sous-traitant
+        per_subcontractor = []
+        for sub_data in subcontract_orders.values('subcontractor__name').annotate(
+            rev=Sum('total_price'), cnt=Count('id')
+        ).order_by('-rev'):
+            per_subcontractor.append({
+                'name': sub_data['subcontractor__name'],
+                'revenue': float(sub_data['rev'] or 0),
+                'count': sub_data['cnt'],
+            })
 
         pharmacy_revenue = float(paid_invoices.filter(
             invoice_type='healthcare_pharmacy'
@@ -753,6 +787,11 @@ class ActivityIndicatorsView(APIView):
                 'total_revenue': round(total_revenue, 2),
                 'consultation_revenue': round(consultation_revenue, 2),
                 'lab_revenue': round(lab_revenue, 2),
+                'lab_exams_revenue': round(exams_revenue, 2),
+                'lab_kit_revenue': round(kit_revenue, 2),
+                'subcontract_revenue': round(subcontract_revenue, 2),
+                'subcontract_count': subcontract_count,
+                'subcontract_by_lab': per_subcontractor,
                 'pharmacy_revenue': round(pharmacy_revenue, 2),
                 'other_revenue': round(other_revenue, 2),
                 'avg_consultation_cost': round(avg_consultation_cost, 2),

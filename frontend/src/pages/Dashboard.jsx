@@ -264,7 +264,52 @@ const Dashboard = () => {
                   icon={<AssessmentIcon />} color="#6366f1" loading={loading}
                   subtitle="Pharmacie ordonnance + Soins divers" />
               </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="CA Examens Labo"
+                  value={loading ? '...' : formatCurrency(financial.lab_exams_revenue)}
+                  icon={<ScienceIcon />} color="#ef4444" loading={loading}
+                  subtitle="Hors kits de prélèvement" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Kits de Prélèvement"
+                  value={loading ? '...' : formatCurrency(financial.lab_kit_revenue)}
+                  icon={<ScienceIcon />} color="#f59e0b" loading={loading}
+                  subtitle="Inclus dans CA Labo" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Sous-traitance Labo"
+                  value={loading ? '...' : formatCurrency(financial.subcontract_revenue)}
+                  icon={<ShippingIcon />} color="#8b5cf6" loading={loading}
+                  subtitle={`${financial.subcontract_count ?? 0} examens envoyés`} />
+              </Grid>
             </Grid>
+
+            {/* Tableau sous-traitance par laboratoire */}
+            {(financial.subcontract_by_lab?.length > 0) && (
+              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
+                <SectionTitle>Sous-traitance par Laboratoire</SectionTitle>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Laboratoire</TableCell>
+                        <TableCell align="right">Examens</TableCell>
+                        <TableCell align="right">CA</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {financial.subcontract_by_lab.map((sub, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{sub.name}</TableCell>
+                          <TableCell align="right">{sub.count}</TableCell>
+                          <TableCell align="right">{formatCurrency(sub.revenue)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            )}
 
             {/* Timeline CA */}
             {revenueTimeline.length > 0 && (
