@@ -991,7 +991,7 @@ class ServiceRevenueAnalyticsView(APIView):
         """
         # InvoiceItem des factures labo payées
         inv_qs = InvoiceItem.objects.filter(
-            invoice__created_by__organization=organization,
+            invoice__organization=organization,
             invoice__invoice_type='healthcare_laboratory',
             invoice__status='paid',
         ).exclude(invoice__invoice_type='credit_note')
@@ -1098,7 +1098,7 @@ class ServiceRevenueAnalyticsView(APIView):
 
         # Base queryset: invoice items from paid invoices (hors avoirs)
         queryset = InvoiceItem.objects.filter(
-            invoice__created_by__organization=organization,
+            invoice__organization=organization,
             invoice__status='paid'
         ).exclude(invoice__invoice_type='credit_note')
 
