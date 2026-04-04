@@ -493,31 +493,22 @@ class ActivityIndicatorsView(APIView):
             count=Count('id')
         ).order_by('period_date')
 
-        # N°2: Nouveaux patients = patients dont la TOUTE PREMIÈRE visite (all-time) tombe dans la période
-        # On cherche les patients dont la date de 1ère visite est dans [start_date, end_date]
-        from django.db.models import Subquery, OuterRef
-        first_visit_dates = PatientVisit.objects.filter(
-            organization=organization,
-            patient=OuterRef('patient')
-        ).order_by('arrived_at').values('arrived_at')[:1]
+        from apps.accounts.models import Client
 
-        new_patients_qs = PatientVisit.objects.filter(
+        # N°2: Nouveaux patients = patients créés dans le système sur la période
+        new_patients_qs = Client.objects.filter(
             organization=organization,
-            arrived_at__date__gte=start_date,
-            arrived_at__date__lte=end_date,
-        ).annotate(
-            first_ever=Subquery(first_visit_dates)
-        ).filter(
-            arrived_at=F('first_ever')
-        ).values('patient').distinct()
-
+            client_type='patient',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
+        )
         new_patients_count = new_patients_qs.count()
 
         # Timeline des nouveaux patients
         new_patients_timeline = new_patients_qs.annotate(
-            period_date=TruncDate('arrived_at')
+            period_date=TruncDate('created_at')
         ).values('period_date').annotate(
-            count=Count('patient', distinct=True)
+            count=Count('id')
         ).order_by('period_date')
 
         # N°3: Actes de laboratoire sur la période
@@ -643,7 +634,7 @@ class ActivityIndicatorsView(APIView):
             for item in revenue_timeline_qs
         ]
 
-        # Patients uniques sur la période (consultation + labo + pharmacie)
+        # Patients uniques sur la période (union consultation + labo + pharmacie + factures payées)
         consult_patient_ids = set(consultations_queryset.values_list('patient_id', flat=True))
         lab_patient_ids = set(LabOrder.objects.filter(
             organization=organization,
@@ -661,27 +652,27 @@ class ActivityIndicatorsView(APIView):
             ).values_list('patient_id', flat=True))
         except Exception:
             pharma_patient_ids = set()
-        total_patients = len(consult_patient_ids | lab_patient_ids | pharma_patient_ids)
+            
+        # Ajouter les patients des factures payées (couvre les soins, chirurgies, hospis facturées en standard)
+        invoice_patient_ids = set(paid_invoices.filter(client__isnull=False).values_list('client_id', flat=True))
+        
+        total_patients = len(consult_patient_ids | lab_patient_ids | pharma_patient_ids | invoice_patient_ids)
         avg_cost_per_patient = round(total_revenue / total_patients, 2) if total_patients > 0 else 0
 
-        # Patients récurrents = patients avec >= 2 visites (PatientVisit) dans la période
-        recurring_patients = PatientVisit.objects.filter(
-            organization=organization,
-            arrived_at__date__gte=start_date,
-            arrived_at__date__lte=end_date
-        ).values('patient').annotate(
-            visit_count=Count('id')
-        ).filter(visit_count__gte=2).count()
+        # Patients récurrents = patients avec >= 2 factures payées sur la période
+        recurring_patients = paid_invoices.filter(
+            client__isnull=False
+        ).values('client').annotate(
+            inv_count=Count('id')
+        ).filter(inv_count__gte=2).count()
 
-        # Timeline patients uniques par jour (via PatientVisit)
-        patients_timeline_qs = PatientVisit.objects.filter(
-            organization=organization,
-            arrived_at__date__gte=start_date,
-            arrived_at__date__lte=end_date
+        # Timeline patients actifs par jour (via les factures payées)
+        patients_timeline_qs = paid_invoices.filter(
+            client__isnull=False
         ).annotate(
-            period_date=TruncDate('arrived_at')
+            period_date=TruncDate('created_at')
         ).values('period_date').annotate(
-            count=Count('patient', distinct=True)
+            count=Count('client', distinct=True)
         ).order_by('period_date')
 
         patients_timeline = [
