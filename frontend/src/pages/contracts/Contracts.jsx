@@ -149,12 +149,14 @@ function Contracts() {
 
   const ContractRow = ({ contract, index, isLast }) => {
     const statusColor = STATUS_COLOR_MAP[contract.status] || '#94a3b8';
+    const displayTitle = contract.title || contract.contract_type || '—';
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2, delay: index * 0.03 }}
+        style={{ borderLeft: `3px solid ${statusColor}` }}
       >
         <Box
           onClick={() => navigate(`/contracts/${contract.id}`)}
@@ -165,10 +167,9 @@ function Contracts() {
             py: isMobile ? 1.25 : 1,
             cursor: 'pointer',
             borderBottom: isLast ? 'none' : `1px solid ${alpha(theme.palette.divider, 0.35)}`,
-            borderLeft: `3px solid ${statusColor}`,
             transition: 'background 0.15s ease',
             '&:hover': {
-              bgcolor: alpha(theme.palette.action.hover, 0.5),
+              bgcolor: alpha(theme.palette.primary.main, 0.04),
               '& .contract-actions': { opacity: 1 },
             },
             minHeight: isMobile ? 52 : 48,
@@ -178,7 +179,7 @@ function Contracts() {
             <>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem', mb: 0.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {contract.title}
+                  {displayTitle}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
                   {contract.contract_number}{contract.supplier_name ? ` · ${contract.supplier_name}` : ''}
@@ -208,7 +209,7 @@ function Contracts() {
               {/* Titre + fournisseur */}
               <Box sx={{ flex: 1, minWidth: 0, pr: 2 }}>
                 <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.825rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {contract.title}
+                  {displayTitle}
                 </Typography>
                 {contract.supplier_name && (
                   <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>
@@ -320,115 +321,118 @@ function Contracts() {
             ))}
           </Grid>
 
-          {/* Barre recherche + filtres */}
-          <Card sx={{ mb: 2, borderRadius: 2, border: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
-            <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-              <Stack spacing={1.5}>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder={t('contracts:search.placeholder', 'Rechercher un contrat...')}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search sx={{ fontSize: 18, color: 'text.disabled' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                  <IconButton
-                    onClick={() => setShowFilters(!showFilters)}
-                    sx={{
-                      borderRadius: 2,
-                      bgcolor: showFilters ? 'primary.main' : alpha(theme.palette.action.hover, 0.5),
-                      color: showFilters ? 'white' : 'inherit',
-                      '&:hover': { bgcolor: showFilters ? 'primary.dark' : alpha(theme.palette.action.hover, 0.8) },
-                    }}
+          {/* Card unique : search + liste */}
+          <Card sx={{ borderRadius: 2, border: `1px solid ${alpha(theme.palette.divider, 0.5)}`, overflow: 'hidden' }}>
+            {/* Toolbar search */}
+            <Box sx={{ px: isMobile ? 1.5 : 2, py: 1.25, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.4)}`, display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder={t('contracts:search.placeholder', 'Rechercher un contrat...')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ fontSize: 18, color: 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'background.default' } }}
+              />
+              <IconButton
+                size="small"
+                onClick={() => setShowFilters(!showFilters)}
+                sx={{
+                  borderRadius: 1.5,
+                  bgcolor: showFilters ? 'primary.main' : 'transparent',
+                  color: showFilters ? 'white' : 'text.secondary',
+                  border: `1px solid ${showFilters ? 'primary.main' : alpha(theme.palette.divider, 0.8)}`,
+                  '&:hover': { bgcolor: showFilters ? 'primary.dark' : alpha(theme.palette.action.hover, 0.8) },
+                }}
+              >
+                <FilterList sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Box>
+
+            {showFilters && (
+              <Box sx={{ px: 2, py: 1.25, borderBottom: `1px solid ${alpha(theme.palette.divider, 0.4)}`, bgcolor: alpha(theme.palette.action.hover, 0.2) }}>
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                  <InputLabel>{t('contracts:labels.status', 'Statut')}</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    label={t('contracts:labels.status', 'Statut')}
+                    sx={{ borderRadius: 2 }}
                   >
-                    <FilterList />
-                  </IconButton>
-                </Box>
+                    <MenuItem value="">{t('contracts:filters.all', 'Tous')}</MenuItem>
+                    <MenuItem value="draft">{t('contracts:status.draft', 'Brouillon')}</MenuItem>
+                    <MenuItem value="approved">{t('contracts:status.approved', 'Approuvé')}</MenuItem>
+                    <MenuItem value="active">{t('contracts:status.active', 'Actif')}</MenuItem>
+                    <MenuItem value="expiring_soon">Expire bientôt</MenuItem>
+                    <MenuItem value="expired">{t('contracts:status.expired', 'Expiré')}</MenuItem>
+                    <MenuItem value="terminated">{t('contracts:status.terminated', 'Résilié')}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
 
-                {showFilters && (
-                  <FormControl size="small" sx={{ maxWidth: 220 }}>
-                    <InputLabel>{t('contracts:labels.status', 'Statut')}</InputLabel>
-                    <Select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      label={t('contracts:labels.status', 'Statut')}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      <MenuItem value="">{t('contracts:filters.all', 'Tous')}</MenuItem>
-                      <MenuItem value="draft">{t('contracts:status.draft', 'Brouillon')}</MenuItem>
-                      <MenuItem value="approved">{t('contracts:status.approved', 'Approuvé')}</MenuItem>
-                      <MenuItem value="active">{t('contracts:status.active', 'Actif')}</MenuItem>
-                      <MenuItem value="expiring_soon">Expire bientôt</MenuItem>
-                      <MenuItem value="expired">{t('contracts:status.expired', 'Expiré')}</MenuItem>
-                      <MenuItem value="terminated">{t('contracts:status.terminated', 'Résilié')}</MenuItem>
-                    </Select>
-                  </FormControl>
+            {filteredContracts.length === 0 ? (
+              <Box sx={{ p: 4 }}>
+                <EmptyState
+                  title={t('contracts:labels.noContracts', 'Aucun contrat')}
+                  description={t('contracts:labels.noContractsDescription', 'Créez votre premier contrat')}
+                  actionLabel={t('contracts:newContract', 'Nouveau contrat')}
+                  onAction={() => navigate('/contracts/new')}
+                />
+              </Box>
+            ) : (
+              <>
+                {/* Header desktop */}
+                {!isMobile && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', px: 2.5, py: 1, bgcolor: alpha(theme.palette.action.selected, 0.04), borderBottom: `1px solid ${alpha(theme.palette.divider, 0.4)}` }}>
+                    <Box sx={{ width: 3, flexShrink: 0 }} />{/* spacer for borderLeft */}
+                    <Box sx={{ width: 140, flexShrink: 0, pl: 1.5 }}>
+                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
+                        Numéro
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: 1, pr: 2 }}>
+                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
+                        Titre / Fournisseur
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: 120, textAlign: 'right', pr: 2 }}>
+                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
+                        Montant
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: 120, pr: 2 }}>
+                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
+                        Statut
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: 100, pr: 2 }}>
+                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
+                        Fin
+                      </Typography>
+                    </Box>
+                    <Box sx={{ width: 40 }} />
+                  </Box>
                 )}
-              </Stack>
-            </CardContent>
+                <AnimatePresence>
+                  {filteredContracts.map((contract, index) => (
+                    <ContractRow
+                      key={contract.id}
+                      contract={contract}
+                      index={index}
+                      isLast={index === filteredContracts.length - 1}
+                    />
+                  ))}
+                </AnimatePresence>
+              </>
+            )}
           </Card>
-
-          {/* Liste */}
-          {filteredContracts.length === 0 ? (
-            <EmptyState
-              title={t('contracts:labels.noContracts', 'Aucun contrat')}
-              description={t('contracts:labels.noContractsDescription', 'Créez votre premier contrat')}
-              actionLabel={t('contracts:newContract', 'Nouveau contrat')}
-              onAction={() => navigate('/contracts/new')}
-            />
-          ) : (
-            <Card sx={{ borderRadius: 2, border: `1px solid ${alpha(theme.palette.divider, 0.5)}`, overflow: 'hidden' }}>
-              {/* Header desktop */}
-              {!isMobile && (
-                <Box sx={{ display: 'flex', alignItems: 'center', px: 2.5, py: 1, bgcolor: alpha(theme.palette.action.hover, 0.3), borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
-                  <Box sx={{ width: 140, flexShrink: 0 }}>
-                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                      Numéro
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: 1, pr: 2 }}>
-                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                      Titre / Fournisseur
-                    </Typography>
-                  </Box>
-                  <Box sx={{ width: 120, textAlign: 'right', pr: 2 }}>
-                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                      Montant
-                    </Typography>
-                  </Box>
-                  <Box sx={{ width: 120, pr: 2 }}>
-                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                      Statut
-                    </Typography>
-                  </Box>
-                  <Box sx={{ width: 100, pr: 2 }}>
-                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
-                      Fin
-                    </Typography>
-                  </Box>
-                  <Box sx={{ width: 40 }} />
-                </Box>
-              )}
-              <AnimatePresence>
-                {filteredContracts.map((contract, index) => (
-                  <ContractRow
-                    key={contract.id}
-                    contract={contract}
-                    index={index}
-                    isLast={index === filteredContracts.length - 1}
-                  />
-                ))}
-              </AnimatePresence>
-            </Card>
-          )}
         </Box>
       )}
 
