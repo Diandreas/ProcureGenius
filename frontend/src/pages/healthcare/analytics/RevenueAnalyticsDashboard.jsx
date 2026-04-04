@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Box, Card, CardContent, Typography, Grid, Tabs, CircularProgress, Alert, Chip, Stack, useTheme, Paper, Avatar, Divider, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { SafeTab } from '../../../components/safe';
 import { alpha } from '@mui/material/styles';
@@ -25,12 +26,16 @@ const RevenueAnalyticsDashboard = () => {
     const { t } = useTranslation();
     const theme = useTheme();
     const { format: formatCurrency } = useCurrency();
+    const location = useLocation();
+
+    // Read date range from URL params (passed from Dashboard)
+    const urlParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [period, setPeriod] = useState('day');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [startDate, setStartDate] = useState(() => urlParams.get('start_date') || '');
+    const [endDate, setEndDate] = useState(() => urlParams.get('end_date') || '');
     const [data, setData] = useState(null);
 
     useEffect(() => {

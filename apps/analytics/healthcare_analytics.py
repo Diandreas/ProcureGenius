@@ -943,8 +943,15 @@ class EnhancedRevenueAnalyticsView(APIView):
             count=Count('id')
         ).order_by('period_date')
 
-        # Get invoice type choices mapping
-        invoice_type_dict = dict(Invoice.INVOICE_TYPES) if hasattr(Invoice, 'INVOICE_TYPES') else {}
+        # Libellés français pour chaque type d'activité
+        ACTIVITY_LABELS_FR = {
+            'healthcare_consultation': 'Consultation médicale',
+            'healthcare_laboratory':   'Laboratoire',
+            'healthcare_pharmacy':     'Pharmacie / Médicaments',
+            'healthcare_services':     'Soins / Petite chirurgie / Hospitalisation',
+            'standard':                'Vente comptoir / Divers',
+            'subcontracting':          'Sous-traitance Labo',
+        }
 
         # Format response
         return Response({
@@ -960,7 +967,7 @@ class EnhancedRevenueAnalyticsView(APIView):
             },
             'by_activity': [{
                 'activity_type': item['invoice_type'],
-                'activity_label': invoice_type_dict.get(item['invoice_type'], item['invoice_type']) if invoice_type_dict else item['invoice_type'],
+                'activity_label': ACTIVITY_LABELS_FR.get(item['invoice_type'], item['invoice_type']),
                 'revenue': float(item['revenue'] or 0),
                 'count': item['count'],
                 'avg_amount': float(item['avg_amount'] or 0)

@@ -489,7 +489,7 @@ const Dashboard = () => {
                     <>
                       <Box mb={2}>
                         <QuickLink title="Voir détail des revenus par service" description="Analyse complète par service/produit"
-                          icon={<ChartIcon />} color="#2563eb" to="/healthcare/analytics/revenue" navigate={navigate} />
+                          icon={<ChartIcon />} color="#2563eb" to={`/healthcare/analytics/revenue?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}`} navigate={navigate} />
                       </Box>
                       {labCategories.length > 0 ? (() => {
                         const totalLab = labCategories.reduce((s, x) => s + parseFloat(x.revenue || 0), 0);
