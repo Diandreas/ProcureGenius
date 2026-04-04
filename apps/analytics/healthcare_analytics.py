@@ -634,40 +634,52 @@ class ActivityIndicatorsView(APIView):
             for item in revenue_timeline_qs
         ]
 
-        # Patients uniques sur la période (union consultation + labo + pharmacie + factures payées)
-        consult_patient_ids = set(consultations_queryset.values_list('patient_id', flat=True))
+        # Patients uniques sur la période (union consultation + labo + pharmacie + toutes factures)
+        # On ne filtre pas par "payé" pour le décompte des patients reçus (volume d'activité)
+        consult_patient_ids = set(Consultation.objects.filter(
+            organization=organization,
+            consultation_date__date__gte=start_date,
+            consultation_date__date__lte=end_date
+        ).values_list('patient_id', flat=True))
+        
         lab_patient_ids = set(LabOrder.objects.filter(
             organization=organization,
             order_date__date__gte=start_date,
             order_date__date__lte=end_date
         ).values_list('patient_id', flat=True))
+        
         try:
             from apps.pharmacy.models import PharmacyDispensing as PD
             pharma_patient_ids = set(PD.objects.filter(
                 organization=organization,
                 dispensed_at__date__gte=start_date,
                 dispensed_at__date__lte=end_date,
-                status='dispensed',
                 patient__isnull=False
             ).values_list('patient_id', flat=True))
         except Exception:
             pharma_patient_ids = set()
             
-        # Ajouter les patients des factures payées (couvre les soins, chirurgies, hospis facturées en standard)
-        invoice_patient_ids = set(paid_invoices.filter(client__isnull=False).values_list('client_id', flat=True))
+        # Ajouter tous les patients ayant eu une facture sur la période (payée ou non)
+        all_invoices = InvoiceModel.objects.filter(
+            created_by__organization=organization,
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date
+        ).exclude(invoice_type='credit_note')
+        
+        invoice_patient_ids = set(all_invoices.filter(client__isnull=False).values_list('client_id', flat=True))
         
         total_patients = len(consult_patient_ids | lab_patient_ids | pharma_patient_ids | invoice_patient_ids)
         avg_cost_per_patient = round(total_revenue / total_patients, 2) if total_patients > 0 else 0
 
-        # Patients récurrents = patients avec >= 2 factures payées sur la période
-        recurring_patients = paid_invoices.filter(
+        # Patients récurrents = patients avec >= 2 factures sur la période (fidélité)
+        recurring_patients = all_invoices.filter(
             client__isnull=False
         ).values('client').annotate(
             inv_count=Count('id')
         ).filter(inv_count__gte=2).count()
 
-        # Timeline patients actifs par jour (via les factures payées)
-        patients_timeline_qs = paid_invoices.filter(
+        # Timeline patients actifs par jour (via toutes les factures émises)
+        patients_timeline_qs = all_invoices.filter(
             client__isnull=False
         ).annotate(
             period_date=TruncDate('created_at')
