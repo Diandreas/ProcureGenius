@@ -1822,7 +1822,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         } for item in top_clients_qs]
         
         # Factures récentes avec clients
-        recent_invoices = invoice_items.select_related('invoice', 'invoice__client').order_by('-created_at')[:10]
+        recent_invoices = invoice_items.select_related('invoice', 'invoice__client').order_by('-created_at')[:500]
         recent_invoices_data = []
         for item in recent_invoices:
             # Récupérer le nom du client avec fallback

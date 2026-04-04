@@ -589,10 +589,22 @@ class ActivityIndicatorsView(APIView):
         total_revenue_agg = paid_invoices.aggregate(total=Sum('total_amount'))
         total_revenue = float(total_revenue_agg['total'] or 0)
 
+        from apps.invoicing.models import InvoiceItem
+        from django.db.models import Q
+
         # CA consultation (factures healthcare_consultation payées)
-        consultation_revenue = float(paid_invoices.filter(
+        consultation_invoices_revenue = float(paid_invoices.filter(
             invoice_type='healthcare_consultation'
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
+
+        # Chercher les items de consultation dans les factures standard
+        consultation_items_revenue = float(InvoiceItem.objects.filter(
+            invoice__in=paid_invoices.filter(invoice_type='standard')
+        ).filter(
+            Q(product__category__name__icontains='Consultation') | Q(product__name__icontains='Consultation')
+        ).aggregate(total=Sum('total_price'))['total'] or 0)
+
+        consultation_revenue = consultation_invoices_revenue + consultation_items_revenue
 
         # CA laboratoire (factures healthcare_laboratory payées)
         lab_revenue = float(paid_invoices.filter(
@@ -605,9 +617,12 @@ class ActivityIndicatorsView(APIView):
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
         # CA autres (standard) — soins, chirurgie, hospitalisation
-        other_revenue = float(paid_invoices.filter(
+        other_revenue_raw = float(paid_invoices.filter(
             invoice_type='standard'
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
+        
+        # Soustraire la part des consultations facturées en standard pour éviter de compter en double
+        other_revenue = max(0, other_revenue_raw - consultation_items_revenue)
 
         # Moyennes par acte
         avg_consultation_cost = consultation_revenue / num_consultations if num_consultations > 0 else 0
