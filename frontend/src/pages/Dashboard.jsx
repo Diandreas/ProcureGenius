@@ -425,7 +425,7 @@ const Dashboard = () => {
                 <StatCard title="Sous-traitance Labo"
                   value={loading ? '...' : formatCurrency(byActivity.find(a => a.activity_type === 'subcontracting')?.revenue || 0)}
                   icon={<ShippingIcon />} color="#6366f1" loading={loading}
-                  subtitle={`${byActivity.find(a => a.activity_type === 'subcontracting')?.count ?? 0} examens`} />
+                  subtitle={`${byActivity.find(a => a.activity_type === 'subcontracting')?.count ?? 0} examens · inclus dans CA Labo`} />
               </Grid>
             </Grid>
 
@@ -491,42 +491,54 @@ const Dashboard = () => {
                         <QuickLink title="Voir détail des revenus par service" description="Analyse complète par service/produit"
                           icon={<ChartIcon />} color="#2563eb" to="/healthcare/analytics/revenue" navigate={navigate} />
                       </Box>
-                      {labCategories.length > 0 ? (
-                        <TableContainer>
-                          <Table size="small">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Catégorie</TableCell>
-                                <TableCell align="right">CA</TableCell>
-                                <TableCell align="right">Actes</TableCell>
-                                <TableCell align="right">%</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {labCategories.map((c, i) => {
-                                const totalLab = labCategories.reduce((s, x) => s + parseFloat(x.revenue || 0), 0);
-                                const pct = totalLab > 0 ? ((parseFloat(c.revenue || 0) / totalLab) * 100).toFixed(1) : '0';
-                                return (
-                                  <TableRow key={i}>
-                                    <TableCell>{c.category_name}</TableCell>
-                                    <TableCell align="right">{formatCurrency(c.revenue)}</TableCell>
-                                    <TableCell align="right">{c.count}</TableCell>
-                                    <TableCell align="right">
-                                      <Box display="flex" alignItems="center" gap={1}>
-                                        <LinearProgress variant="determinate" value={parseFloat(pct)} sx={{ width: 40, height: 6, borderRadius: 3 }} />
-                                        {pct}%
-                                      </Box>
+                      {labCategories.length > 0 ? (() => {
+                        const totalLab = labCategories.reduce((s, x) => s + parseFloat(x.revenue || 0), 0);
+                        const subcontractRev = byActivity.find(a => a.activity_type === 'subcontracting')?.revenue || 0;
+                        return (
+                          <TableContainer>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>Catégorie</TableCell>
+                                  <TableCell align="right">CA</TableCell>
+                                  <TableCell align="right">Actes</TableCell>
+                                  <TableCell align="right">%</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {labCategories.map((c, i) => {
+                                  const pct = totalLab > 0 ? ((parseFloat(c.revenue || 0) / totalLab) * 100).toFixed(1) : '0';
+                                  return (
+                                    <TableRow key={i}>
+                                      <TableCell>{c.category_name}</TableCell>
+                                      <TableCell align="right">{formatCurrency(c.revenue)}</TableCell>
+                                      <TableCell align="right">{c.count}</TableCell>
+                                      <TableCell align="right">
+                                        <Box display="flex" alignItems="center" gap={1}>
+                                          <LinearProgress variant="determinate" value={parseFloat(pct)} sx={{ width: 40, height: 6, borderRadius: 3 }} />
+                                          {pct}%
+                                        </Box>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                                {subcontractRev > 0 && (
+                                  <TableRow sx={{ bgcolor: 'action.hover' }}>
+                                    <TableCell sx={{ color: 'text.secondary', fontStyle: 'italic' }}>dont Sous-traitance</TableCell>
+                                    <TableCell align="right" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>{formatCurrency(subcontractRev)}</TableCell>
+                                    <TableCell align="right" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>{byActivity.find(a => a.activity_type === 'subcontracting')?.count || 0}</TableCell>
+                                    <TableCell align="right" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                                      {totalLab > 0 ? ((subcontractRev / totalLab) * 100).toFixed(1) : '0'}%
                                     </TableCell>
                                   </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      ) : (
+                                )}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        );
+                      })() : (
                         <Typography color="text.secondary" variant="body2">
                           Aucune catégorie labo identifiée sur la période.
-                          Vérifiez la nomenclature des catégories de produits.
                         </Typography>
                       )}
                     </>

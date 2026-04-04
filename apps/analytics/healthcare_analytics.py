@@ -824,7 +824,7 @@ class EnhancedRevenueAnalyticsView(APIView):
 
         # Base queryset: ONLY paid invoices — exclude credit notes
         invoices = Invoice.objects.filter(
-            created_by__organization=organization,
+            organization=organization,
             status='paid'
         ).exclude(invoice_type='credit_note')
 
@@ -909,18 +909,16 @@ class EnhancedRevenueAnalyticsView(APIView):
                 _add_activity('standard', item.total_price)
 
         # Sous-traitance labo : depuis LabOrder (pas les factures)
-        subcontract_rev = float(LabOrder.objects.filter(
+        sub_qs = LabOrder.objects.filter(
             organization=organization,
             subcontractor__isnull=False,
-            order_date__date__gte=start_date,
-            order_date__date__lte=end_date,
-        ).aggregate(t=Sum('total_price'))['t'] or 0)
-        subcontract_cnt = LabOrder.objects.filter(
-            organization=organization,
-            subcontractor__isnull=False,
-            order_date__date__gte=start_date,
-            order_date__date__lte=end_date,
-        ).count()
+        )
+        if start_date:
+            sub_qs = sub_qs.filter(order_date__date__gte=start_date)
+        if end_date:
+            sub_qs = sub_qs.filter(order_date__date__lte=end_date)
+        subcontract_rev = float(sub_qs.aggregate(t=Sum('total_price'))['t'] or 0)
+        subcontract_cnt = sub_qs.count()
         if subcontract_rev > 0:
             _add_activity('subcontracting', subcontract_rev, subcontract_cnt)
 
