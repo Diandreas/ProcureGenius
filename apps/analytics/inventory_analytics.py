@@ -522,11 +522,11 @@ class StockValueAnalyticsView(APIView):
         sort_by = request.GET.get('sort_by', 'stock_value')
         warehouse_id = request.GET.get('warehouse_id')
 
-        # Base queryset - physical products with stock
-        queryset = Product.objects.filter(
+        # Base queryset annotée avec le stock effectif (lots si disponibles, sinon stock_quantity)
+        queryset = annotate_effective_stock(Product.objects.filter(
             organization=organization,
             is_active=True
-        )
+        ))
 
         if product_type:
             queryset = queryset.filter(product_type=product_type)
@@ -539,20 +539,20 @@ class StockValueAnalyticsView(APIView):
                 Q(name__icontains=search) | Q(reference__icontains=search)
             )
 
-        # Annotate with computed values
+        # Annotate with computed values using effective_stock
         queryset = queryset.annotate(
-            stock_value_cost=F('stock_quantity') * F('cost_price'),
-            stock_value_sell=F('stock_quantity') * F('price'),
-            potential_margin=F('stock_quantity') * (F('price') - F('cost_price'))
+            stock_value_cost=F('effective_stock') * F('cost_price'),
+            stock_value_sell=F('effective_stock') * F('price'),
+            potential_margin=F('effective_stock') * (F('price') - F('cost_price'))
         )
 
         # Summary stats
         summary = queryset.aggregate(
             total_products=Count('id'),
-            total_quantity=Sum('stock_quantity'),
-            total_cost_value=Sum(F('stock_quantity') * F('cost_price')),
-            total_sell_value=Sum(F('stock_quantity') * F('price')),
-            total_potential_margin=Sum(F('stock_quantity') * (F('price') - F('cost_price'))),
+            total_quantity=Sum('effective_stock'),
+            total_cost_value=Sum(F('effective_stock') * F('cost_price')),
+            total_sell_value=Sum(F('effective_stock') * F('price')),
+            total_potential_margin=Sum(F('effective_stock') * (F('price') - F('cost_price'))),
             avg_margin_percent=Avg(
                 Case(
                     When(cost_price__gt=0, then=(F('price') - F('cost_price')) * 100.0 / F('cost_price')),
@@ -567,10 +567,10 @@ class StockValueAnalyticsView(APIView):
             'category__name', 'category__id'
         ).annotate(
             product_count=Count('id'),
-            total_quantity=Sum('stock_quantity'),
-            cost_value=Sum(F('stock_quantity') * F('cost_price')),
-            sell_value=Sum(F('stock_quantity') * F('price')),
-            margin=Sum(F('stock_quantity') * (F('price') - F('cost_price')))
+            total_quantity=Sum('effective_stock'),
+            cost_value=Sum(F('effective_stock') * F('cost_price')),
+            sell_value=Sum(F('effective_stock') * F('price')),
+            margin=Sum(F('effective_stock') * (F('price') - F('cost_price')))
         ).order_by('-cost_value')
 
         category_data = []
@@ -601,8 +601,9 @@ class StockValueAnalyticsView(APIView):
 
         product_data = []
         for p in products:
-            cost_val = float(p.stock_quantity * (p.cost_price or 0))
-            sell_val = float(p.stock_quantity * (p.price or 0))
+            eff_qty = p.effective_stock
+            cost_val = float(eff_qty * (p.cost_price or 0))
+            sell_val = float(eff_qty * (p.price or 0))
             margin = sell_val - cost_val
             product_data.append({
                 'id': str(p.id),
@@ -610,7 +611,7 @@ class StockValueAnalyticsView(APIView):
                 'reference': p.reference or '',
                 'category': p.category.name if p.category else 'N/A',
                 'warehouse': p.warehouse.name if p.warehouse else 'N/A',
-                'stock_quantity': p.stock_quantity,
+                'stock_quantity': eff_qty,
                 'cost_price': float(p.cost_price or 0),
                 'sell_price': float(p.price or 0),
                 'stock_value_cost': cost_val,
@@ -618,12 +619,12 @@ class StockValueAnalyticsView(APIView):
                 'margin': margin,
                 'margin_percent': round(margin / cost_val * 100, 1) if cost_val > 0 else 0,
                 'low_stock_threshold': p.low_stock_threshold,
-                'is_low_stock': p.stock_quantity <= p.low_stock_threshold,
-                'is_out_of_stock': p.stock_quantity == 0,
+                'is_low_stock': eff_qty <= p.low_stock_threshold,
+                'is_out_of_stock': eff_qty == 0,
             })
 
         # Products with 0 stock but active
-        zero_stock_value = queryset.filter(stock_quantity=0).aggregate(
+        zero_stock_value = queryset.filter(effective_stock=0).aggregate(
             count=Count('id')
         )
 
