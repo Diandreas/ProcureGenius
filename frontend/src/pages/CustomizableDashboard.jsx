@@ -36,6 +36,8 @@ import SupplierPerformanceWidget from '../components/widgets/SupplierPerformance
 import PendingApprovalsWidget from '../components/widgets/PendingApprovalsWidget';
 // IA (1)
 import AIProactiveSuggestionsWidget from '../components/widgets/AIProactiveSuggestionsWidget';
+import SmartAlertsWidget from '../components/widgets/SmartAlertsWidget';
+import CashFlowWidget from '../components/widgets/CashFlowWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -63,6 +65,9 @@ const WIDGET_COMPONENTS = {
   pending_approvals: PendingApprovalsWidget,
   // IA (1)
   ai_suggestions: AIProactiveSuggestionsWidget,
+  // Algo pur (2)
+  smart_alerts: SmartAlertsWidget,
+  cash_flow_projection: CashFlowWidget,
 };
 
 const CustomizableDashboard = () => {

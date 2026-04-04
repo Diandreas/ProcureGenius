@@ -826,7 +826,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
 class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les clients"""
-    queryset = Client.objects.all()
+    queryset = Client.objects.all().distinct()
     serializer_class = ClientSerializer
     permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.CLIENTS
@@ -2016,5 +2016,73 @@ class WarehouseViewSet(viewsets.ModelViewSet):
         # Filtre par organization de l'utilisateur
         if self.request.user.is_authenticated and hasattr(self.request.user, 'organization') and self.request.user.organization:
             queryset = queryset.filter(organization=self.request.user.organization)
-
         return queryset
+
+
+class PriceHistoryView(APIView):
+    """
+    GET /api/v1/purchase-orders/items/price-history/
+    Params: product_id (ou description), supplier_id (optionnel), current_price (optionnel)
+    Retourne l'historique des prix d'achat pour un produit ou une description libre.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        product_id = request.query_params.get('product_id')
+        description = request.query_params.get('description', '').strip()
+        supplier_id = request.query_params.get('supplier_id')
+        org = getattr(request.user, 'organization', None)
+
+        if not org or (not product_id and not description):
+            return Response({'occurrences': 0})
+
+        qs = PurchaseOrderItem.objects.filter(
+            purchase_order__created_by__organization=org,
+        ).select_related('purchase_order', 'purchase_order__supplier').order_by(
+            '-purchase_order__created_at'
+        )
+
+        if product_id:
+            qs = qs.filter(product_id=product_id)
+        elif description:
+            qs = qs.filter(description__icontains=description)
+
+        if supplier_id:
+            qs = qs.filter(purchase_order__supplier_id=supplier_id)
+
+        items = list(qs[:20])
+
+        if not items:
+            return Response({'occurrences': 0})
+
+        prices = [float(item.unit_price) for item in items]
+        avg_price = sum(prices) / len(prices)
+        last_item = items[0]
+        last_price = float(last_item.unit_price)
+        last_supplier = (
+            last_item.purchase_order.supplier.name
+            if last_item.purchase_order.supplier else None
+        )
+        last_date = last_item.purchase_order.created_at.strftime('%d/%m/%Y')
+
+        current_price_param = request.query_params.get('current_price')
+        deviation_percent = None
+        warning = False
+        if current_price_param:
+            try:
+                current_price = float(current_price_param)
+                if avg_price > 0:
+                    deviation_percent = round((current_price - avg_price) / avg_price * 100, 1)
+                    warning = abs(deviation_percent) >= 10
+            except (ValueError, TypeError):
+                pass
+
+        return Response({
+            'occurrences': len(items),
+            'last_price': last_price,
+            'last_date': last_date,
+            'last_supplier': last_supplier,
+            'avg_price': round(avg_price, 2),
+            'deviation_percent': deviation_percent,
+            'warning': warning,
+        })

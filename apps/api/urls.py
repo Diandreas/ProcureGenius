@@ -29,6 +29,9 @@ router.register(r'print-templates', views_settings.PrintTemplateViewSet, basenam
 router.register(r'print-configurations', views_settings.PrintConfigurationViewSet, basename='print-configurations')
 
 urlpatterns = [
+    # Price History (before router.urls to avoid conflict)
+    path('purchase-orders/items/price-history/', views.PriceHistoryView.as_view(), name='price-history'),
+
     # Authentication - Enhanced
     path('auth/token/', obtain_auth_token, name='api_token_auth'),
     path('auth/register/', auth_api_views.api_register, name='api_register'),

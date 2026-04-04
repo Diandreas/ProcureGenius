@@ -477,7 +477,7 @@ function ProductForm() {
                 cost_price: parseFloat(values.cost_price) || 0,
                 price_editable: values.price_editable,
                 category: values.category_id || null,
-                is_active: values.is_active,
+                is_active: true,
             };
 
             // Ajouter supplier et warehouse pour tous les types si définis
@@ -1032,43 +1032,56 @@ function ProductForm() {
                                                     />
                                                 </Grid>
 
-                                                {/* Catégorie */}
+                                                {/* Catégorie — freeSolo : sélection ou création à la volée */}
                                                 <Grid item xs={12} md={6}>
-                                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                                                        <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                                                            <InputLabel>{t('products:labels.category')}</InputLabel>
-                                                            <Select
-                                                                name="category_id"
-                                                                value={values.category_id}
-                                                                onChange={handleChange}
+                                                    <Autocomplete
+                                                        freeSolo
+                                                        options={categories}
+                                                        getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+                                                        value={categories.find(c => c.id === values.category_id) || null}
+                                                        onChange={async (_, newValue) => {
+                                                            if (!newValue) {
+                                                                setFieldValue('category_id', '');
+                                                            } else if (typeof newValue === 'string') {
+                                                                // Texte libre → créer la catégorie
+                                                                try {
+                                                                    const res = await productCategoriesAPI.create({ name: newValue });
+                                                                    setCategories(prev => [...prev, res.data]);
+                                                                    setFieldValue('category_id', res.data.id);
+                                                                } catch {
+                                                                    enqueueSnackbar('Erreur création catégorie', { variant: 'error' });
+                                                                }
+                                                            } else if (newValue.inputValue) {
+                                                                // Option "Créer X"
+                                                                try {
+                                                                    const res = await productCategoriesAPI.create({ name: newValue.inputValue });
+                                                                    setCategories(prev => [...prev, res.data]);
+                                                                    setFieldValue('category_id', res.data.id);
+                                                                } catch {
+                                                                    enqueueSnackbar('Erreur création catégorie', { variant: 'error' });
+                                                                }
+                                                            } else {
+                                                                setFieldValue('category_id', newValue.id);
+                                                            }
+                                                        }}
+                                                        filterOptions={(options, params) => {
+                                                            const filtered = options.filter(o =>
+                                                                o.name.toLowerCase().includes(params.inputValue.toLowerCase())
+                                                            );
+                                                            if (params.inputValue !== '' && !filtered.some(o => o.name.toLowerCase() === params.inputValue.toLowerCase())) {
+                                                                filtered.push({ inputValue: params.inputValue, name: `Créer "${params.inputValue}"` });
+                                                            }
+                                                            return filtered;
+                                                        }}
+                                                        renderInput={(params) => (
+                                                            <TextField
+                                                                {...params}
                                                                 label={t('products:labels.category')}
-                                                                startAdornment={<Category sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                            >
-                                                                <MenuItem value="">
-                                                                    <em>{t('products:labels.uncategorized')}</em>
-                                                                </MenuItem>
-                                                                {categories.map((category) => (
-                                                                    <MenuItem key={category.id} value={category.id}>
-                                                                        {category.name}
-                                                                    </MenuItem>
-                                                                ))}
-                                                            </Select>
-                                                        </FormControl>
-                                                        <Tooltip title={t('products:modals.manageCategories', 'Gérer les catégories')}>
-                                                            <IconButton
-                                                                onClick={() => setCategoryModalOpen(true)}
-                                                                sx={{
-                                                                    bgcolor: 'primary.main',
-                                                                    color: 'white',
-                                                                    '&:hover': { bgcolor: 'primary.dark' },
-                                                                    mt: isMobile ? 0.5 : 0.75
-                                                                }}
                                                                 size={isMobile ? "small" : "medium"}
-                                                            >
-                                                                <Add />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </Box>
+                                                                placeholder="Tapez pour chercher ou créer..."
+                                                            />
+                                                        )}
+                                                    />
                                                 </Grid>
 
                                                 {/* Type de source - Seulement pour physiques */}
@@ -1330,39 +1343,6 @@ function ProductForm() {
                                     </Card>
                                 )}
 
-                                {/* For service/digital: is_active on last step (step 1) */}
-                                {safeActiveStep === 1 && values.product_type !== 'physical' && (
-                                    <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
-                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                                            <Divider sx={{ mb: 2 }} />
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        name="is_active"
-                                                        checked={values.is_active}
-                                                        onChange={handleChange}
-                                                        color="success"
-                                                    />
-                                                }
-                                                label={
-                                                    <Box display="flex" alignItems="center">
-                                                        {values.is_active ? (
-                                                            <>
-                                                                <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
-                                                                {t('products:labels.activeProduct')}
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Warning sx={{ mr: 1, color: 'warning.main' }} />
-                                                                {t('products:labels.inactiveProduct')}
-                                                            </>
-                                                        )}
-                                                    </Box>
-                                                }
-                                            />
-                                        </CardContent>
-                                    </Card>
-                                )}
 
                                 {/* Navigation Buttons */}
                                 <Box sx={{

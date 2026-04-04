@@ -50,26 +50,22 @@ const QuickCreateDialog = ({
     setSimilarEntities([]);
 
     try {
-      // Fusionner les données du formulaire avec les données contextuelles
       const dataToSend = { ...formData, ...contextData };
+      const response = await createFunction(dataToSend);
 
-      const result = await createFunction(dataToSend);
-
-      // Vérifier si des entités similaires ont été trouvées
-      if (result.error === 'similar_entities_found') {
-        setSimilarEntities(result.similar_entities);
-        setError(result.message);
-        setLoading(false);
-        return;
-      }
-
-      // Succès
       if (onSuccess) {
-        onSuccess(result);
+        onSuccess(response.data);
       }
       handleClose();
     } catch (err) {
-      setError(err.message || "Erreur lors de la création");
+      // 409 = entités similaires trouvées
+      if (err.response?.status === 409 && err.response?.data?.error === 'similar_entities_found') {
+        setSimilarEntities(err.response.data.similar_entities || []);
+        setError(err.response.data.message || 'Des entités similaires ont été trouvées.');
+      } else {
+        const msg = err.response?.data?.error || err.response?.data?.detail || err.message || "Erreur lors de la création";
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -87,14 +83,14 @@ const QuickCreateDialog = ({
     setLoading(true);
     try {
       const dataToSend = { ...formData, ...contextData, force_create: true };
-      const result = await createFunction(dataToSend);
-
+      const response = await createFunction(dataToSend);
       if (onSuccess) {
-        onSuccess(result);
+        onSuccess(response.data);
       }
       handleClose();
     } catch (err) {
-      setError(err.message || "Erreur lors de la création forcée");
+      const msg = err.response?.data?.error || err.response?.data?.detail || err.message || "Erreur lors de la création forcée";
+      setError(msg);
     } finally {
       setLoading(false);
     }

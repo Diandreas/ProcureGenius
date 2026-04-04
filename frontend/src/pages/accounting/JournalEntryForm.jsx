@@ -5,6 +5,7 @@ import {
   Paper, IconButton, Alert, CircularProgress, Card, CardContent, Divider, Chip,
 } from '@mui/material';
 import { Add, Delete, Save, CheckCircle } from '@mui/icons-material';
+import AccountingTooltip from '../../components/accounting/AccountingTooltip';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import accountingAPI from '../../services/accountingAPI';
@@ -124,8 +125,8 @@ export default function JournalEntryForm() {
             <TableRow sx={{ bgcolor: 'action.hover' }}>
               <TableCell sx={{ minWidth: 240 }}><strong>Compte</strong></TableCell>
               <TableCell><strong>Libellé</strong></TableCell>
-              <TableCell align="right" sx={{ width: 140 }}><strong>Débit</strong></TableCell>
-              <TableCell align="right" sx={{ width: 140 }}><strong>Crédit</strong></TableCell>
+              <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="debit">Débit</AccountingTooltip></strong></TableCell>
+              <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="credit">Crédit</AccountingTooltip></strong></TableCell>
               <TableCell sx={{ width: 48 }} />
             </TableRow>
           </TableHead>

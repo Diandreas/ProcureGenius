@@ -43,7 +43,7 @@ class PurchaseOrder(models.Model):
     # Dates
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de modification"))
-    required_date = models.DateField(verbose_name=_("Date requise"))
+    required_date = models.DateField(null=True, blank=True, verbose_name=_("Date requise"))
     
     # Montants (simplifiés sans django-money)
     subtotal = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Sous-total"))
@@ -99,7 +99,7 @@ class PurchaseOrder(models.Model):
     def is_overdue(self):
         """Vérifie si le BC est en retard par rapport à required_date"""
         from django.utils import timezone
-        if self.status in ['received', 'cancelled']:
+        if self.status in ['received', 'cancelled'] or not self.required_date:
             return False
         return self.required_date < timezone.now().date()
 
@@ -269,7 +269,7 @@ class PurchaseOrderItem(models.Model):
     )
 
     # Informations produit
-    product_reference = models.CharField(max_length=100, default="REF-001", verbose_name=_("Référence produit"))
+    product_reference = models.CharField(max_length=100, blank=True, default="", verbose_name=_("Référence produit"))
     product_code = models.CharField(max_length=100, blank=True, verbose_name=_("Code produit"))
     description = models.CharField(max_length=500, verbose_name=_("Description"))
     specifications = models.TextField(blank=True, verbose_name=_("Spécifications"))
@@ -299,12 +299,7 @@ class PurchaseOrderItem(models.Model):
     def clean(self):
         """Validation de l'article de bon de commande"""
         super().clean()
-
-        # Validation: Un produit doit toujours être associé
-        if not self.product:
-            raise ValidationError({
-                'product': _("Un produit doit être associé à cet article. Sélectionnez un produit existant ou créez-en un nouveau.")
-            })
+        # product est optionnel — une description libre suffit pour un BdC fournisseur
 
     def save(self, *args, **kwargs):
         # Synchroniser avec product si défini

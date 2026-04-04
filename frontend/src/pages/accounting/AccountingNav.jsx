@@ -12,9 +12,19 @@ import {
   TrendingUp as ResultIcon,
   AccountBalance as BilanIcon,
   Insights as SIGIcon,
+  HelpOutline as HelpIcon,
 } from '@mui/icons-material';
 import BackButton from '../../components/navigation/BackButton';
 import { useHeader } from '../../contexts/HeaderContext';
+import { useAccountingHelp } from '../../contexts/AccountingHelpContext';
+
+const PATH_TO_CONTEXT = {
+  '/accounting/entries/new': 'journal_entry',
+  '/accounting/entries': 'journal_entry',
+  '/accounting/chart-of-accounts': 'chart_of_accounts',
+  '/accounting/reports/balance-sheet': 'balance_sheet',
+  '/accounting/reports/general-ledger': 'general_ledger',
+};
 
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/accounting', icon: <DashboardIcon />, exact: true },
@@ -34,6 +44,11 @@ export default function AccountingNav({ title, subtitle, action }) {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { setPageHeader } = useHeader();
+  const { openHelp } = useAccountingHelp();
+
+  const helpContext = Object.entries(PATH_TO_CONTEXT).find(([path]) =>
+    pathname.startsWith(path)
+  )?.[1] || 'journal_entry';
 
   const activeIndex = NAV_ITEMS.findIndex((item) =>
     item.exact ? pathname === item.path : pathname.startsWith(item.path)
@@ -49,7 +64,8 @@ export default function AccountingNav({ title, subtitle, action }) {
 
   return (
     <Box mb={2}>
-      {/* Navigation tabs — scroll horizontal sur mobile */}
+      {/* Navigation tabs + bouton aide */}
+      <Box display="flex" alignItems="center" gap={1}>
       {isMobile ? (
         // Mobile : icônes seules dans un scroll horizontal
         <Box
@@ -123,6 +139,13 @@ export default function AccountingNav({ title, subtitle, action }) {
           ))}
         </Tabs>
       )}
+
+      <Tooltip title="Aide comptabilité" placement="left">
+        <IconButton size="small" onClick={() => openHelp(helpContext)} sx={{ ml: 'auto', flexShrink: 0 }}>
+          <HelpIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      </Box>
 
       <Divider sx={{ mt: 1 }} />
     </Box>

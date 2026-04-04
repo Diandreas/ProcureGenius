@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { alpha } from '@mui/material/styles';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -46,11 +48,11 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
-import { purchaseOrdersAPI, suppliersAPI, productsAPI, warehousesAPI, aiChatAPI } from '../../services/api';
+import { purchaseOrdersAPI, suppliersAPI, warehousesAPI, aiChatAPI } from '../../services/api';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
-import { supplierFields, getProductFields } from '../../config/quickCreateFields';
-import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
+import { supplierFields } from '../../config/quickCreateFields';
+import POItemDialog from '../../components/purchase-orders/POItemDialog';
 
 function PurchaseOrderForm() {
   const { id } = useParams();
@@ -80,7 +82,6 @@ function PurchaseOrderForm() {
   // Items state
   const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState({
-    product: null,
     product_reference: '',
     description: '',
     quantity: 1,
@@ -94,7 +95,6 @@ function PurchaseOrderForm() {
   const [aiPrompt, setAiAiPrompt] = useState('');
   const [showAiInput, setShowAiAiInput] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
-  const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState(-1);
@@ -159,17 +159,15 @@ function PurchaseOrderForm() {
 
   // Quick Create states
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
-  const [productDialogOpen, setProductDialogOpen] = useState(false);
 
   // Totals calculation
-  const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-  const taxRate = 0.15; // 15% tax rate (adjustable)
+  const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity) * parseFloat(item.unit_price)), 0);
+  const taxRate = 0.20; // 20% TVA standard
   const taxAmount = subtotal * taxRate;
   const total = subtotal + taxAmount;
 
   useEffect(() => {
     fetchSuppliers();
-    fetchProducts();
     fetchWarehouses();
     if (isEdit) {
       fetchPurchaseOrder();
@@ -186,26 +184,6 @@ function PurchaseOrderForm() {
       enqueueSnackbar(t('purchaseOrders:messages.suppliersLoadError'), { variant: 'error' });
     }
   };
-
-  const fetchProducts = async (supplierId = null) => {
-    try {
-      // Si un fournisseur est sélectionné, filtrer les produits par ce fournisseur
-      const params = supplierId ? { supplier: supplierId } : {};
-      const response = await productsAPI.list(params);
-      setProducts(response.data.results || response.data);
-    } catch (error) {
-      enqueueSnackbar(t('purchaseOrders:messages.productsLoadError'), { variant: 'error' });
-    }
-  };
-
-  // Recharger les produits quand le fournisseur change
-  useEffect(() => {
-    if (formData.supplier && formData.supplier.id) {
-      fetchProducts(formData.supplier.id);
-    } else {
-      fetchProducts(); // Charger tous les produits si aucun fournisseur sélectionné
-    }
-  }, [formData.supplier]);
 
   // Pré-sélectionner le fournisseur depuis l'URL
   useEffect(() => {
@@ -280,33 +258,18 @@ function PurchaseOrderForm() {
     fetchSuppliers();
   };
 
-  const handleProductCreated = (result) => {
-    enqueueSnackbar(result.message || t('purchaseOrders:messages.productCreatedSuccess'), { variant: 'success' });
-    setProducts(prev => [...prev, result.data]);
-    setNewItem(prev => ({
-      ...prev,
-      product_reference: result.data.reference || '',
-      description: result.data.name,
-      unit_price: parseFloat(result.data.cost_price) || parseFloat(result.data.price) || 0
-    }));
-    fetchProducts();
-  };
 
   const handleAddItem = () => {
-    // Validation: Un produit doit être sélectionné
-    if (!newItem.product) {
-      enqueueSnackbar(t('purchaseOrders:messages.selectProduct'), { variant: 'error' });
-      return;
-    }
-
-    if (!newItem.description || newItem.quantity <= 0 || newItem.unit_price <= 0) {
+    if (!newItem.description?.trim() || parseFloat(newItem.quantity) <= 0) {
       enqueueSnackbar(t('purchaseOrders:messages.fillRequiredFields'), { variant: 'error' });
       return;
     }
 
     const item = {
       ...newItem,
-      total_price: newItem.quantity * newItem.unit_price,
+      quantity: parseFloat(newItem.quantity),
+      unit_price: parseFloat(newItem.unit_price) || 0,
+      total_price: parseFloat(newItem.quantity) * (parseFloat(newItem.unit_price) || 0),
     };
 
     if (editingItemIndex >= 0) {
@@ -318,13 +281,7 @@ function PurchaseOrderForm() {
       setItems(prev => [...prev, item]);
     }
 
-    setNewItem({
-      product: null,
-      product_reference: '',
-      description: '',
-      quantity: 1,
-      unit_price: 0,
-    });
+    setNewItem({ product_reference: '', description: '', quantity: 1, unit_price: 0 });
     setAddItemDialogOpen(false);
   };
 
@@ -332,7 +289,7 @@ function PurchaseOrderForm() {
     const item = items[index];
     setNewItem({
       product_reference: item.product_reference || '',
-      description: item.description,
+      description: item.description || '',
       quantity: item.quantity,
       unit_price: item.unit_price,
     });
@@ -342,17 +299,6 @@ function PurchaseOrderForm() {
 
   const handleDeleteItem = (index) => {
     setItems(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleProductSelect = (product) => {
-    if (product) {
-      setNewItem(prev => ({
-        ...prev,
-        product_reference: product.reference || product.sku || '',
-        description: product.name,
-        unit_price: product.price || product.unit_price || 0,
-      }));
-    }
   };
 
   const handleSubmit = async () => {
@@ -367,9 +313,11 @@ function PurchaseOrderForm() {
         ...formData,
         supplier: formData.supplier.id,
         delivery_warehouse: formData.delivery_warehouse ? formData.delivery_warehouse.id : null,
-        items: items.map(item => ({
+        required_date: formData.required_date || null,
+        expected_delivery_date: formData.expected_delivery_date || null,
+        items: items.map(({ product, total_price, ...item }) => ({
           ...item,
-          product: item.product ? item.product.id : null,
+          product: product?.id ?? null,
         })),
         subtotal,
         tax_amount: taxAmount,
@@ -935,19 +883,18 @@ function PurchaseOrderForm() {
       </Grid>
       </Box>
 
-      {/* Add/Edit Item Dialog with Product Selection and Creation */}
-      <ProductSelectionDialog
+      {/* Dialog ajout/édition ligne BdC — saisie libre, pas de catalogue obligatoire */}
+      <POItemDialog
         open={addItemDialogOpen}
-        onClose={() => setAddItemDialogOpen(false)}
-        products={products}
-        newItem={newItem}
-        setNewItem={setNewItem}
-        onAddItem={handleAddItem}
-        onCreateProduct={() => setProductDialogOpen(true)}
-        editingItemIndex={editingItemIndex}
+        onClose={() => { setAddItemDialogOpen(false); setEditingItemIndex(-1); }}
+        item={newItem}
+        setItem={setNewItem}
+        onConfirm={handleAddItem}
+        editingIndex={editingItemIndex}
+        supplierId={formData.supplier?.id}
       />
 
-      {/* Quick Create Dialogs */}
+      {/* Quick Create Supplier */}
       <QuickCreateDialog
         open={supplierDialogOpen}
         onClose={() => setSupplierDialogOpen(false)}
@@ -956,17 +903,6 @@ function PurchaseOrderForm() {
         fields={supplierFields}
         createFunction={suppliersAPI.quickCreate}
         title={t('purchaseOrders:dialogs.quickCreateSupplier')}
-      />
-
-      <QuickCreateDialog
-        open={productDialogOpen}
-        onClose={() => setProductDialogOpen(false)}
-        onSuccess={handleProductCreated}
-        entityType="product"
-        fields={getProductFields(suppliers, formData.supplier)}
-        createFunction={productsAPI.quickCreate}
-        title={t('purchaseOrders:dialogs.quickCreateProduct')}
-        contextData={formData.supplier ? { supplier_id: formData.supplier.id } : {}}
       />
     </Box>
   );

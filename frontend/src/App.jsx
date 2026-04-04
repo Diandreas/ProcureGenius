@@ -11,6 +11,7 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
 import { fetchSettings } from './store/slices/settingsSlice';
 import { HeaderProvider } from './contexts/HeaderContext';
+import { AccountingHelpProvider } from './contexts/AccountingHelpContext';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -719,6 +720,7 @@ function App() {
                 <ModuleProvider>
                   <SharedElementProvider>
                     <HeaderProvider>
+                      <AccountingHelpProvider>
                       <AdSenseScript />
                       {onboardingChecked && (
                         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -837,6 +839,7 @@ function App() {
                       <PWAInstallPrompt />
                     </Router>
                       )}
+                      </AccountingHelpProvider>
                     </HeaderProvider>
                   </SharedElementProvider>
                 </ModuleProvider>

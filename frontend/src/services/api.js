@@ -176,6 +176,9 @@ export const dashboardAPI = {
 };
 
 // AI Chat API
+// Purchase Orders Price History
+export const getPriceHistory = (params) => api.get('/purchase-orders/items/price-history/', { params });
+
 export const aiChatAPI = {
   sendMessage: (data) => api.post('/ai/chat/', data),
   generateText: (prompt, maxTokens = 4000) => api.post('/ai/generate/', { prompt, max_tokens: maxTokens }),
@@ -202,6 +205,7 @@ export const aiChatAPI = {
   unsubscribePush: (endpoint) => api.post('/ai/push/unsubscribe/', { endpoint }),
   getPushPreferences: () => api.get('/ai/push/preferences/'),
   updatePushPreferences: (prefs) => api.put('/ai/push/preferences/', prefs),
+  getSmartAlerts: () => api.get('/ai/smart-alerts/'),
   getImportReviews: (status = 'pending') => api.get(`/ai/import-reviews/?status=${status}`),
   getImportReview: (id) => api.get(`/ai/import-reviews/${id}/`),
   approveImportReview: (id) => api.post(`/ai/import-reviews/${id}/approve/`),
@@ -226,6 +230,7 @@ export const contractsAPI = {
   renew: (id, data) => api.post(`/contracts/${id}/renew/`, data),
   exportPDF: (id, data) => api.post(`/contracts/${id}/pdf-report/`, data, { responseType: 'blob' }),
   exportWord: (id, data) => api.post(`/contracts/${id}/word-report/`, data, { responseType: 'blob' }),
+  sendEmail: (id, data) => api.post(`/contracts/${id}/send-email/`, data),
   extractClauses: (id, contractText, language = 'fr') =>
     api.post(`/contracts/${id}/extract_clauses/`, {
       contract_text: contractText,

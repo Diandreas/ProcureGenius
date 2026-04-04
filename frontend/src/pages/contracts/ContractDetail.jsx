@@ -50,6 +50,7 @@ import {
   Download,
   PictureAsPdf,
   Receipt,
+  Email,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
@@ -89,6 +90,12 @@ function ContractDetail() {
   const [contextData, setContextData] = useState('');
   const [generating, setGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
+
+  // States pour l'envoi d'email
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     dispatch(fetchContract(id));
@@ -269,6 +276,67 @@ function ContractDetail() {
     }
   };
 
+  const handleDirectExportPDF = async () => {
+    try {
+      setGenerating(true);
+      const response = await contractsAPI.exportPDF(id, { template_type: 'contract', generated_content: '' });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `contrat-${currentContract.contract_number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      enqueueSnackbar('Export PDF réussi', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Erreur lors de l\'export PDF', { variant: 'error' });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleDirectExportWord = async () => {
+    try {
+      setGenerating(true);
+      const response = await contractsAPI.exportWord(id, { template_type: 'contract', generated_content: '' });
+      const blob = new Blob([response.data], { type: 'application/msword' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `contrat-${currentContract.contract_number}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      enqueueSnackbar('Export Word réussi', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Erreur lors de l\'export Word', { variant: 'error' });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailRecipient.trim()) {
+      enqueueSnackbar('Email destinataire requis', { variant: 'warning' });
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      await contractsAPI.sendEmail(id, { recipient_email: emailRecipient, message: emailMessage });
+      enqueueSnackbar('Email envoyé avec succès', { variant: 'success' });
+      setEmailDialogOpen(false);
+      setEmailRecipient('');
+      setEmailMessage('');
+    } catch (e) {
+      enqueueSnackbar('Erreur lors de l\'envoi de l\'email', { variant: 'error' });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const getRiskChip = (riskLevel) => {
     const riskConfig = {
       low: { label: t('contracts:risk.low'), color: 'success', icon: <Info /> },
@@ -379,14 +447,6 @@ function ContractDetail() {
                     >
                       {t('contracts:detail.actions.approve')}
                     </Button>
-                    <Button
-                      variant="outlined"
-                      color="secondary"
-                      startIcon={<Description />}
-                      onClick={handleOpenGenerateDialog}
-                    >
-                      Générer depuis un modèle
-                    </Button>
                   </>
                 )}
 
@@ -419,6 +479,36 @@ function ContractDetail() {
                     </Button>
                   </>
                 )}
+
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<PictureAsPdf />}
+                  onClick={handleDirectExportPDF}
+                  disabled={generating}
+                >
+                  PDF
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  startIcon={<Description />}
+                  onClick={handleDirectExportWord}
+                  disabled={generating}
+                >
+                  Word
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  startIcon={<Email />}
+                  onClick={() => {
+                    setEmailRecipient(currentContract.supplier_email || '');
+                    setEmailDialogOpen(true);
+                  }}
+                >
+                  Envoyer par email
+                </Button>
 
                 <Button
                   variant="outlined"
@@ -915,6 +1005,66 @@ function ContractDetail() {
             startIcon={<Psychology />}
           >
             {generating ? 'Génération...' : 'Générer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog envoi email */}
+      <Dialog
+        open={emailDialogOpen}
+        onClose={() => !sendingEmail && setEmailDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Email color="primary" />
+            Envoyer le contrat par email
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              fullWidth
+              label="Email destinataire"
+              type="email"
+              value={emailRecipient}
+              onChange={(e) => setEmailRecipient(e.target.value)}
+              disabled={sendingEmail}
+              required
+              placeholder="client@exemple.com"
+            />
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Message personnalisé (optionnel)"
+              value={emailMessage}
+              onChange={(e) => setEmailMessage(e.target.value)}
+              disabled={sendingEmail}
+              placeholder="Bonjour, veuillez trouver ci-joint le contrat..."
+            />
+            {sendingEmail && (
+              <Box sx={{ mt: 1 }}>
+                <LinearProgress />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                  Envoi en cours...
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEmailDialogOpen(false)} disabled={sendingEmail}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleSendEmail}
+            variant="contained"
+            disabled={sendingEmail || !emailRecipient.trim()}
+            startIcon={<Email />}
+          >
+            {sendingEmail ? 'Envoi...' : 'Envoyer'}
           </Button>
         </DialogActions>
       </Dialog>

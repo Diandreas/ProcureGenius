@@ -6,7 +6,8 @@ from .api_views import (
     DashboardExportView,
     DashboardConfigView,
     SavedDashboardViewsView,
-    AIDashboardGreetingView
+    AIDashboardGreetingView,
+    CashFlowWidgetView,
 )
 from .widget_views import (
     WidgetListView,
@@ -34,6 +35,9 @@ urlpatterns = [
     # Vues sauvegardées
     path('saved-views/', SavedDashboardViewsView.as_view(), name='saved_dashboard_views'),
     path('saved-views/<uuid:view_id>/', SavedDashboardViewsView.as_view(), name='saved_dashboard_view_detail'),
+
+    # Cash Flow Widget (algo pur, sans IA)
+    path('cashflow-widget/', CashFlowWidgetView.as_view(), name='cashflow_widget'),
 
     # Widgets
     path('widgets/', WidgetListView.as_view(), name='widgets_list'),

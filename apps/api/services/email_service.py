@@ -76,6 +76,9 @@ class InvoiceEmailService:
             try:
                 # Générer le PDF avec WeasyPrint (avec langue)
                 pdf_buffer = generate_invoice_pdf_weasy(invoice, template_type, language=language)
+            except Exception as pdf_err:
+                logger.warning(f"WeasyPrint PDF generation failed, falling back: {pdf_err}")
+                pdf_buffer = None
 
             # Préparer l'email avec traductions
             if language == 'en':
@@ -327,7 +330,8 @@ ProcureGenius
                 pdf_filename = f"invoice-{invoice.invoice_number}.pdf"
             else:
                 pdf_filename = f"facture-{invoice.invoice_number}.pdf"
-            email.attach(pdf_filename, pdf_buffer.getvalue(), 'application/pdf')
+            if pdf_buffer is not None:
+                email.attach(pdf_filename, pdf_buffer.getvalue(), 'application/pdf')
 
             # Envoyer l'email
             email.send(fail_silently=False)
@@ -467,13 +471,16 @@ class PurchaseOrderEmailService:
             try:
                 # Générer le PDF
                 pdf_buffer = PurchaseOrderEmailService._generate_purchase_order_pdf(po, template_type)
+            except Exception as pdf_err:
+                logger.warning(f"PO PDF generation failed: {pdf_err}")
+                pdf_buffer = None
 
-                # Préparer l'email avec traductions
-                if language == 'en':
-                    subject = f"Purchase Order {po.po_number} - ProcureGenius"
-                else:
-                    subject = f"Bon de Commande {po.po_number} - ProcureGenius"
-            
+            # Préparer l'email avec traductions
+            if language == 'en':
+                subject = f"Purchase Order {po.po_number} - ProcureGenius"
+            else:
+                subject = f"Bon de Commande {po.po_number} - ProcureGenius"
+
             # Utiliser le message personnalisé si fourni
             if custom_message:
                 html_body = f"""
@@ -702,8 +709,9 @@ ProcureGenius
             email.body = html_body
 
             # Attacher le PDF
-            pdf_filename = f"bon-commande-{po.po_number}.pdf"
-            email.attach(pdf_filename, pdf_buffer.getvalue(), 'application/pdf')
+            if pdf_buffer is not None:
+                pdf_filename = f"bon-commande-{po.po_number}.pdf"
+                email.attach(pdf_filename, pdf_buffer.getvalue(), 'application/pdf')
 
             # Envoyer l'email
             email.send(fail_silently=False)
@@ -736,3 +744,90 @@ ProcureGenius
                 'success': False,
                 'message': f'{error_message}: {str(e)}'
             }
+
+
+class ContractEmailService:
+    """Service pour envoyer un contrat par email avec PDF en pièce jointe"""
+
+    @staticmethod
+    def send_contract_email(contract, recipient_email, custom_message=None, language='fr'):
+        try:
+            organization = getattr(contract, 'organization', None)
+            original_settings = None
+            if organization:
+                try:
+                    original_settings = configure_django_email_settings(organization)
+                except Exception:
+                    pass
+
+            translation.activate(language)
+
+            # Générer le PDF du contrat via WeasyPrint
+            pdf_buffer = None
+            try:
+                from apps.api.services.report_generator_weasy import generate_contract_report_pdf
+                pdf_buffer = generate_contract_report_pdf(contract, None, 'contract', None)
+            except Exception as pdf_err:
+                logger.warning(f"Contract PDF generation failed: {pdf_err}")
+
+            if language == 'en':
+                subject = f"Contract {contract.contract_number} - {contract.title}"
+                greeting = "Hello"
+                regards = "Best regards"
+            else:
+                subject = f"Contrat {contract.contract_number} - {contract.title}"
+                greeting = "Bonjour"
+                regards = "Cordialement"
+
+            message_text = custom_message.strip() if custom_message and custom_message.strip() else (
+                f"Veuillez trouver ci-joint le contrat {contract.contract_number}." if language == 'fr'
+                else f"Please find attached contract {contract.contract_number}."
+            )
+
+            html_body = f"""<!DOCTYPE html>
+<html><head><style>
+body{{font-family:Arial,sans-serif;color:#333;line-height:1.6}}
+.container{{max-width:600px;margin:0 auto;padding:20px}}
+.content{{background:#f9f9f9;padding:30px;border-radius:8px}}
+.footer{{text-align:center;margin-top:30px;padding-top:20px;border-top:2px solid #eee;color:#666;font-size:.9em}}
+</style></head><body><div class="container"><div class="content">
+<p>{greeting},</p>
+<div style="white-space:pre-wrap">{message_text}</div>
+<p><br><strong>Réf. :</strong> {contract.contract_number} — {contract.title}</p>
+<div class="footer"><p><strong>ProcureGenius</strong></p></div>
+</div></div></body></html>"""
+
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@procuregenius.com')
+            if organization:
+                try:
+                    from apps.accounts.models import EmailConfiguration
+                    cfg = EmailConfiguration.objects.filter(organization=organization).first()
+                    if cfg:
+                        from_email = f"{cfg.default_from_name} <{cfg.default_from_email}>"
+                except Exception:
+                    pass
+
+            email = EmailMessage(subject=subject, body=html_body, from_email=from_email, to=[recipient_email])
+            email.content_subtype = 'html'
+
+            if pdf_buffer is not None:
+                filename = f"contrat-{contract.contract_number}.pdf" if language == 'fr' else f"contract-{contract.contract_number}.pdf"
+                email.attach(filename, pdf_buffer.getvalue(), 'application/pdf')
+
+            email.send(fail_silently=False)
+            logger.info(f"Contract {contract.contract_number} sent to {recipient_email}")
+            return {'success': True, 'message': 'Email envoyé avec succès'}
+
+        except Exception as e:
+            logger.error(f"ContractEmailService error: {e}", exc_info=True)
+            return {'success': False, 'message': f'Erreur envoi email : {str(e)}'}
+        finally:
+            if original_settings:
+                try:
+                    restore_django_email_settings(original_settings)
+                except Exception:
+                    pass
+            try:
+                translation.deactivate()
+            except Exception:
+                pass

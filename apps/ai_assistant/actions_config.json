@@ -111,6 +111,121 @@
       }
     },
 
+    "create_quote": {
+      "name": "Créer un devis",
+      "description": "Crée un devis pour un client, modifiable et convertible en facture",
+      "icon": "request_quote",
+      "category": "invoices",
+      "required_params": ["client_name"],
+      "optional_params": ["items", "amount", "tax_rate", "discount_percent", "validity_days", "quote_terms"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Devis #{quote_number} créé avec succès !"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/invoices/{id}",
+          "label": "Voir et modifier le devis"
+        },
+        {
+          "type": "quick_action",
+          "label": "Convertir en facture",
+          "action": "convert_quote_to_invoice",
+          "params": {"quote_number": "{quote_number}"}
+        },
+        {
+          "type": "file_action",
+          "label": "Télécharger PDF",
+          "url": "/api/v1/invoices/{id}/pdf/"
+        }
+      ],
+      "ai_prompts": {
+        "extract": "Extrait : nom du client, articles/services avec quantités et prix, remise éventuelle, durée de validité",
+        "confirm": "Créer un devis pour '{client_name}' de {amount}€ ?"
+      }
+    },
+
+    "convert_quote_to_invoice": {
+      "name": "Convertir un devis en facture",
+      "description": "Convertit un devis accepté en facture brouillon",
+      "icon": "swap_horiz",
+      "category": "invoices",
+      "required_params": [],
+      "optional_params": ["quote_number", "quote_id"],
+      "success_actions": [
+        {
+          "type": "notification",
+          "message": "Devis converti en facture #{new_invoice_number} !"
+        },
+        {
+          "type": "redirect_option",
+          "url": "/invoices/{id}",
+          "label": "Voir la facture"
+        }
+      ]
+    },
+
+    "verify_price": {
+      "name": "Vérifier un prix",
+      "description": "Compare un prix avec l'historique interne et le marché",
+      "icon": "price_check",
+      "category": "intelligence",
+      "required_params": ["product_name", "price"],
+      "optional_params": ["context"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "price_verification"
+        }
+      ]
+    },
+
+    "predict_cashflow": {
+      "name": "Prédiction cash flow",
+      "description": "Prédit la trésorerie sur 30/60/90 jours avec actions correctives",
+      "icon": "trending_up",
+      "category": "intelligence",
+      "required_params": [],
+      "optional_params": ["horizon_days"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "cashflow_prediction"
+        }
+      ]
+    },
+
+    "three_way_match": {
+      "name": "Contrôle 3-way matching",
+      "description": "Détecte doublons, écarts et anomalies entre factures et PO",
+      "icon": "fact_check",
+      "category": "intelligence",
+      "required_params": [],
+      "optional_params": ["invoice_number"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "three_way_match"
+        }
+      ]
+    },
+
+    "smart_reminder": {
+      "name": "Relances intelligentes",
+      "description": "Gère les relances clients avec emails adaptés au niveau de retard",
+      "icon": "notifications_active",
+      "category": "invoices",
+      "required_params": [],
+      "optional_params": ["action", "min_days_overdue", "invoice_number"],
+      "success_actions": [
+        {
+          "type": "display_results",
+          "template": "smart_reminder"
+        }
+      ]
+    },
+
     "search_supplier": {
       "name": "Rechercher un fournisseur",
       "description": "Recherche des fournisseurs par nom, email ou contact",
@@ -660,15 +775,24 @@
     ],
     "invoices": [
       "Créer une nouvelle facture",
+      "Créer un devis",
       "Voir les factures impayées",
-      "Envoyer des relances",
+      "Relancer les impayés",
+      "Détecter les doublons",
       "Statistiques de revenus"
     ],
     "purchase_orders": [
       "Créer un bon de commande",
+      "Vérifier un prix",
       "Voir les commandes en attente",
       "Suivre les livraisons",
       "Statistiques d'achats"
+    ],
+    "dashboard": [
+      "Prédiction cash flow",
+      "Factures en retard",
+      "Contrôle 3-way matching",
+      "Analyse de rentabilité"
     ]
   }
 }

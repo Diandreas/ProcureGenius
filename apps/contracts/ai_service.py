@@ -199,45 +199,45 @@ class ContractAIService:
 
     def generate_all_sections(self, contract_type: str, context: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Génère TOUTES les sections d'un contrat, une par une.
-        Retourne la liste des sections avec leur contenu.
-
-        Args:
-            contract_type: Type de contrat (service, purchase, nda, etc.)
-            context: Données du contrat
-
-        Returns:
-            Liste de dicts: [{'section_type': '...', 'title': '...', 'content': '...', 'order': N, 'tokens_used': N}]
+        Génère TOUTES les sections d'un contrat en parallèle (ThreadPoolExecutor).
+        Retourne la liste des sections avec leur contenu, triées par order.
         """
         from .models import CONTRACT_SECTION_DEFINITIONS
+        from concurrent.futures import ThreadPoolExecutor, as_completed
 
         section_defs = CONTRACT_SECTION_DEFINITIONS.get(contract_type, CONTRACT_SECTION_DEFINITIONS['other'])
-        results = []
+        results = [None] * len(section_defs)
         total_tokens = 0
 
-        for i, section_def in enumerate(section_defs):
+        def _generate_one(i, section_def):
             section_type = section_def['type']
             section_title = section_def['title']
-
             try:
                 result = self.generate_section(section_type, section_title, context)
-                results.append({
+                return i, {
                     'section_type': section_type,
                     'title': section_title,
                     'content': result['content'],
                     'order': i + 1,
                     'tokens_used': result['tokens_used'],
-                })
-                total_tokens += result['tokens_used']
+                }
             except Exception as e:
                 logger.error(f"Erreur section {section_type}: {e}")
-                results.append({
+                return i, {
                     'section_type': section_type,
                     'title': section_title,
-                    'content': f'<p><em>Erreur de génération pour cette section. Veuillez la régénérer.</em></p>',
+                    'content': '<p><em>Erreur de génération pour cette section. Veuillez la régénérer.</em></p>',
                     'order': i + 1,
                     'tokens_used': 0,
-                })
+                }
+
+        # Paralléliser avec max 6 workers pour ne pas surcharger l'API Mistral
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = {executor.submit(_generate_one, i, sd): i for i, sd in enumerate(section_defs)}
+            for future in as_completed(futures):
+                i, section_result = future.result()
+                results[i] = section_result
+                total_tokens += section_result['tokens_used']
 
         logger.info(f"Contrat '{contract_type}' généré: {len(results)} sections, {total_tokens} tokens total")
         return results

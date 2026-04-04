@@ -414,3 +414,139 @@ class SavedDashboardViewsView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CashFlowWidgetView(APIView):
+    """
+    Projection de trésorerie 30/60j calculée par ORM pur (sans IA/Mistral).
+    GET /api/v1/analytics/cashflow-widget/?horizon_days=60
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.invoicing.models import Invoice
+        from apps.purchase_orders.models import PurchaseOrder
+        from django.db.models import Sum
+        from decimal import Decimal
+        from datetime import date, timedelta
+
+        org = getattr(request.user, 'organization', None)
+        if not org:
+            return Response({'error': 'Organisation non trouvée'}, status=400)
+
+        horizon_days = int(request.query_params.get('horizon_days', 60))
+        today = date.today()
+
+        # ── Entrées prévues : factures clients non payées ──
+        unpaid_qs = Invoice.objects.filter(
+            created_by__organization=org,
+            status__in=['sent', 'overdue'],
+        ).select_related('client')
+
+        income_items = []
+        total_receivable = Decimal('0')
+        for inv in unpaid_qs:
+            balance = inv.get_balance_due()
+            if balance > 0:
+                total_receivable += balance
+                income_items.append({
+                    'invoice': inv.invoice_number,
+                    'client': inv.client.company_name if inv.client else 'N/A',
+                    'amount': float(balance),
+                    'due_date': inv.due_date.isoformat() if inv.due_date else None,
+                })
+
+        # ── Sorties engagées : PO non reçus ──
+        pending_pos = PurchaseOrder.objects.filter(
+            created_by__organization=org,
+            status__in=['draft', 'pending', 'approved', 'sent'],
+        ).select_related('supplier')
+
+        expense_items = []
+        total_payable = Decimal('0')
+        for po in pending_pos:
+            total_payable += po.total_amount
+            expense_items.append({
+                'po_number': po.po_number,
+                'supplier': po.supplier.name if po.supplier else 'N/A',
+                'amount': float(po.total_amount),
+                'due_date': po.required_date.isoformat() if po.required_date else None,
+            })
+
+        # ── CA mensuel moyen (3 derniers mois) ──
+        three_months_ago = today - timedelta(days=90)
+        paid_total = Invoice.objects.filter(
+            created_by__organization=org,
+            status='paid',
+            created_at__date__gte=three_months_ago,
+        ).aggregate(t=Sum('total_amount'))['t'] or Decimal('0')
+        monthly_avg = float(paid_total / 3)
+
+        # ── Projection horizon 30j ──
+        horizon_30 = today + timedelta(days=30)
+        income_30 = sum(
+            i['amount'] for i in income_items
+            if i['due_date'] and i['due_date'] <= horizon_30.isoformat()
+        )
+        expense_30 = sum(
+            e['amount'] for e in expense_items
+            if e['due_date'] and e['due_date'] <= horizon_30.isoformat()
+        )
+
+        # ── Projection semaine par semaine ──
+        weeks = []
+        week_alerts = []
+        for week_num in range(min(horizon_days // 7 + 1, 12)):
+            w_start = today + timedelta(weeks=week_num)
+            w_end = w_start + timedelta(days=6)
+            w_start_s = w_start.isoformat()
+            w_end_s = w_end.isoformat()
+
+            w_income = sum(
+                i['amount'] for i in income_items
+                if i['due_date'] and w_start_s <= i['due_date'] <= w_end_s
+            )
+            w_expense = sum(
+                e['amount'] for e in expense_items
+                if e['due_date'] and w_start_s <= e['due_date'] <= w_end_s
+            )
+            w_net = w_income - w_expense
+
+            week_entry = {
+                'period': f"{w_start.strftime('%d/%m')}—{w_end.strftime('%d/%m')}",
+                'income': round(w_income, 2),
+                'expenses': round(w_expense, 2),
+                'net': round(w_net, 2),
+                'status': 'positive' if w_net >= 0 else 'negative',
+            }
+            weeks.append(week_entry)
+
+            if w_net < 0:
+                week_alerts.append({
+                    'type': 'warning',
+                    'message': f"Semaine du {w_start.strftime('%d/%m')} : solde négatif prévu ({w_net:,.0f} €)",
+                })
+
+        net_balance = float(total_receivable - total_payable)
+
+        return Response({
+            'summary': {
+                'total_receivable': float(total_receivable),
+                'total_payable': float(total_payable),
+                'net_balance': round(net_balance, 2),
+                'monthly_avg_revenue': round(monthly_avg, 2),
+            },
+            'horizon_30': {
+                'income': round(income_30, 2),
+                'expenses': round(expense_30, 2),
+                'net': round(income_30 - expense_30, 2),
+            },
+            'horizon_60': {
+                'income': float(total_receivable),
+                'expenses': float(total_payable),
+                'net': round(net_balance, 2),
+            },
+            'weeks': weeks,
+            'alerts': week_alerts,
+        })
+

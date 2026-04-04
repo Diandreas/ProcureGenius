@@ -30,22 +30,14 @@ urlpatterns = [
     path('notifications/count/', views.AINotificationsCountView.as_view(), name='notifications_count'),
     path('notifications/<int:notification_id>/mark-read/', views.AINotificationMarkReadView.as_view(), name='notification_mark_read'),
 
-    # Web Push (native browser push)
-    path('push/vapid-key/', views.PushVapidKeyView.as_view(), name='push_vapid_key'),
-    path('push/subscribe/', views.PushSubscribeView.as_view(), name='push_subscribe'),
-    path('push/unsubscribe/', views.PushUnsubscribeView.as_view(), name='push_unsubscribe'),
-    path('push/preferences/', views.NotificationPreferencesView.as_view(), name='push_preferences'),
+    # Smart Alerts (algo pur, sans IA)
+    path('smart-alerts/', views.SmartAlertsView.as_view(), name='smart_alerts'),
 
     # Import Reviews
     path('import-reviews/', views.ImportReviewListView.as_view(), name='import_reviews_list'),
     path('import-reviews/<uuid:review_id>/', views.ImportReviewDetailView.as_view(), name='import_review_detail'),
     path('import-reviews/<uuid:review_id>/approve/', views.ImportReviewApproveView.as_view(), name='import_review_approve'),
     path('import-reviews/<uuid:review_id>/reject/', views.ImportReviewRejectView.as_view(), name='import_review_reject'),
-
-    # Conversations Proactives
-    path('proactive-conversations/', views.ProactiveConversationListView.as_view(), name='proactive_conversations_list'),
-    path('proactive-conversations/<uuid:conversation_id>/accept/', views.ProactiveConversationAcceptView.as_view(), name='proactive_conversation_accept'),
-    path('proactive-conversations/<uuid:conversation_id>/dismiss/', views.ProactiveConversationDismissView.as_view(), name='proactive_conversation_dismiss'),
 
     # Direct text/JSON generation (no tool calling, high max_tokens)
     path('generate/', views.GenerateTextView.as_view(), name='generate_text'),

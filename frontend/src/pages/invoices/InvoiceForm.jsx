@@ -81,7 +81,7 @@ function InvoiceForm() {
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
     tax_rate: 20,
-    status: 'paid'
+    status: 'draft'
   });
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
@@ -137,7 +137,11 @@ function InvoiceForm() {
   const fetchClients = async () => {
     try {
       const response = await clientsAPI.list();
-      setClients(response.data.results || []);
+      const raw = response.data.results || response.data || [];
+      // Déduplique par id au cas où l'API renverrait des doublons
+      const seen = new Set();
+      const unique = raw.filter(c => { if (seen.has(c.id)) return false; seen.add(c.id); return true; });
+      setClients(unique);
     } catch (error) {
       enqueueSnackbar(t('invoices:messages.loadClientsError'), { variant: 'error' });
     }

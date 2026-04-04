@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
@@ -417,6 +418,7 @@ class StockMovement(models.Model):
 class Invoice(models.Model):
     """Facture"""
     STATUS_CHOICES = [
+        ('quote', _('Devis')),
         ('draft', _('Brouillon')),
         ('sent', _('Envoyée')),
         ('paid', _('Payée')),
@@ -454,6 +456,18 @@ class Invoice(models.Model):
     payment_method = models.CharField(max_length=50, blank=True, verbose_name=_("Mode de paiement"))
     currency = models.CharField(max_length=3, default="CAD", verbose_name=_("Devise"))
 
+    # Champs Devis
+    valid_until = models.DateField(null=True, blank=True, verbose_name=_("Devis valable jusqu'au"))
+    quote_terms = models.TextField(blank=True, verbose_name=_("Conditions du devis"))
+    quote_discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_("Remise devis (%)"))
+    converted_from_quote = models.BooleanField(default=False, verbose_name=_("Converti depuis un devis"))
+    quote_accepted_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date d'acceptation du devis"))
+
+    # Relance automatique
+    last_reminder_sent_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière relance envoyée"))
+    reminder_count = models.PositiveIntegerField(default=0, verbose_name=_("Nombre de relances envoyées"))
+    next_reminder_date = models.DateField(null=True, blank=True, verbose_name=_("Prochaine relance prévue"))
+
     class Meta:
         verbose_name = _("Facture")
         verbose_name_plural = _("Factures")
@@ -469,20 +483,20 @@ class Invoice(models.Model):
     def save(self, *args, **kwargs):
         if not self.invoice_number:
             self.invoice_number = self.generate_invoice_number()
-            
+
         is_new = self.pk is None
         super().save(*args, **kwargs)
-        
-        # Gestion des stocks (Batch/Lots)
+
+        # Gestion des stocks (Batch/Lots) — les devis (quote) n'affectent jamais le stock
         if not is_new and self._old_status != self.status:
             # Brouillon -> Envoyée/Payée/En retard
             if self._old_status == 'draft' and self.status in ['sent', 'paid', 'overdue']:
                 self._deduct_stock()
-            
+
             # Envoyée/Payée -> Annulée/Brouillon
             elif self._old_status in ['sent', 'paid', 'overdue'] and self.status in ['cancelled', 'draft']:
                 self._restore_stock()
-                
+
         self._old_status = self.status
 
     def _deduct_stock(self):
@@ -555,26 +569,39 @@ class Invoice(models.Model):
         return base64.b64encode(buffer.getvalue()).decode()
 
     def generate_invoice_number(self):
-        """Génère un numéro de facture unique"""
+        """Génère un numéro de facture ou devis unique"""
         from datetime import datetime
         year = datetime.now().year
         month = datetime.now().month
 
-        # Trouve le prochain numéro disponible
-        last_invoice = Invoice.objects.filter(
-            invoice_number__startswith=f"FAC{year}{month:02d}"
+        prefix = "DEV" if self.status == 'quote' else "FAC"
+
+        last_doc = Invoice.objects.filter(
+            invoice_number__startswith=f"{prefix}{year}{month:02d}"
         ).order_by('-invoice_number').first()
 
-        if last_invoice:
+        if last_doc:
             try:
-                last_number = int(last_invoice.invoice_number[-4:])
+                last_number = int(last_doc.invoice_number[-4:])
                 next_number = last_number + 1
             except ValueError:
                 next_number = 1
         else:
             next_number = 1
 
-        return f"FAC{year}{month:02d}{next_number:04d}"
+        return f"{prefix}{year}{month:02d}{next_number:04d}"
+
+    def convert_quote_to_draft(self):
+        """Convertit un devis accepté en facture brouillon"""
+        if self.status != 'quote':
+            raise ValueError("Seul un devis peut être converti en facture.")
+        self.status = 'draft'
+        self.converted_from_quote = True
+        self.quote_accepted_at = timezone.now()
+        # Générer un nouveau numéro de facture (remplace le DEV par FAC)
+        self.invoice_number = self.generate_invoice_number()
+        self.save()
+        return self
     
     def get_balance_due(self):
         """Calcule le solde restant à payer"""

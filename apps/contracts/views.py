@@ -342,6 +342,28 @@ class ContractViewSet(viewsets.ModelViewSet):
 
 
 
+    @action(detail=True, methods=['post'], url_path='send-email')
+    def send_email(self, request, pk=None):
+        """Envoie le contrat par email avec PDF en pièce jointe"""
+        contract = self.get_object()
+        recipient_email = request.data.get('recipient_email', '').strip()
+        custom_message = request.data.get('message', '')
+        language = request.data.get('language', 'fr')
+
+        if not recipient_email:
+            return Response({'error': 'Email destinataire requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from apps.api.services.email_service import ContractEmailService
+        result = ContractEmailService.send_contract_email(
+            contract=contract,
+            recipient_email=recipient_email,
+            custom_message=custom_message,
+            language=language,
+        )
+        if result['success']:
+            return Response({'message': result['message']})
+        return Response({'error': result['message']}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['get'], url_path='section-definitions')
     def section_definitions(self, request):
         """Retourne les définitions de sections pour un type de contrat donné"""

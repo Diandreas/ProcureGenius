@@ -516,6 +516,13 @@ const QUICK_ACTIONS_CATEGORIES = [
         description: 'Création de factures'
       },
       {
+        id: 'create_quote',
+        title: 'Créer un devis',
+        icon: <Description />,
+        prompt: 'Je veux créer un devis pour un client. Peux-tu m\'aider ?',
+        description: 'Devis clients'
+      },
+      {
         id: 'create_purchase_order',
         title: 'Bon de commande',
         icon: <ShoppingCart />,
@@ -528,6 +535,42 @@ const QUICK_ACTIONS_CATEGORIES = [
         icon: <Business />,
         prompt: 'Je veux ajouter un nouveau fournisseur à mon système. Comment procéder ?',
         description: 'Gestion des fournisseurs'
+      },
+    ]
+  },
+  {
+    id: 'ai_features',
+    label: 'IA Avancée',
+    icon: <TipsAndUpdates />,
+    color: '#8b5cf6',
+    actions: [
+      {
+        id: 'verify_price',
+        title: 'Vérifier un prix',
+        icon: <TrendingUp />,
+        prompt: 'Vérifie le prix du marché pour un produit que je veux acheter.',
+        description: 'Vérification prix marché + historique'
+      },
+      {
+        id: 'three_way_match',
+        title: '3-Way Matching',
+        icon: <CheckCircle />,
+        prompt: 'Fais une vérification 3-way match entre une facture, un bon de commande et une réception.',
+        description: 'Contrôle facture/BdC/réception'
+      },
+      {
+        id: 'smart_reminder',
+        title: 'Relance client',
+        icon: <Notifications />,
+        prompt: 'Je veux envoyer une relance pour une facture impayée. Peux-tu générer un email de relance ?',
+        description: 'Relances intelligentes par niveau'
+      },
+      {
+        id: 'predict_cashflow',
+        title: 'Cash Flow IA',
+        icon: <BarChart />,
+        prompt: 'Fais une analyse prédictive de ma trésorerie pour les 60 prochains jours.',
+        description: 'Projection trésorerie avec conseils'
       },
     ]
   },
@@ -1442,10 +1485,10 @@ function AIChat() {
           <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
             <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' } }}>
               {[
-                { label: '📊 Stats', prompt: 'Montre-moi les statistiques principales' },
-                { label: '📝 Facture', prompt: 'Créer une nouvelle facture' },
-                { label: '📦 Stock', prompt: 'Quels produits sont en rupture de stock ?' },
-                { label: '💡 Optimiser', prompt: 'Quelles optimisations me suggères-tu ?' },
+                { label: '📝 Devis', prompt: 'Je veux créer un devis pour un client' },
+                { label: '🔍 Vérifier prix', prompt: 'Vérifie le prix du marché pour un produit' },
+                { label: '📬 Relancer client', prompt: 'Génère une relance pour une facture impayée' },
+                { label: '💰 Cash Flow', prompt: 'Fais une analyse prédictive de ma trésorerie 60 jours' },
               ].map((chip, idx) => (
                 <Box
                   key={idx}

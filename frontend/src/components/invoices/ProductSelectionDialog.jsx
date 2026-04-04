@@ -27,6 +27,7 @@ import {
 } from '../../utils/productHelpers';
 import useCurrency from '../../hooks/useCurrency';
 import { useTranslation } from 'react-i18next';
+import PriceHistoryHint from '../common/PriceHistoryHint';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -51,6 +52,7 @@ function ProductSelectionDialog({
   onAddItem,
   onCreateProduct,
   editingItemIndex,
+  supplierId,
 }) {
   const { t } = useTranslation(['invoices', 'products', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -332,6 +334,11 @@ function ProductSelectionDialog({
                   }
                   inputProps={{ min: 0, step: 0.01 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+                <PriceHistoryHint
+                  productId={newItem.product?.id}
+                  supplierId={supplierId}
+                  currentPrice={newItem.unit_price}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

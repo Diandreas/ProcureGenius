@@ -392,6 +392,8 @@ class PurchaseOrderItemSerializer(serializers.ModelSerializer):
     """Serializer pour les items de bon de commande"""
     total_price = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True)
+    # product_reference est optionnel en saisie libre (pas de produit catalogue)
+    product_reference = serializers.CharField(required=False, allow_blank=True, default='')
 
     # Permettre la création de produit à la volée
     product_data = serializers.DictField(write_only=True, required=False, help_text="Données pour créer un nouveau produit si nécessaire")
@@ -406,34 +408,35 @@ class PurchaseOrderItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'total_price', 'product_name']
 
     def validate(self, attrs):
-        """Valider qu'un produit est associé ou créé"""
+        """
+        product est optionnel : une description libre suffit pour un BdC fournisseur.
+        La normalisation vers le catalogue se fait à l'arrivage.
+        Si product_data est fourni (legacy), on tente de créer le produit.
+        """
         product = attrs.get('product')
         product_data = attrs.get('product_data')
+        description = attrs.get('description', '').strip()
 
-        # Si ni product ni product_data fournis, erreur
-        if not product and not product_data:
+        # Valider qu'au minimum une description est présente
+        if not product and not product_data and not description:
             raise serializers.ValidationError({
-                'product': "Un produit doit être sélectionné ou créé. Fournissez 'product' ou 'product_data'."
+                'description': "Une description est obligatoire si aucun produit du catalogue n'est sélectionné."
             })
 
-        # Si product_data fourni, créer le produit
+        # Si product_data fourni, tenter de créer ou récupérer le produit
         if product_data:
             from apps.invoicing.models import Product
-            # Valider les champs requis pour créer un produit
             required_fields = ['name', 'price']
             missing_fields = [f for f in required_fields if f not in product_data]
             if missing_fields:
                 raise serializers.ValidationError({
                     'product_data': f"Champs manquants pour créer un produit: {', '.join(missing_fields)}"
                 })
-
-            # Créer le produit
             try:
                 product_data.setdefault('product_type', 'physical')
                 product_data.setdefault('cost_price', product_data.get('price', 0))
                 new_product = Product.objects.create(**product_data)
                 attrs['product'] = new_product
-                # Retirer product_data des attrs pour ne pas le sauvegarder
                 attrs.pop('product_data', None)
             except Exception as e:
                 raise serializers.ValidationError({

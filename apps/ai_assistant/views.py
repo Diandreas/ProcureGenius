@@ -2430,3 +2430,18 @@ class NotificationPreferencesView(APIView):
         prefs.save()
         data = {f: getattr(prefs, f) for f in self.PREF_FIELDS}
         return Response(data)
+
+
+class SmartAlertsView(APIView):
+    """
+    Alertes business calculées par algo pur (sans IA/Mistral).
+    Retourne les alertes triées par priorité pour le widget dashboard.
+    GET /api/v1/ai/smart-alerts/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .smart_alerts_service import SmartAlertsService
+        service = SmartAlertsService(request.user)
+        alerts = service.get_alerts()
+        return Response({'alerts': alerts, 'total': len(alerts)})
