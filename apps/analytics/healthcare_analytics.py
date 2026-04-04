@@ -854,8 +854,8 @@ class EnhancedRevenueAnalyticsView(APIView):
             'surveillance':              'healthcare_services',
             'autres services':           'healthcare_services',
             'medicaments':               'healthcare_pharmacy',
-            'consommables laboratoire':  'healthcare_laboratory',
-            'materiel medical':          'standard',
+            'consommables laboratoire':  'healthcare_pharmacy',
+            'materiel medical':          'healthcare_pharmacy',
         }
         # Consultation détectée aussi via nom produit/description (items sans catégorie)
         CONSULT_KEYWORDS = ['consultation']

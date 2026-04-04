@@ -53,9 +53,9 @@ const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 const ACTIVITY_LABELS = {
   healthcare_consultation: 'Consultation',
   healthcare_laboratory: 'Laboratoire',
-  healthcare_pharmacy: 'Pharmacie — Ordonnance',
+  healthcare_pharmacy: 'Pharmacie & Médicaments',
   healthcare_services: 'Soins / Chirurgie / Hosp.',
-  standard: 'Propharmacie — Vente comptoir',
+  standard: 'Pharmacie & Médicaments',
   subcontracting: 'Sous-traitance Labo',
 };
 const getActivityLabel = (type) => ACTIVITY_LABELS[type] || `Autres (${type || 'non défini'})`;
@@ -165,9 +165,11 @@ const Dashboard = () => {
   const productSaleTotalRevenue = productSaleData?.total_revenue || 0;
 
   // KPIs par type d'activité
-  const pharmacyRevenue = byActivity.find(a => a.activity_type === 'healthcare_pharmacy')?.revenue || 0;
+  // Pharmacie = healthcare_pharmacy + standard (propharmacie comptoir) fusionnés
+  const pharmacyRevenue = (byActivity.find(a => a.activity_type === 'healthcare_pharmacy')?.revenue || 0)
+    + (byActivity.find(a => a.activity_type === 'standard')?.revenue || 0);
   const labRevenue = byActivity.find(a => a.activity_type === 'healthcare_laboratory')?.revenue || 0;
-  const productRevenue = byActivity.find(a => a.activity_type === 'standard')?.revenue || 0;
+  const productRevenue = 0; // fusionné dans pharmacyRevenue
   const servicesRevenue = byActivity.find(a => a.activity_type === 'healthcare_services')?.revenue || 0;
 
   // Soins par catégorie
@@ -400,14 +402,15 @@ const Dashboard = () => {
                   icon={<ScienceIcon />} color="#ef4444" loading={loading} />
               </Grid>
               <Grid item xs={6} md={3}>
+                <StatCard title="CA Pharmacie & Médicaments"
+                  value={loading ? '...' : formatCurrency(pharmacyRevenue)}
+                  icon={<HospitalIcon />} color="#10b981" loading={loading}
+                  subtitle="Ordonnances + vente comptoir" />
+              </Grid>
+              <Grid item xs={6} md={3}>
                 <StatCard title="CA Soins / Chirurgie / Hospit."
                   value={loading ? '...' : formatCurrency(servicesRevenue)}
                   icon={<MedicalIcon />} color="#8b5cf6" loading={loading} />
-              </Grid>
-              <Grid item xs={6} md={3}>
-                <StatCard title="CA Propharmacie comptoir"
-                  value={loading ? '...' : formatCurrency(productRevenue)}
-                  icon={<InventoryIcon />} color="#f59e0b" loading={loading} />
               </Grid>
               <Grid item xs={6} md={3}>
                 <StatCard title="Sous-traitance Labo"
