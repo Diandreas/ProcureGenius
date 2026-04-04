@@ -564,7 +564,8 @@ class ActivityIndicatorsView(APIView):
         except Exception:
             pharmacy_count = 0
 
-        total_medical_acts = num_consultations + lab_orders_count + pharmacy_count
+        # Actes médicaux = pharmacie ordonnance + soins divers (hors consultations et labo comptés séparément)
+        total_medical_acts = pharmacy_count
 
         # ===== INDICATEURS DE PERFORMANCE =====
 

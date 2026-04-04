@@ -262,7 +262,7 @@ const Dashboard = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="Actes Médicaux" value={loading ? '...' : actVol?.medical_acts?.total ?? 0}
                   icon={<AssessmentIcon />} color="#6366f1" loading={loading}
-                  subtitle="Consultations + Examens Labo + Pharmacie" />
+                  subtitle="Pharmacie ordonnance + Soins divers" />
               </Grid>
             </Grid>
 
@@ -354,12 +354,7 @@ const Dashboard = () => {
                   icon={<ScienceIcon />} color="#ef4444" loading={loading} />
               </Grid>
               <Grid item xs={6} md={3}>
-                <StatCard title="CA Pharmacie ordonnance"
-                  value={loading ? '...' : formatCurrency(pharmacyRevenue)}
-                  icon={<HospitalIcon />} color="#10b981" loading={loading} />
-              </Grid>
-              <Grid item xs={6} md={3}>
-                <StatCard title="CA Soins / Chirurgie"
+                <StatCard title="CA Soins / Chirurgie / Hospit."
                   value={loading ? '...' : formatCurrency(servicesRevenue)}
                   icon={<MedicalIcon />} color="#8b5cf6" loading={loading} />
               </Grid>
