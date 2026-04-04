@@ -185,20 +185,27 @@ class DemographicAnalysisView(APIView):
         pharma_qs = PharmacyDispensing.objects.filter(
             organization=organization, status='dispensed', patient__isnull=False
         )
+        # Factures (source principale — inclut tous les actes facturés)
+        invoice_qs = Invoice.objects.filter(
+            created_by__organization=organization
+        ).exclude(invoice_type='credit_note').filter(client__isnull=False)
 
         if start_date:
             lab_qs = lab_qs.filter(order_date__date__gte=start_date)
             consult_qs = consult_qs.filter(consultation_date__date__gte=start_date)
             pharma_qs = pharma_qs.filter(dispensed_at__date__gte=start_date)
+            invoice_qs = invoice_qs.filter(created_at__date__gte=start_date)
         if end_date:
             lab_qs = lab_qs.filter(order_date__date__lte=end_date)
             consult_qs = consult_qs.filter(consultation_date__date__lte=end_date)
             pharma_qs = pharma_qs.filter(dispensed_at__date__lte=end_date)
+            invoice_qs = invoice_qs.filter(created_at__date__lte=end_date)
 
         patient_ids = (
             set(lab_qs.values_list('patient_id', flat=True)) |
             set(consult_qs.values_list('patient_id', flat=True)) |
-            set(pharma_qs.values_list('patient_id', flat=True))
+            set(pharma_qs.values_list('patient_id', flat=True)) |
+            set(invoice_qs.values_list('client_id', flat=True))
         )
 
         # Requêtes démographiques sur les patients uniques
@@ -289,8 +296,12 @@ class RevenueAnalyticsView(APIView):
             avg_amount=Avg('total_price')
         )
 
-        # Consultation module stats (if exists)
-        consultation_queryset = Consultation.objects.filter(organization=organization)
+        # Consultation module stats — uniquement les consultations avec facture payée
+        consultation_queryset = Consultation.objects.filter(
+            organization=organization,
+            status='completed',
+            consultation_invoice__status='paid'
+        )
         if start_date:
             consultation_queryset = consultation_queryset.filter(consultation_date__gte=start_date)
         if end_date:
@@ -476,22 +487,45 @@ class ActivityIndicatorsView(APIView):
 
         # ===== INDICATEURS D'ACTIVITÉ ET DE VOLUME =====
 
-        # N°1: Consultations PAYÉES sur la période (facture payée = acte réalisé et encaissé)
+        # N°1: Consultations PAYÉES sur la période
+        # Source : items de consultation dans les factures payées (toutes types confondus)
+        # — couvre les factures healthcare_consultation ET les factures standard qui incluent l'acte de consultation
+        from apps.invoicing.models import InvoiceItem as InvoiceItemModel, Invoice as InvoiceModel
+        from django.db.models import Q as DQ
+
+        paid_invoices_base = InvoiceModel.objects.filter(
+            created_by__organization=organization,
+            status='paid',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+        ).exclude(invoice_type='credit_note')
+
+        # Items de consultation : produit ou catégorie contient "consultation" (insensible à la casse)
+        # On exclut les items purement fournitures/médicaments dans les factures healthcare_consultation
+        consult_items_qs = InvoiceItemModel.objects.filter(
+            invoice__in=paid_invoices_base
+        ).filter(
+            DQ(product__name__icontains='consultation') |
+            DQ(product__category__name__icontains='consultation') |
+            DQ(description__icontains='consultation')
+        )
+
+        num_consultations = consult_items_qs.count()
+
+        # Timeline : date de la facture
+        consultations_timeline = consult_items_qs.annotate(
+            period_date=TruncDate('invoice__created_at')
+        ).values('period_date').annotate(
+            count=Count('id')
+        ).order_by('period_date')
+
+        # Queryset consultations (pour calculs de durée/attente)
         consultations_queryset = Consultation.objects.filter(
             organization=organization,
             consultation_date__date__gte=start_date,
             consultation_date__date__lte=end_date,
             status='completed',
-            consultation_invoice__status='paid'
         )
-        num_consultations = consultations_queryset.count()
-
-        # Timeline des consultations terminées
-        consultations_timeline = consultations_queryset.annotate(
-            period_date=TruncDate('consultation_date')
-        ).values('period_date').annotate(
-            count=Count('id')
-        ).order_by('period_date')
 
         from apps.accounts.models import Client
 
@@ -588,11 +622,13 @@ class ActivityIndicatorsView(APIView):
             invoice_type='healthcare_consultation'
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        # Chercher les items de consultation dans les factures standard
+        # Chercher les items de consultation dans les factures non-consultation (standard, etc.)
         consultation_items_revenue = float(InvoiceItem.objects.filter(
-            invoice__in=paid_invoices.filter(invoice_type='standard')
+            invoice__in=paid_invoices.exclude(invoice_type='healthcare_consultation')
         ).filter(
-            Q(product__category__name__icontains='Consultation') | Q(product__name__icontains='Consultation')
+            Q(product__category__name__icontains='consultation') |
+            Q(product__name__icontains='consultation') |
+            Q(description__icontains='consultation')
         ).aggregate(total=Sum('total_price'))['total'] or 0)
 
         consultation_revenue = consultation_invoices_revenue + consultation_items_revenue
@@ -671,12 +707,15 @@ class ActivityIndicatorsView(APIView):
         total_patients = len(consult_patient_ids | lab_patient_ids | pharma_patient_ids | invoice_patient_ids)
         avg_cost_per_patient = round(total_revenue / total_patients, 2) if total_patients > 0 else 0
 
-        # Patients récurrents = patients avec >= 2 factures sur la période (fidélité)
+        # Patients récurrents = patients avec des factures sur >= 2 jours différents (fidélité)
+        # On compte les jours distincts de facturation, pas le nombre de factures
         recurring_patients = all_invoices.filter(
             client__isnull=False
-        ).values('client').annotate(
-            inv_count=Count('id')
-        ).filter(inv_count__gte=2).count()
+        ).annotate(
+            invoice_day=TruncDate('created_at')
+        ).values('client', 'invoice_day').distinct().values('client').annotate(
+            day_count=Count('invoice_day', distinct=True)
+        ).filter(day_count__gte=2).count()
 
         # Timeline patients actifs par jour (via toutes les factures émises)
         patients_timeline_qs = all_invoices.filter(

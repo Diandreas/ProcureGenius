@@ -114,6 +114,12 @@ class Command(BaseCommand):
 
         consultations_completed = consultations.filter(status='completed').count()
 
+        # Consultations payées (facture paid) — source de vérité pour les stats financières
+        consultations_paid = consultations.filter(
+            status='completed',
+            consultation_invoice__status='paid'
+        ).count()
+
         # --- Examens de laboratoire ---
         lab_orders = LabOrder.objects.filter(
             organization=org,
@@ -233,7 +239,7 @@ class Command(BaseCommand):
             loss.quantity_abs = abs(loss.quantity)
 
         stats = {
-            'total_consultations': consultations.count(),
+            'total_consultations': consultations_paid,
             'consultations_completed': consultations_completed,
             'total_lab_orders': lab_orders.count(),
             'lab_completed': lab_completed,
