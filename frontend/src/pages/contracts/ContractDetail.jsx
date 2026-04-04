@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -31,8 +32,11 @@ import {
   IconButton,
   Tooltip,
   FormControl,
-  MenuItem
+  MenuItem,
+  Avatar,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   ArrowBack,
   Edit,
@@ -378,72 +382,110 @@ function ContractDetail() {
     return format(new Date(dateString), 'dd MMMM yyyy', { locale: fr });
   };
 
+  const statusColorMap = {
+    draft: '#94a3b8',
+    pending_review: '#f59e0b',
+    pending_approval: '#f59e0b',
+    approved: '#3b82f6',
+    active: '#10b981',
+    expiring_soon: '#f97316',
+    expired: '#ef4444',
+    terminated: '#ef4444',
+    renewed: '#8b5cf6',
+  };
+
+  const statusColor = statusColorMap[currentContract?.status] || '#94a3b8';
+
   if (loading || !currentContract) {
     return <LoadingState message={t('contracts:messages.loading', 'Chargement du contrat...')} />;
   }
 
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+    >
     <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
-      {/* Header - Caché sur mobile (géré par top navbar) */}
-      <Box sx={{ mb: 2, display: { xs: 'none', md: 'block' } }}>
+      {/* Back button */}
+      <Box sx={{ mb: 2 }}>
         <Button
           startIcon={<ArrowBack />}
           onClick={() => navigate('/contracts')}
-          sx={{ mb: 2 }}
+          size="small"
+          sx={{ textTransform: 'none', color: 'text.secondary' }}
         >
-          {t('common:back')}
+          {t('common:back', 'Retour')}
         </Button>
       </Box>
 
-      {/* Actions Mobile - Affiché uniquement sur mobile */}
-      <Box sx={{ mb: 2, display: { xs: 'block', md: 'none' } }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/contracts')}
-            size="small"
-          >
-            {t('common:back')}
-          </Button>
-          <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
-            {currentContract.title}
-          </Typography>
-        </Stack>
-      </Box>
-
       <Grid container spacing={3}>
-        {/* En-tête */}
+        {/* En-tête hero */}
         <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
-                <Box>
-                  <Typography variant="h5" component="h1" gutterBottom sx={{ display: { xs: 'none', md: 'block' } }}>
-                    {currentContract.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' } }}>
-                    {currentContract.contract_number} • {currentContract.supplier_name}
-                  </Typography>
+          <Card
+            sx={{
+              borderRadius: 3,
+              overflow: 'hidden',
+              border: `1px solid ${alpha(statusColor, 0.25)}`,
+              boxShadow: `0 4px 24px ${alpha(statusColor, 0.1)}`,
+              position: 'relative',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0, left: 0, right: 0,
+                height: 4,
+                background: `linear-gradient(90deg, ${statusColor}, ${alpha(statusColor, 0.4)})`,
+              },
+            }}
+          >
+            <CardContent sx={{ pt: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, gap: 2, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
+                  <Avatar
+                    sx={{
+                      width: 52, height: 52,
+                      bgcolor: alpha(statusColor, 0.12),
+                      color: statusColor,
+                      borderRadius: 2,
+                      border: `2px solid ${alpha(statusColor, 0.2)}`,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Description sx={{ fontSize: 26 }} />
+                  </Avatar>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.3, mb: 0.25 }}>
+                      {currentContract.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.82rem' }}>
+                      {currentContract.contract_number}
+                      {currentContract.supplier_name && ` · ${currentContract.supplier_name}`}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Box>{getStatusChip(currentContract.status)}</Box>
+                <Box sx={{ flexShrink: 0 }}>{getStatusChip(currentContract.status)}</Box>
               </Box>
 
-              <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: 2, borderColor: alpha(statusColor, 0.15) }} />
 
-              <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ gap: 1 }}>
                 {currentContract.status === 'draft' && (
                   <>
                     <Button
                       variant="outlined"
+                      size="small"
                       startIcon={<Edit />}
                       onClick={() => navigate(`/contracts/${id}/edit`)}
+                      sx={{ borderRadius: 2, textTransform: 'none' }}
                     >
                       {t('contracts:detail.actions.edit')}
                     </Button>
                     <Button
                       variant="contained"
+                      size="small"
                       startIcon={<CheckCircle />}
                       onClick={handleApprove}
+                      sx={{ borderRadius: 2, textTransform: 'none' }}
                     >
                       {t('contracts:detail.actions.approve')}
                     </Button>
@@ -453,8 +495,10 @@ function ContractDetail() {
                 {currentContract.status === 'approved' && (
                   <Button
                     variant="contained"
+                    size="small"
                     startIcon={<PlayArrow />}
                     onClick={handleActivate}
+                    sx={{ borderRadius: 2, textTransform: 'none', bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
                   >
                     {t('contracts:detail.actions.activate')}
                   </Button>
@@ -464,68 +508,84 @@ function ContractDetail() {
                   <>
                     <Button
                       variant="outlined"
+                      size="small"
                       startIcon={<Autorenew />}
                       onClick={() => navigate(`/contracts/${id}/renew`)}
+                      sx={{ borderRadius: 2, textTransform: 'none' }}
                     >
                       {t('contracts:detail.actions.renew')}
                     </Button>
                     <Button
                       variant="outlined"
+                      size="small"
                       color="error"
                       startIcon={<Stop />}
                       onClick={handleTerminate}
+                      sx={{ borderRadius: 2, textTransform: 'none' }}
                     >
                       {t('contracts:detail.actions.terminate')}
                     </Button>
                   </>
                 )}
 
+                <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+
                 <Button
                   variant="outlined"
+                  size="small"
                   color="error"
                   startIcon={<PictureAsPdf />}
                   onClick={handleDirectExportPDF}
                   disabled={generating}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   PDF
                 </Button>
 
                 <Button
                   variant="outlined"
+                  size="small"
                   startIcon={<Description />}
                   onClick={handleDirectExportWord}
                   disabled={generating}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Word
                 </Button>
 
                 <Button
                   variant="outlined"
+                  size="small"
                   startIcon={<Email />}
                   onClick={() => {
                     setEmailRecipient(currentContract.supplier_email || '');
                     setEmailDialogOpen(true);
                   }}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  Envoyer par email
+                  Envoyer
                 </Button>
 
                 <Button
                   variant="outlined"
+                  size="small"
                   color="primary"
                   startIcon={<Receipt />}
                   onClick={() => navigate(`/invoices/new?contractId=${id}`)}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  {t('contracts:detail.actions.createInvoice', 'Créer une facture')}
+                  {t('contracts:detail.actions.createInvoice', 'Créer facture')}
                 </Button>
 
                 <Button
                   variant="contained"
+                  size="small"
                   color="secondary"
                   startIcon={<Psychology />}
                   onClick={() => setExtractDialogOpen(true)}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  {t('contracts:detail.actions.extractClauses')}
+                  {t('contracts:detail.actions.extractClauses', 'Analyser IA')}
                 </Button>
               </Stack>
             </CardContent>
@@ -618,73 +678,82 @@ function ContractDetail() {
 
         {/* Informations clés */}
         <Grid item xs={12} md={4}>
-          <Card>
+          <Card sx={{ borderRadius: 2, border: `1px solid ${alpha(statusColor, 0.15)}` }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {t('contracts:detail.sections.keyInformation')}
+              <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Description sx={{ fontSize: 18, color: statusColor }} />
+                {t('contracts:detail.sections.keyInformation', 'Informations clés')}
               </Typography>
 
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {t('contracts:detail.sections.contractType')}
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {currentContract.contract_type === 'purchase' ? t('contracts:detail.sections.purchase') :
-                   currentContract.contract_type === 'service' ? t('contracts:detail.sections.service') :
-                   currentContract.contract_type}
-                </Typography>
-              </Box>
-
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {t('contracts:detail.sections.startDate')}
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {formatDate(currentContract.start_date)}
-                </Typography>
-              </Box>
-
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {t('contracts:detail.sections.endDate')}
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {formatDate(currentContract.end_date)}
-                </Typography>
-              </Box>
-
-              {currentContract.days_until_expiry !== null && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {t('contracts:detail.sections.daysUntilExpiry')}
+              {/* Valeur totale mise en avant */}
+              {currentContract.total_value > 0 && (
+                <Box sx={{ bgcolor: alpha(statusColor, 0.08), borderRadius: 2, p: 1.5, mb: 2, textAlign: 'center', border: `1px solid ${alpha(statusColor, 0.15)}` }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.25 }}>
+                    {t('contracts:detail.sections.totalValue', 'Valeur totale')}
                   </Typography>
-                  <Typography
-                    variant="h5"
-                    color={currentContract.days_until_expiry < 30 ? 'error' : 'primary'}
-                  >
-                    {currentContract.days_until_expiry}
+                  <Typography variant="h5" fontWeight={700} sx={{ color: statusColor }}>
+                    {parseFloat(currentContract.total_value).toLocaleString()} {currentContract.currency}
                   </Typography>
                 </Box>
               )}
 
-              <Divider sx={{ my: 2 }} />
+              <Stack spacing={1.5}>
+                {[
+                  {
+                    label: t('contracts:detail.sections.contractType', 'Type'),
+                    value: currentContract.contract_type === 'purchase' ? t('contracts:detail.sections.purchase', 'Achat') :
+                           currentContract.contract_type === 'service' ? t('contracts:detail.sections.service', 'Service') :
+                           currentContract.contract_type,
+                  },
+                  { label: t('contracts:detail.sections.startDate', 'Début'), value: formatDate(currentContract.start_date) },
+                  { label: t('contracts:detail.sections.endDate', 'Fin'), value: formatDate(currentContract.end_date) },
+                ].map((row, i) => row.value && row.value !== '-' && (
+                  <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5, borderBottom: `1px solid ${alpha(statusColor, 0.08)}` }}>
+                    <Typography variant="caption" color="text.secondary">{row.label}</Typography>
+                    <Typography variant="body2" fontWeight={500}>{row.value}</Typography>
+                  </Box>
+                ))}
 
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {t('contracts:detail.sections.totalValue')}
-                </Typography>
-                <Typography variant="h5" color="primary">
-                  {parseFloat(currentContract.total_value).toLocaleString()} {currentContract.currency}
-                </Typography>
-              </Box>
+                {currentContract.days_until_expiry !== null && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('contracts:detail.sections.daysUntilExpiry', 'Jours restants')}
+                    </Typography>
+                    <Chip
+                      label={`${currentContract.days_until_expiry}j`}
+                      size="small"
+                      sx={{
+                        bgcolor: alpha(currentContract.days_until_expiry < 30 ? '#ef4444' : '#10b981', 0.12),
+                        color: currentContract.days_until_expiry < 30 ? '#ef4444' : '#10b981',
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                      }}
+                    />
+                  </Box>
+                )}
+              </Stack>
 
               {currentContract.auto_renewal && (
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  {t('contracts:detail.sections.autoRenewal')}
+                <Alert severity="info" sx={{ mt: 2, borderRadius: 2, py: 0.5 }}>
+                  {t('contracts:detail.sections.autoRenewal', 'Renouvellement automatique')}
                 </Alert>
               )}
             </CardContent>
           </Card>
+
+          {/* Risque */}
+          {currentContract.risk_level && (
+            <Card sx={{ mt: 2, borderRadius: 2 }}>
+              <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('contracts:detail.riskLevel', 'Niveau de risque')}
+                  </Typography>
+                  {getRiskChip(currentContract.risk_level)}
+                </Box>
+              </CardContent>
+            </Card>
+          )}
         </Grid>
 
         {/* Clauses extraites par IA */}
@@ -1069,6 +1138,7 @@ function ContractDetail() {
         </DialogActions>
       </Dialog>
     </Box>
+    </motion.div>
   );
 }
 

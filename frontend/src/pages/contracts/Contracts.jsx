@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box, Card, CardContent, Typography, IconButton, TextField, InputAdornment,
   FormControl, InputLabel, Select, MenuItem, Grid, Chip, Avatar, Stack,
-  CircularProgress, useMediaQuery, useTheme, Tabs, Tab, Button,
+  Button, Divider, useMediaQuery, useTheme, Tabs, Tab,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
   Search, FilterList, Description, AttachMoney, CheckCircle, Schedule,
+  Gavel, TrendingUp, Warning, Edit,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { contractsAPI } from '../../services/api';
@@ -15,9 +17,20 @@ import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
-import ErrorState from '../../components/ErrorState';
 import ContractTemplatesTab from '../../components/ContractTemplatesTab';
 import { useHeader } from '../../contexts/HeaderContext';
+
+const STATUS_COLOR_MAP = {
+  draft: '#94a3b8',
+  pending_review: '#f59e0b',
+  pending_approval: '#f59e0b',
+  approved: '#3b82f6',
+  active: '#10b981',
+  expiring_soon: '#f97316',
+  expired: '#ef4444',
+  terminated: '#ef4444',
+  renewed: '#8b5cf6',
+};
 
 function Contracts() {
   const { t } = useTranslation(['contracts', 'common']);
@@ -27,7 +40,7 @@ function Contracts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState(0); // 0: Contrats, 1: Modèles
+  const [activeTab, setActiveTab] = useState(0);
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -49,10 +62,9 @@ function Contracts() {
     }
   };
 
-  // Set the page header via Context
   useEffect(() => {
     setPageHeader({
-      title: t('contracts:title', t('navigation:menu.contracts')),
+      title: t('contracts:title', 'Contrats'),
       actions: (
         <Button
           variant="contained"
@@ -72,19 +84,19 @@ function Contracts() {
       )
     });
     return () => setPageHeader({ title: '', actions: null });
-  }, [t, navigate, theme.palette.primary, setPageHeader]);
-
-  const getStatusColor = (status) => {
-    const colors = { draft: 'default', active: 'success', expired: 'error', cancelled: 'error' };
-    return colors[status] || 'default';
-  };
+  }, [t, navigate, theme.palette.primary.main, setPageHeader]);
 
   const getStatusLabel = (status) => {
     const labels = {
-      draft: t('contracts:status.draft'),
-      active: t('contracts:status.active'),
-      expired: t('contracts:status.expired'),
-      cancelled: t('contracts:status.terminated'),
+      draft: t('contracts:status.draft', 'Brouillon'),
+      pending_review: t('contracts:contractStatus.pending_review', 'En révision'),
+      pending_approval: t('contracts:contractStatus.pending_approval', 'En approbation'),
+      approved: t('contracts:status.approved', 'Approuvé'),
+      active: t('contracts:status.active', 'Actif'),
+      expiring_soon: t('contracts:contractStatus.expiring_soon', 'Expire bientôt'),
+      expired: t('contracts:status.expired', 'Expiré'),
+      terminated: t('contracts:status.terminated', 'Résilié'),
+      renewed: t('contracts:contractStatus.renewed', 'Renouvelé'),
     };
     return labels[status] || status;
   };
@@ -92,7 +104,8 @@ function Contracts() {
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = !searchTerm ||
       contract.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contract.contract_number?.toLowerCase().includes(searchTerm.toLowerCase());
+      contract.contract_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !statusFilter || contract.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -101,112 +114,152 @@ function Contracts() {
   const activeContracts = contracts.filter(c => c.status === 'active').length;
   const expiring = contracts.filter(c => {
     if (!c.end_date) return false;
-    const end = new Date(c.end_date);
-    const now = new Date();
-    const diff = (end - now) / (1000 * 60 * 60 * 24);
+    const diff = (new Date(c.end_date) - new Date()) / (1000 * 60 * 60 * 24);
     return diff > 0 && diff <= 30;
   }).length;
   const totalValue = contracts.reduce((sum, c) => sum + (c.total_value || 0), 0);
 
-  const ContractCard = ({ contract }) => (
-    <Card
-      onClick={() => navigate(`/contracts/${contract.id}`)}
-      sx={{
-        cursor: 'pointer',
-        height: '100%',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.2s',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-          transform: 'translateY(-2px)',
-        },
-      }}
-    >
-      <CardContent sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <Avatar
-            sx={{
-              width: isMobile ? 48 : 56,
-              height: isMobile ? 48 : 56,
-              bgcolor: 'primary.main',
-              borderRadius: 1,
-            }}
-          >
-            <Description />
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 600,
-                mb: 0.5,
-                fontSize: isMobile ? '0.875rem' : '0.95rem',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-              }}
-            >
-              {contract.title}
-            </Typography>
-            {contract.contract_number && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: '0.75rem', display: 'block' }}
+  const kpiCards = [
+    {
+      label: t('contracts:labels.totalContracts', 'Total'),
+      value: totalContracts,
+      icon: <Description />,
+      color: theme.palette.primary.main,
+    },
+    {
+      label: t('contracts:labels.activeContracts', 'Actifs'),
+      value: activeContracts,
+      icon: <CheckCircle />,
+      color: '#10b981',
+    },
+    {
+      label: t('contracts:labels.expiringSoon', 'Expire ≤ 30j'),
+      value: expiring,
+      icon: <Warning />,
+      color: '#f97316',
+    },
+    {
+      label: t('contracts:labels.totalValue', 'Valeur totale'),
+      value: formatCurrency(totalValue),
+      icon: <AttachMoney />,
+      color: '#3b82f6',
+      isAmount: true,
+    },
+  ];
+
+  const ContractRow = ({ contract, index, isLast }) => {
+    const statusColor = STATUS_COLOR_MAP[contract.status] || '#94a3b8';
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, delay: index * 0.03 }}
+      >
+        <Box
+          onClick={() => navigate(`/contracts/${contract.id}`)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            px: isMobile ? 1.5 : 2.5,
+            py: isMobile ? 1.25 : 1,
+            cursor: 'pointer',
+            borderBottom: isLast ? 'none' : `1px solid ${alpha(theme.palette.divider, 0.35)}`,
+            borderLeft: `3px solid ${statusColor}`,
+            transition: 'background 0.15s ease',
+            '&:hover': {
+              bgcolor: alpha(theme.palette.action.hover, 0.5),
+              '& .contract-actions': { opacity: 1 },
+            },
+            minHeight: isMobile ? 52 : 48,
+          }}
+        >
+          {isMobile ? (
+            <>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem', mb: 0.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {contract.title}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
+                  {contract.contract_number}{contract.supplier_name ? ` · ${contract.supplier_name}` : ''}
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'right', flexShrink: 0, ml: 1 }}>
+                {contract.total_value > 0 && (
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.82rem' }}>
+                    {formatCurrency(contract.total_value)}
+                  </Typography>
+                )}
+                <Chip
+                  label={getStatusLabel(contract.status)}
+                  size="small"
+                  sx={{ height: 16, fontSize: '0.58rem', mt: 0.25, bgcolor: alpha(statusColor, 0.12), color: statusColor, border: 'none' }}
+                />
+              </Box>
+            </>
+          ) : (
+            <>
+              {/* Numéro */}
+              <Box sx={{ width: 140, flexShrink: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem', color: 'text.primary', fontFamily: 'monospace' }}>
+                  {contract.contract_number || '—'}
+                </Typography>
+              </Box>
+              {/* Titre + fournisseur */}
+              <Box sx={{ flex: 1, minWidth: 0, pr: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.825rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {contract.title}
+                </Typography>
+                {contract.supplier_name && (
+                  <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>
+                    {contract.supplier_name}
+                  </Typography>
+                )}
+              </Box>
+              {/* Montant */}
+              <Box sx={{ width: 120, textAlign: 'right', flexShrink: 0, pr: 2 }}>
+                {contract.total_value > 0 && (
+                  <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.875rem' }}>
+                    {formatCurrency(contract.total_value)}
+                  </Typography>
+                )}
+              </Box>
+              {/* Statut */}
+              <Box sx={{ width: 120, flexShrink: 0, pr: 2 }}>
+                <Chip
+                  label={getStatusLabel(contract.status)}
+                  size="small"
+                  sx={{ height: 20, fontSize: '0.68rem', bgcolor: alpha(statusColor, 0.1), color: statusColor, border: `1px solid ${alpha(statusColor, 0.2)}` }}
+                />
+              </Box>
+              {/* Date fin */}
+              <Box sx={{ width: 100, flexShrink: 0, pr: 2 }}>
+                {contract.end_date && (
+                  <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>
+                    {formatDate(contract.end_date)}
+                  </Typography>
+                )}
+              </Box>
+              {/* Actions */}
+              <Box
+                className="contract-actions"
+                sx={{ opacity: 0, transition: 'opacity 0.15s', display: 'flex', gap: 0.5, flexShrink: 0 }}
+                onClick={e => e.stopPropagation()}
               >
-                {contract.contract_number}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-
-        {contract.total_value > 0 && (
-          <Box
-            sx={{
-              bgcolor: 'success.50',
-              borderRadius: 1,
-              p: 1,
-              mb: 1.5,
-              textAlign: 'center',
-            }}
-          >
-            <Typography
-              variant="h6"
-              color="success.main"
-              sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
-            >
-              {formatCurrency(contract.total_value)}
-            </Typography>
-          </Box>
-        )}
-
-        <Stack spacing={0.75}>
-          {contract.end_date && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                {t('contracts:labels.endDate')}: {formatDate(contract.end_date)}
-              </Typography>
-            </Box>
+                <IconButton
+                  size="small"
+                  onClick={() => navigate(`/contracts/${contract.id}/edit`)}
+                  sx={{ bgcolor: alpha(theme.palette.primary.main, 0.08), color: 'primary.main', width: 28, height: 28 }}
+                >
+                  <Edit sx={{ fontSize: 14 }} />
+                </IconButton>
+              </Box>
+            </>
           )}
-        </Stack>
-
-        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip
-            label={getStatusLabel(contract.status)}
-            size="small"
-            color={getStatusColor(contract.status)}
-            sx={{ fontSize: '0.7rem', height: 20 }}
-          />
         </Box>
-      </CardContent>
-    </Card>
-  );
+      </motion.div>
+    );
+  };
 
   if (loading) {
     return <LoadingState message={t('contracts:messages.loading', 'Chargement des contrats...')} />;
@@ -214,10 +267,10 @@ function Contracts() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-      <Tabs 
-        value={activeTab} 
-        onChange={(e, val) => setActiveTab(val)} 
-        sx={{ mb: 3 }}
+      <Tabs
+        value={activeTab}
+        onChange={(e, val) => setActiveTab(val)}
+        sx={{ mb: 3, '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}
       >
         <Tab label="Contrats" />
         <Tab label="Modèles" />
@@ -225,167 +278,158 @@ function Contracts() {
 
       {activeTab === 0 && (
         <Box>
-          <Box sx={{ mb: 3 }}>
-            <Grid container spacing={isMobile ? 1 : 2}>
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'primary.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Description sx={{ fontSize: isMobile ? 20 : 24, color: 'primary.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="primary">
-                      {totalContracts}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('contracts:labels.totalContracts')}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+          {/* KPI Cards */}
+          <Grid container spacing={isMobile ? 1.5 : 2} sx={{ mb: 3 }}>
+            {kpiCards.map((kpi, i) => (
+              <Grid item xs={6} sm={3} key={i}>
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: i * 0.06 }}
+                >
+                  <Card
+                    sx={{
+                      borderRadius: 2,
+                      border: `1px solid ${alpha(kpi.color, 0.2)}`,
+                      background: `linear-gradient(135deg, ${alpha(kpi.color, 0.06)} 0%, transparent 100%)`,
+                      boxShadow: `0 2px 12px ${alpha(kpi.color, 0.08)}`,
+                    }}
+                  >
+                    <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Avatar sx={{ width: isMobile ? 32 : 40, height: isMobile ? 32 : 40, bgcolor: alpha(kpi.color, 0.12), color: kpi.color, borderRadius: 1.5 }}>
+                          {React.cloneElement(kpi.icon, { sx: { fontSize: isMobile ? 18 : 22 } })}
+                        </Avatar>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            variant={isMobile ? 'subtitle1' : 'h5'}
+                            fontWeight="bold"
+                            sx={{ color: kpi.color, fontSize: kpi.isAmount ? (isMobile ? '0.85rem' : '1.1rem') : undefined, lineHeight: 1.2 }}
+                          >
+                            {kpi.value}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                            {kpi.label}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
           </Grid>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'success.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <CheckCircle sx={{ fontSize: isMobile ? 20 : 24, color: 'success.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="success.main">
-                      {activeContracts}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('contracts:labels.activeContracts')}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+          {/* Barre recherche + filtres */}
+          <Card sx={{ mb: 2, borderRadius: 2, border: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
+            <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
+              <Stack spacing={1.5}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder={t('contracts:search.placeholder', 'Rechercher un contrat...')}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search sx={{ fontSize: 18, color: 'text.disabled' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  />
+                  <IconButton
+                    onClick={() => setShowFilters(!showFilters)}
+                    sx={{
+                      borderRadius: 2,
+                      bgcolor: showFilters ? 'primary.main' : alpha(theme.palette.action.hover, 0.5),
+                      color: showFilters ? 'white' : 'inherit',
+                      '&:hover': { bgcolor: showFilters ? 'primary.dark' : alpha(theme.palette.action.hover, 0.8) },
+                    }}
+                  >
+                    <FilterList />
+                  </IconButton>
+                </Box>
 
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'warning.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Schedule sx={{ fontSize: isMobile ? 20 : 24, color: 'warning.main' }} />
-                  <Box>
-                    <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" color="warning.main">
-                      {expiring}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('contracts:labels.expiringSoon')}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={6} sm={3}>
-            <Card sx={{ borderRadius: 1, bgcolor: 'info.50' }}>
-              <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <AttachMoney sx={{ fontSize: isMobile ? 20 : 24, color: 'info.main' }} />
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography
-                      variant={isMobile ? 'subtitle2' : 'h6'}
-                      fontWeight="bold"
-                      color="info.main"
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontSize: isMobile ? '0.9rem' : '1.25rem',
-                      }}
-                    >
-                      {formatCurrency(totalValue)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('contracts:labels.totalValue')}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
-
-      <Card sx={{ mb: 3, borderRadius: 1 }}>
-        <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-          <Stack spacing={2}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder={t('contracts:search.placeholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 1 } }}
-              />
-              <IconButton
-                onClick={() => setShowFilters(!showFilters)}
-                sx={{
-                  bgcolor: showFilters ? 'primary.main' : 'transparent',
-                  color: showFilters ? 'white' : 'inherit',
-                  '&:hover': {
-                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
-                  },
-                }}
-              >
-                <FilterList />
-              </IconButton>
-            </Box>
-
-            {showFilters && (
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{t('contracts:labels.status')}</InputLabel>
+                {showFilters && (
+                  <FormControl size="small" sx={{ maxWidth: 220 }}>
+                    <InputLabel>{t('contracts:labels.status', 'Statut')}</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label={t('contracts:labels.status')}
-                      sx={{ borderRadius: 1 }}
+                      label={t('contracts:labels.status', 'Statut')}
+                      sx={{ borderRadius: 2 }}
                     >
-                      <MenuItem value="">{t('contracts:filters.all')}</MenuItem>
-                      <MenuItem value="draft">{t('contracts:status.draft')}</MenuItem>
-                      <MenuItem value="active">{t('contracts:status.active')}</MenuItem>
-                      <MenuItem value="expired">{t('contracts:status.expired')}</MenuItem>
-                      <MenuItem value="cancelled">{t('contracts:status.terminated')}</MenuItem>
+                      <MenuItem value="">{t('contracts:filters.all', 'Tous')}</MenuItem>
+                      <MenuItem value="draft">{t('contracts:status.draft', 'Brouillon')}</MenuItem>
+                      <MenuItem value="approved">{t('contracts:status.approved', 'Approuvé')}</MenuItem>
+                      <MenuItem value="active">{t('contracts:status.active', 'Actif')}</MenuItem>
+                      <MenuItem value="expiring_soon">Expire bientôt</MenuItem>
+                      <MenuItem value="expired">{t('contracts:status.expired', 'Expiré')}</MenuItem>
+                      <MenuItem value="terminated">{t('contracts:status.terminated', 'Résilié')}</MenuItem>
                     </Select>
                   </FormControl>
-                </Grid>
-              </Grid>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
 
-      {filteredContracts.length === 0 ? (
-        <EmptyState
-          title={t('contracts:labels.noContracts')}
-          description={t('contracts:labels.noContractsDescription')}
-          actionLabel={t('contracts:newContract')}
-          onAction={() => navigate('/contracts/new')}
-        />
-      ) : (
-        <Grid container spacing={isMobile ? 2 : 3}>
-          {filteredContracts.map((contract) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={contract.id}>
-              <ContractCard contract={contract} />
-            </Grid>
-          ))}
-        </Grid>
-      )}
-      </Box>
+          {/* Liste */}
+          {filteredContracts.length === 0 ? (
+            <EmptyState
+              title={t('contracts:labels.noContracts', 'Aucun contrat')}
+              description={t('contracts:labels.noContractsDescription', 'Créez votre premier contrat')}
+              actionLabel={t('contracts:newContract', 'Nouveau contrat')}
+              onAction={() => navigate('/contracts/new')}
+            />
+          ) : (
+            <Card sx={{ borderRadius: 2, border: `1px solid ${alpha(theme.palette.divider, 0.5)}`, overflow: 'hidden' }}>
+              {/* Header desktop */}
+              {!isMobile && (
+                <Box sx={{ display: 'flex', alignItems: 'center', px: 2.5, py: 1, bgcolor: alpha(theme.palette.action.hover, 0.3), borderBottom: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
+                  <Box sx={{ width: 140, flexShrink: 0 }}>
+                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                      Numéro
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, pr: 2 }}>
+                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                      Titre / Fournisseur
+                    </Typography>
+                  </Box>
+                  <Box sx={{ width: 120, textAlign: 'right', pr: 2 }}>
+                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                      Montant
+                    </Typography>
+                  </Box>
+                  <Box sx={{ width: 120, pr: 2 }}>
+                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                      Statut
+                    </Typography>
+                  </Box>
+                  <Box sx={{ width: 100, pr: 2 }}>
+                    <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: 0.5 }}>
+                      Fin
+                    </Typography>
+                  </Box>
+                  <Box sx={{ width: 40 }} />
+                </Box>
+              )}
+              <AnimatePresence>
+                {filteredContracts.map((contract, index) => (
+                  <ContractRow
+                    key={contract.id}
+                    contract={contract}
+                    index={index}
+                    isLast={index === filteredContracts.length - 1}
+                  />
+                ))}
+              </AnimatePresence>
+            </Card>
+          )}
+        </Box>
       )}
 
       {activeTab === 1 && (

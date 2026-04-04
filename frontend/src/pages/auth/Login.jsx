@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion } from 'framer-motion';
 import {
   Box,
   Paper,
@@ -42,6 +43,11 @@ function Login() {
 
   return (
     <Container component="main" maxWidth="xs">
+      <motion.div
+        initial={{ opacity: 0, y: 32, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+      >
       <Box
         sx={{
           marginTop: 8,
@@ -107,6 +113,7 @@ function Login() {
           </Box>
         </Paper>
       </Box>
+      </motion.div>
     </Container>
   );
 }
