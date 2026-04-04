@@ -503,9 +503,8 @@ class ActivityIndicatorsView(APIView):
         consult_items_qs = InvoiceItemModel.objects.filter(
             invoice__in=paid_base
         ).filter(
-            DQ(product__name__icontains='consultation') |
-            DQ(product__category__name__icontains='consultation') |
-            DQ(description__icontains='consultation')
+            DQ(product__category__name__iexact="Consultations") |
+            DQ(description__icontains="Consultation M")
         )
 
         num_consultations = consult_items_qs.count()
@@ -617,9 +616,8 @@ class ActivityIndicatorsView(APIView):
         consultation_revenue = float(InvoiceItem.objects.filter(
             invoice__in=paid_invoices
         ).filter(
-            Q(product__name__icontains='consultation') |
-            Q(product__category__name__icontains='consultation') |
-            Q(description__icontains='consultation')
+            Q(product__category__name__iexact="Consultations") |
+            Q(description__icontains="Consultation M")
         ).aggregate(total=Sum('total_price'))['total'] or 0)
 
         # CA labo = toutes les factures healthcare_laboratory payées
@@ -892,8 +890,9 @@ class EnhancedRevenueAnalyticsView(APIView):
                 (item.product.name if item.product else None) or item.description or ''
             ).lower()
 
-            # Détecter consultation via catégorie OU nom produit/description
-            if any(k in cat_lower for k in CONSULT_KEYWORDS) or any(k in prod_name for k in CONSULT_KEYWORDS):
+            # Détecter consultation : catégorie exacte "Consultations" OU description "Consultation M"
+            is_consult = (cat_lower == 'consultations') or ('consultation m' in prod_name)
+            if is_consult:
                 _add_activity('healthcare_consultation', item.total_price)
                 continue
 
@@ -1119,9 +1118,8 @@ class ServiceRevenueAnalyticsView(APIView):
         if invoice_type_filter == 'healthcare_consultation':
             # Consultation : items contenant "consultation" dans toutes les factures
             queryset = queryset.filter(
-                Q(product__name__icontains='consultation') |
-                Q(product__category__name__icontains='consultation') |
-                Q(description__icontains='consultation')
+                Q(product__category__name__iexact="Consultations") |
+                Q(description__icontains="Consultation M")
             )
         elif invoice_type_filter == 'healthcare_pharmacy':
             # Pharmacie : factures healthcare_pharmacy + items médicaments/matériel dans standard
@@ -1145,8 +1143,8 @@ class ServiceRevenueAnalyticsView(APIView):
                     Q(invoice__invoice_type='healthcare_services') |
                     (Q(invoice__invoice_type='standard') & cat_q)
                 ).exclude(
-                    Q(product__name__icontains='consultation') |
-                    Q(product__category__name__icontains='consultation')
+                    Q(product__category__name__iexact='Consultations') |
+                    Q(description__icontains='Consultation M')
                 )
             else:
                 queryset = queryset.filter(invoice__invoice_type='healthcare_services')
@@ -1159,8 +1157,8 @@ class ServiceRevenueAnalyticsView(APIView):
             queryset = queryset.filter(
                 invoice__invoice_type='standard'
             ).filter(product__isnull=False).exclude(cat_q).exclude(
-                Q(product__name__icontains='consultation') |
-                Q(description__icontains='consultation')
+                Q(product__category__name__iexact='Consultations') |
+                Q(description__icontains='Consultation M')
             )
         elif invoice_type_filter:
             queryset = queryset.filter(invoice__invoice_type=invoice_type_filter)

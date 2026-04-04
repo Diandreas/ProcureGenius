@@ -463,6 +463,7 @@ function InvoiceDetail() {
               </IconButton>
             </span>
           </Tooltip>
+          {isAdmin && (
           <IconButton
             size="small"
             onClick={handleEdit}
@@ -483,6 +484,7 @@ function InvoiceDetail() {
           >
             <Edit sx={{ fontSize: '1.1rem' }} />
           </IconButton>
+          )}
           {invoice.status === 'draft' && (
             <IconButton
               size="small"
@@ -600,6 +602,7 @@ Cordialement`
               </Button>
             </span>
           </Tooltip>
+          {isAdmin && (
           <Button
             variant="outlined"
             startIcon={<Edit />}
@@ -608,6 +611,7 @@ Cordialement`
           >
             {t('invoices:buttons.edit')}
           </Button>
+          )}
           <IconButton
             onClick={(e) => setAnchorEl(e.currentTarget)}
             sx={{
@@ -1086,6 +1090,7 @@ Cordialement`
                       </Typography>
                     </Box>
                   </Box>
+                  {isAdmin && (
                   <Button
                     fullWidth
                     variant="outlined"
@@ -1095,6 +1100,7 @@ Cordialement`
                   >
                     {t('invoices:buttons.linkClient')}
                   </Button>
+                  )}
                 </CardContent>
               </Card>
             )}
