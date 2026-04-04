@@ -1110,11 +1110,25 @@ class ServiceRevenueAnalyticsView(APIView):
             queryset = queryset.filter(product_id=service_id)
         if category_id:
             queryset = queryset.filter(product__category_id=category_id)
-        if invoice_type_filter:
+
+        if invoice_type_filter == 'healthcare_consultation':
+            # Consultation : items dont le produit ou la description contient "consultation"
+            # dans TOUTES les factures (certaines consultations sont facturées en "standard")
+            queryset = queryset.filter(
+                Q(product__name__icontains='consultation') |
+                Q(product__category__name__icontains='consultation') |
+                Q(description__icontains='consultation')
+            )
+        elif invoice_type_filter == 'standard':
+            # Propharmacie : factures standard, exclure les items consultation et les items sans produit
+            queryset = queryset.filter(
+                invoice__invoice_type='standard'
+            ).filter(product__isnull=False).exclude(
+                Q(product__name__icontains='consultation') |
+                Q(product__category__name__icontains='consultation')
+            )
+        elif invoice_type_filter:
             queryset = queryset.filter(invoice__invoice_type=invoice_type_filter)
-        # For physical product sales (propharmacie), exclude description-only items (no product FK)
-        if invoice_type_filter == 'standard':
-            queryset = queryset.filter(product__isnull=False)
 
         # === Revenue by service/product ===
         by_service = queryset.values(
