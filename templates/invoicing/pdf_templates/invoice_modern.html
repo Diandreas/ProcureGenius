@@ -468,10 +468,10 @@
             <td style="width: 4%;"></td>
             {% if client %}
             <td class="card">
-                <div class="card-title">Informations client</div>
+                <div class="card-title">{% if is_subcontractor %}Laboratoire Sous-traitant{% else %}Informations client{% endif %}</div>
                 <div class="card-content">
                     <strong>{{ client.name }}</strong><br>
-                    {% if client.email %}{{ client.email }}<br>{% endif %}
+                    {% if client.email %}{{ client.email }}<br>{% else %}Aucun email<br>{% endif %}
                     {% if client.address %}{{ client.address }}{% endif %}
                 </div>
             </td>

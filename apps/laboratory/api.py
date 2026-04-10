@@ -1463,20 +1463,23 @@ class SubcontractorBatchOrderView(APIView):
     Crée plusieurs commandes labo pour les patients d'un sous-traitant.
     - Auto-crée un Client interne pour chaque SubcontractorPatient si besoin
     - Status initial = sample_collected (échantillons déjà prélevés)
-    - Auto-génère les factures
+    - Auto-génère les factures (1 item par examen par patient)
 
     Body: {
         rows: [{subcontractor_patient_id, test_ids, priority, clinical_notes}],
-        payment_method: 'cash'
+        payment_method: 'cash',
+        payment_mode: 'immediate' | 'deferred'  — défaut: 'immediate'
     }
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, subcontractor_id):
         from apps.accounts.models import Client
-        from apps.invoicing.models import Invoice, InvoiceItem
+        from apps.invoicing.models import Invoice, InvoiceItem, Payment
         from decimal import Decimal
         from django.utils import timezone
+        from django.utils.timezone import now as tz_now
+        from django.db import transaction
 
         org = request.user.organization
         try:
@@ -1486,6 +1489,7 @@ class SubcontractorBatchOrderView(APIView):
 
         rows = request.data.get('rows', [])
         payment_method = request.data.get('payment_method', 'cash')
+        payment_mode = request.data.get('payment_mode', 'immediate')  # 'immediate' | 'deferred'
 
         if not rows:
             return Response({'error': 'Aucune ligne fournie'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1510,7 +1514,7 @@ class SubcontractorBatchOrderView(APIView):
         success = []
         errors = []
         batch_total = Decimal('0')
-        invoice_items_data = []  # [(description, unit_price)]
+        invoice_items_data = []  # [{description, unit_price, order_id}]
 
         for row in rows:
             sub_patient_id = row.get('subcontractor_patient_id')
@@ -1542,7 +1546,9 @@ class SubcontractorBatchOrderView(APIView):
                     registration_source='external',
                 )
                 sub_patient.client = client
-                sub_patient.save(update_fields=['client'])
+                # On sauvegarde directement sans passer par le save() override
+                # pour éviter une boucle inutile (le client vient d'être créé)
+                SubcontractorPatient.objects.filter(pk=sub_patient.pk).update(client=client)
 
             # Fetch tests
             tests = list(LabTest.objects.filter(id__in=test_ids, organization=org, is_active=True))
@@ -1564,7 +1570,6 @@ class SubcontractorBatchOrderView(APIView):
                 )
 
                 row_total = Decimal('0')
-                test_names = []
                 for test in tests:
                     item_price = sub_prices.get(test.id, test.price)
                     LabOrderItem.objects.create(
@@ -1574,21 +1579,17 @@ class SubcontractorBatchOrderView(APIView):
                         discount=Decimal('0'),
                     )
                     row_total += item_price
-                    test_names.append(test.name)
+
+                    # 1 ligne de facture par examen par patient
+                    invoice_items_data.append({
+                        'description': f"{sub_patient.full_name} — {test.name}",
+                        'unit_price': item_price,
+                        'order_id': str(order.id),
+                    })
 
                 order.total_price = row_total
                 order.save(update_fields=['total_price'])
                 batch_total += row_total
-
-                # Collect line for the batch invoice
-                invoice_items_data.append({
-                    'description': f"{sub_patient.full_name} — {', '.join(test_names)}",
-                    'unit_price': row_total,
-                    'order_id': str(order.id),
-                    'order_number': order.order_number,
-                    'patient': sub_patient.full_name,
-                    'total': float(row_total),
-                })
 
                 success.append({
                     'patient': sub_patient.full_name,
@@ -1600,35 +1601,56 @@ class SubcontractorBatchOrderView(APIView):
             except Exception as e:
                 errors.append({'patient': sub_patient.full_name, 'error': str(e)})
 
-        # Create ONE batch invoice for the subcontractor
+        # Créer ONE batch invoice pour le sous-traitant
         batch_invoice_id = None
         if invoice_items_data:
             try:
-                from django.utils.timezone import now as tz_now
-                batch_invoice = Invoice.objects.create(
-                    organization=org,
-                    client=sub_client,
-                    invoice_type='healthcare_laboratory',
-                    created_by=request.user,
-                    title=f"Sous-traitance — {subcontractor.name} — {tz_now().strftime('%d/%m/%Y')}",
-                    description=f"Dépôt d'échantillons du {tz_now().strftime('%d/%m/%Y')} — {len(invoice_items_data)} patient(s)",
-                    due_date=tz_now().date(),
-                    status='paid',
-                    currency='XAF',
-                    payment_method=payment_method,
-                    subtotal=batch_total,
-                    tax_amount=Decimal('0'),
-                    total_amount=batch_total,
-                )
-                for item in invoice_items_data:
-                    InvoiceItem.objects.create(
-                        invoice=batch_invoice,
-                        description=item['description'],
-                        quantity=1,
-                        unit_price=item['unit_price'],
-                        total_price=item['unit_price'],
+                with transaction.atomic():
+                    invoice_status = 'paid' if payment_mode == 'immediate' else 'sent'
+
+                    batch_invoice = Invoice.objects.create(
+                        organization=org,
+                        client=sub_client,
+                        invoice_type='healthcare_laboratory',
+                        created_by=request.user,
+                        title=f"Sous-traitance — {subcontractor.name} — {tz_now().strftime('%d/%m/%Y')}",
+                        description=f"Dépôt d'échantillons du {tz_now().strftime('%d/%m/%Y')} — {len(success)} patient(s)",
+                        due_date=tz_now().date(),
+                        status=invoice_status,
+                        currency='XAF',
+                        payment_method=payment_method,
+                        subtotal=batch_total,
+                        tax_amount=Decimal('0'),
+                        total_amount=batch_total,
+                        is_subcontractor_invoice=True,
+                        subcontractor=subcontractor,
                     )
-                batch_invoice_id = str(batch_invoice.id)
+
+                    for item in invoice_items_data:
+                        InvoiceItem.objects.create(
+                            invoice=batch_invoice,
+                            description=item['description'],
+                            quantity=1,
+                            unit_price=item['unit_price'],
+                            total_price=item['unit_price'],
+                        )
+
+                    # Lier les LabOrders à la batch_invoice
+                    order_ids = [s['order_id'] for s in success]
+                    LabOrder.objects.filter(id__in=order_ids).update(lab_invoice=batch_invoice)
+
+                    # Si paiement immédiat → créer un Payment daté d'aujourd'hui
+                    if payment_mode == 'immediate':
+                        Payment.objects.create(
+                            invoice=batch_invoice,
+                            amount=batch_total,
+                            payment_date=tz_now().date(),
+                            payment_method=payment_method,
+                            created_by=request.user,
+                            status='success',
+                        )
+
+                    batch_invoice_id = str(batch_invoice.id)
             except Exception as e:
                 pass  # Invoice failure doesn't block orders
 
@@ -1638,3 +1660,4 @@ class SubcontractorBatchOrderView(APIView):
             'batch_invoice_id': batch_invoice_id,
             'batch_total': float(batch_total),
         })
+

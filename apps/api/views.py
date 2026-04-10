@@ -2558,8 +2558,16 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 status='sent',
                 due_date__lt=timezone.now().date()
             )
-        
+
+        # Filtre sous-traitance : ?is_subcontractor=true|false
+        is_subcontractor_param = self.request.query_params.get('is_subcontractor')
+        if is_subcontractor_param is not None:
+            queryset = queryset.filter(
+                is_subcontractor_invoice=(is_subcontractor_param.lower() == 'true')
+            )
+
         return queryset
+
     
     @action(detail=True, methods=['post'])
     def add_item(self, request, pk=None):

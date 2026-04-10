@@ -763,6 +763,22 @@ class Invoice(models.Model):
         verbose_name=_("Annulé par")
     )
 
+    # Sous-traitance
+    is_subcontractor_invoice = models.BooleanField(
+        default=False,
+        verbose_name=_("Facture sous-traitance"),
+        help_text=_("Indique que cette facture correspond à un dépôt de sous-traitance groupé")
+    )
+    subcontractor = models.ForeignKey(
+        'laboratory.SubcontractorLab',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='invoices',
+        verbose_name=_("Laboratoire sous-traitant"),
+        help_text=_("Laboratoire sous-traitant à l'origine de cette facture batch")
+    )
+
     class Meta:
         verbose_name = _("Facture")
         verbose_name_plural = _("Factures")

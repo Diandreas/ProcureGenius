@@ -1,4 +1,4 @@
-﻿{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
+{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
@@ -89,7 +89,7 @@
                         {% endif %}
                     </div>
                 </div>
-                {% if client %}<div class="sidebar-section"><div class="sidebar-title">Client</div><div class="sidebar-content"><p><strong>{{ client.name }}</strong></p>{% if client.email %}<p>{{ client.email }}</p>{% endif %}{% if client.address %}<p>{{ client.address }}</p>{% endif %}</div></div>{% endif %}
+                {% if client %}<div class="sidebar-section"><div class="sidebar-title">{% if is_subcontractor %}Laboratoire Sous-traitant{% else %}Client{% endif %}</div><div class="sidebar-content"><p><strong>{{ client.name }}</strong></p>{% if client.email %}<p>{{ client.email }}</p>{% else %}<p>Aucun email</p>{% endif %}{% if client.address %}<p>{{ client.address }}</p>{% endif %}</div></div>{% endif %}
                 {% if qr_code_base64 %}<div class="sidebar-qr"><img src="{{ qr_code_base64 }}" alt="QR Code"><div class="qr-text">Code de vérification</div></div>{% endif %}
             </td>
             <td class="main-content">

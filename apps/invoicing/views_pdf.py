@@ -169,8 +169,16 @@ else:
 
             # Ajouter le client
             context['client'] = invoice.client if hasattr(invoice, 'client') else None
-
-            # Ajouter le type de template pour styling conditionnel
+            
+            # Ajouter le flag sous-traitant
+            is_subcontractor = False
+            if hasattr(invoice, 'is_subcontractor') and invoice.is_subcontractor:
+                is_subcontractor = True
+            elif hasattr(invoice, 'lab_orders') and invoice.lab_orders.exists():
+                first_order = invoice.lab_orders.first()
+                if hasattr(first_order, 'subcontractor') and first_order.subcontractor is not None:
+                    is_subcontractor = True
+            context['is_subcontractor'] = is_subcontractor
             context['template_type'] = self.request.GET.get('template', 'modern')
 
             return context

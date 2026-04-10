@@ -83,9 +83,9 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
 
         ${invoiceData.client ? `
         <div class="section">
-          <div class="section-title">Client</div>
+          <div class="section-title">${invoiceData.is_subcontractor_invoice ? 'Laboratoire Sous-traitant' : 'Client'}</div>
           <div><strong>${invoiceData.client.name}</strong></div>
-          <div>${invoiceData.client.email}</div>
+          <div>${invoiceData.client.email || 'Aucun email'}</div>
         </div>
         ` : ''}
 

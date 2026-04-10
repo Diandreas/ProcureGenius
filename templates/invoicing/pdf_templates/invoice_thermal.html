@@ -196,7 +196,7 @@
     <!-- Client (optionnel) -->
     {% if client %}
     <div class="client-section">
-        <div class="client-label">Client:</div>
+        <div class="client-label">{% if is_subcontractor %}Laboratoire Sous-traitant:{% else %}Client:{% endif %}</div>
         <div>{{ client.name }}</div>
     </div>
     {% endif %}

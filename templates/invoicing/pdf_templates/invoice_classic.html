@@ -1,4 +1,4 @@
-﻿{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
+{% load i18n %}{% load invoice_filters %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
@@ -87,7 +87,7 @@
     <div class="invoice-title"><h1>FACTURE</h1><div class="invoice-number">{{ invoice.invoice_number }}</div></div>
     <div class="info-grid">
         <div class="info-box"><h3>Détails de la facture</h3><div class="content"><strong>{% if invoice.title %}{{ invoice.title }}{% else %}Sans titre{% endif %}</strong>{% if invoice.description %}{{ invoice.description }}<br>{% endif %}{% if issue_date %}Date d'émission: {{ issue_date|date:"d/m/Y" }}{% endif %}</div></div>
-        {% if client %}<div class="info-box"><h3>Client</h3><div class="content"><strong>{{ client.name }}</strong>{% if client.email %}{{ client.email }}<br>{% endif %}{% if client.address %}{{ client.address }}{% endif %}</div></div>{% endif %}
+        {% if client %}<div class="info-box"><h3>{% if is_subcontractor %}Laboratoire Sous-traitant{% else %}Client{% endif %}</h3><div class="content"><strong>{{ client.name }}</strong><br>{% if client.email %}{{ client.email }}<br>{% else %}Aucun email<br>{% endif %}{% if client.address %}{{ client.address }}{% endif %}</div></div>{% endif %}
     </div>
     <table>
         <thead><tr><th>Référence</th><th>Description</th><th class="text-center">Qté</th><th class="text-right">Prix unitaire</th><th class="text-right">Total</th></tr></thead>

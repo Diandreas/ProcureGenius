@@ -4,7 +4,7 @@ import {
     Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     IconButton, Divider, Stack, CircularProgress, Alert, Tooltip,
     Select, MenuItem, FormControl, InputLabel, Dialog, DialogTitle,
-    DialogContent, DialogActions,
+    DialogContent, DialogActions, ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import {
     Add as AddIcon, Delete as DeleteIcon, Send as SendIcon,
@@ -12,6 +12,8 @@ import {
     ContentCopy as CopyIcon, Science as ScienceIcon,
     PersonAdd as PersonAddIcon,
     Receipt as InvoiceIcon,
+    Payment as PaymentIcon,
+    CreditCard as DeferredIcon,
 } from '@mui/icons-material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -23,7 +25,7 @@ const fmt = v => new Intl.NumberFormat('fr-FR').format(v || 0);
 // --- Quick patient creation dialog ---
 const NewPatientDialog = ({ open, onClose, onCreated, subcontractorId, initialName = '' }) => {
     const { enqueueSnackbar } = useSnackbar();
-    const [form, setForm] = useState({ first_name: '', last_name: '', gender: '' });
+    const [form, setForm] = useState({ first_name: '', last_name: '', gender: '', date_of_birth: '', age: '' });
     const [saving, setSaving] = useState(false);
     const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -31,7 +33,7 @@ const NewPatientDialog = ({ open, onClose, onCreated, subcontractorId, initialNa
         if (open) {
             // Split "NOM Prénom" — first word = last_name, rest = first_name
             const parts = initialName.trim().split(/\s+/);
-            setForm({ last_name: parts[0] || '', first_name: parts.slice(1).join(' '), gender: '' });
+            setForm({ last_name: parts[0] || '', first_name: parts.slice(1).join(' '), gender: '', date_of_birth: '', age: '' });
         }
     }, [open, initialName]);
 
@@ -42,17 +44,25 @@ const NewPatientDialog = ({ open, onClose, onCreated, subcontractorId, initialNa
         }
         setSaving(true);
         try {
-            const patient = await laboratoryAPI.createSubcontractorPatient(subcontractorId, form);
+            const payload = {
+                first_name: form.first_name.trim(),
+                last_name: form.last_name.trim(),
+                gender: form.gender || '',
+            };
+            if (form.date_of_birth) payload.date_of_birth = form.date_of_birth;
+            if (form.age && !form.date_of_birth) payload.age = parseInt(form.age, 10);
+
+            const patient = await laboratoryAPI.createSubcontractorPatient(subcontractorId, payload);
             enqueueSnackbar('Patient créé', { variant: 'success' });
             onCreated(patient);
             onClose();
-            setForm({ first_name: '', last_name: '', gender: '' });
+            setForm({ first_name: '', last_name: '', gender: '', date_of_birth: '', age: '' });
         } catch { enqueueSnackbar('Erreur lors de la création', { variant: 'error' }); }
         finally { setSaving(false); }
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle>Nouveau patient</DialogTitle>
             <DialogContent>
                 <Stack spacing={2} mt={1}>
@@ -68,6 +78,32 @@ const NewPatientDialog = ({ open, onClose, onCreated, subcontractorId, initialNa
                             <MenuItem value="F">Féminin</MenuItem>
                         </Select>
                     </FormControl>
+                    <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                            <TextField
+                                label="Date de naissance"
+                                type="date"
+                                value={form.date_of_birth}
+                                onChange={e => f('date_of_birth', e.target.value)}
+                                fullWidth
+                                InputLabelProps={{ shrink: true }}
+                                helperText="Format AAAA-MM-JJ"
+                            />
+                        </Grid>
+                        <Grid item xs={6}>
+                            <TextField
+                                label="Âge"
+                                type="number"
+                                value={form.age}
+                                onChange={e => f('age', e.target.value)}
+                                fullWidth
+                                placeholder="Si DDN inconnue"
+                                helperText="Utilisé si pas de DDN"
+                                disabled={!!form.date_of_birth}
+                                inputProps={{ min: 0, max: 120 }}
+                            />
+                        </Grid>
+                    </Grid>
                 </Stack>
             </DialogContent>
             <DialogActions>
@@ -135,7 +171,7 @@ const PatientRow = ({ row, index, patients, testsWithPrices, onUpdate, onRemove,
                     {row.patient && (
                         <Typography variant="caption" color="text.secondary" sx={{ pl: 0.5 }}>
                             {row.patient.gender === 'M' ? '♂' : row.patient.gender === 'F' ? '♀' : ''}
-                            {row.patient.date_of_birth ? ` · ${row.patient.date_of_birth}` : ''}
+                            {row.patient.resolved_age != null ? ` · ${row.patient.resolved_age} ans` : (row.patient.date_of_birth ? ` · ${row.patient.date_of_birth}` : '')}
                         </Typography>
                     )}
                 </Stack>
@@ -230,6 +266,7 @@ const SubcontractorOrderBatch = () => {
     const [patients, setPatients] = useState([]);
     const [rows, setRows] = useState([emptyRow(), emptyRow(), emptyRow()]);
     const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [paymentMode, setPaymentMode] = useState('immediate'); // 'immediate' | 'deferred'
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [results, setResults] = useState(null);
@@ -317,6 +354,7 @@ const SubcontractorOrderBatch = () => {
                     clinical_notes: r.clinical_notes || '',
                 })),
                 payment_method: paymentMethod,
+                payment_mode: paymentMode,
             });
             setResults(result);
             if (result.success?.length > 0) {
@@ -342,12 +380,15 @@ const SubcontractorOrderBatch = () => {
 
                 {/* Single batch invoice button */}
                 {results.batch_invoice_id && (
-                    <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'primary.light', borderRadius: 2, mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: paymentMode === 'deferred' ? 'warning.light' : 'primary.light', borderRadius: 2, mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Box>
                             <Typography fontWeight="700">Facture globale sous-traitance</Typography>
                             <Typography variant="body2" color="text.secondary">
                                 Total : {fmt(results.batch_total)} XAF — {results.success?.length} patient(s)
                             </Typography>
+                            {paymentMode === 'deferred' && (
+                                <Chip label="Crédit différé — à encaisser" color="warning" size="small" sx={{ mt: 0.5 }} />
+                            )}
                         </Box>
                         <Button
                             variant="contained"
@@ -449,7 +490,7 @@ const SubcontractorOrderBatch = () => {
             {/* Global config */}
             <Paper elevation={0} sx={{ p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
                 <Grid container spacing={2} alignItems="flex-end">
-                    <Grid item xs={12} sm={5}>
+                    <Grid item xs={12} sm={4}>
                         <FormControl fullWidth>
                             <InputLabel>Laboratoire sous-traitant *</InputLabel>
                             <Select
@@ -483,30 +524,54 @@ const SubcontractorOrderBatch = () => {
                             </Select>
                         </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
-                        {selectedSub && !loading && (
-                            <Stack spacing={0.5}>
-                                <Alert severity={testsWithPrices.filter(t => t.has_subcontractor_price).length > 0 ? 'success' : 'warning'} sx={{ py: 0.5 }}>
-                                    {testsWithPrices.filter(t => t.has_subcontractor_price).length} examen(s) avec tarif configuré
+                    {/* Mode de règlement : immédiat ou crédit différé */}
+                    <Grid item xs={12} sm={5}>
+                        <Box>
+                            <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                                Mode de règlement
+                            </Typography>
+                            <ToggleButtonGroup
+                                value={paymentMode}
+                                exclusive
+                                onChange={(_, val) => { if (val) setPaymentMode(val); }}
+                                size="small"
+                                fullWidth
+                            >
+                                <ToggleButton value="immediate" color="success" sx={{ gap: 0.5 }}>
+                                    <PaymentIcon fontSize="small" />
+                                    Paiement immédiat
+                                </ToggleButton>
+                                <ToggleButton value="deferred" color="warning" sx={{ gap: 0.5 }}>
+                                    <DeferredIcon fontSize="small" />
+                                    Crédit différé
+                                </ToggleButton>
+                            </ToggleButtonGroup>
+                            {paymentMode === 'deferred' && (
+                                <Alert severity="warning" sx={{ mt: 1, py: 0.25, fontSize: 12 }}>
+                                    La facture sera créée mais non comptabilisée en caisse jusqu'au paiement.
                                 </Alert>
-                                <Box display="flex" alignItems="center" justifyContent="space-between">
-                                    <Typography variant="caption" color="text.secondary">
-                                        {patients.length} patient(s) enregistré(s)
-                                    </Typography>
-                                    <Button
-                                        size="small"
-                                        startIcon={<PersonAddIcon />}
-                                        onClick={() => setNewPatientDialogOpen(true)}
-                                        sx={{ fontSize: 12 }}
-                                    >
-                                        Nouveau patient
-                                    </Button>
-                                </Box>
-                            </Stack>
-                        )}
-                        {loading && <CircularProgress size={20} />}
+                            )}
+                        </Box>
                     </Grid>
                 </Grid>
+
+                {/* Sous info bar */}
+                {selectedSub && !loading && (
+                    <Box mt={2} display="flex" alignItems="center" justifyContent="space-between">
+                        <Alert severity={testsWithPrices.filter(t => t.has_subcontractor_price).length > 0 ? 'success' : 'warning'} sx={{ py: 0.5 }}>
+                            {testsWithPrices.filter(t => t.has_subcontractor_price).length} examen(s) avec tarif configuré · {patients.length} patient(s) enregistré(s)
+                        </Alert>
+                        <Button
+                            size="small"
+                            startIcon={<PersonAddIcon />}
+                            onClick={() => setNewPatientDialogOpen(true)}
+                            sx={{ ml: 2 }}
+                        >
+                            Nouveau patient
+                        </Button>
+                    </Box>
+                )}
+                {loading && <Box mt={1}><CircularProgress size={20} /></Box>}
             </Paper>
 
             {!selectedSub ? (
@@ -577,6 +642,12 @@ const SubcontractorOrderBatch = () => {
                             <Box>
                                 <Typography variant="caption" color="text.secondary">Total examens</Typography>
                                 <Typography fontWeight="700">{validRows.reduce((s, r) => s + r.tests.length, 0)}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary">Mode règlement</Typography>
+                                <Typography fontWeight="700" color={paymentMode === 'deferred' ? 'warning.main' : 'success.main'}>
+                                    {paymentMode === 'immediate' ? 'Immédiat' : 'Crédit différé'}
+                                </Typography>
                             </Box>
                         </Stack>
                         <Box textAlign="right">

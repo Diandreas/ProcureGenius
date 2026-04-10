@@ -74,6 +74,11 @@ const PatientRow = ({ patient, subcontractorId }) => {
                     <Typography variant="body2" color="text.secondary">{genderLabel[patient.gender] || '—'}</Typography>
                 </TableCell>
                 <TableCell>
+                    <Typography variant="body2" color="text.secondary">
+                        {patient.resolved_age != null ? `${patient.resolved_age} ans` : (patient.date_of_birth || '—')}
+                    </Typography>
+                </TableCell>
+                <TableCell>
                     {patient.client_id ? (
                         <Chip size="small" label="Actif" color="success" variant="outlined" />
                     ) : (
@@ -90,7 +95,7 @@ const PatientRow = ({ patient, subcontractorId }) => {
             </TableRow>
             {expanded && (
                 <TableRow>
-                    <TableCell colSpan={4} sx={{ p: 0, bgcolor: 'grey.50' }}>
+                    <TableCell colSpan={5} sx={{ p: 0, bgcolor: 'grey.50' }}>
                         <Collapse in={expanded}>
                             <Box p={2}>
                                 {loadingOrders ? (
@@ -344,6 +349,7 @@ const SubcontractorDetail = () => {
                                     <TableRow>
                                         <TableCell>Nom complet</TableCell>
                                         <TableCell>Sexe</TableCell>
+                                        <TableCell>Âge/Date de naiss.</TableCell>
                                         <TableCell>Statut</TableCell>
                                         <TableCell />
                                     </TableRow>

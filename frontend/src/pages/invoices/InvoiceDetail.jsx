@@ -125,6 +125,9 @@ function InvoiceDetail() {
   // Receipt Print Modal State
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [generatingReceipt, setGeneratingReceipt] = useState(false);
+  const [encaisserDialogOpen, setEncaisserDialogOpen] = useState(false);
+  const [encaisserSaving, setEncaisserSaving] = useState(false);
+  const [encaisserPaymentMethod, setEncaisserPaymentMethod] = useState('cash');
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
@@ -328,6 +331,20 @@ function InvoiceDetail() {
   const isOverdue = () => {
     if (!invoice?.due_date || invoice.status === 'paid') return false;
     return new Date(invoice.due_date) < new Date() && invoice.status === 'sent';
+  };
+
+  const handleEncaisser = async () => {
+    setEncaisserSaving(true);
+    try {
+      const response = await invoicesAPI.markPaid(id, { payment_method: encaisserPaymentMethod });
+      setInvoice(response.data);
+      setEncaisserDialogOpen(false);
+      enqueueSnackbar('Facture encaissée avec succès', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.error || 'Erreur lors de l\'encaissement', { variant: 'error' });
+    } finally {
+      setEncaisserSaving(false);
+    }
   };
 
   const getDaysOverdue = () => {
@@ -548,6 +565,17 @@ function InvoiceDetail() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
+          {invoice.is_subcontractor_invoice && invoice.status === 'sent' && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<Payment />}
+              onClick={() => setEncaisserDialogOpen(true)}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            >
+              Encaisser
+            </Button>
+          )}
           <Button
             data-testid="invoice-btn-open-pdf"
             variant="outlined"
@@ -657,7 +685,7 @@ Cordialement`
             }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  {t('invoices:labels.client')}
+                  {invoice.is_subcontractor_invoice ? 'Laboratoire Sous-traitant' : t('invoices:labels.client')}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
                   <Avatar sx={{ bgcolor: 'secondary.main', width: 32, height: 32 }}>
@@ -698,11 +726,11 @@ Cordialement`
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Warning color="warning" fontSize="small" />
                   <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                    {t('invoices:labels.noClientAssociated')}
+                    {invoice.is_subcontractor_invoice ? 'Aucun sous-traitant associé' : t('invoices:labels.noClientAssociated')}
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                  {t('invoices:labels.noClientDescription')}
+                  {invoice.is_subcontractor_invoice ? 'Cette facture n\'a pas de sous-traitant associé.' : t('invoices:labels.noClientDescription')}
                 </Typography>
               </CardContent>
             </Card>
@@ -1048,7 +1076,7 @@ Cordialement`
               <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    {t('invoices:labels.client')}
+                    {invoice.is_subcontractor_invoice ? 'Laboratoire Sous-traitant' : t('invoices:labels.client')}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                     <Avatar sx={{ bgcolor: 'secondary.main' }}>
@@ -1056,7 +1084,7 @@ Cordialement`
                     </Avatar>
                     <Box>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {invoice.client.name || t('invoices:labels.clientWithoutName')}
+                        {invoice.client.name || (invoice.is_subcontractor_invoice ? 'Sous-traitant sans nom' : t('invoices:labels.clientWithoutName'))}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         {invoice.client.email || t('invoices:labels.noEmail')}
@@ -1083,10 +1111,10 @@ Cordialement`
                     </Avatar>
                     <Box>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'warning.main' }}>
-                        {t('invoices:labels.noClientLinked')}
+                        {invoice.is_subcontractor_invoice ? 'Aucun sous-traitant associé' : t('invoices:labels.noClientLinked')}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {t('invoices:labels.noClientLinkedMessage')}
+                        {invoice.is_subcontractor_invoice ? 'Cette facture n\'a pas de sous-traitant' : t('invoices:labels.noClientLinkedMessage')}
                       </Typography>
                     </Box>
                   </Box>
@@ -1100,6 +1128,51 @@ Cordialement`
                   >
                     {t('invoices:buttons.linkClient')}
                   </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Badge sous-traitance */}
+            {invoice.is_subcontractor_invoice && (
+              <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', border: '1px solid', borderColor: 'warning.light', bgcolor: 'warning.50' }}>
+                <CardContent>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <Business color="warning" />
+                    <Typography variant="subtitle2" color="warning.dark" fontWeight={700}>
+                      Facture sous-traitance
+                    </Typography>
+                    <Chip label={invoice.status === 'sent' ? 'En attente' : 'Encaissée'} size="small" color={invoice.status === 'sent' ? 'warning' : 'success'} />
+                  </Box>
+                  {invoice.subcontractor_name && (
+                    <Typography variant="body2" color="text.secondary" mb={1}>
+                      Labo : <strong>{invoice.subcontractor_name}</strong>
+                    </Typography>
+                  )}
+                  {invoice.subcontractor_id && (
+                    <Button
+                      fullWidth
+                      size="small"
+                      variant="outlined"
+                      color="warning"
+                      startIcon={<Business />}
+                      onClick={() => navigate(`/healthcare/laboratory/subcontractors/${invoice.subcontractor_id}`)}
+                      sx={{ borderRadius: 2, textTransform: 'none', mt: 0.5 }}
+                    >
+                      Voir le sous-traitant
+                    </Button>
+                  )}
+                  {invoice.status === 'sent' && (
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="success"
+                      startIcon={<Payment />}
+                      onClick={() => setEncaisserDialogOpen(true)}
+                      sx={{ borderRadius: 2, textTransform: 'none', mt: 1 }}
+                    >
+                      Encaisser maintenant
+                    </Button>
                   )}
                 </CardContent>
               </Card>
@@ -1440,8 +1513,49 @@ Cordialement`
         onDownload={() => handlePrintReceipt('download')}
         helpText="Choisissez une action pour générer le reçu thermal"
       />
+
+      {/* Dialog Encaisser — facture sous-traitance crédit différé */}
+      <Dialog open={encaisserDialogOpen} onClose={() => setEncaisserDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Encaisser la facture sous-traitance</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            Cette action enregistre le paiement daté d'aujourd'hui et inscrit ce montant
+            en caisse pour la journée en cours.
+          </Typography>
+          <Typography variant="h5" fontWeight="700" textAlign="center" mb={2}>
+            {invoice ? new Intl.NumberFormat('fr-FR').format(invoice.total_amount) : ''} {invoice?.currency || 'XAF'}
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel>Mode de paiement</InputLabel>
+            <Select
+              value={encaisserPaymentMethod}
+              label="Mode de paiement"
+              onChange={e => setEncaisserPaymentMethod(e.target.value)}
+            >
+              <MenuItem value="cash">Espèces</MenuItem>
+              <MenuItem value="mobile_money">Mobile Money</MenuItem>
+              <MenuItem value="bank_transfer">Virement bancaire</MenuItem>
+              <MenuItem value="check">Chèque</MenuItem>
+              <MenuItem value="insurance">Assurance</MenuItem>
+              <MenuItem value="other">Autre</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEncaisserDialogOpen(false)}>Annuler</Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleEncaisser}
+            disabled={encaisserSaving}
+            startIcon={encaisserSaving ? <CircularProgress size={18} /> : <Payment />}
+          >
+            Confirmer l'encaissement
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
 
-export default InvoiceDetail;
+export default InvoiceDetail;

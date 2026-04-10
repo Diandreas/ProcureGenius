@@ -1316,6 +1316,7 @@ class SubcontractorPatient(models.Model):
     first_name = models.CharField(max_length=100, verbose_name=_("Prénom"))
     last_name = models.CharField(max_length=100, verbose_name=_("Nom"))
     date_of_birth = models.DateField(null=True, blank=True, verbose_name=_("Date de naissance"))
+    age = models.IntegerField(null=True, blank=True, verbose_name=_("Âge"), help_text=_("Utilisé si la date de naissance est inconnue"))
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, verbose_name=_("Sexe"))
     phone = models.CharField(max_length=50, blank=True, verbose_name=_("Téléphone"))
     external_id = models.CharField(
@@ -1346,3 +1347,31 @@ class SubcontractorPatient(models.Model):
     @property
     def full_name(self):
         return f"{self.last_name} {self.first_name}".strip()
+
+    @property
+    def resolved_age(self):
+        """Retourne l'âge calculé depuis date_of_birth si disponible, sinon le champ age direct."""
+        if self.date_of_birth:
+            from django.utils import timezone
+            today = timezone.now().date()
+            age = today.year - self.date_of_birth.year
+            if (today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day):
+                age -= 1
+            return age
+        return self.age
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Synchroniser les données vers le Client interne lié
+        # On utilise .update() pour éviter les signaux en cascade
+        if self.client_id:
+            from apps.accounts.models import Client
+            update_data = {
+                'name': self.full_name,
+                'phone': self.phone or '',
+            }
+            if self.date_of_birth:
+                update_data['date_of_birth'] = self.date_of_birth
+            if self.gender:
+                update_data['gender'] = self.gender
+            Client.objects.filter(pk=self.client_id).update(**update_data)

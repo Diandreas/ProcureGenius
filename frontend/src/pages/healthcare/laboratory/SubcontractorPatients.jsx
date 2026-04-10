@@ -18,7 +18,7 @@ import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import BackButton from '../../../components/navigation/BackButton';
 
-const EMPTY_FORM = { first_name: '', last_name: '', gender: '' };
+const EMPTY_FORM = { first_name: '', last_name: '', gender: '', date_of_birth: '', age: '' };
 
 const GENDER_LABELS = { M: 'Masculin', F: 'Féminin', O: 'Autre' };
 
@@ -63,6 +63,8 @@ const SubcontractorPatients = () => {
             first_name: patient.first_name || '',
             last_name: patient.last_name || '',
             gender: patient.gender || '',
+            date_of_birth: patient.date_of_birth || '',
+            age: patient.age || '',
         });
         setDialogOpen(true);
     };
@@ -74,11 +76,16 @@ const SubcontractorPatients = () => {
         }
         setSaving(true);
         try {
+            const payload = {
+                ...form,
+                age: form.age ? parseInt(form.age, 10) : null,
+                date_of_birth: form.date_of_birth || null,
+            };
             if (editing) {
-                await laboratoryAPI.updateSubcontractorPatient(subcontractorId, editing.id, form);
+                await laboratoryAPI.updateSubcontractorPatient(subcontractorId, editing.id, payload);
                 enqueueSnackbar('Patient mis à jour', { variant: 'success' });
             } else {
-                await laboratoryAPI.createSubcontractorPatient(subcontractorId, form);
+                await laboratoryAPI.createSubcontractorPatient(subcontractorId, payload);
                 enqueueSnackbar('Patient créé', { variant: 'success' });
             }
             setDialogOpen(false);
@@ -139,6 +146,7 @@ const SubcontractorPatients = () => {
                                 <TableRow sx={{ bgcolor: 'grey.50' }}>
                                     <TableCell>Nom complet</TableCell>
                                     <TableCell>Sexe</TableCell>
+                                    <TableCell>Âge/Date de naiss.</TableCell>
                                     <TableCell align="right">Actions</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -164,6 +172,11 @@ const SubcontractorPatients = () => {
                                                     variant="outlined"
                                                 />
                                             ) : '—'}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {patient.resolved_age != null ? `${patient.resolved_age} ans` : (patient.date_of_birth || '—')}
+                                            </Typography>
                                         </TableCell>
                                         <TableCell align="right">
                                             <Tooltip title="Modifier">
@@ -207,6 +220,32 @@ const SubcontractorPatients = () => {
                                 <MenuItem value="O">Autre</MenuItem>
                             </Select>
                         </FormControl>
+                        <Grid container spacing={2}>
+                            <Grid item xs={6}>
+                                <TextField
+                                    label="Date de naissance"
+                                    type="date"
+                                    value={form.date_of_birth}
+                                    onChange={e => f('date_of_birth', e.target.value)}
+                                    fullWidth
+                                    InputLabelProps={{ shrink: true }}
+                                    helperText="Format AAAA-MM-JJ"
+                                />
+                            </Grid>
+                            <Grid item xs={6}>
+                                <TextField
+                                    label="Âge"
+                                    type="number"
+                                    value={form.age}
+                                    onChange={e => f('age', e.target.value)}
+                                    fullWidth
+                                    placeholder="Si DDN inconnue"
+                                    helperText="Utilisé si pas de DDN"
+                                    disabled={!!form.date_of_birth}
+                                    inputProps={{ min: 0, max: 120 }}
+                                />
+                            </Grid>
+                        </Grid>
                     </Stack>
                 </DialogContent>
                 <DialogActions>

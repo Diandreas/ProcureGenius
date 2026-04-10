@@ -605,6 +605,10 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     purchase_order_number = serializers.CharField(source='purchase_order.po_number', read_only=True, required=False)
 
+    # Champs sous-traitance
+    subcontractor_id = serializers.UUIDField(source='subcontractor.id', read_only=True, default=None)
+    subcontractor_name = serializers.CharField(source='subcontractor.name', read_only=True, default=None)
+
     # Hide fields for disabled modules
     module_dependent_fields = {
         'purchase-orders': ['purchase_order', 'purchase_order_number'],
@@ -620,13 +624,15 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'billing_address', 'payment_terms', 
             'purchase_order', 'purchase_order_number',
             'created_by', 'created_by_name', 'created_by_detail',
+            'is_subcontractor_invoice', 'subcontractor_id', 'subcontractor_name',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
             'id', 'invoice_number', 'subtotal', 'total_amount',
             'created_at', 'updated_at', 'created_by', 
             'purchase_order_number', 'client_name', 'created_by_name',
-            'client_detail', 'created_by_detail'
+            'client_detail', 'created_by_detail',
+            'is_subcontractor_invoice', 'subcontractor_id', 'subcontractor_name',
         ]
     
     def to_representation(self, instance):

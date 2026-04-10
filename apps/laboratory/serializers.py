@@ -466,6 +466,14 @@ class LabOrderSerializer(serializers.ModelSerializer):
 
     def get_patient_age(self, obj):
         if obj.patient:
+            if obj.subcontractor_id:
+                from apps.laboratory.models import SubcontractorPatient
+                sub_patient = SubcontractorPatient.objects.filter(
+                    client=obj.patient, 
+                    subcontractor=obj.subcontractor_id
+                ).first()
+                if sub_patient:
+                    return sub_patient.resolved_age
             return obj.patient.get_age()
         return None
 
@@ -733,23 +741,31 @@ class SubcontractorPatientSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
     subcontractor_name = serializers.CharField(source='subcontractor.name', read_only=True)
     client_id = serializers.UUIDField(source='client.id', read_only=True, default=None)
+    resolved_age = serializers.SerializerMethodField()
 
     class Meta:
         model = SubcontractorPatient
         fields = [
             'id', 'subcontractor', 'subcontractor_name',
             'first_name', 'last_name', 'full_name',
-            'date_of_birth', 'gender', 'phone', 'external_id',
+            'date_of_birth', 'age', 'resolved_age', 'gender', 'phone', 'external_id',
             'client_id',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'subcontractor', 'created_at', 'updated_at']
 
+    def get_resolved_age(self, obj):
+        return obj.resolved_age
+
 
 class SubcontractorPatientListSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
     client_id = serializers.UUIDField(source='client.id', read_only=True, default=None)
+    resolved_age = serializers.SerializerMethodField()
 
     class Meta:
         model = SubcontractorPatient
-        fields = ['id', 'first_name', 'last_name', 'full_name', 'date_of_birth', 'gender', 'phone', 'external_id', 'client_id']
+        fields = ['id', 'first_name', 'last_name', 'full_name', 'date_of_birth', 'age', 'resolved_age', 'gender', 'phone', 'external_id', 'client_id']
+
+    def get_resolved_age(self, obj):
+        return obj.resolved_age
