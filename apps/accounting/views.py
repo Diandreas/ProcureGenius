@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework import status
 
 from .models import Account, AccountingJournal, JournalEntry, JournalEntryLine
@@ -19,13 +19,28 @@ from .serializers import (
     JournalEntrySerializer, JournalEntryListSerializer,
 )
 
+# Utilisateurs autorisés à accéder au module comptabilité
+ACCOUNTING_ALLOWED_USERNAMES = {'boris', 'ashley'}
+
+
+class IsAccountingUser(BasePermission):
+    """Restreint l'accès au module comptabilité à Boris et Ashley uniquement."""
+    message = "Accès refusé. Le module comptabilité est réservé aux utilisateurs autorisés."
+
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.username in ACCOUNTING_ALLOWED_USERNAMES
+        )
+
 
 # ─────────────────────────────────────────────
 #  Plan Comptable
 # ─────────────────────────────────────────────
 
 class AccountListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -58,7 +73,7 @@ class AccountListCreateView(APIView):
 
 
 class AccountDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def _get_account(self, request, pk):
         try:
@@ -98,7 +113,7 @@ class AccountDetailView(APIView):
 # ─────────────────────────────────────────────
 
 class JournalListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -115,7 +130,7 @@ class JournalListCreateView(APIView):
 
 
 class JournalDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get_object(self, pk, org):
         try:
@@ -150,7 +165,7 @@ class JournalDetailView(APIView):
 # ─────────────────────────────────────────────
 
 class JournalEntryListCreateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -196,7 +211,7 @@ class JournalEntryListCreateView(APIView):
 
 
 class JournalEntryDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def _get_entry(self, request, pk):
         try:
@@ -236,7 +251,7 @@ class JournalEntryDetailView(APIView):
 
 class JournalEntryPostView(APIView):
     """Valider une écriture (draft → posted)"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def post(self, request, pk):
         try:
@@ -267,7 +282,7 @@ class JournalEntryPostView(APIView):
 
 class JournalEntryCancelView(APIView):
     """Annuler une écriture (posted → cancelled avec écriture de contrepassation)"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def post(self, request, pk):
         try:
@@ -331,7 +346,7 @@ def _parse_date_range(request, default_days=30):
 
 class TrialBalanceView(APIView):
     """Balance des comptes — solde débit/crédit par compte sur période"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -384,7 +399,7 @@ class TrialBalanceView(APIView):
 
 class GeneralLedgerView(APIView):
     """Grand livre — mouvements détaillés par compte"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -447,7 +462,7 @@ class GeneralLedgerView(APIView):
 
 class IncomeStatementView(APIView):
     """Compte de résultat — Produits vs Charges"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -512,7 +527,7 @@ class IncomeStatementView(APIView):
 
 class AccountingDashboardView(APIView):
     """KPIs pour le dashboard comptable"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -585,7 +600,7 @@ class AccountingDashboardView(APIView):
 
 class SIGView(APIView):
     """Soldes Intermédiaires de Gestion"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -630,7 +645,7 @@ class SIGView(APIView):
                 )
                 for r in qs:
                     amt = (r['d'] or Decimal('0')) - (r['c'] or Decimal('0'))
-                    lines.append({'code': r['account__code'], 'name': r['account__name'], 'amount': str(-amt)})
+                    lines.append({'code': r['account__code'], 'name': r['account__name'], 'amount': str(amt)})
                     total -= amt
 
             return total, lines
@@ -742,7 +757,7 @@ class SIGView(APIView):
 
 class BalanceSheetView(APIView):
     """Bilan comptable — Actif / Passif / Capitaux propres à une date donnée"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def get(self, request):
         org = request.user.organization
@@ -834,7 +849,7 @@ class BalanceSheetView(APIView):
 
 class SyncInvoiceView(APIView):
     """Générer/régénérer manuellement l'écriture comptable pour une facture"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAccountingUser]
 
     def post(self, request, invoice_id):
         from apps.invoicing.models import Invoice

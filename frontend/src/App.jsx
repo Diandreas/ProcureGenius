@@ -118,6 +118,7 @@ import ConsultationDetail from './pages/healthcare/consultations/ConsultationDet
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
 import ModuleRoute from './components/guards/ModuleRoute';
+import AccountingRoute from './components/guards/AccountingRoute';
 import HomeRedirect from './components/HomeRedirect';
 
 // PWA
@@ -863,18 +864,18 @@ function App() {
                               <Route path="/healthcare/consultations/:id" element={<ModuleRoute module="consultations"><ConsultationDetail /></ModuleRoute>} />
                               <Route path="/healthcare/consultations/:id/edit" element={<ModuleRoute module="consultations"><ConsultationForm /></ModuleRoute>} />
 
-                              {/* Comptabilité */}
-                              <Route path="/accounting" element={<AccountingDashboard />} />
-                              <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
-                              <Route path="/accounting/journals" element={<Journals />} />
-                              <Route path="/accounting/entries" element={<JournalEntries />} />
-                              <Route path="/accounting/entries/new" element={<JournalEntryForm />} />
-                              <Route path="/accounting/entries/:id" element={<JournalEntryDetail />} />
-                              <Route path="/accounting/reports/trial-balance" element={<TrialBalance />} />
-                              <Route path="/accounting/reports/general-ledger" element={<GeneralLedger />} />
-                              <Route path="/accounting/reports/income-statement" element={<IncomeStatement />} />
-                              <Route path="/accounting/reports/balance-sheet" element={<BalanceSheet />} />
-                              <Route path="/accounting/reports/sig" element={<SIG />} />
+                              {/* Comptabilité — accès restreint à Boris et Ashley */}
+                              <Route path="/accounting" element={<AccountingRoute><AccountingDashboard /></AccountingRoute>} />
+                              <Route path="/accounting/chart-of-accounts" element={<AccountingRoute><ChartOfAccounts /></AccountingRoute>} />
+                              <Route path="/accounting/journals" element={<AccountingRoute><Journals /></AccountingRoute>} />
+                              <Route path="/accounting/entries" element={<AccountingRoute><JournalEntries /></AccountingRoute>} />
+                              <Route path="/accounting/entries/new" element={<AccountingRoute><JournalEntryForm /></AccountingRoute>} />
+                              <Route path="/accounting/entries/:id" element={<AccountingRoute><JournalEntryDetail /></AccountingRoute>} />
+                              <Route path="/accounting/reports/trial-balance" element={<AccountingRoute><TrialBalance /></AccountingRoute>} />
+                              <Route path="/accounting/reports/general-ledger" element={<AccountingRoute><GeneralLedger /></AccountingRoute>} />
+                              <Route path="/accounting/reports/income-statement" element={<AccountingRoute><IncomeStatement /></AccountingRoute>} />
+                              <Route path="/accounting/reports/balance-sheet" element={<AccountingRoute><BalanceSheet /></AccountingRoute>} />
+                              <Route path="/accounting/reports/sig" element={<AccountingRoute><SIG /></AccountingRoute>} />
                             </Route>
                           </Route>
 
