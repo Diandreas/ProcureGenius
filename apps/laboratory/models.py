@@ -315,6 +315,43 @@ class LabTest(models.Model):
         super().save(*args, **kwargs)
 
 
+class LabTestConsumable(models.Model):
+    """
+    Consommable(s) liés à un LabTest avec quantité par test.
+    Remplace le FK simple linked_product pour supporter plusieurs produits par examen.
+    Ex: Glycémie → bandelette (1 unité) + lancette (1 unité)
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    lab_test = models.ForeignKey(
+        LabTest,
+        on_delete=models.CASCADE,
+        related_name='consumables',
+        verbose_name=_("Examen")
+    )
+    product = models.ForeignKey(
+        'invoicing.Product',
+        on_delete=models.CASCADE,
+        related_name='lab_test_consumables',
+        verbose_name=_("Produit consommable")
+    )
+    quantity_per_test = models.PositiveIntegerField(
+        default=1,
+        verbose_name=_("Quantité par test"),
+        help_text=_("Nombre d'unités de ce produit consommées par test effectué")
+    )
+    notes = models.CharField(max_length=200, blank=True, verbose_name=_("Notes"))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Consommable de test")
+        verbose_name_plural = _("Consommables de test")
+        unique_together = [('lab_test', 'product')]
+        ordering = ['lab_test', 'product__name']
+
+    def __str__(self):
+        return f"{self.lab_test.test_code} → {self.product.name} x{self.quantity_per_test}"
+
+
 class LabOrder(models.Model):
     """
     Lab test order - a request for one or more lab tests
@@ -593,19 +630,31 @@ class LabOrder(models.Model):
             self.sample_collected_by = collected_by
         self.save()
 
-        # Deduct inventory for linked products
+        # Deduct inventory for all linked consumables (new multi-product system)
         try:
             for item in self.items.all():
-                if item.lab_test.linked_product:
-                    product = item.lab_test.linked_product
-                    # Deduct 1 unit per test (modify logic if multiple reagents needed per test)
-                    # Using 'sale' type as it is a consumption for revenue generation
-                    product.adjust_stock(
+                lab_test = item.lab_test
+
+                # New system: LabTestConsumable (supports multiple products per test)
+                consumables = lab_test.consumables.select_related('product').all()
+                if consumables.exists():
+                    for consumable in consumables:
+                        consumable.product.adjust_stock(
+                            quantity=-(consumable.quantity_per_test),
+                            movement_type='sale',
+                            reference_type='manual',
+                            reference_id=self.id,
+                            notes=f"Labo - {self.order_number} - {lab_test.test_code} ({consumable.product.name})",
+                            user=collected_by
+                        )
+                # Fallback: legacy linked_product FK (si pas encore migré)
+                elif lab_test.linked_product:
+                    lab_test.linked_product.adjust_stock(
                         quantity=-1,
-                        movement_type='sale', 
-                        reference_type='manual', # Using manual since lab_order is not an enum choice yet
+                        movement_type='sale',
+                        reference_type='manual',
                         reference_id=self.id,
-                        notes=f"Consommation Labo - Commande {self.order_number} - Test {item.lab_test.test_code}",
+                        notes=f"Labo - {self.order_number} - {lab_test.test_code}",
                         user=collected_by
                     )
         except Exception as e:
