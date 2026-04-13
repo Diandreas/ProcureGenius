@@ -146,6 +146,7 @@ class Command(BaseCommand):
             ))
 
             # ── 3. Ceftriaxone 1g sans eau ─────────────────────────────────
+            # NOTE : produit inexistant en DB — à créer manuellement si besoin
             products = find_product(
                 ['ceftriaxone 1g', 'ceftriasone 1g', 'ceftriaxone 1 g'],
             )
@@ -177,7 +178,8 @@ class Command(BaseCommand):
 
             # ── 5. Paracétamol codéine 500mg ───────────────────────────────
             products = find_product(
-                ['paracétamol codéine 500', 'paracetamol codeine 500', 'paracetamol codéine 500'],
+                ['paracétamol codéin', 'paracetamol codein', 'paracetamol codéin',
+                 'codéiné 500', 'paracétamol/cod', 'paracetamol/cod'],
             )
             results.append(self._apply(
                 products, target=3,
@@ -196,11 +198,14 @@ class Command(BaseCommand):
             ))
 
             # ── 7. Vitamine B complexe — comprimés ─────────────────────────
-            # On exclut les injectables pour ce passage
+            # NOTE : "Vitamine B complex comprimés" n'existe pas en DB
+            # Seul "Gynositol Plus Myo-inositol Vitamine B9" existe (non lié)
+            # À créer manuellement si nécessaire.
             products_cp = find_product(
-                ['vitamine b complex', 'vitamin b complex', 'vit b complex',
-                 'vitabmine b complex', 'vitamien b complex'],
-                exclude_keywords=['inj', 'injectable', 'amp', 'ampoule'],
+                ['vitamine b complex comprim', 'vitamin b complex comprim',
+                 'vitamines b complex comprim'],
+                exclude_keywords=['inj', 'injectable', 'amp', 'ampoule',
+                                   'gynositol', 'inositol', 'b9'],
             )
             results.append(self._apply(
                 products_cp, target=9,
@@ -210,10 +215,11 @@ class Command(BaseCommand):
             ))
 
             # ── 8. Vitamine B complexe — injectable ────────────────────────
+            # DB name: "Vitamines B complex injectable - B/100"
             products_inj = find_product(
-                ['vitamine b complex inj', 'vitamin b complex inj',
-                 'vitamine b complexe inj', 'vitamien b complex inj',
-                 'vitabmine b complex inj'],
+                ['vitamines b complex inj', 'vitamines b complexe inj',
+                 'vitamine b complex inj', 'vitamin b complex inj',
+                 'vitamines b complex', 'vitamins b complex'],
             )
             if not products_inj:
                 # Fallback : chercher avec le mot-clé injectable/inj séparément
