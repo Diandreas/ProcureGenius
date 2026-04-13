@@ -137,16 +137,16 @@ function MainLayout() {
     { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
 
-    // Comptabilité
-    { divider: true, sectionLabel: 'Comptabilité' },
-    { text: 'Comptabilité', iconSrc: '/icon/bill.png', path: '/accounting', moduleId: 'dashboard', isCore: true },
-    { text: 'Plan comptable', iconSrc: '/icon/bill.png', path: '/accounting/chart-of-accounts', moduleId: 'dashboard', isCore: true },
-    { text: 'Écritures', iconSrc: '/icon/bill.png', path: '/accounting/entries', moduleId: 'dashboard', isCore: true },
-    { text: 'Balance', iconSrc: '/icon/analysis.png', path: '/accounting/reports/trial-balance', moduleId: 'dashboard', isCore: true },
-    { text: 'Grand livre', iconSrc: '/icon/analysis.png', path: '/accounting/reports/general-ledger', moduleId: 'dashboard', isCore: true },
-    { text: 'Compte de résultat', iconSrc: '/icon/analysis.png', path: '/accounting/reports/income-statement', moduleId: 'dashboard', isCore: true },
-    { text: 'Bilan comptable', iconSrc: '/icon/analysis.png', path: '/accounting/reports/balance-sheet', moduleId: 'dashboard', isCore: true },
-    { text: 'SIG', iconSrc: '/icon/analysis.png', path: '/accounting/reports/sig', moduleId: 'dashboard', isCore: true },
+    // Comptabilité — restreint à Boris et Ashley
+    { divider: true, sectionLabel: 'Comptabilité', allowedUsernames: ['boris', 'ashley'] },
+    { text: 'Comptabilité', iconSrc: '/icon/bill.png', path: '/accounting', moduleId: 'dashboard', isCore: true, allowedUsernames: ['boris', 'ashley'] },
+    { text: 'Plan comptable', iconSrc: '/icon/bill.png', path: '/accounting/chart-of-accounts', moduleId: 'dashboard', isCore: true, allowedUsernames: ['boris', 'ashley'] },
+    { text: 'Écritures', iconSrc: '/icon/bill.png', path: '/accounting/entries', moduleId: 'dashboard', isCore: true, allowedUsernames: ['boris', 'ashley'] },
+    { text: 'Balance', iconSrc: '/icon/analysis.png', path: '/accounting/reports/trial-balance', moduleId: 'dashboard', isCore: true, allowedUsernames: ['boris', 'ashley'] },
+    { text: 'Grand livre', iconSrc: '/icon/analysis.png', path: '/accounting/reports/general-ledger', moduleId: 'dashboard', isCore: true, allowedUsernames: ['boris', 'ashley'] },
+    { text: 'Compte de résultat', iconSrc: '/icon/analysis.png', path: '/accounting/reports/income-statement', moduleId: 'dashboard', isCore: true, allowedUsernames: ['boris', 'ashley'] },
+    { text: 'Bilan comptable', iconSrc: '/icon/analysis.png', path: '/accounting/reports/balance-sheet', moduleId: 'dashboard', isCore: true, allowedUsernames: ['boris', 'ashley'] },
+    { text: 'SIG', iconSrc: '/icon/analysis.png', path: '/accounting/reports/sig', moduleId: 'dashboard', isCore: true, allowedUsernames: ['boris', 'ashley'] },
 
     // { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
   ];
@@ -403,7 +403,17 @@ function MainLayout() {
         <Box>
           <List disablePadding>
             {menuItems.filter(item => {
-              if (item.divider) return true;
+              if (item.divider) {
+                // Cacher le divider "Comptabilité" si l'utilisateur n'est pas autorisé
+                if (item.allowedUsernames && user && !item.allowedUsernames.includes(user.username)) {
+                  return false;
+                }
+                return true;
+              }
+              // Restreindre les items comptabilité à boris/ashley uniquement
+              if (item.allowedUsernames && user && !item.allowedUsernames.includes(user.username)) {
+                return false;
+              }
               if (item.isCore) return true;
               if (!hasModule(item.moduleId)) return false;
 
