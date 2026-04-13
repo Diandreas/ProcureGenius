@@ -34,6 +34,7 @@ import {
   Stack,
   useMediaQuery,
   useTheme,
+  Avatar,
 } from '@mui/material';
 import {
   ArrowBack,

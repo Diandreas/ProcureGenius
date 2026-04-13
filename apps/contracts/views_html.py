@@ -109,11 +109,14 @@ def contract_ai_generate(request):
         if not description:
             return JsonResponse({'error': 'Description requise'}, status=400)
 
-        # Support both mistralai v1.0+ and older versions
+        # Support mistralai v2.0+, v1.0+ and older versions
         try:
-            from mistralai import Mistral
+            from mistralai.client import Mistral
         except ImportError:
-            from mistralai.client import MistralClient as Mistral
+            try:
+                from mistralai import Mistral
+            except ImportError:
+                from mistralai.client import MistralClient as Mistral
         client = Mistral(api_key=settings.MISTRAL_API_KEY)
         model = getattr(settings, 'MISTRAL_MODEL', 'mistral-small-latest')
 

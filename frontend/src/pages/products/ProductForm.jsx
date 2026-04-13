@@ -194,6 +194,7 @@ function ProductForm() {
 
     const fetchData = async () => {
         setLoading(true);
+        let warehousesRes = null;
         try {
             // Charger les données de manière indépendante pour gérer les erreurs 403
             // Suppliers (optionnel si module désactivé)
@@ -224,7 +225,6 @@ function ProductForm() {
             }
 
             // Warehouses (requis pour produits physiques)
-            let warehousesRes = null;
             try {
                 warehousesRes = await warehousesAPI.list();
                 setWarehouses(warehousesRes.data.results || warehousesRes.data);
