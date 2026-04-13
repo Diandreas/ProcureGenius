@@ -49,15 +49,37 @@ for label, terms, excludes in search_groups:
 
 # Also list ALL products containing "vitamine" or "vitamin"
 print("\n══════════════════════════════════════════")
-print("  TOUS les produits avec 'vitamine'/'vitamin'/'ceftriaxone'/'paracétamol codé'")
+print("  RECHERCHE Ceftriaxone 1g & Vitamine B comprimés")
 print("══════════════════════════════════════════\n")
 
 all_products = Product.objects.filter(is_active=True)
-for kw in ['vitamine', 'vitamin', 'ceftriaxone', 'ceftriasone', 'paracétamol cod', 'paracetamol cod']:
-    matches = [p for p in all_products if kw.lower() in p.name.lower()]
-    if matches:
-        print(f"\n📦 Mot-clé '{kw}':")
-        for p in matches:
+
+# Broad search for Ceftriaxone
+print("🔍 Ceftriaxone — tout produit contenant 'cef' ou 'tri':")
+for p in all_products:
+    name_lower = p.name.lower()
+    if any(kw in name_lower for kw in ['ceftriax', 'ceftriat', 'ceftri', 'ceft', 'trifax']):
+        print(f"     → '{p.name}' (stock={p.stock_quantity}, id={p.id})")
+
+# Broad search for Vitamine B comprimés
+print("\n🔍 Vitamine B comprimés — tout produit avec 'vitamine'/'vitamin' + 'b' mais PAS injectable:")
+for p in all_products:
+    name_lower = p.name.lower()
+    if ('vitamine' in name_lower or 'vitamin' in name_lower) and 'b' in name_lower:
+        if 'injectable' not in name_lower and 'inj' not in name_lower and 'amp' not in name_lower:
             print(f"     → '{p.name}' (stock={p.stock_quantity}, id={p.id})")
+
+# Also list ALL products containing "cef"
+print("\n🔍 TOUS les produits avec 'cef' (toutes céphalosporines):")
+for p in all_products:
+    if 'cef' in p.name.lower():
+        print(f"     → '{p.name}' (stock={p.stock_quantity}, id={p.id})")
+
+# All products with "vitamine" or "vitamin"
+print("\n🔍 TOUS les produits avec 'vitamine'/'vitamin':")
+for p in all_products:
+    name_lower = p.name.lower()
+    if 'vitamine' in name_lower or 'vitamin' in name_lower:
+        print(f"     → '{p.name}' (stock={p.stock_quantity}, id={p.id})")
 
 print("\nDone.")
