@@ -9,6 +9,9 @@ from django.contrib import messages
 from rest_framework import permissions
 from apps.core.modules import user_has_module_access
 
+# Usernames with financial write access (admin-level operations like cancellations)
+FINANCIAL_WRITE_USERNAMES = ['boris', 'ashley']
+
 
 class HasModuleAccess(permissions.BasePermission):
     """
