@@ -9,6 +9,26 @@ from django.contrib import messages
 from rest_framework import permissions
 from apps.core.modules import user_has_module_access
 
+# Seul Boris (admin) peut écrire sur les données financières et le stock
+FINANCIAL_WRITE_USERNAME = 'boris'
+
+
+class IsAdminWriteOnly(permissions.BasePermission):
+    """
+    Lecture : tout utilisateur authentifié (avec accès module si applicable).
+    Écriture (POST, PUT, PATCH, DELETE) : Boris uniquement.
+
+    Utilisé sur les opérations qui touchent aux prix, au stock et à l'argent.
+    """
+    message = "Accès refusé. Seul l'administrateur est autorisé à modifier ces données."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user.username == FINANCIAL_WRITE_USERNAME
+
 
 class HasModuleAccess(permissions.BasePermission):
     """
