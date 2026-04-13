@@ -1,87 +1,33 @@
 """
 Management command: fix_stock_april2026
-Corrections de stock du 13 avril 2026 suite à inventaire physique.
+Corrections de stock du 13 avril 2026 suite a inventaire physique.
 
 Usage:
   python manage.py fix_stock_april2026
   python manage.py fix_stock_april2026 --dry-run    # Simulation sans sauvegarder
 
-Corrections appliquées :
-  - Artésunate 60mg          → stock = 26 (via ajustement)
-  - Carbocistéine 2% 100ml   → stock = 2
-  - Ceftriaxone 1g sans eau  → stock = 7
-  - Cefixime (renommer si "cifixime"), 4 comprimés → stock = 4
-  - Paracétamol codéine 500mg → stock = 3 boites
-  - Paracétamol Viatris 1000mg → stock = 2 boites
-  - Vitamine B complexe comprimés → stock = 9
-  - Vitamine B complexe injectable → stock = 20
+Corrections appliquees :
+  - Artesunate 60mg          - stock = 26 (via ajustement)
+  - Carbocisteine 2% 100ml   - stock = 2
+  - Ceftriaxone 1g sans eau  - stock = 7
+  - Cefixime (renommer si "cifixime"), 4 comprimes - stock = 4
+  - Paracetamol codeine 500mg - stock = 3 boites
+  - Paracetamol Viatris 1000mg - stock = 2 boites
+  - Vitamine B complexe comprimes - stock = 9
+  - Vitamine B complexe injectable - stock = 20
+
+NOTE LOTS :
+  Si un produit gere ses stocks via des lots (ProductBatch), ce script ajuste
+  le lot le plus recent non-epuise. Si aucun lot n'existe, il tombe en mode
+  "stock_quantity" classique.
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
-
-
-# Corrections à appliquer : (recherche_nom, stock_cible, notes, renommer_vers)
-# La recherche est insensible à la casse et cherche un sous-texte
-CORRECTIONS = [
-    {
-        'search': 'artésunate 60',
-        'alt_search': ['artesunate 60', 'artesunat 60'],
-        'target_stock': 26,
-        'notes': 'Inventaire 13/04/2026 : 18 + 8 = 26 unités comptées',
-        'rename': None,
-    },
-    {
-        'search': 'carbocistéine 2%',
-        'alt_search': ['carbocistein 2%', 'carboxiteine 2%', 'carbocisteine 2%'],
-        'target_stock': 2,
-        'notes': 'Inventaire 13/04/2026 : 2 flacons 100ml',
-        'rename': None,
-    },
-    {
-        'search': 'ceftriaxone 1g',
-        'alt_search': ['ceftriasone 1g', 'ceftriaxone 1 g'],
-        'target_stock': 7,
-        'notes': 'Inventaire 13/04/2026 : 7 flacons sans eau',
-        'rename': None,
-    },
-    {
-        'search': 'cifixime',
-        'alt_search': ['cefixime', 'céfixime'],
-        'target_stock': 4,
-        'notes': 'Inventaire 13/04/2026 : 4 comprimés. Nom corrigé : Céfixime → Cefixime',
-        'rename': None,  # On corrige le nom via rename_if_contains ci-dessous
-        'rename_contains': 'cifixime',  # Si le nom contient "cifixime", corriger l'orthographe
-        'rename_replace': ('cifixime', 'cefixime'),
-    },
-    {
-        'search': 'paracétamol codéine 500',
-        'alt_search': ['paracetamol codeine 500', 'paracetamol codéine 500'],
-        'target_stock': 3,
-        'notes': 'Inventaire 13/04/2026 : 3 boites',
-        'rename': None,
-    },
-    {
-        'search': 'paracétamol viatris 1000',
-        'alt_search': ['paracetamol viatris 1000', 'paracetamol viatris 1g'],
-        'target_stock': 2,
-        'notes': 'Inventaire 13/04/2026 : 2 boites',
-        'rename': None,
-    },
-    {
-        'search': 'vitamine b complex',
-        'alt_search': ['vitamin b complex', 'vit b complex', 'vitabmine b complex', 'vitamien b complex'],
-        'target_stock_comprime': 9,
-        'target_stock_injectable': 20,
-        'notes_comprime': 'Inventaire 13/04/2026 : 9 comprimés',
-        'notes_injectable': 'Inventaire 13/04/2026 : 20 ampoules injectables',
-        'split': True,  # Ce produit a deux formes, traitement spécial
-        'rename': None,
-    },
-]
+from django.utils import timezone
 
 
 def find_product(search_terms, exclude_keywords=None):
-    """Cherche un produit par nom (insensible à la casse, sous-texte)."""
+    """Cherche un produit par nom (insensible a la casse, sous-texte)."""
     from apps.invoicing.models import Product
     for term in search_terms:
         qs = Product.objects.filter(name__icontains=term, is_active=True)
@@ -109,35 +55,35 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
 
         self.stdout.write(self.style.WARNING(
-            '\n══════════════════════════════════════════'
+            '\n------------------------------------------'
         ))
         self.stdout.write(self.style.WARNING(
-            '  CORRECTIONS STOCK — Inventaire 13/04/2026'
+            '  CORRECTIONS STOCK - Inventaire 13/04/2026'
         ))
         self.stdout.write(self.style.WARNING(
-            f'  Mode : {"SIMULATION (--dry-run)" if dry_run else "ÉCRITURE RÉELLE"}'
+            f'  Mode : {"SIMULATION (--dry-run)" if dry_run else "ECRITURE REELLE"}'
         ))
         self.stdout.write(self.style.WARNING(
-            '══════════════════════════════════════════\n'
+            '------------------------------------------\n'
         ))
 
         results = []
 
         with transaction.atomic():
 
-            # ── 1. Artésunate 60mg ─────────────────────────────────────────
+            # -- 1. Artesunate 60mg -----------------------------------------
             products = find_product(
-                ['artésunate 60', 'artesunate 60', 'artesunat 60'],
+                ['artesunate 60', 'artesunate 60', 'artesunat 60'],
             )
             results.append(self._apply(
                 products, target=26,
-                notes='Inventaire 13/04/2026 : 18 + 8 = 26 unités',
+                notes='Inventaire 13/04/2026 : 18 + 8 = 26 unites',
                 dry_run=dry_run,
             ))
 
-            # ── 2. Carbocistéine 2% 100ml ──────────────────────────────────
+            # -- 2. Carbocisteine 2% 100ml ----------------------------------
             products = find_product(
-                ['carbocistéine 2%', 'carbocistein 2%', 'carboxiteine 2%', 'carbocisteine 2%'],
+                ['carbocisteine 2%', 'carbocistein 2%', 'carboxiteine 2%', 'carbocisteine 2%'],
             )
             results.append(self._apply(
                 products, target=2,
@@ -145,8 +91,7 @@ class Command(BaseCommand):
                 dry_run=dry_run,
             ))
 
-            # ── 3. Ceftriaxone 1g sans eau ─────────────────────────────────
-            # DB name: "Ceftriaxon 1g sans eau - B/10" (sans 'e' final)
+            # -- 3. Ceftriaxone 1g sans eau ---------------------------------
             products = find_product(
                 ['ceftriaxon 1g', 'ceftriaxone 1g', 'ceftriasone 1g',
                  'ceftriaxon 1 g', 'ceftriaxon 1g sans eau'],
@@ -157,30 +102,29 @@ class Command(BaseCommand):
                 dry_run=dry_run,
             ))
 
-            # ── 4. Cefixime (corriger orthographe "cifixime") ──────────────
+            # -- 4. Cefixime (corriger orthographe "cifixime") --------------
             products = find_product(
-                ['cifixime', 'cefixime', 'céfixime'],
+                ['cifixime', 'cefixime', 'cefixime'],
             )
             for p in products:
                 if 'cifixime' in p.name.lower():
                     old_name = p.name
                     new_name = p.name.lower().replace('cifixime', 'cefixime')
-                    # Remettre la casse correcte
                     new_name = new_name[0].upper() + new_name[1:]
-                    self.stdout.write(f'  [RENOMMAGE] "{old_name}" → "{new_name}"')
+                    self.stdout.write(f'  [RENOMMAGE] "{old_name}" - "{new_name}"')
                     if not dry_run:
                         p.name = new_name
                         p.save(update_fields=['name', 'updated_at'])
             results.append(self._apply(
                 products, target=4,
-                notes='Inventaire 13/04/2026 : 4 comprimés. Orthographe corrigée.',
+                notes='Inventaire 13/04/2026 : 4 comprimes. Orthographe corrigee.',
                 dry_run=dry_run,
             ))
 
-            # ── 5. Paracétamol codéine 500mg ───────────────────────────────
+            # -- 5. Paracetamol codeine 500mg -------------------------------
             products = find_product(
-                ['paracétamol codéin', 'paracetamol codein', 'paracetamol codéin',
-                 'codéiné 500', 'paracétamol/cod', 'paracetamol/cod'],
+                ['paracetamol codein', 'paracetamol codein', 'paracetamol codein',
+                 'codeine 500', 'paracetamol/cod', 'paracetamol/cod'],
             )
             results.append(self._apply(
                 products, target=3,
@@ -188,9 +132,9 @@ class Command(BaseCommand):
                 dry_run=dry_run,
             ))
 
-            # ── 6. Paracétamol Viatris 1000mg ──────────────────────────────
+            # -- 6. Paracetamol Viatris 1000mg ------------------------------
             products = find_product(
-                ['paracétamol viatris 1000', 'paracetamol viatris 1000', 'viatris 1000'],
+                ['paracetamol viatris 1000', 'paracetamol viatris 1000', 'viatris 1000'],
             )
             results.append(self._apply(
                 products, target=2,
@@ -198,8 +142,7 @@ class Command(BaseCommand):
                 dry_run=dry_run,
             ))
 
-            # ── 7. Vitamine B complexe — comprimés ─────────────────────────
-            # Ce produit n'existe pas en DB — on le crée si introuvable
+            # -- 7. Vitamine B complexe - comprimes -------------------------
             products_cp = find_product(
                 ['vitamine b complex comprim', 'vitamin b complex comprim',
                  'vitamines b complex comprim', 'vitamine b comprim', 'vitamin b comprim'],
@@ -207,12 +150,10 @@ class Command(BaseCommand):
                                    'gynositol', 'inositol', 'b9'],
             )
             if not products_cp:
-                # Créer le produit
                 self.stdout.write(self.style.WARNING(
-                    "  [CRÉATION] 'Vitamine B complex comprimés' — produit inexistant, création..."
+                    "  [CREATION] 'Vitamine B complex comprimes' - produit inexistant, creation..."
                 ))
                 if not dry_run:
-                    # Récupérer la catégorie "Medicaments"
                     from apps.invoicing.models import ProductCategory
                     cat = None
                     cat_qs = ProductCategory.objects.filter(slug='medicaments', is_active=True)
@@ -222,7 +163,7 @@ class Command(BaseCommand):
                         cat = cat_qs.first()
 
                     product = Product.objects.create(
-                        name='Vitamine B complex comprimés',
+                        name='Vitamine B complex comprimes',
                         reference='VIT-B-COMPR-001',
                         category=cat,
                         product_type='physical',
@@ -234,26 +175,24 @@ class Command(BaseCommand):
                     )
                     products_cp = [product]
                 else:
-                    self.stdout.write("  [DRY-RUN] Produit serait créé puis corrigé à stock=9.")
+                    self.stdout.write("  [DRY-RUN] Produit serait cree puis corrige a stock=9.")
                     results.append(False)
                     return
 
             results.append(self._apply(
                 products_cp, target=9,
-                notes='Inventaire 13/04/2026 : 9 comprimés. Produit créé.',
-                label='Vitamine B complexe comprimés',
+                notes='Inventaire 13/04/2026 : 9 comprimes. Produit cree.',
+                label='Vitamine B complexe comprimes',
                 dry_run=dry_run,
             ))
 
-            # ── 8. Vitamine B complexe — injectable ────────────────────────
-            # DB name: "Vitamines B complex injectable - B/100"
+            # -- 8. Vitamine B complexe - injectable ------------------------
             products_inj = find_product(
                 ['vitamines b complex inj', 'vitamines b complexe inj',
                  'vitamine b complex inj', 'vitamin b complex inj',
                  'vitamines b complex', 'vitamins b complex'],
             )
             if not products_inj:
-                # Fallback : chercher avec le mot-clé injectable/inj séparément
                 products_inj = find_product(
                     ['vitamine b complex', 'vitamin b complex', 'vit b complex',
                      'vitabmine b complex', 'vitamien b complex'],
@@ -271,29 +210,32 @@ class Command(BaseCommand):
             if dry_run:
                 transaction.set_rollback(True)
 
-        # ── Résumé ─────────────────────────────────────────────────────────
+        # -- Resume ---------------------------------------------------------
         ok = sum(1 for r in results if r)
         ko = len(results) - ok
         self.stdout.write('')
         if dry_run:
             self.stdout.write(self.style.WARNING(
-                f'\nSimulation terminée — {ok} produit(s) trouvé(s), {ko} introuvable(s). Aucune modification.'
+                f'\nSimulation terminee - {ok} produit(s) trouve(s), {ko} introuvable(s). Aucune modification.'
             ))
         else:
             self.stdout.write(
-                self.style.SUCCESS(f'\n✓ Terminé — {ok} correction(s) appliquée(s), {ko} introuvable(s).')
+                self.style.SUCCESS(f'\n- Termine - {ok} correction(s) appliquee(s), {ko} introuvable(s).')
             )
             if ko:
                 self.stdout.write(self.style.ERROR(
-                    '  Vérifiez les produits INTROUVABLES et corrigez manuellement.'
+                    '  Verifiez les produits INTROUVABLES et corrigez manuellement.'
                 ))
 
-    # ──────────────────────────────────────────────────────────────────────
+    # ----------------------------------------------------------------------
     def _apply(self, products, target, notes, label=None, dry_run=False):
         """
-        Applique la correction de stock sur les produits trouvés.
-        Crée un StockMovement d'ajustement.
-        Retourne True si au moins un produit traité.
+        Applique la correction de stock sur les produits trouves.
+
+        Logique lots :
+          - Si le produit a des lots actifs - ajuste le lot le plus recent
+            (quantity_remaining) + cree un StockMovement lie au lot.
+          - Si pas de lots - ajuste product.stock_quantity (mode classique).
         """
         from apps.invoicing.models import StockMovement
 
@@ -303,33 +245,82 @@ class Command(BaseCommand):
             return False
 
         for product in products:
-            current = product.stock_quantity
-            delta = target - current
-            sign = '+' if delta >= 0 else ''
+            # -- Detecter le mode : lots ou stock_quantity classique --
+            active_batches = product.batches.filter(
+                status__in=['available', 'opened']
+            ).order_by('-received_at')
 
-            self.stdout.write(
-                f'  [{"DRY-RUN" if dry_run else "OK"}] '
-                f'{product.name!r} : '
-                f'stock actuel={current} → cible={target} '
-                f'(delta {sign}{delta})'
-            )
+            if active_batches.exists():
+                # MODE LOTS : on ajuste le lot le plus recent non-epuise
+                batch = active_batches.first()
+                current = product.total_stock   # somme de tous les lots actifs
+                delta = target - current
+                sign = '+' if delta >= 0 else ''
 
-            if not dry_run and delta != 0:
-                # Enregistre le mouvement d'ajustement
-                StockMovement.objects.create(
-                    product=product,
-                    movement_type='adjustment',
-                    quantity=delta,
-                    quantity_before=current,
-                    quantity_after=target,
-                    reference_type='manual',
-                    reference_number='INV-13042026',
-                    notes=notes,
+                self.stdout.write(
+                    f'  [{"DRY-RUN" if dry_run else "OK (LOT)"}] '
+                    f'{product.name!r} : '
+                    f'stock total lots={current} - cible={target} '
+                    f'(delta {sign}{delta}) '
+                    f'[lot: {batch.batch_number}]'
                 )
-                # Met à jour le stock du produit
-                product.stock_quantity = target
-                product.save(update_fields=['stock_quantity', 'updated_at'])
-            elif delta == 0:
-                self.stdout.write(f'         → Stock déjà correct, aucun mouvement créé.')
+
+                if not dry_run and delta != 0:
+                    old_batch_qty = batch.quantity_remaining
+                    new_batch_qty = old_batch_qty + delta
+                    if new_batch_qty < 0:
+                        # Securite : ne pas passer en negatif sur le lot
+                        self.stdout.write(self.style.WARNING(
+                            f'    - Lot {batch.batch_number} : qty_remaining={old_batch_qty} + delta={delta} = {new_batch_qty} (negatif!)'
+                            f' - on force a 0 et on repartit sur les autres lots si besoin.'
+                        ))
+                        new_batch_qty = 0
+
+                    batch.quantity_remaining = new_batch_qty
+                    batch.update_status()  # passe a 'depleted' si qty=0
+                    batch.save(update_fields=['quantity_remaining', 'status'])
+
+                    StockMovement.objects.create(
+                        product=product,
+                        batch=batch,
+                        movement_type='adjustment',
+                        quantity=delta,
+                        quantity_before=current,
+                        quantity_after=target,
+                        reference_type='manual',
+                        reference_number='INV-13042026',
+                        notes=notes,
+                    )
+                elif delta == 0:
+                    self.stdout.write(f'         - Stock deja correct, aucun mouvement cree.')
+
+            else:
+                # MODE CLASSIQUE : pas de lots, on utilise stock_quantity
+                current = product.stock_quantity
+                delta = target - current
+                sign = '+' if delta >= 0 else ''
+
+                self.stdout.write(
+                    f'  [{"DRY-RUN" if dry_run else "OK"}] '
+                    f'{product.name!r} : '
+                    f'stock actuel={current} - cible={target} '
+                    f'(delta {sign}{delta})'
+                )
+
+                if not dry_run and delta != 0:
+                    StockMovement.objects.create(
+                        product=product,
+                        movement_type='adjustment',
+                        quantity=delta,
+                        quantity_before=current,
+                        quantity_after=target,
+                        reference_type='manual',
+                        reference_number='INV-13042026',
+                        notes=notes,
+                    )
+                    product.stock_quantity = target
+                    product.save(update_fields=['stock_quantity', 'updated_at'])
+                elif delta == 0:
+                    self.stdout.write(f'         - Stock deja correct, aucun mouvement cree.')
 
         return True
