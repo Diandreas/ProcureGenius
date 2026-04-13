@@ -199,18 +199,50 @@ class Command(BaseCommand):
             ))
 
             # ── 7. Vitamine B complexe — comprimés ─────────────────────────
-            # NOTE : "Vitamine B complex comprimés" n'existe pas en DB
-            # Seul "Gynositol Plus Myo-inositol Vitamine B9" existe (non lié)
-            # À créer manuellement si nécessaire.
+            # Ce produit n'existe pas en DB — on le crée si introuvable
             products_cp = find_product(
                 ['vitamine b complex comprim', 'vitamin b complex comprim',
-                 'vitamines b complex comprim'],
+                 'vitamines b complex comprim', 'vitamine b comprim', 'vitamin b comprim'],
                 exclude_keywords=['inj', 'injectable', 'amp', 'ampoule',
                                    'gynositol', 'inositol', 'b9'],
             )
+            if not products_cp:
+                # Créer le produit
+                self.stdout.write(self.style.WARNING(
+                    "  [CRÉATION] 'Vitamine B complex comprimés' — produit inexistant, création..."
+                ))
+                if not dry_run:
+                    # Récupérer la catégorie "Medicaments"
+                    from apps.invoicing.models import ProductCategory
+                    cat = None
+                    cat_qs = ProductCategory.objects.filter(slug='medicaments', is_active=True)
+                    if not cat_qs.exists():
+                        cat_qs = ProductCategory.objects.filter(name__icontains='medicament')
+                    if cat_qs.exists():
+                        cat = cat_qs.first()
+
+                    product = Product.objects.create(
+                        name='Vitamine B complex comprimés',
+                        reference='VIT-B-COMPR-001',
+                        category=cat,
+                        product_type='physical',
+                        stock_quantity=0,
+                        cost_price=0,
+                        price=0,
+                        is_active=True,
+                        low_stock_threshold=5,
+                        unit='unit',
+                    )
+                    products_cp = [product]
+                else:
+                    self.stdout.write("  [DRY-RUN] Produit serait créé.")
+                    results.append(False)
+                    # On skip apply car le produit n'existe pas encore
+                    continue
+
             results.append(self._apply(
                 products_cp, target=9,
-                notes='Inventaire 13/04/2026 : 9 comprimés',
+                notes='Inventaire 13/04/2026 : 9 comprimés. Produit créé.',
                 label='Vitamine B complexe comprimés',
                 dry_run=dry_run,
             ))
