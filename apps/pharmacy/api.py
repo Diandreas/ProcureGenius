@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Sum
 from django.utils import timezone
 from decimal import Decimal
+from apps.core.permissions import FINANCIAL_WRITE_USERNAME
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
@@ -249,10 +250,15 @@ class DispensingCreateView(APIView):
 
 
 class DispensingCancelView(APIView):
-    """Cancel a dispensing and restore stock"""
+    """Cancel a dispensing and restore stock — Boris uniquement"""
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, pk):
+        if request.user.username != FINANCIAL_WRITE_USERNAME:
+            return Response(
+                {'error': "Seul l'administrateur peut annuler une dispensation."},
+                status=status.HTTP_403_FORBIDDEN
+            )
         try:
             dispensing = PharmacyDispensing.objects.get(
                 id=pk,

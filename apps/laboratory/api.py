@@ -40,7 +40,7 @@ from .serializers import (
 
 
 class IsAdminOrReadOnly(BasePermission):
-    """Admin can write; any authenticated user can read."""
+    """Admin (Boris) peut écrire ; tout utilisateur authentifié peut lire."""
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return request.user and request.user.is_authenticated
@@ -54,7 +54,7 @@ class IsAdminOrReadOnly(BasePermission):
 class LabTestCategoryListCreateView(generics.ListCreateAPIView):
     """List all test categories or create a new one"""
     serializer_class = LabTestCategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.OrderingFilter]
     ordering = ['display_order', 'name']
     
@@ -70,7 +70,7 @@ class LabTestCategoryListCreateView(generics.ListCreateAPIView):
 class LabTestCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a test category"""
     serializer_class = LabTestCategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     
     def get_queryset(self):
         return LabTestCategory.objects.filter(
@@ -84,7 +84,7 @@ class LabTestCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class LabTestListCreateView(generics.ListCreateAPIView):
     """List all lab tests or create a new one"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'sample_type', 'is_active', 'fasting_required']
     search_fields = ['name', 'test_code', 'short_name']
@@ -108,7 +108,7 @@ class LabTestListCreateView(generics.ListCreateAPIView):
 class LabTestDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a lab test"""
     serializer_class = LabTestSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     
     def get_queryset(self):
         return LabTest.objects.filter(
@@ -846,8 +846,8 @@ class LabResultPDFView(APIView):
 
 
 class GenerateLabOrderInvoiceView(APIView):
-    """Generate invoice for lab order (manual trigger)"""
-    permission_classes = [IsAuthenticated]
+    """Generate invoice for lab order (manual trigger) — Boris uniquement"""
+    permission_classes = [IsAdminOrReadOnly]
 
     def post(self, request, pk):
         from apps.healthcare.invoice_services import LabOrderInvoiceService
@@ -885,7 +885,7 @@ class GenerateLabOrderInvoiceView(APIView):
 class LabTestParameterListCreateView(generics.ListCreateAPIView):
     """List all parameters for a lab test, or create a new parameter"""
     serializer_class = LabTestParameterSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         return LabTestParameter.objects.filter(
@@ -904,7 +904,7 @@ class LabTestParameterListCreateView(generics.ListCreateAPIView):
 class LabTestParameterDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a lab test parameter"""
     serializer_class = LabTestParameterSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         return LabTestParameter.objects.filter(
@@ -918,7 +918,7 @@ class LabTestParameterBulkSaveView(APIView):
     Updates parameters for a test using UPDATE/CREATE/soft-delete to preserve result history.
     Parameters with existing results are never deleted — they are marked is_active=False instead.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def post(self, request, test_id):
         try:
@@ -992,7 +992,7 @@ class QuickUpdateConfigView(APIView):
     POST /healthcare/laboratory/quick-update-unit/
     Updates unit, conversion factor, and reference ranges for a test or parameter.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def post(self, request):
         test_id = request.data.get('test_id')
@@ -1065,7 +1065,7 @@ class LabTestPanelListCreateView(generics.ListCreateAPIView):
     POST /healthcare/laboratory/panels/       — Create a new bilan
     """
     serializer_class = LabTestPanelSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'code', 'description']
 
@@ -1089,7 +1089,7 @@ class LabTestPanelDetailView(generics.RetrieveUpdateDestroyAPIView):
     DELETE /healthcare/laboratory/panels/<uuid>/   — Delete bilan
     """
     serializer_class = LabTestPanelSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         return LabTestPanel.objects.filter(
@@ -1145,7 +1145,7 @@ class SubcontractorLabListCreateView(generics.ListCreateAPIView):
     GET  /healthcare/laboratory/subcontractors/  — List subcontractor labs
     POST /healthcare/laboratory/subcontractors/  — Create subcontractor lab
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_serializer_class(self):
@@ -1168,7 +1168,7 @@ class SubcontractorLabDetailView(generics.RetrieveUpdateDestroyAPIView):
     GET/PATCH/DELETE /healthcare/laboratory/subcontractors/<uuid>/
     """
     serializer_class = SubcontractorLabSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
@@ -1197,7 +1197,7 @@ class SubcontractorPriceBulkSaveView(APIView):
     Body: [{lab_test_id, price, turnaround_days, is_active, notes}, ...]
     Creates or updates prices in bulk.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def post(self, request, subcontractor_id):
         try:
@@ -1294,7 +1294,7 @@ class SubcontractorDefaultPriceView(APIView):
     GET  /healthcare/laboratory/subcontractors/default-prices/   — List all tests with default subcontractor price
     POST /healthcare/laboratory/subcontractors/default-prices/bulk-save/  — Bulk save default prices
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get(self, request):
         org = request.user.organization
@@ -1328,7 +1328,7 @@ class SubcontractorDefaultPriceBulkSaveView(APIView):
     POST /healthcare/laboratory/subcontractors/default-prices/bulk-save/
     Body: [{lab_test_id, price, is_active}, ...]
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def post(self, request):
         org = request.user.organization
@@ -1358,7 +1358,7 @@ class SubcontractorPriceBulkActivateView(APIView):
     Body: {test_ids: [...], is_active: true, use_defaults: true}
     When use_defaults=true, copies default prices for selected tests.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def post(self, request, subcontractor_id):
         try:
