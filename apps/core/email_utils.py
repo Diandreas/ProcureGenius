@@ -133,7 +133,7 @@ def send_user_invitation_email(invited_user, temp_password, invited_by_user, org
     Envoie un email d'invitation à un nouvel utilisateur ajouté à l'organisation.
     """
     try:
-        app_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        app_url = settings.FRONTEND_URL
         from_email = settings.DEFAULT_FROM_EMAIL
         org_name = organization.name if organization else 'Procura'
 
@@ -213,7 +213,7 @@ def send_welcome_registration_email(user, organization):
     Envoie un email de bienvenue lors de l'inscription.
     """
     try:
-        app_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        app_url = settings.FRONTEND_URL
         from_email = settings.DEFAULT_FROM_EMAIL
 
         subject = "Bienvenue sur Procura !"
@@ -269,7 +269,7 @@ def send_password_reset_email(user, token):
     Envoie un email de réinitialisation de mot de passe.
     """
     try:
-        app_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        app_url = settings.FRONTEND_URL
         from_email = settings.DEFAULT_FROM_EMAIL
         
         # Le lien vers le frontend avec le token
@@ -331,7 +331,7 @@ def send_verification_email(user, token):
     Envoie un email de vérification d'adresse email.
     """
     try:
-        app_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        app_url = settings.FRONTEND_URL
         from_email = settings.DEFAULT_FROM_EMAIL
         
         verify_url = f"{app_url}/verify-email?token={token}&email={user.email}"

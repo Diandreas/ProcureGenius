@@ -549,12 +549,18 @@ def api_change_password(request):
     current_password = request.data.get('current_password', '')
     new_password = request.data.get('new_password', '')
 
-    if not current_password or not new_password:
-        return Response({'error': 'Les deux mots de passe sont requis.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not new_password:
+        return Response({'error': 'Le nouveau mot de passe est requis.'}, status=status.HTTP_400_BAD_REQUEST)
 
     user = request.user
-    if not user.check_password(current_password):
-        return Response({'error': 'Mot de passe actuel incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Pour les utilisateurs Social Login (Google, etc.), ils n'ont pas de mot de passe local.
+    # On leur permet de définir un mot de passe sans fournir l'ancien.
+    if user.has_usable_password():
+        if not current_password:
+            return Response({'error': 'Le mot de passe actuel est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not user.check_password(current_password):
+            return Response({'error': 'Mot de passe actuel incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
 
     if len(new_password) < 8:
         return Response({'error': 'Le nouveau mot de passe doit contenir au moins 8 caractères.'}, status=status.HTTP_400_BAD_REQUEST)

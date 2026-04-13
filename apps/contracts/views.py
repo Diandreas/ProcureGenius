@@ -300,18 +300,18 @@ class ContractViewSet(viewsets.ModelViewSet):
         """Exporter un rapport au format MS Word (HTML as .doc)"""
         from django.http import HttpResponse
         from django.template.loader import render_to_string
-        from datetime import datetime
-        
+        from django.utils import timezone
+
         try:
             contract = self.get_object()
-            
+
             template_type = request.data.get('template_type', request.query_params.get('template_type', 'contract'))
             generated_content = request.data.get('generated_content', '')
-            
+
             context = {
                 'contract': contract,
                 'generated_content': generated_content,
-                'generated_at': datetime.now(),
+                'generated_at': timezone.localtime(timezone.now()),
             }
             
             templates_map = {

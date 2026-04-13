@@ -5,6 +5,7 @@ from io import BytesIO
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.db.models import Sum, Count, Avg, Q
+from django.utils import timezone as django_tz
 from datetime import datetime, timedelta
 import base64
 import qrcode
@@ -320,7 +321,7 @@ class ReportPDFGenerator:
             'po_by_status': po_by_status,
             'top_products': top_products,
             'recent_activity': recent_activity,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         # Générer le PDF
@@ -409,7 +410,7 @@ class ReportPDFGenerator:
             'avg_invoice_value': avg_invoice,
             'invoices_by_status': invoices_by_status,
             'recent_invoices': recent_invoices,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         template_name = 'reports/pdf/client_report.html'
@@ -524,7 +525,7 @@ class ReportPDFGenerator:
             'suppliers': suppliers,
             'recent_sales': recent_sales,
             'recent_purchases': recent_purchases,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         # Générer le PDF
@@ -568,7 +569,7 @@ class ReportPDFGenerator:
             'logo_base64': self._get_logo_base64(org_data),
             'qr_code_base64': qr_code,
             'generated_content': generated_content,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         # Select the right template based on type
@@ -611,7 +612,7 @@ class ReportPDFGenerator:
             'qr_code_base64': qr_code,
             'bids': bids,
             'total_bids': total_bids,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         template_name = 'reports/pdf/sourcing_event_report.html'
@@ -782,7 +783,7 @@ class ReportPDFGenerator:
             # Dates
             'date_start': date_start,
             'date_end': date_end,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         template_name = 'reports/pdf/invoices_report.html'
@@ -940,7 +941,7 @@ class ReportPDFGenerator:
             # Dates
             'date_start': date_start,
             'date_end': date_end,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         template_name = 'reports/pdf/purchase_orders_report.html'
@@ -1095,7 +1096,7 @@ class ReportPDFGenerator:
             # Dates
             'date_start': date_start,
             'date_end': date_end,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         template_name = 'reports/pdf/clients_report.html'
@@ -1221,7 +1222,7 @@ class ReportPDFGenerator:
             # Dates
             'date_start': date_start,
             'date_end': date_end,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         template_name = 'reports/pdf/products_report.html'
@@ -1400,7 +1401,7 @@ class ReportPDFGenerator:
             # Dates
             'date_start': date_start,
             'date_end': date_end,
-            'generated_at': datetime.now(),
+            'generated_at': django_tz.localtime(django_tz.now()),
         }
         
         template_name = 'reports/pdf/suppliers_report.html'

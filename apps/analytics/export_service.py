@@ -42,8 +42,8 @@ class DashboardExportService:
                 'stats_data': self.stats_data,
                 'metadata': self.metadata,
                 'user_name': self.user.get_full_name() or self.user.username,
-                'current_datetime': datetime.now().strftime('%d/%m/%Y à %H:%M'),
-                'generated_date': datetime.now().strftime('%d/%m/%Y'),
+                'current_datetime': timezone.localtime(timezone.now()).strftime('%d/%m/%Y à %H:%M'),
+                'generated_date': timezone.localtime(timezone.now()).strftime('%d/%m/%Y'),
             }
 
             # Rendu HTML
@@ -99,7 +99,7 @@ class DashboardExportService:
 
             ws_summary.append(["Période", f"{self.metadata.get('start_date')} - {self.metadata.get('end_date')}"])
             ws_summary.append(["Nombre de jours", self.metadata.get('period_days', 'N/A')])
-            ws_summary.append(["Généré le", datetime.now().strftime('%d/%m/%Y %H:%M')])
+            ws_summary.append(["Généré le", timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')])
             ws_summary.append([])
 
             # Données financières

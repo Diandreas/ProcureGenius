@@ -109,7 +109,7 @@ class SourcingEvent(models.Model):
     def get_public_url(self):
         """Retourne l'URL publique pour l'événement"""
         from django.conf import settings
-        base_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        base_url = settings.FRONTEND_URL
         return f"{base_url}/sourcing/public/{self.public_token}"
 
     @property
@@ -171,7 +171,7 @@ class SupplierInvitation(models.Model):
     def get_public_url(self):
         """Retourne l'URL publique pour accéder à l'invitation"""
         from django.conf import settings
-        base_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        base_url = settings.FRONTEND_URL
         return f"{base_url}/sourcing/submit/{self.access_token}"
 
     def mark_as_sent(self):

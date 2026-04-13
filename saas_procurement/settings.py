@@ -290,8 +290,15 @@ LOGIN_URL = '/admin/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-# Frontend URL (for email links)
+# Frontend URL (for email links — MUST be set in production via FRONTEND_URL env var)
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+if FRONTEND_URL == 'http://localhost:3000' and not os.getenv('DEBUG', 'True').lower() in ('1', 'true', 'yes'):
+    import warnings
+    warnings.warn(
+        "FRONTEND_URL is not set! Email invitation links will point to localhost:3000. "
+        "Set the FRONTEND_URL environment variable to your production URL.",
+        stacklevel=2,
+    )
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

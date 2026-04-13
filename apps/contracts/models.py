@@ -114,9 +114,10 @@ class Contract(models.Model):
 
     def generate_contract_number(self):
         """Génère un numéro de contrat unique au format CTR202501-0001"""
-        from datetime import datetime
-        year = datetime.now().year
-        month = datetime.now().month
+        from django.utils import timezone
+        now = timezone.localtime(timezone.now())
+        year = now.year
+        month = now.month
 
         last_contract = Contract.objects.filter(
             contract_number__startswith=f"CTR{year}{month:02d}"

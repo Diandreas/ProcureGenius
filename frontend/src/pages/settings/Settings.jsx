@@ -1379,6 +1379,7 @@ const ProfileSection = ({ settings, onUpdate }) => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
   const [profileError, setProfileError] = useState('');
+  const [hasUsablePassword, setHasUsablePassword] = useState(true);
 
   // Mot de passe
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -1390,12 +1391,18 @@ const ProfileSection = ({ settings, onUpdate }) => {
   useEffect(() => {
     fetch('/api/v1/accounts/profile/', { headers: { Authorization: `Token ${token}` } })
       .then(r => r.json())
-      .then(data => setProfileData({
-        first_name: data.first_name || '',
-        last_name: data.last_name || '',
-        email: data.email || '',
-        phone: data.phone || '',
-      }));
+      .then(data => {
+        setProfileData({
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+        });
+        // Détecter Social Login (pas de mot de passe local)
+        if (data.has_usable_password === false) {
+          setHasUsablePassword(false);
+        }
+      });
   }, []);
 
   const handleProfileSave = async () => {
@@ -1484,12 +1491,19 @@ const ProfileSection = ({ settings, onUpdate }) => {
         Modifier le mot de passe
       </Typography>
       <Divider sx={{ mb: 2 }} />
+      {!hasUsablePassword && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Vous êtes connecté via Google. Définissez un mot de passe pour pouvoir aussi vous connecter par email.
+        </Alert>
+      )}
       <Grid container spacing={2}>
+        {hasUsablePassword && (
         <Grid item xs={12} md={4}>
           <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label="Mot de passe actuel"
             value={passwordData.currentPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))} />
         </Grid>
+        )}
         <Grid item xs={12} md={4}>
           <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label="Nouveau mot de passe"
             value={passwordData.newPassword}
@@ -1509,7 +1523,7 @@ const ProfileSection = ({ settings, onUpdate }) => {
               label={<Typography variant="body2">Afficher les mots de passe</Typography>}
             />
             <Button variant="contained" size="small" onClick={handleSubmitPassword}
-              disabled={pwLoading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}>
+              disabled={pwLoading || (hasUsablePassword && !passwordData.currentPassword) || !passwordData.newPassword || !passwordData.confirmPassword}>
               {pwLoading ? <CircularProgress size={16} /> : 'Changer le mot de passe'}
             </Button>
           </Stack>

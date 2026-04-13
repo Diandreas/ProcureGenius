@@ -74,7 +74,7 @@ const Pricing = () => {
 
   const handleSubscribe = async (planCode) => {
     // Check if user is authenticated
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     if (!token) {
       // Redirect to login with return URL
       navigate(`/login?return=/pricing&plan=${planCode}`);

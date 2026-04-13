@@ -38,6 +38,8 @@ import {
   Lightbulb,
   Menu as MenuIcon,
   Assignment,
+  ArrowBack,
+  PowerSettingsNew,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { useModules } from '../contexts/ModuleContext';
@@ -159,6 +161,7 @@ function MainLayout() {
   ];
 
   const [userPermissions, setUserPermissions] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [moduleActivationDialogOpen, setModuleActivationDialogOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
   const [reportAction, setReportAction] = useState(null);
@@ -199,10 +202,23 @@ function MainLayout() {
       if (response.ok) {
         const data = await response.json();
         setUserPermissions(data.permissions);
+        setUserProfile({
+          firstName: data.first_name || '',
+          lastName: data.last_name || '',
+          email: data.email || '',
+          avatar: data.avatar || data.picture || null,
+        });
       }
     } catch (error) {
       console.error('Error fetching user permissions:', error);
     }
+  };
+
+  const getUserInitials = () => {
+    if (!userProfile) return 'U';
+    const first = userProfile.firstName?.[0] || '';
+    const last = userProfile.lastName?.[0] || '';
+    return (first + last).toUpperCase() || userProfile.email?.[0]?.toUpperCase() || 'U';
   };
 
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
@@ -338,15 +354,19 @@ function MainLayout() {
       height: '100%',
     }}>
       {/* Logo */}
-      <Box sx={{
-        px: 2.5,
-        py: 2.5,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.5,
-        borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
-        mb: 0.5,
-      }}>
+      <Box
+        onClick={() => navigate('/landing')}
+        sx={{
+          px: 2.5,
+          py: 2.5,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+          mb: 0.5,
+          cursor: 'pointer',
+          '&:hover': { opacity: 0.85 },
+        }}>
         <Box
           component="img"
           src="/main.png"
@@ -592,16 +612,7 @@ function MainLayout() {
                         }
                       }}
                     >
-                      <Box
-                        component="span"
-                        sx={{
-                          fontSize: 16,
-                          fontWeight: 600,
-                          lineHeight: 1,
-                        }}
-                      >
-                        ←
-                      </Box>
+                      <ArrowBack sx={{ fontSize: 18 }} />
                     </IconButton>
                   ) : isDashboard && contextualActions?.periodControls ? (
                     // Afficher les contrôles de période à gauche sur mobile pour le dashboard
@@ -1022,26 +1033,19 @@ function MainLayout() {
                 data-tutorial="profile-menu"
               >
                 <Avatar
+                  src={userProfile?.avatar || undefined}
                   sx={{
                     width: { xs: 28, sm: 34 },
                     height: { xs: 28, sm: 34 },
-                    bgcolor: mode === 'dark'
-                      ? theme.palette.background.paper
-                      : '#ffffff',
-                    border: 'none',
-                    p: 0.5,
+                    bgcolor: userProfile?.avatar
+                      ? 'transparent'
+                      : theme.palette.primary.main,
+                    fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                    fontWeight: 700,
+                    border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
                   }}
                 >
-                  <Box
-                    component="img"
-                    src="/icon/ai-assistant.png"
-                    alt="Profile"
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                    }}
-                  />
+                  {!userProfile?.avatar && getUserInitials()}
                 </Avatar>
               </IconButton>
             </Tooltip>
@@ -1079,7 +1083,7 @@ function MainLayout() {
               <Divider sx={{ my: 0.5 }} />
               <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5, color: 'error.main' }}>
                 <ListItemIcon sx={{ minWidth: 32, color: 'error.main' }}>
-                  <Box component="span" sx={{ fontSize: 20 }}>⏻</Box>
+                  <PowerSettingsNew fontSize="small" />
                 </ListItemIcon>
                 {t('navigation:userMenu.logout')}
               </MenuItem>
