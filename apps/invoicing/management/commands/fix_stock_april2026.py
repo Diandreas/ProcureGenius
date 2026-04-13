@@ -231,7 +231,6 @@ class Command(BaseCommand):
                         price=0,
                         is_active=True,
                         low_stock_threshold=5,
-                        unit='unit',
                     )
                     products_cp = [product]
                 else:
