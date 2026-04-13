@@ -127,8 +127,13 @@ class ContractAIService:
     """Service pour l'extraction, l'analyse et la génération de contrats avec Mistral AI"""
 
     def __init__(self):
-        from mistralai import Mistral
-        self.client = Mistral(api_key=settings.MISTRAL_API_KEY)
+        # Support both mistralai v1.0+ and older versions
+        try:
+            from mistralai import Mistral
+            self.client = Mistral(api_key=settings.MISTRAL_API_KEY)
+        except ImportError:
+            from mistralai.client import MistralClient
+            self.client = MistralClient(api_key=settings.MISTRAL_API_KEY)
         self.model = settings.MISTRAL_MODEL
 
     # ===================================================================

@@ -422,8 +422,13 @@ class AdvancedAIActions:
             if not api_key:
                 return None
 
-            from mistralai import Mistral
-            client = Mistral(api_key=api_key)
+            # Support both mistralai v1.0+ and older versions
+            try:
+                from mistralai import Mistral
+                client = Mistral(api_key=api_key)
+            except ImportError:
+                from mistralai.client import MistralClient
+                client = MistralClient(api_key=api_key)
 
             response = client.chat.complete(
                 model="mistral-large-latest",

@@ -2280,7 +2280,11 @@ class GenerateTextView(APIView):
 
         try:
             import os
-            from mistralai import Mistral
+            # Support both mistralai v1.0+ and older versions
+            try:
+                from mistralai import Mistral
+            except ImportError:
+                from mistralai.client import MistralClient as Mistral
 
             api_key = os.getenv('MISTRAL_API_KEY')
             if not api_key:

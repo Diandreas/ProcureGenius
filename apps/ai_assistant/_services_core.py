@@ -26,8 +26,15 @@ class MistralService:
         if not api_key:
             raise ValueError("MISTRAL_API_KEY not configured")
 
-        from mistralai import Mistral
-        self.client = Mistral(api_key=api_key)
+        # Support both mistralai v1.0+ and older versions
+        try:
+            from mistralai import Mistral
+            self.client = Mistral(api_key=api_key)
+        except ImportError:
+            # Fallback for older versions of mistralai
+            from mistralai.client import MistralClient
+            self.client = MistralClient(api_key=api_key)
+        
         self.model = getattr(settings, 'MISTRAL_MODEL', 'mistral-large-latest')
         self.tools = self._define_tools()
         self._system_prompt_cached = None

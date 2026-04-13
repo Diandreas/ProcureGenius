@@ -34,9 +34,14 @@ class PixtralService:
         Args:
             api_key: Mistral API key (defaults to settings)
         """
-        from mistralai import Mistral
+        # Support both mistralai v1.0+ and older versions
+        try:
+            from mistralai import Mistral
+            self.client = Mistral(api_key=self.api_key)
+        except ImportError:
+            from mistralai.client import MistralClient
+            self.client = MistralClient(api_key=self.api_key)
         self.api_key = api_key or settings.MISTRAL_API_KEY
-        self.client = Mistral(api_key=self.api_key)
         self.max_file_size = 10 * 1024 * 1024  # 10MB
 
     def analyze_document_image(

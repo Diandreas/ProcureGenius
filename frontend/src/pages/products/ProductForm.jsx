@@ -224,8 +224,9 @@ function ProductForm() {
             }
 
             // Warehouses (requis pour produits physiques)
+            let warehousesRes = null;
             try {
-                const warehousesRes = await warehousesAPI.list();
+                warehousesRes = await warehousesAPI.list();
                 setWarehouses(warehousesRes.data.results || warehousesRes.data);
             } catch (error) {
                 console.error('Error loading warehouses:', error);
@@ -250,8 +251,8 @@ function ProductForm() {
                 if (defaultType === 'physical') {
                     const year = new Date().getFullYear();
                     const random = Math.floor(1000 + Math.random() * 9000);
-                    const defaultWarehouseId = (warehousesRes.data.results?.[0]?.id || warehousesRes.data?.[0]?.id || '');
-                    
+                    const defaultWarehouseId = (warehousesRes?.data?.results?.[0]?.id || warehousesRes?.data?.[0]?.id || '');
+
                     setInitialValues(prev => ({
                         ...prev,
                         lots: [{
@@ -517,7 +518,7 @@ function ProductForm() {
                                 expiration_date: lot.expiration_date || null,
                                 supplier_batch_reference: lot.supplier_batch_reference || '',
                             }));
-                        
+
                         if (lotPromises.length > 0) {
                             await Promise.all(lotPromises);
                             enqueueSnackbar(`${lotPromises.length} lot(s) initial(aux) créé(s)`, { variant: 'info' });
@@ -678,728 +679,728 @@ function ProductForm() {
             </Box>
             <Box sx={{ px: isMobile ? 2 : 0 }}>
 
-            {/* Message d'information si warehouses manquants (seulement pour produits physiques) */}
-            {warehouses.length === 0 && currentProductType === 'physical' && (
-                <Alert
-                    severity="info"
-                    sx={{
-                        mb: 3,
-                        borderRadius: 1.5,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                        border: 'none',
-                        '& .MuiAlert-icon': {
-                            alignItems: 'center'
-                        }
-                    }}
-                >
-                    {t('products:messages.missingWarehouses')}
-                </Alert>
-            )}
-
-            <Formik
-                initialValues={initialValues}
-                validationSchema={Yup.lazy((values) =>
-                    getValidationSchema(values?.product_type || 'physical', warehouses.length > 0)
-                )}
-                onSubmit={handleSubmit}
-                enableReinitialize
-            >
-                {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue, validateForm, setTouched, submitForm }) => {
-                    // Update refs to access from modals
-                    formikRef.current.setFieldValue = setFieldValue;
-                    formikRef.current.values = values;
-
-                    const steps = getSteps(values.product_type);
-                    const totalSteps = steps.length;
-                    const isLastStep = activeStep === totalSteps - 1;
-                    isLastStepRef.current = isLastStep;
-
-                    const handleStepNext = async () => {
-                        const stepFieldsList = STEP_FIELDS[activeStep] || [];
-                        const touchedFields = {};
-                        stepFieldsList.forEach(f => { touchedFields[f] = true; });
-                        setTouched(touchedFields, true);
-                        const errs = await validateForm();
-                        const hasStepErrors = stepFieldsList.some(f => errs[f]);
-                        if (!hasStepErrors) {
-                            setActiveStep(prev => prev + 1);
-                        }
-                    };
-
-                    const handleStepBack = () => {
-                        if (activeStep === 0) {
-                            navigate('/products');
-                        } else {
-                            setActiveStep(prev => prev - 1);
-                        }
-                    };
-
-                    // Ensure activeStep is within bounds when product type changes
-                    const safeActiveStep = Math.min(activeStep, totalSteps - 1);
-
-                    const handleKeyDown = (e) => {
-                        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-                            e.preventDefault();
-                            if (isLastStep) {
-                                submitForm();
-                            } else {
-                                handleStepNext();
+                {/* Message d'information si warehouses manquants (seulement pour produits physiques) */}
+                {warehouses.length === 0 && currentProductType === 'physical' && (
+                    <Alert
+                        severity="info"
+                        sx={{
+                            mb: 3,
+                            borderRadius: 1.5,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                            border: 'none',
+                            '& .MuiAlert-icon': {
+                                alignItems: 'center'
                             }
-                        }
-                    };
+                        }}
+                    >
+                        {t('products:messages.missingWarehouses')}
+                    </Alert>
+                )}
 
-                    return (
-                        <form onKeyDown={handleKeyDown} onSubmit={(e) => e.preventDefault()}>
-                            {/* Layout: sidebar steps + content */}
-                            <Box sx={{
-                                display: 'flex',
-                                gap: { xs: 0, md: 3 },
-                                alignItems: 'flex-start',
-                                flexDirection: { xs: 'column', md: 'row' },
-                            }}>
+                <Formik
+                    initialValues={initialValues}
+                    validationSchema={Yup.lazy((values) =>
+                        getValidationSchema(values?.product_type || 'physical', warehouses.length > 0)
+                    )}
+                    onSubmit={handleSubmit}
+                    enableReinitialize
+                >
+                    {({ values, errors, touched, handleChange, handleBlur, isSubmitting, setFieldValue, validateForm, setTouched, submitForm }) => {
+                        // Update refs to access from modals
+                        formikRef.current.setFieldValue = setFieldValue;
+                        formikRef.current.values = values;
 
-                            {/* LEFT: Steps sidebar (desktop only) */}
-                            {!isMobile && (
-                                <Box sx={{
-                                    width: 220,
-                                    flexShrink: 0,
-                                    position: 'sticky',
-                                    top: 80,
-                                }}>
-                                    <Box sx={{
-                                        bgcolor: 'background.paper',
-                                        borderRadius: 3,
-                                        border: theme => `1px solid ${alpha(theme.palette.divider, 0.8)}`,
-                                        overflow: 'hidden',
-                                    }}>
-                                        {steps.map((label, index) => {
-                                            const isActive = safeActiveStep === index;
-                                            const isDone = safeActiveStep > index;
-                                            return (
-                                                <Box
-                                                    key={label}
-                                                    sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: 1.5,
-                                                        px: 2,
-                                                        py: 1.75,
-                                                        borderBottom: index < steps.length - 1 ? theme => `1px solid ${alpha(theme.palette.divider, 0.5)}` : 'none',
-                                                        bgcolor: isActive ? theme => alpha(theme.palette.primary.main, 0.06) : 'transparent',
-                                                        borderLeft: isActive ? theme => `3px solid ${theme.palette.primary.main}` : '3px solid transparent',
-                                                        transition: 'all 0.2s',
-                                                    }}
-                                                >
-                                                    <Box sx={{
-                                                        width: 28, height: 28,
-                                                        borderRadius: '50%',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        bgcolor: isDone ? 'success.main' : isActive ? 'primary.main' : theme => alpha(theme.palette.text.disabled, 0.15),
-                                                        color: isDone || isActive ? 'white' : 'text.disabled',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 700,
-                                                        flexShrink: 0,
-                                                    }}>
-                                                        {isDone ? '✓' : index + 1}
-                                                    </Box>
-                                                    <Typography variant="body2" sx={{
-                                                        fontWeight: isActive ? 700 : 500,
-                                                        color: isActive ? 'primary.main' : isDone ? 'text.primary' : 'text.disabled',
-                                                        fontSize: '0.875rem',
-                                                    }}>
-                                                        {label}
-                                                    </Typography>
-                                                </Box>
-                                            );
-                                        })}
-                                    </Box>
-                                </Box>
-                            )}
+                        const steps = getSteps(values.product_type);
+                        const totalSteps = steps.length;
+                        const isLastStep = activeStep === totalSteps - 1;
+                        isLastStepRef.current = isLastStep;
 
-                            {/* Mobile stepper bar */}
-                            {isMobile && (
-                                <Box sx={{ width: '100%', mb: 2, px: 2 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                        {steps.map((label, index) => (
-                                            <Box key={label} sx={{ display: 'flex', alignItems: 'center', flex: index < steps.length - 1 ? 1 : 'none' }}>
-                                                <Box sx={{
-                                                    width: 28, height: 28, borderRadius: '50%',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    bgcolor: safeActiveStep > index ? 'success.main' : safeActiveStep === index ? 'primary.main' : theme => alpha(theme.palette.text.disabled, 0.15),
-                                                    color: safeActiveStep >= index ? 'white' : 'text.disabled',
-                                                    fontSize: '0.75rem', fontWeight: 700, flexShrink: 0,
-                                                }}>
-                                                    {safeActiveStep > index ? '✓' : index + 1}
-                                                </Box>
-                                                {index < steps.length - 1 && (
-                                                    <Box sx={{ flex: 1, height: 2, mx: 0.5, bgcolor: safeActiveStep > index ? 'success.main' : theme => alpha(theme.palette.divider, 1) }} />
-                                                )}
-                                            </Box>
-                                        ))}
-                                    </Box>
-                                    <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700, px: 0.5 }}>
-                                        {steps[safeActiveStep]} — Étape {safeActiveStep + 1}/{steps.length}
-                                    </Typography>
-                                </Box>
-                            )}
+                        const handleStepNext = async () => {
+                            const stepFieldsList = STEP_FIELDS[activeStep] || [];
+                            const touchedFields = {};
+                            stepFieldsList.forEach(f => { touchedFields[f] = true; });
+                            setTouched(touchedFields, true);
+                            const errs = await validateForm();
+                            const hasStepErrors = stepFieldsList.some(f => errs[f]);
+                            if (!hasStepErrors) {
+                                setActiveStep(prev => prev + 1);
+                            }
+                        };
 
-                            {/* RIGHT: Step Content */}
-                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                        const handleStepBack = () => {
+                            if (activeStep === 0) {
+                                navigate('/products');
+                            } else {
+                                setActiveStep(prev => prev - 1);
+                            }
+                        };
 
-                                {/* STEP 0: Informations */}
-                                {safeActiveStep === 0 && (
-                                    <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
-                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                    <Box sx={{
-                                                        width: 36, height: 36,
-                                                        borderRadius: 2,
-                                                        bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}>
-                                                        <Description sx={{ fontSize: 20, color: 'primary.main' }} />
-                                                    </Box>
-                                                    <Box>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                                                            {t('products:labels.generalInfo')}
-                                                        </Typography>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            Type, nom et description
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                            </Box>
+                        // Ensure activeStep is within bounds when product type changes
+                        const safeActiveStep = Math.min(activeStep, totalSteps - 1);
 
-                                            {/* Product Type Selector */}
-                                            <Box sx={{ mb: 2.5 }}>
-                                                <ProductTypeSelector value={values.product_type} onChange={(e) => {
-                                                    handleChange(e);
-                                                    setCurrentProductType(e.target.value);
-                                                    // Reset step if type changes and step would be out of bounds
-                                                    const newSteps = getSteps(e.target.value);
-                                                    if (activeStep >= newSteps.length) {
-                                                        setActiveStep(newSteps.length - 1);
-                                                    }
-                                                    // Auto-check price_editable for services
-                                                    if (e.target.value === 'service') {
-                                                        setFieldValue('price_editable', true);
-                                                        setFieldValue('price', 0);
-                                                    } else {
-                                                        setFieldValue('price_editable', false);
-                                                    }
-                                                }} />
-                                            </Box>
+                        const handleKeyDown = (e) => {
+                            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                                e.preventDefault();
+                                if (isLastStep) {
+                                    submitForm();
+                                } else {
+                                    handleStepNext();
+                                }
+                            }
+                        };
 
-                                            <Grid container spacing={1.5}>
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="name"
-                                                        label={t('products:labels.name')}
-                                                        value={values.name}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.name && Boolean(errors.name)}
-                                                        helperText={touched.name && errors.name}
-                                                        required
-                                                    />
-                                                </Grid>
-
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="reference"
-                                                        label={t('products:labels.reference')}
-                                                        value={values.reference}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.reference && Boolean(errors.reference)}
-                                                        helperText={touched.reference && errors.reference || t('products:messages.leaveEmptyForAuto')}
-                                                        placeholder="PRD-0001"
-                                                    />
-                                                </Grid>
-
-                                                <Grid item xs={12}>
-                                                    <TextField
-                                                        fullWidth
-                                                        multiline
-                                                        rows={isMobile ? 3 : 4}
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="description"
-                                                        label={t('products:labels.detailedDescription')}
-                                                        value={values.description}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.description && Boolean(errors.description)}
-                                                        helperText={touched.description && errors.description}
-                                                        required
-                                                    />
-                                                </Grid>
-                                            </Grid>
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-                                {/* STEP 1: Tarification */}
-                                {safeActiveStep === 1 && (
-                                    <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
-                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                                                <Box sx={{
-                                                    width: 36, height: 36,
-                                                    borderRadius: 2,
-                                                    bgcolor: theme => alpha(theme.palette.success.main, 0.1),
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                }}>
-                                                    <AttachMoney sx={{ fontSize: 20, color: 'success.main' }} />
-                                                </Box>
-                                                <Box>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                                                        {t('products:labels.pricing')}
-                                                    </Typography>
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        Prix de vente, coût et catégorie
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-
-                                            <Grid container spacing={1.5}>
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="price"
-                                                        label={
-                                                            values.product_type === 'service' ? t('products:labels.sellingPrice') :
-                                                                values.product_type === 'digital' ? t('products:labels.pricePerLicense') :
-                                                                    t('products:labels.sellingPrice')
-                                                        }
-                                                        type="number"
-                                                        value={values.price}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.price && Boolean(errors.price)}
-                                                        helperText={touched.price && errors.price}
-                                                        InputProps={{
-                                                            startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                                        }}
-                                                        required
-                                                    />
-                                                </Grid>
-
-                                                <Grid item xs={12} md={6}>
-                                                    <TextField
-                                                        fullWidth
-                                                        size={isMobile ? "small" : "medium"}
-                                                        name="cost_price"
-                                                        label={t('products:labels.costPrice')}
-                                                        type="number"
-                                                        value={values.cost_price}
-                                                        onChange={handleChange}
-                                                        onBlur={handleBlur}
-                                                        error={touched.cost_price && Boolean(errors.cost_price)}
-                                                        helperText={touched.cost_price && errors.cost_price}
-                                                        InputProps={{
-                                                            startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                                        }}
-                                                    />
-                                                </Grid>
-
-                                                <Grid item xs={12}>
-                                                    <FormControlLabel
-                                                        control={
-                                                            <Checkbox
-                                                                name="price_editable"
-                                                                checked={values.price_editable || false}
-                                                                onChange={handleChange}
-                                                            />
-                                                        }
-                                                        label={
-                                                            <Box>
-                                                                <Typography variant="body2">
-                                                                    {t('products:labels.priceEditable')}
-                                                                </Typography>
-                                                                <Typography variant="caption" color="text.secondary">
-                                                                    {t('products:labels.priceEditableHelp')}
-                                                                </Typography>
-                                                            </Box>
-                                                        }
-                                                    />
-                                                </Grid>
-
-                                                {/* Catégorie — freeSolo : sélection ou création à la volée */}
-                                                <Grid item xs={12} md={6}>
-                                                    <Autocomplete
-                                                        freeSolo
-                                                        options={categories}
-                                                        getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
-                                                        value={categories.find(c => c.id === values.category_id) || null}
-                                                        onChange={async (_, newValue) => {
-                                                            if (!newValue) {
-                                                                setFieldValue('category_id', '');
-                                                            } else if (typeof newValue === 'string') {
-                                                                // Texte libre → créer la catégorie
-                                                                try {
-                                                                    const res = await productCategoriesAPI.create({ name: newValue });
-                                                                    setCategories(prev => [...prev, res.data]);
-                                                                    setFieldValue('category_id', res.data.id);
-                                                                } catch {
-                                                                    enqueueSnackbar('Erreur création catégorie', { variant: 'error' });
-                                                                }
-                                                            } else if (newValue.inputValue) {
-                                                                // Option "Créer X"
-                                                                try {
-                                                                    const res = await productCategoriesAPI.create({ name: newValue.inputValue });
-                                                                    setCategories(prev => [...prev, res.data]);
-                                                                    setFieldValue('category_id', res.data.id);
-                                                                } catch {
-                                                                    enqueueSnackbar('Erreur création catégorie', { variant: 'error' });
-                                                                }
-                                                            } else {
-                                                                setFieldValue('category_id', newValue.id);
-                                                            }
-                                                        }}
-                                                        filterOptions={(options, params) => {
-                                                            const filtered = options.filter(o =>
-                                                                o.name.toLowerCase().includes(params.inputValue.toLowerCase())
-                                                            );
-                                                            if (params.inputValue !== '' && !filtered.some(o => o.name.toLowerCase() === params.inputValue.toLowerCase())) {
-                                                                filtered.push({ inputValue: params.inputValue, name: `Créer "${params.inputValue}"` });
-                                                            }
-                                                            return filtered;
-                                                        }}
-                                                        renderInput={(params) => (
-                                                            <TextField
-                                                                {...params}
-                                                                label={t('products:labels.category')}
-                                                                size={isMobile ? "small" : "medium"}
-                                                                placeholder="Tapez pour chercher ou créer..."
-                                                            />
-                                                        )}
-                                                    />
-                                                </Grid>
-
-                                                {/* Type de source - Seulement pour physiques */}
-                                                {values.product_type === 'physical' && (
-                                                    <Grid item xs={12} md={6}>
-                                                        <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                                                            <InputLabel>{t('products:labels.sourceType')}</InputLabel>
-                                                            <Select
-                                                                name="source_type"
-                                                                value={values.source_type}
-                                                                onChange={handleChange}
-                                                                label={t('products:labels.sourceType')}
-                                                            >
-                                                                <MenuItem value="purchased">
-                                                                    <ShoppingCart sx={{ mr: 1, fontSize: 20 }} />
-                                                                    {t('products:sourceTypes.purchased')}
-                                                                </MenuItem>
-                                                                <MenuItem value="manufactured">
-                                                                    <Construction sx={{ mr: 1, fontSize: 20 }} />
-                                                                    {t('products:sourceTypes.manufactured')}
-                                                                </MenuItem>
-                                                                <MenuItem value="resale">
-                                                                    <Storefront sx={{ mr: 1, fontSize: 20 }} />
-                                                                    {t('products:sourceTypes.resale')}
-                                                                </MenuItem>
-                                                            </Select>
-                                                        </FormControl>
-                                                    </Grid>
-                                                )}
-
-                                                {/* Fournisseur */}
-                                                {suppliers.length > 0 && (
-                                                    <Grid item xs={12} md={6}>
-                                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                                            <FormControl
-                                                                fullWidth
-                                                                size={isMobile ? "small" : "medium"}
-                                                                error={touched.supplier_id && Boolean(errors.supplier_id)}
-                                                            >
-                                                                <InputLabel>
-                                                                    {t('products:labels.supplierOptional')}
-                                                                </InputLabel>
-                                                                <Select
-                                                                    name="supplier_id"
-                                                                    value={values.supplier_id}
-                                                                    onChange={handleChange}
-                                                                    label={t('products:labels.supplierOptional')}
-                                                                    startAdornment={<Business sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
-                                                                >
-                                                                    <MenuItem value="">
-                                                                        <em>{t('products:labels.noSupplier')}</em>
-                                                                    </MenuItem>
-                                                                    {suppliers.map((supplier) => (
-                                                                        <MenuItem key={supplier.id} value={supplier.id}>
-                                                                            {supplier.name}
-                                                                        </MenuItem>
-                                                                    ))}
-                                                                </Select>
-                                                                {touched.supplier_id && errors.supplier_id && (
-                                                                    <FormHelperText>{errors.supplier_id}</FormHelperText>
-                                                                )}
-                                                            </FormControl>
-                                                            <IconButton
-                                                                onClick={() => setSupplierModalOpen(true)}
-                                                                sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}
-                                                                size={isMobile ? "small" : "medium"}
-                                                            >
-                                                                <Add />
-                                                            </IconButton>
-                                                        </Box>
-                                                    </Grid>
-                                                )}
-                                            </Grid>
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-                                {/* STEP 2: Stock & Lots (physical only) */}
-                                {safeActiveStep === 2 && values.product_type === 'physical' && (
-                                    <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
-                                        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                                                <Box sx={{
-                                                    width: 36, height: 36,
-                                                    borderRadius: 2,
-                                                    bgcolor: theme => alpha(theme.palette.warning.main, 0.1),
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                }}>
-                                                    <Inventory sx={{ fontSize: 20, color: 'warning.main' }} />
-                                                </Box>
-                                                <Box>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                                                        Lots &amp; Stock Initial
-                                                    </Typography>
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        Définissez le stock de départ par lot
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-
-                                            <Alert severity="info" sx={{ mb: 3, borderRadius: 1.5 }}>
-                                                Le stock est désormais géré exclusivement par lots. Ajoutez un ou plusieurs lots initiaux pour définir le stock de départ.
-                                            </Alert>
-
-                                            <FieldArray name="lots">
-                                                {({ push, remove }) => (
-                                                    <Box>
-                                                        {values.lots.length === 0 ? (
-                                                            <Box sx={{ 
-                                                                py: 4, 
-                                                                textAlign: 'center', 
-                                                                bgcolor: 'grey.50', 
-                                                                borderRadius: 2,
-                                                                border: '1px dashed',
-                                                                borderColor: 'divider'
-                                                            }}>
-                                                                <Typography color="text.secondary" gutterBottom>
-                                                                    Aucun lot initial défini
-                                                                </Typography>
-                                                                <Button 
-                                                                    variant="contained" 
-                                                                    startIcon={<Add />}
-                                                                    onClick={() => push({ 
-                                                                        batch_number: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`, 
-                                                                        initial_quantity: 0, 
-                                                                        warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
-                                                                        expiration_date: '',
-                                                                        supplier_batch_reference: ''
-                                                                    })}
-                                                                    sx={{ borderRadius: 2, textTransform: 'none' }}
-                                                                >
-                                                                    Ajouter un lot initial
-                                                                </Button>
-                                                            </Box>
-                                                        ) : (
-                                                            <Grid container spacing={2}>
-                                                                {values.lots.map((lot, index) => (
-                                                                    <Grid item xs={12} key={index}>
-                                                                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 1.5, position: 'relative', bgcolor: index % 2 === 0 ? 'white' : 'grey.50' }}>
-                                                                            <IconButton 
-                                                                                size="small" 
-                                                                                color="error"
-                                                                                onClick={() => remove(index)}
-                                                                                sx={{ position: 'absolute', top: 8, right: 8 }}
-                                                                            >
-                                                                                <DeleteOutline fontSize="small" />
-                                                                            </IconButton>
-                                                                            <Grid container spacing={2}>
-                                                                                <Grid item xs={12} md={4}>
-                                                                                    <TextField
-                                                                                        fullWidth
-                                                                                        size="small"
-                                                                                        label="Numéro de lot"
-                                                                                        name={`lots.${index}.batch_number`}
-                                                                                        value={lot.batch_number}
-                                                                                        onChange={handleChange}
-                                                                                        error={touched.lots?.[index]?.batch_number && Boolean(errors.lots?.[index]?.batch_number)}
-                                                                                        helperText={touched.lots?.[index]?.batch_number && errors.lots?.[index]?.batch_number}
-                                                                                        required
-                                                                                    />
-                                                                                </Grid>
-                                                                                <Grid item xs={12} md={4}>
-                                                                                    <TextField
-                                                                                        fullWidth
-                                                                                        size="small"
-                                                                                        label="Quantité initiale"
-                                                                                        type="number"
-                                                                                        name={`lots.${index}.initial_quantity`}
-                                                                                        value={lot.initial_quantity}
-                                                                                        onChange={handleChange}
-                                                                                        error={touched.lots?.[index]?.initial_quantity && Boolean(errors.lots?.[index]?.initial_quantity)}
-                                                                                        helperText={touched.lots?.[index]?.initial_quantity && errors.lots?.[index]?.initial_quantity}
-                                                                                        required
-                                                                                    />
-                                                                                </Grid>
-                                                                                <Grid item xs={12} md={4}>
-                                                                                    <FormControl fullWidth size="small" error={touched.lots?.[index]?.warehouse_id && Boolean(errors.lots?.[index]?.warehouse_id)}>
-                                                                                        <InputLabel>Entrepôt</InputLabel>
-                                                                                        <Select
-                                                                                            name={`lots.${index}.warehouse_id`}
-                                                                                            value={lot.warehouse_id}
-                                                                                            onChange={handleChange}
-                                                                                            label="Entrepôt"
-                                                                                        >
-                                                                                            {warehouses.map((w) => (
-                                                                                                <MenuItem key={w.id} value={w.id}>{w.name} ({w.code})</MenuItem>
-                                                                                            ))}
-                                                                                        </Select>
-                                                                                    </FormControl>
-                                                                                </Grid>
-                                                                                <Grid item xs={12} md={6}>
-                                                                                    <TextField
-                                                                                        fullWidth
-                                                                                        size="small"
-                                                                                        label="Date d'expiration"
-                                                                                        type="date"
-                                                                                        name={`lots.${index}.expiration_date`}
-                                                                                        value={lot.expiration_date || ''}
-                                                                                        onChange={handleChange}
-                                                                                        InputLabelProps={{ shrink: true }}
-                                                                                    />
-                                                                                </Grid>
-                                                                                <Grid item xs={12} md={6}>
-                                                                                    <TextField
-                                                                                        fullWidth
-                                                                                        size="small"
-                                                                                        label="Référence fournisseur"
-                                                                                        name={`lots.${index}.supplier_batch_reference`}
-                                                                                        value={lot.supplier_batch_reference}
-                                                                                        onChange={handleChange}
-                                                                                    />
-                                                                                </Grid>
-                                                                            </Grid>
-                                                                        </Paper>
-                                                                    </Grid>
-                                                                ))}
-                                                                <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-                                                                    <Button 
-                                                                        variant="outlined"
-                                                                        startIcon={<Add />}
-                                                                        onClick={() => push({ 
-                                                                            batch_number: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`, 
-                                                                            initial_quantity: 0, 
-                                                                            warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
-                                                                            expiration_date: '',
-                                                                            supplier_batch_reference: ''
-                                                                        })}
-                                                                        sx={{ borderRadius: 2, textTransform: 'none' }}
-                                                                    >
-                                                                        Ajouter un autre lot
-                                                                    </Button>
-                                                                </Grid>
-                                                            </Grid>
-                                                        )}
-
-                                                        <Divider sx={{ my: 3 }} />
-
-                                                        <Grid container spacing={2}>
-                                                            <Grid item xs={12} md={6}>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    size="small"
-                                                                    name="low_stock_threshold"
-                                                                    label={t('products:labels.lowStockThreshold')}
-                                                                    type="number"
-                                                                    value={values.low_stock_threshold}
-                                                                    onChange={handleChange}
-                                                                    onBlur={handleBlur}
-                                                                    error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
-                                                                    helperText={touched.low_stock_threshold && errors.low_stock_threshold}
-                                                                    required
-                                                                />
-                                                            </Grid>
-                                                        </Grid>
-                                                    </Box>
-                                                )}
-                                            </FieldArray>
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-
-                                {/* Navigation Buttons */}
+                        return (
+                            <form onKeyDown={handleKeyDown} onSubmit={(e) => e.preventDefault()}>
+                                {/* Layout: sidebar steps + content */}
                                 <Box sx={{
                                     display: 'flex',
-                                    gap: 1.5,
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    mt: 1,
-                                    position: isMobile ? 'fixed' : 'relative',
-                                    bottom: isMobile ? 0 : 'auto',
-                                    left: isMobile ? 0 : 'auto',
-                                    right: isMobile ? 0 : 'auto',
-                                    bgcolor: isMobile ? 'background.paper' : 'transparent',
-                                    p: isMobile ? 2 : 0,
-                                    zIndex: isMobile ? 1000 : 1,
-                                    boxShadow: isMobile ? '0 -1px 12px rgba(0,0,0,0.08)' : 0,
-                                    width: isMobile ? '100%' : 'auto',
-                                    margin: isMobile ? '-16px' : 0,
+                                    gap: { xs: 0, md: 3 },
+                                    alignItems: 'flex-start',
+                                    flexDirection: { xs: 'column', md: 'row' },
                                 }}>
-                                    <Button
-                                        type="button"
-                                        variant="outlined"
-                                        startIcon={activeStep === 0 ? <Cancel /> : <NavigateBefore />}
-                                        onClick={handleStepBack}
-                                        disabled={isSubmitting}
-                                    >
-                                        {activeStep === 0 ? t('products:actions.cancel') : 'Précédent'}
-                                    </Button>
 
-                                    {isLastStep ? (
-                                        <Button
-                                            type="button"
-                                            variant="contained"
-                                            startIcon={isSubmitting ? null : <Save />}
-                                            disabled={isSubmitting}
-                                            onClick={() => submitForm()}
-                                        >
-                                            {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('products:actions.modify') : t('products:actions.create'))}
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            type="button"
-                                            variant="contained"
-                                            endIcon={<NavigateNext />}
-                                            onClick={handleStepNext}
-                                            disabled={isSubmitting}
-                                        >
-                                            Suivant
-                                        </Button>
+                                    {/* LEFT: Steps sidebar (desktop only) */}
+                                    {!isMobile && (
+                                        <Box sx={{
+                                            width: 220,
+                                            flexShrink: 0,
+                                            position: 'sticky',
+                                            top: 80,
+                                        }}>
+                                            <Box sx={{
+                                                bgcolor: 'background.paper',
+                                                borderRadius: 3,
+                                                border: theme => `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+                                                overflow: 'hidden',
+                                            }}>
+                                                {steps.map((label, index) => {
+                                                    const isActive = safeActiveStep === index;
+                                                    const isDone = safeActiveStep > index;
+                                                    return (
+                                                        <Box
+                                                            key={label}
+                                                            sx={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: 1.5,
+                                                                px: 2,
+                                                                py: 1.75,
+                                                                borderBottom: index < steps.length - 1 ? theme => `1px solid ${alpha(theme.palette.divider, 0.5)}` : 'none',
+                                                                bgcolor: isActive ? theme => alpha(theme.palette.primary.main, 0.06) : 'transparent',
+                                                                borderLeft: isActive ? theme => `3px solid ${theme.palette.primary.main}` : '3px solid transparent',
+                                                                transition: 'all 0.2s',
+                                                            }}
+                                                        >
+                                                            <Box sx={{
+                                                                width: 28, height: 28,
+                                                                borderRadius: '50%',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                bgcolor: isDone ? 'success.main' : isActive ? 'primary.main' : theme => alpha(theme.palette.text.disabled, 0.15),
+                                                                color: isDone || isActive ? 'white' : 'text.disabled',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: 700,
+                                                                flexShrink: 0,
+                                                            }}>
+                                                                {isDone ? '✓' : index + 1}
+                                                            </Box>
+                                                            <Typography variant="body2" sx={{
+                                                                fontWeight: isActive ? 700 : 500,
+                                                                color: isActive ? 'primary.main' : isDone ? 'text.primary' : 'text.disabled',
+                                                                fontSize: '0.875rem',
+                                                            }}>
+                                                                {label}
+                                                            </Typography>
+                                                        </Box>
+                                                    );
+                                                })}
+                                            </Box>
+                                        </Box>
                                     )}
-                                </Box>
-                            </Box>{/* end content */}
-                            </Box>{/* end sidebar layout */}
-                        </form>
-                    );
-                }}
-            </Formik>
+
+                                    {/* Mobile stepper bar */}
+                                    {isMobile && (
+                                        <Box sx={{ width: '100%', mb: 2, px: 2 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                {steps.map((label, index) => (
+                                                    <Box key={label} sx={{ display: 'flex', alignItems: 'center', flex: index < steps.length - 1 ? 1 : 'none' }}>
+                                                        <Box sx={{
+                                                            width: 28, height: 28, borderRadius: '50%',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            bgcolor: safeActiveStep > index ? 'success.main' : safeActiveStep === index ? 'primary.main' : theme => alpha(theme.palette.text.disabled, 0.15),
+                                                            color: safeActiveStep >= index ? 'white' : 'text.disabled',
+                                                            fontSize: '0.75rem', fontWeight: 700, flexShrink: 0,
+                                                        }}>
+                                                            {safeActiveStep > index ? '✓' : index + 1}
+                                                        </Box>
+                                                        {index < steps.length - 1 && (
+                                                            <Box sx={{ flex: 1, height: 2, mx: 0.5, bgcolor: safeActiveStep > index ? 'success.main' : theme => alpha(theme.palette.divider, 1) }} />
+                                                        )}
+                                                    </Box>
+                                                ))}
+                                            </Box>
+                                            <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700, px: 0.5 }}>
+                                                {steps[safeActiveStep]} — Étape {safeActiveStep + 1}/{steps.length}
+                                            </Typography>
+                                        </Box>
+                                    )}
+
+                                    {/* RIGHT: Step Content */}
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+
+                                        {/* STEP 0: Informations */}
+                                        {safeActiveStep === 0 && (
+                                            <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
+                                                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                            <Box sx={{
+                                                                width: 36, height: 36,
+                                                                borderRadius: 2,
+                                                                bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center'
+                                                            }}>
+                                                                <Description sx={{ fontSize: 20, color: 'primary.main' }} />
+                                                            </Box>
+                                                            <Box>
+                                                                <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                                                                    {t('products:labels.generalInfo')}
+                                                                </Typography>
+                                                                <Typography variant="caption" color="text.secondary">
+                                                                    Type, nom et description
+                                                                </Typography>
+                                                            </Box>
+                                                        </Box>
+                                                    </Box>
+
+                                                    {/* Product Type Selector */}
+                                                    <Box sx={{ mb: 2.5 }}>
+                                                        <ProductTypeSelector value={values.product_type} onChange={(e) => {
+                                                            handleChange(e);
+                                                            setCurrentProductType(e.target.value);
+                                                            // Reset step if type changes and step would be out of bounds
+                                                            const newSteps = getSteps(e.target.value);
+                                                            if (activeStep >= newSteps.length) {
+                                                                setActiveStep(newSteps.length - 1);
+                                                            }
+                                                            // Auto-check price_editable for services
+                                                            if (e.target.value === 'service') {
+                                                                setFieldValue('price_editable', true);
+                                                                setFieldValue('price', 0);
+                                                            } else {
+                                                                setFieldValue('price_editable', false);
+                                                            }
+                                                        }} />
+                                                    </Box>
+
+                                                    <Grid container spacing={1.5}>
+                                                        <Grid item xs={12} md={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                size={isMobile ? "small" : "medium"}
+                                                                name="name"
+                                                                label={t('products:labels.name')}
+                                                                value={values.name}
+                                                                onChange={handleChange}
+                                                                onBlur={handleBlur}
+                                                                error={touched.name && Boolean(errors.name)}
+                                                                helperText={touched.name && errors.name}
+                                                                required
+                                                            />
+                                                        </Grid>
+
+                                                        <Grid item xs={12} md={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                size={isMobile ? "small" : "medium"}
+                                                                name="reference"
+                                                                label={t('products:labels.reference')}
+                                                                value={values.reference}
+                                                                onChange={handleChange}
+                                                                onBlur={handleBlur}
+                                                                error={touched.reference && Boolean(errors.reference)}
+                                                                helperText={touched.reference && errors.reference || t('products:messages.leaveEmptyForAuto')}
+                                                                placeholder="PRD-0001"
+                                                            />
+                                                        </Grid>
+
+                                                        <Grid item xs={12}>
+                                                            <TextField
+                                                                fullWidth
+                                                                multiline
+                                                                rows={isMobile ? 3 : 4}
+                                                                size={isMobile ? "small" : "medium"}
+                                                                name="description"
+                                                                label={t('products:labels.detailedDescription')}
+                                                                value={values.description}
+                                                                onChange={handleChange}
+                                                                onBlur={handleBlur}
+                                                                error={touched.description && Boolean(errors.description)}
+                                                                helperText={touched.description && errors.description}
+                                                                required
+                                                            />
+                                                        </Grid>
+                                                    </Grid>
+                                                </CardContent>
+                                            </Card>
+                                        )}
+
+                                        {/* STEP 1: Tarification */}
+                                        {safeActiveStep === 1 && (
+                                            <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
+                                                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                                                        <Box sx={{
+                                                            width: 36, height: 36,
+                                                            borderRadius: 2,
+                                                            bgcolor: theme => alpha(theme.palette.success.main, 0.1),
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                        }}>
+                                                            <AttachMoney sx={{ fontSize: 20, color: 'success.main' }} />
+                                                        </Box>
+                                                        <Box>
+                                                            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                                                                {t('products:labels.pricing')}
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                Prix de vente, coût et catégorie
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+
+                                                    <Grid container spacing={1.5}>
+                                                        <Grid item xs={12} md={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                size={isMobile ? "small" : "medium"}
+                                                                name="price"
+                                                                label={
+                                                                    values.product_type === 'service' ? t('products:labels.sellingPrice') :
+                                                                        values.product_type === 'digital' ? t('products:labels.pricePerLicense') :
+                                                                            t('products:labels.sellingPrice')
+                                                                }
+                                                                type="number"
+                                                                value={values.price}
+                                                                onChange={handleChange}
+                                                                onBlur={handleBlur}
+                                                                error={touched.price && Boolean(errors.price)}
+                                                                helperText={touched.price && errors.price}
+                                                                InputProps={{
+                                                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                                                }}
+                                                                required
+                                                            />
+                                                        </Grid>
+
+                                                        <Grid item xs={12} md={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                size={isMobile ? "small" : "medium"}
+                                                                name="cost_price"
+                                                                label={t('products:labels.costPrice')}
+                                                                type="number"
+                                                                value={values.cost_price}
+                                                                onChange={handleChange}
+                                                                onBlur={handleBlur}
+                                                                error={touched.cost_price && Boolean(errors.cost_price)}
+                                                                helperText={touched.cost_price && errors.cost_price}
+                                                                InputProps={{
+                                                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                                                }}
+                                                            />
+                                                        </Grid>
+
+                                                        <Grid item xs={12}>
+                                                            <FormControlLabel
+                                                                control={
+                                                                    <Checkbox
+                                                                        name="price_editable"
+                                                                        checked={values.price_editable || false}
+                                                                        onChange={handleChange}
+                                                                    />
+                                                                }
+                                                                label={
+                                                                    <Box>
+                                                                        <Typography variant="body2">
+                                                                            {t('products:labels.priceEditable')}
+                                                                        </Typography>
+                                                                        <Typography variant="caption" color="text.secondary">
+                                                                            {t('products:labels.priceEditableHelp')}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                }
+                                                            />
+                                                        </Grid>
+
+                                                        {/* Catégorie — freeSolo : sélection ou création à la volée */}
+                                                        <Grid item xs={12} md={6}>
+                                                            <Autocomplete
+                                                                freeSolo
+                                                                options={categories}
+                                                                getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+                                                                value={categories.find(c => c.id === values.category_id) || null}
+                                                                onChange={async (_, newValue) => {
+                                                                    if (!newValue) {
+                                                                        setFieldValue('category_id', '');
+                                                                    } else if (typeof newValue === 'string') {
+                                                                        // Texte libre → créer la catégorie
+                                                                        try {
+                                                                            const res = await productCategoriesAPI.create({ name: newValue });
+                                                                            setCategories(prev => [...prev, res.data]);
+                                                                            setFieldValue('category_id', res.data.id);
+                                                                        } catch {
+                                                                            enqueueSnackbar('Erreur création catégorie', { variant: 'error' });
+                                                                        }
+                                                                    } else if (newValue.inputValue) {
+                                                                        // Option "Créer X"
+                                                                        try {
+                                                                            const res = await productCategoriesAPI.create({ name: newValue.inputValue });
+                                                                            setCategories(prev => [...prev, res.data]);
+                                                                            setFieldValue('category_id', res.data.id);
+                                                                        } catch {
+                                                                            enqueueSnackbar('Erreur création catégorie', { variant: 'error' });
+                                                                        }
+                                                                    } else {
+                                                                        setFieldValue('category_id', newValue.id);
+                                                                    }
+                                                                }}
+                                                                filterOptions={(options, params) => {
+                                                                    const filtered = options.filter(o =>
+                                                                        o.name.toLowerCase().includes(params.inputValue.toLowerCase())
+                                                                    );
+                                                                    if (params.inputValue !== '' && !filtered.some(o => o.name.toLowerCase() === params.inputValue.toLowerCase())) {
+                                                                        filtered.push({ inputValue: params.inputValue, name: `Créer "${params.inputValue}"` });
+                                                                    }
+                                                                    return filtered;
+                                                                }}
+                                                                renderInput={(params) => (
+                                                                    <TextField
+                                                                        {...params}
+                                                                        label={t('products:labels.category')}
+                                                                        size={isMobile ? "small" : "medium"}
+                                                                        placeholder="Tapez pour chercher ou créer..."
+                                                                    />
+                                                                )}
+                                                            />
+                                                        </Grid>
+
+                                                        {/* Type de source - Seulement pour physiques */}
+                                                        {values.product_type === 'physical' && (
+                                                            <Grid item xs={12} md={6}>
+                                                                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                                                                    <InputLabel>{t('products:labels.sourceType')}</InputLabel>
+                                                                    <Select
+                                                                        name="source_type"
+                                                                        value={values.source_type}
+                                                                        onChange={handleChange}
+                                                                        label={t('products:labels.sourceType')}
+                                                                    >
+                                                                        <MenuItem value="purchased">
+                                                                            <ShoppingCart sx={{ mr: 1, fontSize: 20 }} />
+                                                                            {t('products:sourceTypes.purchased')}
+                                                                        </MenuItem>
+                                                                        <MenuItem value="manufactured">
+                                                                            <Construction sx={{ mr: 1, fontSize: 20 }} />
+                                                                            {t('products:sourceTypes.manufactured')}
+                                                                        </MenuItem>
+                                                                        <MenuItem value="resale">
+                                                                            <Storefront sx={{ mr: 1, fontSize: 20 }} />
+                                                                            {t('products:sourceTypes.resale')}
+                                                                        </MenuItem>
+                                                                    </Select>
+                                                                </FormControl>
+                                                            </Grid>
+                                                        )}
+
+                                                        {/* Fournisseur */}
+                                                        {suppliers.length > 0 && (
+                                                            <Grid item xs={12} md={6}>
+                                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                                    <FormControl
+                                                                        fullWidth
+                                                                        size={isMobile ? "small" : "medium"}
+                                                                        error={touched.supplier_id && Boolean(errors.supplier_id)}
+                                                                    >
+                                                                        <InputLabel>
+                                                                            {t('products:labels.supplierOptional')}
+                                                                        </InputLabel>
+                                                                        <Select
+                                                                            name="supplier_id"
+                                                                            value={values.supplier_id}
+                                                                            onChange={handleChange}
+                                                                            label={t('products:labels.supplierOptional')}
+                                                                            startAdornment={<Business sx={{ ml: 1, mr: -0.5, color: 'action.active' }} />}
+                                                                        >
+                                                                            <MenuItem value="">
+                                                                                <em>{t('products:labels.noSupplier')}</em>
+                                                                            </MenuItem>
+                                                                            {suppliers.map((supplier) => (
+                                                                                <MenuItem key={supplier.id} value={supplier.id}>
+                                                                                    {supplier.name}
+                                                                                </MenuItem>
+                                                                            ))}
+                                                                        </Select>
+                                                                        {touched.supplier_id && errors.supplier_id && (
+                                                                            <FormHelperText>{errors.supplier_id}</FormHelperText>
+                                                                        )}
+                                                                    </FormControl>
+                                                                    <IconButton
+                                                                        onClick={() => setSupplierModalOpen(true)}
+                                                                        sx={{ bgcolor: 'primary.main', color: 'white', '&:hover': { bgcolor: 'primary.dark' } }}
+                                                                        size={isMobile ? "small" : "medium"}
+                                                                    >
+                                                                        <Add />
+                                                                    </IconButton>
+                                                                </Box>
+                                                            </Grid>
+                                                        )}
+                                                    </Grid>
+                                                </CardContent>
+                                            </Card>
+                                        )}
+
+                                        {/* STEP 2: Stock & Lots (physical only) */}
+                                        {safeActiveStep === 2 && values.product_type === 'physical' && (
+                                            <Card sx={{ mb: 2, borderRadius: 2.5, boxShadow: theme => `0 1px 4px ${alpha(theme.palette.common.black, 0.06)}`, border: theme => `1px solid ${alpha(theme.palette.divider, 0.7)}` }}>
+                                                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                                                        <Box sx={{
+                                                            width: 36, height: 36,
+                                                            borderRadius: 2,
+                                                            bgcolor: theme => alpha(theme.palette.warning.main, 0.1),
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                        }}>
+                                                            <Inventory sx={{ fontSize: 20, color: 'warning.main' }} />
+                                                        </Box>
+                                                        <Box>
+                                                            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                                                                Lots &amp; Stock Initial
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                Définissez le stock de départ par lot
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+
+                                                    <Alert severity="info" sx={{ mb: 3, borderRadius: 1.5 }}>
+                                                        Le stock est désormais géré exclusivement par lots. Ajoutez un ou plusieurs lots initiaux pour définir le stock de départ.
+                                                    </Alert>
+
+                                                    <FieldArray name="lots">
+                                                        {({ push, remove }) => (
+                                                            <Box>
+                                                                {values.lots.length === 0 ? (
+                                                                    <Box sx={{
+                                                                        py: 4,
+                                                                        textAlign: 'center',
+                                                                        bgcolor: 'grey.50',
+                                                                        borderRadius: 2,
+                                                                        border: '1px dashed',
+                                                                        borderColor: 'divider'
+                                                                    }}>
+                                                                        <Typography color="text.secondary" gutterBottom>
+                                                                            Aucun lot initial défini
+                                                                        </Typography>
+                                                                        <Button
+                                                                            variant="contained"
+                                                                            startIcon={<Add />}
+                                                                            onClick={() => push({
+                                                                                batch_number: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                                                                                initial_quantity: 0,
+                                                                                warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+                                                                                expiration_date: '',
+                                                                                supplier_batch_reference: ''
+                                                                            })}
+                                                                            sx={{ borderRadius: 2, textTransform: 'none' }}
+                                                                        >
+                                                                            Ajouter un lot initial
+                                                                        </Button>
+                                                                    </Box>
+                                                                ) : (
+                                                                    <Grid container spacing={2}>
+                                                                        {values.lots.map((lot, index) => (
+                                                                            <Grid item xs={12} key={index}>
+                                                                                <Paper variant="outlined" sx={{ p: 2, borderRadius: 1.5, position: 'relative', bgcolor: index % 2 === 0 ? 'white' : 'grey.50' }}>
+                                                                                    <IconButton
+                                                                                        size="small"
+                                                                                        color="error"
+                                                                                        onClick={() => remove(index)}
+                                                                                        sx={{ position: 'absolute', top: 8, right: 8 }}
+                                                                                    >
+                                                                                        <DeleteOutline fontSize="small" />
+                                                                                    </IconButton>
+                                                                                    <Grid container spacing={2}>
+                                                                                        <Grid item xs={12} md={4}>
+                                                                                            <TextField
+                                                                                                fullWidth
+                                                                                                size="small"
+                                                                                                label="Numéro de lot"
+                                                                                                name={`lots.${index}.batch_number`}
+                                                                                                value={lot.batch_number}
+                                                                                                onChange={handleChange}
+                                                                                                error={touched.lots?.[index]?.batch_number && Boolean(errors.lots?.[index]?.batch_number)}
+                                                                                                helperText={touched.lots?.[index]?.batch_number && errors.lots?.[index]?.batch_number}
+                                                                                                required
+                                                                                            />
+                                                                                        </Grid>
+                                                                                        <Grid item xs={12} md={4}>
+                                                                                            <TextField
+                                                                                                fullWidth
+                                                                                                size="small"
+                                                                                                label="Quantité initiale"
+                                                                                                type="number"
+                                                                                                name={`lots.${index}.initial_quantity`}
+                                                                                                value={lot.initial_quantity}
+                                                                                                onChange={handleChange}
+                                                                                                error={touched.lots?.[index]?.initial_quantity && Boolean(errors.lots?.[index]?.initial_quantity)}
+                                                                                                helperText={touched.lots?.[index]?.initial_quantity && errors.lots?.[index]?.initial_quantity}
+                                                                                                required
+                                                                                            />
+                                                                                        </Grid>
+                                                                                        <Grid item xs={12} md={4}>
+                                                                                            <FormControl fullWidth size="small" error={touched.lots?.[index]?.warehouse_id && Boolean(errors.lots?.[index]?.warehouse_id)}>
+                                                                                                <InputLabel>Entrepôt</InputLabel>
+                                                                                                <Select
+                                                                                                    name={`lots.${index}.warehouse_id`}
+                                                                                                    value={lot.warehouse_id}
+                                                                                                    onChange={handleChange}
+                                                                                                    label="Entrepôt"
+                                                                                                >
+                                                                                                    {warehouses.map((w) => (
+                                                                                                        <MenuItem key={w.id} value={w.id}>{w.name} ({w.code})</MenuItem>
+                                                                                                    ))}
+                                                                                                </Select>
+                                                                                            </FormControl>
+                                                                                        </Grid>
+                                                                                        <Grid item xs={12} md={6}>
+                                                                                            <TextField
+                                                                                                fullWidth
+                                                                                                size="small"
+                                                                                                label="Date d'expiration"
+                                                                                                type="date"
+                                                                                                name={`lots.${index}.expiration_date`}
+                                                                                                value={lot.expiration_date || ''}
+                                                                                                onChange={handleChange}
+                                                                                                InputLabelProps={{ shrink: true }}
+                                                                                            />
+                                                                                        </Grid>
+                                                                                        <Grid item xs={12} md={6}>
+                                                                                            <TextField
+                                                                                                fullWidth
+                                                                                                size="small"
+                                                                                                label="Référence fournisseur"
+                                                                                                name={`lots.${index}.supplier_batch_reference`}
+                                                                                                value={lot.supplier_batch_reference}
+                                                                                                onChange={handleChange}
+                                                                                            />
+                                                                                        </Grid>
+                                                                                    </Grid>
+                                                                                </Paper>
+                                                                            </Grid>
+                                                                        ))}
+                                                                        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                                                                            <Button
+                                                                                variant="outlined"
+                                                                                startIcon={<Add />}
+                                                                                onClick={() => push({
+                                                                                    batch_number: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                                                                                    initial_quantity: 0,
+                                                                                    warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+                                                                                    expiration_date: '',
+                                                                                    supplier_batch_reference: ''
+                                                                                })}
+                                                                                sx={{ borderRadius: 2, textTransform: 'none' }}
+                                                                            >
+                                                                                Ajouter un autre lot
+                                                                            </Button>
+                                                                        </Grid>
+                                                                    </Grid>
+                                                                )}
+
+                                                                <Divider sx={{ my: 3 }} />
+
+                                                                <Grid container spacing={2}>
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <TextField
+                                                                            fullWidth
+                                                                            size="small"
+                                                                            name="low_stock_threshold"
+                                                                            label={t('products:labels.lowStockThreshold')}
+                                                                            type="number"
+                                                                            value={values.low_stock_threshold}
+                                                                            onChange={handleChange}
+                                                                            onBlur={handleBlur}
+                                                                            error={touched.low_stock_threshold && Boolean(errors.low_stock_threshold)}
+                                                                            helperText={touched.low_stock_threshold && errors.low_stock_threshold}
+                                                                            required
+                                                                        />
+                                                                    </Grid>
+                                                                </Grid>
+                                                            </Box>
+                                                        )}
+                                                    </FieldArray>
+                                                </CardContent>
+                                            </Card>
+                                        )}
+
+
+                                        {/* Navigation Buttons */}
+                                        <Box sx={{
+                                            display: 'flex',
+                                            gap: 1.5,
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            mt: 1,
+                                            position: isMobile ? 'fixed' : 'relative',
+                                            bottom: isMobile ? 0 : 'auto',
+                                            left: isMobile ? 0 : 'auto',
+                                            right: isMobile ? 0 : 'auto',
+                                            bgcolor: isMobile ? 'background.paper' : 'transparent',
+                                            p: isMobile ? 2 : 0,
+                                            zIndex: isMobile ? 1000 : 1,
+                                            boxShadow: isMobile ? '0 -1px 12px rgba(0,0,0,0.08)' : 0,
+                                            width: isMobile ? '100%' : 'auto',
+                                            margin: isMobile ? '-16px' : 0,
+                                        }}>
+                                            <Button
+                                                type="button"
+                                                variant="outlined"
+                                                startIcon={activeStep === 0 ? <Cancel /> : <NavigateBefore />}
+                                                onClick={handleStepBack}
+                                                disabled={isSubmitting}
+                                            >
+                                                {activeStep === 0 ? t('products:actions.cancel') : 'Précédent'}
+                                            </Button>
+
+                                            {isLastStep ? (
+                                                <Button
+                                                    type="button"
+                                                    variant="contained"
+                                                    startIcon={isSubmitting ? null : <Save />}
+                                                    disabled={isSubmitting}
+                                                    onClick={() => submitForm()}
+                                                >
+                                                    {isSubmitting ? <CircularProgress size={24} /> : (isEdit ? t('products:actions.modify') : t('products:actions.create'))}
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    variant="contained"
+                                                    endIcon={<NavigateNext />}
+                                                    onClick={handleStepNext}
+                                                    disabled={isSubmitting}
+                                                >
+                                                    Suivant
+                                                </Button>
+                                            )}
+                                        </Box>
+                                    </Box>{/* end content */}
+                                </Box>{/* end sidebar layout */}
+                            </form>
+                        );
+                    }}
+                </Formik>
             </Box>
 
             {/* Supplier Selection Modal - Modern Design */}

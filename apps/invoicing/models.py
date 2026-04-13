@@ -446,6 +446,14 @@ class Invoice(models.Model):
     
     # Relations et informations supplémentaires
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices', verbose_name=_("Créé par"))
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='invoices',
+        null=True,
+        blank=True,
+        verbose_name=_("Organisation")
+    )
     client = models.ForeignKey('accounts.Client', on_delete=models.CASCADE, related_name='invoices', null=True, blank=True, verbose_name=_("Client"))
     contract = models.ForeignKey('contracts.Contract', on_delete=models.SET_NULL, null=True, blank=True, related_name='invoices', verbose_name=_("Contrat associé"))
     purchase_order = models.ForeignKey('purchase_orders.PurchaseOrder', on_delete=models.SET_NULL, related_name='invoices', null=True, blank=True, verbose_name=_("Bon de commande associé"))
@@ -481,6 +489,10 @@ class Invoice(models.Model):
         self._old_status = self.status
 
     def save(self, *args, **kwargs):
+        # Auto-populate organization from client if not set
+        if not self.organization and self.client and self.client.organization_id:
+            self.organization = self.client.organization
+        
         if not self.invoice_number:
             self.invoice_number = self.generate_invoice_number()
 
