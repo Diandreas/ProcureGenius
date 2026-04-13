@@ -146,9 +146,10 @@ class Command(BaseCommand):
             ))
 
             # ── 3. Ceftriaxone 1g sans eau ─────────────────────────────────
-            # NOTE : produit inexistant en DB — à créer manuellement si besoin
+            # DB name: "Ceftriaxon 1g sans eau - B/10" (sans 'e' final)
             products = find_product(
-                ['ceftriaxone 1g', 'ceftriasone 1g', 'ceftriaxone 1 g'],
+                ['ceftriaxon 1g', 'ceftriaxone 1g', 'ceftriasone 1g',
+                 'ceftriaxon 1 g', 'ceftriaxon 1g sans eau'],
             )
             results.append(self._apply(
                 products, target=7,
