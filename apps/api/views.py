@@ -14,7 +14,7 @@ from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
 from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse
 from apps.accounts.models import Client
-from apps.core.permissions import HasModuleAccess, IsAdminWriteOnly
+from apps.core.permissions import HasModuleAccess
 from apps.core.modules import Modules, user_has_module_access
 from apps.core.organization_mixin import OrganizationFilterMixin, OrganizationClientFilterMixin
 
@@ -280,7 +280,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les produits"""
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAdminWriteOnly]
+    permission_classes = [permissions.IsAuthenticated]
     organization_field = 'organization'
     filterset_class = ProductFilter
     search_fields = ['name', 'reference', 'description']
@@ -1616,12 +1616,6 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def adjust_stock(self, request, pk=None):
         """Ajustement manuel du stock — supporte batch_id pour traçabilité par lot"""
-        from apps.core.permissions import FINANCIAL_WRITE_USERNAME
-        if request.user.username != FINANCIAL_WRITE_USERNAME:
-            return Response(
-                {'error': 'Seul l\'administrateur peut ajuster le stock.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
         product = self.get_object()
 
         if product.product_type != 'physical':
@@ -1709,12 +1703,6 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def report_loss(self, request, pk=None):
         """Déclarer une perte de stock avec raison détaillée"""
-        from apps.core.permissions import FINANCIAL_WRITE_USERNAME
-        if request.user.username != FINANCIAL_WRITE_USERNAME:
-            return Response(
-                {'error': 'Seul l\'administrateur peut déclarer des pertes de stock.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
         product = self.get_object()
 
         if product.product_type != 'physical':
@@ -2260,7 +2248,7 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les bons de commande"""
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
-    permission_classes = [IsAdminWriteOnly, HasModuleAccess]
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.PURCHASE_ORDERS
     organization_field = 'created_by__organization'  # Filter via user's org
     filterset_fields = ['status', 'supplier', 'created_by']
@@ -2298,12 +2286,6 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """Approuver un bon de commande"""
-        from apps.core.permissions import FINANCIAL_WRITE_USERNAME
-        if request.user.username != FINANCIAL_WRITE_USERNAME:
-            return Response(
-                {'error': 'Seul l\'administrateur peut approuver les bons de commande.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
         purchase_order = self.get_object()
         if purchase_order.status == 'draft':
             purchase_order.status = 'approved'
@@ -2319,12 +2301,6 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def receive(self, request, pk=None):
         """Marquer le bon de commande comme reçu et mettre à jour le stock"""
-        from apps.core.permissions import FINANCIAL_WRITE_USERNAME
-        if request.user.username != FINANCIAL_WRITE_USERNAME:
-            return Response(
-                {'error': 'Seul l\'administrateur peut valider la réception d\'une commande.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
         purchase_order = self.get_object()
 
         if purchase_order.status == 'received':
@@ -2554,7 +2530,7 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les factures"""
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
-    permission_classes = [IsAdminWriteOnly, HasModuleAccess]
+    permission_classes = [permissions.IsAuthenticated, HasModuleAccess]
     required_module = Modules.INVOICES
     organization_field = 'organization'  # Use direct organization field
     filterset_fields = ['status', 'client', 'created_by']
@@ -2670,16 +2646,10 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def mark_paid(self, request, pk=None):
         """Marquer une facture comme payée en créant un enregistrement de paiement"""
-        from apps.core.permissions import FINANCIAL_WRITE_USERNAME
-        if request.user.username != FINANCIAL_WRITE_USERNAME:
-            return Response(
-                {'error': 'Seul l\'administrateur peut enregistrer un paiement.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
         from apps.invoicing.models import Payment
         from datetime import datetime, date
         from decimal import Decimal
-
+        
         try:
             invoice = self.get_object()
             
