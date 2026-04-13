@@ -235,10 +235,9 @@ class Command(BaseCommand):
                     )
                     products_cp = [product]
                 else:
-                    self.stdout.write("  [DRY-RUN] Produit serait créé.")
+                    self.stdout.write("  [DRY-RUN] Produit serait créé puis corrigé à stock=9.")
                     results.append(False)
-                    # On skip apply car le produit n'existe pas encore
-                    continue
+                    return
 
             results.append(self._apply(
                 products_cp, target=9,
