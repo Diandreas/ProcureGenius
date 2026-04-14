@@ -16,7 +16,7 @@ from .services import LabResultPDFGenerator
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable
 from .serializers import (
     LabTestCategorySerializer,
     LabTestSerializer,
@@ -36,6 +36,7 @@ from .serializers import (
     SubcontractorDefaultPriceSerializer,
     SubcontractorPatientSerializer,
     SubcontractorPatientListSerializer,
+    LabTestConsumableSerializer,
 )
 
 
@@ -1661,3 +1662,92 @@ class SubcontractorBatchOrderView(APIView):
             'batch_total': float(batch_total),
         })
 
+
+
+class LabTestConsumableListView(APIView):
+    """
+    GET  /healthcare/laboratory/tests/<uuid>/consumables/
+         Liste les consommables lies a un LabTest
+    POST /healthcare/laboratory/tests/<uuid>/consumables/
+         Ajoute un consommable (product + quantity_per_test)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, test_id):
+        test = LabTest.objects.filter(
+            id=test_id, organization=request.user.organization
+        ).first()
+        if not test:
+            return Response({'error': 'Test introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        consumables = test.consumables.select_related('product').all()
+        return Response(LabTestConsumableSerializer(consumables, many=True).data)
+
+    def post(self, request, test_id):
+        test = LabTest.objects.filter(
+            id=test_id, organization=request.user.organization
+        ).first()
+        if not test:
+            return Response({'error': 'Test introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = LabTestConsumableSerializer(data=request.data)
+        if serializer.is_valid():
+            # Verifier que le produit appartient a la meme organisation
+            from apps.invoicing.models import Product
+            product_id = serializer.validated_data['product'].id
+            product = Product.objects.filter(
+                id=product_id, organization=request.user.organization
+            ).first()
+            if not product:
+                return Response({'error': 'Produit introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+            consumable, created = LabTestConsumable.objects.get_or_create(
+                lab_test=test,
+                product=product,
+                defaults={
+                    'quantity_per_test': serializer.validated_data.get('quantity_per_test', 1),
+                    'notes': serializer.validated_data.get('notes', ''),
+                }
+            )
+            if not created:
+                # Mettre a jour la quantite si deja existant
+                consumable.quantity_per_test = serializer.validated_data.get('quantity_per_test', consumable.quantity_per_test)
+                consumable.notes = serializer.validated_data.get('notes', consumable.notes)
+                consumable.save()
+
+            return Response(
+                LabTestConsumableSerializer(consumable).data,
+                status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LabTestConsumableDetailView(APIView):
+    """
+    PATCH  /healthcare/laboratory/consumables/<uuid>/  — modifier quantite/notes
+    DELETE /healthcare/laboratory/consumables/<uuid>/  — supprimer le lien
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _get_consumable(self, request, pk):
+        return LabTestConsumable.objects.filter(
+            id=pk,
+            lab_test__organization=request.user.organization
+        ).select_related('product', 'lab_test').first()
+
+    def patch(self, request, pk):
+        consumable = self._get_consumable(request, pk)
+        if not consumable:
+            return Response({'error': 'Introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        if 'quantity_per_test' in request.data:
+            consumable.quantity_per_test = int(request.data['quantity_per_test'])
+        if 'notes' in request.data:
+            consumable.notes = request.data['notes']
+        consumable.save()
+        return Response(LabTestConsumableSerializer(consumable).data)
+
+    def delete(self, request, pk):
+        consumable = self._get_consumable(request, pk)
+        if not consumable:
+            return Response({'error': 'Introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        consumable.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

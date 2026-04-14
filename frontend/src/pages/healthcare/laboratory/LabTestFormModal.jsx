@@ -57,6 +57,12 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
     const [parameters, setParameters] = useState([]);
     const [products, setProducts] = useState([]);
     const [productSearch, setProductSearch] = useState('');
+    const [consumables, setConsumables] = useState([]);
+    const [consumablesLoading, setConsumablesLoading] = useState(false);
+    const [addConsumableProduct, setAddConsumableProduct] = useState('');
+    const [addConsumableQty, setAddConsumableQty] = useState(1);
+    const [addConsumableSearch, setAddConsumableSearch] = useState('');
+    const [addConsumableLoading, setAddConsumableLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         test_code: '', name: '', short_name: '', category: '', description: '',
@@ -77,7 +83,11 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
             fetchCategories();
             fetchProducts();
             setActiveTab(initialTab === 'params' ? 1 : 0);
+            setAddConsumableProduct('');
+            setAddConsumableQty(1);
+            setAddConsumableSearch('');
             if (test) {
+                fetchConsumables(test.id);
                 setFormData({
                     test_code: test.test_code || '', name: test.name || '', short_name: test.short_name || '',
                     category: test.category || '', description: test.description || '',
@@ -134,6 +144,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                     linked_product: '',
                 }));
                 setParameters([]);
+                setConsumables([]);
             }
         }
     }, [open, test]);
@@ -161,6 +172,49 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
             const items = Array.isArray(resp.data) ? resp.data : resp.data?.results || [];
             setProducts(items);
         } catch (error) { console.error('Error fetching products:', error); }
+    };
+
+    const fetchConsumables = async (testId) => {
+        if (!testId) { setConsumables([]); return; }
+        setConsumablesLoading(true);
+        try {
+            const data = await laboratoryAPI.getTestConsumables(testId);
+            setConsumables(Array.isArray(data) ? data : data.results || []);
+        } catch { setConsumables([]); }
+        finally { setConsumablesLoading(false); }
+    };
+
+    const handleAddConsumable = async () => {
+        if (!test?.id || !addConsumableProduct) return;
+        setAddConsumableLoading(true);
+        try {
+            await laboratoryAPI.addTestConsumable(test.id, {
+                product: addConsumableProduct,
+                quantity_per_test: addConsumableQty,
+            });
+            enqueueSnackbar('Consommable ajoute', { variant: 'success' });
+            setAddConsumableProduct('');
+            setAddConsumableQty(1);
+            fetchConsumables(test.id);
+        } catch (err) {
+            const msg = err?.response?.data?.error || err?.response?.data?.detail || 'Erreur ajout consommable';
+            enqueueSnackbar(msg, { variant: 'error' });
+        } finally { setAddConsumableLoading(false); }
+    };
+
+    const handleDeleteConsumable = async (consumableId) => {
+        try {
+            await laboratoryAPI.deleteTestConsumable(consumableId);
+            enqueueSnackbar('Consommable supprime', { variant: 'success' });
+            fetchConsumables(test.id);
+        } catch { enqueueSnackbar('Erreur suppression', { variant: 'error' }); }
+    };
+
+    const handleUpdateConsumableQty = async (consumableId, qty) => {
+        try {
+            await laboratoryAPI.updateTestConsumable(consumableId, { quantity_per_test: qty });
+            fetchConsumables(test.id);
+        } catch { enqueueSnackbar('Erreur mise a jour', { variant: 'error' }); }
     };
 
     const handleChange = (e) => {
@@ -382,81 +436,137 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                         <Grid item xs={12}>
                             <TextField fullWidth multiline rows={2} label="Instructions de preparation" name="preparation_instructions" value={formData.preparation_instructions} onChange={handleChange} size="small" />
                         </Grid>
-                        <Grid item xs={12}><Divider /><Typography variant="subtitle2" color="primary" sx={{ mt: 1 }}>Stock consommable (test rapide)</Typography></Grid>
+                        <Grid item xs={12}><Divider /><Typography variant="subtitle2" color="primary" sx={{ mt: 1 }}>Consommables stock (tests rapides, kits…)</Typography></Grid>
                         <Grid item xs={12}>
                             <Alert severity="info" sx={{ mb: 1, py: 0.5 }} icon={<InventoryIcon fontSize="small" />}>
-                                Liez ce test à un produit du stock pour déduire automatiquement 1 unité à chaque collecte d'échantillon (tests rapides, bandelettes, kits…).
+                                Liez un ou plusieurs produits du stock à ce test. A chaque collecte d'echantillon, les quantites indiquees seront deduites automatiquement.
                             </Alert>
                         </Grid>
-                        <Grid item xs={12} sm={8}>
-                            <TextField
-                                fullWidth select
-                                label="Produit stock lié (consommable)"
-                                name="linked_product"
-                                value={formData.linked_product}
-                                onChange={handleChange}
-                                size="small"
-                                SelectProps={{ displayEmpty: true }}
-                                InputProps={{
-                                    startAdornment: formData.linked_product ? (
-                                        <InputAdornment position="start">
-                                            <InventoryIcon fontSize="small" color="primary" />
-                                        </InputAdornment>
-                                    ) : null,
-                                }}
-                            >
-                                <MenuItem value=""><em>Aucun produit lié</em></MenuItem>
-                                {products
-                                    .filter(p => !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()))
-                                    .map(p => (
-                                        <MenuItem key={p.id} value={p.id}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 2 }}>
-                                                <span>{p.name}</span>
-                                                <Chip
-                                                    label={`Stock: ${p.stock_quantity ?? 0}`}
-                                                    size="small"
-                                                    color={p.stock_quantity > 0 ? 'success' : 'error'}
-                                                    variant="outlined"
-                                                    sx={{ fontSize: '0.65rem', height: 18 }}
-                                                />
-                                            </Box>
-                                        </MenuItem>
-                                    ))
-                                }
-                            </TextField>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField
-                                fullWidth
-                                label="Rechercher un produit"
-                                value={productSearch}
-                                onChange={e => setProductSearch(e.target.value)}
-                                size="small"
-                                placeholder="Filtrer la liste..."
-                            />
-                        </Grid>
-                        {formData.linked_product && (() => {
-                            const p = products.find(x => x.id === formData.linked_product);
-                            return p ? (
-                                <Grid item xs={12}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, borderRadius: 1, bgcolor: 'action.hover' }}>
-                                        <InventoryIcon fontSize="small" color="primary" />
-                                        <Typography variant="body2"><strong>{p.name}</strong></Typography>
-                                        {p.reference && <Typography variant="caption" color="text.secondary">({p.reference})</Typography>}
-                                        <Chip label={`Stock actuel: ${p.stock_quantity ?? 0}`} size="small" color={p.stock_quantity > 0 ? 'success' : 'error'} />
-                                        <Button
-                                            size="small"
-                                            color="error"
-                                            startIcon={<LinkOffIcon fontSize="small" />}
-                                            onClick={() => setFormData(prev => ({ ...prev, linked_product: '' }))}
-                                            sx={{ ml: 'auto' }}
-                                        >
-                                            Délier
-                                        </Button>
-                                    </Box>
+                        {/* Liste des consommables existants */}
+                        {test?.id && (
+                            <Grid item xs={12}>
+                                {consumablesLoading ? (
+                                    <CircularProgress size={20} />
+                                ) : consumables.length > 0 ? (
+                                    <Table size="small" sx={{ mb: 1 }}>
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Produit</TableCell>
+                                                <TableCell>Ref</TableCell>
+                                                <TableCell align="center">Stock</TableCell>
+                                                <TableCell align="center">Qte/test</TableCell>
+                                                <TableCell align="center">Suppr.</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {consumables.map(c => (
+                                                <TableRow key={c.id}>
+                                                    <TableCell>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                            <InventoryIcon fontSize="small" color="primary" sx={{ opacity: 0.7 }} />
+                                                            <Typography variant="body2">{c.product_name}</Typography>
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell><Typography variant="caption" color="text.secondary">{c.product_reference}</Typography></TableCell>
+                                                    <TableCell align="center">
+                                                        <Chip
+                                                            label={c.product_stock ?? 0}
+                                                            size="small"
+                                                            color={(c.product_stock ?? 0) > 0 ? 'success' : 'error'}
+                                                            variant="outlined"
+                                                            sx={{ fontSize: '0.65rem', height: 18 }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        <TextField
+                                                            type="number"
+                                                            size="small"
+                                                            value={c.quantity_per_test}
+                                                            onChange={e => handleUpdateConsumableQty(c.id, parseInt(e.target.value) || 1)}
+                                                            inputProps={{ min: 1, style: { width: 50, textAlign: 'center' } }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        <IconButton size="small" color="error" onClick={() => handleDeleteConsumable(c.id)}>
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                ) : (
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Aucun consommable lie.</Typography>
+                                )}
+                            </Grid>
+                        )}
+                        {/* Formulaire ajout consommable (seulement si test existe) */}
+                        {test?.id ? (
+                            <>
+                                <Grid item xs={12} sm={3}>
+                                    <TextField
+                                        fullWidth
+                                        label="Filtrer produit"
+                                        value={addConsumableSearch}
+                                        onChange={e => setAddConsumableSearch(e.target.value)}
+                                        size="small"
+                                        placeholder="Rechercher..."
+                                    />
                                 </Grid>
-                            ) : null;
-                        })()}
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth select
+                                        label="Produit a ajouter"
+                                        value={addConsumableProduct}
+                                        onChange={e => setAddConsumableProduct(e.target.value)}
+                                        size="small"
+                                        SelectProps={{ displayEmpty: true }}
+                                    >
+                                        <MenuItem value=""><em>Selectionner un produit…</em></MenuItem>
+                                        {products
+                                            .filter(p => !addConsumableSearch || p.name.toLowerCase().includes(addConsumableSearch.toLowerCase()))
+                                            .filter(p => !consumables.some(c => c.product === p.id))
+                                            .map(p => (
+                                                <MenuItem key={p.id} value={p.id}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', gap: 2 }}>
+                                                        <span>{p.name}</span>
+                                                        <Chip label={`${p.stock_quantity ?? 0}`} size="small"
+                                                            color={(p.stock_quantity ?? 0) > 0 ? 'success' : 'error'}
+                                                            variant="outlined" sx={{ fontSize: '0.65rem', height: 18 }} />
+                                                    </Box>
+                                                </MenuItem>
+                                            ))
+                                        }
+                                    </TextField>
+                                </Grid>
+                                <Grid item xs={12} sm={1}>
+                                    <TextField
+                                        fullWidth type="number"
+                                        label="Qte"
+                                        value={addConsumableQty}
+                                        onChange={e => setAddConsumableQty(parseInt(e.target.value) || 1)}
+                                        size="small"
+                                        inputProps={{ min: 1 }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                    <Button
+                                        fullWidth variant="contained" size="small"
+                                        startIcon={addConsumableLoading ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}
+                                        onClick={handleAddConsumable}
+                                        disabled={!addConsumableProduct || addConsumableLoading}
+                                    >
+                                        Ajouter
+                                    </Button>
+                                </Grid>
+                            </>
+                        ) : (
+                            <Grid item xs={12}>
+                                <Alert severity="warning" sx={{ py: 0.5 }}>
+                                    Enregistrez d'abord le test pour pouvoir lui lier des consommables.
+                                </Alert>
+                            </Grid>
+                        )}
                         <Grid item xs={12}><Divider /><Typography variant="subtitle2" color="primary" sx={{ mt: 1 }}>Traitement</Typography></Grid>
                         <Grid item xs={12} sm={4}>
                             <TextField fullWidth label="Delai execution (heures)" name="estimated_turnaround_hours" value={formData.estimated_turnaround_hours} onChange={handleChange} size="small" type="number" />

@@ -376,6 +376,24 @@ const laboratoryAPI = {
         });
         return response.data;
     },
+
+    // Consumables (stock links for lab tests)
+    getTestConsumables: async (testId) => {
+        const response = await api.get(`/healthcare/laboratory/tests/${testId}/consumables/`);
+        return response.data;
+    },
+    addTestConsumable: async (testId, data) => {
+        const response = await api.post(`/healthcare/laboratory/tests/${testId}/consumables/`, data);
+        return response.data;
+    },
+    updateTestConsumable: async (consumableId, data) => {
+        const response = await api.patch(`/healthcare/laboratory/consumables/${consumableId}/`, data);
+        return response.data;
+    },
+    deleteTestConsumable: async (consumableId) => {
+        const response = await api.delete(`/healthcare/laboratory/consumables/${consumableId}/`);
+        return response.data;
+    },
 };
 
 export default laboratoryAPI;

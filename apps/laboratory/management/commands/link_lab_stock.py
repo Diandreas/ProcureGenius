@@ -43,7 +43,7 @@ Refs DB verifiees localement :
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from apps.invoicing.models import Product, ProductCategory
+from apps.invoicing.models import Product
 from apps.laboratory.models import LabTest, LabTestConsumable
 
 
@@ -118,16 +118,6 @@ MAPPINGS = [
 ]
 
 
-# Produits a creer UNIQUEMENT s'ils sont vraiment absents en DB
-PRODUCTS_TO_CREATE_IF_MISSING = [
-    ('Syphilis Rapid Test Cassette', 'SYP-W23', 100,
-     'Syphilis (TPHA/VDRL) Rapid Test Cassette', ['Syphilis', 'Rapid Test']),
-    ('Rubella IgG/IgM Rapid Test', 'H185-23WM', 25,
-     'Rubeole IgG/IgM Rapid Test', ['Rubella', 'Rubeole']),
-    ('ABO/Rh Blood Grouping Reagents', 'DR077-2', 20,
-     'Reactifs de groupage sanguin ABO/Rh', ['ABO', 'Rh', 'blood group']),
-]
-
 
 def resolve_product(refs, keywords=None):
     """Trouve un produit par refs en ordre de preference, puis par mots-cles."""
@@ -162,28 +152,7 @@ class Command(BaseCommand):
         self.stdout.write(f'  LINK LAB CONSUMABLES -- Mode: {mode}{"  [RESET]" if reset else ""}')
         self.stdout.write(f'{"=" * 70}\n')
 
-        cat, _ = ProductCategory.objects.get_or_create(
-            slug='lab-consumables',
-            defaults={'name': 'Consommables de laboratoire', 'is_active': True}
-        )
-
-        # -- Etape 1 : Creer les produits vraiment absents ----------------
-        self.stdout.write('-- Etape 1 : Produits a creer si absents --\n')
-        for name, ref, qty, desc, kws in PRODUCTS_TO_CREATE_IF_MISSING:
-            p, match = resolve_product([ref], kws)
-            if p:
-                self.stdout.write(f'  [EXISTE  ({match})] "{p.name}"')
-            else:
-                self.stdout.write(f'  [ABSENT -> CREATION] "{name}" ref={ref}')
-                if not dry_run:
-                    Product.objects.create(
-                        name=name, reference=ref, category=cat,
-                        product_type='physical', stock_quantity=qty,
-                        cost_price=0, price=0, is_active=True,
-                        low_stock_threshold=5, description=desc,
-                    )
-
-        # -- Etape 2 : Reset si demande -----------------------------------
+        # -- Reset si demande -----------------------------------
         if reset and not dry_run:
             deleted = LabTestConsumable.objects.all().delete()
             self.stdout.write(f'\n  [RESET] {deleted[0]} liaisons supprimees.\n')

@@ -3,7 +3,7 @@ Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
 from decimal import Decimal, InvalidOperation
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable
 
 
 class LabTestParameterSerializer(serializers.ModelSerializer):
@@ -152,6 +152,27 @@ class LabTestCategorySerializer(serializers.ModelSerializer):
         return obj.tests.filter(is_active=True).count()
 
 
+class LabTestConsumableSerializer(serializers.ModelSerializer):
+    """Consommable lié à un LabTest (lecture + écriture)"""
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_reference = serializers.CharField(source='product.reference', read_only=True)
+    product_stock = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LabTestConsumable
+        fields = ['id', 'product', 'product_name', 'product_reference',
+                  'product_stock', 'quantity_per_test', 'notes']
+
+    def get_product_stock(self, obj):
+        from django.db.models import Sum
+        p = obj.product
+        batch_stock = (
+            p.batches.filter(status__in=['available', 'opened'])
+            .aggregate(total=Sum('quantity_remaining'))['total'] or 0
+        )
+        return batch_stock if batch_stock > 0 else (p.stock_quantity or 0)
+
+
 class LabTestSerializer(serializers.ModelSerializer):
     """Full serializer for LabTest"""
     category_name = serializers.CharField(source='category.name', read_only=True)
@@ -162,6 +183,8 @@ class LabTestSerializer(serializers.ModelSerializer):
     # Consommable lié : nom + stock actuel (read-only, calculé)
     linked_product_name = serializers.SerializerMethodField()
     linked_product_stock = serializers.SerializerMethodField()
+    # Nouveau système multi-consommables
+    consumables = LabTestConsumableSerializer(many=True, read_only=True)
 
     class Meta:
         model = LabTest
@@ -202,6 +225,7 @@ class LabTestSerializer(serializers.ModelSerializer):
             'linked_product',
             'linked_product_name',
             'linked_product_stock',
+            'consumables',
             'created_at',
             'updated_at',
         ]

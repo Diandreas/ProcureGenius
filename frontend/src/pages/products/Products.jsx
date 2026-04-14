@@ -587,30 +587,6 @@ function Products() {
               )}
             </Stack>
 
-            {/* Stock Level Bar for physical */}
-            {isPhysical && (
-              <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.3 }}>
-                  <Typography variant="caption" color="text.secondary">Niveau de stock</Typography>
-                  <Typography variant="caption" fontWeight="bold" sx={{ color: stockColor }}>
-                    {product.stock_quantity ?? 0} / {(product.low_stock_threshold || 10) * 2}
-                  </Typography>
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={Math.min(100, ((product.stock_quantity ?? 0) / ((product.low_stock_threshold || 10) * 2)) * 100)}
-                  sx={{
-                    height: 6,
-                    borderRadius: 3,
-                    bgcolor: alpha(stockColor, 0.1),
-                    '& .MuiLinearProgress-bar': {
-                      borderRadius: 3,
-                      background: `linear-gradient(90deg, ${stockColor}, ${alpha(stockColor, 0.7)})`,
-                    }
-                  }}
-                />
-              </Box>
-            )}
           </CardContent>
         </Card>
       </motion.div>
