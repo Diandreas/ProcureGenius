@@ -226,6 +226,43 @@ with transaction.atomic():
     log_adjustment(prod_para500, 0, total)
     print(f"   → {len(batches)} lots créés, stock = {total}")
 
+    # =========================================================================
+    # 7. PARACETAMOL VIATRIS 1000mg  (ID:3f75613f)  = Paracétamol 1g
+    #    Inventaire physique regroupé par date :
+    #      09/2026 → 02
+    #      11/2026 → 01
+    #      03/2027 → 27
+    #      04/2027 → 02+07 = 09
+    #      07/2027 → 01+03+01+07 = 12
+    #      09/2027 → 04
+    #      01/2028 → 06
+    #      02/2028 → 09
+    #      03/2028 → 03
+    #    Total = 73
+    # =========================================================================
+    print("\n[7] Régularisation Paracétamol 1g (VIATRIS 1000mg) ...")
+    prod_para1g = Product.objects.get(id='3f75613f-1aef-437a-b5cf-98895408c48f')
+    qty_before = prod_para1g.stock_quantity
+    clear_batches(prod_para1g)
+
+    lots_para1g = [
+        (2,  date(2026,  9, 30)),
+        (1,  date(2026, 11, 30)),
+        (27, date(2027,  3, 31)),
+        (9,  date(2027,  4, 30)),
+        (12, date(2027,  7, 31)),
+        (4,  date(2027,  9, 30)),
+        (6,  date(2028,  1, 31)),
+        (9,  date(2028,  2, 29)),
+        (3,  date(2028,  3, 31)),
+    ]
+    total = sum(q for q, _ in lots_para1g)
+    batches = [make_batch(prod_para1g, q, exp) for q, exp in lots_para1g]
+    ProductBatch.objects.bulk_create(batches)
+    set_stock(prod_para1g, total)
+    log_adjustment(prod_para1g, qty_before, total)
+    print(f"   → {len(batches)} lots créés, stock = {total}")
+
 # ─────────────────────────────────────────────────────────────────────────────
 print("\n✓ Régularisation terminée avec succès.\n")
 print("Récapitulatif final :")
@@ -234,6 +271,7 @@ for pid, nom in [
     ('32c3c1b3-6e6a-4ea4-b28c-1a84fd4748b9', 'Doliprane 300mg'),
     ('bfe1c67b-8fc5-48b8-9db0-50ee4d2ff526', 'Doliprane 200mg'),
     ('fe3d18b9-2e5b-4302-9af8-ef24a2ae0533', 'Paracodine 500mg'),
+    ('3f75613f-1aef-437a-b5cf-98895408c48f', 'Paracétamol 1g (VIATRIS)'),
 ]:
     p = Product.objects.get(id=pid)
     lots = ProductBatch.objects.filter(product=p).order_by('expiry_date')
