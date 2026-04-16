@@ -139,12 +139,9 @@ export default function LabPanelCatalog() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Box display="flex" flexWrap="wrap" gap={0.5}>
-                                                        {(panel.tests_detail || []).slice(0, 4).map(t => (
+                                                        {(panel.tests_detail || []).map(t => (
                                                             <Chip key={t.id} label={t.test_code} size="small" variant="outlined" />
                                                         ))}
-                                                        {(panel.tests_detail || []).length > 4 && (
-                                                            <Chip label={`+${panel.tests_detail.length - 4}`} size="small" />
-                                                        )}
                                                     </Box>
                                                 </TableCell>
                                                 <TableCell align="right">

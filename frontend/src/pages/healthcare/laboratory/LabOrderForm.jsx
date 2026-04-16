@@ -574,12 +574,9 @@ const LabOrderForm = () => {
                                                         </TableCell>
                                                         <TableCell>
                                                             <Box display="flex" flexWrap="wrap" gap={0.5}>
-                                                                {(panel.tests_detail || []).slice(0, 3).map(t => (
+                                                                {(panel.tests_detail || []).map(t => (
                                                                     <Chip key={t.id} label={t.test_code} size="small" variant="outlined" />
                                                                 ))}
-                                                                {(panel.tests_detail || []).length > 3 && (
-                                                                    <Chip label={`+${panel.tests_detail.length - 3}`} size="small" />
-                                                                )}
                                                             </Box>
                                                         </TableCell>
                                                         <TableCell align="right">

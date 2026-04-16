@@ -295,7 +295,7 @@ function ProductDetail() {
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <IconButton onClick={() => navigate('/products')} size="medium" sx={{ mr: 1 }}>
+          <IconButton onClick={() => navigate(-1)} size="medium" sx={{ mr: 1 }}>
             <ArrowBack />
           </IconButton>
 

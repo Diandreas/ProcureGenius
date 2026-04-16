@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -147,6 +147,7 @@ function Products() {
   const { format: formatCurrency } = useCurrency();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -157,23 +158,44 @@ function Products() {
   const [stockSummary, setStockSummary] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
+  // Lire les filtres initiaux depuis l'URL (pour restaurer après un retour arrière)
+  const _qp = useMemo(() => new URLSearchParams(location.search), []);
+
   // Pagination
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(parseInt(_qp.get('page') || '1'));
+  const [pageSize, setPageSize] = useState(parseInt(_qp.get('page_size') || '20'));
 
   // Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [stockFilter, setStockFilter] = useState('');   // quick filter (stat cards)
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [warehouseFilter, setWarehouseFilter] = useState('');
-  const [expirationFilter, setExpirationFilter] = useState('');
-  const [registeredAfter, setRegisteredAfter] = useState('');
-  const [registeredBefore, setRegisteredBefore] = useState('');
-  const [expirationAfter, setExpirationAfter] = useState('');
-  const [expirationBefore, setExpirationBefore] = useState('');
+  const [searchTerm, setSearchTerm] = useState(_qp.get('search') || '');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(_qp.get('search') || '');
+  const [stockFilter, setStockFilter] = useState(_qp.get('stock') || '');   // quick filter (stat cards)
+  const [categoryFilter, setCategoryFilter] = useState(_qp.get('category') || '');
+  const [statusFilter, setStatusFilter] = useState(_qp.get('status') || '');
+  const [warehouseFilter, setWarehouseFilter] = useState(_qp.get('warehouse') || '');
+  const [expirationFilter, setExpirationFilter] = useState(_qp.get('expiration') || '');
+  const [registeredAfter, setRegisteredAfter] = useState(_qp.get('reg_after') || '');
+  const [registeredBefore, setRegisteredBefore] = useState(_qp.get('reg_before') || '');
+  const [expirationAfter, setExpirationAfter] = useState(_qp.get('exp_after') || '');
+  const [expirationBefore, setExpirationBefore] = useState(_qp.get('exp_before') || '');
   const [showFilters, setShowFilters] = useState(false);
+
+  // Synchroniser les filtres dans l'URL (replaceState = pas d'entrée dans l'historique)
+  useEffect(() => {
+    const qp = new URLSearchParams();
+    if (searchTerm) qp.set('search', searchTerm);
+    if (stockFilter) qp.set('stock', stockFilter);
+    if (categoryFilter) qp.set('category', categoryFilter);
+    if (statusFilter) qp.set('status', statusFilter);
+    if (warehouseFilter) qp.set('warehouse', warehouseFilter);
+    if (expirationFilter) qp.set('expiration', expirationFilter);
+    if (registeredAfter) qp.set('reg_after', registeredAfter);
+    if (registeredBefore) qp.set('reg_before', registeredBefore);
+    if (expirationAfter) qp.set('exp_after', expirationAfter);
+    if (expirationBefore) qp.set('exp_before', expirationBefore);
+    if (page > 1) qp.set('page', page);
+    const qs = qp.toString();
+    window.history.replaceState(null, '', qs ? `/products?${qs}` : '/products');
+  }, [searchTerm, stockFilter, categoryFilter, statusFilter, warehouseFilter, expirationFilter, registeredAfter, registeredBefore, expirationAfter, expirationBefore, page]);
 
   // Report state
   const [reportConfigOpen, setReportConfigOpen] = useState(false);

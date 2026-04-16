@@ -455,7 +455,7 @@ function ProductForm() {
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <IconButton onClick={() => navigate('/products')} size="small">
+                    <IconButton onClick={() => navigate(-1)} size="small">
                         <ArrowBack />
                     </IconButton>
                     <Typography variant="h4" fontWeight={800} sx={{ color: 'primary.main' }}>
