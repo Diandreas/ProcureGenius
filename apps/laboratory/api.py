@@ -48,6 +48,14 @@ class IsAdminOrReadOnly(BasePermission):
         return request.user and request.user.is_authenticated and request.user.role == 'admin'
 
 
+class IsAdminOrLabTech(BasePermission):
+    """Admin ou lab_tech peuvent écrire ; tout utilisateur authentifié peut lire."""
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated and request.user.role in ('admin', 'lab_tech')
+
+
 # =============================================================================
 # Lab Test Category Views
 # =============================================================================
@@ -85,7 +93,7 @@ class LabTestCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class LabTestListCreateView(generics.ListCreateAPIView):
     """List all lab tests or create a new one"""
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrLabTech]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'sample_type', 'is_active', 'fasting_required']
     search_fields = ['name', 'test_code', 'short_name']
@@ -109,7 +117,7 @@ class LabTestListCreateView(generics.ListCreateAPIView):
 class LabTestDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a lab test"""
     serializer_class = LabTestSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrLabTech]
     
     def get_queryset(self):
         return LabTest.objects.filter(
@@ -886,7 +894,7 @@ class GenerateLabOrderInvoiceView(APIView):
 class LabTestParameterListCreateView(generics.ListCreateAPIView):
     """List all parameters for a lab test, or create a new parameter"""
     serializer_class = LabTestParameterSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrLabTech]
 
     def get_queryset(self):
         return LabTestParameter.objects.filter(
@@ -905,7 +913,7 @@ class LabTestParameterListCreateView(generics.ListCreateAPIView):
 class LabTestParameterDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a lab test parameter"""
     serializer_class = LabTestParameterSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrLabTech]
 
     def get_queryset(self):
         return LabTestParameter.objects.filter(
@@ -919,7 +927,7 @@ class LabTestParameterBulkSaveView(APIView):
     Updates parameters for a test using UPDATE/CREATE/soft-delete to preserve result history.
     Parameters with existing results are never deleted — they are marked is_active=False instead.
     """
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrLabTech]
 
     def post(self, request, test_id):
         try:
@@ -993,7 +1001,7 @@ class QuickUpdateConfigView(APIView):
     POST /healthcare/laboratory/quick-update-unit/
     Updates unit, conversion factor, and reference ranges for a test or parameter.
     """
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrLabTech]
 
     def post(self, request):
         test_id = request.data.get('test_id')
