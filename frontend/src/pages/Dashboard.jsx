@@ -758,6 +758,8 @@ const Dashboard = () => {
           const totalRevExclSub = patientActivityData?.total_revenue_excl_sub || 0;
           const billedPatients = patientActivityData?.billed_patients || 0;
           const totalUnique = patientActivityData?.total_unique_patients || 0;
+          const analysesRecues = patientActivityData?.analyses_recues || 0;
+          const analysesRecuesSource = patientActivityData?.analyses_recues_by_source || [];
 
           return (
             <>
@@ -796,6 +798,16 @@ const Dashboard = () => {
                   </Paper>
                 </Grid>
               </Grid>
+
+              {/* ── Info sous-traitance reçue ── */}
+              {analysesRecues > 0 && (
+                <Box mb={2} px={2} py={1.5} sx={{ border: '1px solid', borderColor: 'info.light', borderRadius: 2, bgcolor: t => alpha(t.palette.info.main, 0.05), display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="info.dark">
+                    <strong>{analysesRecues} analyse{analysesRecues > 1 ? 's' : ''}</strong> reçue{analysesRecues > 1 ? 's' : ''} de laboratoires externes (non comptabilisée{analysesRecues > 1 ? 's' : ''} dans nos patients)
+                    {analysesRecuesSource.length > 0 && ` — ${analysesRecuesSource.map(s => `${s.subcontractor_patient__subcontractor__name || 'Inconnu'} (${s.count})`).join(', ')}`}
+                  </Typography>
+                </Box>
+              )}
 
               {/* ── Graphe évolution journalière ── */}
               <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
@@ -945,9 +957,6 @@ const Dashboard = () => {
                     <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                       <Box display="flex" alignItems="center" gap={2} mb={2}>
                         <Typography variant="h6" fontWeight="700" mt={1}>Détail Démographique</Typography>
-                        {demographicsData?.total_patients > 0 && (
-                          <Chip label={`${demographicsData.total_patients} patients`} color="primary" size="small" />
-                        )}
                       </Box>
                       <TableContainer>
                         <Table size="small">

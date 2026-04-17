@@ -180,15 +180,15 @@ class DemographicAnalysisView(APIView):
         from apps.pharmacy.models import PharmacyDispensing
 
         # Collecter les IDs de tous les patients ayant eu une interaction dans la période
-        lab_qs = LabOrder.objects.filter(organization=organization)
+        lab_qs = LabOrder.objects.filter(organization=organization, subcontractor_patient__isnull=True)
         consult_qs = Consultation.objects.filter(organization=organization, status='completed')
         pharma_qs = PharmacyDispensing.objects.filter(
             organization=organization, status='dispensed', patient__isnull=False
         )
-        # Factures (source principale — inclut tous les actes facturés)
+        # Factures PAYÉES hors avoirs et hors sous-traitance reçue
         invoice_qs = Invoice.objects.filter(
-            created_by__organization=organization
-        ).exclude(invoice_type='credit_note').filter(client__isnull=False)
+            organization=organization, status='paid', client__isnull=False
+        ).exclude(invoice_type='credit_note').exclude(is_subcontractor_invoice=True)
 
         if start_date:
             lab_qs = lab_qs.filter(order_date__date__gte=start_date)
@@ -427,7 +427,7 @@ class HealthcareDashboardStatsView(APIView):
         # Average exam amount — basé sur les factures labo payées dans la période
         from apps.invoicing.models import Invoice as InvoiceModel
         avg_amount_agg = InvoiceModel.objects.filter(
-            created_by__organization=organization,
+            organization=organization,
             invoice_type='healthcare_laboratory',
             status='paid',
             created_at__date__gte=start_date,
@@ -494,7 +494,7 @@ class ActivityIndicatorsView(APIView):
         from django.db.models import Q as DQ
 
         paid_base = InvoiceModel.objects.filter(
-            created_by__organization=organization,
+            organization=organization,
             status='paid',
             created_at__date__gte=start_date,
             created_at__date__lte=end_date,
@@ -602,7 +602,7 @@ class ActivityIndicatorsView(APIView):
         # Le CA est toujours calculé depuis Invoice.status='paid' pour cohérence
 
         paid_invoices = InvoiceModel.objects.filter(
-            created_by__organization=organization,
+            organization=organization,
             status='paid',
             created_at__date__gte=start_date,
             created_at__date__lte=end_date
@@ -712,7 +712,7 @@ class ActivityIndicatorsView(APIView):
             
         # Ajouter tous les patients ayant eu une facture sur la période (payée ou non)
         all_invoices = InvoiceModel.objects.filter(
-            created_by__organization=organization,
+            organization=organization,
             created_at__date__gte=start_date,
             created_at__date__lte=end_date
         ).exclude(invoice_type='credit_note')
@@ -1733,13 +1733,52 @@ class SubcontractorStatsView(APIView):
 
 class PatientActivityView(APIView):
     """
-    Patient activity by day and by activity type (labo, consultation, pharmacy, services, subcontracting).
-    Returns:
-      - daily_counts: [{date, total, labo, consultation, pharmacie, soins, sous_traitance}]
-      - patient_details: [{date, patient_id, patient_name, labo, consultation, pharmacie, soins, sous_traitance}]
-    Query params: start_date, end_date
+    Patient activity by day and by activity type.
+    Source of truth: invoice items (categorized by product category + invoice_type)
+    + Consultation model + LabOrder model (for subcontracting).
+
+    Category → activity mapping:
+      consultation : invoice_type='healthcare_consultation'
+                     OR category icontains 'consultation' or 'acte médical'
+                     OR Consultation model record
+      labo         : invoice_type='healthcare_laboratory'
+                     OR category icontains 'consommable labo'
+                     OR LabOrder model record
+      pharmacie    : category icontains 'medicament' or 'materiel medical'
+                     OR invoice_type='healthcare_pharmacy'
+                     OR PharmacyDispensing record
+      soins        : category icontains 'soin' or 'surveillance' or 'hospitalisation'
+                     OR invoice_type='healthcare_services'
+      sous_traitance: LabOrder.subcontractor_id IS NOT NULL
     """
     permission_classes = [IsAuthenticated]
+
+    # Category name fragments → activity (case-insensitive)
+    CAT_MAP = [
+        ('consultation',   ['consultation', 'acte m', 'actes m']),
+        ('labo',           ['consommable labo', 'laboratoire', 'autres services']),
+        ('pharmacie',      ['medicament', 'materiel medical', 'mat\u00e9riel m\u00e9dical']),
+        ('soins',          ['soin', 'surveillance', 'hospitali']),
+    ]
+    # invoice_type → activity (takes priority over category)
+    TYPE_MAP = {
+        'healthcare_consultation': 'consultation',
+        'healthcare_laboratory':   'labo',
+        'healthcare_pharmacy':     'pharmacie',
+        'healthcare_services':     'soins',
+    }
+
+    @staticmethod
+    def _cat_to_activity(cat_name, inv_type, cat_map, type_map):
+        if inv_type in type_map:
+            return type_map[inv_type]
+        if not cat_name:
+            return None
+        low = cat_name.lower()
+        for activity, fragments in cat_map:
+            if any(f in low for f in fragments):
+                return activity
+        return None
 
     def get(self, request):
         organization = request.user.organization
@@ -1748,8 +1787,8 @@ class PatientActivityView(APIView):
 
         from apps.pharmacy.models import PharmacyDispensing
         from collections import defaultdict
+        from apps.invoicing.models import InvoiceItem
 
-        # --- Build date range ---
         today = date.today()
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else (today - timedelta(days=30))
@@ -1758,16 +1797,12 @@ class PatientActivityView(APIView):
             start_date = today - timedelta(days=30)
             end_date = today
 
-        # --- Gather activity per patient per day ---
-        # Key: (date_str, patient_id) → set of activity types
-
         patient_days = defaultdict(lambda: {
             'labo': False, 'consultation': False,
             'pharmacie': False, 'soins': False, 'sous_traitance': False,
             'patient_name': '', 'patient_id': None,
         })
 
-        # Helper to upsert patient info
         def upsert(day_str, patient_id, patient_name, activity):
             key = (day_str, str(patient_id))
             patient_days[key][activity] = True
@@ -1775,52 +1810,81 @@ class PatientActivityView(APIView):
                 patient_days[key]['patient_name'] = patient_name
             patient_days[key]['patient_id'] = str(patient_id)
 
-        # 1. Consultations
-        consults = Consultation.objects.filter(
-            organization=organization,
-            consultation_date__date__gte=start_date,
-            consultation_date__date__lte=end_date,
-            patient__isnull=False,
-        ).values('consultation_date', 'patient_id', 'patient__name')
-        for c in consults:
-            d = c['consultation_date'].date().isoformat() if hasattr(c['consultation_date'], 'date') else str(c['consultation_date'])[:10]
-            upsert(d, c['patient_id'], c['patient__name'] or 'Inconnu', 'consultation')
+        # ── SOURCE 1 : Invoice items PAYÉES — source de vérité principale ──
+        # Exclut : avoirs, factures sous-traitance reçues (patients externes)
+        items = InvoiceItem.objects.filter(
+            invoice__organization=organization,
+            invoice__created_at__date__gte=start_date,
+            invoice__created_at__date__lte=end_date,
+            invoice__client__isnull=False,
+            invoice__status='paid',
+        ).exclude(
+            invoice__invoice_type='credit_note'
+        ).exclude(
+            invoice__is_subcontractor_invoice=True
+        ).values(
+            'invoice__created_at',
+            'invoice__client_id',
+            'invoice__client__name',
+            'invoice__invoice_type',
+            'product__category__name',
+        )
 
-        # 2. Lab orders
-        lab_orders = LabOrder.objects.filter(
+        for item in items:
+            activity = self._cat_to_activity(
+                item['product__category__name'],
+                item['invoice__invoice_type'],
+                self.CAT_MAP,
+                self.TYPE_MAP,
+            )
+            if activity is None:
+                continue
+            raw_dt = item['invoice__created_at']
+            d = raw_dt.date().isoformat() if hasattr(raw_dt, 'date') else str(raw_dt)[:10]
+            upsert(d, item['invoice__client_id'], item['invoice__client__name'] or 'Inconnu', activity)
+
+        # ── SOURCE 2 : LabOrder — NOS patients seulement (exclut sous-traitance reçue) ──
+        # subcontractor_patient__isnull=True = c'est notre patient (pas un patient d'un autre labo)
+        for lo in LabOrder.objects.filter(
             organization=organization,
             order_date__date__gte=start_date,
             order_date__date__lte=end_date,
             patient__isnull=False,
-        ).values('order_date', 'patient_id', 'subcontractor_id', 'patient__name')
-        for lo in lab_orders:
-            d = lo['order_date'].date().isoformat() if hasattr(lo['order_date'], 'date') else str(lo['order_date'])[:10]
+            subcontractor_patient__isnull=True,
+        ).values('order_date', 'patient_id', 'subcontractor_id', 'patient__name'):
+            raw_dt = lo['order_date']
+            d = raw_dt.date().isoformat() if hasattr(raw_dt, 'date') else str(raw_dt)[:10]
             upsert(d, lo['patient_id'], lo['patient__name'] or 'Inconnu', 'labo')
             if lo.get('subcontractor_id'):
+                # Notre patient, mais examen envoyé à un sous-traitant externe
                 upsert(d, lo['patient_id'], lo['patient__name'] or 'Inconnu', 'sous_traitance')
 
-        # 3. Pharmacy dispensings
-        pharma = PharmacyDispensing.objects.filter(
+        # ── SOURCE 3 : PharmacyDispensing (OTC sans facture patient) ──
+        for ph in PharmacyDispensing.objects.filter(
             organization=organization,
             dispensed_at__date__gte=start_date,
             dispensed_at__date__lte=end_date,
             patient__isnull=False,
-        ).values('dispensed_at', 'patient_id', 'patient__name')
-        for ph in pharma:
-            d = ph['dispensed_at'].date().isoformat() if hasattr(ph['dispensed_at'], 'date') else str(ph['dispensed_at'])[:10]
+        ).values('dispensed_at', 'patient_id', 'patient__name'):
+            raw_dt = ph['dispensed_at']
+            d = raw_dt.date().isoformat() if hasattr(raw_dt, 'date') else str(raw_dt)[:10]
             upsert(d, ph['patient_id'], ph['patient__name'] or 'Inconnu', 'pharmacie')
 
-        # 4. Soins invoices (healthcare_services)
-        soins_invoices = Invoice.objects.filter(
-            created_by__organization=organization,
-            invoice_type='healthcare_services',
-            created_at__date__gte=start_date,
-            created_at__date__lte=end_date,
-            client__isnull=False,
-        ).values('created_at', 'client_id', 'client__name')
-        for inv in soins_invoices:
-            d = inv['created_at'].date().isoformat() if hasattr(inv['created_at'], 'date') else str(inv['created_at'])[:10]
-            upsert(d, inv['client_id'], inv['client__name'] or 'Inconnu', 'soins')
+        # ── Sous-traitance reçue : analyses de patients externes (pas nos patients) ──
+        analyses_recues_qs = LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date,
+            subcontractor_patient__isnull=False,
+        )
+        analyses_recues = analyses_recues_qs.count()
+        # Group by external lab name (SubcontractorLab.name)
+        analyses_recues_by_source = list(
+            analyses_recues_qs
+            .values('subcontractor_patient__subcontractor__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
 
         # --- Build patient_details list ---
         patient_details = []
@@ -1864,11 +1928,11 @@ class PatientActivityView(APIView):
 
         total_unique = len(set(pid for (_, pid) in patient_days.keys()))
 
-        # Average cost per patient (excluding subcontracting invoices)
+        # Average cost per patient — all invoices except credit notes and subcontracting
         from django.db.models import Sum, Count as DCount
         rev_qs = Invoice.objects.filter(
-            created_by__organization=organization,
-            invoice_type__startswith='healthcare',
+            organization=organization,
+            status='paid',
             created_at__date__gte=start_date,
             created_at__date__lte=end_date,
             client__isnull=False,
@@ -1890,4 +1954,6 @@ class PatientActivityView(APIView):
             'avg_cost_per_patient': avg_cost_per_patient,
             'total_revenue_excl_sub': total_revenue,
             'billed_patients': billed_patients,
+            'analyses_recues': analyses_recues,
+            'analyses_recues_by_source': analyses_recues_by_source,
         })
