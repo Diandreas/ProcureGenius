@@ -16,6 +16,7 @@ from .healthcare_analytics import (
     LabStageTimingView,
     PrescriberAnalyticsView,
     SubcontractorStatsView,
+    PatientActivityView,
 )
 from .report_views import ReportConfigView, ReportTestView
 from .inventory_analytics import (
@@ -49,6 +50,7 @@ urlpatterns = [
     path('healthcare/lab-stage-timing/', LabStageTimingView.as_view(), name='healthcare_lab_stage_timing'),
     path('healthcare/prescribers/', PrescriberAnalyticsView.as_view(), name='healthcare_prescribers'),
     path('healthcare/subcontractors-stats/', SubcontractorStatsView.as_view(), name='healthcare_subcontractors_stats'),
+    path('healthcare/patient-activity/', PatientActivityView.as_view(), name='healthcare_patient_activity'),
 
     # Inventory Analytics
     path('inventory/reorder/', ReorderQuantitiesView.as_view(), name='inventory_reorder'),

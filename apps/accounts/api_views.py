@@ -264,7 +264,7 @@ def api_user_permissions(request, user_id):
     elif request.method == 'PUT':
         try:
             data = request.data
-            
+
             if 'can_manage_users' in data:
                 permissions.can_manage_users = data['can_manage_users']
             if 'can_manage_settings' in data:
@@ -275,9 +275,13 @@ def api_user_permissions(request, user_id):
                 permissions.can_approve_purchases = data['can_approve_purchases']
             if 'module_access' in data:
                 permissions.module_access = data['module_access']
-            
+                # Sync UserPreferences.enabled_modules so the user sees the right modules
+                prefs, _ = UserPreferences.objects.get_or_create(user=user)
+                prefs.enabled_modules = data['module_access']
+                prefs.save(update_fields=['enabled_modules', 'updated_at'])
+
             permissions.save()
-            
+
             return Response({
                 'success': True,
                 'message': 'Permissions mises à jour'

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Grid, Typography, Container, Paper, alpha, Tabs, Tab, Chip,
   CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  LinearProgress
+  LinearProgress, Tooltip as MuiTooltip,
 } from '@mui/material';
 import { SafeTab } from '../components/safe';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -25,10 +25,16 @@ import {
   MedicalServices as MedicalIcon,
   AccessTime as ClockIcon,
   LocalHospital as HospitalIcon,
+
+  LocalPharmacy as PharmacyIcon,
+  Biotech as BiotechIcon,
+  HealthAndSafety as SoinsIcon,
+  SwapHoriz as SubcontractIcon,
+  PersonSearch as PersonSearchIcon,
 } from '@mui/icons-material';
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList,
 } from 'recharts';
 import StatCard from '../components/analytics/StatCard';
 import DateRangeSelector from '../components/analytics/DateRangeSelector';
@@ -101,6 +107,8 @@ const Dashboard = () => {
   const [servicesData, setServicesData] = useState(null);  // CA soins/chirurgie/hosp
   const [labStageData, setLabStageData] = useState(null);
   const [demographicsData, setDemographicsData] = useState(null);
+  const [patientActivityData, setPatientActivityData] = useState(null);
+  const [selectedDay, setSelectedDay] = useState('');
   const [inventoryStats, setInventoryStats] = useState({});
   const [unifiedData, setUnifiedData] = useState(null);
 
@@ -114,7 +122,7 @@ const Dashboard = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const [activity, revenue, labService, pharmacyService, servicesSale, labStage, demographics, inventory, unified] = await Promise.all([
+      const [activity, revenue, labService, pharmacyService, servicesSale, labStage, demographics, patientActivity, inventory, unified] = await Promise.all([
         healthcareAnalyticsAPI.getActivityIndicators(dateRange).catch(() => null),
         healthcareAnalyticsAPI.getEnhancedRevenue({ ...dateRange, period: 'month' }).catch(() => null),
         healthcareAnalyticsAPI.getServiceRevenue({ ...dateRange, invoice_type: 'healthcare_laboratory' }).catch(() => null),
@@ -122,6 +130,7 @@ const Dashboard = () => {
         healthcareAnalyticsAPI.getServiceRevenue({ ...dateRange, invoice_type: 'healthcare_services', include_standard: true }).catch(() => null),
         healthcareAnalyticsAPI.getLabStageTiming(dateRange).catch(() => null),
         healthcareAnalyticsAPI.getDemographics(dateRange).catch(() => null),
+        healthcareAnalyticsAPI.getPatientActivity(dateRange).catch(() => null),
         inventoryAnalyticsAPI.getDashboardStats(dateRange).catch(() => ({})),
         api.get(`/analytics/unified-dashboard/?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}`)
           .then(r => r.data).catch(() => null),
@@ -133,6 +142,7 @@ const Dashboard = () => {
       setServicesData(servicesSale);
       setLabStageData(labStage);
       setDemographicsData(demographics);
+      setPatientActivityData(patientActivity);
       setInventoryStats(inventory);
       setUnifiedData(unified);
     } finally {
@@ -231,7 +241,7 @@ const Dashboard = () => {
             <SafeTab icon={<AssessmentIcon />} iconPosition="start" label="Activité" sx={{ minHeight: 48 }} />
             <SafeTab icon={<MoneyIcon />} iconPosition="start" label="Revenus" sx={{ minHeight: 48 }} />
             <SafeTab icon={<ScienceIcon />} iconPosition="start" label="Laboratoire" sx={{ minHeight: 48 }} />
-            <SafeTab icon={<PeopleIcon />} iconPosition="start" label="Démographie" sx={{ minHeight: 48 }} />
+            <SafeTab icon={<PeopleIcon />} iconPosition="start" label="Patients" sx={{ minHeight: 48 }} />
             <SafeTab icon={<InventoryIcon />} iconPosition="start" label="Stock & Alertes" sx={{ minHeight: 48 }} />
           </Tabs>
         </Paper>
@@ -714,85 +724,215 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* ── TAB 3 : DÉMOGRAPHIE ── */}
-        {tabValue === 3 && (
-          <>
-            <Grid container spacing={3}>
-              {/* Gender */}
-              <Grid item xs={12} md={5}>
-                <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
-                  <SectionTitle>Répartition par Genre</SectionTitle>
-                  {loading ? <CircularProgress size={32} /> : genderData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={220}>
-                      <PieChart>
-                        <Pie data={genderData} cx="50%" cy="50%" outerRadius={80} dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                          {genderData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <Typography color="text.secondary" variant="body2">Aucune donnée</Typography>
-                  )}
-                </Paper>
-              </Grid>
+        {/* ── TAB 3 : PATIENTS & DÉMOGRAPHIE ── */}
+        {tabValue === 3 && (() => {
+          const dailyCounts = patientActivityData?.daily_counts || [];
+          const patientDetails = patientActivityData?.patient_details || [];
 
-              {/* Age groups */}
-              <Grid item xs={12} md={7}>
-                <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
-                  <SectionTitle>Répartition par Tranche d'Âge</SectionTitle>
-                  {loading ? <CircularProgress size={32} /> : ageData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={ageData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" tick={{ fontSize: 11 }} />
-                        <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 11 }} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#2563eb" name="Patients" radius={[0, 3, 3, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <Typography color="text.secondary" variant="body2">Aucune donnée</Typography>
-                  )}
-                </Paper>
-              </Grid>
+          // Keep only days with at least 1 patient
+          const chartData = dailyCounts
+            .filter(d => d.total > 0)
+            .map(d => ({ ...d, _fullDate: d.date, date: d.date.slice(5) }));
 
-              {/* Demographic summary table */}
-              {demographicsData?.by_gender?.length > 0 && (
-                <Grid item xs={12}>
-                  <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                    <Box display="flex" alignItems="center" gap={2} mb={2}>
-                      <Typography variant="h6" fontWeight="700" mt={1}>Détail Démographique</Typography>
-                      {demographicsData?.total_patients > 0 && (
-                        <Chip label={`${demographicsData.total_patients} patients`} color="primary" size="small" />
-                      )}
-                    </Box>
+          const ACT_CONFIG = [
+            { key: 'consultation', label: 'Consultation', color: '#2563eb', icon: <MedicalIcon sx={{ fontSize: 14 }} /> },
+            { key: 'labo', label: 'Laboratoire', color: '#10b981', icon: <BiotechIcon sx={{ fontSize: 14 }} /> },
+            { key: 'pharmacie', label: 'Pharmacie', color: '#f59e0b', icon: <PharmacyIcon sx={{ fontSize: 14 }} /> },
+            { key: 'soins', label: 'Soins', color: '#8b5cf6', icon: <SoinsIcon sx={{ fontSize: 14 }} /> },
+            { key: 'sous_traitance', label: 'Sous-traitance', color: '#ef4444', icon: <SubcontractIcon sx={{ fontSize: 14 }} /> },
+          ];
+
+          // selectedDay : full date string YYYY-MM-DD (from original dailyCounts, not sliced)
+          const selectedDayPatients = selectedDay
+            ? patientDetails.filter(p => p.date === selectedDay)
+            : [];
+
+          const handleChartClick = (data) => {
+            if (!data?.activePayload?.length) return;
+            // _fullDate is stored directly in chartData entries
+            const fullDate = data.activePayload[0]?.payload?._fullDate;
+            if (fullDate) setSelectedDay(fullDate === selectedDay ? '' : fullDate);
+          };
+
+          return (
+            <>
+              {/* ── Graphe évolution journalière ── */}
+              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <SectionTitle>Évolution du nombre de patients par jour</SectionTitle>
+                  {selectedDay && (
+                    <Chip
+                      label={`Jour sélectionné : ${new Date(selectedDay).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}`}
+                      color="primary" size="small" onDelete={() => setSelectedDay('')}
+                      sx={{ ml: 1 }}
+                    />
+                  )}
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                  Cliquez sur un jour pour voir le détail des patients
+                </Typography>
+                {loading ? <CircularProgress size={32} /> : chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart data={chartData} margin={{ top: 24, right: 10, left: 0, bottom: 5 }}
+                      onClick={handleChartClick} style={{ cursor: 'pointer' }}
+                      barCategoryGap="20%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                      <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={28} />
+                      <Tooltip
+                        formatter={(value, name) => value > 0 ? [value, ACT_CONFIG.find(a => a.key === name)?.label || (name === 'total' ? 'Total' : name)] : null}
+                        labelFormatter={label => {
+                          const found = chartData.find(d => d.date === label);
+                          return found ? new Date(found._fullDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : label;
+                        }}
+                        filterNull
+                      />
+                      <Legend formatter={name => ACT_CONFIG.find(a => a.key === name)?.label || (name === 'total' ? 'Total' : name)} />
+                      {/* Total bar (stacked background) */}
+                      <Bar dataKey="total" fill="#e2e8f0" name="total" radius={[3, 3, 0, 0]}>
+                        <LabelList dataKey="total" position="top" style={{ fontSize: 11, fontWeight: 700, fill: '#1e293b' }}
+                          formatter={v => v > 0 ? v : ''} />
+                      </Bar>
+                      {ACT_CONFIG.map(a => (
+                        <Bar key={a.key} dataKey={a.key} fill={a.color} name={a.key} radius={[2, 2, 0, 0]}>
+                          <LabelList dataKey={a.key} position="top" style={{ fontSize: 10, fill: a.color, fontWeight: 600 }}
+                            formatter={v => v > 0 ? v : ''} />
+                        </Bar>
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Typography color="text.secondary" variant="body2">Aucune donnée pour la période</Typography>
+                )}
+              </Paper>
+
+              {/* ── Détail du jour sélectionné ── */}
+              {selectedDay && (
+                <Paper elevation={0} sx={{ p: 3, border: '2px solid', borderColor: 'primary.main', borderRadius: 2, mb: 3 }}>
+                  <Box display="flex" alignItems="center" gap={1} mb={2}>
+                    <PersonSearchIcon color="primary" />
+                    <Typography variant="h6" fontWeight="700">
+                      Patients du {new Date(selectedDay).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </Typography>
+                    <Chip label={`${selectedDayPatients.length} patient${selectedDayPatients.length > 1 ? 's' : ''}`} color="primary" size="small" />
+                  </Box>
+                  {selectedDayPatients.length > 0 ? (
                     <TableContainer>
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>Genre</TableCell>
-                            <TableCell align="right">Patients</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Patient</TableCell>
+                            {ACT_CONFIG.map(a => (
+                              <TableCell key={a.key} align="center" sx={{ fontWeight: 700 }}>
+                                <Box display="flex" alignItems="center" justifyContent="center" gap={0.5} sx={{ color: a.color }}>
+                                  {a.icon}
+                                  <Typography variant="caption" sx={{ fontSize: 11, color: a.color, fontWeight: 700 }}>{a.label}</Typography>
+                                </Box>
+                              </TableCell>
+                            ))}
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {demographicsData.by_gender.map((row, i) => (
-                            <TableRow key={i}>
-                              <TableCell>{row.gender === 'M' ? 'Homme' : row.gender === 'F' ? 'Femme' : 'Non spécifié'}</TableCell>
-                              <TableCell align="right">{row.count}</TableCell>
+                          {selectedDayPatients.map((row, i) => (
+                            <TableRow key={i} hover>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight="500">{row.patient_name}</Typography>
+                              </TableCell>
+                              {ACT_CONFIG.map(a => (
+                                <TableCell key={a.key} align="center">
+                                  {row[a.key] ? (
+                                    <Box sx={{ color: a.color, display: 'flex', justifyContent: 'center' }}>
+                                      <CheckCircleIcon sx={{ fontSize: 18 }} />
+                                    </Box>
+                                  ) : (
+                                    <Typography variant="caption" color="text.disabled">—</Typography>
+                                  )}
+                                </TableCell>
+                              ))}
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     </TableContainer>
+                  ) : (
+                    <Typography color="text.secondary" variant="body2">Aucun patient ce jour-là</Typography>
+                  )}
+                </Paper>
+              )}
+
+              {/* ── Démographie (anciens graphiques) ── */}
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={5}>
+                  <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
+                    <SectionTitle>Répartition par Genre</SectionTitle>
+                    {loading ? <CircularProgress size={32} /> : genderData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie data={genderData} cx="50%" cy="50%" outerRadius={80} dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                            {genderData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <Typography color="text.secondary" variant="body2">Aucune donnée</Typography>
+                    )}
                   </Paper>
                 </Grid>
-              )}
-            </Grid>
-          </>
-        )}
+                <Grid item xs={12} md={7}>
+                  <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
+                    <SectionTitle>Répartition par Tranche d'Âge</SectionTitle>
+                    {loading ? <CircularProgress size={32} /> : ageData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={ageData} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" tick={{ fontSize: 11 }} />
+                          <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#2563eb" name="Patients" radius={[0, 3, 3, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <Typography color="text.secondary" variant="body2">Aucune donnée</Typography>
+                    )}
+                  </Paper>
+                </Grid>
+                {demographicsData?.by_gender?.length > 0 && (
+                  <Grid item xs={12}>
+                    <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                      <Box display="flex" alignItems="center" gap={2} mb={2}>
+                        <Typography variant="h6" fontWeight="700" mt={1}>Détail Démographique</Typography>
+                        {demographicsData?.total_patients > 0 && (
+                          <Chip label={`${demographicsData.total_patients} patients`} color="primary" size="small" />
+                        )}
+                      </Box>
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Genre</TableCell>
+                              <TableCell align="right">Patients</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {demographicsData.by_gender.map((row, i) => (
+                              <TableRow key={i}>
+                                <TableCell>{row.gender === 'M' ? 'Homme' : row.gender === 'F' ? 'Femme' : 'Non spécifié'}</TableCell>
+                                <TableCell align="right">{row.count}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Paper>
+                  </Grid>
+                )}
+              </Grid>
+            </>
+          );
+        })()}
 
         {/* ── TAB 4 : STOCK & ALERTES ── */}
         {tabValue === 4 && (

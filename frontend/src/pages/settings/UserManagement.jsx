@@ -209,6 +209,8 @@ function UserManagement() {
         first_name: '',
         last_name: '',
         role: 'buyer',
+        password: '',
+        confirmPassword: '',
     });
 
     const [permissionsForm, setPermissionsForm] = useState({
@@ -251,38 +253,64 @@ function UserManagement() {
     };
 
     const handleInviteUser = async () => {
+        if (!inviteForm.email || !inviteForm.first_name || !inviteForm.last_name) {
+            enqueueSnackbar('Veuillez remplir tous les champs obligatoires', { variant: 'warning' });
+            return;
+        }
+        if (inviteForm.password && inviteForm.password !== inviteForm.confirmPassword) {
+            enqueueSnackbar('Les mots de passe ne correspondent pas', { variant: 'error' });
+            return;
+        }
+        if (inviteForm.password && inviteForm.password.length < 8) {
+            enqueueSnackbar('Le mot de passe doit contenir au moins 8 caractères', { variant: 'error' });
+            return;
+        }
+
         try {
+            const payload = {
+                email: inviteForm.email,
+                first_name: inviteForm.first_name,
+                last_name: inviteForm.last_name,
+                role: inviteForm.role,
+            };
+            if (inviteForm.password) {
+                payload.password = inviteForm.password;
+            }
+
             const response = await fetch('/api/v1/accounts/organization/users/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Token ${localStorage.getItem('authToken')}`,
                 },
-                body: JSON.stringify(inviteForm),
+                body: JSON.stringify(payload),
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                enqueueSnackbar(t('settings:userManagement.inviteDialog.inviteSuccess'), { variant: 'success' });
+                enqueueSnackbar('Utilisateur créé avec succès', { variant: 'success' });
                 setInviteDialogOpen(false);
-                setInviteForm({ email: '', first_name: '', last_name: '', role: 'buyer' });
+                setInviteForm({ email: '', first_name: '', last_name: '', role: 'buyer', password: '', confirmPassword: '' });
                 fetchUsers();
             } else {
-                throw new Error('Failed to invite user');
+                enqueueSnackbar(data.error || 'Erreur lors de la création', { variant: 'error' });
             }
         } catch (error) {
-            console.error('Error inviting user:', error);
-            enqueueSnackbar(t('settings:userManagement.inviteDialog.inviteError'), { variant: 'error' });
+            console.error('Error creating user:', error);
+            enqueueSnackbar('Erreur réseau lors de la création', { variant: 'error' });
         }
     };
 
     const handleEditPermissions = () => {
         if (selectedUser) {
+            const perms = selectedUser.permissions || {};
             setPermissionsForm({
-                can_manage_users: selectedUser.permissions.can_manage_users,
-                can_manage_settings: selectedUser.permissions.can_manage_settings,
-                can_view_analytics: selectedUser.permissions.can_view_analytics,
-                can_approve_purchases: selectedUser.permissions.can_approve_purchases,
-                module_access: selectedUser.permissions.module_access || [],
+                can_manage_users: perms.can_manage_users || false,
+                can_manage_settings: perms.can_manage_settings || false,
+                can_view_analytics: perms.can_view_analytics || false,
+                can_approve_purchases: perms.can_approve_purchases || false,
+                module_access: perms.module_access || selectedUser.enabled_modules || [],
             });
             setPermissionsDialogOpen(true);
         }
@@ -302,16 +330,18 @@ function UserManagement() {
                 body: JSON.stringify(permissionsForm),
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                enqueueSnackbar(t('settings:userManagement.permissionsDialog.saveSuccess'), { variant: 'success' });
+                enqueueSnackbar('Permissions mises à jour avec succès', { variant: 'success' });
                 setPermissionsDialogOpen(false);
                 fetchUsers();
             } else {
-                throw new Error('Failed to update permissions');
+                enqueueSnackbar(data.error || 'Erreur lors de la mise à jour', { variant: 'error' });
             }
         } catch (error) {
             console.error('Error updating permissions:', error);
-            enqueueSnackbar(t('settings:userManagement.permissionsDialog.saveError'), { variant: 'error' });
+            enqueueSnackbar('Erreur réseau lors de la mise à jour', { variant: 'error' });
         }
     };
 
@@ -411,7 +441,7 @@ function UserManagement() {
                     startIcon={<PersonAdd />}
                     onClick={() => setInviteDialogOpen(true)}
                 >
-                    {t('settings:userManagement.inviteUser')}
+                    Créer un utilisateur
                 </Button>
             </Box>
 
@@ -574,7 +604,7 @@ function UserManagement() {
 
             {/* Dialog d'invitation */}
             <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>{t('settings:userManagement.inviteDialog.title')}</DialogTitle>
+                <DialogTitle>Créer un utilisateur</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
                         <Grid item xs={12}>
@@ -618,16 +648,31 @@ function UserManagement() {
                                 </Select>
                             </FormControl>
                         </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Mot de passe"
+                                type="password"
+                                value={inviteForm.password}
+                                onChange={(e) => setInviteForm({ ...inviteForm, password: e.target.value })}
+                                helperText="Laisser vide pour un mot de passe temporaire"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                fullWidth
+                                label="Confirmer le mot de passe"
+                                type="password"
+                                value={inviteForm.confirmPassword}
+                                onChange={(e) => setInviteForm({ ...inviteForm, confirmPassword: e.target.value })}
+                            />
+                        </Grid>
                     </Grid>
-
-                    <Alert severity="info" sx={{ mt: 2 }}>
-                        {t('settings:userManagement.inviteDialog.emailInfo')}
-                    </Alert>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setInviteDialogOpen(false)}>{t('common:cancel')}</Button>
-                    <Button onClick={handleInviteUser} variant="contained">
-                        {t('settings:userManagement.inviteDialog.invite')}
+                    <Button onClick={handleInviteUser} variant="contained" startIcon={<PersonAdd />}>
+                        Créer l'utilisateur
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -154,6 +154,16 @@ const healthcareAnalyticsAPI = {
     const response = await api.get(`/analytics/healthcare/subcontractors-stats/?${queryParams.toString()}`);
     return response.data;
   },
+
+  getPatientActivity: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    const startDate = formatDate(params.start_date);
+    const endDate = formatDate(params.end_date);
+    if (startDate) queryParams.append('start_date', startDate);
+    if (endDate) queryParams.append('end_date', endDate);
+    const response = await api.get(`/analytics/healthcare/patient-activity/?${queryParams.toString()}`);
+    return response.data;
+  },
 };
 
 export default healthcareAnalyticsAPI;

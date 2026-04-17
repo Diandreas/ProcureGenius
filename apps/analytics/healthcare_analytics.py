@@ -1729,3 +1729,142 @@ class SubcontractorStatsView(APIView):
             },
             'by_subcontractor': per_sub,
         })
+
+
+class PatientActivityView(APIView):
+    """
+    Patient activity by day and by activity type (labo, consultation, pharmacy, services, subcontracting).
+    Returns:
+      - daily_counts: [{date, total, labo, consultation, pharmacie, soins, sous_traitance}]
+      - patient_details: [{date, patient_id, patient_name, labo, consultation, pharmacie, soins, sous_traitance}]
+    Query params: start_date, end_date
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        organization = request.user.organization
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+
+        from apps.pharmacy.models import PharmacyDispensing
+        from collections import defaultdict
+
+        # --- Build date range ---
+        today = date.today()
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else (today - timedelta(days=30))
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else today
+        except (ValueError, TypeError):
+            start_date = today - timedelta(days=30)
+            end_date = today
+
+        # --- Gather activity per patient per day ---
+        # Key: (date_str, patient_id) → set of activity types
+
+        patient_days = defaultdict(lambda: {
+            'labo': False, 'consultation': False,
+            'pharmacie': False, 'soins': False, 'sous_traitance': False,
+            'patient_name': '', 'patient_id': None,
+        })
+
+        # Helper to upsert patient info
+        def upsert(day_str, patient_id, patient_name, activity):
+            key = (day_str, str(patient_id))
+            patient_days[key][activity] = True
+            if not patient_days[key]['patient_name']:
+                patient_days[key]['patient_name'] = patient_name
+            patient_days[key]['patient_id'] = str(patient_id)
+
+        # 1. Consultations
+        consults = Consultation.objects.filter(
+            organization=organization,
+            consultation_date__date__gte=start_date,
+            consultation_date__date__lte=end_date,
+            patient__isnull=False,
+        ).values('consultation_date', 'patient_id', 'patient__name')
+        for c in consults:
+            d = c['consultation_date'].date().isoformat() if hasattr(c['consultation_date'], 'date') else str(c['consultation_date'])[:10]
+            upsert(d, c['patient_id'], c['patient__name'] or 'Inconnu', 'consultation')
+
+        # 2. Lab orders
+        lab_orders = LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date,
+            patient__isnull=False,
+        ).values('order_date', 'patient_id', 'subcontractor_id', 'patient__name')
+        for lo in lab_orders:
+            d = lo['order_date'].date().isoformat() if hasattr(lo['order_date'], 'date') else str(lo['order_date'])[:10]
+            upsert(d, lo['patient_id'], lo['patient__name'] or 'Inconnu', 'labo')
+            if lo.get('subcontractor_id'):
+                upsert(d, lo['patient_id'], lo['patient__name'] or 'Inconnu', 'sous_traitance')
+
+        # 3. Pharmacy dispensings
+        pharma = PharmacyDispensing.objects.filter(
+            organization=organization,
+            dispensed_at__date__gte=start_date,
+            dispensed_at__date__lte=end_date,
+            patient__isnull=False,
+        ).values('dispensed_at', 'patient_id', 'patient__name')
+        for ph in pharma:
+            d = ph['dispensed_at'].date().isoformat() if hasattr(ph['dispensed_at'], 'date') else str(ph['dispensed_at'])[:10]
+            upsert(d, ph['patient_id'], ph['patient__name'] or 'Inconnu', 'pharmacie')
+
+        # 4. Soins invoices (healthcare_services)
+        soins_invoices = Invoice.objects.filter(
+            created_by__organization=organization,
+            invoice_type='healthcare_services',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+            client__isnull=False,
+        ).values('created_at', 'client_id', 'client__name')
+        for inv in soins_invoices:
+            d = inv['created_at'].date().isoformat() if hasattr(inv['created_at'], 'date') else str(inv['created_at'])[:10]
+            upsert(d, inv['client_id'], inv['client__name'] or 'Inconnu', 'soins')
+
+        # --- Build patient_details list ---
+        patient_details = []
+        for (day_str, pid), info in sorted(patient_days.items()):
+            patient_details.append({
+                'date': day_str,
+                'patient_id': info['patient_id'],
+                'patient_name': info['patient_name'],
+                'consultation': info['consultation'],
+                'labo': info['labo'],
+                'pharmacie': info['pharmacie'],
+                'soins': info['soins'],
+                'sous_traitance': info['sous_traitance'],
+            })
+
+        # --- Build daily aggregates ---
+        daily = defaultdict(lambda: {'total_patients': set(), 'labo': set(), 'consultation': set(),
+                                      'pharmacie': set(), 'soins': set(), 'sous_traitance': set()})
+        for (day_str, pid), info in patient_days.items():
+            daily[day_str]['total_patients'].add(pid)
+            for act in ('labo', 'consultation', 'pharmacie', 'soins', 'sous_traitance'):
+                if info[act]:
+                    daily[day_str][act].add(pid)
+
+        # Fill every day in range (even with 0)
+        all_days = []
+        cur = start_date
+        while cur <= end_date:
+            d = cur.isoformat()
+            entry = daily.get(d, {})
+            all_days.append({
+                'date': d,
+                'total': len(entry.get('total_patients', set())),
+                'consultation': len(entry.get('consultation', set())),
+                'labo': len(entry.get('labo', set())),
+                'pharmacie': len(entry.get('pharmacie', set())),
+                'soins': len(entry.get('soins', set())),
+                'sous_traitance': len(entry.get('sous_traitance', set())),
+            })
+            cur += timedelta(days=1)
+
+        return Response({
+            'period': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
+            'daily_counts': all_days,
+            'patient_details': patient_details,
+            'total_unique_patients': len(set(pid for (_, pid) in patient_days.keys())),
+        })
