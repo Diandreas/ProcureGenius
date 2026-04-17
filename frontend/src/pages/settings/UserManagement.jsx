@@ -273,32 +273,17 @@ function UserManagement() {
                 last_name: inviteForm.last_name,
                 role: inviteForm.role,
             };
-            if (inviteForm.password) {
-                payload.password = inviteForm.password;
-            }
+            if (inviteForm.password) payload.password = inviteForm.password;
 
-            const response = await fetch('/api/v1/accounts/organization/users/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                enqueueSnackbar('Utilisateur créé avec succès', { variant: 'success' });
-                setInviteDialogOpen(false);
-                setInviteForm({ email: '', first_name: '', last_name: '', role: 'buyer', password: '', confirmPassword: '' });
-                fetchUsers();
-            } else {
-                enqueueSnackbar(data.error || 'Erreur lors de la création', { variant: 'error' });
-            }
+            await authAPI.createUser(payload);
+            enqueueSnackbar('Utilisateur créé avec succès', { variant: 'success' });
+            setInviteDialogOpen(false);
+            setInviteForm({ email: '', first_name: '', last_name: '', role: 'buyer', password: '', confirmPassword: '' });
+            fetchUsers();
         } catch (error) {
-            console.error('Error creating user:', error);
-            enqueueSnackbar('Erreur réseau lors de la création', { variant: 'error' });
+            const msg = error.response?.data?.error || error.message || 'Erreur lors de la création';
+            enqueueSnackbar(msg, { variant: 'error' });
+            console.error('Error creating user:', error.response?.data || error);
         }
     };
 
@@ -319,53 +304,28 @@ function UserManagement() {
 
     const handleSavePermissions = async () => {
         if (!selectedUser) return;
-
         try {
-            const response = await fetch(`/api/v1/accounts/organization/users/${selectedUser.id}/permissions/`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
-                },
-                body: JSON.stringify(permissionsForm),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                enqueueSnackbar('Permissions mises à jour avec succès', { variant: 'success' });
-                setPermissionsDialogOpen(false);
-                fetchUsers();
-            } else {
-                enqueueSnackbar(data.error || 'Erreur lors de la mise à jour', { variant: 'error' });
-            }
+            await authAPI.updateUserPermissions(selectedUser.id, permissionsForm);
+            enqueueSnackbar('Permissions mises à jour avec succès', { variant: 'success' });
+            setPermissionsDialogOpen(false);
+            fetchUsers();
         } catch (error) {
-            console.error('Error updating permissions:', error);
-            enqueueSnackbar('Erreur réseau lors de la mise à jour', { variant: 'error' });
+            const msg = error.response?.data?.error || error.message || 'Erreur lors de la mise à jour';
+            enqueueSnackbar(msg, { variant: 'error' });
+            console.error('Error updating permissions:', error.response?.data || error);
         }
     };
 
     const handleDeleteUser = async () => {
         if (!selectedUser) return;
-
         try {
-            const response = await fetch(`/api/v1/accounts/organization/users/${selectedUser.id}/`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
-                },
-            });
-
-            if (response.ok) {
-                enqueueSnackbar(t('settings:userManagement.deleteDialog.deleteSuccess'), { variant: 'success' });
-                setDeleteDialogOpen(false);
-                fetchUsers();
-            } else {
-                throw new Error('Failed to delete user');
-            }
+            await authAPI.deleteUser(selectedUser.id);
+            enqueueSnackbar(t('settings:userManagement.deleteDialog.deleteSuccess'), { variant: 'success' });
+            setDeleteDialogOpen(false);
+            fetchUsers();
         } catch (error) {
-            console.error('Error deleting user:', error);
-            enqueueSnackbar(t('settings:userManagement.deleteDialog.deleteError'), { variant: 'error' });
+            const msg = error.response?.data?.error || error.message || t('settings:userManagement.deleteDialog.deleteError');
+            enqueueSnackbar(msg, { variant: 'error' });
         }
         handleMenuClose();
     };
@@ -375,34 +335,18 @@ function UserManagement() {
             enqueueSnackbar(t('settings:userManagement.passwordDialog.errorMatch'), { variant: 'error' });
             return;
         }
-
         if (passwordForm.password.length < 8) {
             enqueueSnackbar(t('settings:userManagement.passwordDialog.errorLength'), { variant: 'error' });
             return;
         }
-
         try {
-            const response = await fetch(`/api/v1/accounts/organization/users/${selectedUser.id}/`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
-                },
-                body: JSON.stringify({
-                    password: passwordForm.password
-                }),
-            });
-
-            if (response.ok) {
-                enqueueSnackbar(t('settings:userManagement.passwordDialog.success'), { variant: 'success' });
-                setPasswordDialogOpen(false);
-                setPasswordForm({ password: '', confirmPassword: '' });
-            } else {
-                const data = await response.json();
-                enqueueSnackbar(data.error || t('settings:userManagement.passwordDialog.error'), { variant: 'error' });
-            }
+            await authAPI.updateUser(selectedUser.id, { password: passwordForm.password });
+            enqueueSnackbar(t('settings:userManagement.passwordDialog.success'), { variant: 'success' });
+            setPasswordDialogOpen(false);
+            setPasswordForm({ password: '', confirmPassword: '' });
         } catch (error) {
-            enqueueSnackbar(t('common:error'), { variant: 'error' });
+            const msg = error.response?.data?.error || t('settings:userManagement.passwordDialog.error');
+            enqueueSnackbar(msg, { variant: 'error' });
         }
     };
 

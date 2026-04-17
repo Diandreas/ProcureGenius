@@ -1862,9 +1862,32 @@ class PatientActivityView(APIView):
             })
             cur += timedelta(days=1)
 
+        total_unique = len(set(pid for (_, pid) in patient_days.keys()))
+
+        # Average cost per patient (excluding subcontracting invoices)
+        from django.db.models import Sum, Count as DCount
+        rev_qs = Invoice.objects.filter(
+            created_by__organization=organization,
+            invoice_type__startswith='healthcare',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+            client__isnull=False,
+        ).exclude(invoice_type='credit_note').exclude(is_subcontractor_invoice=True)
+
+        rev_agg = rev_qs.aggregate(
+            total=Sum('total_amount'),
+            unique_patients=DCount('client_id', distinct=True),
+        )
+        total_revenue = float(rev_agg['total'] or 0)
+        billed_patients = rev_agg['unique_patients'] or 0
+        avg_cost_per_patient = round(total_revenue / billed_patients, 2) if billed_patients else 0
+
         return Response({
             'period': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
             'daily_counts': all_days,
             'patient_details': patient_details,
-            'total_unique_patients': len(set(pid for (_, pid) in patient_days.keys())),
+            'total_unique_patients': total_unique,
+            'avg_cost_per_patient': avg_cost_per_patient,
+            'total_revenue_excl_sub': total_revenue,
+            'billed_patients': billed_patients,
         })

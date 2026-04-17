@@ -754,8 +754,49 @@ const Dashboard = () => {
             if (fullDate) setSelectedDay(fullDate === selectedDay ? '' : fullDate);
           };
 
+          const avgCost = patientActivityData?.avg_cost_per_patient || 0;
+          const totalRevExclSub = patientActivityData?.total_revenue_excl_sub || 0;
+          const billedPatients = patientActivityData?.billed_patients || 0;
+          const totalUnique = patientActivityData?.total_unique_patients || 0;
+
           return (
             <>
+              {/* ── KPI : coût moyen / patient ── */}
+              <Grid container spacing={2} mb={3}>
+                <Grid item xs={12} sm={4}>
+                  <Paper elevation={0} sx={{ p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Patients uniques
+                    </Typography>
+                    <Typography variant="h4" fontWeight="800" color="primary.main" mt={0.5}>
+                      {loading ? '…' : totalUnique}
+                    </Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Paper elevation={0} sx={{ p: 2.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      CA hors sous-traitance
+                    </Typography>
+                    <Typography variant="h4" fontWeight="800" color="success.main" mt={0.5}>
+                      {loading ? '…' : formatCurrency(totalRevExclSub)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">{billedPatients} patients facturés</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Paper elevation={0} sx={{ p: 2.5, border: '2px solid', borderColor: 'warning.main', borderRadius: 2, bgcolor: t => alpha(t.palette.warning.main, 0.04) }}>
+                    <Typography variant="caption" color="warning.dark" sx={{ textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 }}>
+                      Coût moyen / patient
+                    </Typography>
+                    <Typography variant="h4" fontWeight="800" color="warning.dark" mt={0.5}>
+                      {loading ? '…' : formatCurrency(avgCost)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Hors sous-traitance labo</Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+
               {/* ── Graphe évolution journalière ── */}
               <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
