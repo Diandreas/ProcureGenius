@@ -19,9 +19,7 @@ import AuthLayout from './layouts/AuthLayout';
 
 // Pages
 import Login from './pages/auth/Login';
-import CustomizableDashboard from './pages/CustomizableDashboard';
 import DashboardEnhanced from './pages/DashboardEnhanced';
-import OldDashboard from './pages/Dashboard';
 import Suppliers from './pages/suppliers/Suppliers';
 import SupplierDetail from './pages/suppliers/SupplierDetail';
 import SupplierForm from './pages/suppliers/SupplierForm';
@@ -88,6 +86,7 @@ import PublicLayout from './layouts/PublicLayout';
 
 // PWA
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import { usePWA } from './hooks/usePWA';
 
 // AdSense
 import { AdSenseScript } from './components/AdSense';
@@ -578,6 +577,7 @@ const getDesignTokens = (mode) => ({
 function AppInitializer({ children }) {
   const dispatch = useDispatch();
   const [initialized, setInitialized] = React.useState(false);
+  usePWA(); // Enregistre le service worker au démarrage
 
   React.useEffect(() => {
     const initializeApp = async () => {
@@ -757,8 +757,6 @@ function App() {
                         <Route element={<PrivateRoute />}>
                           <Route element={<MainLayout />}>
                             <Route path="/dashboard" element={<DashboardEnhanced />} />
-                            <Route path="/dashboard-custom" element={<CustomizableDashboard />} />
-                            <Route path="/dashboard-old" element={<OldDashboard />} />
 
                             {/* Suppliers */}
                             <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />

@@ -9,6 +9,10 @@ export const login = createAsyncThunk(
       const response = await authAPI.login(credentials);
       const { token } = response.data;
       localStorage.setItem('authToken', token);
+      // Rétention : sauvegarder la date du 1er login pour le trigger J+2
+      if (!localStorage.getItem('signup_date')) {
+        localStorage.setItem('signup_date', Date.now().toString());
+      }
       return { token, user: credentials.username }; // TODO: Get user data from API
     } catch (error) {
       // Extract meaningful error message from response
@@ -45,6 +49,9 @@ export const googleLogin = createAsyncThunk(
       const response = await authAPI.googleLogin(token);
       const { token: authToken } = response.data;
       localStorage.setItem('authToken', authToken);
+      if (!localStorage.getItem('signup_date')) {
+        localStorage.setItem('signup_date', Date.now().toString());
+      }
       return { token: authToken, user: response.data.user || 'Google User' };
     } catch (error) {
       return rejectWithValue(error.response?.data?.detail || 'Google login failed');

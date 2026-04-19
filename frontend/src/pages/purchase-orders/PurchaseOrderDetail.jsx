@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -39,6 +39,8 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  Stack,
+  LinearProgress,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -67,7 +69,16 @@ import {
   Inventory,
   LocalShipping,
   Payment,
+  Psychology,
+  SearchOutlined,
+  BugReport,
+  OpenInNew,
+  Refresh,
+  TrendingDown,
+  CheckCircleOutline,
+  ErrorOutline,
 } from '@mui/icons-material';
+import { aiChatAPI } from '../../services/api';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n/config';
@@ -112,6 +123,10 @@ function PurchaseOrderDetail() {
     unit_price: 0,
     product_reference: ''
   });
+
+  // AI Panel state
+  const [aiResults, setAiResults] = useState({});
+  const [aiLoading, setAiLoading] = useState({});
 
   const { setPageHeader } = useHeader();
 
@@ -208,6 +223,60 @@ function PurchaseOrderDetail() {
       navigate('/purchase-orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runAiAnalysis = async (type) => {
+    setAiLoading(prev => ({ ...prev, [type]: true }));
+    setAiResults(prev => ({ ...prev, [type]: null }));
+
+    const itemsList = purchaseOrder.items?.map(i =>
+      `- ${i.description} (qté: ${i.quantity}, prix unitaire: ${i.unit_price}, total: ${i.total_price})`
+    ).join('\n') || 'Aucun article';
+
+    const prompts = {
+      anomalies: `Analyse ce bon de commande et détecte les anomalies éventuelles. Sois direct et simple.
+
+Bon de commande: ${purchaseOrder.po_number}
+Fournisseur: ${purchaseOrder.supplier?.name || 'Non défini'}
+Total: ${purchaseOrder.total_amount}
+Date limite: ${purchaseOrder.required_date || 'Non définie'}
+Articles:
+${itemsList}
+
+Dis-moi : est-ce que tu vois quelque chose d'anormal ? Prix trop élevés, quantités bizarres, délais serrés ? Réponds en 3-5 points courts.`,
+
+      advice: `Donne des conseils pratiques pour ce bon de commande. Parle simplement.
+
+Bon de commande: ${purchaseOrder.po_number}
+Fournisseur: ${purchaseOrder.supplier?.name || 'Non défini'}
+Statut: ${purchaseOrder.status}
+Total: ${purchaseOrder.total_amount}
+Articles:
+${itemsList}
+
+Donne 3 conseils concrets pour améliorer ou sécuriser cette commande.`,
+
+      market_price: `Recherche les prix du marché en ligne pour ces produits. Pour chaque article, trouve des exemples de prix en ligne et donne des liens si possible.
+
+Articles de la commande:
+${itemsList}
+
+Pour chaque produit : cherche le prix moyen du marché, dis si le prix payé est correct ou trop élevé, et donne 1-2 liens vers des sites où on peut comparer (Amazon, Alibaba, ou autres).`,
+    };
+
+    try {
+      const response = await aiChatAPI.sendMessage({
+        message: prompts[type],
+        context_type: 'purchase_order',
+        context_id: id,
+      });
+      const reply = response.data?.response || response.data?.message || response.data?.content || JSON.stringify(response.data);
+      setAiResults(prev => ({ ...prev, [type]: reply }));
+    } catch (error) {
+      setAiResults(prev => ({ ...prev, [type]: `Erreur: ${error.response?.data?.error || error.message}` }));
+    } finally {
+      setAiLoading(prev => ({ ...prev, [type]: false }));
     }
   };
 
@@ -614,6 +683,12 @@ function PurchaseOrderDetail() {
           icon={<AttachMoney sx={{ fontSize: isMobile ? 18 : 20 }} />}
           label={t('purchaseOrders:tabs.financial')}
           iconPosition="start"
+        />
+        <Tab
+          icon={<Psychology sx={{ fontSize: isMobile ? 18 : 20 }} />}
+          label="Analyse IA"
+          iconPosition="start"
+          sx={{ color: 'primary.main' }}
         />
       </Tabs>
 
@@ -1082,6 +1157,103 @@ function PurchaseOrderDetail() {
               </Grid>
             </CardContent>
           </Card>
+        </Box>
+      )}
+
+      {/* Tab: AI Analysis */}
+      {activeTab === 3 && (
+        <Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Laissez l'IA analyser cette commande pour vous. Cliquez sur un bouton pour lancer l'analyse.
+          </Typography>
+          <Grid container spacing={2}>
+            {[
+              {
+                key: 'anomalies',
+                icon: <BugReport sx={{ fontSize: 32, color: 'error.main' }} />,
+                title: 'Détecter les anomalies',
+                subtitle: 'Prix suspects, quantités bizarres, délais serrés',
+                color: 'error',
+                btnLabel: 'Analyser',
+              },
+              {
+                key: 'advice',
+                icon: <CheckCircleOutline sx={{ fontSize: 32, color: 'success.main' }} />,
+                title: 'Conseils pratiques',
+                subtitle: 'Comment améliorer ou sécuriser cette commande',
+                color: 'success',
+                btnLabel: 'Obtenir des conseils',
+              },
+              {
+                key: 'market_price',
+                icon: <TrendingDown sx={{ fontSize: 32, color: 'primary.main' }} />,
+                title: 'Prix du marché en ligne',
+                subtitle: 'Comparaison avec Amazon, Alibaba et autres sites',
+                color: 'primary',
+                btnLabel: 'Vérifier les prix',
+              },
+            ].map(({ key, icon, title, subtitle, color, btnLabel }) => (
+              <Grid item xs={12} key={key}>
+                <Card sx={{
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: theme => alpha(theme.palette[color].main, 0.2),
+                  boxShadow: 'none',
+                }}>
+                  <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: aiResults[key] ? 2 : 0 }}>
+                      {icon}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
+                        <Typography variant="body2" color="text.secondary">{subtitle}</Typography>
+                      </Box>
+                      <Button
+                        variant={aiResults[key] ? 'outlined' : 'contained'}
+                        size="small"
+                        color={color}
+                        disabled={aiLoading[key]}
+                        startIcon={aiLoading[key] ? <CircularProgress size={16} /> : (aiResults[key] ? <Refresh fontSize="small" /> : null)}
+                        onClick={() => runAiAnalysis(key)}
+                        sx={{ minWidth: 130, flexShrink: 0 }}
+                      >
+                        {aiLoading[key] ? 'Analyse...' : (aiResults[key] ? 'Relancer' : btnLabel)}
+                      </Button>
+                    </Box>
+
+                    {aiLoading[key] && (
+                      <LinearProgress color={color} sx={{ borderRadius: 1, mt: 1 }} />
+                    )}
+
+                    {aiResults[key] && !aiLoading[key] && (
+                      <Box sx={{
+                        mt: 2,
+                        p: 2,
+                        bgcolor: theme => alpha(theme.palette[color].main, 0.05),
+                        borderRadius: 2,
+                        borderLeft: '3px solid',
+                        borderLeftColor: `${color}.main`,
+                      }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            whiteSpace: 'pre-wrap',
+                            lineHeight: 1.8,
+                            '& a': { color: 'primary.main' },
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: aiResults[key]
+                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                              .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'),
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
         </Box>
       )}
 

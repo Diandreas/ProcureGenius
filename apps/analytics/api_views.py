@@ -120,7 +120,8 @@ class AIDashboardGreetingView(APIView):
 
     def get(self, request):
         try:
-            from apps.ai_assistant.services import mistral_service
+            import asyncio
+            from apps.ai_assistant.services import MistralService
             # Récupérer quelques stats clés pour le prompt
             stats_service = DashboardStatsService(
                 user=request.user,
@@ -128,31 +129,33 @@ class AIDashboardGreetingView(APIView):
                 end_date=timezone.now()
             )
             stats = stats_service.get_comprehensive_stats()
-            
+
             # Extraire les données pertinentes
             financials = stats.get('financials', {})
             revenue = financials.get('total_revenue', 0)
             revenue_change = financials.get('revenue_change_pct', 0)
-            
+
             invoices = stats.get('invoices', {})
             pending_invoices = invoices.get('pending_count', 0)
-            
+
             products = stats.get('products', {})
             low_stock = products.get('low_stock_count', 0)
-            
+
             user_name = request.user.first_name or request.user.username
-            
+
             # Construire le prompt pour Mistral
             prompt = f"""Génère un message de bienvenue court et motivant pour un entrepreneur nommé {user_name}.
             Voici ses stats des 30 derniers jours :
             - CA : {revenue}€ ({'+' if revenue_change > 0 else ''}{revenue_change}% par rapport au mois dernier)
             - Factures en attente : {pending_invoices}
             - Produits en rupture de stock : {low_stock}
-            
-            Le ton doit être professionnel, encourageant et très bref (max 2 phrases). 
+
+            Le ton doit être professionnel, encourageant et très bref (max 2 phrases).
             Réponds uniquement avec le message."""
 
-            greeting = mistral_service.generate_response(prompt)
+            mistral_svc = MistralService()
+            result = asyncio.run(mistral_svc.chat(message=prompt, user_context={'user_id': request.user.id}))
+            greeting = result.get('response', result.get('message', 'Bonjour !'))
             
             return Response({
                 'success': True,

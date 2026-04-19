@@ -52,8 +52,10 @@ import TutorialButton from '../components/tutorial/TutorialButton';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider, { useAINotifications } from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
+import OnboardingChecklist from '../components/OnboardingChecklist';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
+import usePushPrompt from '../hooks/usePushPrompt';
 import PeriodSelector from '../components/dashboard/PeriodSelector';
 
 const drawerWidth = 240;
@@ -102,6 +104,8 @@ function MainLayout() {
 
   // Activer les raccourcis clavier
   useKeyboardShortcuts();
+  // Demander permission push au bon moment (après 1ère facture ou J+2)
+  usePushPrompt();
 
   useEffect(() => {
     const handlePeriodChange = (event) => {
@@ -1166,6 +1170,9 @@ function MainLayout() {
 
         {/* PWA Installation Prompt */}
         <InstallPWAPrompt />
+
+        {/* Onboarding checklist for new users */}
+        <OnboardingChecklist />
       </Box>
     </AINotificationProvider>
   );

@@ -174,6 +174,17 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'ai_assistant.cleanup_old_conversations',
         'schedule': crontab(hour=3, minute=0, day_of_week='sunday'),
     },
+    # Moteur de notifications adaptatif (remplace toutes les tâches retention fixes)
+    # Tourne chaque matin à 9h — analyse le profil réel de chaque utilisateur
+    'smart-notifications': {
+        'task': 'ai_assistant.smart_notifications',
+        'schedule': crontab(hour=9, minute=30),
+    },
+    # Nettoyage des logs de notifications > 30 jours (dimanche 4h)
+    'cleanup-notification-logs': {
+        'task': 'ai_assistant.cleanup_notification_logs',
+        'schedule': crontab(hour=4, minute=0, day_of_week='sunday'),
+    },
 }
 
 # Password validation

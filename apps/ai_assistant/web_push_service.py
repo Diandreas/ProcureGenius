@@ -319,3 +319,39 @@ def notify_resume_hebdo(user, ca_semaine: float, factures_attente: int, alertes_
         url='/dashboard',
         tag='resume_hebdo',
     )
+
+
+# ─── Notifications de rétention (phases 2 & 3) ───────────────────────────────
+
+def notify_retention_add_supplier(user):
+    """Phase 2 — J+2 : inviter à ajouter le premier fournisseur."""
+    name = user.first_name or user.username
+    return send_push_to_user(
+        user, 'insight_ia',
+        title=f'👋 {name}, votre tableau de bord vous attend',
+        body='Ajoutez votre premier fournisseur pour commencer à faire des commandes.',
+        url='/suppliers/new',
+        tag='retention_supplier',
+    )
+
+
+def notify_retention_first_po(user):
+    """Phase 2 — J+5 : inviter à créer le premier bon de commande."""
+    return send_push_to_user(
+        user, 'insight_ia',
+        title='📋 Créez votre première commande',
+        body='Vous avez des fournisseurs — faites une commande en 2 minutes.',
+        url='/purchase-orders/new',
+        tag='retention_po',
+    )
+
+
+def notify_retention_ai_tip(user):
+    """Phase 3 — J+7 : montrer la valeur de l'IA."""
+    return send_push_to_user(
+        user, 'insight_ia',
+        title='🤖 Votre assistant IA a une analyse pour vous',
+        body='Posez-lui une question sur vos achats ou vos factures — il répond en 10 secondes.',
+        url='/ai-chat',
+        tag='retention_ai',
+    )

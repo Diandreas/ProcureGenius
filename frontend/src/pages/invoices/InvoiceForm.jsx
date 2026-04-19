@@ -333,6 +333,11 @@ function InvoiceForm() {
       } else {
         await invoicesAPI.create(payload);
         enqueueSnackbar(t('invoices:messages.invoiceCreatedSuccess'), { variant: 'success' });
+        // Rétention phase 1 : déclencher la demande push après la 1ère facture
+        if (!localStorage.getItem('first_invoice_created')) {
+          localStorage.setItem('first_invoice_created', 'true');
+          window.dispatchEvent(new CustomEvent('first-invoice-created'));
+        }
       }
 
       navigate('/invoices');

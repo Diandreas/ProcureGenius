@@ -535,3 +535,25 @@ class NotificationPreferences(models.Model):
     def get_or_create_for_user(cls, user):
         prefs, _ = cls.objects.get_or_create(user=user)
         return prefs
+
+
+class NotificationLog(models.Model):
+    """
+    Trace chaque notification envoyée (push ou email) pour le rate limiting
+    et éviter les doublons. Nettoyé automatiquement après 30 jours.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notification_logs')
+    notification_type = models.CharField(max_length=80)
+    channel = models.CharField(max_length=10, default='push')  # 'push', 'email'
+    reference_id = models.CharField(max_length=100, blank=True, default='')
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Log notification"
+        verbose_name_plural = "Logs notifications"
+        indexes = [
+            models.Index(fields=['user', 'notification_type', 'sent_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} — {self.notification_type} ({self.channel})"

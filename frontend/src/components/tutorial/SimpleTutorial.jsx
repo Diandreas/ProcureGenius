@@ -1,858 +1,554 @@
-/**
- * SimpleTutorial - Système de tutoriel simplifié
- * 
- * Version légère du système de tutoriel qui fonctionne sans contexte React.
- * Écoute les événements globaux et affiche les tooltips de tutoriel.
- */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-    Box,
-    Typography,
-    Button,
-    Paper,
-    IconButton,
-    LinearProgress,
-    Fade,
-    Backdrop,
-    Stack,
-    Chip,
-    Portal,
-    useMediaQuery,
-    useTheme,
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  LinearProgress,
+  Portal,
+  useMediaQuery,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
-    Close as CloseIcon,
-    NavigateNext,
-    NavigateBefore,
-    School as TutorialIcon,
-    CheckCircle,
+  Close as CloseIcon,
+  ArrowForward,
+  ArrowBack,
+  CheckRounded,
 } from '@mui/icons-material';
-import Mascot from '../Mascot';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// Étapes du tutoriel
+// ─── Tutorial steps ───────────────────────────────────────────────
 const TUTORIAL_STEPS = [
-    {
-        id: 'welcome',
-        title: 'Bienvenue sur ProcureGenius ! 🎉',
-        description: 'Je suis Procury, votre assistant. Laissez-moi vous faire découvrir les principales fonctionnalités de la plateforme.',
-        target: null,
-        route: '/dashboard',
-        showMascot: true,
-    },
-    {
-        id: 'dashboard',
-        title: 'Votre Tableau de bord',
-        description: 'C\'est votre centre de commande. Vous y trouverez un aperçu de votre activité, vos alertes et vos statistiques en temps réel. Vous pouvez personnaliser ce tableau de bord en ajoutant ou supprimant des widgets.',
-        target: '[data-tutorial="getting-started"]',
-        route: '/dashboard',
-    },
-    {
-        id: 'suppliers',
-        title: 'Gestion des Fournisseurs',
-        description: 'Ajoutez et gérez tous vos fournisseurs. Vous pouvez importer depuis Excel, scanner des cartes de visite avec l\'IA, et suivre leurs performances.',
-        target: '[data-tutorial="menu-suppliers"]',
-        route: '/dashboard',
-        module: 'suppliers',
-    },
-    {
-        id: 'purchase-orders',
-        title: 'Bons de Commande',
-        description: 'Créez des bons de commande professionnels en quelques clics. L\'assistant IA peut vous aider à rédiger le contenu et suggérer des fournisseurs.',
-        target: '[data-tutorial="menu-purchase-orders"]',
-        route: '/dashboard',
-        module: 'purchase-orders',
-    },
-    {
-        id: 'invoices',
-        title: 'Facturation',
-        description: 'Gérez vos factures clients. Créez-les rapidement, envoyez-les par email et suivez les paiements en temps réel.',
-        target: '[data-tutorial="menu-invoices"]',
-        route: '/dashboard',
-        module: 'invoices',
-    },
-    {
-        id: 'clients',
-        title: 'Gestion des Clients',
-        description: 'Suivez vos clients, leur historique d\'achats et leurs soldes impayés. Parfait pour gérer votre relation client.',
-        target: '[data-tutorial="menu-clients"]',
-        route: '/dashboard',
-        module: 'clients',
-    },
-    {
-        id: 'products',
-        title: 'Produits & Stock',
-        description: 'Gérez votre catalogue de produits et services, suivez vos niveaux de stock et recevez des alertes de réapprovisionnement.',
-        target: '[data-tutorial="menu-products"]',
-        route: '/dashboard',
-        module: 'products',
-    },
-    {
-        id: 'settings',
-        title: 'Paramètres',
-        description: 'Personnalisez votre expérience : informations entreprise, logo, paramètres fiscaux, modules activés, impression et plus encore.',
-        target: '[data-tutorial="menu-settings"]',
-        targetMobile: '[data-tutorial="menu-settings-profile"]',
-        requireOpenMenu: true, // Indique qu'il faut ouvrir le menu profil en mobile
-        route: '/dashboard',
-    },
-    {
-        id: 'help',
-        title: 'Aide & Support',
-        description: 'Vous pouvez relancer ce tutoriel à tout moment en cliquant sur le bouton d\'aide dans la barre supérieure.',
-        target: '[data-tutorial="help-button"]',
-        route: '/dashboard',
-    },
-    {
-        id: 'complete',
-        title: 'Vous êtes prêt ! 🚀',
-        description: 'Vous connaissez maintenant les bases de ProcureGenius. Utilisez le widget "Premiers pas" sur votre dashboard pour compléter les actions recommandées. Bonne utilisation !',
-        target: null,
-        route: '/dashboard',
-        showMascot: true,
-    },
+  {
+    id: 'welcome',
+    title: 'Bienvenue sur Procura !',
+    description: 'On va vous montrer comment ça marche. Ça prend 2 minutes. Suivez les étapes et vous serez prêt à commencer.',
+    target: null,
+    route: '/dashboard',
+    icon: '👋',
+  },
+  {
+    id: 'dashboard',
+    title: 'Votre page principale',
+    description: 'Ici vous voyez tout ce qui se passe : vos commandes du jour, vos factures en attente, et vos alertes importantes.',
+    target: '[data-tutorial="menu-dashboard"]',
+    route: '/dashboard',
+    icon: '📊',
+  },
+  {
+    id: 'suppliers',
+    title: 'Vos fournisseurs',
+    description: 'C\'est ici que vous enregistrez vos vendeurs et fournisseurs. Quand vous faites une commande, vous les retrouvez facilement.',
+    target: '[data-tutorial="menu-suppliers"]',
+    route: '/dashboard',
+    module: 'suppliers',
+    icon: '🏭',
+  },
+  {
+    id: 'purchase-orders',
+    title: 'Bons de commande',
+    description: 'Créez une commande à un fournisseur. Vous pouvez aussi voir si le prix est bon — l\'appli vérifie les prix du marché pour vous.',
+    target: '[data-tutorial="menu-purchase-orders"]',
+    route: '/dashboard',
+    module: 'purchase-orders',
+    icon: '📋',
+  },
+  {
+    id: 'invoices',
+    title: 'Vos factures',
+    description: 'Faites vos factures et envoyez-les à vos clients par email. Vous voyez qui a payé et qui doit encore payer.',
+    target: '[data-tutorial="menu-invoices"]',
+    route: '/dashboard',
+    module: 'invoices',
+    icon: '🧾',
+  },
+  {
+    id: 'products',
+    title: 'Vos produits',
+    description: 'Listez vos produits et leur stock. Si un article est presque épuisé, l\'appli vous prévient avant qu\'il soit trop tard.',
+    target: '[data-tutorial="menu-products"]',
+    route: '/dashboard',
+    module: 'products',
+    icon: '📦',
+  },
+  {
+    id: 'contracts',
+    title: 'Contrats',
+    description: 'Gardez une copie de vos accords avec les fournisseurs. Comme ça, si un prix change ou s\'il y a un problème, vous avez la preuve écrite.',
+    target: '[data-tutorial="menu-contracts"]',
+    route: '/dashboard',
+    module: 'contracts',
+    icon: '📝',
+  },
+  {
+    id: 'accounting',
+    title: 'Comptabilité',
+    description: 'Voyez en un coup d\'œil combien vous avez dépensé, ce que vous avez gagné, et si votre activité est rentable.',
+    target: '[data-tutorial="menu-dashboard"]',
+    route: '/dashboard',
+    icon: '📒',
+  },
+  {
+    id: 'ai-assistant',
+    title: 'Votre assistant IA',
+    description: 'Posez-lui une question en français simple — "Montre-moi mes factures du mois" ou "Qui est mon meilleur fournisseur ?" — il répond tout de suite.',
+    target: '[data-tutorial="menu-dashboard"]',
+    route: '/dashboard',
+    icon: '🤖',
+  },
+  {
+    id: 'settings',
+    title: 'Réglages',
+    description: 'Mettez le nom de votre boutique, votre logo, votre devise. C\'est aussi ici que vous ajoutez d\'autres personnes de votre équipe.',
+    target: '[data-tutorial="menu-settings"]',
+    route: '/dashboard',
+    icon: '⚙️',
+  },
+  {
+    id: 'complete',
+    title: 'C\'est parti !',
+    description: 'Vous avez vu l\'essentiel. Commencez par mettre le nom de votre boutique dans les réglages, puis ajoutez votre premier fournisseur.',
+    target: null,
+    route: '/dashboard',
+    icon: '🚀',
+  },
 ];
 
+// ─── Spotlight SVG overlay ────────────────────────────────────────
+const Spotlight = ({ targetRect }) => {
+  if (!targetRect) return null;
+  const pad = 10;
+  const rx = 10;
+  return (
+    <Box
+      component="svg"
+      sx={{
+        position: 'fixed', top: 0, left: 0,
+        width: '100vw', height: '100vh',
+        zIndex: 9997, pointerEvents: 'none',
+      }}
+    >
+      <defs>
+        <mask id="spotlight-mask">
+          <rect x="0" y="0" width="100%" height="100%" fill="white" />
+          <rect
+            x={targetRect.left - pad}
+            y={targetRect.top - pad}
+            width={targetRect.width + pad * 2}
+            height={targetRect.height + pad * 2}
+            rx={rx}
+            fill="black"
+          />
+        </mask>
+      </defs>
+      <rect x="0" y="0" width="100%" height="100%" fill="rgba(0,0,0,0.72)" mask="url(#spotlight-mask)" />
+      {/* Highlight ring */}
+      <rect
+        x={targetRect.left - pad}
+        y={targetRect.top - pad}
+        width={targetRect.width + pad * 2}
+        height={targetRect.height + pad * 2}
+        rx={rx}
+        fill="none"
+        stroke="rgba(37,99,235,0.7)"
+        strokeWidth="2"
+      />
+    </Box>
+  );
+};
+
+// ─── Step indicator dots ──────────────────────────────────────────
+const StepDots = ({ total, current }) => (
+  <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
+    {Array.from({ length: total }).map((_, i) => (
+      <Box
+        key={i}
+        sx={{
+          width: i === current ? 20 : 6,
+          height: 6,
+          borderRadius: 3,
+          bgcolor: i === current
+            ? 'primary.main'
+            : i < current
+              ? alpha('#2563eb', 0.35)
+              : 'rgba(0,0,0,0.12)',
+          transition: 'all 0.3s ease',
+        }}
+      />
+    ))}
+  </Box>
+);
+
+// ─── Main component ───────────────────────────────────────────────
 const SimpleTutorial = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const [isActive, setIsActive] = useState(false);
-    const [currentStepIndex, setCurrentStepIndex] = useState(0);
-    const [steps, setSteps] = useState([]);
-    const [targetRect, setTargetRect] = useState(null);
-    const [targetElement, setTargetElement] = useState(null);
-    const [retryCount, setRetryCount] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [steps, setSteps] = useState([]);
+  const [targetRect, setTargetRect] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({});
+  const [direction, setDirection] = useState(1);
 
-    // Charger les modules utilisateur et filtrer les étapes
-    useEffect(() => {
-        const loadUserModules = async () => {
-            try {
-                const authToken = localStorage.getItem('authToken');
-                if (!authToken) {
-                    setSteps(TUTORIAL_STEPS.filter(s => !s.module));
-                    return;
-                }
+  // ── Load modules & filter steps ──────────────────────────────
+  useEffect(() => {
+    const loadSteps = async () => {
+      try {
+        const authToken = localStorage.getItem('authToken');
+        if (!authToken) {
+          setSteps(TUTORIAL_STEPS.filter(s => !s.module));
+          return;
+        }
+        const [profileRes, statsRes] = await Promise.allSettled([
+          fetch('/api/v1/accounts/profile/', { headers: { Authorization: `Token ${authToken}` } }),
+          fetch('/api/v1/dashboard/stats/', { headers: { Authorization: `Token ${authToken}` } }),
+        ]);
 
-                const profileUrl = '/api/v1/accounts/profile/';
-                const statsUrl = '/api/v1/dashboard/stats/';
-
-                // Charger depuis plusieurs sources pour être sûr
-                const [profileResponse, statsResponse] = await Promise.allSettled([
-                    fetch(profileUrl, {
-                        headers: { 'Authorization': `Token ${authToken}` },
-                    }),
-                    fetch(statsUrl, {
-                        headers: { 'Authorization': `Token ${authToken}` },
-                    }),
-                ]);
-
-                let modules = [];
-
-                // Extraire depuis profile
-                if (profileResponse.status === 'fulfilled' && profileResponse.value.ok) {
-                    const profileData = await profileResponse.value.json();
-                    modules = profileData.accessible_modules ||
-                        profileData.preferences?.enabled_modules ||
-                        profileData.enabled_modules ||
-                        [];
-                }
-
-                // Extraire depuis stats (plus fiable)
-                if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
-                    const statsData = await statsResponse.value.json();
-                    if (statsData.enabled_modules && Array.isArray(statsData.enabled_modules)) {
-                        // Fusionner les modules (union)
-                        modules = [...new Set([...modules, ...statsData.enabled_modules])];
-                    }
-                }
-
-                console.log('[Tutorial] Modules actifs détectés:', modules);
-
-                // Filtrer les étapes selon les modules
-                const filteredSteps = TUTORIAL_STEPS.filter(step => {
-                    if (!step.module) return true; // Étapes générales toujours affichées
-
-                    // Normaliser les IDs de modules pour comparaison
-                    const stepModule = step.module;
-                    const normalizedModules = modules.map(m => m.replace(/-/g, '_'));
-                    const normalizedStepModule = stepModule.replace(/-/g, '_');
-
-                    return modules.includes(stepModule) ||
-                        normalizedModules.includes(normalizedStepModule) ||
-                        normalizedModules.includes(stepModule) ||
-                        modules.includes(normalizedStepModule);
-                });
-
-                console.log('[Tutorial] Étapes filtrées:', filteredSteps.map(s => s.id));
-                setSteps(filteredSteps);
-            } catch (error) {
-                console.error('[Tutorial] Error loading modules:', error);
-                // En cas d'erreur, afficher toutes les étapes générales
-                setSteps(TUTORIAL_STEPS.filter(s => !s.module));
-            }
-        };
-
-        loadUserModules();
-    }, []);
-
-    // Écouter l'événement pour démarrer le tutoriel
-    useEffect(() => {
-        const handleStartTutorial = () => {
-            setCurrentStepIndex(0);
-            setIsActive(true);
-        };
-
-        window.addEventListener('start-tutorial', handleStartTutorial);
-        return () => window.removeEventListener('start-tutorial', handleStartTutorial);
-    }, []);
-
-    // Fonction pour trouver l'élément cible avec retry
-    const findTarget = useCallback((step, retry = 0) => {
-        if (!step || !step.target) {
-            setTargetRect(null);
-            setTargetElement(null);
-            return;
+        let modules = [];
+        if (profileRes.status === 'fulfilled' && profileRes.value.ok) {
+          const d = await profileRes.value.json();
+          modules = d.accessible_modules || d.preferences?.enabled_modules || d.enabled_modules || [];
+        }
+        if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+          const d = await statsRes.value.json();
+          if (d.enabled_modules) modules = [...new Set([...modules, ...d.enabled_modules])];
         }
 
-        // Sur mobile, si l'étape nécessite d'ouvrir le menu profil
-        if (isMobile && step.requireOpenMenu && step.targetMobile) {
-            // Ouvrir le menu profil
-            const profileButton = document.querySelector('[data-tutorial="profile-menu"]');
-            if (profileButton && retry === 0) {
-                profileButton.click();
-                // Attendre que le menu s'ouvre puis chercher l'élément
-                setTimeout(() => findTarget(step, 1), 300);
-                return;
-            }
-
-            // Chercher dans le menu ouvert
-            const menuElement = document.querySelector(step.targetMobile);
-            if (menuElement && menuElement.offsetParent !== null) {
-                const rect = menuElement.getBoundingClientRect();
-                if (rect.width > 0 && rect.height > 0) {
-                    setTargetElement(menuElement);
-                    setTargetRect({
-                        top: rect.top,
-                        left: rect.left,
-                        width: rect.width,
-                        height: rect.height,
-                    });
-                    console.log(`[Tutorial] ✓ Élément mobile trouvé: ${step.targetMobile}`, menuElement);
-                    setRetryCount(0);
-                    return;
-                }
-            }
-
-            // Retry si pas encore trouvé
-            if (retry < 4) {
-                console.log(`[Tutorial] Élément mobile non trouvé (tentative ${retry + 1}/4): ${step.targetMobile}`);
-                setRetryCount(retry + 1);
-                setTimeout(() => findTarget(step, retry + 1), 500);
-                return;
-            }
-        }
-
-        let element = null;
-
-        // Extraire le module ID du target (ex: "menu-suppliers" -> "suppliers")
-        const moduleMatch = step.target.match(/menu-([^"]+)/);
-        const moduleId = moduleMatch ? moduleMatch[1] : null;
-
-        if (moduleId) {
-            // Chercher dans le menu desktop (sidebar) - plusieurs sélecteurs possibles
-            const desktopSelectors = [
-                `[data-tutorial="menu-${moduleId}"]`,
-                `[data-tutorial="sidebar"] [data-tutorial="menu-${moduleId}"]`,
-                `[data-tutorial="sidebar"] *[data-tutorial*="${moduleId}"]`,
-                `[data-tutorial="sidebar"] button[data-tutorial*="${moduleId}"]`,
-                `[data-tutorial="sidebar"] a[data-tutorial*="${moduleId}"]`,
-            ];
-
-            for (const selector of desktopSelectors) {
-                const found = document.querySelector(selector);
-                if (found && found.offsetParent !== null) { // Vérifier que l'élément est visible
-                    element = found;
-                    break;
-                }
-            }
-
-            // Si pas trouvé, chercher dans la mobile toolbar
-            if (!element) {
-                const mobileSelectors = [
-                    `[data-tutorial="menu-${moduleId}"]`,
-                    `*[data-tutorial*="${moduleId}"]`,
-                ];
-
-                for (const selector of mobileSelectors) {
-                    // Chercher dans le bottom nav
-                    const bottomNav = document.querySelector('[data-tutorial="mobile-nav"]') ||
-                        document.querySelector('nav[aria-label*="navigation"]') ||
-                        document.querySelector('.MuiBottomNavigation-root') ||
-                        document.querySelector('[role="navigation"]');
-                    if (bottomNav) {
-                        const found = bottomNav.querySelector(selector);
-                        if (found && found.offsetParent !== null) {
-                            element = found;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Si toujours pas trouvé, utiliser le sélecteur original
-        if (!element) {
-            element = document.querySelector(step.target);
-        }
-
-        // Si toujours pas trouvé, essayer des sélecteurs alternatifs génériques
-        if (!element && moduleId) {
-            const fallbackSelectors = [
-                `a[href*="${moduleId}"]`,
-                `button[aria-label*="${moduleId}"]`,
-                `*[aria-label*="${moduleId}"]`,
-                `*[title*="${moduleId}"]`,
-            ];
-
-            for (const selector of fallbackSelectors) {
-                const found = document.querySelector(selector);
-                if (found && found.offsetParent !== null) {
-                    element = found;
-                    break;
-                }
-            }
-        }
-
-        if (element && element.offsetParent !== null) {
-            const rect = element.getBoundingClientRect();
-
-            // Vérifier que l'élément est visible et a une taille
-            if (rect.width > 0 && rect.height > 0) {
-                setTargetElement(element);
-                setTargetRect({
-                    top: rect.top,
-                    left: rect.left,
-                    width: rect.width,
-                    height: rect.height,
-                });
-
-                // Scroll pour voir l'élément (seulement si nécessaire)
-                const isVisible = rect.top >= -50 &&
-                    rect.left >= -50 &&
-                    rect.bottom <= window.innerHeight + 50 &&
-                    rect.right <= window.innerWidth + 50;
-
-                if (!isVisible) {
-                    // Attendre un peu avant de scroller pour laisser le DOM se stabiliser
-                    setTimeout(() => {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-                    }, 100);
-                }
-
-                console.log(`[Tutorial] ✓ Élément trouvé: ${step.target}`, element);
-                setRetryCount(0);
-            } else {
-                console.warn(`[Tutorial] Élément trouvé mais invisible: ${step.target}`, element);
-                setTargetRect(null);
-                setTargetElement(null);
-            }
-        } else {
-            // Retry jusqu'à 4 fois avec délai croissant
-            if (retry < 4) {
-                console.log(`[Tutorial] Élément non trouvé (tentative ${retry + 1}/4): ${step.target}`);
-                setRetryCount(retry + 1);
-                setTimeout(() => findTarget(step, retry + 1), 500 * (retry + 1));
-            } else {
-                console.warn(`[Tutorial] Élément non trouvé après 4 tentatives: ${step.target}`);
-                setTargetRect(null);
-                setTargetElement(null);
-            }
-        }
-    }, [isMobile]);
-
-    // Mettre à jour la position de l'élément cible
-    useEffect(() => {
-        if (!isActive || steps.length === 0) {
-            setTargetRect(null);
-            setTargetElement(null);
-            return;
-        }
-
-        const step = steps[currentStepIndex];
-        if (!step) return;
-
-        // Naviguer si nécessaire
-        if (step.route && location.pathname !== step.route) {
-            navigate(step.route);
-        }
-
-        // Attendre que le DOM se mette à jour, puis chercher avec retry
-        const timer = setTimeout(() => findTarget(step, 0), 300);
-
-        // Utiliser MutationObserver pour détecter les changements du DOM
-        const observer = new MutationObserver(() => {
-            if (isActive && step) {
-                findTarget(step, 0);
-            }
+        const filtered = TUTORIAL_STEPS.filter(step => {
+          if (!step.module) return true;
+          const norm = (s) => s.replace(/-/g, '_');
+          return modules.some(m => norm(m) === norm(step.module) || m === step.module);
         });
-
-        // Observer les changements dans le body
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['data-tutorial', 'style', 'class'],
-        });
-
-        return () => {
-            clearTimeout(timer);
-            observer.disconnect();
-        };
-    }, [isActive, currentStepIndex, steps, navigate, location.pathname, findTarget]);
-
-    const handleClose = useCallback(() => {
-        setIsActive(false);
-        setCurrentStepIndex(0);
-        setTargetRect(null);
-        localStorage.setItem('tutorial_completed', 'true');
-    }, []);
-
-    const handleNext = useCallback(() => {
-        // Fermer le menu profil si ouvert (en mobile)
-        if (isMobile && steps[currentStepIndex]?.requireOpenMenu) {
-            const backdrop = document.querySelector('.MuiBackdrop-root');
-            if (backdrop) backdrop.click();
-        }
-
-        if (currentStepIndex < steps.length - 1) {
-            setCurrentStepIndex(prev => prev + 1);
-        } else {
-            handleClose();
-        }
-    }, [currentStepIndex, steps, handleClose, isMobile]);
-
-    const handlePrev = useCallback(() => {
-        // Fermer le menu profil si ouvert (en mobile)
-        if (isMobile && steps[currentStepIndex]?.requireOpenMenu) {
-            const backdrop = document.querySelector('.MuiBackdrop-root');
-            if (backdrop) backdrop.click();
-        }
-
-        if (currentStepIndex > 0) {
-            setCurrentStepIndex(prev => prev - 1);
-        }
-    }, [currentStepIndex, isMobile, steps]);
-
-    if (!isActive || steps.length === 0) return null;
-
-    const currentStep = steps[currentStepIndex];
-    const isFirst = currentStepIndex === 0;
-    const isLast = currentStepIndex === steps.length - 1;
-    const progress = ((currentStepIndex + 1) / steps.length) * 100;
-
-    // Calcul de la position du tooltip
-    const getTooltipPosition = () => {
-        // Sur mobile, toujours centrer le modal
-        if (isMobile) {
-            return {
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                maxWidth: 'calc(100vw - 32px)',
-                width: 'calc(100vw - 32px)',
-            };
-        }
-
-        // Sur desktop, positionner à côté de l'élément
-        if (!targetRect) {
-            return {
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-            };
-        }
-
-        const padding = 15;
-        const tooltipWidth = 380;
-        const tooltipHeight = 300; // Approximate height of the tooltip
-
-        // Calculer les positions possibles
-        const positionRight = targetRect.left + targetRect.width + padding;
-        const positionLeft = targetRect.left - tooltipWidth - padding;
-        const positionBelow = targetRect.top + targetRect.height + padding;
-        const positionAbove = targetRect.top - tooltipHeight - padding;
-
-        // Vérifier si les positions sont valides (à l'intérieur de l'écran)
-        const canPositionRight = positionRight + tooltipWidth <= window.innerWidth - 20;
-        const canPositionLeft = positionLeft >= 20;
-        const canPositionBelow = positionBelow + tooltipHeight <= window.innerHeight - 20;
-        const canPositionAbove = positionAbove >= 20;
-
-        // Priorité : droite > gauche > dessous > dessus
-        if (canPositionRight && targetRect.left < window.innerWidth / 2) {
-            const availableWidth = window.innerWidth - positionRight - 20;
-            return {
-                position: 'fixed',
-                top: Math.max(20, Math.min(targetRect.top, window.innerHeight - tooltipHeight)),
-                left: positionRight,
-                maxWidth: `${Math.min(tooltipWidth, availableWidth)}px`,
-            };
-        } else if (canPositionLeft && targetRect.left >= window.innerWidth / 2) {
-            return {
-                position: 'fixed',
-                top: Math.max(20, Math.min(targetRect.top, window.innerHeight - tooltipHeight)),
-                left: Math.max(20, positionLeft), // Ensure minimum left position of 20px
-                maxWidth: `${Math.min(tooltipWidth, positionLeft - 20)}px`, // Ensure it doesn't go beyond left margin
-            };
-        } else if (canPositionBelow) {
-            const adjustedLeft = Math.max(20, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 20));
-            return {
-                position: 'fixed',
-                top: positionBelow,
-                left: adjustedLeft,
-                maxWidth: `${Math.min(tooltipWidth, window.innerWidth - adjustedLeft - 20)}px`,
-            };
-        } else {
-            // Position au-dessus ou centré si aucune autre position n'est valide
-            const adjustedLeft = Math.max(20, Math.min(targetRect.left, window.innerWidth - tooltipWidth - 20));
-            return {
-                position: 'fixed',
-                top: Math.max(20, positionAbove),
-                left: adjustedLeft,
-                maxWidth: `${Math.min(tooltipWidth, window.innerWidth - adjustedLeft - 20)}px`,
-            };
-        }
+        setSteps(filtered);
+      } catch {
+        setSteps(TUTORIAL_STEPS.filter(s => !s.module));
+      }
     };
+    loadSteps();
+  }, []);
 
-    return (
-        <Portal>
-            {/* Backdrop - seulement si pas de targetRect (sinon le SVG gère le backdrop) */}
-            {!targetRect && (
-                <Backdrop
-                    open={isActive}
-                    sx={{
-                        zIndex: 9997,
-                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                    }}
-                />
-            )}
+  // ── Auto-launch on first login ────────────────────────────────
+  useEffect(() => {
+    if (steps.length === 0) return;
+    const alreadySeen = localStorage.getItem('tutorial_completed') === 'true'
+      || localStorage.getItem('tutorial_seen') === 'true';
+    if (!alreadySeen) {
+      // Small delay to let the dashboard render first
+      const t = setTimeout(() => {
+        localStorage.setItem('tutorial_seen', 'true');
+        setCurrentStepIndex(0);
+        setDirection(1);
+        setIsActive(true);
+      }, 1200);
+      return () => clearTimeout(t);
+    }
+  }, [steps]);
 
-            {/* Highlight de l'élément cible - Backdrop avec découpe */}
-            {targetRect && (
-                <>
-                    {/* SVG pour créer un vrai trou dans le backdrop */}
-                    <Box
-                        component="svg"
-                        sx={{
-                            position: 'fixed',
-                            top: 0,
-                            left: 0,
-                            width: '100vw',
-                            height: '100vh',
-                            zIndex: 9998,
-                            pointerEvents: 'none',
-                        }}
-                    >
-                        <defs>
-                            <mask id="tutorial-mask">
-                                <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                                <rect
-                                    x={targetRect.left - 12}
-                                    y={targetRect.top - 12}
-                                    width={targetRect.width + 24}
-                                    height={targetRect.height + 24}
-                                    rx="12"
-                                    fill="black"
-                                />
-                            </mask>
-                        </defs>
-                        <rect
-                            x="0"
-                            y="0"
-                            width="100%"
-                            height="100%"
-                            fill="rgba(0, 0, 0, 0.85)"
-                            mask="url(#tutorial-mask)"
-                        />
+  // ── Listen for manual trigger ─────────────────────────────────
+  useEffect(() => {
+    const handler = () => {
+      setCurrentStepIndex(0);
+      setDirection(1);
+      setIsActive(true);
+    };
+    window.addEventListener('start-tutorial', handler);
+    return () => window.removeEventListener('start-tutorial', handler);
+  }, []);
+
+  // ── Find target element & compute tooltip position ────────────
+  const computePositions = useCallback((step, retries = 0) => {
+    if (!step?.target) {
+      setTargetRect(null);
+      setTooltipPos(isMobile
+        ? { position: 'fixed', bottom: 24, left: 16, right: 16 }
+        : { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+      );
+      return;
+    }
+
+    const el = document.querySelector(step.target);
+    if (!el || el.offsetParent === null) {
+      if (retries < 5) setTimeout(() => computePositions(step, retries + 1), 400 * (retries + 1));
+      else {
+        setTargetRect(null);
+        setTooltipPos(isMobile
+          ? { position: 'fixed', bottom: 24, left: 16, right: 16 }
+          : { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+        );
+      }
+      return;
+    }
+
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0) {
+      if (retries < 5) setTimeout(() => computePositions(step, retries + 1), 400);
+      return;
+    }
+
+    setTargetRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
+
+    // Scroll element into view if needed
+    const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+    if (!visible) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Calculate tooltip position
+    if (isMobile) {
+      setTooltipPos({ position: 'fixed', bottom: 24, left: 16, right: 16 });
+      return;
+    }
+
+    const TW = 380, TH = 260, PAD = 20;
+    const spaceRight = window.innerWidth - rect.right - PAD;
+    const spaceLeft = rect.left - PAD;
+    const spaceBelow = window.innerHeight - rect.bottom - PAD;
+    const spaceAbove = rect.top - PAD;
+
+    let pos = {};
+    if (spaceRight >= TW) {
+      pos = {
+        position: 'fixed',
+        top: Math.max(PAD, Math.min(rect.top, window.innerHeight - TH - PAD)),
+        left: rect.right + PAD,
+        width: Math.min(TW, spaceRight),
+      };
+    } else if (spaceLeft >= TW) {
+      pos = {
+        position: 'fixed',
+        top: Math.max(PAD, Math.min(rect.top, window.innerHeight - TH - PAD)),
+        left: Math.max(PAD, rect.left - TW - PAD),
+        width: Math.min(TW, spaceLeft),
+      };
+    } else if (spaceBelow >= TH) {
+      pos = {
+        position: 'fixed',
+        top: rect.bottom + PAD,
+        left: Math.max(PAD, Math.min(rect.left, window.innerWidth - TW - PAD)),
+        width: TW,
+      };
+    } else {
+      pos = {
+        position: 'fixed',
+        top: Math.max(PAD, rect.top - TH - PAD),
+        left: Math.max(PAD, Math.min(rect.left, window.innerWidth - TW - PAD)),
+        width: TW,
+      };
+    }
+    setTooltipPos(pos);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!isActive || steps.length === 0) return;
+    const step = steps[currentStepIndex];
+    if (!step) return;
+    if (step.route && location.pathname !== step.route) navigate(step.route);
+    const timer = setTimeout(() => computePositions(step), 350);
+    return () => clearTimeout(timer);
+  }, [isActive, currentStepIndex, steps, location.pathname, navigate, computePositions]);
+
+  const handleClose = useCallback(() => {
+    setIsActive(false);
+    setTargetRect(null);
+    localStorage.setItem('tutorial_completed', 'true');
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setDirection(1);
+    if (currentStepIndex < steps.length - 1) setCurrentStepIndex(i => i + 1);
+    else handleClose();
+  }, [currentStepIndex, steps.length, handleClose]);
+
+  const handlePrev = useCallback(() => {
+    setDirection(-1);
+    if (currentStepIndex > 0) setCurrentStepIndex(i => i - 1);
+  }, [currentStepIndex]);
+
+  if (!isActive || steps.length === 0) return null;
+
+  const step = steps[currentStepIndex];
+  const isFirst = currentStepIndex === 0;
+  const isLast = currentStepIndex === steps.length - 1;
+  const progress = ((currentStepIndex + 1) / steps.length) * 100;
+
+  const cardVariants = {
+    enter: (d) => ({ opacity: 0, x: d > 0 ? 32 : -32 }),
+    center: { opacity: 1, x: 0 },
+    exit: (d) => ({ opacity: 0, x: d > 0 ? -32 : 32 }),
+  };
+
+  return (
+    <Portal>
+      {/* Spotlight */}
+      <Spotlight targetRect={targetRect} />
+      {!targetRect && (
+        <Box sx={{ position: 'fixed', inset: 0, bgcolor: 'rgba(0,0,0,0.72)', zIndex: 9997, pointerEvents: 'none' }} />
+      )}
+
+      {/* Tooltip card */}
+      <Box
+        sx={{
+          ...tooltipPos,
+          zIndex: 9999,
+          pointerEvents: 'all',
+        }}
+      >
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentStepIndex}
+            custom={direction}
+            variants={cardVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Box sx={{
+              bgcolor: isDark ? '#1e2530' : '#ffffff',
+              borderRadius: 3,
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+              boxShadow: isDark
+                ? '0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)'
+                : '0 24px 60px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.04)',
+              overflow: 'hidden',
+            }}>
+              {/* Progress bar */}
+              <Box sx={{ height: 3, bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}>
+                <Box sx={{
+                  height: '100%',
+                  width: `${progress}%`,
+                  bgcolor: 'primary.main',
+                  transition: 'width 0.4s ease',
+                  borderRadius: 2,
+                }} />
+              </Box>
+
+              <Box sx={{ p: { xs: 2.5, sm: 3 } }}>
+                {/* Header row */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{
+                      width: 40, height: 40, borderRadius: 2.5,
+                      bgcolor: isDark ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.08)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '1.2rem', flexShrink: 0,
+                    }}>
+                      {step.icon}
                     </Box>
-
-                    {/* Zone de l'élément avec fond légèrement éclairci */}
-                    <Box
-                        sx={{
-                            position: 'fixed',
-                            top: targetRect.top - 12,
-                            left: targetRect.left - 12,
-                            width: targetRect.width + 24,
-                            height: targetRect.height + 24,
-                            borderRadius: 3,
-                            bgcolor: 'rgba(255, 255, 255, 0.05)',
-                            zIndex: 9998,
-                            pointerEvents: 'none',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-
-                    {/* Bordure principale animée avec effet pulsant */}
-                    <Box
-                        sx={{
-                            position: 'fixed',
-                            top: targetRect.top - 8,
-                            left: targetRect.left - 8,
-                            width: targetRect.width + 16,
-                            height: targetRect.height + 16,
-                            border: '5px solid',
-                            borderColor: 'primary.main',
-                            borderRadius: 2.5,
-                            zIndex: 9999,
-                            pointerEvents: 'none',
-                            transition: 'all 0.3s ease',
-                            animation: 'tutorial-pulse 2s ease-in-out infinite',
-                            boxShadow: '0 0 0 4px rgba(33, 150, 243, 0.3)',
-                            '@keyframes tutorial-pulse': {
-                                '0%, 100%': {
-                                    transform: 'scale(1)',
-                                    boxShadow: '0 0 0 4px rgba(33, 150, 243, 0.3)',
-                                },
-                                '50%': {
-                                    transform: 'scale(1.03)',
-                                    boxShadow: '0 0 0 8px rgba(33, 150, 243, 0.5)',
-                                },
-                            },
-                        }}
-                    />
-
-                    {/* Effet glow lumineux externe */}
-                    <Box
-                        sx={{
-                            position: 'fixed',
-                            top: targetRect.top - 12,
-                            left: targetRect.left - 12,
-                            width: targetRect.width + 24,
-                            height: targetRect.height + 24,
-                            borderRadius: 3,
-                            zIndex: 9998,
-                            pointerEvents: 'none',
-                            transition: 'all 0.3s ease',
-                            animation: 'tutorial-glow 2s ease-in-out infinite',
-                            '@keyframes tutorial-glow': {
-                                '0%, 100%': {
-                                    boxShadow: '0 0 40px 15px rgba(33, 150, 243, 0.7), 0 0 80px 30px rgba(33, 150, 243, 0.4), inset 0 0 20px rgba(33, 150, 243, 0.2)',
-                                },
-                                '50%': {
-                                    boxShadow: '0 0 60px 25px rgba(33, 150, 243, 0.9), 0 0 120px 50px rgba(33, 150, 243, 0.6), inset 0 0 30px rgba(33, 150, 243, 0.3)',
-                                },
-                            },
-                        }}
-                    />
-
-                    {/* Effet de coins animés (indicateurs visuels) */}
-                    {[
-                        { top: -16, left: -16, rotation: 0 },
-                        { top: -16, right: -16, rotation: 90 },
-                        { bottom: -16, right: -16, rotation: 180 },
-                        { bottom: -16, left: -16, rotation: 270 },
-                    ].map((position, index) => (
-                        <Box
-                            key={index}
-                            sx={{
-                                position: 'fixed',
-                                top: position.top !== undefined ? targetRect.top + position.top : undefined,
-                                bottom: position.bottom !== undefined ? window.innerHeight - targetRect.bottom + position.bottom : undefined,
-                                left: position.left !== undefined ? targetRect.left + position.left : undefined,
-                                right: position.right !== undefined ? window.innerWidth - targetRect.right + position.right : undefined,
-                                width: 32,
-                                height: 32,
-                                zIndex: 9999,
-                                pointerEvents: 'none',
-                                transform: `rotate(${position.rotation}deg)`,
-                                animation: `tutorial-corner-${index} 2s ease-in-out infinite`,
-                                '&::before, &::after': {
-                                    content: '""',
-                                    position: 'absolute',
-                                    bgcolor: 'primary.main',
-                                    borderRadius: '2px',
-                                },
-                                '&::before': {
-                                    width: '100%',
-                                    height: '4px',
-                                    top: 0,
-                                    left: 0,
-                                },
-                                '&::after': {
-                                    width: '4px',
-                                    height: '100%',
-                                    top: 0,
-                                    left: 0,
-                                },
-                                '@keyframes tutorial-corner-0': {
-                                    '0%, 100%': { opacity: 1 },
-                                    '25%': { opacity: 0.4 },
-                                    '50%': { opacity: 1 },
-                                },
-                                '@keyframes tutorial-corner-1': {
-                                    '0%, 100%': { opacity: 0.4 },
-                                    '25%': { opacity: 1 },
-                                    '50%': { opacity: 0.4 },
-                                    '75%': { opacity: 1 },
-                                },
-                                '@keyframes tutorial-corner-2': {
-                                    '0%, 100%': { opacity: 1 },
-                                    '25%': { opacity: 0.4 },
-                                    '50%': { opacity: 1 },
-                                },
-                                '@keyframes tutorial-corner-3': {
-                                    '0%, 100%': { opacity: 0.4 },
-                                    '25%': { opacity: 1 },
-                                    '50%': { opacity: 0.4 },
-                                    '75%': { opacity: 1 },
-                                },
-                            }}
-                        />
-                    ))}
-
-                    {/* Flèche indicatrice animée (pointant vers l'élément) */}
-                    <Box
-                        sx={{
-                            position: 'fixed',
-                            top: targetRect.top - 50,
-                            left: targetRect.left + targetRect.width / 2 - 20,
-                            width: 40,
-                            height: 40,
-                            zIndex: 9999,
-                            pointerEvents: 'none',
-                            animation: 'tutorial-arrow 1.5s ease-in-out infinite',
-                            '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                width: 0,
-                                height: 0,
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                borderLeft: '12px solid transparent',
-                                borderRight: '12px solid transparent',
-                                borderTop: '16px solid',
-                                borderTopColor: 'primary.main',
-                                filter: 'drop-shadow(0 0 8px rgba(33, 150, 243, 0.8))',
-                            },
-                            '@keyframes tutorial-arrow': {
-                                '0%, 100%': { transform: 'translateY(0px)' },
-                                '50%': { transform: 'translateY(-10px)' },
-                            },
-                        }}
-                    />
-                </>
-            )}
-
-            {/* Tooltip */}
-            <Fade in={isActive}>
-                <Paper
-                    elevation={24}
-                    sx={{
-                        ...getTooltipPosition(),
-                        p: isMobile ? 2 : 3,
-                        maxWidth: isMobile ? 'calc(100vw - 32px)' : 'unset', // Use 'unset' to allow getTooltipPosition to control maxWidth
-                        minWidth: isMobile ? 'unset' : 340,
-                        width: isMobile ? 'calc(100vw - 32px)' : 'unset', // Use unset to respect the calculated width from getTooltipPosition
-                        borderRadius: 2,
-                        bgcolor: 'background.paper',
-                        zIndex: 9999,
-                    }}
-                >
-                    {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: isMobile ? 1.5 : 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <TutorialIcon color="primary" fontSize={isMobile ? 'small' : 'medium'} />
-                            <Chip
-                                label={`${currentStepIndex + 1} / ${steps.length}`}
-                                size="small"
-                                color="primary"
-                                variant="outlined"
-                            />
-                        </Box>
-                        <IconButton size="small" onClick={handleClose}>
-                            <CloseIcon fontSize="small" />
-                        </IconButton>
+                    <Box>
+                      <Typography sx={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'primary.main',
+                        mb: 0.1,
+                      }}>
+                        Étape {currentStepIndex + 1} sur {steps.length}
+                      </Typography>
+                      <Typography sx={{
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        color: isDark ? '#f1f5f9' : '#0f172a',
+                        lineHeight: 1.2,
+                      }}>
+                        {step.title}
+                      </Typography>
                     </Box>
+                  </Box>
+                  <IconButton
+                    size="small"
+                    onClick={handleClose}
+                    sx={{
+                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                      '&:hover': { color: isDark ? '#fff' : '#0f172a' },
+                      p: 0.5,
+                    }}
+                  >
+                    <CloseIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Box>
 
-                    {/* Progress */}
-                    <LinearProgress
-                        variant="determinate"
-                        value={progress}
-                        sx={{ mb: isMobile ? 1.5 : 2, borderRadius: 1, height: isMobile ? 4 : 6 }}
-                    />
+                {/* Description */}
+                <Typography sx={{
+                  color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
+                  fontSize: '0.875rem',
+                  lineHeight: 1.65,
+                  mb: 3,
+                }}>
+                  {step.description}
+                </Typography>
 
-                    {/* Mascot (optionnel) */}
-                    {currentStep.showMascot && (
-                        <Box sx={{ textAlign: 'center', mb: isMobile ? 1.5 : 2 }}>
-                            <Mascot pose={isLast ? 'celebration' : 'happy'} animation="bounce" size={isMobile ? 60 : 80} />
-                        </Box>
+                {/* Footer */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <StepDots total={steps.length} current={currentStepIndex} />
+
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    {!isFirst && (
+                      <IconButton
+                        size="small"
+                        onClick={handlePrev}
+                        sx={{
+                          border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+                          borderRadius: 2, p: 0.75,
+                          color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+                          '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
+                        }}
+                      >
+                        <ArrowBack sx={{ fontSize: 16 }} />
+                      </IconButton>
                     )}
-
-                    {/* Content */}
-                    <Typography variant={isMobile ? 'subtitle1' : 'h6'} gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
-                        {currentStep.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" paragraph sx={{ lineHeight: 1.6, fontSize: isMobile ? '0.875rem' : 'inherit' }}>
-                        {currentStep.description}
-                    </Typography>
-
-                    {/* Actions */}
-                    <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center" sx={{ mt: isMobile ? 2 : 3 }}>
-                        <Box>
-                            {!isLast && (
-                                <Button
-                                    size="small"
-                                    onClick={handleClose}
-                                    sx={{ color: 'text.secondary' }}
-                                >
-                                    Passer
-                                </Button>
-                            )}
-                        </Box>
-                        <Stack direction="row" spacing={1}>
-                            {!isFirst && (
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    startIcon={<NavigateBefore />}
-                                    onClick={handlePrev}
-                                >
-                                    Précédent
-                                </Button>
-                            )}
-                            {isLast ? (
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    startIcon={<CheckCircle />}
-                                    onClick={handleClose}
-                                    color="success"
-                                >
-                                    Terminer
-                                </Button>
-                            ) : (
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    endIcon={<NavigateNext />}
-                                    onClick={handleNext}
-                                >
-                                    {isFirst ? 'Commencer' : 'Suivant'}
-                                </Button>
-                            )}
-                        </Stack>
-                    </Stack>
-                </Paper>
-            </Fade>
-        </Portal>
-    );
+                    <Button
+                      variant="contained"
+                      onClick={handleNext}
+                      disableElevation
+                      endIcon={isLast ? <CheckRounded sx={{ fontSize: 16 }} /> : <ArrowForward sx={{ fontSize: 16 }} />}
+                      sx={{
+                        bgcolor: 'primary.main',
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        textTransform: 'none',
+                        borderRadius: 2,
+                        px: 2.5,
+                        py: 0.9,
+                        boxShadow: `0 4px 14px ${alpha('#2563eb', 0.35)}`,
+                        '&:hover': {
+                          bgcolor: 'primary.dark',
+                          boxShadow: `0 6px 20px ${alpha('#2563eb', 0.45)}`,
+                        },
+                      }}
+                    >
+                      {isFirst ? 'Commencer' : isLast ? 'Terminer' : 'Suivant'}
+                    </Button>
+                    {!isLast && (
+                      <Button
+                        size="small"
+                        onClick={handleClose}
+                        sx={{
+                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                          textTransform: 'none',
+                          fontSize: '0.78rem',
+                          fontWeight: 500,
+                          '&:hover': { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' },
+                        }}
+                      >
+                        Passer
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          </motion.div>
+        </AnimatePresence>
+      </Box>
+    </Portal>
+  );
 };
 
 export default SimpleTutorial;
-
