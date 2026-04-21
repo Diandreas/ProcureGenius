@@ -43,17 +43,21 @@ class TokenAuthMixin:
 class TokenLoginRequiredMixin:
     """
     Alternative à LoginRequiredMixin qui supporte le token
+    Et évite les redirections brutales si l'utilisateur est déjà authentifié.
     """
     def dispatch(self, request, *args, **kwargs):
+        # 1. Vérification du Token dans l'URL (Accès direct)
         token = request.GET.get('token')
         if token and token == getattr(settings, 'PDF_ACCESS_TOKEN', 'csj-secure-pdf-2024'):
             return super().dispatch(request, *args, **kwargs)
         
-        if not request.user.is_authenticated:
-            from django.contrib.auth.views import redirect_to_login
-            return redirect_to_login(request.get_full_path())
+        # 2. Vérification de l'authentification standard (Session/Cookie)
+        if request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
             
-        return super().dispatch(request, *args, **kwargs)
+        # 3. Si non authentifié et pas de token -> Erreur 403 au lieu de 302 redirect (pour l'API)
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Authentification requise pour accéder à ce document PDF.")
 
 
 class SafeWeasyTemplateResponseMixin:
