@@ -8,7 +8,7 @@
     <style>
         @page {
             size: A4;
-            margin: {% if header_image_base64 %}45mm{% else %}15mm{% endif %} 10mm {% if footer_image_base64 %}35mm{% else %}15mm{% endif %} 10mm;
+            margin: {% if header_image_base64 %}43mm{% else %}15mm{% endif %} 10mm {% if footer_image_base64 %}33mm{% else %}15mm{% endif %} 10mm;
 
             @bottom-center {
                 {% if not footer_image_base64 %}
@@ -22,14 +22,20 @@
             {% if header_image_base64 %}
             @top-center {
                 content: url("{{ header_image_base64 }}");
-                width: 100%;
+                width: 190mm;
+                height: 40mm;
+                max-height: 40mm;
+                vertical-align: bottom;
             }
             {% endif %}
 
             {% if footer_image_base64 %}
             @bottom-center {
                 content: url("{{ footer_image_base64 }}");
-                width: 100%;
+                width: 190mm;
+                height: 30mm;
+                max-height: 30mm;
+                vertical-align: top;
             }
             {% endif %}
         }
