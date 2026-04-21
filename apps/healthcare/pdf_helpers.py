@@ -61,13 +61,21 @@ class TokenLoginRequiredMixin:
         # Utile si l'appel vient du frontend avec un header Authorization
         try:
             from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-            from rest_framework_simplejwt.authentication import JWTAuthentication
-            
-            # On tente d'authentifier la requête manuellement via DRF
-            authenticators = [JWTAuthentication(), TokenAuthentication(), SessionAuthentication()]
+            from rest_framework.request import Request as DRFRequest
+
+            # Wrap Django request in DRF Request so authenticators can read headers properly
+            drf_request = DRFRequest(request)
+
+            authenticators = [TokenAuthentication(), SessionAuthentication()]
+            try:
+                from rest_framework_simplejwt.authentication import JWTAuthentication
+                authenticators.insert(0, JWTAuthentication())
+            except ImportError:
+                pass
+
             for authenticator in authenticators:
                 try:
-                    auth_res = authenticator.authenticate(request)
+                    auth_res = authenticator.authenticate(drf_request)
                     if auth_res:
                         user, auth = auth_res
                         request.user = user
