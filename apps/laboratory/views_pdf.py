@@ -73,16 +73,9 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
         subcontractor = getattr(lab_order, 'subcontractor', None)
         if subcontractor and subcontractor.is_active:
             # Surcharger logo et entête avec ceux du sous-traitant
-            if subcontractor.logo:
-                import base64
-                try:
-                    with open(subcontractor.logo.path, 'rb') as f:
-                        logo_b64 = base64.b64encode(f.read()).decode('utf-8')
-                    context['logo_base64'] = f"data:image/png;base64,{logo_b64}"
-                except Exception:
-                    context['logo_base64'] = self._get_logo_base64(org_data)
-            else:
-                context['logo_base64'] = self._get_logo_base64(org_data)
+            context['logo_base64'] = self._get_image_base64(subcontractor.logo) or self._get_logo_base64(org_data)
+            context['header_image_base64'] = self._get_image_base64(subcontractor.header_image)
+            context['footer_image_base64'] = self._get_image_base64(subcontractor.footer_image)
 
             context['organization'] = {
                 **org_data,

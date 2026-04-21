@@ -702,7 +702,7 @@ class SubcontractorLabSerializer(serializers.ModelSerializer):
         model = SubcontractorLab
         fields = [
             'id', 'name', 'address', 'city', 'phone', 'fax', 'email', 'website',
-            'logo', 'logo_url', 'brand_color', 'header_text',
+            'logo', 'logo_url', 'header_image', 'footer_image', 'brand_color', 'header_text',
             'niu', 'rc_number', 'rccm_number', 'tax_number',
             'bank_name', 'bank_account',
             'is_active', 'prices_count', 'b2b_client_id',

@@ -8,14 +8,30 @@
     <style>
         @page {
             size: A4;
-            margin: 15mm 10mm; /* Marges standards propres */
+            margin: {% if header_image_base64 %}45mm{% else %}15mm{% endif %} 10mm {% if footer_image_base64 %}35mm{% else %}15mm{% endif %} 10mm;
 
             @bottom-center {
+                {% if not footer_image_base64 %}
                 content: "Page " counter(page) " / " counter(pages);
                 font-family: 'Helvetica', 'Arial', sans-serif;
                 font-size: 8pt;
                 color: #9ca3af;
+                {% endif %}
             }
+
+            {% if header_image_base64 %}
+            @top-center {
+                content: url("{{ header_image_base64 }}");
+                width: 100%;
+            }
+            {% endif %}
+
+            {% if footer_image_base64 %}
+            @bottom-center {
+                content: url("{{ footer_image_base64 }}");
+                width: 100%;
+            }
+            {% endif %}
         }
 
         body {
@@ -34,6 +50,7 @@
             margin-bottom: 10px;
             padding-bottom: 8px;
             border-bottom: 2px solid #2563eb;
+            {% if header_image_base64 %}display: none;{% endif %}
         }
 
         .header-left {
@@ -120,7 +137,7 @@
 </head>
 
 <body>
-    <!-- Unified Header -->
+    <!-- Unified Header (hidden if header_image_base64 is present) -->
     <div class="header">
         <div class="header-left">
             <div class="logo">
@@ -146,7 +163,10 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Footer supprimé comme demandé -->
+    <!-- Footer -->
+    {% if not footer_image_base64 %}
+    <!-- Footer supprimé comme demandé pour le mode standard -->
+    {% endif %}
 </body>
 
 </html>

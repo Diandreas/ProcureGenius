@@ -1233,6 +1233,20 @@ class SubcontractorLab(models.Model):
         verbose_name=_("Logo"),
         help_text=_("Logo affiché sur les rapports PDF sous-traités")
     )
+    header_image = models.ImageField(
+        upload_to='subcontractors/headers/',
+        blank=True,
+        null=True,
+        verbose_name=_("Image d'en-tête"),
+        help_text=_("Image pleine largeur pour l'en-tête du rapport PDF")
+    )
+    footer_image = models.ImageField(
+        upload_to='subcontractors/footers/',
+        blank=True,
+        null=True,
+        verbose_name=_("Image de pied de page"),
+        help_text=_("Image pleine largeur pour le pied de page du rapport PDF")
+    )
     brand_color = models.CharField(
         max_length=7, default='#2563eb', blank=True,
         verbose_name=_("Couleur principale"),
