@@ -997,7 +997,9 @@ class LabTestParameter(models.Model):
         is_child = patient_age_years is not None and patient_age_years < self.child_age_max_years
 
         if is_child:
-            return (self.child_ref_min, self.child_ref_max)
+            if self.child_ref_min is not None or self.child_ref_max is not None:
+                return (self.child_ref_min, self.child_ref_max)
+            # No pediatric range defined — fall through to adult ranges
 
         if patient_sex == 'M':
             if self.adult_ref_min_male is not None or self.adult_ref_max_male is not None:
