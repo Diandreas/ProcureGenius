@@ -140,29 +140,36 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
                         groups[group] = []
                     
                     factor = pv.parameter.conversion_factor or Decimal('1.0')
-                    ref_min, ref_max = pv.parameter.get_reference_range(patient_age, patient_sex)
-                    
+                    # Normalize empty string gender to None so fallback logic works
+                    effective_sex = patient_sex if patient_sex in ('M', 'F') else None
+                    ref_min, ref_max = pv.parameter.get_reference_range(patient_age, effective_sex)
+
                     # Apply conversion to reference ranges
                     if ref_min is not None: ref_min = ref_min * factor
                     if ref_max is not None: ref_max = ref_max * factor
-                    
+
+                    dp = pv.parameter.decimal_places or 2
+                    fmt = f".{dp}f"
                     ref_display = ''
                     if ref_min is not None and ref_max is not None:
-                        ref_display = f"{ref_min:.4f} – {ref_max:.4f}"
+                        ref_display = f"{ref_min:{fmt}} – {ref_max:{fmt}}"
                     elif ref_min is not None:
-                        ref_display = f"≥ {ref_min:.4f}"
+                        ref_display = f"≥ {ref_min:{fmt}}"
                     elif ref_max is not None:
-                        ref_display = f"≤ {ref_max:.4f}"
+                        ref_display = f"≤ {ref_max:{fmt}}"
 
                     # Apply conversion to result value
                     res_num = pv.result_numeric
                     if res_num is not None:
                         res_num = res_num * factor
+                    # Pass decimal_places for template formatting
+
 
                     groups[group].append({
                         'code': pv.parameter.code,
                         'name': pv.parameter.name,
                         'result_numeric': res_num,
+                        'decimal_places': dp,
                         'result_text': pv.result_text,
                         'flag': pv.flag,
                         'unit': pv.parameter.unit,
