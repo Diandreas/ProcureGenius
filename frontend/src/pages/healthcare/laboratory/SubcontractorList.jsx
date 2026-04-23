@@ -40,6 +40,10 @@ const SubcontractorList = () => {
     const [form, setForm] = useState(EMPTY_FORM);
     const [logoFile, setLogoFile] = useState(null);
     const [logoPreview, setLogoPreview] = useState(null);
+    const [headerFile, setHeaderFile] = useState(null);
+    const [headerPreview, setHeaderPreview] = useState(null);
+    const [footerFile, setFooterFile] = useState(null);
+    const [footerPreview, setFooterPreview] = useState(null);
 
     useEffect(() => { fetchList(); }, []);
 
@@ -57,8 +61,9 @@ const SubcontractorList = () => {
     const openCreate = () => {
         setEditing(null);
         setForm(EMPTY_FORM);
-        setLogoFile(null);
-        setLogoPreview(null);
+        setLogoFile(null); setLogoPreview(null);
+        setHeaderFile(null); setHeaderPreview(null);
+        setFooterFile(null); setFooterPreview(null);
         setDialogOpen(true);
     };
 
@@ -83,8 +88,9 @@ const SubcontractorList = () => {
             header_text: detail.header_text || '',
             is_active: detail.is_active,
         });
-        setLogoFile(null);
-        setLogoPreview(detail.logo_url || null);
+        setLogoFile(null); setLogoPreview(detail.logo_url || null);
+        setHeaderFile(null); setHeaderPreview(detail.header_image_url || null);
+        setFooterFile(null); setFooterPreview(detail.footer_image_url || null);
         setDialogOpen(true);
     };
 
@@ -93,6 +99,20 @@ const SubcontractorList = () => {
         if (!file) return;
         setLogoFile(file);
         setLogoPreview(URL.createObjectURL(file));
+    };
+
+    const handleHeaderChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setHeaderFile(file);
+        setHeaderPreview(URL.createObjectURL(file));
+    };
+
+    const handleFooterChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setFooterFile(file);
+        setFooterPreview(URL.createObjectURL(file));
     };
 
     const handleSave = async () => {
@@ -104,6 +124,8 @@ const SubcontractorList = () => {
                 if (v !== null && v !== undefined) fd.append(k, v);
             });
             if (logoFile) fd.append('logo', logoFile);
+            if (headerFile) fd.append('header_image', headerFile);
+            if (footerFile) fd.append('footer_image', footerFile);
 
             if (editing) {
                 await laboratoryAPI.updateSubcontractor(editing.id, fd);
@@ -301,7 +323,7 @@ const SubcontractorList = () => {
                             </AccordionSummary>
                             <AccordionDetails>
                                 <Stack spacing={2}>
-                                    <Box display="flex" alignItems="center" gap={2}>
+                                    <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
                                         <Box>
                                             <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Logo</Typography>
                                             {logoPreview && (
@@ -316,6 +338,24 @@ const SubcontractorList = () => {
                                                 <TextField size="small" value={form.brand_color} onChange={e => f('brand_color', e.target.value)} sx={{ width: 110 }} placeholder="#2563eb" />
                                             </Box>
                                         </Box>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                                            Image d'en-tête PDF <Typography component="span" variant="caption" color="text.disabled">(pleine largeur, recommandé : 2480×300 px)</Typography>
+                                        </Typography>
+                                        {headerPreview && (
+                                            <Box component="img" src={headerPreview} sx={{ width: '100%', maxHeight: 80, objectFit: 'contain', objectPosition: 'left', border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 1, display: 'block' }} />
+                                        )}
+                                        <input type="file" accept="image/*" onChange={handleHeaderChange} style={{ fontSize: 13 }} />
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                                            Image de pied de page PDF <Typography component="span" variant="caption" color="text.disabled">(pleine largeur, recommandé : 2480×200 px)</Typography>
+                                        </Typography>
+                                        {footerPreview && (
+                                            <Box component="img" src={footerPreview} sx={{ width: '100%', maxHeight: 60, objectFit: 'contain', objectPosition: 'left', border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 1, display: 'block' }} />
+                                        )}
+                                        <input type="file" accept="image/*" onChange={handleFooterChange} style={{ fontSize: 13 }} />
                                     </Box>
                                     <TextField
                                         label="Entête libre (accréditations, mentions légales…)"

@@ -696,13 +696,16 @@ class SubcontractorPriceSerializer(serializers.ModelSerializer):
 class SubcontractorLabSerializer(serializers.ModelSerializer):
     prices_count = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
+    header_image_url = serializers.SerializerMethodField()
+    footer_image_url = serializers.SerializerMethodField()
     b2b_client_id = serializers.SerializerMethodField()
 
     class Meta:
         model = SubcontractorLab
         fields = [
             'id', 'name', 'address', 'city', 'phone', 'fax', 'email', 'website',
-            'logo', 'logo_url', 'header_image', 'footer_image', 'brand_color', 'header_text',
+            'logo', 'logo_url', 'header_image', 'header_image_url',
+            'footer_image', 'footer_image_url', 'brand_color', 'header_text',
             'niu', 'rc_number', 'rccm_number', 'tax_number',
             'bank_name', 'bank_account',
             'is_active', 'prices_count', 'b2b_client_id',
@@ -726,6 +729,22 @@ class SubcontractorLabSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.logo.url)
             return obj.logo.url
+        return None
+
+    def get_header_image_url(self, obj):
+        if obj.header_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.header_image.url)
+            return obj.header_image.url
+        return None
+
+    def get_footer_image_url(self, obj):
+        if obj.footer_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.footer_image.url)
+            return obj.footer_image.url
         return None
 
 
