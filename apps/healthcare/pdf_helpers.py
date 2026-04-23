@@ -211,46 +211,66 @@ class HealthcarePDFMixin:
         logo_field = org_data.get('company_logo')
         return self._get_image_base64(logo_field)
 
-    def _get_image_base64(self, image_field):
+    def _get_image_base64(self, image_field, max_width_px=None, max_height_px=None):
         """
-        Convertit un ImageField ou un chemin d'image en base64 data URL
+        Convertit un ImageField ou un chemin d'image en base64 data URL.
+        Si max_width_px ou max_height_px est fourni, redimensionne avec Pillow
+        en conservant le ratio avant encodage.
         """
         if not image_field:
             return None
-            
+
         import os
         import base64
-        
+        from io import BytesIO
+
         try:
-            # Get the file path from the ImageField
             if hasattr(image_field, 'path'):
                 image_path = image_field.path
             else:
-                # Fallback if it's already a string path
                 image_path = str(image_field)
-            
-            if os.path.exists(image_path):
-                with open(image_path, 'rb') as f:
-                    image_data = f.read()
-                    image_base64 = base64.b64encode(image_data).decode('utf-8')
 
-                    # Detect MIME type
-                    ext = os.path.splitext(image_path)[1].lower()
-                    mime_types = {
-                        '.png': 'image/png',
-                        '.jpg': 'image/jpeg',
-                        '.jpeg': 'image/jpeg',
-                        '.gif': 'image/gif',
-                        '.svg': 'image/svg+xml',
-                        '.webp': 'image/webp',
-                        '.bmp': 'image/bmp',
-                    }
-                    mime_type = mime_types.get(ext, 'image/png')
+            if not os.path.exists(image_path):
+                return None
 
-                    return f"data:{mime_type};base64,{image_base64}"
+            ext = os.path.splitext(image_path)[1].lower()
+            mime_types = {
+                '.png': 'image/png',
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.gif': 'image/gif',
+                '.svg': 'image/svg+xml',
+                '.webp': 'image/webp',
+                '.bmp': 'image/bmp',
+            }
+            mime_type = mime_types.get(ext, 'image/png')
+
+            if (max_width_px or max_height_px) and ext != '.svg':
+                try:
+                    from PIL import Image as PILImage
+                    img = PILImage.open(image_path).convert('RGB')
+                    w, h = img.size
+                    scale = 1.0
+                    if max_width_px and w > max_width_px:
+                        scale = min(scale, max_width_px / w)
+                    if max_height_px and h > max_height_px:
+                        scale = min(scale, max_height_px / h)
+                    if scale < 1.0:
+                        img = img.resize((int(w * scale), int(h * scale)), PILImage.LANCZOS)
+                    buf = BytesIO()
+                    img.save(buf, format='PNG')
+                    image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+                    return f"data:image/png;base64,{image_base64}"
+                except ImportError:
+                    pass  # Pillow not available, fall through to raw read
+
+            with open(image_path, 'rb') as f:
+                image_base64 = base64.b64encode(f.read()).decode('utf-8')
+            return f"data:{mime_type};base64,{image_base64}"
+
         except Exception as e:
             print(f"[ERROR] Error encoding image to base64: {e}")
-            
+
         return None
 
     def _generate_qr_code(self, instance, data=None):

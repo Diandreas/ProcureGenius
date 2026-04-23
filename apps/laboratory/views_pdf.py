@@ -74,8 +74,9 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
         if subcontractor and subcontractor.is_active:
             # Surcharger logo et entête avec ceux du sous-traitant
             context['logo_base64'] = self._get_image_base64(subcontractor.logo) or self._get_logo_base64(org_data)
-            context['header_image_base64'] = self._get_image_base64(subcontractor.header_image)
-            context['footer_image_base64'] = self._get_image_base64(subcontractor.footer_image)
+            # 718px = 190mm à 96dpi (largeur utile A4 avec marges 10mm)
+            context['header_image_base64'] = self._get_image_base64(subcontractor.header_image, max_width_px=718)
+            context['footer_image_base64'] = self._get_image_base64(subcontractor.footer_image, max_width_px=718)
 
             context['organization'] = {
                 **org_data,
