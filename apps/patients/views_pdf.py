@@ -40,7 +40,7 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
         # ── 1. Consultations with full details (vitals, diagnosis, treatment) ──
         consultations = patient.consultations.all().select_related(
             'doctor', 'vitals_taken_by'
-        ).order_by('-consultation_date')
+        ).order_by('-consultation_date')[:20]
         context['all_consultations'] = consultations
 
         # ── 2. Prescriptions with their items (medications) ──
@@ -50,22 +50,86 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
                 patient=patient
             ).select_related(
                 'prescriber', 'consultation'
-            ).prefetch_related('items__medication').order_by('-prescribed_date')
+            ).prefetch_related('items__medication').order_by('-prescribed_date')[:20]
             context['all_prescriptions'] = prescriptions
         except Exception:
             context['all_prescriptions'] = []
 
         # ── 3. Lab orders with detailed test results ──
-        all_lab_orders = patient.lab_orders.all().select_related(
-            'ordered_by', 'results_entered_by', 'results_verified_by'
-        ).prefetch_related('items__lab_test').order_by('-order_date')
-        context['all_lab_orders'] = all_lab_orders
+        from django.db.models import Prefetch
+        try:
+            from apps.laboratory.models import LabOrderItem, LabResultValue
+            items_prefetch = Prefetch(
+                'items',
+                queryset=LabOrderItem.objects.select_related('lab_test').prefetch_related(
+                    Prefetch('parameter_results', queryset=LabResultValue.objects.select_related('parameter'))
+                )
+            )
+            all_lab_orders = patient.lab_orders.all().select_related(
+                'ordered_by', 'results_entered_by', 'results_verified_by'
+            ).prefetch_related(items_prefetch).order_by('-order_date')[:20]
+            
+            patient_age = patient.get_age() if patient else None
+            patient_sex = patient.gender if patient else None
+            from decimal import Decimal
+            import copy
+            
+            # Convert QuerySet to list to attach groupings in memory and avoid N+1
+            lab_orders_list = list(all_lab_orders)
+            for order in lab_orders_list:
+                for item in order.items.all():
+                    # Build structured parameter groups for compound tests
+                    item.parameter_results_grouped = None
+                    param_results = list(item.parameter_results.all())
+                    if param_results:
+                        param_results.sort(key=lambda pv: (pv.parameter.display_order, pv.parameter.name))
+                        groups = {}
+                        for pv in param_results:
+                            group = pv.parameter.group_name or 'Paramètres'
+                            if group not in groups:
+                                groups[group] = []
+                            
+                            factor = pv.parameter.conversion_factor or Decimal('1.0')
+                            ref_min, ref_max = pv.parameter.get_reference_range(patient_age, patient_sex)
+                            
+                            if ref_min is not None: ref_min = ref_min * factor
+                            if ref_max is not None: ref_max = ref_max * factor
+                            
+                            ref_display = ''
+                            if ref_min is not None and ref_max is not None:
+                                ref_display = f"{ref_min.normalize():f} – {ref_max.normalize():f}"
+                            elif ref_min is not None:
+                                ref_display = f"≥ {ref_min.normalize():f}"
+                            elif ref_max is not None:
+                                ref_display = f"≤ {ref_max.normalize():f}"
+                            
+                            res_num = pv.result_numeric
+                            if res_num is not None:
+                                res_num = (res_num * factor).normalize()
+        
+                            groups[group].append({
+                                'code': pv.parameter.code,
+                                'name': pv.parameter.name,
+                                'result_numeric': res_num,
+                                'result_text': pv.result_text,
+                                'flag': pv.flag,
+                                'unit': pv.parameter.unit,
+                                'ref_display': ref_display,
+                            })
+                        item.parameter_results_grouped = [
+                            {'group_name': g, 'parameters': rows}
+                            for g, rows in groups.items()
+                        ]
+            context['all_lab_orders'] = lab_orders_list
+        except Exception as e:
+            print(f"[ERROR] Lab orders processing error: {e}")
+            context['all_lab_orders'] = []
 
         # ── 4. Pharmacy dispensings with items ──
         try:
             dispensings = patient.pharmacy_dispensings.all().select_related(
                 'dispensed_by'
-            ).prefetch_related('items__medication').order_by('-dispensed_at')
+            ).prefetch_related('items__medication').order_by('-dispensed_at')[:20]
             context['all_dispensings'] = dispensings
         except Exception:
             context['all_dispensings'] = []
@@ -75,7 +139,7 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
             from apps.patients.models_care import PatientCareService
             care_services = PatientCareService.objects.filter(
                 patient=patient
-            ).select_related('provided_by').order_by('-provided_at')
+            ).select_related('provided_by').order_by('-provided_at')[:20]
             context['all_care_services'] = care_services
         except Exception:
             context['all_care_services'] = []
@@ -84,7 +148,7 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
         try:
             visits = patient.visits.all().select_related(
                 'assigned_doctor', 'registered_by'
-            ).order_by('-arrived_at')
+            ).order_by('-arrived_at')[:20]
             context['all_visits'] = visits
         except Exception:
             context['all_visits'] = []
@@ -100,7 +164,7 @@ class PatientSummaryView(HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, Det
             from apps.patients.models_followup import PatientFollowUp
             follow_ups = PatientFollowUp.objects.filter(
                 patient=patient
-            ).select_related('provided_by').order_by('-follow_up_date')
+            ).select_related('provided_by').order_by('-follow_up_date')[:20]
             context['all_follow_ups'] = follow_ups
         except Exception:
             context['all_follow_ups'] = []

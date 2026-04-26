@@ -573,18 +573,90 @@
                 </tr></thead>
                 <tbody>
                     {% for item in order.items.all %}
-                    <tr{% if item.is_abnormal %} class="abn-row"{% endif %}>
-                        <td><strong>{{ item.lab_test.name }}</strong></td>
-                        <td class="fw-bold">{{ item.result_value|default:"—" }}</td>
-                        <td>{{ item.result_unit|default:"—" }}</td>
-                        <td style="font-size:7pt;">{{ item.reference_range|default:"—" }}</td>
-                        <td>
-                            {% if item.is_abnormal %}<span class="abn-flag">⚠ {{ item.get_abnormality_type_display|default:"Anormal" }}</span>
-                            {% elif item.result_value %}<span class="ok-flag">✓ Normal</span>
-                            {% else %}<span class="text-muted">En attente</span>{% endif %}
-                        </td>
-                    </tr>
-                    {% if item.technician_notes %}<tr><td colspan="5" class="note-inline">{{ item.technician_notes }}</td></tr>{% endif %}
+                    {% if item.parameter_results_grouped %}
+                        <tr style="border-bottom:none;">
+                            <td colspan="5" style="padding-top:8px; padding-left:10px; background-color:#f8fafc;">
+                                <strong>{{ item.lab_test.name }}</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" style="padding:0 10px 8px 10px; background-color:#f8fafc;">
+                                <table style="width:100%; border-collapse:collapse; font-size:7pt; border:1px solid #e2e8f0; margin-top:4px;">
+                                    {% for group in item.parameter_results_grouped %}
+                                        {% if group.group_name and group.group_name != 'Paramètres' %}
+                                        <tr style="background-color:#f1f5f9;"><td colspan="5" style="padding:2px 4px;font-weight:bold;color:#334155;border-bottom:1px solid #e2e8f0;">{{ group.group_name }}</td></tr>
+                                        {% endif %}
+                                        {% for p in group.parameters %}
+                                        <tr>
+                                            <td style="padding:3px 4px; border-bottom:1px solid #f1f5f9; width:30%;">{{ p.name }}</td>
+                                            <td style="padding:3px 4px; border-bottom:1px solid #f1f5f9; width:20%; font-weight:bold;{% if p.flag != 'N' %}color:#dc2626;{% endif %}">
+                                                {% if p.result_numeric is not None %}{{ p.result_numeric|floatformat:"4" }}{% else %}{{ p.result_text|default:"—" }}{% endif %}
+                                            </td>
+                                            <td style="padding:3px 4px; border-bottom:1px solid #f1f5f9; width:10%; color:#64748b;">{{ p.unit }}</td>
+                                            <td style="padding:3px 4px; border-bottom:1px solid #f1f5f9; width:25%; color:#64748b;">{{ p.ref_display|default:"—" }}</td>
+                                            <td style="padding:3px 4px; border-bottom:1px solid #f1f5f9; width:15%; font-weight:bold;">
+                                                {% if p.flag == 'H' %}↑
+                                                {% elif p.flag == 'L' %}↓
+                                                {% elif p.flag == 'H*' %}↑↑
+                                                {% elif p.flag == 'L*' %}↓↓
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </table>
+                            </td>
+                        </tr>
+                        {% if item.technician_notes or item.interpretation %}
+                        <tr><td colspan="5" class="note-inline">
+                            {% if item.interpretation %}<strong>Interprétation:</strong> {{ item.interpretation|striptags }}<br>{% endif %}
+                            {% if item.technician_notes %}<em>Note: {{ item.technician_notes|striptags }}</em>{% endif %}
+                        </td></tr>
+                        {% endif %}
+                    {% elif item.lab_test.use_large_layout %}
+                        <tr style="border-bottom:none;">
+                            <td colspan="5" style="padding-top:8px;">
+                                <strong>{{ item.lab_test.name }}</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" style="padding:0 5px 8px 5px;">
+                                <div style="font-size:8pt; line-height:1.4; border-left:2px solid #e2e8f0; padding-left:8px;">
+                                    {{ item.result_value|safe }}
+                                </div>
+                                {% if item.result_unit or item.reference_range %}
+                                <div style="font-size:7pt; color:#666; margin-top:6px;">
+                                    {% if item.result_unit %}<span><strong>UNITÉ:</strong> {{ item.result_unit }}</span>{% endif %}
+                                    {% if item.reference_range %}<span style="margin-left:15px;"><strong>RÉFÉRENCE:</strong> {{ item.reference_range }}</span>{% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if item.technician_notes or item.interpretation %}
+                        <tr><td colspan="5" class="note-inline">
+                            {% if item.interpretation %}<strong>Interprétation:</strong> {{ item.interpretation|striptags }}<br>{% endif %}
+                            {% if item.technician_notes %}<em>Note: {{ item.technician_notes|striptags }}</em>{% endif %}
+                        </td></tr>
+                        {% endif %}
+                    {% else %}
+                        <tr{% if item.is_abnormal %} class="abn-row"{% endif %}>
+                            <td><strong>{{ item.lab_test.name }}</strong></td>
+                            <td class="fw-bold">{{ item.result_value|default:"—" }}</td>
+                            <td>{{ item.result_unit|default:"—" }}</td>
+                            <td style="font-size:7pt;">{{ item.reference_range|default:"—" }}</td>
+                            <td>
+                                {% if item.is_abnormal %}<span class="abn-flag">⚠ {{ item.get_abnormality_type_display|default:"Anormal" }}</span>
+                                {% elif item.result_value %}<span class="ok-flag">✓ Normal</span>
+                                {% else %}<span class="text-muted">En attente</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% if item.technician_notes or item.interpretation %}
+                        <tr><td colspan="5" class="note-inline">
+                            {% if item.interpretation %}<strong>Interprétation:</strong> {{ item.interpretation|striptags }}<br>{% endif %}
+                            {% if item.technician_notes %}<em>Note: {{ item.technician_notes|striptags }}</em>{% endif %}
+                        </td></tr>
+                        {% endif %}
+                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
