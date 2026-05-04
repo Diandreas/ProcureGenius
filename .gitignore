@@ -307,3 +307,4 @@ run_all_captures.js
 # Specific maintenance scripts that SHOULD be pushed
 !analyze_db.py
 !normalize_db.py
+.mcp.json
