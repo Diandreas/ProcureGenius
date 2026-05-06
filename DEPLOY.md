@@ -1,205 +1,128 @@
-# Guide de Déploiement - procura.mirlab.cloud
+Je veux créer un devis pour un client. Peux-tu m'aider ?
 
-Serveur: `/home/mirlab-procura/htdocs/procura.mirlab.cloud`
+20 avril 2026 05:40
+Bien sûr ! Je vais t'aider à créer un devis pour ton client. Voici ce que j'ai besoin de savoir :
 
----
+Quel est le nom du client ? (Si le client n'existe pas encore, je le créerai automatiquement.)
 
-## Étape 1 — Préparer le serveur (une seule fois)
+Que veux-tu inclure dans le devis ? Donne-moi une description générale (ex: "Prestation de consulting", "Vente de matériel informatique", etc.).
 
-### 1.1 Installer les dépendances système
+As-tu une liste d'articles ou de services précis ? Si oui, pour chaque article, donne-moi :
 
-```bash
-sudo apt-get update
-sudo apt-get install -y python3 python3-pip python3-venv \
-    postgresql postgresql-client libpq-dev \
-    redis-server \
-    build-essential gettext \
-    libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev
-```
+La description (ex: "Ramette de papier A4")
+La quantité
+Le prix unitaire OU
+Le montant total du devis (si tu ne veux pas détailler les articles).
+Y a-t-il une remise ? Si oui, quel pourcentage ?
 
-### 1.2 Créer la base de données PostgreSQL
+Quelle est la durée de validité du devis ? (Par défaut, je mets 30 jours.)
 
-```bash
-sudo -u postgres psql
-```
+As-tu des conditions particulières à ajouter ? (Ex: "Valable sous réserve de disponibilité des stocks".)
 
-```sql
-CREATE DATABASE procura_db;
-CREATE USER procura_user WITH PASSWORD 'votre_mot_de_passe_fort';
-ALTER ROLE procura_user SET client_encoding TO 'utf8';
-ALTER ROLE procura_user SET default_transaction_isolation TO 'read committed';
-ALTER ROLE procura_user SET timezone TO 'America/Toronto';
-GRANT ALL PRIVILEGES ON DATABASE procura_db TO procura_user;
-\q
-```
+Exemple de réponse rapide :
+"Pour le client Entreprise Martin, je veux un devis pour 10 ramettes de papier A4 à 45€ HT l'unité, avec une remise de 5% et une validité de 15 jours. Ajoute les conditions : 'Prix valables jusqu'au 30/09/2024'."
 
----
+Dis-moi ce que tu en penses, et je m'occupe du reste ! 😊
 
-## Étape 2 — Déployer le code
+20 avril 2026 05:40
+our le client Entreprise Martin, je veux un devis pour 10 ramettes de papier A4 à 45€ HT l'unité, avec une remise de 5% et une validité de 15 jours. Ajoute les conditions : 'Prix valables jusqu'au 30/09/2024'. tucomplet avec des elment que je pourai utiliser pour faire une formation en presentiel
 
-### 2.1 Uploader le projet sur le serveur
+20 avril 2026 05:41
+Super ! Je vais préparer un devis détaillé pour Entreprise Martin incluant :
 
-Depuis votre machine locale (Git recommandé) :
+10 ramettes de papier A4 à 45€ HT (avec remise de 5%)
+Des éléments complémentaires pour une formation en présentiel (que tu pourras adapter selon tes besoins).
+Voici une proposition structurée. Dis-moi si tu veux ajouter/modifier quelque chose avant que je le crée !
 
-```bash
-# Sur le serveur
-cd /home/mirlab-procura/htdocs/procura.mirlab.cloud
-git clone https://github.com/votre-repo/procura.git .
-# OU via SFTP/rsync
-```
+Devis pour Entreprise Martin
+Objet : Devis pour fourniture de papier + formation en présentiel Validité : 15 jours (jusqu'au 30/09/2024) Conditions : Prix valables jusqu'au 30/09/2024. TVA à 20% applicable.
 
-### 2.2 Configurer le fichier .env.production
+1. Fournitures (Papeterie)
+Description	Quantité	Prix unitaire HT	Total HT
+Ramette de papier A4	10	45,00 €	450,00 €
+Sous-total (avant remise)			450,00 €
+Remise (5%)			-22,50 €
+Sous-total (après remise)			427,50 €
+2. Formation en présentiel (à personnaliser selon ton offre)
+Description	Durée	Prix unitaire HT	Total HT
+Formation "Gestion des stocks"	1 journée	800,00 €	800,00 €
+Inclus :			
+- Support de formation (PDF)			
+- Exercices pratiques			
+- Évaluation des acquis			
+- Pause café + déjeuner			
+Frais de déplacement (forfait)		150,00 €	150,00 €
+Sous-total formation			950,00 €
+3. Total général
+Poste	Montant HT	TVA (20%)	Montant TTC
+Fournitures	427,50 €	85,50 €	513,00 €
+Formation	950,00 €	190,00 €	1 140,00 €
+TOTAL	1 377,50 €	275,50 €	1 653,00 €
+4. Conditions générales
+Paiement : 30% à la commande, solde à la livraison/formation.
+Livraison : Sous 5 jours ouvrés pour les fournitures.
+Annulation : Gratuite jusqu'à 7 jours avant la formation.
+Lieu de formation : Dans vos locaux ou en centre agréé (préciser si besoin).
+Prochaines étapes
+Veux-tu ajouter/supprimer des éléments ? (Ex: d'autres modules de formation, des options comme un suivi post-formation, etc.)
+Dois-je inclure un délai de rétractation ou des clauses spécifiques ?
+Préfères-tu un format plus court (juste les fournitures + une ligne "Formation en présentiel : 950€ HT") ?
+Dis-moi ce que tu en penses, et je génère le devis immédiatement ! 🚀 (Exemple de réponse : "Ajoute un module 'Optimisation des commandes' à 300€ HT, et mets un paiement à 50% à la commande.")
 
-```bash
-cp .env.production /home/mirlab-procura/htdocs/procura.mirlab.cloud/.env.production
-nano .env.production
-```
+20 avril 2026 05:41
+cest ok
 
-**Valeurs obligatoires à remplacer :**
+20 avril 2026 05:42
+J'exécute create_quote...
 
-| Variable | Description |
-|----------|-------------|
-| `SECRET_KEY` | Générer: `python3 -c "import secrets; print(secrets.token_hex(50))"` |
-| `DATABASE_URL` | `postgres://procura_user:MOT_DE_PASSE@localhost:5432/procura_db` |
-| `MISTRAL_API_KEY` | Votre clé API Mistral AI |
-| `EMAIL_HOST_USER` | Votre adresse Gmail |
-| `EMAIL_HOST_PASSWORD` | Mot de passe d'application Gmail |
+✗ Désolé, une erreur s'est produite : Erreur lors de la création du devis : Client() got unexpected keyword arguments: 'company_name', 'first_name', 'last_name'
 
-### 2.3 Lancer le script de déploiement
+Échec
 
-```bash
-cd /home/mirlab-procura/htdocs/procura.mirlab.cloud
-bash deploy_mirlab.sh
-```
 
----
 
-## Étape 3 — Configurer Gunicorn
+Génère une relance pour une facture impayée
 
-### 3.1 Créer le service systemd
+20 avril 2026 05:43
+D'accord ! Je vais préparer une relance pour facture impayée intelligente. Pour que ce soit efficace, j'ai besoin de quelques infos :
 
-```bash
-sudo nano /etc/systemd/system/procura.service
-```
+1. Quelle facture relancer ?
+Numéro de facture : (Ex: "FACT-2024-001")
+Nom du client : (Ex: "Entreprise Martin")
+Montant impayé : (Ex: "1 653,00 €")
+Date d'échéance : (Ex: "15/09/2024")
+(Si tu ne connais pas ces infos, dis-moi juste le nom du client ou le numéro de facture, et je les retrouverai !)
 
-Contenu :
-```ini
-[Unit]
-Description=Procura Gunicorn Daemon
-After=network.target postgresql.service redis.service
 
-[Service]
-User=mirlab-procura
-Group=mirlab-procura
-WorkingDirectory=/home/mirlab-procura/htdocs/procura.mirlab.cloud
-ExecStart=/home/mirlab-procura/htdocs/procura.mirlab.cloud/venv/bin/gunicorn \
-    --bind 127.0.0.1:8000 \
-    --workers 3 \
-    --timeout 120 \
-    --max-requests 1000 \
-    --max-requests-jitter 100 \
-    --access-logfile /home/mirlab-procura/htdocs/procura.mirlab.cloud/logs/gunicorn-access.log \
-    --error-logfile /home/mirlab-procura/htdocs/procura.mirlab.cloud/logs/gunicorn-error.log \
-    saas_procurement.wsgi:application
-EnvironmentFile=/home/mirlab-procura/htdocs/procura.mirlab.cloud/.env.production
-Environment=DJANGO_SETTINGS_MODULE=saas_procurement.settings_production
-Restart=on-failure
-RestartSec=5
+Fais une analyse prédictive de ma trésorerie 60 jours
 
-[Install]
-WantedBy=multi-user.target
-```
+20 avril 2026 05:46
+**•**predict_cashflowuseeland{"horizon_days": 60}
 
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable procura
-sudo systemctl start procura
-sudo systemctl status procura
-```
+20 avril 2026 05:46
+Vérifie le prix du marché pour un produit
 
----
+20 avril 2026 05:46
+Voici ce que je peux vérifier pour toi :
 
-## Étape 4 — Configurer Nginx dans CloudPanel
+1. Quel produit ?
+Nom exact : (Ex: "Ramette de papier A4 80g" ou "Formation 'Gestion des stocks'").
+Référence : (Ex: "PAPIER-A4-80G" ou "FORM-STOCK-01").
+2. Contexte : Achat ou Vente ?
+Achat : "Je veux vérifier si le prix que me propose mon fournisseur est correct." → Je compare avec les prix du marché (Amazon, grossistes, etc.) et ton historique d'achat.
+Vente : "Je veux vérifier si mon prix de vente est compétitif." → Je compare avec les concurrents (sites web, marketplace) et ton historique de vente.
+3. Prix à vérifier
+Prix unitaire : (Ex: "45 € HT" pour le papier,- Quantité : (Ex: "10 ramettes" ou "1 journée de formation").
+Exemple de réponse rapide :
+"Vérifie le prix de 10 ramettes de papier A4 80g à 45 € HT (contexte : achat). Et aussi le prix de ma formation 'Gestion des stocks' à 800 € HT (contexte : vente)."
 
-Dans CloudPanel, aller dans **Vhosts** du domaine `procura.mirlab.cloud` et coller cette configuration :
+Dis-moi ce que tu veux vérifier, et je te donne une analyse précise + des recommandations ! 🔍
 
-```nginx
-# Redirection HTTP → HTTPS
-if ($scheme != "https") {
-    rewrite ^ https://$host$request_uri permanent;
-}
+(PS : Si tu veux que je scanne tous tes produits récents pour détecter des anomalies, je peux le faire aussi !)
 
-# Fichiers statiques Django
-location /static/ {
-    alias /home/mirlab-procura/htdocs/procura.mirlab.cloud/staticfiles/;
-    expires 1y;
-    add_header Cache-Control "public, immutable";
-    access_log off;
-}
-
-# Fichiers médias (uploads)
-location /media/ {
-    alias /home/mirlab-procura/htdocs/procura.mirlab.cloud/media/;
-    expires 30d;
-    add_header Cache-Control "public";
-    access_log off;
-}
-
-# Proxy vers Gunicorn (Django)
-location / {
-    proxy_pass http://127.0.0.1:8000;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_connect_timeout 60s;
-    proxy_read_timeout 120s;
-    proxy_send_timeout 120s;
-}
-```
-
----
-
-## Étape 5 — Frontend React (si séparé)
-
-Si le frontend React est buildé séparément :
-
-```bash
-cd /home/mirlab-procura/htdocs/procura.mirlab.cloud/frontend
-npm install
-npm run build
-```
-
-Puis dans Nginx, servir `frontend/dist` pour `/` et proxifier `/api/`, `/admin/`, `/static/`, `/media/` vers Gunicorn.
-
----
-
-## Commandes utiles
-
-```bash
-# Redémarrer l'application
-sudo systemctl restart procura
-
-# Voir les logs
-sudo journalctl -u procura -f
-tail -f logs/gunicorn-error.log
-
-# Appliquer des migrations après mise à jour du code
-source venv/bin/activate
-python manage.py migrate --settings=saas_procurement.settings_production
-
-# Créer un superuser
-python manage.py createsuperuser --settings=saas_procurement.settings_production
-```
-
----
-
-## Vérification du déploiement
-
-```bash
-# Tester que Gunicorn répond
-curl -I http://127.0.0.1:8000/admin/login/
-
-# Vérifier les logs Django
-tail -50 logs/django.log
-```
+20 avril 2026 05:46
+📝 Devis
+🔍 Vérifier prix
+📬 Relancer client
+💰 Cash Flow
+Tapez votre message...

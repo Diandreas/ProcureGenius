@@ -26,6 +26,7 @@ import {
   Chip,
   LinearProgress,
   Divider,
+  Switch,
 } from '@mui/material';
 import {
   Business,
@@ -142,7 +143,7 @@ function OnboardingSetup() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
-  // Pre-fill company name from Redux state
+  // Pre-fill company name from Redux state or localStorage (set during register)
   const reduxCompanyName = useSelector(
     (state) =>
       state?.settings?.companyName ||
@@ -150,6 +151,7 @@ function OnboardingSetup() {
       state?.auth?.user?.organization_name ||
       ''
   );
+  const registeredCompanyName = localStorage.getItem('onboarding_company_name') || '';
 
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -157,7 +159,7 @@ function OnboardingSetup() {
 
   const [formData, setFormData] = useState({
     // Étape 0 : Informations entreprise
-    companyName: reduxCompanyName,
+    companyName: reduxCompanyName || registeredCompanyName,
     address: '',
     logo: null,
 
@@ -301,6 +303,7 @@ function OnboardingSetup() {
         // Continue anyway - layout can be created later
       }
 
+      localStorage.removeItem('onboarding_company_name');
       enqueueSnackbar('Configuration terminée avec succès !', { variant: 'success' });
 
       // Afficher l'écran de célébration
@@ -394,7 +397,7 @@ function OnboardingSetup() {
                   value={formData.companyName}
                   onChange={(e) => handleChange('companyName', e.target.value)}
                   placeholder="Ex: ACME Corporation"
-                  helperText={reduxCompanyName ? 'Pré-rempli depuis votre inscription' : ''}
+                  helperText={(reduxCompanyName || registeredCompanyName) ? 'Pré-rempli depuis votre inscription' : ''}
                 />
               </Grid>
 
@@ -569,15 +572,15 @@ function OnboardingSetup() {
       case 2: // Sélection des modules
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
               Modules
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              Sélectionnez les fonctionnalités dont vous avez besoin. Vous pourrez les modifier à tout moment.
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Activez les fonctionnalités dont vous avez besoin. Modifiables à tout moment.
             </Typography>
 
-            <Grid container spacing={2}>
-              {AVAILABLE_MODULES.map(module => {
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+              {AVAILABLE_MODULES.map((module, idx) => {
                 const isSelected = formData.selectedModules.includes(module.id);
                 const isRequired = module.required;
                 const isRecommended = module.recommended;
@@ -586,72 +589,68 @@ function OnboardingSetup() {
                   : null;
 
                 return (
-                  <Grid item xs={12} sm={6} md={4} key={module.id}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        cursor: isRequired ? 'default' : 'pointer',
-                        border: '1.5px solid',
-                        borderColor: isSelected ? 'primary.main' : 'divider',
-                        bgcolor: isSelected ? 'primary.50' : 'background.paper',
-                        transition: 'all 0.15s ease',
-                        height: '100%',
-                        '&:hover': {
-                          borderColor: isRequired ? 'divider' : 'primary.main',
-                          transform: isRequired ? 'none' : 'translateY(-2px)',
-                          boxShadow: isRequired ? 'none' : '0 4px 12px rgba(0,0,0,0.08)',
-                        },
-                      }}
-                      onClick={() => !isRequired && handleModuleToggle(module.id)}
-                    >
-                      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                          <Box
-                            sx={{
-                              color: isSelected ? 'primary.main' : 'text.secondary',
-                              mr: 1.5,
-                              mt: 0.25,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {module.icon}
-                          </Box>
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                              {module.name}
-                            </Typography>
-                            {module.description && (
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, lineHeight: 1.4 }}>
-                                {module.description}
-                              </Typography>
-                            )}
-                            <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {isRequired && (
-                                <Chip label="Requis" size="small" color="primary" variant="outlined" />
-                              )}
-                              {!isRequired && isRecommended && (
-                                <Chip label="Recommandé" size="small" color="success" variant="outlined" />
-                              )}
-                              {depName && (
-                                <Chip label={`Nécessite : ${depName}`} size="small" color="default" variant="outlined" />
-                              )}
-                            </Box>
-                          </Box>
-                          {isSelected && (
-                            <CheckCircle color="primary" fontSize="small" sx={{ flexShrink: 0, mt: 0.25, ml: 0.5 }} />
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
+                  <Box
+                    key={module.id}
+                    onClick={() => !isRequired && handleModuleToggle(module.id)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      px: 2,
+                      py: 1.25,
+                      borderRadius: 2,
+                      cursor: isRequired ? 'default' : 'pointer',
+                      bgcolor: isSelected ? 'primary.50' : 'transparent',
+                      border: '1px solid',
+                      borderColor: isSelected ? 'primary.200' : 'transparent',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        bgcolor: isRequired ? 'transparent' : isSelected ? 'primary.50' : 'action.hover',
+                      },
+                    }}
+                  >
+                    {/* Icon */}
+                    <Box sx={{
+                      color: isSelected ? 'primary.main' : 'text.disabled',
+                      display: 'flex', flexShrink: 0,
+                      transition: 'color 0.15s',
+                    }}>
+                      {module.icon}
+                    </Box>
+
+                    {/* Text */}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                          {module.name}
+                        </Typography>
+                        {isRequired && <Chip label="Requis" size="small" sx={{ height: 18, fontSize: '0.65rem' }} color="primary" variant="outlined" />}
+                        {!isRequired && isRecommended && <Chip label="Recommandé" size="small" sx={{ height: 18, fontSize: '0.65rem' }} color="success" variant="outlined" />}
+                      </Box>
+                      {depName && (
+                        <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.7rem' }}>
+                          Nécessite : {depName}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {/* Switch */}
+                    <Switch
+                      checked={isSelected}
+                      disabled={isRequired}
+                      size="small"
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => !isRequired && handleModuleToggle(module.id)}
+                      color="primary"
+                    />
+                  </Box>
                 );
               })}
-            </Grid>
+            </Box>
 
-            <Alert severity="info" sx={{ mt: 3, borderRadius: 2 }}>
-              <strong>{formData.selectedModules.length} module(s) sélectionné(s).</strong>{' '}
-              Vous pourrez activer ou désactiver des modules à tout moment depuis les Paramètres.
-            </Alert>
+            <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 2, textAlign: 'right' }}>
+              {formData.selectedModules.length} module(s) activé(s) — modifiable dans les Paramètres
+            </Typography>
           </Box>
         );
 

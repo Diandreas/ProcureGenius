@@ -78,6 +78,9 @@ import {
   CheckCircleOutline,
   ErrorOutline,
 } from '@mui/icons-material';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { aiChatAPI } from '../../services/api';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -127,6 +130,8 @@ function PurchaseOrderDetail() {
   // AI Panel state
   const [aiResults, setAiResults] = useState({});
   const [aiLoading, setAiLoading] = useState({});
+  const [aiConversations, setAiConversations] = useState({});
+  const [aiInputs, setAiInputs] = useState({});
 
   const { setPageHeader } = useHeader();
 
@@ -218,6 +223,10 @@ function PurchaseOrderDetail() {
     try {
       const response = await purchaseOrdersAPI.get(id);
       setPurchaseOrder(response.data);
+      if (response.data.ai_insights) {
+        setAiResults(response.data.ai_insights.results || {});
+        setAiConversations(response.data.ai_insights.conversations || {});
+      }
     } catch (error) {
       enqueueSnackbar(t('purchaseOrders:messages.loadingError'), { variant: 'error' });
       navigate('/purchase-orders');
@@ -226,9 +235,16 @@ function PurchaseOrderDetail() {
     }
   };
 
-  const runAiAnalysis = async (type) => {
-    setAiLoading(prev => ({ ...prev, [type]: true }));
-    setAiResults(prev => ({ ...prev, [type]: null }));
+  const runAiAnalysis = async (type, isFollowUp = false) => {
+    if (!isFollowUp) {
+      setAiLoading(prev => ({ ...prev, [type]: true }));
+    } else {
+      setAiLoading(prev => ({ ...prev, [type]: true }));
+      setAiResults(prev => ({ 
+        ...prev, 
+        [type]: (prev[type] || '') + `\n\n**Vous :**\n${aiInputs[type]}`
+      }));
+    }
 
     const itemsList = purchaseOrder.items?.map(i =>
       `- ${i.description} (qté: ${i.quantity}, prix unitaire: ${i.unit_price}, total: ${i.total_price})`
@@ -257,26 +273,73 @@ ${itemsList}
 
 Donne 3 conseils concrets pour améliorer ou sécuriser cette commande.`,
 
-      market_price: `Recherche les prix du marché en ligne pour ces produits. Pour chaque article, trouve des exemples de prix en ligne et donne des liens si possible.
+      market_price: `Recherche les prix du marché pour ces produits. 
+IMPORTANT: Si tu n'as pas un accès direct à internet pour chercher des liens en direct, NE FOURNIS PAS DE LIENS INVENTÉS OU MORTS. Donne uniquement des estimations réalistes basées sur tes connaissances. Ne donne absolument pas de faux URLs.
+N'utilise PAS la fonction/outil interne "verify_price" car il y a plusieurs articles.
 
 Articles de la commande:
 ${itemsList}
 
-Pour chaque produit : cherche le prix moyen du marché, dis si le prix payé est correct ou trop élevé, et donne 1-2 liens vers des sites où on peut comparer (Amazon, Alibaba, ou autres).`,
+Pour chaque produit : donne le prix moyen du marché estimé et indique si le prix payé est correct, bas ou trop élevé.`,
     };
 
     try {
-      const response = await aiChatAPI.sendMessage({
-        message: prompts[type],
+      const payload = {
+        message: isFollowUp ? aiInputs[type] : prompts[type],
         context_type: 'purchase_order',
         context_id: id,
-      });
-      const reply = response.data?.response || response.data?.message || response.data?.content || JSON.stringify(response.data);
-      setAiResults(prev => ({ ...prev, [type]: reply }));
+      };
+
+      if (aiConversations[type]) {
+        payload.conversation_id = aiConversations[type];
+      }
+
+      const response = await aiChatAPI.sendMessage(payload);
+      
+      let rawReply = response.data?.ai_response || response.data?.response || response.data?.message?.content || response.data?.content || response.data;
+      let reply = rawReply;
+      if (typeof reply !== 'string') {
+        reply = reply && typeof reply === 'object' && reply.content ? reply.content : JSON.stringify(reply, null, 2);
+      }
+      
+      let newConversations = { ...aiConversations };
+      if (response.data?.conversation_id) {
+        newConversations[type] = response.data.conversation_id;
+        setAiConversations(newConversations);
+      }
+
+      let newResults = { ...aiResults };
+      if (isFollowUp) {
+        newResults[type] = newResults[type] + `\n\n**Aunlia :**\n${reply}`;
+        setAiInputs(prev => ({ ...prev, [type]: '' }));
+      } else {
+        newResults[type] = reply;
+      }
+      setAiResults(newResults);
+
+      // Persist in backend
+      purchaseOrdersAPI.update(id, { 
+        ai_insights: { results: newResults, conversations: newConversations } 
+      }).catch(e => console.error('Failed to save AI insights:', e));
+
     } catch (error) {
-      setAiResults(prev => ({ ...prev, [type]: `Erreur: ${error.response?.data?.error || error.message}` }));
+      const errorMsg = `Erreur: ${error.response?.data?.error || error.message}`;
+      if (isFollowUp) {
+        setAiResults(prev => ({ ...prev, [type]: prev[type] + `\n\n*${errorMsg}*` }));
+      } else {
+        setAiResults(prev => ({ ...prev, [type]: errorMsg }));
+      }
     } finally {
       setAiLoading(prev => ({ ...prev, [type]: false }));
+    }
+  };
+
+  const handleAiInputKeyPress = (e, type) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (aiInputs[type]?.trim()) {
+        runAiAnalysis(type, true);
+      }
     }
   };
 
@@ -694,161 +757,219 @@ Pour chaque produit : cherche le prix moyen du marché, dis si le prix payé est
 
       {/* Tab: General Information */}
       {activeTab === 0 && (
-        <Grid container spacing={isMobile ? 2 : 3}>
-          {/* Main Content */}
-          <Grid item xs={12} md={8}>
-            {/* Order Info Card */}
-            <Card sx={{
-              borderRadius: 3,
-              mb: isMobile ? 2 : 3,
-              background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-              boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
-              border: '1px solid',
-              borderColor: theme => alpha(theme.palette.divider, 0.1),
-              backdropFilter: 'blur(20px)',
-              position: 'relative',
-              overflow: 'hidden',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
-              },
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 4,
-                background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                borderRadius: '3px 3px 0 0'
-              }
-            }}>
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography variant={isMobile ? 'h6' : 'h5'} sx={{
-                  fontWeight: 700,
-                  mb: 2,
-                  background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
+        <Grid container spacing={isMobile ? 1.5 : 2.5}>
+          {/* Résumé compact — pleine largeur */}
+          <Grid item xs={12}>
+            <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+              <Box sx={{
+                height: 3,
+                background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              }} />
+              <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+                {/* Ligne 1 : Fournisseur + Dates + Créé par */}
+                <Box sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 0,
+                  borderRadius: 1.5,
+                  overflow: 'hidden',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  mb: (purchaseOrder.title || purchaseOrder.description) ? 1.5 : 0,
                 }}>
-                  {purchaseOrder.title}
-                </Typography>
-                {purchaseOrder.description && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="600" gutterBottom sx={{ color: 'text.primary' }}>
-                      {t('purchaseOrders:labels.description')}
+                  {/* Fournisseur */}
+                  <Box sx={{
+                    flex: '1 1 200px',
+                    p: 1.5,
+                    borderRight: '1px solid',
+                    borderColor: 'divider',
+                    display: 'flex', flexDirection: 'column', gap: 0.5,
+                  }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      {t('purchaseOrders:labels.supplier')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                      {purchaseOrder.description}
+                    {purchaseOrder.supplier ? (
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }}
+                        onClick={() => navigate(`/suppliers/${purchaseOrder.supplier.id}`)}
+                      >
+                        <Avatar sx={{ bgcolor: 'primary.main', width: 26, height: 26, fontSize: '0.7rem' }}>
+                          {purchaseOrder.supplier.name?.[0]?.toUpperCase()}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="body2" fontWeight={600} sx={{ color: 'primary.main', '&:hover': { textDecoration: 'underline' }, lineHeight: 1.2 }}>
+                            {purchaseOrder.supplier.name}
+                          </Typography>
+                          {purchaseOrder.supplier.email && (
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>{purchaseOrder.supplier.email}</Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.disabled">—</Typography>
+                    )}
+                  </Box>
+
+                  {/* Date création */}
+                  <Box sx={{ flex: '0 1 140px', p: 1.5, borderRight: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', mb: 0.25 }}>
+                      {t('purchaseOrders:labels.creationDate')}
                     </Typography>
+                    <Typography variant="body2" fontWeight={600}>{formatDate(purchaseOrder.created_at)}</Typography>
+                  </Box>
+
+                  {/* Date requise */}
+                  {purchaseOrder.required_date && (
+                    <Box sx={{ flex: '0 1 140px', p: 1.5, borderRight: '1px solid', borderColor: 'divider' }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', mb: 0.25 }}>
+                        {t('purchaseOrders:labels.requiredDate')}
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} color="warning.main">{formatDate(purchaseOrder.required_date)}</Typography>
+                    </Box>
+                  )}
+
+                  {/* Créé par */}
+                  {purchaseOrder.created_by && (
+                    <Box sx={{ flex: '0 1 160px', p: 1.5 }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', mb: 0.25 }}>
+                        {t('purchaseOrders:labels.createdBy')}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <Avatar sx={{ bgcolor: 'secondary.main', width: 22, height: 22, fontSize: '0.6rem' }}>
+                          {purchaseOrder.created_by.first_name?.[0]}{purchaseOrder.created_by.last_name?.[0]}
+                        </Avatar>
+                        <Typography variant="body2" fontWeight={500} sx={{ fontSize: '0.8rem' }}>
+                          {purchaseOrder.created_by.first_name} {purchaseOrder.created_by.last_name}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Description — seulement si présente, inline sous la fiche */}
+                {(purchaseOrder.title || purchaseOrder.description) && (
+                  <Box sx={{ px: 0.5 }}>
+                    {purchaseOrder.title && (
+                      <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.25, color: 'text.primary' }}>
+                        {purchaseOrder.title}
+                      </Typography>
+                    )}
+                    {purchaseOrder.description && (
+                      <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+                        {purchaseOrder.description}
+                      </Typography>
+                    )}
                   </Box>
                 )}
               </CardContent>
             </Card>
           </Grid>
 
-          {/* Sidebar */}
-          <Grid item xs={12} md={4}>
-            {/* Supplier Info */}
-            {purchaseOrder.supplier && (
-              <Card sx={{ borderRadius: 2, mb: isMobile ? 2 : 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Business sx={{ color: 'primary.main' }} />
-                    <Typography variant="subtitle1" fontWeight="600">
-                      {t('purchaseOrders:labels.supplier')}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                      <Business />
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle1" fontWeight="medium">
-                        {purchaseOrder.supplier.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {purchaseOrder.supplier.email}
-                      </Typography>
+          {/* Articles — pleine largeur sous le résumé */}
+          <Grid item xs={12}>
+            <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Inventory color="primary" fontSize="small" />
+                    {t('purchaseOrders:labels.orderedItems')} ({purchaseOrder.items?.length || 0})
+                  </Typography>
+                  <Button
+                    size="small"
+                    startIcon={<Add />}
+                    onClick={() => setAddItemDialogOpen(true)}
+                    disabled={purchaseOrder.status !== 'draft'}
+                    sx={{ borderRadius: 1.5, textTransform: 'none', fontWeight: 600 }}
+                  >
+                    {t('purchaseOrders:buttons.addItem')}
+                  </Button>
+                </Box>
+                {isMobile ? (
+                  <Stack spacing={1.5}>
+                    {purchaseOrder.items?.map((item, index) => (
+                      <Box key={index} sx={{
+                        p: 1.5, borderRadius: 1.5,
+                        bgcolor: theme => alpha(theme.palette.primary.main, 0.04),
+                        border: '1px solid',
+                        borderColor: theme => alpha(theme.palette.divider, 0.15),
+                      }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                          <Typography variant="body2" fontWeight={600}>{item.description}</Typography>
+                          <Typography variant="body2" fontWeight={700} color="primary.main">
+                            {formatCurrency(item.total_price)}
+                          </Typography>
+                        </Box>
+                        {item.product_reference && (
+                          <Typography variant="caption" color="text.secondary">{item.product_reference}</Typography>
+                        )}
+                        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                          {item.quantity} × {formatCurrency(item.unit_price)}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : (
+                  <TableContainer sx={{ borderRadius: 1.5, border: '1px solid', borderColor: 'divider' }}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: 'grey.50' }}>
+                          <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{t('purchaseOrders:columns.reference')}</TableCell>
+                          <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{t('purchaseOrders:columns.description')}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{t('purchaseOrders:columns.quantity')}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{t('purchaseOrders:columns.unitPrice')}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>{t('purchaseOrders:columns.total')}</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {purchaseOrder.items?.map((item, index) => (
+                          <TableRow key={index} hover>
+                            <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{item.product_reference || '—'}</TableCell>
+                            <TableCell sx={{ fontSize: '0.85rem', fontWeight: 500 }}>{item.description}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>{item.quantity}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.85rem' }}>{formatCurrency(item.unit_price)}</TableCell>
+                            <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 700 }}>{formatCurrency(item.total_price)}</TableCell>
+                          </TableRow>
+                        ))}
+                        {(!purchaseOrder.items || purchaseOrder.items.length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
+                              Aucun article
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+
+                {/* Totaux */}
+                {purchaseOrder.items?.length > 0 && (
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                    <Box sx={{ minWidth: 220 }}>
+                      {purchaseOrder.tax_amount > 0 && (
+                        <>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="body2" color="text.secondary">Sous-total</Typography>
+                            <Typography variant="body2">{formatCurrency(purchaseOrder.subtotal || 0)}</Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography variant="body2" color="text.secondary">Taxes</Typography>
+                            <Typography variant="body2">{formatCurrency(purchaseOrder.tax_amount || 0)}</Typography>
+                          </Box>
+                          <Divider sx={{ mb: 1 }} />
+                        </>
+                      )}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="subtitle2" fontWeight={700}>Total</Typography>
+                        <Typography variant="subtitle2" fontWeight={700} color="primary.main">
+                          {formatCurrency(purchaseOrder.total_amount || 0)}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    onClick={() => navigate(`/suppliers/${purchaseOrder.supplier.id}`)}
-                  >
-                    {t('purchaseOrders:buttons.viewSupplier')}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Dates */}
-            <Card sx={{ borderRadius: 2, mb: isMobile ? 2 : 3, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  {t('purchaseOrders:labels.importantDates')}
-                </Typography>
-                <List dense>
-                  <ListItem>
-                    <ListItemIcon>
-                      <CalendarToday color="action" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={t('purchaseOrders:labels.creationDate')}
-                      secondary={formatDate(purchaseOrder.created_at)}
-                    />
-                  </ListItem>
-                  {purchaseOrder.required_date && (
-                    <ListItem>
-                      <ListItemIcon>
-                        <Schedule color="warning" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={t('purchaseOrders:labels.requiredDate')}
-                        secondary={formatDate(purchaseOrder.required_date)}
-                      />
-                    </ListItem>
-                  )}
-                  <ListItem>
-                    <ListItemIcon>
-                      <Edit color="action" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={t('purchaseOrders:labels.lastUpdate')}
-                      secondary={formatDate(purchaseOrder.updated_at)}
-                    />
-                  </ListItem>
-                </List>
+                )}
               </CardContent>
             </Card>
-
-            {/* Created By */}
-            {purchaseOrder.created_by && (
-              <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                  <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                    {t('purchaseOrders:labels.createdBy')}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: 'secondary.main', width: 48, height: 48 }}>
-                      <Person />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight="medium">
-                        {purchaseOrder.created_by.first_name} {purchaseOrder.created_by.last_name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {purchaseOrder.created_by.email}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            )}
           </Grid>
         </Grid>
       )}
@@ -1224,7 +1345,7 @@ Pour chaque produit : cherche le prix moyen du marché, dis si le prix payé est
                       <LinearProgress color={color} sx={{ borderRadius: 1, mt: 1 }} />
                     )}
 
-                    {aiResults[key] && !aiLoading[key] && (
+                    {aiResults[key] && (
                       <Box sx={{
                         mt: 2,
                         p: 2,
@@ -1233,20 +1354,39 @@ Pour chaque produit : cherche le prix moyen du marché, dis si le prix payé est
                         borderLeft: '3px solid',
                         borderLeftColor: `${color}.main`,
                       }}>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            whiteSpace: 'pre-wrap',
-                            lineHeight: 1.8,
-                            '& a': { color: 'primary.main' },
-                          }}
-                          dangerouslySetInnerHTML={{
-                            __html: aiResults[key]
-                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                              .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                              .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'),
-                          }}
-                        />
+                        <Box sx={{ 
+                          '& p': { mt: 0, mb: 1, fontSize: '0.875rem', lineHeight: 1.6 },
+                          '& a': { color: 'primary.main', textDecoration: 'none', fontWeight: 500 },
+                          '& a:hover': { textDecoration: 'underline' },
+                          '& ul, & ol': { mt: 0, mb: 1, pl: 3 },
+                          '& li': { mb: 0.5, fontSize: '0.875rem' },
+                          '& h3, & h4': { mt: 2, mb: 1, fontSize: '1rem', fontWeight: 600 },
+                        }}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                            {String(aiResults[key] || '')}
+                          </ReactMarkdown>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            placeholder="Discuter avec l'IA ou demander une précision..."
+                            value={aiInputs[key] || ''}
+                            onChange={(e) => setAiInputs(prev => ({ ...prev, [key]: e.target.value }))}
+                            onKeyPress={(e) => handleAiInputKeyPress(e, key)}
+                            disabled={aiLoading[key]}
+                            sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'background.paper', borderRadius: 2 } }}
+                          />
+                          <IconButton 
+                            color="primary" 
+                            onClick={() => runAiAnalysis(key, true)}
+                            disabled={aiLoading[key] || !aiInputs[key]?.trim()}
+                            sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) } }}
+                          >
+                            {aiLoading[key] ? <CircularProgress size={24} /> : <Send />}
+                          </IconButton>
+                        </Box>
                       </Box>
                     )}
                   </CardContent>

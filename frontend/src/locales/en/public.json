@@ -13,9 +13,9 @@
       "desc": "Need urgent help? Chat directly with a technical expert via WhatsApp."
     },
     "youtube": {
-        "title": "Training and Tutorials on YouTube",
-        "desc": "Exclusive videos on how to master our AI tools and integrate Procura into your business.",
-        "comingSoon": "(Channel coming very soon)"
+      "title": "Training and Tutorials on YouTube",
+      "desc": "Exclusive videos on how to master our AI tools and integrate Procura into your business.",
+      "comingSoon": "(Channel coming very soon)"
     },
     "form": {
       "title": "Send a Message",
@@ -36,33 +36,47 @@
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last updated: {{date}}",
-    "intro": "At Procura, the security and confidentiality of your data are our top priority. This privacy policy details what information we collect, how we use it, and the strict measures we take to protect it.",
+    "intro": "At ProcureGenius, the security and confidentiality of your data are our top priority. This privacy policy details what information we collect, how we use it, and the strict measures we take to protect it.",
     "sections": {
       "intro": {
-        "title": "1. Introduction",
-        "content": "This policy applies to all our ERP, financial management services, and our AI assistant 'Copilote'."
+        "title": "1. Introduction and Scope",
+        "content": "This privacy policy applies to all services offered by ProcureGenius, including the ERP platform, financial management module, procurement and supplier management system, and the 'Copilote' AI assistant. By accessing our services, you acknowledge having read this policy and accept it in its entirety. ProcureGenius is the data controller for your personal data under the General Data Protection Regulation (GDPR – EU Regulation 2016/679)."
       },
       "data": {
         "title": "2. Data Collected",
-        "content": "We collect the following types of information:",
+        "content": "In the course of providing our services, we collect the following categories of information:",
         "items": [
-          "Professional data: Company name, SIRET, VAT numbers.",
-          "User information: Email addresses, names, and job titles.",
-          "Analytical data: Connection logs, AI interactions.",
-          "Documents: Purchase orders, receipts, PDF invoices."
+          "Professional identification data: Company name, registration numbers, VAT numbers, registered address.",
+          "User information: Email addresses, first and last names, job titles and roles within the organization.",
+          "Financial and accounting data: Invoices, purchase orders, statements, payment information (processed via PCI-DSS certified providers).",
+          "Imported documents: PDF files, receipt images, supporting documents processed by AI.",
+          "Analytical usage data: Connection logs, IP addresses, AI assistant interactions, session durations.",
+          "Communication data: Messages sent to support, feedback and satisfaction surveys."
         ]
       },
       "usage": {
-        "title": "3. Data Usage",
-        "content": "Your data is only used to provide and optimize the services offered. We never sell your data to third parties."
+        "title": "3. Purposes of Processing",
+        "content": "Your data is collected and processed exclusively for the following purposes: providing, improving and personalizing our ERP services; managing your account and subscription; sending functional notifications and reports; detecting and preventing fraud; complying with our legal and regulatory obligations. We never sell, rent, or share your data with third parties for commercial purposes."
       },
       "ai": {
-        "title": "4. Artificial Intelligence",
-        "content": "Your private data is not used to publicly train external AI models."
+        "title": "4. Artificial Intelligence and Automated Processing",
+        "content": "ProcureGenius's 'Copilote' AI assistant uses your operational data solely to provide you with analysis, recommendations and automation within your workspace. Your confidential data is never used to train public AI models or shared with third parties for machine learning purposes. Automated processing remains under your control and you have the right to object at any time."
       },
       "security": {
         "title": "5. Security and Hosting",
-        "content": "Data hosted in Europe (GDPR) with AES-256 encryption."
+        "content": "All your data is hosted exclusively in Europe, in GDPR-compliant data centers. We apply the following security measures: AES-256 encryption at rest and TLS 1.3 in transit, two-factor authentication (2FA), role-based access control (RBAC), regular security audits and comprehensive access logging."
+      },
+      "rights": {
+        "title": "6. Your Rights",
+        "content": "Under GDPR, you have the following rights over your personal data: right of access, right to rectification, right to erasure ('right to be forgotten'), right to restriction of processing, right to data portability, right to object. To exercise these rights, contact our Data Protection Officer at: privacy@procuregenius.com. We are committed to responding to any request within 30 days."
+      },
+      "cookies": {
+        "title": "7. Cookies and Trackers",
+        "content": "We use cookies strictly necessary for the operation of the platform, as well as analytical cookies (anonymized) to improve the user experience. No third-party advertising cookies are used. You can manage your cookie preferences at any time from your account settings."
+      },
+      "contact": {
+        "title": "8. Contact and Complaints",
+        "content": "For any questions regarding this policy or the processing of your personal data, you can contact us at: privacy@procuregenius.com. In case of unresolved dispute, you have the right to lodge a complaint with your national data protection authority."
       }
     }
   },
@@ -72,15 +86,39 @@
     "sections": {
       "acceptance": {
         "title": "1. Acceptance of Terms",
-        "content": "By using Procura, you agree to be bound by these general terms of use."
+        "content": "By accessing the ProcureGenius platform and using our services, you agree to be bound by these Terms of Service. If you do not accept these terms, you must immediately stop using our services. These Terms constitute a legally binding agreement between you (or your organization) and ProcureGenius."
       },
       "services": {
         "title": "2. Description of Services",
-        "content": "Procura provides a business management platform integrating AI, invoicing, and inventory management."
+        "content": "ProcureGenius offers a SaaS business management platform including: a complete ERP module (purchasing, inventory, suppliers), a financial and accounting management system, a 'Copilote' AI assistant for analysis and automation, reporting and dashboard tools, and a notification and alert system. Services are accessible via web browser and mobile application. We reserve the right to evolve our features, subject to informing users with reasonable notice."
       },
       "accounts": {
-        "title": "3. User Accounts",
-        "content": "You are responsible for maintaining the confidentiality of your credentials."
+        "title": "3. User Accounts and Responsibilities",
+        "content": "You are solely responsible for maintaining the confidentiality of your login credentials and all activities performed from your account. You agree to immediately notify ProcureGenius of any unauthorized use of your account. Each user must be a real individual; accounts shared between multiple people are prohibited without explicit authorization. The organization administrator is responsible for managing their team members' access."
+      },
+      "usage_rules": {
+        "title": "4. Acceptable Use Policy",
+        "content": "By using ProcureGenius, you agree not to: use the platform for illegal or fraudulent purposes; attempt to access data belonging to other organizations; introduce viruses, malware or any malicious code; reverse engineer or decompile our software; use unauthorized automated robots or scripts. Any breach of these rules may result in immediate suspension of your account."
+      },
+      "subscription": {
+        "title": "5. Subscription and Billing",
+        "content": "Access to ProcureGenius is subject to payment of a monthly or annual subscription according to the chosen plan. Prices are shown exclusive of taxes and subject to applicable VAT. Renewal is automatic unless cancelled before the due date. In case of non-payment, access to services may be suspended after a 7-day grace period. Refunds are granted within 14 days of subscription for new registrations."
+      },
+      "intellectual_property": {
+        "title": "6. Intellectual Property",
+        "content": "All elements constituting the ProcureGenius platform (software, interface, trademarks, logos, AI algorithms, documentation) are the exclusive property of ProcureGenius and are protected by intellectual property law. You retain full ownership of all data you import or create on the platform. ProcureGenius claims no ownership rights over your business data."
+      },
+      "liability": {
+        "title": "7. Limitation of Liability",
+        "content": "ProcureGenius commits to maintaining a service availability of 99.5% per month (SLA). In the event of interruption, our liability is limited to a proportional refund of the downtime period. ProcureGenius cannot be held liable for indirect losses, loss of earnings or intangible damages. AI assistance is provided for guidance only; business decisions remain entirely your responsibility."
+      },
+      "termination": {
+        "title": "8. Termination",
+        "content": "You may cancel your subscription at any time from your account settings. Termination takes effect at the end of the current billing period. ProcureGenius reserves the right to terminate or suspend your access in case of violation of these Terms, non-payment or fraudulent use. Upon termination, your data remains exportable for 90 days, then is securely deleted."
+      },
+      "governing_law": {
+        "title": "9. Governing Law and Jurisdiction",
+        "content": "These Terms are governed by French law. In case of dispute, the parties agree to seek an amicable solution before any legal proceedings. Failing an amicable agreement, any dispute will be submitted to the exclusive jurisdiction of the Paris courts. For any questions regarding these Terms: legal@procuregenius.com."
       }
     }
   }

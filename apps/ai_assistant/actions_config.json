@@ -171,8 +171,8 @@
       "description": "Compare un prix avec l'historique interne et le marché",
       "icon": "price_check",
       "category": "intelligence",
-      "required_params": ["product_name", "price"],
-      "optional_params": ["context"],
+      "required_params": [],
+      "optional_params": ["product_name", "price", "context"],
       "success_actions": [
         {
           "type": "display_results",

@@ -25,6 +25,11 @@ urlpatterns = [
     path('suggestions/<uuid:suggestion_id>/dismiss/', views.SuggestionDismissView.as_view(), name='suggestion_dismiss'),
     path('suggestions/<uuid:suggestion_id>/action-taken/', views.SuggestionActionTakenView.as_view(), name='suggestion_action_taken'),
 
+    # Proactive Conversations
+    path('proactive-conversations/', views.ProactiveConversationListView.as_view(), name='proactive_conversations'),
+    path('proactive-conversations/<uuid:conversation_id>/accept/', views.ProactiveConversationAcceptView.as_view(), name='proactive_conversations_accept'),
+    path('proactive-conversations/<uuid:conversation_id>/dismiss/', views.ProactiveConversationDismissView.as_view(), name='proactive_conversations_dismiss'),
+
     # Notifications push IA (in-app)
     path('notifications/', views.AINotificationsView.as_view(), name='notifications'),
     path('notifications/count/', views.AINotificationsCountView.as_view(), name='notifications_count'),

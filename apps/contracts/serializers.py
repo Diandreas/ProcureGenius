@@ -116,6 +116,7 @@ class ContractDetailSerializer(serializers.ModelSerializer):
     is_expiring_soon = serializers.BooleanField(read_only=True)
     is_expired = serializers.BooleanField(read_only=True)
     counterpart_display = serializers.CharField(read_only=True)
+    signed_pdf_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Contract
@@ -126,7 +127,8 @@ class ContractDetailSerializer(serializers.ModelSerializer):
             'internal_contact', 'internal_contact_name',
             'signed_by_us', 'signed_by_us_at', 'signed_by_us_name',
             'signed_by_counterpart', 'signed_by_counterpart_at', 'signed_by_counterpart_name',
-            'contract_body',
+            'signed_pdf_url',
+            'contract_body', 'language',
             'description', 'terms_and_conditions', 'payment_terms',
             'start_date', 'end_date', 'total_value', 'currency',
             'auto_renewal', 'renewal_notice_days', 'renewal_count',
@@ -141,6 +143,14 @@ class ContractDetailSerializer(serializers.ModelSerializer):
             'approved_at', 'terminated_at', 'last_alert_sent'
         ]
 
+    def get_signed_pdf_url(self, obj):
+        if obj.signed_pdf:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.signed_pdf.url)
+            return obj.signed_pdf.url
+        return None
+
 
 class ContractCreateSerializer(serializers.ModelSerializer):
     """Serializer pour créer/modifier un contrat"""
@@ -151,7 +161,7 @@ class ContractCreateSerializer(serializers.ModelSerializer):
         model = Contract
         fields = [
             'title', 'contract_type', 'supplier', 'client', 'counterpart_name',
-            'internal_contact',
+            'internal_contact', 'language',
             'description', 'terms_and_conditions', 'payment_terms', 'contract_body',
             'start_date', 'end_date', 'total_value', 'currency',
             'auto_renewal', 'renewal_notice_days', 'alert_days_before_expiry',

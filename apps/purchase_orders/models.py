@@ -62,6 +62,8 @@ class PurchaseOrder(models.Model):
     special_conditions = models.TextField(blank=True, verbose_name=_("Conditions spéciales"))
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_("Frais de livraison"))
     
+    # AI Analysis retention
+    ai_insights = models.JSONField(blank=True, null=True, verbose_name=_("Analyse IA (JSON)"))
     class Meta:
         verbose_name = _("Bon de commande")
         verbose_name_plural = _("Bons de commande")
@@ -186,21 +188,35 @@ class PurchaseOrder(models.Model):
                     product = Product.objects.filter(reference=item.product_reference).first()
 
                 if product and product.product_type == 'physical':
-                    # Ajuster le stock
-                    movement = product.adjust_stock(
-                        quantity=item.quantity,
-                        movement_type='reception',
-                        reference_type='purchase_order',
-                        reference_id=self.id,
-                        notes=f"Réception BC {self.po_number} - {item.description}",
-                        user=user
+                    from apps.invoicing.models import ProductBatch
+                    # Chercher ou créer un lot pour cette réception
+                    batch_number = f"REC-{self.po_number}-{item.id}"
+                    batch, created = ProductBatch.objects.get_or_create(
+                        product=product,
+                        batch_number=batch_number,
+                        defaults={
+                            'initial_quantity': item.quantity,
+                            'current_quantity': 0,
+                        }
                     )
-                    if movement:
-                        movements.append({
-                            'product': product.name,
-                            'quantity': item.quantity,
-                            'new_stock': product.stock_quantity
-                        })
+                    # Ajuster le stock via le lot
+                    qty_to_add = item.quantity if created else max(0, item.quantity - (batch.current_quantity))
+                    if qty_to_add > 0:
+                        movement = product.adjust_stock(
+                            quantity=qty_to_add,
+                            movement_type='reception',
+                            reference_type='purchase_order',
+                            reference_id=self.id,
+                            notes=f"Réception BC {self.po_number} - {item.description}",
+                            user=user,
+                            batch=batch,
+                        )
+                        if movement:
+                            movements.append({
+                                'product': product.name,
+                                'quantity': qty_to_add,
+                                'new_stock': product.stock_quantity
+                            })
             except Exception as e:
                 errors.append({
                     'item': item.description,

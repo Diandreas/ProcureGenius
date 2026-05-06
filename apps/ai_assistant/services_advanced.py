@@ -273,6 +273,13 @@ class AdvancedAIActions:
         from apps.purchase_orders.models import PurchaseOrderItem
 
         try:
+            if not params.get('product_name'):
+                return {
+                    'success': True,
+                    'message': "Veuillez spécifier le nom d'un produit et son prix pour utiliser la vérification interne avancée.",
+                    'data': {'entity_type': 'price_verification', 'skipped': True}
+                }
+
             @sync_to_async
             def check_internal_price():
                 organization = user_context.get('organization')

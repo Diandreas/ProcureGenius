@@ -129,15 +129,17 @@ class ProductBatchSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'product', 'product_name', 'batch_number', 'expiration_date',
             'initial_quantity', 'current_quantity', 'warehouse', 'warehouse_name',
-            'warehouse_code', 'supplier_batch_reference', 'created_at', 'updated_at',
-            'is_active', 'notes', 'is_expired', 'is_expiring_soon'
+            'warehouse_code', 'supplier_batch_reference', 'description', 'created_at',
+            'updated_at', 'is_active', 'notes', 'is_expired', 'is_expiring_soon'
         ]
         read_only_fields = [
-            'id', 'created_at', 'updated_at', 'current_quantity', 
+            'id', 'created_at', 'updated_at', 'current_quantity',
             'is_expired', 'is_expiring_soon', 'warehouse_name', 'warehouse_code'
         ]
         extra_kwargs = {
             'warehouse': {'required': False, 'allow_null': True},
+            'expiration_date': {'required': False, 'allow_null': True},
+            'description': {'required': False, 'allow_blank': True},
         }
 
 
@@ -470,7 +472,7 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
             'supplier', 'supplier_name', 'supplier_detail',
             'status', 'priority', 'subtotal', 'tax_gst_hst', 'tax_qst',
             'total_amount', 'required_date', 'expected_delivery_date',
-            'delivery_address', 'notes', 
+            'delivery_address', 'notes', 'ai_insights',
             'created_by', 'created_by_name', 'created_by_detail',
             'created_at', 'updated_at', 'items'
         ]
@@ -578,6 +580,54 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
                             'quantity': f"Stock insuffisant. Disponible: {product.stock_quantity}, Demandé: {stock_needed}"
                         })
         
+        return attrs
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    """Serializer pour les paiements de factures"""
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    balance_after = serializers.SerializerMethodField()
+
+    class Meta:
+        from apps.invoicing.models import Payment
+        model = Payment
+        fields = [
+            'id', 'invoice', 'amount', 'payment_date', 'payment_method',
+            'reference_number', 'notes', 'created_by', 'created_by_name',
+            'balance_after', 'created_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'created_by', 'created_by_name', 'balance_after']
+
+    def get_balance_after(self, obj):
+        """Solde restant après ce paiement (calculé à la volée)"""
+        from decimal import Decimal
+        invoice = obj.invoice
+        # Paiements jusqu'à et incluant celui-ci, triés par date
+        payments = invoice.payments.filter(
+            payment_date__lte=obj.payment_date,
+            created_at__lte=obj.created_at,
+        )
+        total_paid = sum(Decimal(str(p.amount)) for p in payments)
+        return float(max(Decimal(str(invoice.total_amount)) - total_paid, Decimal('0')))
+
+    def validate_amount(self, value):
+        from decimal import Decimal
+        if value <= 0:
+            raise serializers.ValidationError("Le montant doit être supérieur à 0.")
+        return value
+
+    def validate(self, attrs):
+        invoice = attrs.get('invoice') or (self.instance.invoice if self.instance else None)
+        amount = attrs.get('amount', self.instance.amount if self.instance else None)
+        if invoice and amount:
+            from decimal import Decimal
+            balance = invoice.get_balance_due()
+            if self.instance:
+                balance += Decimal(str(self.instance.amount))
+            if Decimal(str(amount)) > balance + Decimal('0.01'):
+                raise serializers.ValidationError({
+                    'amount': f"Montant ({amount}) supérieur au solde dû ({balance:.2f})."
+                })
         return attrs
 
 
@@ -691,10 +741,24 @@ class ProductCategorySerializer(serializers.ModelSerializer):
             'description', 'parent', 'parent_name', 'children_count',
             'is_active', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'organization', 'slug', 'created_at', 'updated_at']
 
     def get_children_count(self, obj):
         return obj.children.count()
+
+    def create(self, validated_data):
+        from django.utils.text import slugify
+        import uuid
+        name = validated_data.get('name', '')
+        base_slug = slugify(name)
+        slug = base_slug
+        # Garantir l'unicité du slug
+        counter = 1
+        while ProductCategory.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        validated_data['slug'] = slug
+        return super().create(validated_data)
 
 
 class WarehouseSerializer(serializers.ModelSerializer):
@@ -709,7 +773,7 @@ class WarehouseSerializer(serializers.ModelSerializer):
             'address', 'city', 'province', 'postal_code', 'country',
             'is_active', 'products_count', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'organization', 'created_at', 'updated_at']
 
     def get_products_count(self, obj):
         from apps.invoicing.models import Product

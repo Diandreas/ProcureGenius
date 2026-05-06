@@ -24,7 +24,7 @@ import {
   Badge,
   Divider,
 } from '@mui/material';
-import { motion, LayoutGroup } from 'framer-motion';
+import { motion, LayoutGroup, AnimatePresence } from 'framer-motion';
 import { getNeumorphicShadow } from '../styles/neumorphism/mixins';
 import {
   Add,
@@ -84,6 +84,29 @@ const NotificationsMenuItem = ({ handleMenuClose }) => {
     </MenuItem>
   );
 };
+
+const pageVariants = {
+  initial: { opacity: 0, y: 10 },
+  enter:   { opacity: 1, y: 0, transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] } },
+  exit:    { opacity: 0, y: -6, transition: { duration: 0.15, ease: [0.4, 0, 1, 1] } },
+};
+
+function PageTransition({ locationKey, children }) {
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={locationKey}
+        variants={pageVariants}
+        initial="initial"
+        animate="enter"
+        exit="exit"
+        style={{ width: '100%' }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 function MainLayout() {
   const { t } = useTranslation(['navigation', 'common']);
@@ -156,12 +179,12 @@ function MainLayout() {
     { text: t('navigation:menu.invoices'), iconSrc: '/icon/bill.png', path: '/invoices', moduleId: 'invoices', isCore: false },
     { text: t('navigation:menu.products'), iconSrc: '/icon/product.png', path: '/products', moduleId: 'products', isCore: false },
     { text: t('navigation:menu.clients'), iconSrc: '/icon/user.png', path: '/clients', moduleId: 'clients', isCore: false },
-    { text: t('navigation:menu.eSourcing'), iconSrc: '/icon/market.png', path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
+    // { text: t('navigation:menu.eSourcing'), iconSrc: '/icon/market.png', path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
     { text: t('navigation:menu.contracts'), iconSrc: '/icon/contract.png', path: '/contracts', moduleId: 'contracts', isCore: false },
-    { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
+    { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'ai-assistant', isCore: true },
 
     { divider: true },
-    { text: 'Comptabilité', iconSrc: '/icon/analysis.png', path: '/accounting', moduleId: 'dashboard', isCore: true, matchPrefix: '/accounting' },
+    { text: 'Comptabilité', iconSrc: '/icon/analysis.png', path: '/accounting', moduleId: 'accounting', isCore: true, matchPrefix: '/accounting' },
   ];
 
   const [userPermissions, setUserPermissions] = useState(null);
@@ -310,15 +333,6 @@ function MainLayout() {
             label: t('navigation:topBar.newClient', 'Nouveau client'),
             icon: <Add fontSize="small" />,
             onClick: () => navigate('/clients/new')
-          }
-        };
-      case '/e-sourcing/events':
-        return {
-          title: t('navigation:menu.eSourcing'),
-          action: {
-            label: t('navigation:topBar.newRfqEvent', 'Nouvel événement'),
-            icon: <Add fontSize="small" />,
-            onClick: () => navigate('/e-sourcing/events/new')
           }
         };
       case '/contracts':
@@ -551,7 +565,7 @@ function MainLayout() {
 
   // Calculer isMainPage pour utilisation dans plusieurs endroits
   const path = location.pathname;
-  const mainPages = ['/dashboard', '/suppliers', '/purchase-orders', '/invoices', '/products', '/clients', '/ai-chat', '/e-sourcing', '/contracts'];
+  const mainPages = ['/dashboard', '/suppliers', '/purchase-orders', '/invoices', '/products', '/clients', '/ai-chat', /* '/e-sourcing', */ '/contracts'];
   const isMainPage = mainPages.some(page => path === page);
 
   return (
@@ -1149,7 +1163,9 @@ function MainLayout() {
           <Toolbar sx={{ minHeight: { xs: 56, sm: 60 } }} />
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             <LayoutGroup>
-              <Outlet />
+              <PageTransition locationKey={location.pathname}>
+                <Outlet />
+              </PageTransition>
             </LayoutGroup>
           </Box>
         </Box>

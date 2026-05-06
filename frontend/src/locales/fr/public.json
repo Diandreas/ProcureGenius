@@ -13,9 +13,9 @@
       "desc": "Besoin d'aide urgente ? Discutez directement avec un expert technique via WhatsApp."
     },
     "youtube": {
-        "title": "Formation et Tutoriels sur YouTube",
-        "desc": "Des vidéos exclusives sur comment maîtriser nos outils d'intelligence artificielle et intégrer Procura à votre entreprise.",
-        "comingSoon": "(Chaîne à venir très prochainement)"
+      "title": "Formation et Tutoriels sur YouTube",
+      "desc": "Des vidéos exclusives sur comment maîtriser nos outils d'intelligence artificielle et intégrer Procura à votre entreprise.",
+      "comingSoon": "(Chaîne à venir très prochainement)"
     },
     "form": {
       "title": "Envoyer un message",
@@ -36,51 +36,89 @@
   "privacy": {
     "title": "Politique de Confidentialité",
     "lastUpdated": "Dernière mise à jour : {{date}}",
-    "intro": "Chez Procura, la sécurité et la confidentialité de vos données constituent notre première priorité. Cette politique de confidentialité détaille quelles informations nous collectons, comment nous les utilisons, et les mesures strictes que nous prenons pour les protéger.",
+    "intro": "Chez ProcureGenius, la sécurité et la confidentialité de vos données constituent notre première priorité. Cette politique de confidentialité détaille les informations que nous collectons, la manière dont nous les utilisons, et les mesures strictes que nous prenons pour les protéger.",
     "sections": {
       "intro": {
-        "title": "1. Introduction",
-        "content": "Cette politique s'applique à tous nos services d'ERP, de gestion financière et à notre assistant IA 'Copilote'."
+        "title": "1. Introduction et champ d'application",
+        "content": "La présente politique de confidentialité s'applique à l'ensemble des services proposés par ProcureGenius SAS, incluant la plateforme ERP, le module de gestion financière, le système de gestion des achats et des fournisseurs, ainsi que l'assistant IA « Copilote ». En accédant à nos services, vous reconnaissez avoir pris connaissance de la présente politique et l'acceptez dans son intégralité. ProcureGenius est responsable du traitement de vos données personnelles au sens du Règlement Général sur la Protection des Données (RGPD – Règlement UE 2016/679)."
       },
       "data": {
         "title": "2. Données collectées",
-        "content": "Nous collectons les types d'informations suivants :",
+        "content": "Dans le cadre de la fourniture de nos services, nous collectons les catégories d'informations suivantes :",
         "items": [
-          "Données professionnelles : Raison sociale, SIRET, numéros de TVA.",
-          "Informations utilisateurs : Adresses email, noms et fonctions.",
-          "Données analytiques : Journaux de connexion, interactions IA.",
-          "Documents : Bons de commande, reçus, factures PDF."
+          "Données d'identification professionnelle : Raison sociale, numéro SIRET/SIREN, numéros de TVA intracommunautaire, adresse du siège social.",
+          "Informations utilisateurs : Adresses e-mail, noms et prénoms, fonctions et rôles au sein de l'organisation.",
+          "Données financières et comptables : Factures, bons de commande, relevés, informations de paiement (traitées via des prestataires certifiés PCI-DSS).",
+          "Documents importés : Fichiers PDF, images de reçus, pièces justificatives traitées par l'IA.",
+          "Données d'usage analytiques : Journaux de connexion, adresses IP, interactions avec l'assistant IA, durées de session.",
+          "Données de communication : Messages envoyés au support, retours d'expérience et enquêtes de satisfaction."
         ]
       },
       "usage": {
-        "title": "3. Utilisation des données",
-        "content": "Vos données sont uniquement utilisées pour fournir et optimiser les services offerts. Nous ne vendons jamais vos données à des tiers."
+        "title": "3. Finalités du traitement",
+        "content": "Vos données sont collectées et traitées exclusivement pour les finalités suivantes : la fourniture, l'amélioration et la personnalisation de nos services ERP ; la gestion de votre compte et de votre abonnement ; l'envoi de notifications fonctionnelles et de rapports ; la détection et la prévention des fraudes ; le respect de nos obligations légales et réglementaires. Nous ne vendons, ne louons, ni ne partageons jamais vos données à des tiers à des fins commerciales."
       },
       "ai": {
-        "title": "4. Intelligence Artificielle",
-        "content": "Vos données privées ne sont pas utilisées pour entraîner publiquement les modèles d'IA externes."
+        "title": "4. Intelligence Artificielle et traitement automatisé",
+        "content": "L'assistant IA « Copilote » de ProcureGenius utilise vos données opérationnelles uniquement pour vous fournir des analyses, recommandations et automatisations dans le cadre de votre espace de travail. Vos données confidentielles ne sont en aucun cas utilisées pour entraîner des modèles d'IA publics ou partagées avec des tiers à des fins d'apprentissage automatique. Les traitements automatisés restent sous votre contrôle et vous disposez d'un droit d'opposition à tout moment."
       },
       "security": {
-        "title": "5. Sécurité et Hébergement",
-        "content": "Données hébergées en Europe (RGPD) avec chiffrement AES-256."
+        "title": "5. Sécurité et hébergement",
+        "content": "L'ensemble de vos données est hébergé exclusivement en Europe, dans des centres de données conformes au RGPD. Nous appliquons les mesures de sécurité suivantes : chiffrement AES-256 au repos et TLS 1.3 en transit, authentification à deux facteurs (2FA), contrôle d'accès basé sur les rôles (RBAC), audits de sécurité réguliers et journalisation complète des accès."
+      },
+      "rights": {
+        "title": "6. Vos droits",
+        "content": "Conformément au RGPD, vous disposez des droits suivants sur vos données personnelles : droit d'accès, droit de rectification, droit à l'effacement (« droit à l'oubli »), droit à la limitation du traitement, droit à la portabilité des données, droit d'opposition. Pour exercer ces droits, contactez notre Délégué à la Protection des Données à l'adresse : privacy@procuregenius.com. Nous nous engageons à répondre à toute demande dans un délai de 30 jours."
+      },
+      "cookies": {
+        "title": "7. Cookies et traceurs",
+        "content": "Nous utilisons des cookies strictement nécessaires au fonctionnement de la plateforme, ainsi que des cookies analytiques (anonymisés) pour améliorer l'expérience utilisateur. Aucun cookie publicitaire tiers n'est utilisé. Vous pouvez gérer vos préférences de cookies à tout moment depuis les paramètres de votre compte."
+      },
+      "contact": {
+        "title": "8. Contact et réclamations",
+        "content": "Pour toute question relative à cette politique ou au traitement de vos données personnelles, vous pouvez nous contacter à : privacy@procuregenius.com. En cas de litige non résolu, vous avez le droit d'introduire une réclamation auprès de la CNIL (Commission Nationale de l'Informatique et des Libertés) à l'adresse www.cnil.fr."
       }
     }
   },
   "terms": {
-    "title": "Conditions d'Utilisation",
+    "title": "Conditions Générales d'Utilisation",
     "lastUpdated": "Dernière mise à jour : {{date}}",
     "sections": {
       "acceptance": {
         "title": "1. Acceptation des conditions",
-        "content": "En utilisant Procura, vous acceptez d'être lié par les présentes conditions générales d'utilisation."
+        "content": "En accédant à la plateforme ProcureGenius et en utilisant nos services, vous acceptez d'être lié par les présentes Conditions Générales d'Utilisation (CGU). Si vous n'acceptez pas ces conditions, vous devez cesser immédiatement d'utiliser nos services. Ces CGU constituent un accord légalement contraignant entre vous (ou votre organisation) et ProcureGenius SAS, société par actions simplifiée au capital de 10 000 €, immatriculée au RCS de Paris."
       },
       "services": {
         "title": "2. Description des services",
-        "content": "Procura fournit une plateforme de gestion d'entreprise intégrant l'IA, la facturation et la gestion de stocks."
+        "content": "ProcureGenius propose une plateforme SaaS de gestion d'entreprise intégrant : un module ERP complet (achats, stocks, fournisseurs), un système de gestion financière et comptable, un assistant IA « Copilote » pour l'analyse et l'automatisation, des outils de reporting et de tableaux de bord, ainsi qu'un système de notifications et d'alertes. Les services sont accessibles via navigateur web et application mobile. Nous nous réservons le droit de faire évoluer nos fonctionnalités, sous réserve d'en informer les utilisateurs avec un préavis raisonnable."
       },
       "accounts": {
-        "title": "3. Comptes utilisateurs",
-        "content": "Vous êtes responsable du maintien de la confidentialité de vos identifiants."
+        "title": "3. Comptes utilisateurs et responsabilités",
+        "content": "Vous êtes seul responsable du maintien de la confidentialité de vos identifiants de connexion et de toutes les activités effectuées depuis votre compte. Vous vous engagez à notifier immédiatement ProcureGenius de toute utilisation non autorisée de votre compte. Chaque utilisateur doit être une personne physique réelle ; les comptes partagés entre plusieurs personnes sont interdits sans autorisation explicite. L'administrateur de l'organisation est responsable de la gestion des accès des membres de son équipe."
+      },
+      "usage_rules": {
+        "title": "4. Règles d'utilisation acceptable",
+        "content": "En utilisant ProcureGenius, vous vous engagez à ne pas : utiliser la plateforme à des fins illégales ou frauduleuses ; tenter d'accéder à des données appartenant à d'autres organisations ; introduire des virus, malwares ou tout code malveillant ; procéder à du reverse engineering ou décompiler nos logiciels ; utiliser des robots ou scripts automatisés non autorisés. Tout manquement à ces règles pourra entraîner la suspension immédiate de votre compte."
+      },
+      "subscription": {
+        "title": "5. Abonnement et facturation",
+        "content": "L'accès à ProcureGenius est soumis au paiement d'un abonnement mensuel ou annuel selon la formule choisie. Les tarifs sont indiqués hors taxes et soumis à la TVA applicable. Le renouvellement est automatique sauf résiliation avant la date d'échéance. En cas de non-paiement, l'accès aux services peut être suspendu après un délai de grâce de 7 jours. Les remboursements sont accordés dans un délai de 14 jours suivant la souscription pour les nouvelles inscriptions."
+      },
+      "intellectual_property": {
+        "title": "6. Propriété intellectuelle",
+        "content": "L'ensemble des éléments constituant la plateforme ProcureGenius (logiciel, interface, marques, logos, algorithmes IA, documentation) sont la propriété exclusive de ProcureGenius SAS et sont protégés par le droit de la propriété intellectuelle. Vous conservez la pleine propriété de l'ensemble des données que vous importez ou créez sur la plateforme. ProcureGenius ne revendique aucun droit de propriété sur vos données métier."
+      },
+      "liability": {
+        "title": "7. Limitation de responsabilité",
+        "content": "ProcureGenius s'engage à maintenir une disponibilité de service de 99,5 % par mois (SLA). En cas d'interruption, notre responsabilité est limitée au remboursement proportionnel de la période d'indisponibilité. ProcureGenius ne saurait être tenu responsable des pertes indirectes, manques à gagner ou préjudices immatériels. L'assistance IA est fournie à titre indicatif ; les décisions métier restent sous votre entière responsabilité."
+      },
+      "termination": {
+        "title": "8. Résiliation",
+        "content": "Vous pouvez résilier votre abonnement à tout moment depuis les paramètres de votre compte. La résiliation prend effet à la fin de la période de facturation en cours. ProcureGenius se réserve le droit de résilier ou suspendre votre accès en cas de violation des présentes CGU, de non-paiement ou d'utilisation frauduleuse. À la résiliation, vos données restent exportables pendant 90 jours, puis sont supprimées de manière sécurisée."
+      },
+      "governing_law": {
+        "title": "9. Droit applicable et juridiction",
+        "content": "Les présentes CGU sont régies par le droit français. En cas de litige, les parties s'engagent à rechercher une solution amiable avant tout recours judiciaire. À défaut d'accord amiable, tout litige sera soumis à la compétence exclusive des tribunaux de Paris. Pour toute question relative aux présentes CGU : legal@procuregenius.com."
       }
     }
   }

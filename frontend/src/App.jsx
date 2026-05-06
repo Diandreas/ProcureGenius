@@ -2,6 +2,7 @@ import React, { useMemo, createContext, useContext, useState, useEffect } from '
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import Box from '@mui/material/Box';
 import { SnackbarProvider } from 'notistack';
 import { Provider, useDispatch } from 'react-redux';
 import { store } from './store/store';
@@ -17,66 +18,78 @@ import { AccountingHelpProvider } from './contexts/AccountingHelpContext';
 import MainLayout from './layouts/MainLayout';
 import AuthLayout from './layouts/AuthLayout';
 
-// Pages
-import Login from './pages/auth/Login';
-import DashboardEnhanced from './pages/DashboardEnhanced';
-import Suppliers from './pages/suppliers/Suppliers';
-import SupplierDetail from './pages/suppliers/SupplierDetail';
-import SupplierForm from './pages/suppliers/SupplierForm';
-import PurchaseOrders from './pages/purchase-orders/PurchaseOrders';
-import PurchaseOrderDetail from './pages/purchase-orders/PurchaseOrderDetail';
-import PurchaseOrderForm from './pages/purchase-orders/PurchaseOrderForm';
-import Invoices from './pages/invoices/Invoices';
-import InvoiceDetail from './pages/invoices/InvoiceDetail';
-import InvoiceForm from './pages/invoices/InvoiceForm';
-import Products from './pages/products/Products';
-import ProductDetail from './pages/products/ProductDetail';
-import ProductForm from './pages/products/ProductForm';
-import Clients from './pages/clients/Clients';
-import ClientDetail from './pages/clients/ClientDetail';
-import ClientForm from './pages/clients/ClientForm';
-import AIChat from './pages/ai-chat/AIChat';
-import ImportReviews from './pages/ai-chat/ImportReviews';
-import DocumentImport from './pages/ai-chat/DocumentImport';
-import Settings from './pages/settings/Settings';
-import UserManagement from './pages/settings/UserManagement';
-import SourcingEvents from './pages/e-sourcing/SourcingEvents';
-import SourcingEventForm from './pages/e-sourcing/SourcingEventForm';
-import SourcingEventDetail from './pages/e-sourcing/SourcingEventDetail';
-import BidComparison from './pages/e-sourcing/BidComparison';
-import BidDetail from './pages/e-sourcing/BidDetail';
-import PublicBidSubmission from './pages/e-sourcing/PublicBidSubmission';
-import Contracts from './pages/contracts/Contracts';
-import ContractDetail from './pages/contracts/ContractDetail';
-import ContractForm from './pages/contracts/ContractForm';
-import MigrationJobs from './pages/migration/MigrationJobs';
-import MigrationWizard from './pages/migration/MigrationWizard';
-import DataImportPage from './pages/settings/DataImportPage';
-import Pricing from './pages/Pricing';
-import PublicSupport from './pages/public/Support';
-import Documentation from './pages/public/Documentation';
-import PrivacyPolicy from './pages/public/PrivacyPolicy';
-import TermsOfService from './pages/public/TermsOfService';
-import Register from './pages/auth/Register';
-import LoginEnhanced from './pages/auth/LoginEnhanced';
-import OnboardingSetup from './pages/auth/OnboardingSetup';
-import Help from './pages/Help';
-import FAQ from './pages/FAQ';
-import KeyboardShortcuts from './pages/KeyboardShortcuts';
-import Support from './pages/Support';
-import Landing from './pages/Landing';
+// Lazy-loaded pages — chaque module est chargé à la demande
+const Login         = React.lazy(() => import('./pages/auth/Login'));
+const LoginEnhanced = React.lazy(() => import('./pages/auth/LoginEnhanced'));
+const Register      = React.lazy(() => import('./pages/auth/Register'));
+const OnboardingSetup = React.lazy(() => import('./pages/auth/OnboardingSetup'));
 
-// Accounting Pages
-import AccountingDashboard from './pages/accounting/AccountingDashboard';
-import ChartOfAccounts from './pages/accounting/ChartOfAccounts';
-import JournalEntries from './pages/accounting/JournalEntries';
-import JournalEntryForm from './pages/accounting/JournalEntryForm';
-import JournalEntryDetail from './pages/accounting/JournalEntryDetail';
-import TrialBalance from './pages/accounting/TrialBalance';
-import GeneralLedger from './pages/accounting/GeneralLedger';
-import IncomeStatement from './pages/accounting/IncomeStatement';
-import BalanceSheet from './pages/accounting/BalanceSheet';
-import SIG from './pages/accounting/SIG';
+const Landing          = React.lazy(() => import('./pages/Landing'));
+const Pricing          = React.lazy(() => import('./pages/Pricing'));
+const Help             = React.lazy(() => import('./pages/Help'));
+const FAQ              = React.lazy(() => import('./pages/FAQ'));
+const KeyboardShortcuts = React.lazy(() => import('./pages/KeyboardShortcuts'));
+const Support          = React.lazy(() => import('./pages/Support'));
+const PublicSupport    = React.lazy(() => import('./pages/public/Support'));
+const Documentation    = React.lazy(() => import('./pages/public/Documentation'));
+const PrivacyPolicy    = React.lazy(() => import('./pages/public/PrivacyPolicy'));
+const TermsOfService   = React.lazy(() => import('./pages/public/TermsOfService'));
+const PublicBidSubmission = React.lazy(() => import('./pages/e-sourcing/PublicBidSubmission'));
+
+const DashboardEnhanced = React.lazy(() => import('./pages/DashboardEnhanced'));
+
+const Suppliers      = React.lazy(() => import('./pages/suppliers/Suppliers'));
+const SupplierDetail = React.lazy(() => import('./pages/suppliers/SupplierDetail'));
+const SupplierForm   = React.lazy(() => import('./pages/suppliers/SupplierForm'));
+
+const PurchaseOrders      = React.lazy(() => import('./pages/purchase-orders/PurchaseOrders'));
+const PurchaseOrderDetail = React.lazy(() => import('./pages/purchase-orders/PurchaseOrderDetail'));
+const PurchaseOrderForm   = React.lazy(() => import('./pages/purchase-orders/PurchaseOrderForm'));
+
+const Invoices      = React.lazy(() => import('./pages/invoices/Invoices'));
+const InvoiceDetail = React.lazy(() => import('./pages/invoices/InvoiceDetail'));
+const InvoiceForm   = React.lazy(() => import('./pages/invoices/InvoiceForm'));
+
+const Products      = React.lazy(() => import('./pages/products/Products'));
+const ProductDetail = React.lazy(() => import('./pages/products/ProductDetail'));
+const ProductForm   = React.lazy(() => import('./pages/products/ProductForm'));
+
+const Clients      = React.lazy(() => import('./pages/clients/Clients'));
+const ClientDetail = React.lazy(() => import('./pages/clients/ClientDetail'));
+const ClientForm   = React.lazy(() => import('./pages/clients/ClientForm'));
+
+const Contracts      = React.lazy(() => import('./pages/contracts/Contracts'));
+const ContractDetail = React.lazy(() => import('./pages/contracts/ContractDetail'));
+const ContractForm   = React.lazy(() => import('./pages/contracts/ContractForm'));
+
+const SourcingEvents      = React.lazy(() => import('./pages/e-sourcing/SourcingEvents'));
+const SourcingEventForm   = React.lazy(() => import('./pages/e-sourcing/SourcingEventForm'));
+const SourcingEventDetail = React.lazy(() => import('./pages/e-sourcing/SourcingEventDetail'));
+const BidComparison       = React.lazy(() => import('./pages/e-sourcing/BidComparison'));
+const BidDetail           = React.lazy(() => import('./pages/e-sourcing/BidDetail'));
+
+const AIChat        = React.lazy(() => import('./pages/ai-chat/AIChat'));
+const ImportReviews = React.lazy(() => import('./pages/ai-chat/ImportReviews'));
+const DocumentImport = React.lazy(() => import('./pages/ai-chat/DocumentImport'));
+
+const Settings       = React.lazy(() => import('./pages/settings/Settings'));
+const UserManagement = React.lazy(() => import('./pages/settings/UserManagement'));
+const DataImportPage = React.lazy(() => import('./pages/settings/DataImportPage'));
+
+const MigrationJobs   = React.lazy(() => import('./pages/migration/MigrationJobs'));
+const MigrationWizard = React.lazy(() => import('./pages/migration/MigrationWizard'));
+
+// Accounting — chargé uniquement si l'utilisateur visite /accounting
+const AccountingDashboard = React.lazy(() => import('./pages/accounting/AccountingDashboard'));
+const ChartOfAccounts     = React.lazy(() => import('./pages/accounting/ChartOfAccounts'));
+const JournalEntries      = React.lazy(() => import('./pages/accounting/JournalEntries'));
+const JournalEntryForm    = React.lazy(() => import('./pages/accounting/JournalEntryForm'));
+const JournalEntryDetail  = React.lazy(() => import('./pages/accounting/JournalEntryDetail'));
+const TrialBalance        = React.lazy(() => import('./pages/accounting/TrialBalance'));
+const GeneralLedger       = React.lazy(() => import('./pages/accounting/GeneralLedger'));
+const IncomeStatement     = React.lazy(() => import('./pages/accounting/IncomeStatement'));
+const BalanceSheet        = React.lazy(() => import('./pages/accounting/BalanceSheet'));
+const SIG                 = React.lazy(() => import('./pages/accounting/SIG'));
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
@@ -598,6 +611,77 @@ function AppInitializer({ children }) {
   return children;
 }
 
+// Skeleton léger affiché pendant le chargement lazy d'une page
+function PageSkeleton() {
+  return (
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 2,
+      p: { xs: 2, md: 3 },
+      maxWidth: 1200,
+      mx: 'auto',
+      mt: 2,
+    }}>
+      {/* Barre de titre */}
+      <Box sx={{
+        height: 32,
+        width: '35%',
+        borderRadius: 2,
+        bgcolor: 'action.hover',
+        animation: 'pulse 1.4s ease-in-out infinite',
+        '@keyframes pulse': {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.4 },
+        },
+      }} />
+      {/* Ligne de cartes */}
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        {[1, 2, 3].map(i => (
+          <Box key={i} sx={{
+            flex: 1,
+            height: 90,
+            borderRadius: 3,
+            bgcolor: 'action.hover',
+            animation: 'pulse 1.4s ease-in-out infinite',
+            animationDelay: `${i * 0.1}s`,
+            '@keyframes pulse': {
+              '0%, 100%': { opacity: 1 },
+              '50%': { opacity: 0.4 },
+            },
+          }} />
+        ))}
+      </Box>
+      {/* Bloc principal */}
+      <Box sx={{
+        height: 340,
+        borderRadius: 3,
+        bgcolor: 'action.hover',
+        animation: 'pulse 1.4s ease-in-out 0.3s infinite',
+        '@keyframes pulse': {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.4 },
+        },
+      }} />
+      {/* Lignes de texte */}
+      {[80, 60, 70].map((w, i) => (
+        <Box key={i} sx={{
+          height: 14,
+          width: `${w}%`,
+          borderRadius: 1,
+          bgcolor: 'action.hover',
+          animation: 'pulse 1.4s ease-in-out infinite',
+          animationDelay: `${0.4 + i * 0.1}s`,
+          '@keyframes pulse': {
+            '0%, 100%': { opacity: 1 },
+            '50%': { opacity: 0.4 },
+          },
+        }} />
+      ))}
+    </Box>
+  );
+}
+
 function App() {
   // Theme mode state - persisted to localStorage
   const [mode, setMode] = useState(() => {
@@ -724,6 +808,7 @@ function App() {
                       <AdSenseScript />
                       {onboardingChecked && (
                         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                      <React.Suspense fallback={<PageSkeleton />}>
                       <Routes>
                         {/* Public Routes */}
                         <Route element={<PublicLayout />}>
@@ -834,6 +919,7 @@ function App() {
                         {/* 404 */}
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
+                      </React.Suspense>
                       <PWAInstallPrompt />
                     </Router>
                       )}

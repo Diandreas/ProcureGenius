@@ -22,6 +22,7 @@ router.register(r'warehouses', views.WarehouseViewSet)
 router.register(r'clients', views.ClientViewSet)
 router.register(r'purchase-orders', views.PurchaseOrderViewSet)
 router.register(r'invoices', views.InvoiceViewSet)
+router.register(r'payments', views.PaymentViewSet, basename='payments')
 
 # Settings and Print Templates
 router.register(r'settings', views_settings.OrganizationSettingsViewSet, basename='settings')

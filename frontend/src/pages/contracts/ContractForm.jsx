@@ -145,9 +145,8 @@ const BUILTIN_TEMPLATES = [
 
 const STEPS = [
   { label: 'Type & Description', icon: <SmartToy /> },
-  { label: 'Informations', icon: <Business /> },
-  { label: 'Sections du contrat', icon: <Gavel /> },
-  { label: 'Signatures & Finalisation', icon: <Draw /> },
+  { label: 'Informations & Sections', icon: <Gavel /> },
+  { label: 'Finalisation', icon: <CheckCircle /> },
 ];
 
 // ===================================================================
@@ -267,7 +266,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
       setSections(defs.map((d, i) => ({
         section_type: d.type,
         title: d.title,
-        content: '',
+        content: d.default_content || '',
         order: i + 1,
         is_ai_generated: false,
         ai_tokens_used: 0,
@@ -281,11 +280,14 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
     title: formData.title || '',
     contract_type: formData.contract_type || 'service',
     description: formData.description || formData.extra_instructions || '',
+    language: formData.language || 'fr',
     counterpart_name: formData.party_type === 'client'
       ? (formData.client?.name || formData.client?.company_name || '')
       : formData.party_type === 'supplier'
         ? (formData.supplier?.name || '')
         : formData.counterpart_name || '',
+    supplier_id: formData.party_type === 'supplier' ? formData.supplier?.id : undefined,
+    client_id: formData.party_type === 'client' ? formData.client?.id : undefined,
     total_value: formData.total_value || '',
     currency: formData.currency || 'CAD',
     start_date: formData.start_date || '',
@@ -370,13 +372,13 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
   return (
     <Box>
       {/* Header avec bouton générer tout */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
         <Box>
           <Typography variant="h6" fontWeight={700}>
             Sections du contrat ({sections.length} articles)
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            L'IA génère chaque section individuellement pour une meilleure qualité et économie de tokens
+            Chaque article est pré-rempli avec du texte juridique standard. Utilisez l'IA pour personnaliser selon vos besoins.
           </Typography>
         </Box>
         <Button
@@ -386,7 +388,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
           disabled={generating}
           color="primary"
         >
-          {generating ? 'Génération en cours...' : allSectionsGenerated ? 'Tout régénérer' : 'Générer toutes les sections'}
+          {generating ? 'Personnalisation en cours...' : sections.some(s => s.is_ai_generated) ? '✨ Re-personnaliser tout' : '✨ Personnaliser avec IA'}
         </Button>
       </Box>
 
@@ -499,11 +501,11 @@ function SectionEditor({ section, index, isRegenerating, onRegenerate, onContent
           <Button
             size="small"
             variant="outlined"
-            startIcon={isRegenerating ? <CircularProgress size={14} /> : <Refresh />}
+            startIcon={isRegenerating ? <CircularProgress size={14} /> : <AutoFixHigh />}
             onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
             disabled={isRegenerating}
           >
-            {hasContent ? 'Régénérer' : 'Générer'} avec IA
+            {isRegenerating ? 'IA en cours...' : section.is_ai_generated ? 'Re-personnaliser IA' : '✨ Personnaliser avec IA'}
           </Button>
           {hasContent && (
             <Button
@@ -713,7 +715,6 @@ function ContractForm() {
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const [activeStep, setActiveStep] = useState(0);
-  const [signedPdfFile, setSignedPdfFile] = useState(null);
   const [sections, setSections] = useState([]);
 
   const { currentContract, loading } = useSelector((state) => state.contracts);
@@ -739,6 +740,7 @@ function ContractForm() {
     end_date: '',
     total_value: '',
     currency: 'CAD',
+    language: 'fr',
     auto_renewal: false,
     renewal_notice_days: 30,
     alert_days_before_expiry: 30,
@@ -790,6 +792,7 @@ function ContractForm() {
         signed_by_counterpart_name: currentContract.signed_by_counterpart_name || '',
         signed_by_counterpart_at: currentContract.signed_by_counterpart_at || '',
         extra_instructions: '',
+        language: currentContract.language || 'fr',
       });
       // Charger les sections existantes
       if (currentContract.sections && currentContract.sections.length > 0) {
@@ -830,16 +833,12 @@ function ContractForm() {
       if (isEditMode) {
         await dispatch(updateContract({ id, data: payload })).unwrap();
         enqueueSnackbar('Contrat mis à jour avec succès', { variant: 'success' });
+        navigate(`/contracts/${id}`);
       } else {
         const result = await dispatch(createContract(payload)).unwrap();
-        if (signedPdfFile && result?.id) {
-          const formDataUpload = new FormData();
-          formDataUpload.append('signed_pdf', signedPdfFile);
-          await contractsAPI.update(result.id, formDataUpload);
-        }
-        enqueueSnackbar('Contrat créé avec succès', { variant: 'success' });
+        enqueueSnackbar('Contrat créé avec succès ! Vous pouvez maintenant importer le PDF signé.', { variant: 'success' });
+        navigate(`/contracts/${result?.id || ''}`);
       }
-      navigate('/contracts');
     } catch (err) {
       enqueueSnackbar(err.message || 'Erreur lors de la sauvegarde', { variant: 'error' });
     } finally {
@@ -891,6 +890,16 @@ function ContractForm() {
                   <MenuItem value="nda">Accord de confidentialité</MenuItem>
                   <MenuItem value="partnership">Accord de partenariat</MenuItem>
                   <MenuItem value="other">Autre</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Langue du contrat</InputLabel>
+                <Select name="language" value={formData.language} onChange={handleChange} label="Langue du contrat">
+                  <MenuItem value="fr">🇫🇷 Français</MenuItem>
+                  <MenuItem value="en">🇬🇧 English</MenuItem>
+                  <MenuItem value="es">🇪🇸 Español</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -1032,7 +1041,7 @@ function ContractForm() {
           </Grid>
         );
 
-      case 2:
+      case 1:
         return (
           <SectionsStep
             formData={formData}
@@ -1042,17 +1051,9 @@ function ContractForm() {
           />
         );
 
-      case 3:
+      case 2:
         return (
           <Box>
-            <SignatureSection
-              formData={formData}
-              setFormData={setFormData}
-              onSignedPdfUpload={setSignedPdfFile}
-            />
-
-            <Divider sx={{ my: 3 }} />
-
             <Typography variant="h6" fontWeight={700} mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CalendarToday fontSize="small" color="primary" />
               Renouvellement & Alertes
@@ -1105,6 +1106,12 @@ function ContractForm() {
                   <Typography variant="body2" fontWeight={600}>{formData.contract_type}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Langue</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {formData.language === 'fr' ? '🇫🇷 Français' : formData.language === 'en' ? '🇬🇧 English' : '🇪🇸 Español'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Contrepartie</Typography>
                   <Typography variant="body2" fontWeight={600}>
                     {formData.party_type === 'client' ? formData.client?.name || formData.client?.company_name :
@@ -1130,18 +1137,12 @@ function ContractForm() {
                     {sections.filter(s => s.content).length}/{sections.length} générées
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Signatures</Typography>
-                  <Stack direction="row" spacing={0.5}>
-                    {formData.signed_by_us && <Chip label="Nous" size="small" color="success" />}
-                    {formData.signed_by_counterpart && <Chip label="Contrepartie" size="small" color="success" />}
-                    {!formData.signed_by_us && !formData.signed_by_counterpart && (
-                      <Typography variant="body2" color="text.secondary">Non signé</Typography>
-                    )}
-                  </Stack>
-                </Box>
               </Stack>
             </Box>
+
+            <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }} icon={<Draw fontSize="small" />}>
+              Les signatures et l'import du PDF signé se font depuis la <strong>vue détail</strong> du contrat, après sa création.
+            </Alert>
           </Box>
         );
 

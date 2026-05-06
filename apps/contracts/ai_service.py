@@ -160,25 +160,49 @@ class ContractAIService:
         try:
             prompt_def = SECTION_PROMPTS.get(section_type, SECTION_PROMPTS['custom'])
             max_tokens = prompt_def['max_tokens']
+            language = context.get('language', 'fr')
 
             # Construire un contexte minimal pour économiser les tokens
             context_summary = self._build_minimal_context(context)
 
-            system_prompt = (
-                "Tu es un juriste expert en rédaction de contrats commerciaux professionnels. "
-                "Tu rédiges des clauses rigoureuses, conformes aux bonnes pratiques juridiques. "
-                "Réponds UNIQUEMENT en HTML sémantique (<p>, <strong>, <ul>, <li>, <br>). "
-                "PAS de <h1>/<h2> (le titre est géré séparément). PAS de markdown. PAS de commentaires."
-            )
+            system_prompt = self._get_generation_system_prompt(language)
 
-            user_prompt = (
-                f"CONTEXTE DU CONTRAT:\n{context_summary}\n\n"
-                f"SECTION: {section_title}\n"
-                f"INSTRUCTION: {prompt_def['instruction']}\n\n"
-                "Rédige UNIQUEMENT le contenu de cette section en HTML. "
-                "Sois professionnel, précis et rigoureux juridiquement. "
-                "Numérote les sous-clauses si pertinent."
-            )
+            if language == 'en':
+                user_prompt = (
+                    f"CONTRACT CONTEXT:\n{context_summary}\n\n"
+                    f"SECTION: {section_title}\n"
+                    f"INSTRUCTION: {prompt_def['instruction']}\n\n"
+                    "Write ONLY the content of this section in HTML. "
+                    "Be professional, precise and legally rigorous. "
+                    "IMPORTANT: Use ALL the context data provided (names, addresses, amounts). "
+                    "NEVER use placeholders like '[to complete]' or '[issuing authority]'. "
+                    "If data is missing, omit the clause or use a generic but complete formulation. "
+                    "Number sub-clauses if relevant."
+                )
+            elif language == 'es':
+                user_prompt = (
+                    f"CONTEXTO DEL CONTRATO:\n{context_summary}\n\n"
+                    f"SECCIÓN: {section_title}\n"
+                    f"INSTRUCCIÓN: {prompt_def['instruction']}\n\n"
+                    "Redacta ÚNICAMENTE el contenido de esta sección en HTML. "
+                    "Sé profesional, preciso y jurídicamente riguroso. "
+                    "IMPORTANTE: Usa TODOS los datos de contexto proporcionados (nombres, direcciones, montos). "
+                    "NUNCA uses marcadores como '[a completar]' o '[autoridad emisora]'. "
+                    "Si faltan datos, omite la cláusula o usa una formulación genérica pero completa. "
+                    "Numera las sub-cláusulas si es pertinente."
+                )
+            else:
+                user_prompt = (
+                    f"CONTEXTE DU CONTRAT:\n{context_summary}\n\n"
+                    f"SECTION: {section_title}\n"
+                    f"INSTRUCTION: {prompt_def['instruction']}\n\n"
+                    "Rédige UNIQUEMENT le contenu de cette section en HTML. "
+                    "Sois professionnel, précis et rigoureux juridiquement. "
+                    "IMPORTANT: Utilise TOUTES les données de contexte fournies (noms, adresses, montants). "
+                    "NE METS JAMAIS de placeholder comme '[à compléter]' ou '[autorité émettrice]'. "
+                    "Si une donnée manque, omets la clause ou utilise une formulation générique mais complète. "
+                    "Numérote les sous-clauses si pertinent."
+                )
 
             response = self.client.chat.complete(
                 model=self.model,
@@ -251,6 +275,35 @@ class ContractAIService:
         logger.info(f"Contrat '{contract_type}' généré: {len(results)} sections, {total_tokens} tokens total")
         return results
 
+    def _get_generation_system_prompt(self, language: str = 'fr') -> str:
+        """Retourne le system prompt adapté à la langue demandée"""
+        if language == 'en':
+            return (
+                "You are an expert legal professional specialized in drafting commercial contracts. "
+                "You write rigorous clauses that comply with legal best practices. "
+                "Respond ONLY in semantic HTML (<p>, <strong>, <ul>, <li>, <br>). "
+                "NO <h1>/<h2> (title is managed separately). NO markdown. NO comments. "
+                "NEVER use placeholder text like '[to complete]', '[issuing authority]'. "
+                "Use ALL provided context data to fill in real values."
+            )
+        elif language == 'es':
+            return (
+                "Eres un profesional legal experto en redacción de contratos comerciales. "
+                "Redactas cláusulas rigurosas conforme a las mejores prácticas jurídicas. "
+                "Responde ÚNICAMENTE en HTML semántico (<p>, <strong>, <ul>, <li>, <br>). "
+                "SIN <h1>/<h2> (el título se gestiona por separado). SIN markdown. SIN comentarios. "
+                "NUNCA uses texto de marcador como '[a completar]', '[autoridad emisora]'. "
+                "Usa TODOS los datos de contexto proporcionados para completar valores reales."
+            )
+        return (
+            "Tu es un juriste expert en rédaction de contrats commerciaux professionnels. "
+            "Tu rédiges des clauses rigoureuses, conformes aux bonnes pratiques juridiques. "
+            "Réponds UNIQUEMENT en HTML sémantique (<p>, <strong>, <ul>, <li>, <br>). "
+            "PAS de <h1>/<h2> (le titre est géré séparément). PAS de markdown. PAS de commentaires. "
+            "NE METS JAMAIS de texte placeholder comme '[à compléter]', '[autorité émettrice]'. "
+            "Utilise TOUTES les données de contexte fournies pour remplir les valeurs réelles."
+        )
+
     def _build_minimal_context(self, context: Dict[str, Any]) -> str:
         """Construit un contexte compact pour minimiser les tokens envoyés"""
         lines = []
@@ -264,10 +317,20 @@ class ContractAIService:
             lines.append(f"Notre entreprise: {context['organization_name']}")
         if context.get('organization_address'):
             lines.append(f"Notre adresse: {context['organization_address']}")
+        if context.get('organization_email'):
+            lines.append(f"Notre email: {context['organization_email']}")
+        if context.get('organization_phone'):
+            lines.append(f"Notre téléphone: {context['organization_phone']}")
         if context.get('counterpart_name'):
             lines.append(f"Contrepartie: {context['counterpart_name']}")
         if context.get('counterpart_address'):
             lines.append(f"Adresse contrepartie: {context['counterpart_address']}")
+        if context.get('counterpart_email'):
+            lines.append(f"Email contrepartie: {context['counterpart_email']}")
+        if context.get('counterpart_phone'):
+            lines.append(f"Téléphone contrepartie: {context['counterpart_phone']}")
+        if context.get('counterpart_contact_person'):
+            lines.append(f"Contact contrepartie: {context['counterpart_contact_person']}")
         if context.get('total_value'):
             currency = context.get('currency', 'CAD')
             lines.append(f"Montant: {context['total_value']} {currency}")
@@ -277,6 +340,9 @@ class ContractAIService:
             lines.append(f"Fin: {context['end_date']}")
         if context.get('payment_terms'):
             lines.append(f"Paiement: {context['payment_terms']}")
+        if context.get('language'):
+            lang_map = {'fr': 'Français', 'en': 'English', 'es': 'Español'}
+            lines.append(f"Langue: {lang_map.get(context['language'], context['language'])}")
         if context.get('extra_instructions'):
             lines.append(f"Instructions: {context['extra_instructions']}")
         return '\n'.join(lines)

@@ -268,6 +268,7 @@ function Invoices() {
     const colors = {
       draft: 'default',
       sent: 'info',
+      pending: 'warning',
       paid: 'success',
       overdue: 'error',
       cancelled: 'error'
@@ -279,6 +280,7 @@ function Invoices() {
     const labels = {
       draft: t('invoices:status.draft'),
       sent: t('invoices:status.sent'),
+      pending: 'En attente',
       paid: t('invoices:status.paid'),
       overdue: t('invoices:status.overdue'),
       cancelled: t('invoices:status.cancelled')
@@ -1152,6 +1154,7 @@ function Invoices() {
                           <MenuItem value="">{t('invoices:filters.all')}</MenuItem>
                           <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
                           <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
+                          <MenuItem value="pending">En attente</MenuItem>
                           <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
                           <MenuItem value="overdue">{t('invoices:status.overdue')}</MenuItem>
                           <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>

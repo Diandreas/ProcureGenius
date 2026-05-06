@@ -178,7 +178,8 @@ function ProductForm() {
                     Yup.object({
                         batch_number: Yup.string().required(t('products:validation.batchNumberRequired', 'Numéro de lot requis')),
                         initial_quantity: Yup.number().min(0, t('products:validation.stockNegative')).required(t('products:validation.stockRequired')),
-                        warehouse_id: Yup.string().required(t('products:validation.warehouseRequired')),
+                        expiration_date: Yup.string().nullable().optional(),
+                        description: Yup.string().optional(),
                     })
                 ),
                 low_stock_threshold: Yup.number().min(0, t('products:validation.thresholdNegative')).required(t('products:validation.thresholdRequired')),
@@ -260,7 +261,8 @@ function ProductForm() {
                             initial_quantity: 0,
                             warehouse_id: defaultWarehouseId,
                             expiration_date: '',
-                            supplier_batch_reference: ''
+                            supplier_batch_reference: '',
+                            description: ''
                         }]
                     }));
                 }
@@ -517,6 +519,7 @@ function ProductForm() {
                                 warehouse: lot.warehouse_id || null,
                                 expiration_date: lot.expiration_date || null,
                                 supplier_batch_reference: lot.supplier_batch_reference || '',
+                                description: lot.description || '',
                             }));
 
                         if (lotPromises.length > 0) {
@@ -679,23 +682,7 @@ function ProductForm() {
             </Box>
             <Box sx={{ px: isMobile ? 2 : 0 }}>
 
-                {/* Message d'information si warehouses manquants (seulement pour produits physiques) */}
-                {warehouses.length === 0 && currentProductType === 'physical' && (
-                    <Alert
-                        severity="info"
-                        sx={{
-                            mb: 3,
-                            borderRadius: 1.5,
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                            border: 'none',
-                            '& .MuiAlert-icon': {
-                                alignItems: 'center'
-                            }
-                        }}
-                    >
-                        {t('products:messages.missingWarehouses')}
-                    </Alert>
-                )}
+                {/* Warehouse alert supprimé */}
 
                 <Formik
                     initialValues={initialValues}
@@ -1208,9 +1195,10 @@ function ProductForm() {
                                                                             onClick={() => push({
                                                                                 batch_number: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
                                                                                 initial_quantity: 0,
-                                                                                warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+                                                                                warehouse_id: '',
                                                                                 expiration_date: '',
-                                                                                supplier_batch_reference: ''
+                                                                                supplier_batch_reference: '',
+                                                                                description: ''
                                                                             })}
                                                                             sx={{ borderRadius: 2, textTransform: 'none' }}
                                                                         >
@@ -1258,22 +1246,8 @@ function ProductForm() {
                                                                                                 required
                                                                                             />
                                                                                         </Grid>
+                                                                                        {/* Entrepôt désactivé */}
                                                                                         <Grid item xs={12} md={4}>
-                                                                                            <FormControl fullWidth size="small" error={touched.lots?.[index]?.warehouse_id && Boolean(errors.lots?.[index]?.warehouse_id)}>
-                                                                                                <InputLabel>Entrepôt</InputLabel>
-                                                                                                <Select
-                                                                                                    name={`lots.${index}.warehouse_id`}
-                                                                                                    value={lot.warehouse_id}
-                                                                                                    onChange={handleChange}
-                                                                                                    label="Entrepôt"
-                                                                                                >
-                                                                                                    {warehouses.map((w) => (
-                                                                                                        <MenuItem key={w.id} value={w.id}>{w.name} ({w.code})</MenuItem>
-                                                                                                    ))}
-                                                                                                </Select>
-                                                                                            </FormControl>
-                                                                                        </Grid>
-                                                                                        <Grid item xs={12} md={6}>
                                                                                             <TextField
                                                                                                 fullWidth
                                                                                                 size="small"
@@ -1283,9 +1257,10 @@ function ProductForm() {
                                                                                                 value={lot.expiration_date || ''}
                                                                                                 onChange={handleChange}
                                                                                                 InputLabelProps={{ shrink: true }}
+                                                                                                helperText="Optionnel"
                                                                                             />
                                                                                         </Grid>
-                                                                                        <Grid item xs={12} md={6}>
+                                                                                        <Grid item xs={12} md={4}>
                                                                                             <TextField
                                                                                                 fullWidth
                                                                                                 size="small"
@@ -1293,6 +1268,19 @@ function ProductForm() {
                                                                                                 name={`lots.${index}.supplier_batch_reference`}
                                                                                                 value={lot.supplier_batch_reference}
                                                                                                 onChange={handleChange}
+                                                                                            />
+                                                                                        </Grid>
+                                                                                        <Grid item xs={12}>
+                                                                                            <TextField
+                                                                                                fullWidth
+                                                                                                size="small"
+                                                                                                label="Description du lot"
+                                                                                                multiline
+                                                                                                rows={2}
+                                                                                                name={`lots.${index}.description`}
+                                                                                                value={lot.description || ''}
+                                                                                                onChange={handleChange}
+                                                                                                placeholder="Description spécifique à ce lot (optionnel)"
                                                                                             />
                                                                                         </Grid>
                                                                                     </Grid>
@@ -1306,9 +1294,10 @@ function ProductForm() {
                                                                                 onClick={() => push({
                                                                                     batch_number: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
                                                                                     initial_quantity: 0,
-                                                                                    warehouse_id: warehouses.length > 0 ? warehouses[0].id : '',
+                                                                                    warehouse_id: '',
                                                                                     expiration_date: '',
-                                                                                    supplier_batch_reference: ''
+                                                                                    supplier_batch_reference: '',
+                                                                                    description: ''
                                                                                 })}
                                                                                 sx={{ borderRadius: 2, textTransform: 'none' }}
                                                                             >
@@ -1526,8 +1515,8 @@ function ProductForm() {
                 </DialogActions>
             </Dialog>
 
-            {/* Warehouse Selection Modal - Modern Design */}
-            <Dialog
+            {/* Warehouse Selection Modal - désactivé */}
+            {false && <Dialog
                 open={warehouseModalOpen}
                 onClose={() => setWarehouseModalOpen(false)}
                 maxWidth="md"
@@ -1676,10 +1665,10 @@ function ProductForm() {
                         {t('products:actions.cancel')}
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog>}
 
-            {/* Warehouse Form Modal - Modern Design */}
-            <Dialog
+            {/* Warehouse Form Modal - désactivé */}
+            {false && <Dialog
                 open={warehouseFormOpen}
                 onClose={() => {
                     setWarehouseFormOpen(false);
@@ -1820,7 +1809,7 @@ function ProductForm() {
                         {editingWarehouse ? t('products:actions.save', 'Enregistrer') : t('products:actions.create')}
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog>}
 
             {/* Category Selection Modal - Modern Design */}
             <Dialog

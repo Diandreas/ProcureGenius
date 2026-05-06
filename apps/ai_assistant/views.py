@@ -447,7 +447,7 @@ class ChatView(APIView):
                                 }
                             ]
                         else:
-                            error = action_result.get('error')
+                            error = action_result.get('error') or action_result.get('message')
                             # Gestion améliorée des entités similaires trouvées
                             if error and 'similar_entities_found' in str(error):
                                 similar = action_result.get('similar_entities', [])

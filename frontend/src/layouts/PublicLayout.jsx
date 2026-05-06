@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Container, Typography, Button, Divider, useTheme } from '@mui/material';
 import { LightMode, DarkMode, Translate } from '@mui/icons-material';
 import { useColorMode } from '../App';
@@ -162,7 +162,16 @@ export default function PublicLayout() {
       </header>
 
       <Box component="main" sx={{ flexGrow: 1, pt: isLanding ? 0 : { xs: 10, sm: 12 } }}>
-        <Outlet />
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] } }}
+            exit={{ opacity: 0, y: -6, transition: { duration: 0.15, ease: [0.4, 0, 1, 1] } }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </Box>
 
       <footer>

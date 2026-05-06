@@ -1201,7 +1201,7 @@ function ProductDetail() {
       {/* Tab: Lots - Affiché uniquement pour les produits physiques (Index 3 si type physical) */}
       {product?.product_type === 'physical' && activeTab === 3 && (
         <Box>
-          <ProductBatchesTab productId={id} />
+          <ProductBatchesTab productId={id} onStockChange={fetchProduct} />
         </Box>
       )}
 

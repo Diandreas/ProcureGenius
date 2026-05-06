@@ -81,7 +81,8 @@ function InvoiceForm() {
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
     tax_rate: 20,
-    status: 'draft'
+    status: 'paid',
+    payment_method: '',
   });
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
@@ -178,7 +179,8 @@ function InvoiceForm() {
         issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
         due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
         tax_rate: invoice.tax_rate || 20,
-        status: invoice.status || 'draft'
+        status: invoice.status || 'paid',
+        payment_method: invoice.payment_method || '',
       });
       setItems(invoice.items || []);
     } catch (error) {
@@ -292,11 +294,6 @@ function InvoiceForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.title.trim()) {
-      enqueueSnackbar(t('invoices:messages.enterTitleRequired'), { variant: 'error' });
-      return;
-    }
 
     if (items.length === 0) {
       enqueueSnackbar(t('invoices:messages.addAtLeastOneItem'), { variant: 'error' });
@@ -501,7 +498,7 @@ function InvoiceForm() {
             onClick={() => navigate('/invoices')}
             size="small"
           >
-            {t('common:back')}
+            {t('common:buttons.back', 'Retour')}
           </Button>
           <Typography variant="h6" noWrap sx={{ flex: 1, ml: 1 }}>
             {isEdit ? t('invoices:editInvoice') : t('invoices:newInvoice')}
@@ -544,7 +541,6 @@ function InvoiceForm() {
                     label={t('invoices:labels.invoiceTitleField')}
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
                     size="small"
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                   />
@@ -559,7 +555,7 @@ function InvoiceForm() {
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                   />
                   <Grid container spacing={1}>
-                    <Grid item xs={6}>
+                    <Grid item xs={formData.status === 'paid' ? 12 : 6}>
                       <TextField
                         fullWidth
                         label={t('invoices:fields.issueDate')}
@@ -567,23 +563,24 @@ function InvoiceForm() {
                         value={formData.issue_date}
                         onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
                         InputLabelProps={{ shrink: true }}
-                        required
                         size="small"
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
-                    <Grid item xs={6}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:labels.dueDateLabel')}
-                        type="date"
-                        value={formData.due_date}
-                        onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                        InputLabelProps={{ shrink: true }}
-                        size="small"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
+                    {formData.status !== 'paid' && (
+                      <Grid item xs={6}>
+                        <TextField
+                          fullWidth
+                          label={t('invoices:labels.dueDateLabel')}
+                          type="date"
+                          value={formData.due_date}
+                          onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                          InputLabelProps={{ shrink: true }}
+                          size="small"
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                    )}
                   </Grid>
                 </Stack>
               </CardContent>
@@ -751,20 +748,41 @@ function InvoiceForm() {
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
                   {t('common:labels.status')}
                 </Typography>
-                <FormControl fullWidth size="small">
-                  <InputLabel>{t('invoices:labels.invoiceStatusField')}</InputLabel>
-                  <Select
-                    value={formData.status}
-                    label={t('invoices:labels.invoiceStatusField')}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    sx={{ borderRadius: 2 }}
-                  >
-                    <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
-                    <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
-                    <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
-                    <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
-                  </Select>
-                </FormControl>
+                <Stack spacing={1.5}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>{t('invoices:labels.invoiceStatusField')}</InputLabel>
+                    <Select
+                      value={formData.status}
+                      label={t('invoices:labels.invoiceStatusField')}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
+                      <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
+                      <MenuItem value="pending">En attente</MenuItem>
+                      <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
+                      <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {formData.status === 'paid' && (
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Méthode de paiement</InputLabel>
+                    <Select
+                      value={formData.payment_method || ''}
+                      label="Méthode de paiement"
+                      onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      <MenuItem value="">— Non spécifiée —</MenuItem>
+                      <MenuItem value="cash">Comptant</MenuItem>
+                      <MenuItem value="card">Carte</MenuItem>
+                      <MenuItem value="transfer">Virement</MenuItem>
+                      <MenuItem value="cheque">Chèque</MenuItem>
+                      <MenuItem value="interac">Interac</MenuItem>
+                    </Select>
+                  </FormControl>
+                  )}
+                </Stack>
               </CardContent>
             </Card>
           </Box>
@@ -785,7 +803,6 @@ function InvoiceForm() {
                         label={t('invoices:labels.invoiceTitleField')}
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        required
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
@@ -800,7 +817,7 @@ function InvoiceForm() {
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={formData.status === 'paid' ? 12 : 6}>
                       <TextField
                         fullWidth
                         label={t('invoices:fields.issueDate')}
@@ -808,21 +825,22 @@ function InvoiceForm() {
                         value={formData.issue_date}
                         onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
                         InputLabelProps={{ shrink: true }}
-                        required
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:labels.dueDateLabel')}
-                        type="date"
-                        value={formData.due_date}
-                        onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
+                    {formData.status !== 'paid' && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label={t('invoices:labels.dueDateLabel')}
+                          type="date"
+                          value={formData.due_date}
+                          onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                    )}
                   </Grid>
                 </CardContent>
               </Card>
@@ -1079,26 +1097,47 @@ function InvoiceForm() {
                 </CardContent>
               </Card>
 
-              {/* Status */}
+              {/* Status + Paiement */}
               <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Statut
+                    Statut & paiement
                   </Typography>
-                  <FormControl fullWidth>
-                    <InputLabel>Statut de la facture</InputLabel>
-                    <Select
-                      value={formData.status}
-                      label="Statut de la facture"
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      <MenuItem value="draft">Brouillon</MenuItem>
-                      <MenuItem value="sent">Envoyée</MenuItem>
-                      <MenuItem value="paid">Payée</MenuItem>
-                      <MenuItem value="cancelled">Annulée</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <Stack spacing={2}>
+                    <FormControl fullWidth>
+                      <InputLabel>Statut de la facture</InputLabel>
+                      <Select
+                        value={formData.status}
+                        label="Statut de la facture"
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="draft">Brouillon</MenuItem>
+                        <MenuItem value="sent">Envoyée</MenuItem>
+                        <MenuItem value="pending">En attente</MenuItem>
+                        <MenuItem value="paid">Payée</MenuItem>
+                        <MenuItem value="cancelled">Annulée</MenuItem>
+                      </Select>
+                    </FormControl>
+                    {formData.status === 'paid' && (
+                    <FormControl fullWidth>
+                      <InputLabel>Méthode de paiement</InputLabel>
+                      <Select
+                        value={formData.payment_method || ''}
+                        label="Méthode de paiement"
+                        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="">— Non spécifiée —</MenuItem>
+                        <MenuItem value="cash">Comptant</MenuItem>
+                        <MenuItem value="card">Carte</MenuItem>
+                        <MenuItem value="transfer">Virement</MenuItem>
+                        <MenuItem value="cheque">Chèque</MenuItem>
+                        <MenuItem value="interac">Interac</MenuItem>
+                      </Select>
+                    </FormControl>
+                    )}
+                  </Stack>
                 </CardContent>
               </Card>
             </Grid>

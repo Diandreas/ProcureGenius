@@ -754,6 +754,171 @@ function ContractDetail() {
               </CardContent>
             </Card>
           )}
+
+          {/* Documents & Signatures */}
+          <Card sx={{ mt: 2, borderRadius: 2, border: `1px solid ${alpha(statusColor, 0.15)}` }}>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Description sx={{ fontSize: 18, color: statusColor }} />
+                Documents & Signatures
+              </Typography>
+
+              {/* Upload PDF signé */}
+              <Box sx={{
+                border: '2px dashed',
+                borderColor: currentContract.signed_pdf_url ? 'success.light' : 'divider',
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'center',
+                bgcolor: currentContract.signed_pdf_url ? alpha('#10b981', 0.04) : 'grey.50',
+                mb: 2,
+              }}>
+                {currentContract.signed_pdf_url ? (
+                  <Box>
+                    <CheckCircle color="success" sx={{ fontSize: 32, mb: 0.5 }} />
+                    <Typography variant="body2" fontWeight={600} color="success.main" gutterBottom>
+                      PDF signé importé
+                    </Typography>
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Download />}
+                        href={currentContract.signed_pdf_url}
+                        target="_blank"
+                        sx={{ borderRadius: 1.5, textTransform: 'none' }}
+                      >
+                        Télécharger
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="text"
+                        component="label"
+                        sx={{ borderRadius: 1.5, textTransform: 'none' }}
+                      >
+                        Remplacer
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          hidden
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              try {
+                                await contractsAPI.uploadSignedPdf(id, file);
+                                enqueueSnackbar('PDF signé importé', { variant: 'success' });
+                                dispatch(fetchContract(id));
+                              } catch {
+                                enqueueSnackbar('Erreur import PDF', { variant: 'error' });
+                              }
+                            }
+                          }}
+                        />
+                      </Button>
+                    </Stack>
+                  </Box>
+                ) : (
+                  <Box>
+                    <PictureAsPdf sx={{ fontSize: 32, mb: 0.5, color: 'text.secondary' }} />
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                      Importer le PDF signé
+                    </Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      component="label"
+                      startIcon={<Description />}
+                      sx={{ borderRadius: 1.5, textTransform: 'none' }}
+                    >
+                      Parcourir...
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        hidden
+                        onChange={async (e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            try {
+                              await contractsAPI.uploadSignedPdf(id, file);
+                              enqueueSnackbar('PDF signé importé avec succès', { variant: 'success' });
+                              dispatch(fetchContract(id));
+                            } catch {
+                              enqueueSnackbar('Erreur lors de l\'import', { variant: 'error' });
+                            }
+                          }
+                        }}
+                      />
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Signatures */}
+              <Divider sx={{ mb: 1.5 }} />
+              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                SIGNATURES
+              </Typography>
+              <Stack spacing={1.5}>
+                {/* Notre signature */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2">Notre organisation</Typography>
+                  <Chip
+                    size="small"
+                    label={currentContract.signed_by_us ? (currentContract.signed_by_us_name || 'Signé') : 'Non signé'}
+                    color={currentContract.signed_by_us ? 'success' : 'default'}
+                    variant={currentContract.signed_by_us ? 'filled' : 'outlined'}
+                    onClick={async () => {
+                      if (!currentContract.signed_by_us) {
+                        const name = prompt('Nom du signataire :');
+                        if (name) {
+                          try {
+                            await contractsAPI.updateSignatures(id, {
+                              signed_by_us: true,
+                              signed_by_us_name: name,
+                            });
+                            enqueueSnackbar('Signature enregistrée', { variant: 'success' });
+                            dispatch(fetchContract(id));
+                          } catch {
+                            enqueueSnackbar('Erreur mise à jour signature', { variant: 'error' });
+                          }
+                        }
+                      }
+                    }}
+                    sx={{ cursor: currentContract.signed_by_us ? 'default' : 'pointer' }}
+                  />
+                </Box>
+
+                {/* Signature contrepartie */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="body2">Contrepartie</Typography>
+                  <Chip
+                    size="small"
+                    label={currentContract.signed_by_counterpart ? (currentContract.signed_by_counterpart_name || 'Signé') : 'Non signé'}
+                    color={currentContract.signed_by_counterpart ? 'success' : 'default'}
+                    variant={currentContract.signed_by_counterpart ? 'filled' : 'outlined'}
+                    onClick={async () => {
+                      if (!currentContract.signed_by_counterpart) {
+                        const name = prompt('Nom du signataire (contrepartie) :');
+                        if (name) {
+                          try {
+                            await contractsAPI.updateSignatures(id, {
+                              signed_by_counterpart: true,
+                              signed_by_counterpart_name: name,
+                            });
+                            enqueueSnackbar('Signature contrepartie enregistrée', { variant: 'success' });
+                            dispatch(fetchContract(id));
+                          } catch {
+                            enqueueSnackbar('Erreur mise à jour signature', { variant: 'error' });
+                          }
+                        }
+                      }
+                    }}
+                    sx={{ cursor: currentContract.signed_by_counterpart ? 'default' : 'pointer' }}
+                  />
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
         </Grid>
 
         {/* Clauses extraites par IA */}

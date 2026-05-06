@@ -83,7 +83,7 @@ function StockReceptionDialog({ open, batch, productId, onClose, onSuccess }) {
         movement_type: 'reception',
         reference_type: 'manual',
         notes: notes || `Réception sur lot ${batch?.batch_number}`,
-        batch: batch?.id,
+        batch_id: batch?.id,
       });
       enqueueSnackbar(`${qty} unités réceptionnées sur le lot ${batch?.batch_number}`, { variant: 'success' });
       onSuccess();
@@ -275,7 +275,7 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
   );
 }
 
-function ProductBatchesTab({ productId }) {
+function ProductBatchesTab({ productId, onStockChange }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [batches, setBatches] = useState([]);
@@ -421,7 +421,7 @@ function ProductBatchesTab({ productId }) {
         <Box sx={{ px: 2 }}>
           <CreateBatchPanel
             productId={productId}
-            onSuccess={() => { fetchBatches(); setShowCreateForm(false); }}
+            onSuccess={() => { fetchBatches(); setShowCreateForm(false); if (onStockChange) onStockChange(); }}
             onCancel={() => setShowCreateForm(false)}
           />
         </Box>
@@ -620,7 +620,7 @@ function ProductBatchesTab({ productId }) {
         batch={receptionBatch}
         productId={productId}
         onClose={() => setReceptionBatch(null)}
-        onSuccess={fetchBatches}
+        onSuccess={() => { fetchBatches(); if (onStockChange) onStockChange(); }}
       />
     </Box>
   );

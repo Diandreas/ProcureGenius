@@ -63,6 +63,7 @@ import {
   Done,
   Payment,
   PictureAsPdf,
+  Description,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -105,6 +106,19 @@ function InvoiceDetail() {
     payment_method: '',
     notes: ''
   });
+
+  // Paiements
+  const [payments, setPayments] = useState([]);
+  const [paymentsInfo, setPaymentsInfo] = useState(null); // { total_amount, total_paid, balance_due, payment_status }
+  const [addPaymentOpen, setAddPaymentOpen] = useState(false);
+  const [newPayment, setNewPayment] = useState({
+    amount: '',
+    payment_date: new Date().toISOString().split('T')[0],
+    payment_method: 'cash',
+    reference_number: '',
+    notes: '',
+  });
+  const [savingPayment, setSavingPayment] = useState(false);
   const [newItem, setNewItem] = useState({
     description: '',
     quantity: 1,
@@ -160,7 +174,7 @@ function InvoiceDetail() {
             >
               <Edit fontSize="small" />
             </IconButton>
-            {(invoice.status === 'sent' || isOverdue()) && (
+            {(['sent', 'pending'].includes(invoice.status) || isOverdue()) && (
               <IconButton
                 onClick={() => setMarkPaidDialogOpen(true)}
                 size="small"
@@ -209,6 +223,79 @@ function InvoiceDetail() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      const response = await invoicesAPI.getPayments(id);
+      setPayments(response.data.payments || []);
+      setPaymentsInfo({
+        total_amount: response.data.total_amount,
+        total_paid: response.data.total_paid,
+        balance_due: response.data.balance_due,
+        payment_status: response.data.payment_status,
+      });
+    } catch (error) {
+      // silently fail — payments section won't show
+    }
+  };
+
+  useEffect(() => {
+    if (id) fetchPayments();
+  }, [id]);
+
+  const handleAddPayment = async () => {
+    if (!newPayment.amount || parseFloat(newPayment.amount) <= 0) {
+      enqueueSnackbar('Montant invalide', { variant: 'error' });
+      return;
+    }
+    setSavingPayment(true);
+    try {
+      await invoicesAPI.addPayment(id, {
+        amount: parseFloat(newPayment.amount),
+        payment_date: newPayment.payment_date,
+        payment_method: newPayment.payment_method,
+        reference_number: newPayment.reference_number || undefined,
+        notes: newPayment.notes || undefined,
+      });
+      await Promise.all([fetchInvoice(), fetchPayments()]);
+      enqueueSnackbar('Paiement enregistré', { variant: 'success' });
+      setAddPaymentOpen(false);
+      setNewPayment({
+        amount: '',
+        payment_date: new Date().toISOString().split('T')[0],
+        payment_method: 'cash',
+        reference_number: '',
+        notes: '',
+      });
+    } catch (error) {
+      enqueueSnackbar(error.response?.data?.amount?.[0] || error.response?.data?.non_field_errors?.[0] || 'Erreur lors de l\'enregistrement', { variant: 'error' });
+    } finally {
+      setSavingPayment(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId) => {
+    if (!window.confirm('Supprimer ce paiement ?')) return;
+    try {
+      await invoicesAPI.deletePayment(id, paymentId);
+      await Promise.all([fetchInvoice(), fetchPayments()]);
+      enqueueSnackbar('Paiement supprimé', { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+    }
+  };
+
+  const paymentMethodLabel = (method) => {
+    const labels = {
+      cash: 'Espèces',
+      check: 'Chèque',
+      credit_card: 'Carte de crédit',
+      bank_transfer: 'Virement',
+      interac: 'Interac',
+      other: 'Autre',
+    };
+    return labels[method] || method;
   };
 
   const handleEdit = () => {
@@ -335,6 +422,7 @@ function InvoiceDetail() {
     const icons = {
       draft: <Edit color="action" />,
       sent: <Send color="info" />,
+      pending: <Schedule color="warning" />,
       paid: <CheckCircle color="success" />,
       overdue: <Warning color="error" />,
       cancelled: <Block color="error" />,
@@ -344,7 +432,7 @@ function InvoiceDetail() {
 
   const isOverdue = () => {
     if (!invoice?.due_date || invoice.status === 'paid') return false;
-    return new Date(invoice.due_date) < new Date() && invoice.status === 'sent';
+    return new Date(invoice.due_date) < new Date() && ['sent', 'pending'].includes(invoice.status);
   };
 
   const getDaysOverdue = () => {
@@ -525,7 +613,7 @@ function InvoiceDetail() {
             <Send sx={{ fontSize: '1.1rem' }} />
           </IconButton>
           )}
-          {(invoice.status === 'sent' || isOverdue()) && (
+          {(['sent', 'pending'].includes(invoice.status) || isOverdue()) && (
             <IconButton
               size="small"
               onClick={() => setMarkPaidDialogOpen(true)}
@@ -645,7 +733,7 @@ Cordialement`
             >
               {t('invoices:buttons.edit')}
             </Button>
-            {(invoice.status === 'sent' || isOverdue()) && (
+            {(['sent', 'pending'].includes(invoice.status) || isOverdue()) && (
               <Button
                 variant="contained"
                 startIcon={<Payment />}
@@ -906,6 +994,83 @@ Cordialement`
             </CardContent>
           </Card>
 
+          {/* Paiements Mobile */}
+          <Card sx={{
+            mb: 1.5,
+            borderRadius: 3,
+            boxShadow: theme => theme.palette.mode === 'dark'
+              ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
+              : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, color: 'text.primary' }}>
+                  Paiements reçus
+                </Typography>
+                <IconButton size="small" color="primary" onClick={() => setAddPaymentOpen(true)} sx={{ bgcolor: 'primary.50', borderRadius: 1 }}>
+                  <Add fontSize="small" />
+                </IconButton>
+              </Box>
+
+              {paymentsInfo && (
+                <Stack direction="row" spacing={0.75} sx={{ mb: 1.25 }}>
+                  <Box sx={{ flex: 1, p: 1, bgcolor: 'primary.50', borderRadius: 1, textAlign: 'center' }}>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.62rem' }}>Total</Typography>
+                    <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ fontSize: '0.72rem' }}>
+                      {formatCurrency(paymentsInfo.total_amount)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 1, bgcolor: 'success.50', borderRadius: 1, textAlign: 'center' }}>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.62rem' }}>Payé</Typography>
+                    <Typography variant="caption" fontWeight={700} color="success.main" sx={{ fontSize: '0.72rem' }}>
+                      {formatCurrency(paymentsInfo.total_paid)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flex: 1, p: 1, bgcolor: paymentsInfo.balance_due <= 0 ? 'success.50' : 'error.50', borderRadius: 1, textAlign: 'center' }}>
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.62rem' }}>Solde</Typography>
+                    <Typography variant="caption" fontWeight={700} color={paymentsInfo.balance_due <= 0 ? 'success.main' : 'error.main'} sx={{ fontSize: '0.72rem' }}>
+                      {formatCurrency(paymentsInfo.balance_due)}
+                    </Typography>
+                  </Box>
+                </Stack>
+              )}
+
+              {payments.length === 0 ? (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', py: 1 }}>
+                  Aucun paiement enregistré
+                </Typography>
+              ) : (
+                <Stack spacing={0.5}>
+                  {payments.map((p) => (
+                    <Box key={p.id} sx={{
+                      display: 'flex', alignItems: 'center', gap: 1,
+                      p: 0.75, bgcolor: 'grey.50', borderRadius: 1
+                    }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 600, display: 'block' }}>
+                          {formatDate(p.payment_date)} · {paymentMethodLabel(p.payment_method)}
+                        </Typography>
+                        {p.reference_number && (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                            {p.reference_number}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Typography variant="caption" fontWeight={700} color="success.main" sx={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+                        {formatCurrency(p.amount)}
+                      </Typography>
+                      <IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)} sx={{ p: 0.25 }}>
+                        <Delete sx={{ fontSize: '0.9rem' }} />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Dates Mobile - Compact */}
           <Card sx={{
             mb: 1.5,
@@ -1137,6 +1302,105 @@ Cordialement`
                 </Grid>
               </CardContent>
             </Card>
+          {/* Payment Ledger - Desktop */}
+          <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Paiements reçus
+                </Typography>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => setAddPaymentOpen(true)}
+                  sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                >
+                  Ajouter un paiement
+                </Button>
+              </Box>
+
+              {/* Balance Summary */}
+              {paymentsInfo && (
+                <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                  <Grid item xs={4}>
+                    <Box sx={{ p: 1.5, bgcolor: 'primary.50', borderRadius: 1.5, textAlign: 'center' }}>
+                      <Typography variant="caption" color="text.secondary" display="block">Total facture</Typography>
+                      <Typography variant="subtitle2" fontWeight={700} color="primary.main">
+                        {formatCurrency(paymentsInfo.total_amount)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Box sx={{ p: 1.5, bgcolor: 'success.50', borderRadius: 1.5, textAlign: 'center' }}>
+                      <Typography variant="caption" color="text.secondary" display="block">Déjà payé</Typography>
+                      <Typography variant="subtitle2" fontWeight={700} color="success.main">
+                        {formatCurrency(paymentsInfo.total_paid)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Box sx={{
+                      p: 1.5,
+                      bgcolor: paymentsInfo.balance_due <= 0 ? 'success.50' : 'error.50',
+                      borderRadius: 1.5,
+                      textAlign: 'center'
+                    }}>
+                      <Typography variant="caption" color="text.secondary" display="block">Solde restant</Typography>
+                      <Typography variant="subtitle2" fontWeight={700} color={paymentsInfo.balance_due <= 0 ? 'success.main' : 'error.main'}>
+                        {formatCurrency(paymentsInfo.balance_due)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              )}
+
+              {/* Payment list */}
+              {payments.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 3, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Payment sx={{ fontSize: '2rem', color: 'text.disabled', mb: 0.5 }} />
+                  <Typography color="text.secondary" variant="body2">Aucun paiement enregistré</Typography>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: 'grey.50' }}>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Méthode</TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Référence</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Montant</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.75rem' }}>Solde après</TableCell>
+                        <TableCell />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {payments.map((p) => (
+                        <TableRow key={p.id} hover>
+                          <TableCell sx={{ fontSize: '0.8rem' }}>{formatDate(p.payment_date)}</TableCell>
+                          <TableCell sx={{ fontSize: '0.8rem' }}>{paymentMethodLabel(p.payment_method)}</TableCell>
+                          <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{p.reference_number || '—'}</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'success.main' }}>
+                            {formatCurrency(p.amount)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.8rem', color: p.balance_after <= 0 ? 'success.main' : 'text.secondary' }}>
+                            {formatCurrency(p.balance_after ?? 0)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ py: 0.5 }}>
+                            <Tooltip title="Supprimer ce paiement">
+                              <IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)}>
+                                <Delete fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </CardContent>
+          </Card>
           </Grid>
 
           {/* Sidebar */}
@@ -1577,6 +1841,100 @@ Cordialement`
             disabled={!newItem.description || newItem.quantity <= 0}
           >
             {t('invoices:buttons.add')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Payment Dialog */}
+      <Dialog open={addPaymentOpen} onClose={() => setAddPaymentOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Payment sx={{ color: 'success.main' }} />
+          Enregistrer un paiement
+        </DialogTitle>
+        <DialogContent>
+          {paymentsInfo && paymentsInfo.balance_due > 0 && (
+            <Alert severity="info" sx={{ mb: 2, mt: 1 }}>
+              Solde restant à payer : <strong>{formatCurrency(paymentsInfo.balance_due)}</strong>
+            </Alert>
+          )}
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Montant"
+                type="number"
+                required
+                value={newPayment.amount}
+                onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
+                inputProps={{ min: 0.01, step: 0.01 }}
+                helperText={paymentsInfo ? `Max : ${formatCurrency(paymentsInfo.balance_due)}` : ''}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Date du paiement"
+                type="date"
+                required
+                value={newPayment.payment_date}
+                onChange={(e) => setNewPayment({ ...newPayment, payment_date: e.target.value })}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth required>
+                <InputLabel>Méthode de paiement</InputLabel>
+                <Select
+                  value={newPayment.payment_method}
+                  onChange={(e) => setNewPayment({ ...newPayment, payment_method: e.target.value })}
+                  label="Méthode de paiement"
+                >
+                  <MenuItem value="cash">Espèces</MenuItem>
+                  <MenuItem value="check">Chèque</MenuItem>
+                  <MenuItem value="bank_transfer">Virement bancaire</MenuItem>
+                  <MenuItem value="credit_card">Carte de crédit</MenuItem>
+                  <MenuItem value="interac">Interac</MenuItem>
+                  <MenuItem value="other">Autre</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Numéro de référence"
+                value={newPayment.reference_number}
+                onChange={(e) => setNewPayment({ ...newPayment, reference_number: e.target.value })}
+                placeholder="N° chèque, confirmation virement..."
+                helperText="Optionnel"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Notes"
+                multiline
+                rows={2}
+                value={newPayment.notes}
+                onChange={(e) => setNewPayment({ ...newPayment, notes: e.target.value })}
+                placeholder="Notes internes..."
+                helperText="Optionnel"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setAddPaymentOpen(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleAddPayment}
+            variant="contained"
+            color="success"
+            disabled={savingPayment || !newPayment.amount || parseFloat(newPayment.amount) <= 0}
+            startIcon={savingPayment ? <CircularProgress size={18} /> : <CheckCircle />}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            {savingPayment ? 'Enregistrement...' : 'Enregistrer le paiement'}
           </Button>
         </DialogActions>
       </Dialog>

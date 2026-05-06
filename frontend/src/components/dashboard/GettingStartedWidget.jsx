@@ -117,7 +117,7 @@ const GUIDED_ACTIONS = {
             statsKey: 'products_count',
         },
     ],
-    'e-sourcing': [
+    /* 'e-sourcing': [
         {
             id: 'create_first_rfq',
             icon: <CompareArrows />,
@@ -126,7 +126,7 @@ const GUIDED_ACTIONS = {
             priority: 3,
             statsKey: 'sourcing_events_count',
         },
-    ],
+    ], */
     contracts: [
         {
             id: 'create_first_contract',

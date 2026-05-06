@@ -9,7 +9,7 @@ from datetime import timedelta
 
 from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
-from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse, ProductBatch
+from apps.invoicing.models import Invoice, InvoiceItem, Product, ProductCategory, Warehouse, ProductBatch, Payment
 from apps.accounts.models import Client
 from apps.core.permissions import HasModuleAccess
 from apps.core.modules import Modules
@@ -21,7 +21,7 @@ from .serializers import (
     InvoiceSerializer, InvoiceItemSerializer,
     ProductSerializer, ClientSerializer, ProductBatchSerializer,
     ProductCategorySerializer, WarehouseSerializer,
-    DashboardStatsSerializer
+    DashboardStatsSerializer, PaymentSerializer
 )
 
 
@@ -282,6 +282,32 @@ class ProductBatchViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     search_fields = ['batch_number', 'product__name']
     ordering_fields = ['expiration_date', 'created_at']
     ordering = ['expiration_date']
+
+    def perform_create(self, serializer):
+        batch = serializer.save()
+        # current_quantity = initial_quantity à la création
+        batch.current_quantity = batch.initial_quantity
+        batch.save(update_fields=['current_quantity'])
+        # Recalculer stock_quantity du produit depuis la somme des lots
+        batch.product.sync_stock_from_batches()
+        # Créer un mouvement de stock initial
+        from apps.invoicing.models import StockMovement
+        if batch.initial_quantity > 0:
+            StockMovement.objects.create(
+                product=batch.product,
+                batch=batch,
+                movement_type='adjustment',
+                quantity=batch.initial_quantity,
+                quantity_before=batch.product.stock_quantity - batch.initial_quantity,
+                quantity_after=batch.product.stock_quantity,
+                notes=f"Stock initial - Lot {batch.batch_number}",
+                created_by=self.request.user,
+            )
+
+    def perform_update(self, serializer):
+        serializer.save()
+        # Re-syncer après toute modification d'un lot
+        serializer.instance.product.sync_stock_from_batches()
 
 
 class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
@@ -1407,6 +1433,27 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             )
 
 
+class PaymentViewSet(viewsets.ModelViewSet):
+    """ViewSet pour les paiements — filtrés par facture via ?invoice=<id>"""
+    serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Payment.objects.select_related('invoice', 'created_by').all()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        invoice_id = self.request.query_params.get('invoice')
+        if invoice_id:
+            qs = qs.filter(invoice_id=invoice_id)
+        # Sécurité : limiter aux factures de l'organisation
+        org = getattr(self.request.user, 'organization', None)
+        if org:
+            qs = qs.filter(invoice__organization=org)
+        return qs.order_by('payment_date', 'created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
 class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les factures"""
     queryset = Invoice.objects.all()
@@ -1532,7 +1579,55 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             {'error': 'Only sent invoices can be marked as paid'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
+    @action(detail=True, methods=['get', 'post'], url_path='payments')
+    def payments(self, request, pk=None):
+        """Liste et ajout de paiements sur une facture"""
+        invoice = self.get_object()
+
+        if request.method == 'GET':
+            pmts = invoice.payments.select_related('created_by').order_by('payment_date', 'created_at')
+            serializer = PaymentSerializer(pmts, many=True)
+            balance = float(invoice.get_balance_due())
+            return Response({
+                'payments': serializer.data,
+                'total_amount': float(invoice.total_amount),
+                'total_paid': round(float(invoice.total_amount) - balance, 2),
+                'balance_due': round(balance, 2),
+                'payment_status': invoice.get_payment_status(),
+            })
+
+        # POST — ajouter un paiement
+        data = request.data.copy()
+        data['invoice'] = str(invoice.id)
+        serializer = PaymentSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(created_by=request.user)
+            invoice.refresh_from_db()
+            return Response({
+                'payment': serializer.data,
+                'balance_due': round(float(invoice.get_balance_due()), 2),
+                'payment_status': invoice.get_payment_status(),
+                'invoice_status': invoice.status,
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['delete'], url_path='payments/(?P<payment_id>[^/.]+)')
+    def delete_payment(self, request, pk=None, payment_id=None):
+        """Supprimer un paiement d'une facture"""
+        invoice = self.get_object()
+        try:
+            payment = Payment.objects.get(id=payment_id, invoice=invoice)
+            payment.delete()
+            invoice.refresh_from_db()
+            return Response({
+                'balance_due': round(float(invoice.get_balance_due()), 2),
+                'payment_status': invoice.get_payment_status(),
+                'invoice_status': invoice.status,
+            })
+        except Payment.DoesNotExist:
+            return Response({'error': 'Paiement introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=True, methods=['get'], url_path='pdf')
     def generate_pdf(self, request, pk=None):
         """Générer un PDF de la facture avec WeasyPrint (HTML/CSS)"""
@@ -1998,6 +2093,12 @@ class ProductCategoryViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def perform_create(self, serializer):
+        if hasattr(self.request.user, 'organization') and self.request.user.organization:
+            serializer.save(organization=self.request.user.organization)
+        else:
+            serializer.save()
+
 
 class WarehouseViewSet(viewsets.ModelViewSet):
     """ViewSet pour les entrepôts"""
@@ -2017,6 +2118,12 @@ class WarehouseViewSet(viewsets.ModelViewSet):
         if self.request.user.is_authenticated and hasattr(self.request.user, 'organization') and self.request.user.organization:
             queryset = queryset.filter(organization=self.request.user.organization)
         return queryset
+
+    def perform_create(self, serializer):
+        if hasattr(self.request.user, 'organization') and self.request.user.organization:
+            serializer.save(organization=self.request.user.organization)
+        else:
+            serializer.save()
 
 
 class PriceHistoryView(APIView):

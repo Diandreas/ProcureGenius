@@ -1,5 +1,8 @@
 {
   "title": "Assistant IA",
+  "sidebar": {
+    "history": "Historique"
+  },
   "drawer": {
     "conversations": "Conversations"
   },

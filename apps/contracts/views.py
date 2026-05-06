@@ -64,6 +64,63 @@ class ContractViewSet(viewsets.ModelViewSet):
             created_by=self.request.user,
         )
 
+    @action(detail=True, methods=['post'], url_path='upload-signed-pdf')
+    def upload_signed_pdf(self, request, pk=None):
+        """Upload un PDF signé pour le contrat"""
+        contract = self.get_object()
+        pdf_file = request.FILES.get('signed_pdf')
+
+        if not pdf_file:
+            return Response(
+                {'error': 'Fichier PDF requis'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Valider le type de fichier
+        if not pdf_file.name.lower().endswith('.pdf'):
+            return Response(
+                {'error': 'Seuls les fichiers PDF sont acceptés'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        contract.signed_pdf = pdf_file
+        contract.save(update_fields=['signed_pdf'])
+
+        return Response({
+            'status': 'success',
+            'message': 'PDF signé importé avec succès',
+            'signed_pdf_url': contract.signed_pdf.url if contract.signed_pdf else None,
+        })
+
+    @action(detail=True, methods=['patch'], url_path='update-signatures')
+    def update_signatures(self, request, pk=None):
+        """Met à jour les informations de signature du contrat"""
+        contract = self.get_object()
+
+        fields_to_update = []
+        for field in ['signed_by_us', 'signed_by_counterpart',
+                       'signed_by_us_name', 'signed_by_counterpart_name']:
+            if field in request.data:
+                setattr(contract, field, request.data[field])
+                fields_to_update.append(field)
+
+        # Auto-set signature dates
+        if request.data.get('signed_by_us') and not contract.signed_by_us_at:
+            contract.signed_by_us_at = timezone.now()
+            fields_to_update.append('signed_by_us_at')
+        if request.data.get('signed_by_counterpart') and not contract.signed_by_counterpart_at:
+            contract.signed_by_counterpart_at = timezone.now()
+            fields_to_update.append('signed_by_counterpart_at')
+
+        if fields_to_update:
+            contract.save(update_fields=fields_to_update)
+
+        return Response({
+            'status': 'success',
+            'message': 'Signatures mises à jour',
+            'data': ContractDetailSerializer(contract).data
+        })
+
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """Approuve le contrat"""
@@ -366,12 +423,31 @@ class ContractViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='section-definitions')
     def section_definitions(self, request):
-        """Retourne les définitions de sections pour un type de contrat donné"""
+        """Retourne les définitions de sections pour un type de contrat donné, avec contenu par défaut"""
         contract_type = request.query_params.get('contract_type', 'service')
         definitions = CONTRACT_SECTION_DEFINITIONS.get(contract_type, CONTRACT_SECTION_DEFINITIONS['other'])
+
+        # Construire le contexte pour la substitution des variables dans les templates
+        from .static_templates import get_section_default_content
+        org = request.user.organization
+        context = {}
+        if org:
+            context['organization_name'] = org.name or ''
+            if hasattr(org, 'address') and org.address:
+                from django.utils.html import strip_tags
+                context['organization_address'] = strip_tags(org.address)
+
+        # Enrichir chaque définition avec le contenu par défaut
+        enriched = []
+        for d in definitions:
+            enriched.append({
+                **d,
+                'default_content': get_section_default_content(d['type'], context),
+            })
+
         return Response({
             'contract_type': contract_type,
-            'sections': definitions,
+            'sections': enriched,
         })
 
     @action(detail=False, methods=['post'], url_path='generate-section')
@@ -387,13 +463,8 @@ class ContractViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Enrichir le contexte avec les infos de l'organisation
-        org = request.user.organization
-        if org:
-            context.setdefault('organization_name', org.name or '')
-            if hasattr(org, 'address') and org.address:
-                from django.utils.html import strip_tags
-                context.setdefault('organization_address', strip_tags(org.address))
+        # Enrichir le contexte
+        self._enrich_context(request, context)
 
         try:
             ai_service = ContractAIService()
@@ -418,13 +489,8 @@ class ContractViewSet(viewsets.ModelViewSet):
         contract_type = request.data.get('contract_type', 'service')
         context = request.data.get('context', {})
 
-        # Enrichir le contexte avec les infos de l'organisation
-        org = request.user.organization
-        if org:
-            context.setdefault('organization_name', org.name or '')
-            if hasattr(org, 'address') and org.address:
-                from django.utils.html import strip_tags
-                context.setdefault('organization_address', strip_tags(org.address))
+        # Enrichir le contexte
+        self._enrich_context(request, context)
 
         try:
             ai_service = ContractAIService()
@@ -444,6 +510,55 @@ class ContractViewSet(viewsets.ModelViewSet):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    def _enrich_context(self, request, context):
+        """Enrichit le contexte avec les données de l'organisation et la contrepartie"""
+        from django.utils.html import strip_tags
+
+        # Organisation
+        org = request.user.organization
+        if org:
+            context.setdefault('organization_name', org.name or '')
+            if hasattr(org, 'address') and org.address:
+                context.setdefault('organization_address', strip_tags(org.address))
+            if hasattr(org, 'email') and org.email:
+                context.setdefault('organization_email', org.email)
+            if hasattr(org, 'phone') and org.phone:
+                context.setdefault('organization_phone', org.phone)
+
+        # Contrepartie — résoudre fournisseur/client depuis l'ID passé dans le contexte
+        supplier_id = context.get('supplier_id')
+        client_id = context.get('client_id')
+
+        if supplier_id:
+            try:
+                from apps.suppliers.models import Supplier
+                supplier = Supplier.objects.get(id=supplier_id)
+                context.setdefault('counterpart_name', supplier.name)
+                if hasattr(supplier, 'address') and supplier.address:
+                    context.setdefault('counterpart_address', strip_tags(str(supplier.address)))
+                if hasattr(supplier, 'email') and supplier.email:
+                    context.setdefault('counterpart_email', supplier.email)
+                if hasattr(supplier, 'phone') and supplier.phone:
+                    context.setdefault('counterpart_phone', supplier.phone)
+                if hasattr(supplier, 'contact_person') and supplier.contact_person:
+                    context.setdefault('counterpart_contact_person', supplier.contact_person)
+            except Exception:
+                pass
+
+        if client_id:
+            try:
+                from apps.accounts.models import Client
+                client = Client.objects.get(id=client_id)
+                context.setdefault('counterpart_name', client.name or client.company_name or '')
+                if hasattr(client, 'address') and client.address:
+                    context.setdefault('counterpart_address', strip_tags(str(client.address)))
+                if hasattr(client, 'email') and client.email:
+                    context.setdefault('counterpart_email', client.email)
+                if hasattr(client, 'phone') and client.phone:
+                    context.setdefault('counterpart_phone', client.phone)
+            except Exception:
+                pass
 
 
 class ContractSectionViewSet(viewsets.ModelViewSet):

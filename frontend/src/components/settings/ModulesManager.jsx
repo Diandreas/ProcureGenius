@@ -32,7 +32,7 @@ const AVAILABLE_MODULES = [
   { code: 'clients', name: 'Clients', IconComponent: People },
   { code: 'products', name: 'Produits', IconComponent: Inventory },
   { code: 'contracts', name: 'Contrats', IconComponent: Description },
-  { code: 'e-sourcing', name: 'E-Sourcing', IconComponent: Gavel },
+  // { code: 'e-sourcing', name: 'E-Sourcing', IconComponent: Gavel },
   { code: 'analytics', name: 'Analytics', IconComponent: BarChart },
 ];
 

@@ -1207,189 +1207,27 @@ function ClientDetail() {
             )}
           </Grid>
 
-          {/* Sidebar avec design amélioré */}
+          {/* Sidebar */}
           <Grid item xs={12} md={4}>
             {/* Conditions commerciales */}
-            <Card
-              sx={{
-                borderRadius: 3,
-                mb: isMobile ? 1.5 : 3,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-                boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
-                border: '1px solid',
-                borderColor: theme => alpha(theme.palette.divider, 0.1),
-                backdropFilter: 'blur(20px)',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 4,
-                  background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  borderRadius: '3px 3px 0 0'
-                }
-              }}
-            >
-              <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: isMobile ? 1.5 : 2.5 }}>
-                  <Box
-                    sx={{
-                      p: 1,
-                      borderRadius: 1.5,
-                      bgcolor: 'primary.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <CreditCard sx={{ color: 'white', fontSize: isMobile ? 20 : 22 }} />
-                  </Box>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight="600"
-                    sx={{ fontSize: isMobile ? '0.938rem' : undefined }}
-                  >
-                    {t('clients:labels.commercialConditions')}
-                  </Typography>
+            <Card sx={{ borderRadius: 2, mb: isMobile ? 1.5 : 3 }}>
+              <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
+                <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.7rem' }}>
+                  Conditions commerciales
+                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.25, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <Typography variant="body2" color="text.secondary">{t('clients:labels.paymentTerms')}</Typography>
+                  <Typography variant="body2" fontWeight={600}>{client.payment_terms || 'CASH'}</Typography>
                 </Box>
-                <Box
-                  sx={{
-                    textAlign: 'center',
-                    p: isMobile ? 2 : 3,
-                    borderRadius: 2.5,
-                    background: theme => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                    mb: client.credit_limit ? (isMobile ? 1.5 : 2) : 0,
-                    boxShadow: theme => `0 4px 16px ${alpha(theme.palette.primary.main, 0.3)}`,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '50%',
-                      background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%)',
-                      borderRadius: '2.5px 2.5px 0 0'
-                    }
-                  }}
-                >
-                  <Typography
-                    variant="h5"
-                    color="white"
-                    fontWeight="bold"
-                    gutterBottom
-                    sx={{
-                      fontSize: isMobile ? '1.25rem' : '1.5rem',
-                      position: 'relative',
-                      zIndex: 1
-                    }}
-                  >
-                    {client.payment_terms || 'CASH'}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: 'rgba(255,255,255,0.95)',
-                      fontWeight: 500,
-                      fontSize: isMobile ? '0.75rem' : '0.875rem',
-                      position: 'relative',
-                      zIndex: 1
-                    }}
-                  >
-                    {t('clients:labels.paymentTerms')}
-                  </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.25 }}>
+                  <Typography variant="body2" color="text.secondary">{t('clients:labels.creditLimit')}</Typography>
+                  <Typography variant="body2" fontWeight={600}>{client.credit_limit ? formatCurrency(client.credit_limit) : '—'}</Typography>
                 </Box>
-
-                {client.credit_limit && (
-                  <Box
-                    sx={{
-                      textAlign: 'center',
-                      p: isMobile ? 2 : 3,
-                      borderRadius: 2.5,
-                      background: theme => `linear-gradient(135deg, ${theme.palette.info.main} 0%, ${theme.palette.info.dark} 100%)`,
-                      boxShadow: theme => `0 4px 16px ${alpha(theme.palette.info.main, 0.3)}`,
-                      position: 'relative',
-                      overflow: 'hidden',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '50%',
-                        background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%)',
-                        borderRadius: '2.5px 2.5px 0 0'
-                      }
-                    }}
-                  >
-                    <Typography
-                      variant="h5"
-                      color="white"
-                      fontWeight="bold"
-                      gutterBottom
-                      sx={{ 
-                        fontSize: isMobile ? '1.125rem' : '1.375rem',
-                        position: 'relative',
-                        zIndex: 1
-                      }}
-                    >
-                      {formatCurrency(client.credit_limit)}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'rgba(255,255,255,0.95)',
-                        fontWeight: 500,
-                        fontSize: isMobile ? '0.75rem' : '0.875rem',
-                        position: 'relative',
-                        zIndex: 1
-                      }}
-                    >
-                      {t('clients:labels.creditLimit')}
-                    </Typography>
-                  </Box>
-                )}
               </CardContent>
             </Card>
 
-            {/* Actions rapides avec design amélioré */}
-            <Card
-              sx={{
-                borderRadius: 3,
-                mb: isMobile ? 1.5 : 3,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-                boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
-                border: '1px solid',
-                borderColor: theme => alpha(theme.palette.divider, 0.1),
-                backdropFilter: 'blur(20px)',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 4,
-                  background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.info.main})`,
-                  borderRadius: '3px 3px 0 0'
-                }
-              }}
-            >
+            {/* Actions rapides */}
+            <Card sx={{ borderRadius: 2, mb: isMobile ? 1.5 : 3 }}>
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
                 <Typography
                   variant="subtitle1"
@@ -1460,34 +1298,8 @@ function ClientDetail() {
               </CardContent>
             </Card>
 
-            {/* Dates avec design amélioré */}
-            <Card
-              sx={{
-                borderRadius: 3,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-                boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
-                border: '1px solid',
-                borderColor: theme => alpha(theme.palette.divider, 0.1),
-                backdropFilter: 'blur(20px)',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: theme => `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`
-                },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 4,
-                  background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${theme.palette.warning.main})`,
-                  borderRadius: '3px 3px 0 0'
-                }
-              }}
-            >
+            {/* Dates */}
+            <Card sx={{ borderRadius: 2 }}>
               <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
                 <Typography
                   variant="subtitle1"

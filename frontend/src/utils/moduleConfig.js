@@ -10,7 +10,7 @@ export const Modules = {
     INVOICES: 'invoices',
     PRODUCTS: 'products',
     CLIENTS: 'clients',
-    E_SOURCING: 'e-sourcing',
+    // E_SOURCING: 'e-sourcing',
     CONTRACTS: 'contracts',
     ANALYTICS: 'analytics',
 

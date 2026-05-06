@@ -99,6 +99,25 @@ class Contract(models.Model):
     # Notes internes
     internal_notes = models.TextField(blank=True, verbose_name=_("Notes internes"))
 
+    # PDF signé
+    signed_pdf = models.FileField(upload_to='contracts/signed/', blank=True, null=True, verbose_name=_("PDF signé"))
+
+    # Signatures
+    signed_by_us = models.BooleanField(default=False, verbose_name=_("Signé par nous"))
+    signed_by_us_name = models.CharField(max_length=200, blank=True, verbose_name=_("Nom du signataire (nous)"))
+    signed_by_us_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date de signature (nous)"))
+    signed_by_counterpart = models.BooleanField(default=False, verbose_name=_("Signé par la contrepartie"))
+    signed_by_counterpart_name = models.CharField(max_length=200, blank=True, verbose_name=_("Nom du signataire (contrepartie)"))
+    signed_by_counterpart_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date de signature (contrepartie)"))
+
+    # Langue du contrat
+    LANGUAGE_CHOICES = [
+        ('fr', _('Français')),
+        ('en', _('English')),
+        ('es', _('Español')),
+    ]
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default='fr', verbose_name=_("Langue du contrat"))
+
     class Meta:
         verbose_name = _("Contrat")
         verbose_name_plural = _("Contrats")

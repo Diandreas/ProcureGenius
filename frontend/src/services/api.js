@@ -111,6 +111,9 @@ export const invoicesAPI = {
   send: (id, data) => api.post(`/invoices/${id}/send/`, data),
   sendEmail: (id, data) => api.post(`/invoices/${id}/send/`, data),
   markPaid: (id, data) => api.post(`/invoices/${id}/mark_paid/`, data),
+  getPayments: (id) => api.get(`/invoices/${id}/payments/`),
+  addPayment: (id, data) => api.post(`/invoices/${id}/payments/`, data),
+  deletePayment: (invoiceId, paymentId) => api.delete(`/invoices/${invoiceId}/payments/${paymentId}/`),
 };
 
 // Products API
@@ -231,6 +234,14 @@ export const contractsAPI = {
   exportPDF: (id, data) => api.post(`/contracts/${id}/pdf-report/`, data, { responseType: 'blob' }),
   exportWord: (id, data) => api.post(`/contracts/${id}/word-report/`, data, { responseType: 'blob' }),
   sendEmail: (id, data) => api.post(`/contracts/${id}/send-email/`, data),
+  uploadSignedPdf: (id, file) => {
+    const formData = new FormData();
+    formData.append('signed_pdf', file);
+    return api.post(`/contracts/${id}/upload-signed-pdf/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  updateSignatures: (id, data) => api.patch(`/contracts/${id}/update-signatures/`, data),
   extractClauses: (id, contractText, language = 'fr') =>
     api.post(`/contracts/${id}/extract_clauses/`, {
       contract_text: contractText,

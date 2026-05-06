@@ -238,29 +238,34 @@ class Product(models.Model):
         """Formate le prix"""
         return f"{self.price:,.2f} CAD"
 
+    def sync_stock_from_batches(self):
+        """Recalcule stock_quantity comme somme des lots actifs."""
+        total = self.batches.filter(is_active=True).aggregate(
+            total=models.Sum('current_quantity')
+        )['total'] or 0
+        self.stock_quantity = total
+        self.save(update_fields=['stock_quantity'])
+
     def adjust_stock(self, quantity, movement_type, reference_type=None, reference_id=None, notes="", user=None, batch=None):
         """
-        Ajuste le stock et crée un mouvement
-
-        Args:
-            quantity: Quantité (positive pour entrée, négative pour sortie)
-            movement_type: Type de mouvement (reception, sale, adjustment, return)
-            reference_type: Type de référence (purchase_order, invoice, etc.)
-            reference_id: ID de la référence
-            notes: Notes du mouvement
-            user: Utilisateur qui effectue le mouvement
-            batch: Lot de produit (optionnel)
+        Ajuste le stock et crée un mouvement.
+        Si un lot est fourni, la quantité est portée sur le lot et stock_quantity
+        est recalculé depuis la somme des lots. Sinon, on ajuste directement
+        stock_quantity (cas sans lot).
         """
         if self.product_type != 'physical':
             return None
 
         old_quantity = self.stock_quantity
-        self.stock_quantity += quantity
-        self.save(update_fields=['stock_quantity'])
 
         if batch:
             batch.current_quantity += quantity
             batch.save(update_fields=['current_quantity'])
+            # Recalculer depuis les lots pour garder la cohérence
+            self.sync_stock_from_batches()
+        else:
+            self.stock_quantity += quantity
+            self.save(update_fields=['stock_quantity'])
 
         # Créer le mouvement
         movement = StockMovement.objects.create(
@@ -293,7 +298,8 @@ class ProductBatch(models.Model):
     current_quantity = models.IntegerField(default=0, verbose_name="Quantité actuelle")
     warehouse = models.ForeignKey(Warehouse, on_delete=models.SET_NULL, null=True, blank=True, related_name='batches', verbose_name="Entrepôt")
     supplier_batch_reference = models.CharField(max_length=100, blank=True, verbose_name="Référence lot fournisseur")
-    
+    description = models.TextField(blank=True, verbose_name="Description du lot")
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Date de création")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Date de modification")
     is_active = models.BooleanField(default=True, verbose_name="Actif")
@@ -421,6 +427,7 @@ class Invoice(models.Model):
         ('quote', _('Devis')),
         ('draft', _('Brouillon')),
         ('sent', _('Envoyée')),
+        ('pending', _('En attente')),
         ('paid', _('Payée')),
         ('overdue', _('En retard')),
         ('cancelled', _('Annulée')),
@@ -431,13 +438,13 @@ class Invoice(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name=_("Statut"))
     
     # Informations générales
-    title = models.CharField(max_length=200, verbose_name=_("Titre"))
+    title = models.CharField(max_length=200, blank=True, default='', verbose_name=_("Titre"))
     description = models.TextField(blank=True, verbose_name=_("Description"))
     
     # Dates
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de modification"))
-    due_date = models.DateField(verbose_name=_("Date d'échéance"))
+    due_date = models.DateField(null=True, blank=True, verbose_name=_("Date d'échéance"))
     
     # Montants (simplifiés)
     subtotal = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Sous-total"))
@@ -1262,6 +1269,11 @@ class Payment(models.Model):
         ],
         default='bank_transfer',
         verbose_name=_("Mode de paiement")
+    )
+    status = models.CharField(
+        max_length=20,
+        default='completed',
+        verbose_name=_("Statut")
     )
     reference_number = models.CharField(
         max_length=100,
