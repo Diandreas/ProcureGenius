@@ -90,6 +90,11 @@ class PatientListCreateView(generics.ListCreateAPIView):
         source = self.request.query_params.get('source')
         if source:
             queryset = queryset.filter(registration_source=source)
+
+        # Filter by creation date lower bound (YYYY-MM-DD)
+        created_after = self.request.query_params.get('created_after')
+        if created_after:
+            queryset = queryset.filter(created_at__date__gte=created_after)
         
         return queryset
     
@@ -1163,3 +1168,53 @@ class PatientCareServiceDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         self._check_editable(instance)
         return super().destroy(request, *args, **kwargs)
+
+
+class PatientMergeView(APIView):
+    """
+    POST /healthcare/patients/<uuid:patient_id>/merge/
+    Body: { "secondary_id": "<uuid>", "dry_run": true/false }
+    Admin only — merges secondary patient into primary (patient_id).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, patient_id):
+        # Only admin/manager can merge
+        if request.user.role not in ('admin', 'manager', 'owner'):
+            return Response(
+                {'error': 'Seuls les administrateurs peuvent fusionner des patients.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        secondary_id = request.data.get('secondary_id')
+        dry_run = request.data.get('dry_run', False)
+
+        if not secondary_id:
+            return Response(
+                {'error': 'secondary_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from .services import merge_patients
+            result = merge_patients(
+                primary_id=str(patient_id),
+                secondary_id=str(secondary_id),
+                user=request.user,
+                dry_run=dry_run,
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Client.DoesNotExist:
+            return Response(
+                {'error': 'Un des deux patients est introuvable.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            import traceback
+            return Response(
+                {'error': f'Erreur lors de la fusion: {str(e)}', 'traceback': traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+

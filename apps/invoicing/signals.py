@@ -25,11 +25,18 @@ def recalculate_invoice_totals_on_item_delete(sender, instance, **kwargs):
 
 
 @receiver(pre_delete, sender=Invoice)
-def cleanup_invoice_items(sender, instance, **kwargs):
-    """Nettoie les éléments avant de supprimer une facture"""
-    # Les éléments seront supprimés automatiquement grâce à CASCADE
-    # Ce signal peut être utilisé pour d'autres nettoyages si nécessaire
-    pass
+def prevent_invoice_deletion(sender, instance, **kwargs):
+    """Empêche la suppression physique des factures (force l'annulation)."""
+    # On autorise la suppression uniquement si un flag explicite est présent
+    # (utile pour les scripts de nettoyage internes)
+    if getattr(instance, '_allow_deletion', False):
+        return
+        
+    from django.core.exceptions import PermissionDenied
+    raise PermissionDenied(
+        f"La suppression physique de la facture {instance.invoice_number} est interdite "
+        f"pour des raisons de traçabilité comptable. Veuillez l'annuler (statut 'cancelled') à la place."
+    )
 
 
 @receiver(pre_save, sender=Invoice)

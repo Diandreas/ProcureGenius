@@ -45,10 +45,12 @@ import {
   AttachMoney,
   Receipt,
   Send,
+  CheckCircle,
+  LocalOffer,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
-import { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
+import api, { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
 import { buildInvoiceGroup, enqueueGroup } from '../../db/offlineDb';
 import { isOfflineError } from '../../services/syncEngine';
 import { formatDate } from '../../utils/formatters';
@@ -99,13 +101,21 @@ function InvoiceForm() {
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
   const [items, setItems] = useState([]);
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [couponStatus, setCouponStatus] = useState(null); // null | 'loading' | 'valid' | 'invalid'
+  const [couponInfo, setCouponInfo] = useState(null); // { discount_amount, label, discount_type, discount_value }
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     client: null,
     tax_rate: 0,
     status: 'paid', // Default to paid
-    payment_method: 'cash' // Default to cash
+    payment_method: 'cash', // Default to cash
+    global_discount_type: 'fixed',
+    global_discount_value: 0,
+    global_discount_label: ''
   });
 
   // Génère titre et description automatiquement à partir des items (seulement en création)
@@ -197,7 +207,10 @@ function InvoiceForm() {
         // due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
         tax_rate: invoice.tax_rate !== undefined ? invoice.tax_rate : 0,
         status: invoice.status || 'paid',
-        payment_method: invoice.payment_method || 'cash'
+        payment_method: invoice.payment_method || 'cash',
+        global_discount_type: invoice.global_discount_type || 'fixed',
+        global_discount_value: parseFloat(invoice.global_discount_value) || 0,
+        global_discount_label: invoice.global_discount_label || ''
       });
       setItems(invoice.items || []);
     } catch (error) {
@@ -220,11 +233,68 @@ function InvoiceForm() {
     return isNaN(taxAmount) ? 0 : taxAmount;
   };
 
+  const calculateDiscountAmount = () => {
+    const subtotal = calculateSubtotal();
+    const value = parseFloat(formData.global_discount_value) || 0;
+    if (value <= 0) return 0;
+    if (formData.global_discount_type === 'percent') {
+      const pct = Math.min(value, 100);
+      return Math.round((subtotal * pct / 100) * 100) / 100;
+    }
+    return Math.min(value, subtotal);
+  };
+
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
     const taxAmount = calculateTaxAmount();
-    const total = subtotal + taxAmount;
-    return isNaN(total) ? 0 : total;
+    const discount = calculateDiscountAmount();
+    const total = subtotal + taxAmount - discount;
+    return isNaN(total) ? 0 : Math.max(total, 0);
+  };
+
+  // Coupon validation
+  const validateCoupon = async () => {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) return;
+    setCouponStatus('loading');
+    setCouponInfo(null);
+    try {
+      const subtotal = calculateSubtotal();
+      const res = await api.post('/documents/coupons/validate/', {
+        code,
+        invoice_amount: subtotal,
+      });
+      const data = res.data;
+      if (data.valid) {
+        setCouponStatus('valid');
+        setCouponInfo(data);
+        // Appliquer automatiquement la remise dans le formulaire
+        setFormData(prev => ({
+          ...prev,
+          global_discount_type: 'fixed',
+          global_discount_value: data.discount_amount || 0,
+          global_discount_label: `Coupon ${code}${data.label ? ' — ' + data.label : ''}`,
+        }));
+      } else {
+        setCouponStatus('invalid');
+        setCouponInfo({ error: data.error });
+      }
+    } catch (e) {
+      setCouponStatus('invalid');
+      setCouponInfo({ error: e.response?.data?.error || 'Coupon introuvable.' });
+    }
+  };
+
+  const clearCoupon = () => {
+    setCouponCode('');
+    setCouponStatus(null);
+    setCouponInfo(null);
+    setFormData(prev => ({
+      ...prev,
+      global_discount_type: 'fixed',
+      global_discount_value: 0,
+      global_discount_label: '',
+    }));
   };
 
   // Quick Create handlers
@@ -330,6 +400,8 @@ function InvoiceForm() {
       const taxAmount = calculateTaxAmount();
       const totalAmount = calculateTotal();
 
+      const discountAmount = calculateDiscountAmount();
+
       const payload = {
         ...formData,
         client: formData.client ? formData.client.id : null,
@@ -344,7 +416,11 @@ function InvoiceForm() {
         })),
         subtotal: subtotal || 0,
         tax_amount: taxAmount || 0,
-        total_amount: totalAmount || 0
+        total_amount: totalAmount || 0,
+        global_discount_type: formData.global_discount_type || 'fixed',
+        global_discount_value: parseFloat(formData.global_discount_value) || 0,
+        global_discount_label: formData.global_discount_label || '',
+        global_discount_amount: discountAmount
       };
 
       if (isEdit) {
@@ -680,6 +756,56 @@ function InvoiceForm() {
                 </CardContent>
               </Card>
 
+              {/* Discount Section Mobile */}
+              <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <CardContent sx={{ p: 2 }}>
+                  <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
+                    Remise globale
+                  </Typography>
+                  <Stack spacing={1.5}>
+                    {/* Coupon code input */}
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <TextField
+                        size="small"
+                        label="Code coupon"
+                        placeholder="Ex: 4829"
+                        value={couponCode}
+                        onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus(null); }}
+                        onKeyDown={(e) => e.key === 'Enter' && validateCoupon()}
+                        disabled={couponStatus === 'valid'}
+                        inputProps={{ style: { fontFamily: 'monospace', fontWeight: 700, letterSpacing: '0.05em' } }}
+                        sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        InputProps={{
+                          startAdornment: <LocalOffer sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />,
+                          endAdornment: couponStatus === 'valid'
+                            ? <CheckCircle sx={{ color: 'success.main', fontSize: 18 }} />
+                            : null,
+                        }}
+                      />
+                      {couponStatus !== 'valid' ? (
+                        <Button size="small" variant="outlined" onClick={validateCoupon}
+                          disabled={!couponCode.trim() || couponStatus === 'loading'}
+                          sx={{ borderRadius: 2, minWidth: 72, whiteSpace: 'nowrap' }}>
+                          {couponStatus === 'loading' ? <CircularProgress size={14} /> : 'Valider'}
+                        </Button>
+                      ) : (
+                        <Button size="small" color="error" onClick={clearCoupon} sx={{ borderRadius: 2, minWidth: 72 }}>
+                          Retirer
+                        </Button>
+                      )}
+                    </Stack>
+                    {couponStatus === 'invalid' && (
+                      <Alert severity="error" sx={{ py: 0.5, borderRadius: 2 }}>{couponInfo?.error}</Alert>
+                    )}
+                    {couponStatus === 'valid' && couponInfo && (
+                      <Alert severity="success" icon={<CheckCircle fontSize="small" />} sx={{ py: 0.5, borderRadius: 2 }}>
+                        Coupon appliqué — remise de {formatCurrency(couponInfo.discount_amount)}
+                      </Alert>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+
               {/* Financial Summary Mobile */}
               <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent sx={{ p: 2 }}>
@@ -707,6 +833,18 @@ function InvoiceForm() {
                         </Typography>
                       </Box>
                     </Grid>
+                    {calculateDiscountAmount() > 0 && (
+                      <Grid item xs={6}>
+                        <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'error.50', borderRadius: 1 }}>
+                          <Typography variant="h6" color="error.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                            -{formatCurrency(calculateDiscountAmount())}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                            Remise
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
                     <Grid item xs={6}>
                       <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'success.50', borderRadius: 1 }}>
                         <Typography variant="h6" color="success.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
@@ -880,6 +1018,49 @@ function InvoiceForm() {
                   </CardContent>
                 </Card>
 
+                {/* Discount Section Desktop */}
+                <Card sx={{ mb: 3, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                      Remise globale
+                    </Typography>
+                    {/* Coupon code input — desktop */}
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                      <TextField
+                        size="small"
+                        label="Code coupon"
+                        placeholder="Ex: 4829"
+                        value={couponCode}
+                        onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus(null); }}
+                        onKeyDown={(e) => e.key === 'Enter' && validateCoupon()}
+                        disabled={couponStatus === 'valid'}
+                        sx={{ width: 200 }}
+                        inputProps={{ style: { fontFamily: 'monospace', fontWeight: 700, letterSpacing: '0.05em' } }}
+                        InputProps={{
+                          startAdornment: <LocalOffer sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />,
+                          endAdornment: couponStatus === 'valid' ? <CheckCircle sx={{ color: 'success.main', fontSize: 18 }} /> : null,
+                        }}
+                      />
+                      {couponStatus !== 'valid' ? (
+                        <Button size="small" variant="outlined" onClick={validateCoupon}
+                          disabled={!couponCode.trim() || couponStatus === 'loading'}>
+                          {couponStatus === 'loading' ? <CircularProgress size={14} /> : 'Valider'}
+                        </Button>
+                      ) : (
+                        <Button size="small" color="error" onClick={clearCoupon}>Retirer</Button>
+                      )}
+                      {couponStatus === 'invalid' && couponInfo?.error && (
+                        <Typography variant="caption" color="error.main">{couponInfo.error}</Typography>
+                      )}
+                      {couponStatus === 'valid' && couponInfo && (
+                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 600 }}>
+                          Coupon appliqué — remise de {formatCurrency(couponInfo.discount_amount)}
+                        </Typography>
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
+
                 {/* Financial Summary */}
                 <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                   <CardContent>
@@ -907,6 +1088,18 @@ function InvoiceForm() {
                           </Typography>
                         </Box>
                       </Grid>
+                      {calculateDiscountAmount() > 0 && (
+                        <Grid item xs={12} sm={4}>
+                          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.50', borderRadius: 1 }}>
+                            <Typography variant="h5" color="error.main" sx={{ fontWeight: 600 }}>
+                              -{formatCurrency(calculateDiscountAmount())}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {formData.global_discount_label || 'Remise'}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      )}
                       <Grid item xs={12} sm={4}>
                         <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
                           <Typography variant="h5" color="success.main" sx={{ fontWeight: 600 }}>

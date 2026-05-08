@@ -16,7 +16,14 @@ import {
     useMediaQuery,
     Button,
     alpha,
-    Paper
+    Paper,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Autocomplete,
+    CircularProgress,
+    Alert
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -29,13 +36,15 @@ import {
     Block,
     FiberNew,
     Male,
-    Female
+    Female,
+    MergeType as MergeIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { motion } from 'framer-motion';
 import patientAPI from '../../../services/patientAPI';
+import api from '../../../services/api';
 import LoadingState from '../../../components/LoadingState';
 import ErrorState from '../../../components/ErrorState';
 import { formatDate } from '../../../utils/formatters';
@@ -49,6 +58,12 @@ const PatientList = () => {
 
     const [loading, setLoading] = useState(false);
     const [patients, setPatients] = useState([]);
+    const [stats, setStats] = useState({
+        total: 0,
+        newLast7Days: 0,
+        male: 0,
+        female: 0,
+    });
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [quickFilter, setQuickFilter] = useState('');
@@ -60,12 +75,29 @@ const PatientList = () => {
     const fetchPatients = async () => {
         setLoading(true);
         try {
-            const response = await patientAPI.getPatients({
-                page,
-                search,
-                page_size: 50 // Increased for grid view
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+
+            const [listResponse, totalResponse, newResponse, maleResponse, femaleResponse] = await Promise.all([
+                patientAPI.getPatients({
+                    page,
+                    search,
+                    page_size: 50, // Increased for grid view
+                }),
+                patientAPI.getPatients({ page: 1, page_size: 1 }),
+                patientAPI.getPatients({ page: 1, page_size: 1, created_after: sevenDaysAgoStr }),
+                patientAPI.getPatients({ page: 1, page_size: 1, gender: 'M' }),
+                patientAPI.getPatients({ page: 1, page_size: 1, gender: 'F' }),
+            ]);
+
+            setPatients(listResponse.results || []);
+            setStats({
+                total: totalResponse.count || 0,
+                newLast7Days: newResponse.count || 0,
+                male: maleResponse.count || 0,
+                female: femaleResponse.count || 0,
             });
-            setPatients(response.results || []);
         } catch (error) {
             console.error('Error fetching patients:', error);
             enqueueSnackbar(t('common.error'), { variant: 'error' });
@@ -81,6 +113,46 @@ const PatientList = () => {
 
     const handleQuickFilterClick = (filterValue) => {
         setQuickFilter(quickFilter === filterValue ? '' : filterValue);
+    };
+
+    // === Merge patients dialog ===
+    const [mergeDialog, setMergeDialog] = useState({ open: false, primary: null });
+    const [mergeSecondary, setMergeSecondary] = useState(null);
+    const [mergeSearch, setMergeSearch] = useState('');
+    const [mergeOptions, setMergeOptions] = useState([]);
+    const [mergeSaving, setMergeSaving] = useState(false);
+
+    useEffect(() => {
+        if (!mergeDialog.open) return;
+        const timer = setTimeout(async () => {
+            try {
+                const data = await patientAPI.getPatients({ search: mergeSearch, page_size: 20 });
+                setMergeOptions((data.results || []).filter(p => p.id !== mergeDialog.primary?.id));
+            } catch {}
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [mergeSearch, mergeDialog.open, mergeDialog.primary]);
+
+    const handleMergeSubmit = async () => {
+        if (!mergeDialog.primary || !mergeSecondary) return;
+        if (!window.confirm(
+            `Fusionner "${mergeSecondary.name}" → "${mergeDialog.primary.name}" ?\n\nToutes les factures, commandes labo et consultations seront transférées. Le doublon sera désactivé. Cette action est irréversible.`
+        )) return;
+        setMergeSaving(true);
+        try {
+            await api.post(`/healthcare/patients/${mergeDialog.primary.id}/merge/`, {
+                secondary_patient_id: mergeSecondary.id
+            });
+            enqueueSnackbar(`Fusion réussie : "${mergeSecondary.name}" fusionné dans "${mergeDialog.primary.name}"`, { variant: 'success' });
+            setMergeDialog({ open: false, primary: null });
+            setMergeSecondary(null);
+            fetchPatients();
+        } catch (err) {
+            const msg = err.response?.data?.error || 'Erreur lors de la fusion';
+            enqueueSnackbar(msg, { variant: 'error' });
+        } finally {
+            setMergeSaving(false);
+        }
     };
 
     // Filter Logic
@@ -106,15 +178,11 @@ const PatientList = () => {
         }
     });
 
-    // Stats Calculation
-    const totalPatients = patients.length;
-    const newPatients = patients.filter(p => {
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return new Date(p.created_at) > weekAgo;
-    }).length;
-    const malePatients = patients.filter(p => p.gender === 'M').length;
-    const femalePatients = patients.filter(p => p.gender === 'F').length;
+    // Stats Calculation (global backend counts)
+    const totalPatients = stats.total;
+    const newPatients = stats.newLast7Days;
+    const malePatients = stats.male;
+    const femalePatients = stats.female;
 
     // Loading & Error States
     if (loading && patients.length === 0) return <LoadingState message={t('patients.loading', 'Chargement des patients...')} />;
@@ -249,6 +317,11 @@ const PatientList = () => {
                                 <EditIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
+                        <Tooltip title="Fusionner avec un doublon">
+                            <IconButton size="small" color="warning" onClick={() => { setMergeDialog({ open: true, primary: patient }); setMergeSecondary(null); setMergeSearch(''); }}>
+                                <MergeIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
                     </Stack>
                 </CardContent>
             </Card>
@@ -377,6 +450,45 @@ const PatientList = () => {
                     </Button>
                 </Box>
             )}
+
+            {/* Merge Dialog */}
+            <Dialog open={mergeDialog.open} onClose={() => setMergeDialog({ open: false, primary: null })} maxWidth="sm" fullWidth>
+                <DialogTitle>Fusionner un doublon patient</DialogTitle>
+                <DialogContent>
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                        Toutes les données du doublon (factures, labo, consultations) seront transférées vers le patient principal. Le doublon sera désactivé.
+                    </Alert>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                        <strong>Patient principal (conservé) :</strong> {mergeDialog.primary?.name}
+                    </Typography>
+                    <Autocomplete
+                        options={mergeOptions}
+                        getOptionLabel={p => p.name || ''}
+                        value={mergeSecondary}
+                        onChange={(_, v) => setMergeSecondary(v)}
+                        onInputChange={(_, v) => setMergeSearch(v)}
+                        isOptionEqualToValue={(a, b) => a.id === b.id}
+                        renderInput={params => (
+                            <TextField {...params} label="Doublon à fusionner *" size="small" fullWidth
+                                helperText="Recherchez le doublon — il sera désactivé après fusion"
+                            />
+                        )}
+                        noOptionsText="Aucun patient trouvé"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setMergeDialog({ open: false, primary: null })}>Annuler</Button>
+                    <Button
+                        variant="contained"
+                        color="warning"
+                        onClick={handleMergeSubmit}
+                        disabled={!mergeSecondary || mergeSaving}
+                        startIcon={mergeSaving ? <CircularProgress size={16} /> : <MergeIcon />}
+                    >
+                        Fusionner
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

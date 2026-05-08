@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>LISTE DES TARIFS SOUS-TRAITANCE - {{ organization.name|default:"CENTRE DE SANTÉ JULIANNA" }}</title>
+    <style>
+        @page { size: A4; margin: 10mm; }
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; color: #222; font-size: 10px; }
+        .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; }
+        .logo { max-height: 60px; margin-bottom: 5px; }
+        h1 { margin: 0; font-size: 16px; color: #1e3a8a; }
+
+        .price-columns { column-count: 3; column-gap: 20px; column-rule: 1px solid #ddd; }
+        .category-block { break-inside: avoid; margin-bottom: 15px; }
+        h2 { background: #1e3a8a; color: white; font-size: 10px; padding: 4px 8px; margin: 0 0 5px 0; text-transform: uppercase; border-radius: 3px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 3px 0; border-bottom: 0.5px solid #eee; }
+        .p-name { font-weight: normal; }
+        .p-val { text-align: right; font-weight: bold; color: #2e7d32; white-space: nowrap; padding-left: 5px; }
+
+        .footer { text-align: center; font-size: 8px; color: #888; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+        .subcontract-badge { margin-top: 8px; background: #e3f2fd; border: 1px solid #90caf9; padding: 5px 10px; font-weight: bold; color: #1565c0; display: inline-block; border-radius: 4px; font-size: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if logo_b64 %}
+        <img src="{{ logo_b64 }}" class="logo">
+        {% endif %}
+        <h1>LISTE DES TARIFS SOUS-TRAITANCE - {{ organization.name|default:"CENTRE DE SANTÉ JULIANNA" }}</h1>
+        <p style="margin: 3px 0;">
+            {{ organization.address|default:"Makepe Saint-Tropez, Douala" }}
+            {% if organization.phone %} | {{ organization.phone }}{% else %} | 655 24 41 49 / 679 14 51 98{% endif %}
+        </p>
+        <div style="margin-top: 10px; background: #fff3cd; border: 1px solid #ffeeba; padding: 5px; font-weight: bold; color: #856404; display: inline-block; border-radius: 4px;">
+            KIT DE PRÉLÈVEMENT : 500 FCFA (Obligatoire)
+        </div>
+        <div class="subcontract-badge">TARIFS RÉSERVÉS AUX PARTENAIRES &amp; SOUS-TRAITANTS</div>
+    </div>
+
+    <div class="price-columns">
+        {% for category in categories %}
+        <div class="category-block">
+            <h2>{{ category.name|upper }}</h2>
+            <table>
+                {% for test in category.tests.all %}
+                {% if test.is_active %}
+                <tr>
+                    <td class="p-name">{{ test.name }}</td>
+                    <td class="p-val">
+                        {% if test.subcontract_price %}{{ test.subcontract_price|floatformat:0 }}
+                        {% elif test.price %}{{ test.price|floatformat:0 }}
+                        {% else %}<span style="color:#888;font-size:0.9em;font-weight:normal;">Devis</span>{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </table>
+        </div>
+        {% empty %}
+        <div class="category-block">
+            <h2>BIOCHIMIE</h2>
+            <table>
+                <tr><td class="p-name">ACIDE URIQUE</td><td class="p-val">2 000</td></tr>
+                <tr><td class="p-name">ALBUMINE</td><td class="p-val">2 000</td></tr>
+                <tr><td class="p-name">PROFIL LIPIDIQUE</td><td class="p-val">10 500</td></tr>
+                <tr><td class="p-name">BILIRUBINE Directe</td><td class="p-val">2 500</td></tr>
+                <tr><td class="p-name">BILIRUBINE TOTALE</td><td class="p-val">2 500</td></tr>
+                <tr><td class="p-name">CALCIUM Ca++</td><td class="p-val">2 000</td></tr>
+                <tr><td class="p-name">CHIMIE URINAIRE</td><td class="p-val">1 000</td></tr>
+                <tr><td class="p-name">CHOLESTÉROL TOTAL</td><td class="p-val">2 000</td></tr>
+                <tr><td class="p-name">CREATININE</td><td class="p-val">2 000</td></tr>
+                <tr><td class="p-name">CRP</td><td class="p-val">3 500</td></tr>
+                <tr><td class="p-name">IONOGRAMME COMPLET</td><td class="p-val">14 000</td></tr>
+                <tr><td class="p-name">IONOGRAMME SIMPLE</td><td class="p-val">6 000</td></tr>
+                <tr><td class="p-name">GLYCEMIE A JEUN</td><td class="p-val">1 000</td></tr>
+                <tr><td class="p-name">HEMOGLOBINE HbA1C</td><td class="p-val">7 000</td></tr>
+                <tr><td class="p-name">UREE</td><td class="p-val">2 000</td></tr>
+                <tr><td class="p-name">SGOT/SGPT (TRANSAMINASES)</td><td class="p-val">5 000</td></tr>
+                <tr><td class="p-name">TRIGLYCERIDES</td><td class="p-val">3 000</td></tr>
+            </table>
+        </div>
+        <div class="category-block">
+            <h2>PARASITOLOGIE</h2>
+            <table>
+                <tr><td class="p-name">PALUDISME + Quantification (GE)</td><td class="p-val">1 500</td></tr>
+            </table>
+        </div>
+        <div class="category-block">
+            <h2>HORMONOLOGIE</h2>
+            <table>
+                <tr><td class="p-name">HCG GROSSESSE</td><td class="p-val">1 000</td></tr>
+                <tr><td class="p-name">PSA Total</td><td class="p-val">10 000</td></tr>
+                <tr><td class="p-name">TSH</td><td class="p-val">10 000</td></tr>
+                <tr><td class="p-name">T3</td><td class="p-val">10 000</td></tr>
+                <tr><td class="p-name">T4</td><td class="p-val">10 000</td></tr>
+                <tr><td class="p-name">Œstrogène</td><td class="p-val">12 000</td></tr>
+                <tr><td class="p-name">Progestérone</td><td class="p-val">12 000</td></tr>
+                <tr><td class="p-name">FSH</td><td class="p-val">10 000</td></tr>
+                <tr><td class="p-name">LH</td><td class="p-val">10 000</td></tr>
+                <tr><td class="p-name">AMH</td><td class="p-val">20 000</td></tr>
+                <tr><td class="p-name">FERRITINE</td><td class="p-val">10 000</td></tr>
+            </table>
+        </div>
+        <div class="category-block">
+            <h2>BACTÉRIOLOGIE</h2>
+            <table>
+                <tr><td class="p-name">GONOCOQUE</td><td class="p-val">6 000</td></tr>
+                <tr><td class="p-name">EXAM CYTO (ECBU)</td><td class="p-val">6 000</td></tr>
+                <tr><td class="p-name">HEMOCULTURE</td><td class="p-val">10 000</td></tr>
+                <tr><td class="p-name">COPROCULTURE</td><td class="p-val">7 000</td></tr>
+                <tr><td class="p-name">SELLES : KAOP</td><td class="p-val">1 000</td></tr>
+                <tr><td class="p-name">SPERMOGRAMME</td><td class="p-val">8 000</td></tr>
+                <tr><td class="p-name">Mycoplasme</td><td class="p-val">10 000</td></tr>
+            </table>
+        </div>
+        <div class="category-block">
+            <h2>HÉMATOLOGIE</h2>
+            <table>
+                <tr><td class="p-name">VITESSE DE SEDIMENTATION</td><td class="p-val">1 500</td></tr>
+                <tr><td class="p-name">GROUPE SANGUIN (ABO-RH)</td><td class="p-val">2 500</td></tr>
+                <tr><td class="p-name">NFS</td><td class="p-val">2 500</td></tr>
+                <tr><td class="p-name">HÉMOGRAME COMPLET</td><td class="p-val">4 000</td></tr>
+            </table>
+        </div>
+        <div class="category-block">
+            <h2>HÉMOSTASE</h2>
+            <table>
+                <tr><td class="p-name">TP/TQ &amp; TCK &amp; FIB</td><td class="p-val">10 500</td></tr>
+                <tr><td class="p-name">TP/INR</td><td class="p-val">3 000</td></tr>
+                <tr><td class="p-name">TCK</td><td class="p-val">3 000</td></tr>
+                <tr><td class="p-name">FIBRINOGENE</td><td class="p-val">4 000</td></tr>
+            </table>
+        </div>
+        <div class="category-block">
+            <h2>SÉROLOGIE</h2>
+            <table>
+                <tr><td class="p-name">HEPATITE C Ac Anti-HCV</td><td class="p-val">2 500</td></tr>
+                <tr><td class="p-name">HBsAg Hepatitis B Surface Ag</td><td class="p-val">2 500</td></tr>
+                <tr><td class="p-name">HBV Hepatitis B 5-in-1</td><td class="p-val">20 000</td></tr>
+                <tr><td class="p-name">SYPHILIS (TPHA - VDRL)</td><td class="p-val">3 500</td></tr>
+                <tr><td class="p-name">VIH 1 &amp; VIH 2</td><td class="p-val">500</td></tr>
+                <tr><td class="p-name">TOXO Toxoplasma Ab IgM</td><td class="p-val">4 000</td></tr>
+                <tr><td class="p-name">RUBEOLE</td><td class="p-val">4 000</td></tr>
+                <tr><td class="p-name">Chlamydia Trachomatis Ag</td><td class="p-val">5 000</td></tr>
+                <tr><td class="p-name">H.Pylori Ab Test</td><td class="p-val">3 500</td></tr>
+                <tr><td class="p-name">Malaria Pan Test</td><td class="p-val">500</td></tr>
+                <tr><td class="p-name">Typhoid Ab IgM/IgG</td><td class="p-val">2 500</td></tr>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="footer">
+        {% if document and document.revision_date %}
+        Document mis à jour en {{ document.revision_date }}.
+        {% else %}
+        Document mis à jour en Mars 2026.
+        {% endif %}
+        Les tarifs sont sujets à modification sans préavis. — Réservé aux partenaires et sous-traitants.
+    </div>
+</body>
+</html>

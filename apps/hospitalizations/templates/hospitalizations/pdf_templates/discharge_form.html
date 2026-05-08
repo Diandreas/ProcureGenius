@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche de sortie d'hospitalisation</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 10px;
+        }
+        .logo {
+            max-width: 150px;
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 18pt;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+        }
+        .org-info {
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .document-title {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            color: #2c3e50;
+            font-size: 12pt;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 3px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .info-table td {
+            padding: 5px;
+            vertical-align: top;
+        }
+        .info-label {
+            font-weight: bold;
+            width: 30%;
+            color: #555;
+        }
+        .content-box {
+            border: 1px solid #eee;
+            padding: 10px;
+            background-color: #fafafa;
+            min-height: 40px;
+            margin-bottom: 10px;
+        }
+        .footer-signatures {
+            margin-top: 50px;
+            width: 100%;
+        }
+        .signature-box {
+            width: 45%;
+            display: inline-block;
+            text-align: center;
+            border-top: 1px dashed #999;
+            padding-top: 5px;
+        }
+        .signature-box.right {
+            float: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        {% if logo_base64 %}
+            <img src="data:image/png;base64,{{ logo_base64 }}" class="logo" alt="Logo">
+        {% endif %}
+        <h1>{{ organization.name }}</h1>
+        <div class="org-info">
+            {{ organization.address|default:"" }}<br>
+            Tél: {{ organization.phone|default:"" }} | Email: {{ organization.email|default:"" }}
+        </div>
+    </div>
+
+    <div class="document-title">
+        FICHE DE SORTIE D'HOSPITALISATION
+    </div>
+
+    <table class="info-table">
+        <tr>
+            <td class="info-label">Patient(e) :</td>
+            <td><strong>{{ hospitalization.patient.name }}</strong></td>
+            <td class="info-label">Âge / Sexe :</td>
+            <td>
+                {% if hospitalization.patient.date_of_birth %}
+                    {{ hospitalization.patient.date_of_birth|timesince }}
+                {% else %}
+                    N/A
+                {% endif %}
+                / 
+                {{ hospitalization.patient.get_gender_display|default:"N/A" }}
+            </td>
+        </tr>
+        <tr>
+            <td class="info-label">Date d'admission :</td>
+            <td>{{ hospitalization.admission_date|date:"d/m/Y H:i" }}</td>
+            <td class="info-label">Date de sortie :</td>
+            <td>{{ hospitalization.discharge_date|date:"d/m/Y H:i"|default:"N/A" }}</td>
+        </tr>
+        <tr>
+            <td class="info-label">Médecin traitant :</td>
+            <td colspan="3">Dr. {{ hospitalization.admitting_doctor.get_full_name|default:hospitalization.admitting_doctor.email }}</td>
+        </tr>
+    </table>
+
+    <div class="section-title">Motif d'hospitalisation</div>
+    <div class="content-box">
+        {{ hospitalization.admission_reason|linebreaksbr|default:"Non spécifié" }}
+    </div>
+
+    <div class="section-title">Diagnostic Principal</div>
+    <div class="content-box">
+        {{ hospitalization.diagnosis|linebreaksbr|default:"Non spécifié" }}
+    </div>
+
+    <div class="section-title">Résumé de l'Évolution Clinique (Séjour)</div>
+    <div class="content-box">
+        {{ hospitalization.discharge_summary|linebreaksbr|default:"Non spécifié" }}
+    </div>
+
+    <div class="section-title">Ordonnance de Sortie / Traitement Prescrit</div>
+    <div class="content-box">
+        {{ hospitalization.prescribed_treatment_after|linebreaksbr|default:"Aucun traitement prescrit à la sortie." }}
+    </div>
+
+    <div class="section-title">Recommandations & Suivi</div>
+    <div class="content-box">
+        {{ hospitalization.follow_up_instructions|linebreaksbr|default:"Aucune recommandation particulière." }}
+        {% if hospitalization.next_appointment_date %}
+            <br><br>
+            <strong>Prochain rendez-vous prévu le :</strong> {{ hospitalization.next_appointment_date|date:"d/m/Y" }}
+        {% endif %}
+    </div>
+
+    <div class="footer-signatures">
+        <div class="signature-box">
+            Signature du Patient / Accompagnant
+        </div>
+        <div class="signature-box right">
+            Dr. {{ hospitalization.discharging_doctor.get_full_name|default:hospitalization.admitting_doctor.get_full_name|default:"Médecin" }}<br>
+            Signature & Cachet
+        </div>
+    </div>
+
+</body>
+</html>

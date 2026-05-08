@@ -163,6 +163,12 @@ else:
             context['tax_amount'] = getattr(invoice, 'tax_amount', 0) or 0
             context['total_amount'] = getattr(invoice, 'total_amount', 0) or 0
 
+            # Ajouter la remise globale
+            context['global_discount_amount'] = float(getattr(invoice, 'global_discount_amount', 0) or 0)
+            context['global_discount_label'] = getattr(invoice, 'global_discount_label', '') or ''
+            context['global_discount_type'] = getattr(invoice, 'global_discount_type', 'fixed')
+            context['global_discount_value'] = float(getattr(invoice, 'global_discount_value', 0) or 0)
+
             # Ajouter les dates
             context['issue_date'] = getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)
             context['due_date'] = getattr(invoice, 'due_date', None)

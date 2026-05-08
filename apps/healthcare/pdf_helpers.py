@@ -295,7 +295,7 @@ class HealthcarePDFMixin:
     def _get_paper_size(self, org_data):
         """
         Retourne la taille du papier pour WeasyPrint
-        
+
         Returns:
             str: 'thermal_80', 'thermal_58' ou None
         """
@@ -303,3 +303,30 @@ class HealthcarePDFMixin:
         if paper_size in ['thermal_80', 'thermal_58']:
             return paper_size
         return None
+
+    def render_to_pdf(self, template_name, context, filename='document.pdf', organization=None, attachment=False):
+        """
+        Génère un PDF WeasyPrint depuis un template et renvoie un HttpResponse.
+        Utilisable depuis des DRF ViewSet actions.
+        """
+        if not WEASYPRINT_AVAILABLE:
+            return HttpResponse("Moteur PDF (WeasyPrint) non disponible.", status=500)
+
+        if organization:
+            # Support passing an Organization model instance directly (not wrapped in a parent model)
+            class _OrgWrapper:
+                pass
+            wrapper = _OrgWrapper()
+            wrapper.organization = organization
+            org_data = self._get_organization_data(wrapper)
+            context.setdefault('organization', org_data)
+            context.setdefault('logo_base64', self._get_logo_base64(org_data))
+
+        html_string = render_to_string(template_name, context)
+        base_url = self.request.build_absolute_uri('/')
+        pdf = HTML(string=html_string, base_url=base_url).write_pdf()
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        disposition = 'attachment' if attachment else 'inline'
+        response['Content-Disposition'] = f'{disposition}; filename="{filename}"'
+        return response

@@ -117,6 +117,14 @@ class LabTest(models.Model):
         verbose_name=_("Réduction"),
         help_text=_("Réduction par défaut pour ce test")
     )
+    subcontract_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Prix sous-traitance"),
+        help_text=_("Prix appliqué aux laboratoires sous-traitants")
+    )
 
     # Inventory Link
     # Inventory Link
@@ -259,7 +267,36 @@ class LabTest(models.Model):
     
     def __str__(self):
         return f"{self.test_code} - {self.name}"
-    
+
+    @staticmethod
+    def _normalize_name(value: str) -> str:
+        """Normalise un nom de test pour détection de doublons (lower, sans accents, espaces simples)."""
+        import unicodedata, re
+        if not value:
+            return ''
+        nfkd = unicodedata.normalize('NFKD', value)
+        no_accents = ''.join(c for c in nfkd if not unicodedata.combining(c))
+        cleaned = re.sub(r"[\.,;:!\?\"'`´]", '', no_accents.lower().strip())
+        return re.sub(r'\s+', ' ', cleaned)
+
+    def clean(self):
+        """Empêche la création/modification d'un examen avec un nom dupliqué (normalisé) dans la même organisation."""
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if not self.name or not self.organization_id:
+            return
+        normalized = self._normalize_name(self.name)
+        siblings = LabTest.objects.filter(organization_id=self.organization_id).exclude(pk=self.pk)
+        for other in siblings:
+            if self._normalize_name(other.name) == normalized:
+                raise ValidationError({
+                    'name': (
+                        f"Un examen avec un nom équivalent existe déjà dans cette organisation: "
+                        f"'{other.name}' (code {other.test_code}). Veuillez choisir un nom distinct ou "
+                        f"fusionner les examens via la commande merge_lab_test_duplicates."
+                    )
+                })
+
     def get_reference_range(self, gender=None, is_child=False):
         """Get appropriate reference range based on patient demographics"""
         if is_child and self.normal_range_child:

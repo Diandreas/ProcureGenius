@@ -88,10 +88,14 @@ class ExamTypesByPeriodView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from django.db.models.functions import Coalesce
         organization = request.user.organization
         period = request.GET.get('period', 'week')
 
-        queryset = LabOrderItem.objects.filter(lab_order__organization=organization)
+        # Base queryset: exclure les commandes annulées (le revenu n'est pas perçu).
+        queryset = LabOrderItem.objects.filter(
+            lab_order__organization=organization
+        ).exclude(lab_order__status='cancelled')
 
         # Apply filters
         start_date = request.GET.get('start_date')
@@ -105,13 +109,21 @@ class ExamTypesByPeriodView(APIView):
         if patient_id:
             queryset = queryset.filter(lab_order__patient_id=patient_id)
 
+        # Revenu effectif = panel_price si défini (forfait bilan), sinon price unitaire.
+        # Coalesce gère le cas où panel_price est NULL pour les items hors bilan.
+        effective_price = Coalesce(
+            'panel_price',
+            'price',
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+
         # By test type
         by_test = queryset.values(
             'lab_test__name',
             'lab_test__test_code'
         ).annotate(
             count=Count('id'),
-            revenue=Sum('price')
+            revenue=Sum(effective_price)
         ).order_by('-count')[:20]  # Top 20 tests
 
         # By category
@@ -119,7 +131,7 @@ class ExamTypesByPeriodView(APIView):
             'lab_test__category__name'
         ).annotate(
             count=Count('id'),
-            revenue=Sum('price')
+            revenue=Sum(effective_price)
         ).order_by('-count')
 
         # Timeline aggregation
@@ -134,7 +146,7 @@ class ExamTypesByPeriodView(APIView):
             period_date=trunc_func('lab_order__order_date')
         ).values('period_date').annotate(
             count=Count('id'),
-            revenue=Sum('price')
+            revenue=Sum(effective_price)
         ).order_by('period_date')
 
         # Format timeline data
@@ -526,21 +538,15 @@ class ActivityIndicatorsView(APIView):
 
         from apps.accounts.models import Client
 
-        # N°2: Nouveaux patients = patients créés dans le système sur la période
-        new_patients_qs = Client.objects.filter(
+        # N°2: Base nouveaux patients = patients créés dans le système sur la période.
+        # Le filtre "patients réellement reçus sur la période" est appliqué plus bas
+        # pour garantir la cohérence avec le KPI "Patients (période)".
+        created_patients_qs = Client.objects.filter(
             organization=organization,
             client_type='patient',
             created_at__date__gte=start_date,
             created_at__date__lte=end_date
         )
-        new_patients_count = new_patients_qs.count()
-
-        # Timeline des nouveaux patients
-        new_patients_timeline = new_patients_qs.annotate(
-            period_date=TruncDate('created_at')
-        ).values('period_date').annotate(
-            count=Count('id')
-        ).order_by('period_date')
 
         # N°3: Actes de laboratoire sur la période
         lab_orders_count = LabOrder.objects.filter(
@@ -685,57 +691,82 @@ class ActivityIndicatorsView(APIView):
             for item in revenue_timeline_qs
         ]
 
-        # Patients uniques sur la période (union consultation + labo + pharmacie + toutes factures)
-        # On ne filtre pas par "payé" pour le décompte des patients reçus (volume d'activité)
-        consult_patient_ids = set(Consultation.objects.filter(
-            organization=organization,
-            consultation_date__date__gte=start_date,
-            consultation_date__date__lte=end_date
-        ).values_list('patient_id', flat=True))
-        
-        lab_patient_ids = set(LabOrder.objects.filter(
-            organization=organization,
-            order_date__date__gte=start_date,
-            order_date__date__lte=end_date
-        ).values_list('patient_id', flat=True))
-        
+        # ── Patients — même logique que PatientActivityView (source de vérité) ──
+        # SOURCE 1 : factures validées (paid/sent/overdue), hors avoirs et sous-traitance reçue
+        from collections import defaultdict as _dd
         try:
             from apps.pharmacy.models import PharmacyDispensing as PD
-            pharma_patient_ids = set(PD.objects.filter(
-                organization=organization,
-                dispensed_at__date__gte=start_date,
-                dispensed_at__date__lte=end_date,
-                patient__isnull=False
-            ).values_list('patient_id', flat=True))
         except Exception:
-            pharma_patient_ids = set()
-            
-        # Ajouter tous les patients ayant eu une facture sur la période (payée ou non)
-        all_invoices = InvoiceModel.objects.filter(
+            PD = None
+
+        _patient_days = _dd(set)  # pid → {date, ...}
+
+        validated_invoices = InvoiceModel.objects.filter(
             organization=organization,
+            status__in=['paid', 'sent', 'overdue'],
             created_at__date__gte=start_date,
-            created_at__date__lte=end_date
-        ).exclude(invoice_type='credit_note')
-        
-        invoice_patient_ids = set(all_invoices.filter(client__isnull=False).values_list('client_id', flat=True))
-        
-        total_patients = len(consult_patient_ids | lab_patient_ids | pharma_patient_ids | invoice_patient_ids)
-        avg_cost_per_patient = round(total_revenue / total_patients, 2) if total_patients > 0 else 0
+            created_at__date__lte=end_date,
+            client__isnull=False,
+        ).exclude(invoice_type='credit_note').exclude(is_subcontractor_invoice=True)
 
-        # Patients récurrents = patients avec des factures sur >= 2 jours différents (fidélité)
-        # On compte les jours distincts de facturation, pas le nombre de factures
-        recurring_patients = all_invoices.filter(
-            client__isnull=False
-        ).annotate(
-            invoice_day=TruncDate('created_at')
-        ).values('client', 'invoice_day').distinct().values('client').annotate(
-            day_count=Count('invoice_day', distinct=True)
-        ).filter(day_count__gte=2).count()
+        for inv in validated_invoices.values('client_id', 'created_at'):
+            raw_dt = inv['created_at']
+            d = raw_dt.date() if hasattr(raw_dt, 'date') else raw_dt
+            _patient_days[str(inv['client_id'])].add(d)
 
-        # Timeline patients actifs par jour (via toutes les factures émises)
-        patients_timeline_qs = all_invoices.filter(
-            client__isnull=False
-        ).annotate(
+        # SOURCE 2 : LabOrders de nos propres patients (hors sous-traitance reçue)
+        for lo in LabOrder.objects.filter(
+            organization=organization,
+            order_date__date__gte=start_date,
+            order_date__date__lte=end_date,
+            patient__isnull=False,
+            subcontractor_patient__isnull=True,
+        ).values('patient_id', 'order_date'):
+            raw_dt = lo['order_date']
+            d = raw_dt.date() if hasattr(raw_dt, 'date') else raw_dt
+            _patient_days[str(lo['patient_id'])].add(d)
+
+        # SOURCE 3 : PharmacyDispensing
+        if PD is not None:
+            try:
+                for ph in PD.objects.filter(
+                    organization=organization,
+                    dispensed_at__date__gte=start_date,
+                    dispensed_at__date__lte=end_date,
+                    patient__isnull=False,
+                ).values('patient_id', 'dispensed_at'):
+                    raw_dt = ph['dispensed_at']
+                    d = raw_dt.date() if hasattr(raw_dt, 'date') else raw_dt
+                    _patient_days[str(ph['patient_id'])].add(d)
+            except Exception:
+                pass
+
+        received_patient_ids = set(_patient_days.keys())
+        total_patients = len(received_patient_ids)
+
+        # Coût moyen — dénominateur = patients avec facture validée (cohérent avec tab Patients)
+        _cost_agg = validated_invoices.aggregate(
+            total=Sum('total_amount'),
+            unique=Count('client_id', distinct=True),
+        )
+        _billed = _cost_agg['unique'] or 0
+        _rev_for_avg = float(_cost_agg['total'] or 0)
+        avg_cost_per_patient = round(_rev_for_avg / _billed, 2) if _billed else 0
+
+        # Nouveaux patients = créés sur la période ET présents dans received_patient_ids
+        new_patients_qs = created_patients_qs.filter(id__in=received_patient_ids)
+        new_patients_count = new_patients_qs.count()
+        new_patients_timeline = new_patients_qs.annotate(
+            period_date=TruncDate('created_at')
+        ).values('period_date').annotate(
+            count=Count('id')
+        ).order_by('period_date')
+
+        # Patients récurrents = ≥ 2 jours d'activité distincts sur la période
+        recurring_patients = sum(1 for days in _patient_days.values() if len(days) >= 2)
+
+        # Timeline patients actifs par jour (via factures validées)
+        patients_timeline_qs = validated_invoices.annotate(
             period_date=TruncDate('created_at')
         ).values('period_date').annotate(
             count=Count('client', distinct=True)
@@ -1810,14 +1841,14 @@ class PatientActivityView(APIView):
                 patient_days[key]['patient_name'] = patient_name
             patient_days[key]['patient_id'] = str(patient_id)
 
-        # ── SOURCE 1 : Invoice items PAYÉES — source de vérité principale ──
-        # Exclut : avoirs, factures sous-traitance reçues (patients externes)
+        # ── SOURCE 1 : Invoice items VALIDÉES (paid OU sent) — source de vérité principale ──
+        # Exclut brouillons non émis, avoirs, factures sous-traitance reçues (patients externes)
         items = InvoiceItem.objects.filter(
             invoice__organization=organization,
             invoice__created_at__date__gte=start_date,
             invoice__created_at__date__lte=end_date,
             invoice__client__isnull=False,
-            invoice__status='paid',
+            invoice__status__in=['paid', 'sent', 'overdue'],
         ).exclude(
             invoice__invoice_type='credit_note'
         ).exclude(
@@ -1932,7 +1963,7 @@ class PatientActivityView(APIView):
         from django.db.models import Sum, Count as DCount
         rev_qs = Invoice.objects.filter(
             organization=organization,
-            status='paid',
+            status__in=['paid', 'sent', 'overdue'],
             created_at__date__gte=start_date,
             created_at__date__lte=end_date,
             client__isnull=False,

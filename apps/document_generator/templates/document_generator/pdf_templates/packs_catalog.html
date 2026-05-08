@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Catalogue des Packs - Centre de Santé JULIANNA</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --j-dark:#2D4A5F;
+  --j-blue:#2B6CB8;
+  --j-mid:#3A7EC4;
+  --j-light:#6AA8D8;
+  --j-pale:#E8EEF4;
+  --w:#fff;
+  --g50:#f8fafc;--g100:#f0f4f8;--g200:#dde6ef;
+  --g400:#8fa8bf;--g600:#4a6278;--g800:#1e3245;
+}
+html{font-size:13px}
+body{font-family:'Inter',Arial,sans-serif;background:#c8d6e3;color:var(--g800);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+/* ── PAGE ── */
+.page{
+  width:210mm;min-height:297mm;background:var(--w);
+  margin:5mm auto;position:relative;overflow:hidden;
+  box-shadow:0 6px 32px rgba(45,74,95,.2);border-radius:3px;
+  display:flex;flex-direction:column;
+  page-break-after:always;
+}
+.page::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:5px;background:linear-gradient(180deg,var(--j-dark),var(--j-blue));z-index:30
+}
+
+/* ── COVER ── */
+.cover{
+  background:linear-gradient(155deg,var(--j-dark) 0%,var(--j-blue) 58%,var(--j-mid) 100%);
+  min-height:297mm;padding:0;overflow:hidden;
+}
+.cover::before{display:none}
+.cover-circle{position:absolute;border-radius:50%;opacity:.07}
+.cc1{width:360px;height:360px;background:var(--j-mid);top:-90px;right:-90px}
+.cc2{width:240px;height:240px;background:var(--j-light);bottom:100px;left:-70px}
+.cc3{width:160px;height:160px;background:var(--j-dark);top:48%;right:20px}
+.cover-stripe{position:absolute;top:0;right:0;width:7px;height:100%;background:linear-gradient(180deg,var(--j-pale),var(--j-light))}
+.cover-top{padding:52px 56px 0;position:relative;z-index:5}
+.cover-logo-row{display:flex;align-items:center;gap:20px;margin-bottom:50px}
+.cover-logo-img{width:76px;height:76px;border-radius:20px;background:white;padding:7px;object-fit:contain;box-shadow:0 6px 22px rgba(0,0,0,.25)}
+.cover-org-name{font-size:21px;font-weight:800;letter-spacing:-.03em;color:var(--w)}
+.cover-org-type{font-size:10px;font-weight:500;color:var(--j-pale);letter-spacing:.09em;text-transform:uppercase;margin-top:2px}
+.cover-tag{display:inline-block;background:rgba(232,238,244,.14);border:1px solid rgba(232,238,244,.38);color:var(--j-pale);font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:22px}
+.cover-title{font-family:'Playfair Display',Georgia,serif;font-size:48px;font-weight:900;color:var(--w);line-height:1.06;letter-spacing:-.03em;margin-bottom:16px}
+.cover-title span{color:var(--j-pale)}
+.cover-sub{font-size:13px;color:rgba(255,255,255,.7);max-width:320px;line-height:1.65;margin-bottom:42px}
+.cover-stats{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:14px;display:flex;margin-bottom:52px}
+.cover-stat{flex:1;padding:20px 22px;border-right:1px solid rgba(255,255,255,.11)}
+.cover-stat:last-child{border-right:none}
+.cover-stat .num{font-size:32px;font-weight:900;color:var(--j-pale);line-height:1}
+.cover-stat .lbl{font-size:9.5px;font-weight:500;color:rgba(255,255,255,.58);text-transform:uppercase;letter-spacing:.07em;margin-top:5px}
+.cover-bottom{background:rgba(0,0,0,.26);padding:18px 56px;display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.cover-bottom-l{color:rgba(255,255,255,.8);font-size:10.5px;line-height:1.65}
+.cover-bottom-l strong{color:var(--w);font-weight:600}
+.cover-year{font-size:10.5px;font-weight:700;color:var(--j-pale);letter-spacing:.1em;background:rgba(232,238,244,.14);border:1px solid rgba(232,238,244,.34);padding:4px 14px;border-radius:100px}
+
+/* ── PAGE HEADER (pages 2-4) ── */
+.ph{
+  position:relative;overflow:hidden;flex-shrink:0;
+  padding:0;height:90px;
+}
+.ph-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  filter:brightness(.45);
+}
+.ph-gradient{
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(45,74,95,.9) 0%,rgba(43,108,184,.6) 60%,transparent 100%);
+}
+.ph-stripe{position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--j-pale),var(--j-light));z-index:5}
+.ph-content{
+  position:relative;z-index:4;
+  display:flex;align-items:center;gap:18px;
+  height:100%;padding:0 28px 0 32px;
+}
+.ph-logo-box{
+  width:58px;height:58px;background:white;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  padding:5px;box-shadow:0 4px 14px rgba(0,0,0,.25);flex-shrink:0;
+}
+.ph-logo-box img{width:100%;height:100%;object-fit:contain}
+.ph-text h1{font-size:22px;font-weight:800;color:white;letter-spacing:-.04em;line-height:1.15}
+.ph-text p{font-size:10.5px;color:rgba(255,255,255,.78);margin-top:3px;font-weight:500}
+.ph-badge{
+  margin-left:auto;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);
+  color:white;font-size:9.5px;font-weight:700;padding:4px 12px;
+  border-radius:100px;letter-spacing:.07em;white-space:nowrap;
+}
+
+/* ── BODY ── */
+.pb{padding:16px 30px 18px 32px;flex:1;display:flex;flex-direction:column;gap:12px}
+
+/* ── PACK GRID ── */
+.pack-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pack-grid.single{grid-template-columns:1fr}
+
+/* ── PACK CARD ── */
+.pack-card{
+  background:white;border-radius:14px;overflow:hidden;
+  border:1px solid var(--g200);display:flex;flex-direction:column;
+  box-shadow:0 2px 10px rgba(45,74,95,.07);
+}
+.pack-h{
+  background:linear-gradient(135deg,#f0f6ff 0%,#e8f1fb 100%);
+  padding:13px 16px;border-bottom:1px solid #dce8f5;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:8px;
+}
+.pack-title{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:17px;font-weight:900;color:var(--j-dark);line-height:1.2;
+}
+.pack-price-tag{text-align:right;flex-shrink:0}
+.p-old{font-size:10px;color:#a0aec0;text-decoration:line-through;line-height:1}
+.p-new{
+  font-size:16px;font-weight:900;color:var(--j-blue);display:block;
+  margin-top:3px;background:rgba(43,108,184,.1);
+  padding:2px 9px;border-radius:7px;white-space:nowrap;
+}
+.pack-b{padding:12px 16px;flex:1}
+.ana-list{display:flex;flex-direction:column;gap:5px}
+.ana-list.two-col{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px}
+.ana-item{
+  display:flex;align-items:center;gap:7px;
+  font-size:9.5px;color:#374151;font-weight:500;line-height:1.3;
+}
+.ana-item svg{width:13px;height:13px;flex-shrink:0;color:#10b981}
+.pack-footer{
+  background:linear-gradient(90deg,var(--j-dark),var(--j-blue));
+  padding:6px 16px;display:flex;justify-content:space-between;align-items:center;
+  flex-shrink:0;
+}
+.pack-footer-l{font-size:8.5px;font-weight:600;color:rgba(255,255,255,.85);letter-spacing:.04em}
+.pack-badge{
+  background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);
+  color:white;font-size:8px;font-weight:800;padding:2px 8px;
+  border-radius:100px;letter-spacing:.04em;white-space:nowrap;
+}
+
+/* ── INFO BOX ── */
+.info-box{
+  background:linear-gradient(135deg,#f0f7ff,#fafcff);
+  border:1.5px dashed var(--j-light);border-radius:14px;
+  padding:18px 22px;text-align:center;
+  display:flex;flex-direction:column;justify-content:center;gap:8px;
+}
+.info-box h3{
+  font-family:'Playfair Display',Georgia,serif;
+  color:var(--j-dark);font-size:16px;font-weight:900;
+}
+.info-box p{font-size:10px;color:var(--g600);line-height:1.6}
+.info-box .info-note{
+  font-size:9.5px;font-weight:700;color:var(--j-blue);
+  background:rgba(43,108,184,.09);padding:4px 12px;
+  border-radius:100px;display:inline-block;
+}
+
+/* ── PAGE FOOTER ── */
+.pf{
+  border-top:1px solid var(--g200);padding:8px 30px 8px 32px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.pf-brand{font-size:8.5px;color:var(--g400);font-weight:500}
+.pf-brand strong{color:var(--j-dark)}
+.pf-num{
+  background:var(--j-dark);color:white;
+  width:28px;height:28px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:900;
+}
+
+/* ── SVG CHECK ── */
+.chk{fill:none;stroke:#10b981;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+
+@media print{
+  body{background:white}
+  .page{margin:0;box-shadow:none;border-radius:0}
+}
+
+/* WeasyPrint PDF — chaque .page = exactement 1 page A4 */
+@page { size: A4; margin: 0; }
+@media print {
+  .page {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: unset !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .page:last-child { page-break-after: avoid !important; }
+  .cover { min-height: unset !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE COUVERTURE
+═══════════════════════════════════════════════════════ -->
+<div class="page cover">
+  <div class="cover-circle cc1"></div>
+  <div class="cover-circle cc2"></div>
+  <div class="cover-circle cc3"></div>
+  <div class="cover-stripe"></div>
+  <div class="cover-top">
+    <div class="cover-logo-row">
+      {% if logo_b64 %}<img src="{{ logo_b64 }}" class="cover-logo-img" alt="Logo">{% endif %}
+      <div>
+        <div class="cover-org-name">{{ organization.name|default:"CENTRE DE SANTÉ JULIANNA" }}</div>
+        <div class="cover-org-type">Excellence Médicale &amp; Soins de Qualité</div>
+      </div>
+    </div>
+    <div class="cover-tag">Catalogue Officiel 2026</div>
+    <div class="cover-title">Packs &amp; Bilans<br><span>Santé</span></div>
+    <div class="cover-sub">Offres groupées pour un suivi médical complet et accessible. Économisez jusqu'à 35% sur vos analyses avec nos bilans thématiques.</div>
+    <div class="cover-stats">
+      <div class="cover-stat"><div class="num">12</div><div class="lbl">Packs santé</div></div>
+      <div class="cover-stat"><div class="num">4</div><div class="lbl">Catégories</div></div>
+      <div class="cover-stat"><div class="num">-35%</div><div class="lbl">Économies max</div></div>
+    </div>
+  </div>
+  <div class="cover-bottom">
+    <div class="cover-bottom-l">
+      <strong>{{ organization.name|default:"Centre de Santé Julianna" }}</strong><br>
+      {{ organization.address|default:"Makepe Saint-Tropez, Douala" }}
+      {% if organization.phone %} — {{ organization.phone }}{% else %} — 655 24 41 49 / 679 14 51 98{% endif %}
+    </div>
+    <div class="cover-year">TARIFS 2026</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE 1 — COUPLES & PROJETS DE VIE
+═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="ph">
+    {% if centre_images.djery_116 %}<div class="ph-bg" style="background-image:url('{{ centre_images.djery_116 }}')"></div>{% endif %}
+    <div class="ph-gradient"></div>
+    <div class="ph-stripe"></div>
+    <div class="ph-content">
+      <div class="ph-logo-box">{% if logo_b64 %}<img src="{{ logo_b64 }}" alt="Logo">{% endif %}</div>
+      <div class="ph-text">
+        <h1>Couples &amp; Projets de Vie</h1>
+        <p>Construire un avenir serein à deux</p>
+      </div>
+      <div class="ph-badge">OFFRE 2026</div>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="pack-grid">
+
+      <!-- Coup de foudre -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Coup de foudre</div>
+          <div class="pack-price-tag"><div class="p-old">12 500 F</div><div class="p-new">9 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>VIH 1 &amp; 2</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>SYPHILIS (TPHA - VDRL)</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>HBsAg Hepatitis B Surface Ag</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-28% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Avenir Serein -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Avenir Serein</div>
+          <div class="pack-price-tag"><div class="p-old">35 250 F</div><div class="p-new">30 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Groupe sanguin Rhésus</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Électrophorèse de l'hémoglobine</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Bilan IST</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-14% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Pacte de confiance -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Pacte de confiance</div>
+          <div class="pack-price-tag"><div class="p-old">34 500 F</div><div class="p-new">25 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>VIH 1 &amp; 2</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chlamydia Trachomatis Ab Test</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chlamydia Trachomatis Ag Test</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Gonorrhea Ag</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>SYPHILIS (TPHA - VDRL)</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>HBsAg Hepatitis B</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Hépatite C</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-27% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Fertilité & Projet -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Fertilité &amp; Projet</div>
+          <div class="pack-price-tag"><div class="p-old">117 750 F</div><div class="p-new">80 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Groupe sanguin Rhésus</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Électrophorèse de l'hémoglobine</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Bilan Hormonal Femme (FSH, LH, AMH)</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Bilan IST</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Spermogramme</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Spermoculture</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-32% DE RÉDUCTION</span></div>
+      </div>
+
+    </div>
+  </div>
+  <div class="pf">
+    <div class="pf-brand"><strong>Centre de Santé JULIANNA</strong> • Excellence Médicale 2026</div>
+    <div class="pf-num">1</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE 2 — MATERNITÉ & PETITE ENFANCE
+═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="ph">
+    {% if centre_images.cabinet_gynecologie %}<div class="ph-bg" style="background-image:url('{{ centre_images.cabinet_gynecologie }}')"></div>{% endif %}
+    <div class="ph-gradient"></div>
+    <div class="ph-stripe"></div>
+    <div class="ph-content">
+      <div class="ph-logo-box">{% if logo_b64 %}<img src="{{ logo_b64 }}" alt="Logo">{% endif %}</div>
+      <div class="ph-text">
+        <h1>Maternité &amp; Petite Enfance</h1>
+        <p>Accompagner la vie avec excellence</p>
+      </div>
+      <div class="ph-badge">OFFRE 2026</div>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="pack-grid">
+
+      <!-- Premier souffle -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Premier souffle</div>
+          <div class="pack-price-tag"><div class="p-old">28 500 F</div><div class="p-new">25 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>VIH 1 &amp; 2</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>SYPHILIS (TPHA - VDRL)</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>TOXO Toxoplasma IgM/IgG</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Rubéole (IgG/IgM)</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>HBsAg Hepatitis B</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Malaria</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-12% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Grossesse en beauté -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Grossesse en beauté</div>
+          <div class="pack-price-tag"><div class="p-old">51 750 F</div><div class="p-new">40 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>VIH 1 &amp; 2</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>SYPHILIS (TPHA - VDRL)</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>TOXO Toxoplasma IgM/IgG</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Rubéole (IgG/IgM)</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>HBsAg Hepatitis B</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Hépatite C</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Groupe sanguin Rhésus</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>NFS</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>ECBU</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Malaria</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-22% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Maman & Bébé en sécurité -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Maman &amp; Bébé en sécurité</div>
+          <div class="pack-price-tag"><div class="p-old">86 750 F</div><div class="p-new">65 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list two-col">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>VIH</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Syphilis</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Toxoplasmose</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Rubéole</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>HBsAg Hepatitis B</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Hépatite C</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chlamydia Ag &amp; Ab</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Groupe sanguin Rhésus</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>NFS</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>ECBU</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>PCV + ATB</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Électrophorèse Hb</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Glycémie à jeun</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Malaria</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-25% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Info box -->
+      <div class="info-box">
+        <h3>Pourquoi nos packs ?</h3>
+        <p>Le Centre de Santé JULIANNA s'engage à vous fournir des résultats d'une précision absolue. Nos packs sont conçus par des experts pour offrir un bilan complet à tarif préférentiel.</p>
+        <div class="info-note">Résultats disponibles sous 24h à 48h</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="pf">
+    <div class="pf-brand"><strong>Centre de Santé JULIANNA</strong> • Excellence Médicale 2026</div>
+    <div class="pf-num">2</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE 3 — SÉNIORITÉ & VITALITÉ
+═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="ph">
+    {% if centre_images.consultation_medecin %}<div class="ph-bg" style="background-image:url('{{ centre_images.consultation_medecin }}')"></div>{% endif %}
+    <div class="ph-gradient"></div>
+    <div class="ph-stripe"></div>
+    <div class="ph-content">
+      <div class="ph-logo-box">{% if logo_b64 %}<img src="{{ logo_b64 }}" alt="Logo">{% endif %}</div>
+      <div class="ph-text">
+        <h1>Séniorité &amp; Vitalité</h1>
+        <p>Préserver votre capital santé</p>
+      </div>
+      <div class="ph-badge">OFFRE 2026</div>
+    </div>
+  </div>
+  <div class="pb">
+    <div class="pack-grid">
+
+      <!-- Cœur léger -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Cœur léger</div>
+          <div class="pack-price-tag"><div class="p-old">18 000 F</div><div class="p-new">15 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Glycémie</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Profil lipidique</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-16% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Cap santé -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Cap santé</div>
+          <div class="pack-price-tag"><div class="p-old">33 750 F</div><div class="p-new">25 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Glycémie à jeun</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Profil lipidique</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie Urinaire</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Créatinine</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Urée</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Acide urique</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>NFS</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>VS</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-25% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Longue vie -->
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Longue vie</div>
+          <div class="pack-price-tag"><div class="p-old">88 750 F</div><div class="p-new">70 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list two-col">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Profil lipidique</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Créatinine</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Urée</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Acide urique</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Ionogramme complet</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>NFS</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>VS</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>CRP</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>TSH</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>PSA</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie urinaire</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Glycémie à jeun</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-21% DE RÉDUCTION</span></div>
+      </div>
+
+      <!-- Info box -->
+      <div class="info-box">
+        <h3>Pourquoi nos packs ?</h3>
+        <p>Le Centre de Santé JULIANNA s'engage à vous fournir des résultats d'une précision absolue. Nos packs sont conçus par des experts pour offrir un bilan complet à tarif préférentiel. Économisez jusqu'à 35% par rapport aux analyses individuelles.</p>
+        <div class="info-note">Résultats disponibles sous 24h à 48h</div>
+      </div>
+
+    </div>
+  </div>
+  <div class="pf">
+    <div class="pf-brand"><strong>Centre de Santé JULIANNA</strong> • Excellence Médicale 2026</div>
+    <div class="pf-num">3</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PAGE 4 — BILAN DE SANTÉ GÉNÉRAL
+═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="ph">
+    {% if centre_images.salle_laboratoire_vue1 %}<div class="ph-bg" style="background-image:url('{{ centre_images.salle_laboratoire_vue1 }}')"></div>{% endif %}
+    <div class="ph-gradient"></div>
+    <div class="ph-stripe"></div>
+    <div class="ph-content">
+      <div class="ph-logo-box">{% if logo_b64 %}<img src="{{ logo_b64 }}" alt="Logo">{% endif %}</div>
+      <div class="ph-text">
+        <h1>Bilan de Santé Général</h1>
+        <p>Le check-up essentiel pour tous</p>
+      </div>
+      <div class="ph-badge">OFFRE 2026</div>
+    </div>
+  </div>
+  <div class="pb">
+
+    <!-- Santé général — full width -->
+    <div class="pack-grid single">
+      <div class="pack-card">
+        <div class="pack-h">
+          <div class="pack-title">Santé général</div>
+          <div class="pack-price-tag"><div class="p-old">32 250 F</div><div class="p-new">25 000 F</div></div>
+        </div>
+        <div class="pack-b">
+          <div class="ana-list two-col">
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Profil lipidique</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Créatinine</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Urée</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Groupe sanguin Rhésus</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>NFS</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Chimie urinaire</div>
+            <div class="ana-item"><svg viewBox="0 0 24 24" width="13" height="13"><path class="chk" d="M5 13l4 4L19 7"/></svg>Glycémie à jeun</div>
+          </div>
+        </div>
+        <div class="pack-footer"><span class="pack-footer-l">Offre Spéciale 2026</span><span class="pack-badge">-22% DE RÉDUCTION</span></div>
+      </div>
+    </div>
+
+    <!-- Info contact -->
+    <div class="info-box" style="margin-top:4px">
+      <h3>Nous contacter</h3>
+      <p>
+        <strong>{{ organization.name|default:"Centre de Santé JULIANNA" }}</strong><br>
+        {{ organization.address|default:"Makepe Saint-Tropez, Douala, Cameroun" }}<br>
+        {% if organization.phone %}{{ organization.phone }}{% else %}655 24 41 49 / 679 14 51 98{% endif %}
+        {% if organization.email %}&nbsp;•&nbsp;{{ organization.email }}{% endif %}
+      </p>
+      <div class="info-note">📅 Du lundi au samedi • 07h00 – 18h00</div>
+    </div>
+
+  </div>
+  <div class="pf">
+    <div class="pf-brand"><strong>Centre de Santé JULIANNA</strong> • Excellence Médicale 2026</div>
+    <div class="pf-num">4</div>
+  </div>
+</div>
+
+</body>
+</html>

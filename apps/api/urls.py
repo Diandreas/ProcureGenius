@@ -109,6 +109,12 @@ urlpatterns = [
     # Healthcare - Consultations
     path('healthcare/consultations/', include('apps.consultations.urls')),
 
+    # Healthcare - Hospitalizations
+    path('healthcare/hospitalizations/', include('apps.hospitalizations.urls')),
+
+    # Document Generator
+    path('documents/', include('apps.document_generator.urls')),
+
     # Stock movement cancellation (admin only)
     path('stock-movements/<uuid:movement_id>/cancel/', StockMovementCancelView.as_view(), name='stock-movement-cancel'),
 

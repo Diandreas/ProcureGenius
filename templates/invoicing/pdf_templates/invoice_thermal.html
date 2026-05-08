@@ -235,6 +235,12 @@
             <span>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>
         </div>
         {% endif %}
+        {% if global_discount_amount > 0 %}
+        <div class="total-line">
+            <span>{{ global_discount_label|default:"Remise" }}:</span>
+            <span>-{{ global_discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>
+        </div>
+        {% endif %}
         <div class="total-line final">
             <span>TOTAL:</span>
             <span>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>

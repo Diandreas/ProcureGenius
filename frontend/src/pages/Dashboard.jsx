@@ -156,6 +156,7 @@ const Dashboard = () => {
   const actVol = activityData?.activity_volume || {};
   const perf = activityData?.performance || {};
   const patients = activityData?.patients || {};
+  const totalUniquePatients = patientActivityData?.total_unique_patients ?? patients?.total ?? 0;
 
   // Revenue by activity (from enhanced revenue)
   const byActivity = revenueData?.by_activity || [];
@@ -260,17 +261,18 @@ const Dashboard = () => {
                   subtitle="Sur la période sélectionnée" />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
-                <StatCard title="Patients (période)" value={loading ? '...' : patients.total ?? 0}
-                  icon={<PeopleIcon />} color="#8b5cf6" loading={loading} />
+                <StatCard title="Patients uniques (période)" value={loading ? '...' : totalUniquePatients}
+                  icon={<PeopleIcon />} color="#8b5cf6" loading={loading}
+                  subtitle="Même base que l'onglet Patients" />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
-                <StatCard title="Nouveaux Patients" value={loading ? '...' : actVol?.new_patients?.total ?? 0}
+                <StatCard title="Nouveaux Patients Reçus" value={loading ? '...' : actVol?.new_patients?.total ?? 0}
                   icon={<HospitalIcon />} color="#14b8a6" loading={loading} />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="Patients Récurrents" value={loading ? '...' : patients?.recurring ?? 0}
                   icon={<PeopleIcon />} color="#f97316" loading={loading}
-                  subtitle="≥ 2 visites sur la période" />
+                  subtitle="≥ 2 jours d'activité sur la période" />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="Coût Moyen / Patient" value={loading ? '...' : formatCurrency(financial.avg_cost_per_patient)}

@@ -35,6 +35,9 @@ urlpatterns += i18n_patterns(
     path('ai/', include('apps.ai_assistant.urls')),  # IA Assistant activé
     # path('integrations/', include('apps.integrations.urls')),  # Temporairement commenté
     
+    # Interface mobile Boris — gestion des coupons de réduction
+    path('coupons/', include('apps.document_generator.urls_mobile')),
+
     # Fallback pour URLs sans préfixe
     prefix_default_language=False,
 )

@@ -16,6 +16,7 @@ urlpatterns = [
     path('<uuid:patient_id>/complete-history/', api.PatientCompleteHistoryView.as_view(), name='patient-complete-history'),
     path('<uuid:patient_id>/medical-summary/', api.PatientMedicalSummaryView.as_view(), name='patient-medical-summary'),
     path('<uuid:patient_id>/timeline/', api.PatientTimelineView.as_view(), name='patient-timeline'),
+    path('<uuid:patient_id>/merge/', api.PatientMergeView.as_view(), name='patient-merge'),
     path('<uuid:patient_id>/care-services/', api.CreateCareServiceView.as_view(), name='patient-care-services'),
     path('<uuid:patient_id>/quick-invoice/', api.PatientQuickInvoiceView.as_view(), name='patient-quick-invoice'),
 

@@ -114,11 +114,16 @@ import DispensingDetail from './pages/healthcare/pharmacy/DispensingDetail';
 import ConsultationList from './pages/healthcare/consultations/ConsultationList';
 import ConsultationForm from './pages/healthcare/consultations/ConsultationForm';
 import ConsultationDetail from './pages/healthcare/consultations/ConsultationDetail';
+import HospitalizationList from './pages/healthcare/hospitalizations/HospitalizationList';
+import HospitalizationForm from './pages/healthcare/hospitalizations/HospitalizationForm';
+import DocumentManager from './pages/admin/DocumentManager';
+import CouponManager from './pages/admin/CouponManager';
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
 import ModuleRoute from './components/guards/ModuleRoute';
 import AccountingRoute from './components/guards/AccountingRoute';
+import BorisRoute from './components/guards/BorisRoute';
 import HomeRedirect from './components/HomeRedirect';
 
 // PWA
@@ -863,6 +868,15 @@ function App() {
                               <Route path="/healthcare/consultations/new" element={<ModuleRoute module="consultations"><ConsultationForm /></ModuleRoute>} />
                               <Route path="/healthcare/consultations/:id" element={<ModuleRoute module="consultations"><ConsultationDetail /></ModuleRoute>} />
                               <Route path="/healthcare/consultations/:id/edit" element={<ModuleRoute module="consultations"><ConsultationForm /></ModuleRoute>} />
+
+                              {/* Hospitalisations */}
+                              <Route path="/healthcare/hospitalizations" element={<HospitalizationList />} />
+                              <Route path="/healthcare/hospitalizations/new" element={<HospitalizationForm />} />
+                              <Route path="/healthcare/hospitalizations/:id/edit" element={<HospitalizationForm />} />
+
+                              {/* Générateur de documents */}
+                              <Route path="/admin/documents" element={<DocumentManager />} />
+                              <Route path="/admin/coupons" element={<BorisRoute><CouponManager /></BorisRoute>} />
 
                               {/* Comptabilité — accès restreint à Boris et Ashley */}
                               <Route path="/accounting" element={<AccountingRoute><AccountingDashboard /></AccountingRoute>} />

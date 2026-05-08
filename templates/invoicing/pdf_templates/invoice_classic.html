@@ -98,6 +98,7 @@
     </table>
     <div class="totals"><table class="totals-table"><tr><td>Sous-total</td><td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>
     {% if tax_amount > 0 %}<tr><td>Taxes</td><td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% endif %}
+    {% if global_discount_amount > 0 %}<tr><td>{{ global_discount_label|default:"Remise" }}{% if global_discount_type == 'percent' %} ({{ global_discount_value|floatformat:0 }}%){% endif %}</td><td style="color: #ef4444;">-{{ global_discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% endif %}
     <tr><td>TOTAL</td><td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr></table></div>
     <div class="footer">
         {% if qr_code_base64 %}<div class="qr-code"><img src="{{ qr_code_base64 }}" alt="QR Code"><div class="label">Vérification</div></div>{% endif %}

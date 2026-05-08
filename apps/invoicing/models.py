@@ -265,7 +265,7 @@ class Product(models.Model):
         # Générer une référence automatique si absente AVANT la validation
         if not self.reference:
             prefix = 'PRD' if self.product_type == 'physical' else ('DIG' if self.product_type == 'digital' else 'SVC')
-            
+
             try:
                 from apps.core.services.number_generator import NumberGeneratorService
                 self.reference = NumberGeneratorService.generate_number(
@@ -288,8 +288,19 @@ class Product(models.Model):
                 else:
                     self.reference = f"{prefix}0001"
 
-        # Validation avant sauvegarde
-        self.full_clean()
+        # Validation avant sauvegarde — uniquement sur les sauvegardes complètes.
+        # Si `update_fields` est fourni (ex: mise à jour ciblée du stock depuis un batch),
+        # on évite full_clean() qui échouerait sur des champs non concernés (ex: barcode
+        # hérité, péremption passée d'un réactif, etc.) et bloquerait des opérations légitimes.
+        update_fields = kwargs.get('update_fields')
+        if update_fields is None:
+            self.full_clean()
+        else:
+            # Validation ciblée: ne valider que les champs qu'on met à jour.
+            self.full_clean(exclude=[
+                f.name for f in self._meta.get_fields()
+                if hasattr(f, 'name') and f.name not in set(update_fields)
+            ])
         super().save(*args, **kwargs)
 
     def get_stock_in_sell_units(self):
@@ -335,15 +346,14 @@ class Product(models.Model):
     @property
     def total_stock(self):
         """
-        Stock réel :
-        - Si le produit a des lots → somme des quantity_remaining des lots actifs (available/opened)
-        - Si aucun lot → stock_quantity (produits anciens sans gestion par lots)
+        Stock réel — cohérent avec l'annotation _effective_stock du backend:
+        max(stock_quantity, somme lots actifs).
+        Cela évite les incohérences entre la liste et les KPI.
         """
-        if self.batches.exists():
-            return self.batches.filter(
-                status__in=['available', 'opened']
-            ).aggregate(total=models.Sum('quantity_remaining'))['total'] or 0
-        return self.stock_quantity
+        batch_total = self.batches.filter(
+            status__in=['available', 'opened']
+        ).aggregate(total=models.Sum('quantity_remaining'))['total'] or 0
+        return max(self.stock_quantity or 0, batch_total)
 
     @property
     def is_low_stock(self):
@@ -708,6 +718,40 @@ class Invoice(models.Model):
     subtotal = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Sous-total"))
     tax_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name=_("Montant des taxes"))
     total_amount = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Montant total"))
+
+    # Remise globale appliquée sur la facture entière (en plus des remises par item)
+    DISCOUNT_TYPE_CHOICES = [
+        ('fixed', _('Montant fixe')),
+        ('percent', _('Pourcentage')),
+    ]
+    global_discount_type = models.CharField(
+        max_length=10,
+        choices=DISCOUNT_TYPE_CHOICES,
+        default='fixed',
+        verbose_name=_("Type de remise globale"),
+        help_text=_("Type de remise appliquée sur la facture entière")
+    )
+    global_discount_value = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Valeur de la remise globale"),
+        help_text=_("Pour 'fixed' = montant en devise locale ; pour 'percent' = pourcentage de 0 à 100")
+    )
+    global_discount_label = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name=_("Libellé de la remise"),
+        help_text=_("Optionnel — ex: 'Remise commerciale', 'Geste fidélité'")
+    )
+    global_discount_amount = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Montant calculé de la remise globale"),
+        help_text=_("Calculé automatiquement depuis type et value lors du recalcul")
+    )
     
     # Relations et informations supplémentaires
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices', verbose_name=_("Créé par"))
@@ -841,11 +885,25 @@ class Invoice(models.Model):
                 raise ValidationError("La date d'échéance ne peut pas être antérieure à la date de création.")
     
     def recalculate_totals(self):
-        """Recalcule les totaux basés sur les items"""
+        """Recalcule les totaux basés sur les items + remise globale."""
+        from decimal import Decimal
         items = self.items.all()
         self.subtotal = sum(item.total_price for item in items)
-        self.total_amount = self.subtotal + self.tax_amount
-        self.save(update_fields=['subtotal', 'total_amount'])
+
+        # Calcul de la remise globale (en plus des remises item-level déjà déduites de total_price)
+        if self.global_discount_value and self.global_discount_value > 0:
+            if self.global_discount_type == 'percent':
+                # Cap à 100% pour éviter les valeurs négatives
+                pct = min(self.global_discount_value, Decimal('100'))
+                self.global_discount_amount = (self.subtotal * pct / Decimal('100')).quantize(Decimal('0.01'))
+            else:
+                # Cap au sous-total pour éviter total négatif
+                self.global_discount_amount = min(self.global_discount_value, self.subtotal)
+        else:
+            self.global_discount_amount = Decimal('0')
+
+        self.total_amount = self.subtotal + self.tax_amount - self.global_discount_amount
+        self.save(update_fields=['subtotal', 'total_amount', 'global_discount_amount'])
 
     def generate_qr_code(self):
         """Génère un QR code pour la facture"""

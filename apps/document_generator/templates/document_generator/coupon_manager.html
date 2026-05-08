@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Coupons de Réduction — Admin</title>
+<style>
+  :root {
+    --blue: #1e3a8a;
+    --teal: #0d9488;
+    --light-bg: #f0fdfa;
+    --border: #cbd5e1;
+    --red: #dc2626;
+    --green: #16a34a;
+    --gray: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #f1f5f9; color: #1e293b; min-height: 100vh; }
+
+  .topbar {
+    background: var(--blue);
+    color: white;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .topbar h1 { font-size: 18px; font-weight: 700; }
+  .topbar .org { font-size: 11px; opacity: .75; margin-top: 2px; }
+  .topbar-icon { font-size: 28px; }
+
+  .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+  .alert-error { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    border: 1px solid var(--border);
+  }
+  .card h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--blue);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 5px;
+    margin-top: 12px;
+  }
+  label:first-child { margin-top: 0; }
+
+  input[type=text], input[type=number], select, textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    background: #f8fafc;
+    color: #1e293b;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input:focus, select:focus { border-color: var(--teal); background: white; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 16px;
+    letter-spacing: .02em;
+  }
+  .btn-primary { background: var(--teal); color: white; }
+  .btn-primary:active { background: #0f766e; }
+  .btn-danger { background: var(--red); color: white; width: auto; padding: 6px 14px;
+                font-size: 12px; font-weight: 600; border-radius: 6px; display: inline-block; margin: 0; }
+
+  /* Coupon list */
+  .coupon-list { display: flex; flex-direction: column; gap: 10px; }
+  .coupon-item {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .coupon-item.used { opacity: .6; }
+  .coupon-item.cancelled { opacity: .5; background: #f8f8f8; }
+  .coupon-item.expired { opacity: .55; }
+
+  .coupon-badge {
+    font-family: 'Courier New', monospace;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--blue);
+    background: #eff6ff;
+    border: 2px dashed #93c5fd;
+    border-radius: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: .05em;
+  }
+  .coupon-info { flex: 1; min-width: 0; }
+  .coupon-label { font-size: 14px; font-weight: 600; color: #1e293b; }
+  .coupon-desc { font-size: 12px; color: var(--gray); margin-top: 3px; }
+  .coupon-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 100px;
+  }
+  .tag-active { background: #dcfce7; color: #15803d; }
+  .tag-used { background: #e2e8f0; color: #475569; }
+  .tag-expired { background: #fef3c7; color: #92400e; }
+  .tag-cancelled { background: #fee2e2; color: #dc2626; }
+  .tag-discount { background: #eff6ff; color: #1d4ed8; }
+  .tag-uses { background: #f0fdf4; color: #166534; }
+
+  .coupon-actions { flex-shrink: 0; display: flex; align-items: center; }
+
+  .empty-state { text-align: center; color: var(--gray); padding: 32px 16px; font-size: 14px; }
+  .empty-state .icon { font-size: 48px; margin-bottom: 10px; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 20px 0 10px;
+  }
+
+  /* Quick copy on tap */
+  .coupon-badge { cursor: pointer; user-select: all; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-icon">🎟</div>
+  <div>
+    <div class="h1" style="font-size:18px;font-weight:700;">Coupons de Réduction</div>
+    <div class="org">{{ organization.name|default:"Centre de Santé" }} — Admin uniquement</div>
+  </div>
+</div>
+
+<div class="container">
+
+  {% if message %}
+  <div class="alert alert-success">✅ {{ message|safe }}</div>
+  {% endif %}
+  {% if error %}
+  <div class="alert alert-error">❌ {{ error }}</div>
+  {% endif %}
+
+  <!-- FORMULAIRE DE CRÉATION -->
+  <div class="card">
+    <h2>🆕 Créer un coupon</h2>
+    <form method="post" action="?token={{ request.GET.token|default:request.session.coupon_token }}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create">
+
+      <label>Libellé (optionnel)</label>
+      <input type="text" name="label" placeholder="Ex : Offre Fête des Mères, Fidélité…" maxlength="150">
+
+      <div class="row2">
+        <div>
+          <label>Type de remise</label>
+          <select name="discount_type" id="dtype" onchange="toggleMaxDiscount()">
+            <option value="percent">Pourcentage (%)</option>
+            <option value="fixed">Montant fixe (FCFA)</option>
+          </select>
+        </div>
+        <div>
+          <label>Valeur</label>
+          <input type="number" name="discount_value" placeholder="Ex: 10 ou 5000" min="0" step="0.01" required>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>Nb d'utilisations</label>
+          <input type="number" name="max_uses" value="1" min="1" max="9999">
+        </div>
+        <div>
+          <label>Expire dans (jours)</label>
+          <input type="number" name="expires_days" placeholder="Vide = jamais" min="1" max="3650">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label>Montant minimum (FCFA)</label>
+          <input type="number" name="min_amount" value="0" min="0" step="100" placeholder="0 = aucun minimum">
+        </div>
+        <div id="max-discount-field">
+          <label>Remise max (FCFA)</label>
+          <input type="number" name="max_discount_amount" placeholder="Vide = illimité" min="0" step="100">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">🎟 Générer le coupon</button>
+    </form>
+  </div>
+
+  <!-- LISTE DES COUPONS ACTIFS -->
+  <div class="section-title">Coupons actifs</div>
+  <div class="coupon-list">
+    {% for c in coupons %}
+    {% if c.status == 'active' %}
+    <div class="coupon-item">
+      <div class="coupon-badge" title="Appuyer pour sélectionner">{{ c.code }}</div>
+      <div class="coupon-info">
+        <div class="coupon-label">{{ c.label|default:c.code }}</div>
+        <div class="coupon-desc">
+          {% if c.min_amount %}<span>Min {{ c.min_amount|floatformat:0 }} FCFA &nbsp;·&nbsp; </span>{% endif %}
+          {% if c.expires_at %}Expire le {{ c.expires_at|date:"d/m/Y" }} &nbsp;·&nbsp; {% endif %}
+          Créé par {{ c.created_by.get_full_name|default:c.created_by.username }}
+        </div>
+        <div class="coupon-meta">
+          <span class="tag tag-active">Actif</span>
+          <span class="tag tag-discount">{{ c.discount_value }}{% if c.discount_type == 'percent' %}%{% else %} FCFA{% endif %}</span>
+          <span class="tag tag-uses">{{ c.uses_count }}/{{ c.max_uses }} utilisations</span>
+        </div>
+      </div>
+      <div class="coupon-actions">
+        <form method="post" action="?token={{ request.GET.token|default:request.session.coupon_token }}" onsubmit="return confirm('Annuler ce coupon ?')">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="cancel">
+          <input type="hidden" name="coupon_id" value="{{ c.id }}">
+          <button type="submit" class="btn btn-danger">✕</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+    {% empty %}
+    {% endfor %}
+  </div>
+
+  {% if not coupons %}
+  <div class="empty-state">
+    <div class="icon">🎟</div>
+    <div>Aucun coupon créé pour l'instant.</div>
+  </div>
+  {% endif %}
+
+  <!-- COUPONS UTILISÉS / EXPIRÉS / ANNULÉS -->
+  {% with used_coupons=coupons|dictsortreversed:"created_at" %}
+  {% for c in coupons %}
+  {% if c.status != 'active' %}
+  {% if forloop.first %}
+  <div class="section-title" style="margin-top:24px;">Historique</div>
+  <div class="coupon-list">
+  {% endif %}
+    <div class="coupon-item {{ c.status }}">
+      <div class="coupon-badge" style="opacity:.7">{{ c.code }}</div>
+      <div class="coupon-info">
+        <div class="coupon-label">{{ c.label|default:c.code }}</div>
+        <div class="coupon-desc">{{ c.discount_value }}{% if c.discount_type == 'percent' %}%{% else %} FCFA{% endif %} &nbsp;·&nbsp; {{ c.uses_count }}/{{ c.max_uses }} utilisations</div>
+        <div class="coupon-meta">
+          <span class="tag tag-{{ c.status }}">{{ c.get_status_display }}</span>
+        </div>
+      </div>
+    </div>
+  {% if forloop.last %}
+  </div>
+  {% endif %}
+  {% endif %}
+  {% endfor %}
+  {% endwith %}
+
+</div>
+
+<script>
+function toggleMaxDiscount() {
+  const dtype = document.getElementById('dtype').value;
+  document.getElementById('max-discount-field').style.display = dtype === 'percent' ? '' : 'none';
+}
+toggleMaxDiscount();
+
+// Tap to copy coupon code
+document.querySelectorAll('.coupon-badge').forEach(el => {
+  el.addEventListener('click', () => {
+    const text = el.textContent.trim();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = el.style.background;
+        el.style.background = '#dcfce7';
+        setTimeout(() => el.style.background = orig, 800);
+      });
+    }
+  });
+});
+</script>
+</body>
+</html>

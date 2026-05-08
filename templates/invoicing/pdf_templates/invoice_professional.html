@@ -105,6 +105,7 @@
                 {% empty %}<tr><td colspan="5" style="text-align: center; padding: 20px; color: #9ca3af;">Aucun article</td></tr>{% endfor %}</tbody></table></div>
                 <div class="totals-area"><table class="totals-table"><tr><td>Sous-total</td><td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>
                 {% if tax_amount > 0 %}<tr><td>Taxes</td><td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% endif %}
+                {% if global_discount_amount > 0 %}<tr><td>{{ global_discount_label|default:"Remise" }}{% if global_discount_type == 'percent' %} ({{ global_discount_value|floatformat:0 }}%){% endif %}</td><td style="color: #ef4444;">-{{ global_discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr>{% endif %}
                 <tr class="total-row"><td>Total dû</td><td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td></tr></table></div>
                 <div class="footer">{% if organization.name %}<p><strong>{{ organization.name }}</strong></p>{% endif %}<p>{% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}{% endif %}{% if organization.phone %}  Tél: {{ organization.phone }}{% endif %}</p>
                     {% if organization.bank_account %}<p><strong>Banque:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %}  {% endif %}Compte: {{ organization.bank_account }}</p>{% endif %}
