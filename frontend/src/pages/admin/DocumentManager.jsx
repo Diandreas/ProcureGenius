@@ -20,21 +20,27 @@ import BackButton from '../../components/navigation/BackButton';
 const DOC_TYPES = [
   {
     type: 'price_list_public',
-    label: 'Liste de prix (Public)',
+    label: 'Liste des tarifs (Public)',
     description: 'Tarifs publics des analyses de laboratoire, groupés par catégorie.',
     color: 'primary',
   },
   {
     type: 'price_list_subcontract',
-    label: 'Liste de prix (Sous-traitance)',
+    label: 'Liste des tarifs (Sous-traitance)',
     description: 'Tarifs préférentiels pour les partenaires et sous-traitants.',
     color: 'secondary',
   },
   {
-    type: 'packs_catalog',
-    label: 'Catalogue de packs',
-    description: 'Bilans et packs santé à tarif groupé (couples, maternité, séniors…).',
+    type: 'bilans_list',
+    label: 'Liste des bilans',
+    description: 'Catalogue des bilans et packs santé par catégorie (couples, maternité, séniors, général).',
     color: 'success',
+  },
+  {
+    type: 'services_list',
+    label: 'Liste des soins & services',
+    description: 'Services médicaux proposés avec leurs tarifs (consultations, soins, chirurgie…).',
+    color: 'info',
   },
   {
     type: 'full_catalog',
@@ -44,7 +50,10 @@ const DOC_TYPES = [
   },
 ];
 
-function DocumentCard({ config, onGenerate, onEdit, generating }) {
+function DocumentCard({ config, onGenerate, onEdit, generating, job }) {
+  const isRunning = generating === config.type;
+  const isDone = job?.status === 'done';
+
   return (
     <Card sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flexGrow: 1 }}>
@@ -53,24 +62,38 @@ function DocumentCard({ config, onGenerate, onEdit, generating }) {
             <PdfIcon color={config.color} />
             <Typography variant="subtitle1" fontWeight={700}>{config.label}</Typography>
           </Box>
+          {isRunning && <Chip label="En cours…" size="small" color="warning" />}
+          {isDone && <Chip label="Prêt" size="small" color="success" />}
         </Box>
         <Typography variant="body2" color="text.secondary">{config.description}</Typography>
       </CardContent>
-      <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+      <CardActions sx={{ justifyContent: 'flex-end', pt: 0, gap: 0.5, flexWrap: 'wrap' }}>
         <Tooltip title="Paramètres du document">
           <IconButton size="small" onClick={() => onEdit(config.type)}>
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
+        {isDone && job.downloadUrl && (
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            href={job.downloadUrl}
+            download
+            color="success"
+          >
+            Télécharger
+          </Button>
+        )}
         <Button
           variant="contained"
           size="small"
-          startIcon={generating === config.type ? <CircularProgress size={14} /> : <DownloadIcon />}
+          startIcon={isRunning ? <CircularProgress size={14} /> : <RefreshIcon />}
           onClick={() => onGenerate(config.type)}
-          disabled={generating === config.type}
+          disabled={isRunning}
           color={config.color}
         >
-          Générer PDF
+          {isRunning ? 'En cours…' : isDone ? 'Regénérer' : 'Générer PDF'}
         </Button>
       </CardActions>
     </Card>
@@ -346,27 +369,70 @@ function PackagesTab() {
 }
 
 export default function DocumentManager() {
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [tab, setTab] = useState(0);
   const [generating, setGenerating] = useState(null);
   const [editDialogType, setEditDialogType] = useState(null);
+  // {docType: {jobId, status, downloadUrl}}
+  const [jobs, setJobs] = useState({});
 
   const handleGenerate = async (docType) => {
+    if (generating === docType) return;
     setGenerating(docType);
+    const snackKey = enqueueSnackbar('Génération PDF en cours… vous pouvez continuer à naviguer.', {
+      variant: 'info', persist: true,
+    });
+
     try {
-      const blob = await documentGeneratorAPI.generatePDF(docType);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const config = DOC_TYPES.find(d => d.type === docType);
-      a.href = url;
-      a.download = `${config?.label || docType}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-      enqueueSnackbar('PDF généré avec succès', { variant: 'success' });
+      const { job_id } = await documentGeneratorAPI.startPDFJob(docType);
+      setJobs(j => ({ ...j, [docType]: { jobId: job_id, status: 'pending' } }));
+
+      // Poll every 2 seconds until done or error
+      const poll = setInterval(async () => {
+        try {
+          const result = await documentGeneratorAPI.getPDFJobStatus(job_id);
+          if (result.status === 'done') {
+            clearInterval(poll);
+            setGenerating(null);
+            closeSnackbar(snackKey);
+            setJobs(j => ({ ...j, [docType]: { jobId: job_id, status: 'done', downloadUrl: result.download_url } }));
+            const config = DOC_TYPES.find(d => d.type === docType);
+            // Auto-download
+            const a = document.createElement('a');
+            a.href = result.download_url;
+            a.download = `${config?.label || docType}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            enqueueSnackbar('PDF prêt — téléchargement démarré !', { variant: 'success' });
+          } else if (result.status === 'error') {
+            clearInterval(poll);
+            setGenerating(null);
+            closeSnackbar(snackKey);
+            enqueueSnackbar(`Erreur PDF : ${result.error || 'Erreur inconnue'}`, { variant: 'error' });
+          }
+        } catch {
+          clearInterval(poll);
+          setGenerating(null);
+          closeSnackbar(snackKey);
+          enqueueSnackbar('Impossible de vérifier le statut du PDF.', { variant: 'error' });
+        }
+      }, 2000);
+
+      // Safety timeout after 3 minutes
+      setTimeout(() => {
+        clearInterval(poll);
+        if (generating === docType) {
+          setGenerating(null);
+          closeSnackbar(snackKey);
+          enqueueSnackbar('La génération PDF a pris trop longtemps.', { variant: 'warning' });
+        }
+      }, 180000);
+
     } catch {
-      enqueueSnackbar('Erreur lors de la génération du PDF', { variant: 'error' });
-    } finally {
       setGenerating(null);
+      closeSnackbar(snackKey);
+      enqueueSnackbar('Erreur lors du lancement de la génération PDF', { variant: 'error' });
     }
   };
 
@@ -398,6 +464,7 @@ export default function DocumentManager() {
                 onGenerate={handleGenerate}
                 onEdit={(type) => setEditDialogType(type)}
                 generating={generating}
+                job={jobs[config.type]}
               />
             </Grid>
           ))}

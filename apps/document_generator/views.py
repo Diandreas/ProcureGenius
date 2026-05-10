@@ -1,12 +1,14 @@
 import os
 import base64
+import uuid as uuid_module
+import threading
 from decimal import Decimal
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.utils import timezone
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -16,6 +18,9 @@ from .models import OrganizationDocument, HealthPackage, DiscountCoupon
 from .serializers import OrganizationDocumentSerializer, HealthPackageSerializer
 from apps.healthcare.pdf_helpers import HealthcarePDFMixin
 from apps.laboratory.models import LabTestCategory, LabTest
+
+# In-memory job store: {job_id: {status, file_path, error, created_at}}
+_PDF_JOBS = {}
 
 
 def _static_image_b64(relative_path):
@@ -149,7 +154,7 @@ class DocumentRenderView(APIView, HealthcarePDFMixin):
             categories = LabTestCategory.objects.filter(organization=organization, is_active=True).prefetch_related('tests')
             context['categories'] = categories
 
-        elif doc_type == 'packs_catalog':
+        elif doc_type in ('packs_catalog', 'bilans_list'):
             template_name = 'document_generator/pdf_templates/packs_catalog.html'
             packages = HealthPackage.objects.filter(organization=organization, is_active=True).order_by('display_order')
             grouped_packages = {}
@@ -161,6 +166,13 @@ class DocumentRenderView(APIView, HealthcarePDFMixin):
             context['grouped_packages'] = grouped_packages
             context['packages'] = packages
             context['centre_images'] = _load_centre_images()
+
+        elif doc_type == 'services_list':
+            template_name = 'document_generator/pdf_templates/services_list.html'
+            from apps.invoicing.models import Product
+            context['services'] = Product.objects.filter(
+                organization=organization, product_type='service', is_active=True
+            ).order_by('name')
 
         elif doc_type == 'full_catalog':
             template_name = 'document_generator/pdf_templates/full_catalog.html'
@@ -186,6 +198,173 @@ class DocumentRenderView(APIView, HealthcarePDFMixin):
             filename=f"Document_{doc_type}_{organization.name}.pdf",
             organization=organization,
             attachment=True,
+        )
+
+
+# ─────────────────────────────────────────────────────────────
+# PDF ASYNC — génération en arrière-plan
+# ─────────────────────────────────────────────────────────────
+
+def _build_pdf_context(doc_type, organization):
+    """Construit le contexte commun pour les templates PDF."""
+    logo_b64 = _static_image_b64('image1.jpg')
+    lab_b64 = _static_image_b64('laboratory-563423_640.jpg')
+    healthcare_b64 = _static_image_b64('healthcare-6930827_640.jpg')
+
+    document = OrganizationDocument.objects.filter(
+        organization=organization, document_type=doc_type
+    ).first()
+
+    context = {
+        'organization': organization,
+        'document': document,
+        'doc_type': doc_type,
+        'logo_b64': logo_b64,
+        'lab_b64': lab_b64,
+        'healthcare_b64': healthcare_b64,
+    }
+
+    if doc_type in ('price_list_public', 'price_list_subcontract', 'services_list'):
+        context['categories'] = LabTestCategory.objects.filter(
+            organization=organization, is_active=True
+        ).prefetch_related('tests')
+
+    if doc_type in ('packs_catalog', 'bilans_list', 'full_catalog'):
+        packages = HealthPackage.objects.filter(
+            organization=organization, is_active=True
+        ).order_by('display_order')
+        grouped = {}
+        for pkg in packages:
+            cat_name = dict(HealthPackage.CATEGORY_CHOICES).get(pkg.category, pkg.category)
+            grouped.setdefault(cat_name, []).append(pkg)
+        context['packages'] = packages
+        context['grouped_packages'] = grouped
+        context['centre_images'] = _load_centre_images()
+
+    if doc_type == 'full_catalog':
+        context['equipment_images'] = _load_equipment_images()
+
+    if doc_type == 'services_list':
+        from apps.invoicing.models import Product
+        context['services'] = Product.objects.filter(
+            organization=organization,
+            product_type='service',
+            is_active=True,
+        ).order_by('name')
+
+    template_map = {
+        'price_list_public': 'document_generator/pdf_templates/price_list.html',
+        'price_list_subcontract': 'document_generator/pdf_templates/price_list_subcontract.html',
+        'packs_catalog': 'document_generator/pdf_templates/packs_catalog.html',
+        'bilans_list': 'document_generator/pdf_templates/packs_catalog.html',
+        'full_catalog': 'document_generator/pdf_templates/full_catalog.html',
+        'services_list': 'document_generator/pdf_templates/services_list.html',
+    }
+    template_name = template_map.get(doc_type)
+    return context, template_name
+
+
+def _run_pdf_job(job_id, doc_type, organization_id):
+    """Thread worker : génère le PDF et met à jour _PDF_JOBS."""
+    from django.template.loader import render_to_string
+    from apps.accounts.models import Organization
+
+    _PDF_JOBS[job_id]['status'] = 'running'
+    try:
+        organization = Organization.objects.get(id=organization_id)
+        context, template_name = _build_pdf_context(doc_type, organization)
+
+        if not template_name:
+            _PDF_JOBS[job_id].update({'status': 'error', 'error': 'Type non reconnu'})
+            return
+
+        html_string = render_to_string(template_name, context)
+
+        # Génère le PDF via WeasyPrint
+        from weasyprint import HTML
+        out_dir = os.path.join(settings.MEDIA_ROOT, 'pdf_jobs')
+        os.makedirs(out_dir, exist_ok=True)
+        file_path = os.path.join(out_dir, f'{job_id}.pdf')
+        HTML(string=html_string, base_url=settings.BASE_DIR).write_pdf(file_path)
+
+        _PDF_JOBS[job_id].update({
+            'status': 'done',
+            'file_path': file_path,
+            'filename': f"{doc_type}_{organization.name}.pdf",
+        })
+    except Exception as e:
+        _PDF_JOBS[job_id].update({'status': 'error', 'error': str(e)})
+
+
+class DocumentRenderAsyncView(APIView):
+    """POST → lance la génération PDF en arrière-plan, retourne un job_id."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, doc_type, *args, **kwargs):
+        organization = request.user.organization
+        if not organization:
+            return Response({'detail': 'Aucune organisation.'}, status=400)
+
+        valid_types = ['price_list_public', 'price_list_subcontract', 'packs_catalog',
+                       'bilans_list', 'full_catalog', 'services_list']
+        if doc_type not in valid_types:
+            return Response({'detail': 'Type de document non reconnu.'}, status=400)
+
+        job_id = str(uuid_module.uuid4())
+        _PDF_JOBS[job_id] = {
+            'status': 'pending',
+            'doc_type': doc_type,
+            'organization_id': str(organization.id),
+            'created_at': timezone.now().isoformat(),
+            'file_path': None,
+            'error': None,
+        }
+
+        t = threading.Thread(
+            target=_run_pdf_job,
+            args=(job_id, doc_type, organization.id),
+            daemon=True,
+        )
+        t.start()
+
+        return Response({'job_id': job_id, 'status': 'pending'}, status=202)
+
+
+class PDFJobStatusView(APIView):
+    """GET /documents/jobs/<job_id>/status/ → {status, download_url?}"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, job_id, *args, **kwargs):
+        job = _PDF_JOBS.get(job_id)
+        if not job:
+            return Response({'detail': 'Job introuvable.'}, status=404)
+
+        resp = {'status': job['status'], 'doc_type': job.get('doc_type')}
+        if job['status'] == 'done':
+            resp['download_url'] = f"/api/v1/documents/jobs/{job_id}/download/"
+        if job['status'] == 'error':
+            resp['error'] = job.get('error', 'Erreur inconnue')
+        return Response(resp)
+
+
+class PDFJobDownloadView(APIView):
+    """GET /documents/jobs/<job_id>/download/ → téléchargement du PDF."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, job_id, *args, **kwargs):
+        job = _PDF_JOBS.get(job_id)
+        if not job or job['status'] != 'done':
+            return Response({'detail': 'PDF non disponible.'}, status=404)
+
+        file_path = job['file_path']
+        if not os.path.exists(file_path):
+            return Response({'detail': 'Fichier introuvable.'}, status=404)
+
+        return FileResponse(
+            open(file_path, 'rb'),
+            as_attachment=True,
+            filename=job.get('filename', f'{job_id}.pdf'),
+            content_type='application/pdf',
         )
 
 

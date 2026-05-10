@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>LISTE DES SOINS & SERVICES - {{ organization.name|default:"CENTRE DE SANTÉ JULIANNA" }}</title>
+    <style>
+        @page { size: A4; margin: 12mm 10mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; color: #1a2535; font-size: 10px; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+        /* ─── HEADER ─── */
+        .header {
+            display: flex; align-items: center; gap: 16px;
+            padding: 0 0 10px 0; margin-bottom: 12px;
+            border-bottom: 3px solid #2D4A5F;
+        }
+        .header-logo { width: 64px; height: 64px; object-fit: contain; border-radius: 10px; border: 1px solid #dde6ef; }
+        .header-text { flex: 1; }
+        .header-title { font-size: 17px; font-weight: 900; color: #2D4A5F; letter-spacing: -0.03em; line-height: 1.2; }
+        .header-sub { font-size: 9px; color: #5a7a94; margin-top: 2px; }
+        .header-badge {
+            background: linear-gradient(135deg, #2D4A5F, #2B6CB8);
+            color: white; font-size: 9px; font-weight: 700;
+            padding: 4px 12px; border-radius: 100px; white-space: nowrap;
+            letter-spacing: 0.06em; text-transform: uppercase;
+        }
+
+        /* ─── INTRO BANNER ─── */
+        .intro-banner {
+            background: linear-gradient(135deg, #f0f6ff, #e8f1fb);
+            border: 1px solid #c5d9ef; border-radius: 8px;
+            padding: 10px 14px; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .intro-icon { font-size: 22px; }
+        .intro-text { font-size: 9.5px; color: #2D4A5F; line-height: 1.55; }
+        .intro-text strong { color: #2B6CB8; }
+
+        /* ─── SECTION HEADING ─── */
+        .section-heading {
+            background: linear-gradient(90deg, #2D4A5F, #2B6CB8);
+            color: white; font-size: 10px; font-weight: 800;
+            padding: 5px 12px; border-radius: 5px;
+            margin: 14px 0 6px 0; letter-spacing: 0.08em; text-transform: uppercase;
+        }
+
+        /* ─── SERVICE TABLE ─── */
+        .services-table { width: 100%; border-collapse: collapse; }
+        .services-table tr { border-bottom: 0.5px solid #e8eef4; }
+        .services-table tr:last-child { border-bottom: none; }
+        .services-table tr:nth-child(even) td { background: #f8fafc; }
+        .services-table td { padding: 4px 6px; vertical-align: middle; }
+        .s-name { font-weight: 500; color: #1a2535; }
+        .s-desc { font-size: 8.5px; color: #6b8299; margin-top: 1px; }
+        .s-price {
+            text-align: right; font-weight: 800; color: #2B6CB8;
+            white-space: nowrap; font-size: 11px;
+        }
+        .s-price-na { text-align: right; font-size: 8.5px; color: #aab8c4; font-style: italic; }
+        .s-ref { color: #aab8c4; font-size: 8px; }
+
+        /* ─── TWO-COLUMN LAYOUT ─── */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+        .col-block { break-inside: avoid; }
+
+        /* ─── NOTE BOX ─── */
+        .note-box {
+            margin-top: 14px; padding: 10px 14px;
+            background: #fff8e6; border: 1px solid #f5c842; border-radius: 8px;
+            font-size: 9px; color: #7a5c00; line-height: 1.6;
+        }
+        .note-box strong { color: #5a4400; }
+
+        /* ─── CONTACT BOX ─── */
+        .contact-box {
+            margin-top: 12px; padding: 10px 14px;
+            background: linear-gradient(135deg, #2D4A5F, #2B6CB8);
+            border-radius: 8px; color: white;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 6px;
+        }
+        .contact-item { font-size: 9px; font-weight: 600; }
+        .contact-label { font-size: 8px; opacity: 0.75; margin-bottom: 1px; }
+
+        /* ─── FOOTER ─── */
+        .footer {
+            margin-top: 14px; padding-top: 8px;
+            border-top: 1px solid #dde6ef;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 8px; color: #8fa8bf;
+        }
+        .footer strong { color: #2D4A5F; }
+        .footer-badge {
+            background: #2D4A5F; color: white; font-size: 7.5px; font-weight: 700;
+            padding: 2px 8px; border-radius: 100px; letter-spacing: 0.06em;
+        }
+
+        /* ─── EMPTY STATE ─── */
+        .empty-state {
+            text-align: center; padding: 30px;
+            color: #8fa8bf; font-size: 11px;
+            border: 2px dashed #dde6ef; border-radius: 10px; margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        {% if logo_b64 %}
+        <img src="{{ logo_b64 }}" class="header-logo" alt="Logo">
+        {% endif %}
+        <div class="header-text">
+            <div class="header-title">{{ organization.name|default:"CENTRE DE SANTÉ JULIANNA" }}</div>
+            <div class="header-sub">
+                {{ organization.address|default:"Makepe Saint-Tropez, Douala" }}
+                {% if organization.phone %} &bull; {{ organization.phone }}{% else %} &bull; 655 24 41 49 / 679 14 51 98{% endif %}
+            </div>
+        </div>
+        <div class="header-badge">
+            LISTE DES SOINS &amp; SERVICES{% if document and document.revision_date %} — {{ document.revision_date }}{% else %} — 2026{% endif %}
+        </div>
+    </div>
+
+    <!-- INTRO -->
+    <div class="intro-banner">
+        <div class="intro-icon">🏥</div>
+        <div class="intro-text">
+            Notre centre vous propose une gamme complète de <strong>soins médicaux, consultations spécialisées et services de santé</strong>.
+            Les tarifs indiqués sont donnés à titre indicatif et peuvent varier selon la complexité de l'acte.
+            Un devis détaillé peut être établi sur demande.
+        </div>
+    </div>
+
+    {% if services %}
+    <!-- Group services — display all in a clean table -->
+    <div class="section-heading">&#9671; Tarifs des soins et services</div>
+    <table class="services-table">
+        {% for service in services %}
+        <tr>
+            <td style="width:65%">
+                <div class="s-name">{{ service.name }}</div>
+                {% if service.description %}
+                <div class="s-desc">{{ service.description|truncatechars:90 }}</div>
+                {% endif %}
+            </td>
+            <td style="width:15%; text-align:center">
+                {% if service.reference %}
+                <span class="s-ref">{{ service.reference }}</span>
+                {% endif %}
+            </td>
+            <td style="width:20%">
+                {% if service.price %}
+                <div class="s-price">{{ service.price|floatformat:0 }} <span style="font-size:8px;font-weight:600;opacity:.7">FCFA</span></div>
+                {% else %}
+                <div class="s-price-na">Sur devis</div>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <!-- Fallback static content if no services in DB -->
+    <div class="section-heading">&#9671; Consultations médicales</div>
+    <table class="services-table">
+        <tr><td class="s-name">Consultation médecin généraliste</td><td></td><td class="s-price">5 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Consultation médecin spécialiste</td><td></td><td class="s-price">10 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Consultation gynécologie</td><td></td><td class="s-price">10 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Consultation pédiatrie</td><td></td><td class="s-price">8 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Consultation cardio / echo cardiaque</td><td></td><td class="s-price">25 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Téléconsultation</td><td></td><td class="s-price-na">Sur devis</td></tr>
+    </table>
+
+    <div class="section-heading">&#9671; Soins infirmiers</div>
+    <table class="services-table">
+        <tr><td class="s-name">Injection intramusculaire (IM)</td><td></td><td class="s-price">1 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Injection intraveineuse (IV) / Perfusion</td><td></td><td class="s-price">2 500 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Pansement simple</td><td></td><td class="s-price">2 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Pansement complexe</td><td></td><td class="s-price">5 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Pose de sonde urinaire</td><td></td><td class="s-price">5 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Sutures (points)</td><td></td><td class="s-price-na">Sur devis</td></tr>
+    </table>
+
+    <div class="section-heading">&#9671; Examens &amp; Actes techniques</div>
+    <table class="services-table">
+        <tr><td class="s-name">Électrocardiogramme (ECG)</td><td></td><td class="s-price">10 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Échographie obstétricale</td><td></td><td class="s-price">15 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Échographie abdominale</td><td></td><td class="s-price">15 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Test de grossesse</td><td></td><td class="s-price">1 000 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Glycémie capillaire (dextro)</td><td></td><td class="s-price">500 <span style="font-size:8px">FCFA</span></td></tr>
+        <tr><td class="s-name">Tension artérielle + auscultation</td><td></td><td class="s-price">1 000 <span style="font-size:8px">FCFA</span></td></tr>
+    </table>
+    {% endif %}
+
+    <!-- NOTE -->
+    <div class="note-box">
+        <strong>📋 Note :</strong> Les tarifs affichés sont en Francs CFA (FCFA) TTC.
+        Des <strong>forfaits</strong> et <strong>abonnements famille</strong> sont disponibles sur demande.
+        En cas de prise en charge par une assurance maladie ou mutuelle, merci de présenter votre carte à l'accueil.
+    </div>
+
+    <!-- CONTACT -->
+    <div class="contact-box">
+        <div>
+            <div class="contact-label">Centre de santé</div>
+            <div class="contact-item">{{ organization.name|default:"CENTRE DE SANTÉ JULIANNA" }}</div>
+        </div>
+        <div>
+            <div class="contact-label">Adresse</div>
+            <div class="contact-item">{{ organization.address|default:"Makepe Saint-Tropez, Douala" }}</div>
+        </div>
+        <div>
+            <div class="contact-label">Téléphone</div>
+            <div class="contact-item">{% if organization.phone %}{{ organization.phone }}{% else %}655 24 41 49 / 679 14 51 98{% endif %}</div>
+        </div>
+        <div>
+            <div class="contact-label">Horaires</div>
+            <div class="contact-item">Lun–Sam : 7h30–18h30</div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <span><strong>{{ organization.name|default:"Centre de Santé JULIANNA" }}</strong> — Document confidentiel, usage interne et communication externe</span>
+        <span class="footer-badge">TARIFS SOINS &amp; SERVICES</span>
+    </div>
+
+</body>
+</html>

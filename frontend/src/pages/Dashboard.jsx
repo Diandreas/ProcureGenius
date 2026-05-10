@@ -216,16 +216,21 @@ const Dashboard = () => {
   }));
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
-      <Container maxWidth="xl">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 2, md: 4 }, pb: { xs: 10, md: 4 } }}>
+      <Container maxWidth="xl" disableGutters={false} sx={{ px: { xs: 1.5, sm: 3 } }}>
         {/* Header */}
-        <Box mb={3} display="flex" alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" gap={2}>
+        <Box mb={2} display="flex" alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
           <Box>
-            <Typography variant="h3" fontWeight="800"
-              sx={{ background: t => `linear-gradient(45deg, ${t.palette.primary.main}, ${t.palette.primary.light})`, backgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.5 }}>
+            <Typography fontWeight="800"
+              sx={{
+                fontSize: { xs: '1.4rem', sm: '1.8rem', md: '2.4rem' },
+                background: t => `linear-gradient(45deg, ${t.palette.primary.main}, ${t.palette.primary.light})`,
+                backgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.25,
+                lineHeight: 1.2,
+              }}>
               {t('dashboard.title', 'Tableau de Bord')}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
               {dateRange.start_date} → {dateRange.end_date}
             </Typography>
           </Box>
@@ -236,74 +241,85 @@ const Dashboard = () => {
           />
         </Box>
 
-        {/* Tabs */}
-        <Paper elevation={0} sx={{ mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-          <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto" sx={{ px: 2 }}>
-            <SafeTab icon={<AssessmentIcon />} iconPosition="start" label="Activité" sx={{ minHeight: 48 }} />
-            <SafeTab icon={<MoneyIcon />} iconPosition="start" label="Revenus" sx={{ minHeight: 48 }} />
-            <SafeTab icon={<ScienceIcon />} iconPosition="start" label="Laboratoire" sx={{ minHeight: 48 }} />
-            <SafeTab icon={<PeopleIcon />} iconPosition="start" label="Patients" sx={{ minHeight: 48 }} />
-            <SafeTab icon={<InventoryIcon />} iconPosition="start" label="Stock & Alertes" sx={{ minHeight: 48 }} />
+        {/* Tabs — icônes seules sur mobile, icône+texte sur desktop */}
+        <Paper elevation={0} sx={{ mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto"
+            sx={{ px: { xs: 0.5, sm: 2 }, minHeight: { xs: 44, sm: 48 } }}>
+            <SafeTab icon={<AssessmentIcon />} iconPosition="start"
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Activité</Box>}
+              sx={{ minHeight: { xs: 44, sm: 48 }, minWidth: { xs: 44, sm: 'auto' }, px: { xs: 1, sm: 2 } }} />
+            <SafeTab icon={<MoneyIcon />} iconPosition="start"
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Revenus</Box>}
+              sx={{ minHeight: { xs: 44, sm: 48 }, minWidth: { xs: 44, sm: 'auto' }, px: { xs: 1, sm: 2 } }} />
+            <SafeTab icon={<ScienceIcon />} iconPosition="start"
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Laboratoire</Box>}
+              sx={{ minHeight: { xs: 44, sm: 48 }, minWidth: { xs: 44, sm: 'auto' }, px: { xs: 1, sm: 2 } }} />
+            <SafeTab icon={<PeopleIcon />} iconPosition="start"
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Patients</Box>}
+              sx={{ minHeight: { xs: 44, sm: 48 }, minWidth: { xs: 44, sm: 'auto' }, px: { xs: 1, sm: 2 } }} />
+            <SafeTab icon={<InventoryIcon />} iconPosition="start"
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Stock & Alertes</Box>}
+              sx={{ minHeight: { xs: 44, sm: 48 }, minWidth: { xs: 44, sm: 'auto' }, px: { xs: 1, sm: 2 } }} />
           </Tabs>
         </Paper>
 
         {/* ── TAB 0 : ACTIVITÉ ── */}
         {tabValue === 0 && (
           <>
-            <Grid container spacing={3} mb={3}>
-              <Grid item xs={12} sm={6} md={3}>
+            <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} mb={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Chiffre d'Affaires" value={loading ? '...' : formatCurrency(financial.total_revenue)}
                   icon={<MoneyIcon />} color="#2563eb" loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Consultations" value={loading ? '...' : actVol?.consultations?.total ?? 0}
                   icon={<MedicalIcon />} color="#10b981" loading={loading}
                   subtitle="Sur la période sélectionnée" />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Patients uniques (période)" value={loading ? '...' : totalUniquePatients}
                   icon={<PeopleIcon />} color="#8b5cf6" loading={loading}
                   subtitle="Même base que l'onglet Patients" />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Nouveaux Patients Reçus" value={loading ? '...' : actVol?.new_patients?.total ?? 0}
                   icon={<HospitalIcon />} color="#14b8a6" loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Patients Récurrents" value={loading ? '...' : patients?.recurring ?? 0}
                   icon={<PeopleIcon />} color="#f97316" loading={loading}
                   subtitle="≥ 2 jours d'activité sur la période" />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Coût Moyen / Patient" value={loading ? '...' : formatCurrency(financial.avg_cost_per_patient)}
                   icon={<MoneyIcon />} color="#f59e0b" loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Temps d'Attente Moyen" value={loading ? '...' : `${Math.round(perf.avg_wait_time_minutes ?? 0)} min`}
                   icon={<ClockIcon />} color="#ef4444" loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Durée Moy. Consultation" value={loading ? '...' : `${Math.round(perf.avg_consultation_duration_minutes ?? 0)} min`}
                   icon={<ScheduleIcon />} color="#ec4899" loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Actes Médicaux" value={loading ? '...' : actVol?.medical_acts?.total ?? 0}
                   icon={<AssessmentIcon />} color="#6366f1" loading={loading}
                   subtitle="Pharmacie ordonnance + Soins divers" />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="CA Examens Labo"
                   value={loading ? '...' : formatCurrency(financial.lab_exams_revenue)}
                   icon={<ScienceIcon />} color="#ef4444" loading={loading}
                   subtitle="Hors kits de prélèvement" />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Kits de Prélèvement"
                   value={loading ? '...' : formatCurrency(financial.lab_kit_revenue)}
                   icon={<ScienceIcon />} color="#f59e0b" loading={loading}
                   subtitle="Inclus dans CA Labo" />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Sous-traitance Labo"
                   value={loading ? '...' : formatCurrency(financial.subcontract_revenue)}
                   icon={<ShippingIcon />} color="#8b5cf6" loading={loading}
@@ -313,7 +329,7 @@ const Dashboard = () => {
 
             {/* Tableau sous-traitance par laboratoire */}
             {(financial.subcontract_by_lab?.length > 0) && (
-              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
+              <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
                 <SectionTitle>Sous-traitance par Laboratoire</SectionTitle>
                 <TableContainer>
                   <Table size="small">
@@ -340,9 +356,9 @@ const Dashboard = () => {
 
             {/* Timeline CA */}
             {revenueTimeline.length > 0 && (
-              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
+              <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
                 <SectionTitle>Évolution du Chiffre d'Affaires</SectionTitle>
-                <ResponsiveContainer width="100%" height={240}>
+                <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={revenueTimeline}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" tick={{ fontSize: 11 }} />
@@ -356,7 +372,7 @@ const Dashboard = () => {
 
             {/* Consultations timeline */}
             {(actVol?.consultations?.timeline || []).length > 0 && (
-              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
+              <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
                 <SectionTitle>Évolution des Consultations</SectionTitle>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={actVol.consultations.timeline}>
@@ -372,7 +388,7 @@ const Dashboard = () => {
 
             {/* Patients timeline */}
             {patientsTimeline.length > 0 && (
-              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+              <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <SectionTitle>Évolution du Nombre de Patients par Jour</SectionTitle>
                 <Typography variant="caption" color="text.secondary" display="block" mb={1}>
                   Patients uniques enregistrés à l'accueil (toutes activités)
@@ -396,23 +412,23 @@ const Dashboard = () => {
         {tabValue === 1 && (
           <>
             {/* KPI cards — ligne 1 */}
-            <Grid container spacing={3} mb={2}>
-              <Grid item xs={12} sm={6} md={3}>
+            <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} mb={2}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="CA Total (factures payées)"
                   value={loading ? '...' : formatCurrency(revenueData?.total_stats?.total_revenue)}
                   icon={<MoneyIcon />} color="#2563eb" loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Factures Payées"
                   value={loading ? '...' : revenueData?.total_stats?.total_invoices ?? 0}
                   icon={<CheckCircleIcon />} color="#10b981" loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Montant Moyen / Facture"
                   value={loading ? '...' : formatCurrency(revenueData?.total_stats?.avg_invoice_amount)}
                   icon={<AssessmentIcon />} color="#f59e0b" loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="CA Consultations"
                   value={loading ? '...' : formatCurrency(byActivity.find(a => a.activity_type === 'healthcare_consultation')?.revenue)}
                   icon={<MedicalIcon />} color="#8b5cf6" loading={loading} />
@@ -566,7 +582,7 @@ const Dashboard = () => {
             {(loading || pharmacyRevenue > 0) && (
               <Grid container spacing={3} mt={1}>
                 <Grid item xs={12}>
-                  <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                  <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                       <SectionTitle>CA Pharmacie & Médicaments — par Catégorie</SectionTitle>
                       <Chip label={formatCurrency(pharmacyTotalRevenue || pharmacyRevenue)} color="success" size="small" />
@@ -615,7 +631,7 @@ const Dashboard = () => {
             {servicesCategories.length > 0 && (
               <Grid container spacing={3} mt={1}>
                 <Grid item xs={12}>
-                  <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                  <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                       <SectionTitle>CA Soins / Petite Chirurgie / Hospitalisation — par Catégorie</SectionTitle>
                       <Chip label={formatCurrency(servicesTotalRevenue)} color="secondary" size="small" />
@@ -666,7 +682,7 @@ const Dashboard = () => {
         {/* ── TAB 2 : LABORATOIRE ── */}
         {tabValue === 2 && (
           <>
-            <Grid container spacing={3} mb={3}>
+            <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} mb={3}>
               <Grid item xs={12} md={6}>
                 <LabOrdersStatusWidget dateRange={dateRange} />
               </Grid>
@@ -676,7 +692,7 @@ const Dashboard = () => {
             </Grid>
 
             {/* Stage timing */}
-            <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
+            <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
               <SectionTitle>Délais par Étape du Processus Labo</SectionTitle>
               {loading ? <CircularProgress size={32} /> : labStageData ? (
                 <>
@@ -685,7 +701,7 @@ const Dashboard = () => {
                   </Typography>
                   <Grid container spacing={2}>
                     {(labStageData.stages || []).map((stage, i) => (
-                      <Grid item xs={12} sm={6} md={3} key={stage.key}>
+                      <Grid item xs={6} sm={6} md={3} key={stage.key}>
                         <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, textAlign: 'center' }}>
                           <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: alpha(COLORS[i % COLORS.length], 0.12), color: COLORS[i % COLORS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1 }}>
                             <ClockIcon sx={{ fontSize: 20 }} />
@@ -812,7 +828,7 @@ const Dashboard = () => {
               )}
 
               {/* ── Graphe évolution journalière ── */}
-              <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
+              <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 3 }}>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <SectionTitle>Évolution du nombre de patients par jour</SectionTitle>
                   {selectedDay && (
@@ -827,7 +843,7 @@ const Dashboard = () => {
                   Cliquez sur un jour pour voir le détail des patients
                 </Typography>
                 {loading ? <CircularProgress size={32} /> : chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={320}>
+                  <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={chartData} margin={{ top: 24, right: 10, left: 0, bottom: 5 }}
                       onClick={handleChartClick} style={{ cursor: 'pointer' }}
                       barCategoryGap="20%">
@@ -956,7 +972,7 @@ const Dashboard = () => {
                 </Grid>
                 {demographicsData?.by_gender?.length > 0 && (
                   <Grid item xs={12}>
-                    <Paper elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                    <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                       <Box display="flex" alignItems="center" gap={2} mb={2}>
                         <Typography variant="h6" fontWeight="700" mt={1}>Détail Démographique</Typography>
                       </Box>
@@ -989,26 +1005,26 @@ const Dashboard = () => {
         {/* ── TAB 4 : STOCK & ALERTES ── */}
         {tabValue === 4 && (
           <>
-            <Grid container spacing={3} mb={3}>
-              <Grid item xs={12} sm={6} md={3}>
+            <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} mb={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Produits Stock Bas"
                   value={loading ? '...' : inventoryStats.low_stock_count || 0}
                   icon={<WarningIcon />} color="#f59e0b"
                   onClick={() => navigate('/inventory/analytics/reorder')} loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Produits Épuisés"
                   value={loading ? '...' : inventoryStats.out_of_stock || 0}
                   icon={<WarningIcon />} color="#ef4444"
                   onClick={() => navigate('/inventory/analytics/at-risk')} loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Lots Expirants"
                   value={loading ? '...' : stockData.expiring_batches || 0}
                   icon={<ScheduleIcon />} color="#ef4444"
                   onClick={() => navigate('/inventory/analytics/at-risk')} loading={loading} />
               </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Valeur Stock"
                   value={loading ? '...' : formatCurrency(inventoryStats.inventory_value)}
                   icon={<MoneyIcon />} color="#2563eb"

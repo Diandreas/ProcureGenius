@@ -14,6 +14,8 @@ class OrganizationDocument(models.Model):
         ('price_list_public', _('Liste de prix (Public)')),
         ('price_list_subcontract', _('Liste de prix (Sous-traitance)')),
         ('packs_catalog', _('Catalogue de packs')),
+        ('bilans_list', _('Liste des bilans')),
+        ('services_list', _('Liste des soins & services')),
         ('full_catalog', _('Catalogue complet (Tarifs + Infos)')),
     ]
 
