@@ -6,9 +6,11 @@ export default defineConfig(({ mode }) => {
   // Configuration de l'URL du backend
   // En production: URL du backend Django
   // En développement: localhost pour le serveur de développement
+  // En production le frontend est servi par le même nginx qui proxie /api/ → gunicorn,
+  // donc on laisse VITE_BACKEND_URL vide → api.js utilisera des chemins relatifs (/api/v1/...).
   const BACKEND_URL = mode === 'production'
-    ? process.env.VITE_BACKEND_URL || 'https://appback.centrejulianna.com'  // URL du backend en production
-    : process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';  // URL du backend en développement (port 8000)
+    ? process.env.VITE_BACKEND_URL || ''
+    : process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
 
   // #region agent log
   console.log('[Vite Config] Mode:', mode, 'Backend URL:', BACKEND_URL);
