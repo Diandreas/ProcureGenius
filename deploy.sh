@@ -15,8 +15,9 @@ for arg in "$@"; do
   esac
 done
 
-echo "=== [1/5] Git pull ==="
-git pull origin boris
+echo "=== [1/5] Git fetch + reset hard ==="
+git fetch origin
+git reset --hard origin/boris
 
 if [ "$NO_MIGRATE" = false ]; then
   echo "=== [2/5] Migrations Django ==="
@@ -30,7 +31,7 @@ if [ "$NO_BUILD" = false ]; then
   echo "=== [3/5] Build frontend ==="
   cd frontend
   npm ci --prefer-offline
-  npm run build
+  VITE_BACKEND_URL="" npm run build
   cd "$SCRIPT_DIR"
 else
   echo "=== [3/5] Frontend build skipped ==="
@@ -43,4 +44,4 @@ echo "=== [5/5] Statut PM2 ==="
 pm2 status
 
 echo ""
-echo "✓ Déploiement terminé. Frontend: /frontend/build  Backend: 127.0.0.1:8090"
+echo "Déploiement terminé. Frontend: /frontend/build  Backend: 127.0.0.1:8090"
