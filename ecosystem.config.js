@@ -1,64 +1,44 @@
 // ============================================================
 // Configuration PM2 - Centre de Santé Julianna
-// Détection automatique du système d'exploitation
+// Production: gunicorn (Linux server)
+// Dev: manage.py runserver (Windows local)
 // ============================================================
 
 const os = require('os');
 const path = require('path');
 
-// Détection automatique du chemin Python selon l'OS
 const isWindows = os.platform() === 'win32';
 const pythonPath = isWindows
   ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
   : path.join(__dirname, 'venv', 'bin', 'python');
 
-console.log(`[PM2 Config] Système détecté: ${os.platform()}`);
-console.log(`[PM2 Config] Interpréteur Python: ${pythonPath}`);
+const gunicornPath = isWindows
+  ? path.join(__dirname, 'venv', 'Scripts', 'gunicorn.exe')
+  : path.join(__dirname, 'venv', 'bin', 'gunicorn');
 
 module.exports = {
   apps: [
     {
       name: 'backend-django',
-      script: 'manage.py',
-      args: 'runserver 0.0.0.0:8090',
+      // Production (Linux): gunicorn ; Dev (Windows): manage.py runserver
+      script: isWindows ? 'manage.py' : gunicornPath,
+      args: isWindows
+        ? 'runserver 0.0.0.0:8090'
+        : 'saas_procurement.wsgi:application --bind 127.0.0.1:8090 --workers 2 --timeout 120',
       interpreter: pythonPath,
+      exec_mode: 'fork',
       cwd: __dirname,
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '1G',
+      max_memory_restart: '800M',
       env: {
-        NODE_ENV: 'production',
         DJANGO_SETTINGS_MODULE: 'saas_procurement.settings',
         PYTHONUNBUFFERED: '1'
       },
-      error_file: './logs/backend-error.log',
-      out_file: './logs/backend-out.log',
-      log_file: './logs/backend-combined.log',
+      error_file: './logs/pm2-error.log',
+      out_file: './logs/pm2-out.log',
       time: true,
-      merge_logs: true,
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
-    },
-    {
-      name: 'frontend-react',
-      script: isWindows ? 'npm' : 'serve',
-      args: isWindows ? 'start' : '-s build -l 3000',
-      cwd: path.join(__dirname, 'frontend'),
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '500M',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 3000,
-        FORCE_COLOR: '1'
-      },
-      error_file: './logs/frontend-error.log',
-      out_file: './logs/frontend-out.log',
-      log_file: './logs/frontend-combined.log',
-      time: true,
-      merge_logs: true,
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     }
   ]
 };
