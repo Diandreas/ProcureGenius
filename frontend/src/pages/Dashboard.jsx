@@ -1046,6 +1046,10 @@ const Dashboard = () => {
                 <QuickLink title="Mouvements de Stock" description="Historique entrées/sorties"
                   icon={<TrendingUpIcon />} color="#8b5cf6" to="/inventory/analytics/movements" navigate={navigate} />
               </Grid>
+              <Grid item xs={12} md={6}>
+                <QuickLink title="Analyse des Marges" description="Marge totale · Taux de marge · Taux de marque"
+                  icon={<TrendingUpIcon />} color="#059669" to="/inventory/analytics/margin" navigate={navigate} />
+              </Grid>
             </Grid>
           </>
         )}

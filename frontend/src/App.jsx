@@ -59,6 +59,7 @@ import ProductForm from './pages/products/ProductForm';
 import WilsonEOQAnalytics from './pages/inventory/analytics/WilsonEOQAnalytics';
 import PredictiveRestockPage from './pages/inventory/analytics/PredictiveRestockPage';
 import ConsumptionStatsPage from './pages/inventory/analytics/ConsumptionStatsPage';
+import MarginAnalytics from './pages/inventory/analytics/MarginAnalytics';
 import Clients from './pages/clients/Clients';
 import ClientDetail from './pages/clients/ClientDetail';
 import ClientForm from './pages/clients/ClientForm';
@@ -774,6 +775,7 @@ function App() {
                               <Route path="/inventory/analytics/wilson-eoq" element={<WilsonEOQAnalytics />} />
                               <Route path="/inventory/analytics/predictive-restock" element={<PredictiveRestockPage />} />
                               <Route path="/inventory/analytics/consumption" element={<ConsumptionStatsPage />} />
+                              <Route path="/inventory/analytics/margin" element={<MarginAnalytics />} />
 
                               {/* Product Batches */}
                               <Route path="/products/:productId/batches" element={<ProductBatches />} />

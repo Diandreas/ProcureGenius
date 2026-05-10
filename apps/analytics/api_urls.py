@@ -32,6 +32,7 @@ from .inventory_analytics import (
     PredictiveRestockView,
     ConsumptionStatsView,
     UnifiedDashboardView,
+    MarginAnalyticsView,
 )
 
 app_name = 'analytics_api'
@@ -69,6 +70,9 @@ urlpatterns = [
 
     # Unified Dashboard
     path('unified-dashboard/', UnifiedDashboardView.as_view(), name='unified_dashboard'),
+
+    # Margin Analytics
+    path('inventory/margin/', MarginAnalyticsView.as_view(), name='inventory_margin'),
 
     # Report Configuration
     path('report-config/', ReportConfigView.as_view(), name='report_config'),

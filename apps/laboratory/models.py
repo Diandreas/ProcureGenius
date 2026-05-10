@@ -125,6 +125,14 @@ class LabTest(models.Model):
         verbose_name=_("Prix sous-traitance"),
         help_text=_("Prix appliqué aux laboratoires sous-traitants")
     )
+    operating_cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Coût de fonctionnement"),
+        help_text=_("Coût de revient : réactifs, amortissement, charges, salaires… à saisir manuellement")
+    )
 
     # Inventory Link
     # Inventory Link

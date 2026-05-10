@@ -147,6 +147,11 @@ class Product(models.Model):
     # Prix
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Prix de vente")
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Prix d'achat")
+    operating_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        verbose_name="Coût de fonctionnement",
+        help_text="Pour les services/soins : coût de revient (charges, salaires, amortissement…)"
+    )
     price_editable = models.BooleanField(
         default=False,
         verbose_name="Prix modifiable",

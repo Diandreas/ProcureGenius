@@ -1025,3 +1025,228 @@ class UnifiedDashboardView(APIView):
             'period_start': start_date.isoformat(),
             'period_end': end_date.isoformat(),
         })
+
+
+class MarginAnalyticsView(APIView):
+    """
+    Calcule les 3 marges pour chaque catégorie :
+      1. Marge totale (valeur) = (PV - PA) × quantité vendue
+      2. Taux de marge (%) = (PV - PA) / PA × 100
+      3. Taux de marque (%) = (PV - PA) / PV × 100
+
+    3 sections :
+      A. Médicaments/Produits physiques  → cost_price = prix d'achat
+      B. Examens de laboratoire          → operating_cost saisi manuellement
+      C. Services/Soins/Consultations    → operating_cost saisi manuellement
+
+    Query params : start_date, end_date (défaut : 12 derniers mois)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.invoicing.models import Invoice, InvoiceItem
+        from apps.laboratory.models import LabTest, LabOrderItem
+        from decimal import Decimal
+        from django.db.models import Sum, Count, F, Q, DecimalField
+        from django.db.models.functions import Coalesce
+
+        org = request.user.organization
+        today = date.today()
+        start_str = request.GET.get('start_date')
+        end_str = request.GET.get('end_date')
+        start_date = datetime.strptime(start_str, '%Y-%m-%d').date() if start_str else today.replace(month=1, day=1)
+        end_date = datetime.strptime(end_str, '%Y-%m-%d').date() if end_str else today
+
+        def pct_marge(pv, pa):
+            if pa and pa > 0:
+                return round(float((pv - pa) / pa * 100), 2)
+            return None
+
+        def pct_marque(pv, pa):
+            if pv and pv > 0:
+                return round(float((pv - pa) / pv * 100), 2)
+            return None
+
+        # ── A. MÉDICAMENTS / PRODUITS PHYSIQUES ──────────────────────────────
+        sold_items = InvoiceItem.objects.filter(
+            invoice__organization=org,
+            invoice__status__in=['paid', 'sent'],
+            invoice__created_at__date__gte=start_date,
+            invoice__created_at__date__lte=end_date,
+            product__product_type='physical',
+        ).select_related('product')
+
+        pharma_by_product = {}
+        for item in sold_items:
+            p = item.product
+            if not p:
+                continue
+            pid = str(p.id)
+            pa = float(p.cost_price or 0)
+            pv = float(item.unit_price or p.price or 0)
+            qty = float(item.quantity or 0)
+            if pid not in pharma_by_product:
+                pharma_by_product[pid] = {
+                    'name': p.name, 'reference': p.reference,
+                    'pa': pa, 'pv': pv, 'qty': 0,
+                    'revenue': 0, 'cost': 0, 'margin': 0,
+                }
+            pharma_by_product[pid]['qty'] += qty
+            pharma_by_product[pid]['revenue'] += pv * qty
+            pharma_by_product[pid]['cost'] += pa * qty
+            pharma_by_product[pid]['margin'] += (pv - pa) * qty
+
+        pharma_list = []
+        for d in pharma_by_product.values():
+            pv, pa = d['pv'], d['pa']
+            pharma_list.append({
+                **d,
+                'taux_marge': pct_marge(pv, pa),
+                'taux_marque': pct_marque(pv, pa),
+            })
+        pharma_list.sort(key=lambda x: x['margin'], reverse=True)
+
+        pharma_total_revenue = sum(d['revenue'] for d in pharma_list)
+        pharma_total_cost    = sum(d['cost']    for d in pharma_list)
+        pharma_total_margin  = sum(d['margin']  for d in pharma_list)
+        pharma_summary = {
+            'revenue': pharma_total_revenue,
+            'cost':    pharma_total_cost,
+            'margin':  pharma_total_margin,
+            'taux_marge':  pct_marge(pharma_total_revenue / max(len(pharma_list),1), pharma_total_cost / max(len(pharma_list),1)),
+            'taux_marque': pct_marque(pharma_total_revenue / max(len(pharma_list),1), pharma_total_cost / max(len(pharma_list),1)),
+        }
+
+        # ── B. EXAMENS DE LABORATOIRE ────────────────────────────────────────
+        lab_items = LabOrderItem.objects.filter(
+            lab_order__organization=org,
+            lab_order__order_date__gte=start_date,
+            lab_order__order_date__lte=end_date,
+        ).exclude(lab_order__status='cancelled').select_related('lab_test')
+
+        lab_by_test = {}
+        for item in lab_items:
+            t = item.lab_test
+            if not t:
+                continue
+            tid = str(t.id)
+            pv  = float(item.panel_price or item.price or t.price or 0)
+            pa  = float(t.operating_cost or 0)
+            qty = 1
+            if tid not in lab_by_test:
+                lab_by_test[tid] = {
+                    'name': t.name, 'test_code': t.test_code,
+                    'pa': pa, 'pv': pv, 'qty': 0,
+                    'revenue': 0, 'cost': 0, 'margin': 0,
+                    'has_cost': pa > 0,
+                }
+            lab_by_test[tid]['qty'] += qty
+            lab_by_test[tid]['revenue'] += pv
+            lab_by_test[tid]['cost']    += pa
+            lab_by_test[tid]['margin']  += (pv - pa)
+
+        lab_list = []
+        for d in lab_by_test.values():
+            pv, pa = d['pv'], d['pa']
+            lab_list.append({
+                **d,
+                'taux_marge':  pct_marge(pv, pa) if d['has_cost'] else None,
+                'taux_marque': pct_marque(pv, pa) if d['has_cost'] else None,
+            })
+        lab_list.sort(key=lambda x: x['revenue'], reverse=True)
+
+        lab_total_revenue = sum(d['revenue'] for d in lab_list)
+        lab_total_cost    = sum(d['cost']    for d in lab_list)
+        lab_total_margin  = sum(d['margin']  for d in lab_list)
+        lab_has_costs = any(d['has_cost'] for d in lab_list)
+        lab_summary = {
+            'revenue': lab_total_revenue,
+            'cost':    lab_total_cost,
+            'margin':  lab_total_margin,
+            'has_costs': lab_has_costs,
+            'taux_marge':  pct_marge(lab_total_revenue, lab_total_cost) if lab_has_costs else None,
+            'taux_marque': pct_marque(lab_total_revenue, lab_total_cost) if lab_has_costs else None,
+        }
+
+        # ── C. SERVICES / SOINS / CONSULTATIONS ─────────────────────────────
+        service_items = InvoiceItem.objects.filter(
+            invoice__organization=org,
+            invoice__status__in=['paid', 'sent'],
+            invoice__created_at__date__gte=start_date,
+            invoice__created_at__date__lte=end_date,
+            product__product_type='service',
+        ).select_related('product')
+
+        svc_by_product = {}
+        for item in service_items:
+            p = item.product
+            if not p:
+                continue
+            pid = str(p.id)
+            pv  = float(item.unit_price or p.price or 0)
+            pa  = float(p.operating_cost or 0)
+            qty = float(item.quantity or 0)
+            if pid not in svc_by_product:
+                svc_by_product[pid] = {
+                    'name': p.name, 'reference': p.reference,
+                    'pa': pa, 'pv': pv, 'qty': 0,
+                    'revenue': 0, 'cost': 0, 'margin': 0,
+                    'has_cost': pa > 0,
+                }
+            svc_by_product[pid]['qty'] += qty
+            svc_by_product[pid]['revenue'] += pv * qty
+            svc_by_product[pid]['cost']    += pa * qty
+            svc_by_product[pid]['margin']  += (pv - pa) * qty
+
+        svc_list = []
+        for d in svc_by_product.values():
+            pv, pa = d['pv'], d['pa']
+            svc_list.append({
+                **d,
+                'taux_marge':  pct_marge(pv, pa) if d['has_cost'] else None,
+                'taux_marque': pct_marque(pv, pa) if d['has_cost'] else None,
+            })
+        svc_list.sort(key=lambda x: x['revenue'], reverse=True)
+
+        svc_total_revenue = sum(d['revenue'] for d in svc_list)
+        svc_total_cost    = sum(d['cost']    for d in svc_list)
+        svc_total_margin  = sum(d['margin']  for d in svc_list)
+        svc_has_costs = any(d['has_cost'] for d in svc_list)
+        svc_summary = {
+            'revenue': svc_total_revenue,
+            'cost':    svc_total_cost,
+            'margin':  svc_total_margin,
+            'has_costs': svc_has_costs,
+            'taux_marge':  pct_marge(svc_total_revenue, svc_total_cost) if svc_has_costs else None,
+            'taux_marque': pct_marque(svc_total_revenue, svc_total_cost) if svc_has_costs else None,
+        }
+
+        # ── GLOBAL ───────────────────────────────────────────────────────────
+        total_revenue = pharma_total_revenue + lab_total_revenue + svc_total_revenue
+        total_cost    = pharma_total_cost    + lab_total_cost    + svc_total_cost
+        total_margin  = pharma_total_margin  + lab_total_margin  + svc_total_margin
+
+        return Response({
+            'period': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
+            'global': {
+                'revenue': total_revenue,
+                'cost':    total_cost,
+                'margin':  total_margin,
+                'taux_marge':  pct_marge(total_revenue, total_cost),
+                'taux_marque': pct_marque(total_revenue, total_cost),
+            },
+            'pharmacy': {
+                'summary': pharma_summary,
+                'products': pharma_list[:50],
+            },
+            'laboratory': {
+                'summary': lab_summary,
+                'tests': lab_list[:50],
+                'note': None if lab_has_costs else "Renseignez le coût de fonctionnement sur chaque examen pour activer les marges labo.",
+            },
+            'services': {
+                'summary': svc_summary,
+                'products': svc_list[:50],
+                'note': None if svc_has_costs else "Renseignez le coût de fonctionnement sur chaque service pour activer les marges.",
+            },
+        })
