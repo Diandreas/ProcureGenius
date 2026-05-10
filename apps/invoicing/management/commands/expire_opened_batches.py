@@ -43,15 +43,17 @@ class Command(BaseCommand):
         for batch in expired_batches:
             with transaction.atomic():
                 qty = batch.quantity_remaining
+                stock_before = batch.product.stock_quantity or 0
 
                 # 1. Créer le mouvement de perte
                 StockMovement.objects.create(
                     product=batch.product,
-                    organization=batch.organization,
                     batch=batch,
                     movement_type='loss',
                     loss_reason='expired',
-                    quantity=qty,
+                    quantity=-qty,
+                    quantity_before=stock_before,
+                    quantity_after=max(0, stock_before - qty),
                     notes=(
                         f"Lot {batch.batch_number} périmé automatiquement — "
                         f"ouvert le {batch.opened_at.strftime('%d/%m/%Y') if batch.opened_at else '?'}, "
