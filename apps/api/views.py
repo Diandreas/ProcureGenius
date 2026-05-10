@@ -1412,25 +1412,30 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
         base_qs = Product.objects.filter(organization=org, is_active=True, product_type='physical')
 
-        # Annoter chaque produit avec son stock effectif (lots inclus)
+        # Annoter chaque produit avec son stock effectif (lots = source de vérité)
         annotated = base_qs.annotate(
-            _batch_stock=Coalesce(
+            _effective_stock=Coalesce(
                 Sum(
                     'batches__quantity_remaining',
                     filter=Q(batches__status__in=active_batch_statuses)
                 ),
+                F('stock_quantity'),
                 Value(0)
-            ),
-            _effective_stock=Greatest(F('stock_quantity'), F('_batch_stock'))
+            )
         )
 
         total_physical = base_qs.count()
         out_of_stock = annotated.filter(_effective_stock=0).count()
         low_stock = annotated.filter(
             _effective_stock__gt=0,
-            _effective_stock__lte=F('low_stock_threshold')
+            _effective_stock__lte=F('low_stock_threshold'),
+            low_stock_threshold__gt=0
         ).count()
-        in_stock = annotated.filter(_effective_stock__gt=F('low_stock_threshold')).count()
+        # in_stock = tout ce qui a du stock et n'est pas en stock bas
+        in_stock = annotated.filter(_effective_stock__gt=0).exclude(
+            _effective_stock__lte=F('low_stock_threshold'),
+            low_stock_threshold__gt=0
+        ).count()
         total_services = Product.objects.filter(
             organization=org, is_active=True, product_type='service'
         ).count()

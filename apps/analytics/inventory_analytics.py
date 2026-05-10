@@ -28,8 +28,11 @@ def _batch_stock_subquery():
 
 
 def _has_batches_subquery():
-    """Subquery: le produit a-t-il au moins un lot (quel que soit le statut) ?"""
-    return ProductBatch.objects.filter(product=OuterRef('pk')).values('pk')[:1]
+    """Subquery: le produit a-t-il au moins un lot actif (available/opened) ?"""
+    return ProductBatch.objects.filter(
+        product=OuterRef('pk'),
+        status__in=['available', 'opened']
+    ).values('pk')[:1]
 
 
 def annotate_effective_stock(queryset):
