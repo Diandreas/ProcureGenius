@@ -66,7 +66,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
 
     const [formData, setFormData] = useState({
         test_code: '', name: '', short_name: '', category: '', description: '',
-        price: '', discount: '', sample_type: 'blood', container_type: 'serum',
+        price: '', discount: '', operating_cost: '', sample_type: 'blood', container_type: 'serum',
         sample_volume: '', normal_range_general: '', normal_range_male: '',
         normal_range_female: '', normal_range_child: '', unit_of_measurement: '',
         base_unit: '', conversion_factor: 1.0,
@@ -91,7 +91,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                 setFormData({
                     test_code: test.test_code || '', name: test.name || '', short_name: test.short_name || '',
                     category: test.category || '', description: test.description || '',
-                    price: test.price || '', discount: test.discount || '',
+                    price: test.price || '', discount: test.discount || '', operating_cost: test.operating_cost || '',
                     sample_type: test.sample_type || 'blood', container_type: test.container_type || 'serum',
                     sample_volume: test.sample_volume || '', normal_range_general: test.normal_range_general || '',
                     normal_range_male: test.normal_range_male || '', normal_range_female: test.normal_range_female || '',
@@ -133,7 +133,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                 autoGenerateTestCode();
                 setFormData(prev => ({
                     ...prev, name: '', short_name: '', category: '', description: '',
-                    price: '', discount: '', sample_type: 'blood', container_type: 'serum',
+                    price: '', discount: '', operating_cost: '', sample_type: 'blood', container_type: 'serum',
                     sample_volume: '', normal_range_general: '', normal_range_male: '',
                     normal_range_female: '', normal_range_child: '', unit_of_measurement: '',
                     base_unit: '', conversion_factor: 1.0,
@@ -250,6 +250,7 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
             const payload = { ...formData };
             payload.price = (payload.price === '' || payload.price === null) ? 0 : parseFloat(payload.price);
             payload.discount = (payload.discount === '' || payload.discount === null) ? 0 : parseFloat(payload.discount);
+            payload.operating_cost = (payload.operating_cost === '' || payload.operating_cost === null) ? null : parseFloat(payload.operating_cost);
             payload.fasting_hours = (payload.fasting_hours === '' || payload.fasting_hours === null) ? null : parseInt(payload.fasting_hours);
             payload.estimated_turnaround_hours = (payload.estimated_turnaround_hours === '' || payload.estimated_turnaround_hours === null) ? 24 : parseInt(payload.estimated_turnaround_hours);
             if (!payload.category || payload.category === '') payload.category = null;
@@ -382,6 +383,19 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                                 </Grid>
                                 <Grid item xs={12} sm={2}>
                                     <TextField fullWidth label="Reduction (XAF)" name="discount" value={formData.discount} onChange={handleChange} size="small" type="number" />
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                    <TextField
+                                        fullWidth
+                                        label="Coût de revient (XAF)"
+                                        name="operating_cost"
+                                        value={formData.operating_cost}
+                                        onChange={handleChange}
+                                        size="small"
+                                        type="number"
+                                        helperText="Réactifs, charges, amortissement…"
+                                        InputProps={{ inputProps: { min: 0, step: 1 } }}
+                                    />
                                 </Grid>
                             </>
                         )}
