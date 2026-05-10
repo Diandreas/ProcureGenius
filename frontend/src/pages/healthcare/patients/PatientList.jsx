@@ -65,39 +65,56 @@ const PatientList = () => {
         female: 0,
     });
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [page, setPage] = useState(1);
     const [quickFilter, setQuickFilter] = useState('');
 
+    // Debounce 500ms — stats ne se rechargent qu'à l'init (search vide)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search.length >= 2 ? search : search.length === 0 ? '' : debouncedSearch);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search]);
+
     useEffect(() => {
         fetchPatients();
-    }, [page, search]);
+    }, [page, debouncedSearch, quickFilter]);
 
     const fetchPatients = async () => {
         setLoading(true);
         try {
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+            const params = { page, page_size: 50 };
+            if (debouncedSearch) params.search = debouncedSearch;
+            if (quickFilter === 'male') params.gender = 'M';
+            if (quickFilter === 'female') params.gender = 'F';
+            if (quickFilter === 'new') {
+                const d = new Date();
+                d.setDate(d.getDate() - 7);
+                params.created_after = d.toISOString().slice(0, 10);
+            }
 
-            const [listResponse, totalResponse, newResponse, maleResponse, femaleResponse] = await Promise.all([
-                patientAPI.getPatients({
-                    page,
-                    search,
-                    page_size: 50, // Increased for grid view
-                }),
-                patientAPI.getPatients({ page: 1, page_size: 1 }),
-                patientAPI.getPatients({ page: 1, page_size: 1, created_after: sevenDaysAgoStr }),
-                patientAPI.getPatients({ page: 1, page_size: 1, gender: 'M' }),
-                patientAPI.getPatients({ page: 1, page_size: 1, gender: 'F' }),
-            ]);
-
+            const listResponse = await patientAPI.getPatients(params);
             setPatients(listResponse.results || []);
-            setStats({
-                total: totalResponse.count || 0,
-                newLast7Days: newResponse.count || 0,
-                male: maleResponse.count || 0,
-                female: femaleResponse.count || 0,
-            });
+
+            // Stats globales uniquement au premier chargement (sans filtre)
+            if (!debouncedSearch && !quickFilter && page === 1) {
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+                const [totalResponse, newResponse, maleResponse, femaleResponse] = await Promise.all([
+                    patientAPI.getPatients({ page: 1, page_size: 1 }),
+                    patientAPI.getPatients({ page: 1, page_size: 1, created_after: sevenDaysAgoStr }),
+                    patientAPI.getPatients({ page: 1, page_size: 1, gender: 'M' }),
+                    patientAPI.getPatients({ page: 1, page_size: 1, gender: 'F' }),
+                ]);
+                setStats({
+                    total: totalResponse.count || 0,
+                    newLast7Days: newResponse.count || 0,
+                    male: maleResponse.count || 0,
+                    female: femaleResponse.count || 0,
+                });
+            }
         } catch (error) {
             console.error('Error fetching patients:', error);
             enqueueSnackbar(t('common.error'), { variant: 'error' });
@@ -113,6 +130,7 @@ const PatientList = () => {
 
     const handleQuickFilterClick = (filterValue) => {
         setQuickFilter(quickFilter === filterValue ? '' : filterValue);
+        setPage(1);
     };
 
     // === Merge patients dialog ===
@@ -155,28 +173,8 @@ const PatientList = () => {
         }
     };
 
-    // Filter Logic
-    const filteredPatients = patients.filter(patient => {
-        if (!quickFilter) return true;
-
-        switch (quickFilter) {
-            case 'active':
-                // Assuming active if updated recently or explicitly active field if available
-                // For now, let's assume all are active unless marked otherwise
-                return true;
-            case 'new':
-                if (!patient.created_at) return false;
-                const weekAgo = new Date();
-                weekAgo.setDate(weekAgo.getDate() - 7);
-                return new Date(patient.created_at) > weekAgo;
-            case 'male':
-                return patient.gender === 'M';
-            case 'female':
-                return patient.gender === 'F';
-            default:
-                return true;
-        }
-    });
+    // Filtrage géré côté API — patients est déjà filtré
+    const filteredPatients = patients;
 
     // Stats Calculation (global backend counts)
     const totalPatients = stats.total;
