@@ -395,16 +395,28 @@ export default function DocumentManager() {
             clearInterval(poll);
             setGenerating(null);
             closeSnackbar(snackKey);
-            setJobs(j => ({ ...j, [docType]: { jobId: job_id, status: 'done', downloadUrl: result.download_url } }));
             const config = DOC_TYPES.find(d => d.type === docType);
-            // Auto-download
-            const a = document.createElement('a');
-            a.href = result.download_url;
-            a.download = `${config?.label || docType}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            enqueueSnackbar('PDF prêt — téléchargement démarré !', { variant: 'success' });
+            // Fetch authentifie -> Blob -> URL temporaire (sinon 401 sur <a href>)
+            try {
+              const token = localStorage.getItem('authToken');
+              const resp = await fetch(result.download_url, {
+                headers: token ? { Authorization: `Token ${token}` } : {},
+              });
+              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+              const blob = await resp.blob();
+              const blobUrl = URL.createObjectURL(blob);
+              setJobs(j => ({ ...j, [docType]: { jobId: job_id, status: 'done', downloadUrl: blobUrl } }));
+              const a = document.createElement('a');
+              a.href = blobUrl;
+              a.download = `${config?.label || docType}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+              enqueueSnackbar('PDF prêt — téléchargement démarré !', { variant: 'success' });
+            } catch (e) {
+              enqueueSnackbar(`Téléchargement échoué : ${e.message}`, { variant: 'error' });
+            }
           } else if (result.status === 'error') {
             clearInterval(poll);
             setGenerating(null);
