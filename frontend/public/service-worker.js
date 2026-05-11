@@ -1,6 +1,6 @@
 // Service Worker pour PWA
-const CACHE_NAME = 'csj-app-v2';
-const API_CACHE_NAME = 'csj-app-api-v2';
+const CACHE_NAME = 'csj-app-v3';
+const API_CACHE_NAME = 'csj-app-api-v3';
 const DEBUG = false; // Mettre à true pour activer les logs de debug
 
 // URLs essentielles à mettre en cache lors de l'installation
@@ -76,6 +76,17 @@ self.addEventListener('fetch', (event) => {
       url.pathname.includes('/@vite/') ||
       url.pathname.includes('/__vite_ping') ||
       url.searchParams.has('token')) {
+    return;
+  }
+
+  // Ignorer les blobs (download.json bug si SW intercepte)
+  if (url.protocol === 'blob:') {
+    return;
+  }
+
+  // Ignorer les téléchargements binaires (PDF, exports) — pas de cache ni d'intercept
+  if (url.pathname.match(/\/(download|pdf|export|receipt|print_pdf|tube-labels|bench-sheet|discharge-pdf)\/?$/i) ||
+      url.pathname.match(/\/jobs\/[^/]+\/download\/?$/)) {
     return;
   }
 
