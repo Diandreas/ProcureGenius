@@ -183,7 +183,7 @@ const LabOrderForm = () => {
         const panelsTotal = formData.panels.reduce((sum, panel) => {
             return sum + (parseFloat(panel.net_price || panel.price) || 0);
         }, 0);
-        return testsTotal + panelsTotal + 500; // 500 XAF kit
+        return testsTotal + panelsTotal;
     };
 
     const handleSubmit = async () => {
@@ -402,10 +402,6 @@ const LabOrderForm = () => {
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                 <Typography>Bilans sélectionnés:</Typography>
                                 <Typography fontWeight="bold">{formData.panels.length}</Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                <Typography variant="body2">Kit de prélèvement:</Typography>
-                                <Typography variant="body2" fontWeight="bold">500 XAF</Typography>
                             </Box>
                             <Divider sx={{ my: 1 }} />
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>

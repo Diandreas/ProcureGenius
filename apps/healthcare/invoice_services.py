@@ -113,19 +113,11 @@ class LabOrderInvoiceService:
             total_amount=0
         )
 
-        # 1. Ajouter le kit de prélèvement (Toujours ajouté pour le labo)
-        if kit_product:
-            InvoiceItem.objects.create(
-                invoice=invoice,
-                product=kit_product,
-                description=kit_product.name,
-                quantity=1,
-                unit_price=kit_product.price,
-                total_price=kit_product.price,
-                notes="Ajouté automatiquement pour toute commande labo"
-            )
+        # Kit de prélèvement : NE PLUS l'ajouter automatiquement.
+        # Les examens ayant des consommables liés déduisent leurs propres réactifs
+        # via TestConsumable, donc facturer un kit en double est redondant.
 
-        # 2. Ajouter les tests de laboratoire avec réductions
+        # Ajouter les tests de laboratoire avec réductions
         # Bilans (panels) : une seule ligne forfaitaire par bilan
         billed_panels = set()
 
