@@ -37,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
+import api from '../../../services/api';
 import QuickClientCreateModal from './components/QuickClientCreateModal';
 import { buildLabOrderGroup, enqueueGroup } from '../../../db/offlineDb';
 import { isOfflineError } from '../../../services/syncEngine';
@@ -68,6 +69,11 @@ const LabOrderForm = () => {
 
     const [subcontractors, setSubcontractors] = useState([]);
     const [subcontractorPrices, setSubcontractorPrices] = useState({}); // { test_id: price }
+
+    // Coupon state
+    const [couponCode, setCouponCode] = useState('');
+    const [couponStatus, setCouponStatus] = useState(null); // null | 'loading' | 'valid' | 'invalid'
+    const [couponInfo, setCouponInfo] = useState(null);
 
     const [formData, setFormData] = useState({
         patient: null,
@@ -174,7 +180,7 @@ const LabOrderForm = () => {
         return subPrice !== undefined ? parseFloat(subPrice) : (parseFloat(test.price) || 0);
     };
 
-    const calculateTotal = () => {
+    const calculateSubtotal = () => {
         const testsTotal = formData.tests.reduce((sum, test) => {
             const price = getEffectivePrice(test);
             const discount = parseFloat(test.discount) || 0;
@@ -184,6 +190,48 @@ const LabOrderForm = () => {
             return sum + (parseFloat(panel.net_price || panel.price) || 0);
         }, 0);
         return testsTotal + panelsTotal;
+    };
+
+    const couponDiscount = () => {
+        if (couponStatus === 'valid' && couponInfo?.discount_amount) {
+            return Math.min(parseFloat(couponInfo.discount_amount) || 0, calculateSubtotal());
+        }
+        return 0;
+    };
+
+    const calculateTotal = () => {
+        return Math.max(0, calculateSubtotal() - couponDiscount());
+    };
+
+    const validateCoupon = async () => {
+        const code = couponCode.trim().toUpperCase();
+        if (!code) return;
+        setCouponStatus('loading');
+        setCouponInfo(null);
+        try {
+            const subtotal = calculateSubtotal();
+            const res = await api.post('/documents/coupons/validate/', {
+                code,
+                invoice_amount: subtotal,
+            });
+            if (res.data.valid) {
+                setCouponStatus('valid');
+                setCouponInfo(res.data);
+                enqueueSnackbar(`Coupon validé : -${res.data.discount_amount} FCFA`, { variant: 'success' });
+            } else {
+                setCouponStatus('invalid');
+                setCouponInfo({ error: res.data.error });
+            }
+        } catch (e) {
+            setCouponStatus('invalid');
+            setCouponInfo({ error: e.response?.data?.error || 'Coupon introuvable.' });
+        }
+    };
+
+    const clearCoupon = () => {
+        setCouponCode('');
+        setCouponStatus(null);
+        setCouponInfo(null);
     };
 
     const handleSubmit = async () => {
@@ -221,6 +269,26 @@ const LabOrderForm = () => {
             }
 
             const newOrder = await laboratoryAPI.createOrder(payload);
+
+            // Si un coupon valide est saisi, l'appliquer sur la facture générée
+            if (couponStatus === 'valid' && couponCode) {
+                try {
+                    const invoiceId = newOrder.lab_invoice?.id || newOrder.lab_invoice;
+                    if (invoiceId) {
+                        await api.post('/documents/coupons/apply/', {
+                            code: couponCode.trim().toUpperCase(),
+                            invoice_id: invoiceId,
+                        });
+                        enqueueSnackbar(`Coupon ${couponCode} appliqué sur la facture`, { variant: 'success' });
+                    } else {
+                        enqueueSnackbar('Ordre créé mais facture introuvable pour appliquer le coupon', { variant: 'warning' });
+                    }
+                } catch (couponErr) {
+                    const msg = couponErr.response?.data?.error || 'Erreur application coupon';
+                    enqueueSnackbar(`Ordre créé, mais coupon non appliqué : ${msg}`, { variant: 'warning' });
+                }
+            }
+
             enqueueSnackbar('Ordre de laboratoire créé avec succès', { variant: 'success' });
             navigate(`/healthcare/laboratory/${newOrder.id}/dispatch`);
 
@@ -403,6 +471,73 @@ const LabOrderForm = () => {
                                 <Typography>Bilans sélectionnés:</Typography>
                                 <Typography fontWeight="bold">{formData.panels.length}</Typography>
                             </Box>
+
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, mt: 1 }}>
+                                <Typography variant="body2">Sous-total:</Typography>
+                                <Typography variant="body2" fontWeight="bold">
+                                    {new Intl.NumberFormat('fr-FR').format(calculateSubtotal())} XAF
+                                </Typography>
+                            </Box>
+
+                            {/* Coupon de réduction */}
+                            <Box sx={{ mt: 1, mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 600 }}>
+                                    Coupon de réduction
+                                </Typography>
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                    <TextField
+                                        size="small"
+                                        placeholder="Code coupon"
+                                        value={couponCode}
+                                        onChange={(e) => {
+                                            setCouponCode(e.target.value);
+                                            if (couponStatus) {
+                                                setCouponStatus(null);
+                                                setCouponInfo(null);
+                                            }
+                                        }}
+                                        disabled={couponStatus === 'valid' || couponStatus === 'loading'}
+                                        sx={{ flex: 1 }}
+                                        error={couponStatus === 'invalid'}
+                                        helperText={
+                                            couponStatus === 'invalid'
+                                                ? (couponInfo?.error || 'Coupon invalide')
+                                                : couponStatus === 'valid'
+                                                ? `${couponInfo?.label || ''} — ${new Intl.NumberFormat('fr-FR').format(couponInfo?.discount_amount || 0)} FCFA`
+                                                : ''
+                                        }
+                                    />
+                                    {couponStatus !== 'valid' ? (
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={validateCoupon}
+                                            disabled={!couponCode.trim() || couponStatus === 'loading'}
+                                        >
+                                            {couponStatus === 'loading' ? '...' : 'Valider'}
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            size="small"
+                                            onClick={clearCoupon}
+                                        >
+                                            Retirer
+                                        </Button>
+                                    )}
+                                </Stack>
+                            </Box>
+
+                            {couponDiscount() > 0 && (
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography variant="body2" color="error.main">Remise coupon:</Typography>
+                                    <Typography variant="body2" color="error.main" fontWeight="bold">
+                                        −{new Intl.NumberFormat('fr-FR').format(couponDiscount())} XAF
+                                    </Typography>
+                                </Box>
+                            )}
+
                             <Divider sx={{ my: 1 }} />
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                                 <Typography variant="h6">Total:</Typography>
