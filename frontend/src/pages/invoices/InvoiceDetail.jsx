@@ -769,6 +769,16 @@ Cordialement`
                     </Typography>
                   </Box>
                 )}
+                {invoice.global_discount_amount > 0 && (
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+                      {invoice.global_discount_label || 'Remise'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#FFE082', fontWeight: 700 }}>
+                      −{formatCurrency(invoice.global_discount_amount)}
+                    </Typography>
+                  </Box>
+                )}
                 <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 0.5 }} />
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'white', fontWeight: 700 }}>
@@ -1031,8 +1041,12 @@ Cordialement`
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   {t('invoices:labels.financialSummary')}
                 </Typography>
+                {(() => {
+                  const cells = 1 + (invoice.tax_amount > 0 ? 1 : 0) + (invoice.global_discount_amount > 0 ? 1 : 0) + 1;
+                  const sm = Math.floor(12 / cells);
+                  return (
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={invoice.tax_amount > 0 ? 4 : 6}>
+                  <Grid item xs={12} sm={sm}>
                     <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
                       <Typography variant="h4" color="primary" sx={{ fontWeight: 600 }}>
                         {formatCurrency(invoice.subtotal || 0)}
@@ -1043,7 +1057,7 @@ Cordialement`
                     </Box>
                   </Grid>
                   {invoice.tax_amount > 0 && (
-                    <Grid item xs={12} sm={4}>
+                    <Grid item xs={12} sm={sm}>
                       <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.50', borderRadius: 1 }}>
                         <Typography variant="h4" color="warning.main" sx={{ fontWeight: 600 }}>
                           {formatCurrency(invoice.tax_amount || 0)}
@@ -1054,7 +1068,19 @@ Cordialement`
                       </Box>
                     </Grid>
                   )}
-                  <Grid item xs={12} sm={invoice.tax_amount > 0 ? 4 : 6}>
+                  {invoice.global_discount_amount > 0 && (
+                    <Grid item xs={12} sm={sm}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'error.50', borderRadius: 1, border: '1px dashed', borderColor: 'error.light' }}>
+                        <Typography variant="h4" color="error.main" sx={{ fontWeight: 600 }}>
+                          −{formatCurrency(invoice.global_discount_amount)}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          {invoice.global_discount_label || 'Remise / Coupon'}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  )}
+                  <Grid item xs={12} sm={sm}>
                     <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
                       <Typography variant="h4" color="success.main" sx={{ fontWeight: 600 }}>
                         {formatCurrency(invoice.total_amount || 0)}
@@ -1065,6 +1091,8 @@ Cordialement`
                     </Box>
                   </Grid>
                 </Grid>
+                  );
+                })()}
               </CardContent>
             </Card>
           </Grid>

@@ -213,6 +213,21 @@ function InvoiceForm() {
         global_discount_label: invoice.global_discount_label || ''
       });
       setItems(invoice.items || []);
+
+      // Détecter coupon déjà appliqué via le label "Coupon XXXX — ..."
+      if (invoice.global_discount_label && invoice.global_discount_label.startsWith('Coupon ')) {
+        const match = invoice.global_discount_label.match(/^Coupon\s+(\S+)/);
+        if (match) {
+          setCouponCode(match[1]);
+          setCouponStatus('valid');
+          setCouponInfo({
+            discount_amount: parseFloat(invoice.global_discount_amount) || 0,
+            label: invoice.global_discount_label.replace(/^Coupon\s+\S+\s*—\s*/, ''),
+            discount_type: 'fixed',
+            discount_value: parseFloat(invoice.global_discount_value) || 0,
+          });
+        }
+      }
     } catch (error) {
       enqueueSnackbar(t('invoices:messages.loadInvoiceFormError'), { variant: 'error' });
       navigate('/invoices');
