@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse, FileResponse
 from django.utils import timezone
 from django.conf import settings
+from django.core.cache import cache
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -19,8 +20,33 @@ from .serializers import OrganizationDocumentSerializer, HealthPackageSerializer
 from apps.healthcare.pdf_helpers import HealthcarePDFMixin
 from apps.laboratory.models import LabTestCategory, LabTest
 
-# In-memory job store: {job_id: {status, file_path, error, created_at}}
-_PDF_JOBS = {}
+
+# Job store partagé entre workers gunicorn via le cache Django.
+# Clé = pdfjob:<uuid>, TTL = 1h.
+class _PDF_JOBS_PROXY:
+    @staticmethod
+    def _k(job_id):
+        return f'pdfjob:{job_id}'
+
+    def __setitem__(self, job_id, value):
+        cache.set(self._k(job_id), value, timeout=3600)
+
+    def __getitem__(self, job_id):
+        v = cache.get(self._k(job_id))
+        if v is None:
+            raise KeyError(job_id)
+        return v
+
+    def get(self, job_id, default=None):
+        return cache.get(self._k(job_id), default)
+
+    def update(self, job_id, patch):
+        v = cache.get(self._k(job_id)) or {}
+        v.update(patch)
+        cache.set(self._k(job_id), v, timeout=3600)
+
+
+_PDF_JOBS = _PDF_JOBS_PROXY()
 
 
 def _static_image_b64(relative_path):
@@ -269,13 +295,13 @@ def _run_pdf_job(job_id, doc_type, organization_id):
     from django.template.loader import render_to_string
     from apps.accounts.models import Organization
 
-    _PDF_JOBS[job_id]['status'] = 'running'
+    _PDF_JOBS.update(job_id, {'status': 'running'})
     try:
         organization = Organization.objects.get(id=organization_id)
         context, template_name = _build_pdf_context(doc_type, organization)
 
         if not template_name:
-            _PDF_JOBS[job_id].update({'status': 'error', 'error': 'Type non reconnu'})
+            _PDF_JOBS.update(job_id, {'status': 'error', 'error': 'Type non reconnu'})
             return
 
         html_string = render_to_string(template_name, context)
@@ -287,13 +313,13 @@ def _run_pdf_job(job_id, doc_type, organization_id):
         file_path = os.path.join(out_dir, f'{job_id}.pdf')
         HTML(string=html_string, base_url=settings.BASE_DIR).write_pdf(file_path)
 
-        _PDF_JOBS[job_id].update({
+        _PDF_JOBS.update(job_id, {
             'status': 'done',
             'file_path': file_path,
             'filename': f"{doc_type}_{organization.name}.pdf",
         })
     except Exception as e:
-        _PDF_JOBS[job_id].update({'status': 'error', 'error': str(e)})
+        _PDF_JOBS.update(job_id, {'status': 'error', 'error': str(e)})
 
 
 class DocumentRenderAsyncView(APIView):
