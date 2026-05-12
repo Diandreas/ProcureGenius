@@ -2573,7 +2573,32 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
         return queryset
 
-    
+    def perform_destroy(self, instance):
+        """Suppression physique d'une facture (admin/manager uniquement).
+
+        Détache les LabOrder liés (FK PROTECT) puis supprime, en posant le flag
+        _allow_deletion pour contourner le signal de protection comptable.
+        """
+        from rest_framework.exceptions import PermissionDenied as DRFPermissionDenied
+        user_role = getattr(self.request.user, 'role', None)
+        if not self.request.user.is_superuser and user_role not in ('admin', 'manager', 'owner'):
+            raise DRFPermissionDenied("Seuls les administrateurs et managers peuvent supprimer une facture.")
+
+        # Détacher les LabOrder liés (on_delete=PROTECT)
+        try:
+            from apps.laboratory.models import LabOrder
+            LabOrder.objects.filter(lab_invoice=instance).update(lab_invoice=None)
+        except Exception:
+            pass
+        # Détacher les coupons appliqués (M2M)
+        try:
+            instance.applied_coupons.clear()
+        except Exception:
+            pass
+
+        instance._allow_deletion = True
+        instance.delete()
+
     @action(detail=True, methods=['post'])
     def add_item(self, request, pk=None):
         """Ajouter un item à la facture"""
