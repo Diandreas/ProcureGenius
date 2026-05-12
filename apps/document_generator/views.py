@@ -501,18 +501,23 @@ class CouponApplyView(APIView):
         if invoice.status == 'cancelled':
             return Response({'detail': 'Impossible d\'appliquer un coupon sur une facture annulée.'}, status=400)
 
-        try:
-            discount_amount = coupon.apply_to_invoice(invoice, user=request.user)
-        except ValueError as e:
-            return Response({'detail': str(e)}, status=400)
+        # Cas idempotent : coupon déjà lié à cette facture → ré-appliquer sans incrémenter uses_count
+        already_applied = coupon.applied_invoices.filter(pk=invoice.pk).exists()
+        if already_applied:
+            discount_amount = coupon.calculate_discount(invoice.subtotal)
+        else:
+            try:
+                discount_amount = coupon.apply_to_invoice(invoice, user=request.user)
+            except ValueError as e:
+                return Response({'detail': str(e)}, status=400)
 
         # Appliquer la remise sur la facture
-        invoice.global_discount_type = 'fixed'
-        invoice.global_discount_value = discount_amount
+        invoice.global_discount_type = coupon.discount_type
+        invoice.global_discount_value = coupon.discount_value
         invoice.global_discount_label = f"Coupon {coupon.code}" + (f" — {coupon.label}" if coupon.label else "")
         invoice.save(update_fields=['global_discount_type', 'global_discount_value', 'global_discount_label', 'updated_at'])
 
-        # Recalculer les totaux
+        # Recalculer les totaux (global_discount_amount + total_amount)
         if hasattr(invoice, 'recalculate_totals'):
             invoice.recalculate_totals()
 
