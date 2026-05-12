@@ -498,8 +498,8 @@ class CouponApplyView(APIView):
         except Invoice.DoesNotExist:
             return Response({'detail': 'Facture introuvable.'}, status=404)
 
-        if invoice.status not in ['draft', 'sent']:
-            return Response({'detail': 'Impossible d\'appliquer un coupon sur une facture payée ou annulée.'}, status=400)
+        if invoice.status == 'cancelled':
+            return Response({'detail': 'Impossible d\'appliquer un coupon sur une facture annulée.'}, status=400)
 
         try:
             discount_amount = coupon.apply_to_invoice(invoice, user=request.user)
