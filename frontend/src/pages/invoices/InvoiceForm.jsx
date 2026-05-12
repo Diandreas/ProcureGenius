@@ -267,40 +267,51 @@ function InvoiceForm() {
     return isNaN(total) ? 0 : Math.max(total, 0);
   };
 
-  // Coupon validation
+  // Coupon : en édition → applique direct sur la facture (persistant). En création → valide + applique localement.
   const validateCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
     setCouponStatus('loading');
     setCouponInfo(null);
     try {
-      const subtotal = calculateSubtotal();
-      const res = await api.post('/documents/coupons/validate/', {
-        code,
-        invoice_amount: subtotal,
-      });
-      const data = res.data;
-      if (data.valid) {
+      if (isEdit && id) {
+        // Mode édition : appliquer directement sur la facture en base
+        const res = await api.post('/documents/coupons/apply/', { code, invoice_id: id });
+        const data = res.data;
         setCouponStatus('valid');
-        setCouponInfo(data);
-        // Appliquer automatiquement la remise dans le formulaire
-        setFormData(prev => ({
-          ...prev,
-          global_discount_type: 'fixed',
-          global_discount_value: data.discount_amount || 0,
-          global_discount_label: `Coupon ${code}${data.label ? ' — ' + data.label : ''}`,
-        }));
+        setCouponInfo({
+          discount_amount: data.discount_amount,
+          label: (data.coupon_label || '').replace(/^Coupon\s+\S+\s*[-—]\s*/, ''),
+        });
+        // Recharger la facture pour refléter le nouveau total
+        await fetchInvoice();
+        enqueueSnackbar(`Coupon appliqué — remise de ${data.discount_amount} FCFA. Total mis à jour.`, { variant: 'success' });
       } else {
-        setCouponStatus('invalid');
-        setCouponInfo({ error: data.error });
+        // Mode création : valider et appliquer dans le formulaire (persisté à la création)
+        const subtotal = calculateSubtotal();
+        const res = await api.post('/documents/coupons/validate/', { code, invoice_amount: subtotal });
+        const data = res.data;
+        if (data.valid) {
+          setCouponStatus('valid');
+          setCouponInfo(data);
+          setFormData(prev => ({
+            ...prev,
+            global_discount_type: 'fixed',
+            global_discount_value: data.discount_amount || 0,
+            global_discount_label: `Coupon ${code}${data.label ? ' — ' + data.label : ''}`,
+          }));
+        } else {
+          setCouponStatus('invalid');
+          setCouponInfo({ error: data.error });
+        }
       }
     } catch (e) {
       setCouponStatus('invalid');
-      setCouponInfo({ error: e.response?.data?.error || 'Coupon introuvable.' });
+      setCouponInfo({ error: e.response?.data?.detail || e.response?.data?.error || 'Coupon introuvable ou invalide.' });
     }
   };
 
-  const clearCoupon = () => {
+  const clearCoupon = async () => {
     setCouponCode('');
     setCouponStatus(null);
     setCouponInfo(null);
@@ -310,6 +321,20 @@ function InvoiceForm() {
       global_discount_value: 0,
       global_discount_label: '',
     }));
+    // En édition : persister immédiatement le retrait de la remise
+    if (isEdit && id) {
+      try {
+        await invoicesAPI.update(id, {
+          global_discount_type: 'fixed',
+          global_discount_value: 0,
+          global_discount_label: '',
+        });
+        await fetchInvoice();
+        enqueueSnackbar('Remise retirée. Total mis à jour.', { variant: 'info' });
+      } catch (e) {
+        enqueueSnackbar('Erreur lors du retrait de la remise', { variant: 'error' });
+      }
+    }
   };
 
   // Quick Create handlers
