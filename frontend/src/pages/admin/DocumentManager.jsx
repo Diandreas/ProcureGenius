@@ -50,9 +50,8 @@ const DOC_TYPES = [
   },
 ];
 
-function DocumentCard({ config, onGenerate, onEdit, generating, job }) {
+function DocumentCard({ config, onGenerate, onEdit, generating }) {
   const isRunning = generating === config.type;
-  const isDone = job?.status === 'done';
 
   return (
     <Card sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -62,8 +61,7 @@ function DocumentCard({ config, onGenerate, onEdit, generating, job }) {
             <PdfIcon color={config.color} />
             <Typography variant="subtitle1" fontWeight={700}>{config.label}</Typography>
           </Box>
-          {isRunning && <Chip label="En cours…" size="small" color="warning" />}
-          {isDone && <Chip label="Prêt" size="small" color="success" />}
+          {isRunning && <Chip label="Génération…" size="small" color="warning" />}
         </Box>
         <Typography variant="body2" color="text.secondary">{config.description}</Typography>
       </CardContent>
@@ -73,27 +71,15 @@ function DocumentCard({ config, onGenerate, onEdit, generating, job }) {
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        {isDone && job.downloadUrl && (
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<DownloadIcon />}
-            href={job.downloadUrl}
-            download
-            color="success"
-          >
-            Télécharger
-          </Button>
-        )}
         <Button
           variant="contained"
           size="small"
-          startIcon={isRunning ? <CircularProgress size={14} /> : <RefreshIcon />}
+          startIcon={isRunning ? <CircularProgress size={14} /> : <DownloadIcon />}
           onClick={() => onGenerate(config.type)}
           disabled={isRunning}
           color={config.color}
         >
-          {isRunning ? 'En cours…' : isDone ? 'Regénérer' : 'Générer PDF'}
+          {isRunning ? 'Génération…' : 'Générer PDF'}
         </Button>
       </CardActions>
     </Card>
@@ -373,78 +359,31 @@ export default function DocumentManager() {
   const [tab, setTab] = useState(0);
   const [generating, setGenerating] = useState(null);
   const [editDialogType, setEditDialogType] = useState(null);
-  // {docType: {jobId, status, downloadUrl}}
-  const [jobs, setJobs] = useState({});
 
   const handleGenerate = async (docType) => {
     if (generating === docType) return;
     setGenerating(docType);
-    const snackKey = enqueueSnackbar('Génération PDF en cours… vous pouvez continuer à naviguer.', {
-      variant: 'info', persist: true,
-    });
-
+    const snackKey = enqueueSnackbar('Génération du PDF…', { variant: 'info', persist: true });
+    const config = DOC_TYPES.find(d => d.type === docType);
     try {
-      const { job_id } = await documentGeneratorAPI.startPDFJob(docType);
-      setJobs(j => ({ ...j, [docType]: { jobId: job_id, status: 'pending' } }));
-
-      // Poll every 2 seconds until done or error
-      const poll = setInterval(async () => {
-        try {
-          const result = await documentGeneratorAPI.getPDFJobStatus(job_id);
-          if (result.status === 'done') {
-            clearInterval(poll);
-            setGenerating(null);
-            closeSnackbar(snackKey);
-            const config = DOC_TYPES.find(d => d.type === docType);
-            // Fetch authentifie -> Blob -> URL temporaire (sinon 401 sur <a href>)
-            try {
-              const token = localStorage.getItem('authToken');
-              const resp = await fetch(result.download_url, {
-                headers: token ? { Authorization: `Token ${token}` } : {},
-              });
-              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-              const blob = await resp.blob();
-              const blobUrl = URL.createObjectURL(blob);
-              setJobs(j => ({ ...j, [docType]: { jobId: job_id, status: 'done', downloadUrl: blobUrl } }));
-              const a = document.createElement('a');
-              a.href = blobUrl;
-              a.download = `${config?.label || docType}.pdf`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-              enqueueSnackbar('PDF prêt — téléchargement démarré !', { variant: 'success' });
-            } catch (e) {
-              enqueueSnackbar(`Téléchargement échoué : ${e.message}`, { variant: 'error' });
-            }
-          } else if (result.status === 'error') {
-            clearInterval(poll);
-            setGenerating(null);
-            closeSnackbar(snackKey);
-            enqueueSnackbar(`Erreur PDF : ${result.error || 'Erreur inconnue'}`, { variant: 'error' });
-          }
-        } catch {
-          clearInterval(poll);
-          setGenerating(null);
-          closeSnackbar(snackKey);
-          enqueueSnackbar('Impossible de vérifier le statut du PDF.', { variant: 'error' });
-        }
-      }, 2000);
-
-      // Safety timeout after 3 minutes
-      setTimeout(() => {
-        clearInterval(poll);
-        if (generating === docType) {
-          setGenerating(null);
-          closeSnackbar(snackKey);
-          enqueueSnackbar('La génération PDF a pris trop longtemps.', { variant: 'warning' });
-        }
-      }, 180000);
-
-    } catch {
-      setGenerating(null);
+      // Génération synchrone : un seul appel, le PDF arrive directement en blob
+      const blob = await documentGeneratorAPI.generatePDF(docType);
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${config?.label || docType}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
       closeSnackbar(snackKey);
-      enqueueSnackbar('Erreur lors du lancement de la génération PDF', { variant: 'error' });
+      enqueueSnackbar('PDF téléchargé !', { variant: 'success' });
+    } catch (e) {
+      closeSnackbar(snackKey);
+      const msg = e?.response?.status === 500 ? 'Erreur de génération côté serveur' : (e?.message || 'Erreur');
+      enqueueSnackbar(`Échec génération PDF : ${msg}`, { variant: 'error' });
+    } finally {
+      setGenerating(null);
     }
   };
 
@@ -476,7 +415,6 @@ export default function DocumentManager() {
                 onGenerate={handleGenerate}
                 onEdit={(type) => setEditDialogType(type)}
                 generating={generating}
-                job={jobs[config.type]}
               />
             </Grid>
           ))}
