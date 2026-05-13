@@ -172,22 +172,45 @@ class DocumentRenderView(APIView, HealthcarePDFMixin):
 
         if doc_type == 'price_list_public':
             template_name = 'document_generator/pdf_templates/price_list.html'
-            categories = LabTestCategory.objects.filter(organization=organization, is_active=True).prefetch_related('tests')
+            categories = list(LabTestCategory.objects.filter(organization=organization, is_active=True).prefetch_related('tests'))
             context['categories'] = categories
+            # Répartir en 3 colonnes pour le PDF
+            n = len(categories)
+            col_size = (n + 2) // 3
+            context['col1'] = categories[:col_size]
+            context['col2'] = categories[col_size:col_size*2]
+            context['col3'] = categories[col_size*2:]
 
         elif doc_type == 'price_list_subcontract':
             template_name = 'document_generator/pdf_templates/price_list_subcontract.html'
-            categories = LabTestCategory.objects.filter(organization=organization, is_active=True).prefetch_related('tests')
+            categories = list(LabTestCategory.objects.filter(organization=organization, is_active=True).prefetch_related('tests'))
             context['categories'] = categories
+            n = len(categories)
+            col_size = (n + 2) // 3
+            context['col1'] = categories[:col_size]
+            context['col2'] = categories[col_size:col_size*2]
+            context['col3'] = categories[col_size*2:]
 
         elif doc_type in ('packs_catalog', 'bilans_list'):
             template_name = 'document_generator/pdf_templates/packs_catalog.html'
-            packages = HealthPackage.objects.filter(organization=organization, is_active=True).order_by('display_order')
+            packages = HealthPackage.objects.filter(organization=organization, is_active=True).order_by('display_order').prefetch_related('included_tests')
             grouped_packages = {}
             for pkg in packages:
                 cat_name = dict(HealthPackage.CATEGORY_CHOICES).get(pkg.category, pkg.category)
                 if cat_name not in grouped_packages:
                     grouped_packages[cat_name] = []
+                # pré-parser les tests pour le template
+                if pkg.included_tests_text:
+                    pkg._tests_list = [t.strip() for t in pkg.included_tests_text.splitlines() if t.strip()]
+                else:
+                    pkg._tests_list = [t.name for t in pkg.included_tests.all()]
+                # calculer le pourcentage de réduction
+                if pkg.original_price and pkg.discounted_price and pkg.original_price > 0:
+                    import math
+                    pct = math.floor((1 - float(pkg.discounted_price) / float(pkg.original_price)) * 100)
+                    pkg._discount_pct = pct if pct > 0 else 0
+                else:
+                    pkg._discount_pct = 0
                 grouped_packages[cat_name].append(pkg)
             context['grouped_packages'] = grouped_packages
             context['packages'] = packages
