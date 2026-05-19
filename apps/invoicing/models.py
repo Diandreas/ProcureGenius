@@ -717,6 +717,7 @@ class Invoice(models.Model):
     # Dates
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de modification"))
+    invoice_date = models.DateField(null=True, blank=True, verbose_name=_("Date de facturation"))
     due_date = models.DateField(null=True, blank=True, verbose_name=_("Date d'échéance"))
     
     # Montants (simplifiés)

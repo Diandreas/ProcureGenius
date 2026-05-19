@@ -113,6 +113,7 @@ function InvoiceForm() {
     tax_rate: 0,
     status: 'paid', // Default to paid
     payment_method: 'cash', // Default to cash
+    invoice_date: new Date().toISOString().split('T')[0],
     global_discount_type: 'fixed',
     global_discount_value: 0,
     global_discount_label: ''
@@ -203,8 +204,7 @@ function InvoiceForm() {
         title: invoice.title || '',
         description: invoice.description || '',
         client: invoice.client,
-        issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
-        // due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
+        invoice_date: invoice.invoice_date || (invoice.created_at ? invoice.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
         tax_rate: invoice.tax_rate !== undefined ? invoice.tax_rate : 0,
         status: invoice.status || 'paid',
         payment_method: invoice.payment_method || 'cash',
@@ -908,21 +908,33 @@ function InvoiceForm() {
                   <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
                     {t('invoices:labels.paymentMethod', 'Mode de paiement')}
                   </Typography>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
-                    <Select
-                      value={formData.payment_method}
-                      label={t('invoices:labels.paymentMethod')}
-                      onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      {PAYMENT_METHODS.map(method => (
-                        <MenuItem key={method.value} value={method.value}>
-                          {method.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <Stack spacing={1.5}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="date"
+                      label="Date de facturation"
+                      value={formData.invoice_date || ''}
+                      onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
+                      <Select
+                        value={formData.payment_method}
+                        label={t('invoices:labels.paymentMethod')}
+                        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        {PAYMENT_METHODS.map(method => (
+                          <MenuItem key={method.value} value={method.value}>
+                            {method.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Stack>
                 </CardContent>
               </Card>
             </Box>
@@ -1242,21 +1254,33 @@ function InvoiceForm() {
                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                       {t('invoices:labels.paymentMethod', 'Mode de paiement')}
                     </Typography>
-                    <FormControl fullWidth>
-                      <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
-                      <Select
-                        value={formData.payment_method}
-                        label={t('invoices:labels.paymentMethod')}
-                        onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                        sx={{ borderRadius: 2 }}
-                      >
-                        {PAYMENT_METHODS.map(method => (
-                          <MenuItem key={method.value} value={method.value}>
-                            {method.label}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                    <Stack spacing={2}>
+                      <TextField
+                        fullWidth
+                        type="date"
+                        label="Date de facturation"
+                        value={formData.invoice_date || ''}
+                        onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        helperText="Période comptable de référence (peut différer de la date de création)"
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                      <FormControl fullWidth>
+                        <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
+                        <Select
+                          value={formData.payment_method}
+                          label={t('invoices:labels.paymentMethod')}
+                          onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          {PAYMENT_METHODS.map(method => (
+                            <MenuItem key={method.value} value={method.value}>
+                              {method.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Stack>
                   </CardContent>
                 </Card>
               </Grid>

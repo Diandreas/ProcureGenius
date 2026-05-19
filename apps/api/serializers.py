@@ -620,7 +620,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'id', 'invoice_number', 'title', 'description',
             'client', 'client_name', 'client_detail',
             'status', 'currency', 'subtotal', 'tax_amount',
-            'total_amount', 'due_date', 'payment_method',
+            'total_amount', 'invoice_date', 'due_date', 'payment_method',
             'billing_address', 'payment_terms',
             'purchase_order', 'purchase_order_number',
             'created_by', 'created_by_name', 'created_by_detail',
