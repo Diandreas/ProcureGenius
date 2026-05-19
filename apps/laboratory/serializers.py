@@ -198,6 +198,7 @@ class LabTestSerializer(serializers.ModelSerializer):
             'short_name',
             'description',
             'price',
+            'operating_cost',
             'discount',
             'normal_range_male',
             'normal_range_female',

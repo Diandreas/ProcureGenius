@@ -180,7 +180,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'id', 'name', 'reference', 'description', 'barcode',
             'product_type', 'source_type', 'category', 'supplier', 'supplier_name',
             'warehouse', 'warehouse_name', 'warehouse_code', 'warehouse_location',
-            'price', 'cost_price', 'price_editable', 'margin', 'margin_percent',
+            'price', 'cost_price', 'operating_cost', 'price_editable', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'stock_status',
             'is_low_stock', 'is_out_of_stock', 'is_expired', 'days_until_expiration', 'is_active',
             'base_unit', 'sell_unit', 'conversion_factor',
