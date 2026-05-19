@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.http import HttpResponse
 from decimal import Decimal, InvalidOperation
 from .services import LabResultPDFGenerator
+from .signals import set_current_user
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
@@ -40,20 +41,34 @@ from .serializers import (
 )
 
 
+LAB_ADMIN_ROLES = ('admin', 'manager')
+LAB_WRITE_ROLES = ('admin', 'manager', 'lab_tech', 'biologist')
+# Biologiste + admin peuvent gérer les tarifs et la sous-traitance
+LAB_PRICING_ROLES = ('admin', 'manager', 'biologist')
+
+
 class IsAdminOrReadOnly(BasePermission):
-    """Admin (Boris) peut écrire ; tout utilisateur authentifié peut lire."""
+    """Admin/manager peut écrire ; tout utilisateur authentifié peut lire."""
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.role == 'admin'
+        return request.user and request.user.is_authenticated and request.user.role in LAB_ADMIN_ROLES
 
 
 class IsAdminOrLabTech(BasePermission):
-    """Admin ou lab_tech peuvent écrire ; tout utilisateur authentifié peut lire."""
+    """Admin, manager, lab_tech ou biologist peuvent écrire."""
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return request.user and request.user.is_authenticated
-        return request.user and request.user.is_authenticated and request.user.role in ('admin', 'lab_tech')
+        return request.user and request.user.is_authenticated and request.user.role in LAB_WRITE_ROLES
+
+
+class IsAdminOrBiologist(BasePermission):
+    """Admin, manager ou biologiste peuvent écrire (tarifs, sous-traitance)."""
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return request.user and request.user.is_authenticated
+        return request.user and request.user.is_authenticated and request.user.role in LAB_PRICING_ROLES
 
 
 # =============================================================================
@@ -111,18 +126,51 @@ class LabTestListCreateView(generics.ListCreateAPIView):
         return LabTestSerializer
     
     def perform_create(self, serializer):
+        set_current_user(self.request.user)
         serializer.save(organization=self.request.user.organization)
 
 
 class LabTestDetailView(generics.RetrieveUpdateDestroyAPIView):
-    """Retrieve, update, or delete a lab test"""
+    """Retrieve, update, or delete a lab test.
+
+    Règles de modification :
+    - admin/manager : tous les champs
+    - biologist     : tous les champs SAUF price (tarif public) — géré côté serializer
+    - lab_tech      : champs techniques uniquement (pas price, pas operating_cost)
+    - DELETE        : admin/manager uniquement
+    """
     serializer_class = LabTestSerializer
     permission_classes = [IsAdminOrLabTech]
-    
+
     def get_queryset(self):
         return LabTest.objects.filter(
             organization=self.request.user.organization
         ).select_related('category')
+
+    def get_serializer(self, *args, **kwargs):
+        serializer = super().get_serializer(*args, **kwargs)
+        user = self.request.user
+        role = getattr(user, 'role', '')
+        # lab_tech ne peut pas modifier price ni operating_cost
+        if role == 'lab_tech' and self.request.method not in SAFE_METHODS:
+            for field in ('price', 'operating_cost'):
+                serializer.fields[field].read_only = True
+        # biologist ne peut pas modifier le tarif public (price)
+        # mais peut modifier operating_cost et paramètres sous-traitance
+        elif role == 'biologist' and self.request.method not in SAFE_METHODS:
+            serializer.fields['price'].read_only = True
+        return serializer
+
+    def perform_update(self, serializer):
+        set_current_user(self.request.user)
+        serializer.save()
+
+    def destroy(self, request, *args, **kwargs):
+        if getattr(request.user, 'role', '') not in LAB_ADMIN_ROLES:
+            return Response({'detail': 'Seuls les administrateurs peuvent supprimer un examen.'},
+                            status=status.HTTP_403_FORBIDDEN)
+        set_current_user(request.user)
+        return super().destroy(request, *args, **kwargs)
 
 
 # =============================================================================
@@ -1154,7 +1202,7 @@ class SubcontractorLabListCreateView(generics.ListCreateAPIView):
     GET  /healthcare/laboratory/subcontractors/  — List subcontractor labs
     POST /healthcare/laboratory/subcontractors/  — Create subcontractor lab
     """
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrBiologist]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_serializer_class(self):
@@ -1169,6 +1217,7 @@ class SubcontractorLabListCreateView(generics.ListCreateAPIView):
         return qs
 
     def perform_create(self, serializer):
+        set_current_user(self.request.user)
         serializer.save(organization=self.request.user.organization)
 
 
@@ -1177,11 +1226,19 @@ class SubcontractorLabDetailView(generics.RetrieveUpdateDestroyAPIView):
     GET/PATCH/DELETE /healthcare/laboratory/subcontractors/<uuid>/
     """
     serializer_class = SubcontractorLabSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrBiologist]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         return SubcontractorLab.objects.filter(organization=self.request.user.organization)
+
+    def perform_update(self, serializer):
+        set_current_user(self.request.user)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        set_current_user(self.request.user)
+        instance.delete()
 
 
 class SubcontractorPriceListView(generics.ListAPIView):
@@ -1206,9 +1263,10 @@ class SubcontractorPriceBulkSaveView(APIView):
     Body: [{lab_test_id, price, turnaround_days, is_active, notes}, ...]
     Creates or updates prices in bulk.
     """
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrBiologist]
 
     def post(self, request, subcontractor_id):
+        set_current_user(request.user)
         try:
             subcontractor = SubcontractorLab.objects.get(
                 id=subcontractor_id,
@@ -1367,7 +1425,7 @@ class SubcontractorPriceBulkActivateView(APIView):
     Body: {test_ids: [...], is_active: true, use_defaults: true}
     When use_defaults=true, copies default prices for selected tests.
     """
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrBiologist]
 
     def post(self, request, subcontractor_id):
         try:
@@ -1759,3 +1817,49 @@ class LabTestConsumableDetailView(APIView):
             return Response({'error': 'Introuvable'}, status=status.HTTP_404_NOT_FOUND)
         consumable.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# =============================================================================
+# Lab Audit Log
+# =============================================================================
+
+class LabAuditLogListView(generics.ListAPIView):
+    """
+    GET /healthcare/laboratory/audit-logs/
+    Retourne le journal d'audit de toutes les actions du module labo.
+    Filtres : ?action=create|update|delete  ?target_type=lab_test|subcontractor|...
+              ?user_id=<uuid>  ?date_from=YYYY-MM-DD  ?date_to=YYYY-MM-DD
+    """
+    from .serializers import LabAuditLogSerializer as _ALS
+    serializer_class = _ALS
+    permission_classes = [IsAdminOrBiologist]
+    filter_backends = [filters.OrderingFilter]
+    ordering = ['-timestamp']
+
+    def get_queryset(self):
+        from .models import LabAuditLog
+        qs = LabAuditLog.objects.filter(
+            organization=self.request.user.organization
+        ).select_related('user')
+
+        action = self.request.GET.get('action')
+        if action:
+            qs = qs.filter(action=action)
+
+        target_type = self.request.GET.get('target_type')
+        if target_type:
+            qs = qs.filter(target_type=target_type)
+
+        user_id = self.request.GET.get('user_id')
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+
+        date_from = self.request.GET.get('date_from')
+        if date_from:
+            qs = qs.filter(timestamp__date__gte=date_from)
+
+        date_to = self.request.GET.get('date_to')
+        if date_to:
+            qs = qs.filter(timestamp__date__lte=date_to)
+
+        return qs

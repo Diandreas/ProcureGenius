@@ -75,4 +75,7 @@ urlpatterns = [
     # Lab Test Consumables (stock links)
     path('tests/<uuid:test_id>/consumables/', api.LabTestConsumableListView.as_view(), name='test-consumables'),
     path('consumables/<uuid:pk>/', api.LabTestConsumableDetailView.as_view(), name='consumable-detail'),
+
+    # Audit Log
+    path('audit-logs/', api.LabAuditLogListView.as_view(), name='audit-log-list'),
 ]

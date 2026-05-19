@@ -394,6 +394,12 @@ const laboratoryAPI = {
         const response = await api.delete(`/healthcare/laboratory/consumables/${consumableId}/`);
         return response.data;
     },
+
+    // Audit Logs
+    getAuditLogs: async (params = {}) => {
+        const response = await api.get('/healthcare/laboratory/audit-logs/', { params });
+        return response.data;
+    },
 };
 
 export default laboratoryAPI;

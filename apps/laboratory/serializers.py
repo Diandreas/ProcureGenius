@@ -3,7 +3,7 @@ Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
 from decimal import Decimal, InvalidOperation
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable, LabAuditLog
 
 
 class LabTestParameterSerializer(serializers.ModelSerializer):
@@ -813,3 +813,22 @@ class SubcontractorPatientListSerializer(serializers.ModelSerializer):
 
     def get_resolved_age(self, obj):
         return obj.resolved_age
+
+
+class LabAuditLogSerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+    action_label = serializers.CharField(source='get_action_display', read_only=True)
+    target_type_label = serializers.CharField(source='get_target_type_display', read_only=True)
+
+    class Meta:
+        model = LabAuditLog
+        fields = [
+            'id', 'timestamp', 'action', 'action_label',
+            'target_type', 'target_type_label', 'target_id', 'target_name',
+            'user_name', 'changes',
+        ]
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name() or obj.user.email
+        return 'Système'

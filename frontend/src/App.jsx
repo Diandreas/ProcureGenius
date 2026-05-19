@@ -33,6 +33,7 @@ import SubcontractorStats from './pages/healthcare/laboratory/SubcontractorStats
 import SubcontractorOrderBatch from './pages/healthcare/laboratory/SubcontractorOrderBatch';
 import SubcontractorPatients from './pages/healthcare/laboratory/SubcontractorPatients';
 import SubcontractorDefaultPrices from './pages/healthcare/laboratory/SubcontractorDefaultPrices';
+import LabAuditLog from './pages/healthcare/laboratory/LabAuditLog';
 
 // Inventory Analytics
 import ReorderAnalytics from './pages/inventory/analytics/ReorderAnalytics';
@@ -858,6 +859,7 @@ function App() {
                               <Route path="/healthcare/laboratory/subcontractors/:id/prices" element={<ModuleRoute module="laboratory"><SubcontractorPrices /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/subcontractors/:id/patients" element={<ModuleRoute module="laboratory"><SubcontractorPatients /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/opened-reagents" element={<ModuleRoute module="laboratory"><OpenedReagents /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/audit-log" element={<ModuleRoute module="laboratory"><LabAuditLog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
 
                               {/* Pharmacy */}

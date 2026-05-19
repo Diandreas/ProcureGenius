@@ -1485,3 +1485,93 @@ class SubcontractorPatient(models.Model):
             if self.gender:
                 update_data['gender'] = self.gender
             Client.objects.filter(pk=self.client_id).update(**update_data)
+
+
+class LabAuditLog(models.Model):
+    """
+    Journal d'audit pour toutes les actions dans le module laboratoire.
+    Loggue les créations, modifications et suppressions de tests, tarifs,
+    sous-traitants et commandes.
+    """
+    ACTION_CREATE = 'create'
+    ACTION_UPDATE = 'update'
+    ACTION_DELETE = 'delete'
+    ACTION_CHOICES = [
+        (ACTION_CREATE, _('Création')),
+        (ACTION_UPDATE, _('Modification')),
+        (ACTION_DELETE, _('Suppression')),
+    ]
+
+    TARGET_LAB_TEST = 'lab_test'
+    TARGET_SUBCONTRACTOR = 'subcontractor'
+    TARGET_SUBCONTRACTOR_PRICE = 'subcontractor_price'
+    TARGET_LAB_ORDER = 'lab_order'
+    TARGET_CHOICES = [
+        (TARGET_LAB_TEST, _('Test de laboratoire')),
+        (TARGET_SUBCONTRACTOR, _('Laboratoire sous-traitant')),
+        (TARGET_SUBCONTRACTOR_PRICE, _('Tarif sous-traitance')),
+        (TARGET_LAB_ORDER, _('Commande de laboratoire')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization',
+        on_delete=models.CASCADE,
+        related_name='lab_audit_logs',
+        verbose_name=_("Organisation")
+    )
+    user = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='lab_audit_logs',
+        verbose_name=_("Utilisateur")
+    )
+    action = models.CharField(
+        max_length=10,
+        choices=ACTION_CHOICES,
+        verbose_name=_("Action")
+    )
+    target_type = models.CharField(
+        max_length=30,
+        choices=TARGET_CHOICES,
+        verbose_name=_("Type de cible")
+    )
+    target_id = models.CharField(
+        max_length=100,
+        verbose_name=_("ID de la cible")
+    )
+    target_name = models.CharField(
+        max_length=300,
+        verbose_name=_("Nom de la cible")
+    )
+    changes = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name=_("Modifications"),
+        help_text=_("Diff JSON des champs modifiés : {'field': [old, new]}")
+    )
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name=_("Horodatage"))
+
+    class Meta:
+        verbose_name = _("Log d'audit laboratoire")
+        verbose_name_plural = _("Logs d'audit laboratoire")
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        user_name = self.user.get_full_name() if self.user else 'Système'
+        return f"[{self.timestamp:%Y-%m-%d %H:%M}] {user_name} — {self.get_action_display()} {self.get_target_type_display()} : {self.target_name}"
+
+    @classmethod
+    def log(cls, user, action, target_type, target_obj, changes=None):
+        """Helper pour créer un log d'audit en une ligne."""
+        organization = getattr(user, 'organization', None) or getattr(target_obj, 'organization', None)
+        cls.objects.create(
+            organization=organization,
+            user=user,
+            action=action,
+            target_type=target_type,
+            target_id=str(target_obj.pk),
+            target_name=str(target_obj),
+            changes=changes or {},
+        )

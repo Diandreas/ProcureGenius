@@ -106,6 +106,7 @@ class CustomUser(AbstractUser):
             ('doctor', _('Médecin')),
             ('nurse', _('Infirmier/Infirmière')),
             ('lab_tech', _('Technicien de laboratoire')),
+            ('biologist', _('Biologiste')),
             ('pharmacist', _('Pharmacien')),
             ('receptionist', _('Réceptionniste')),
         ],

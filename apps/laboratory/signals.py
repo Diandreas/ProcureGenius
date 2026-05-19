@@ -2,13 +2,38 @@
 Signals for automatic laboratory order billing
 Creates invoices when lab results are verified
 """
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from .models import LabOrder
+from .models import LabOrder, LabTest, SubcontractorLab, SubcontractorPrice
 from apps.invoicing.models import Invoice
 from django.utils import timezone
 from datetime import timedelta
 import logging
+import threading
+
+logger = logging.getLogger(__name__)
+
+# Thread-local pour stocker l'utilisateur courant (injecté depuis les views)
+_thread_local = threading.local()
+
+
+def get_current_user():
+    return getattr(_thread_local, 'current_user', None)
+
+
+def set_current_user(user):
+    _thread_local.current_user = user
+
+
+def _diff(old_obj, new_obj, fields):
+    """Calcule le diff entre deux instances sur les champs donnés."""
+    changes = {}
+    for field in fields:
+        old_val = getattr(old_obj, field, None)
+        new_val = getattr(new_obj, field, None)
+        if str(old_val) != str(new_val):
+            changes[field] = [str(old_val), str(new_val)]
+    return changes
 
 logger = logging.getLogger(__name__)
 
@@ -64,3 +89,149 @@ def create_invoice_for_lab_order(sender, instance, **kwargs):
     
     except Exception as e:
         logger.error(f"Error creating invoice for lab order {instance.id}: {str(e)}", exc_info=True)
+
+
+# =============================================================================
+# Audit log signals — LabTest
+# =============================================================================
+
+LAB_TEST_AUDIT_FIELDS = ['name', 'test_code', 'price', 'subcontract_price', 'operating_cost', 'is_active', 'category_id']
+
+
+@receiver(pre_save, sender=LabTest)
+def lab_test_pre_save(sender, instance, **kwargs):
+    """Snapshot de l'instance avant modification."""
+    if instance.pk:
+        try:
+            instance._pre_save_snapshot = LabTest.objects.get(pk=instance.pk)
+        except LabTest.DoesNotExist:
+            instance._pre_save_snapshot = None
+    else:
+        instance._pre_save_snapshot = None
+
+
+@receiver(post_save, sender=LabTest)
+def lab_test_post_save(sender, instance, created, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user()
+    try:
+        if created:
+            LabAuditLog.log(
+                user=user,
+                action=LabAuditLog.ACTION_CREATE,
+                target_type=LabAuditLog.TARGET_LAB_TEST,
+                target_obj=instance,
+                changes={'price': [None, str(instance.price)], 'test_code': [None, instance.test_code]},
+            )
+        else:
+            snapshot = getattr(instance, '_pre_save_snapshot', None)
+            changes = _diff(snapshot, instance, LAB_TEST_AUDIT_FIELDS) if snapshot else {}
+            if changes:
+                LabAuditLog.log(
+                    user=user,
+                    action=LabAuditLog.ACTION_UPDATE,
+                    target_type=LabAuditLog.TARGET_LAB_TEST,
+                    target_obj=instance,
+                    changes=changes,
+                )
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_save LabTest failed: {e}")
+
+
+@receiver(post_delete, sender=LabTest)
+def lab_test_post_delete(sender, instance, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user()
+    try:
+        LabAuditLog.log(
+            user=user,
+            action=LabAuditLog.ACTION_DELETE,
+            target_type=LabAuditLog.TARGET_LAB_TEST,
+            target_obj=instance,
+        )
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_delete LabTest failed: {e}")
+
+
+# =============================================================================
+# Audit log signals — SubcontractorLab
+# =============================================================================
+
+SUBCONTRACTOR_AUDIT_FIELDS = ['name', 'is_active', 'email', 'phone']
+
+
+@receiver(pre_save, sender=SubcontractorLab)
+def subcontractor_pre_save(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            instance._pre_save_snapshot = SubcontractorLab.objects.get(pk=instance.pk)
+        except SubcontractorLab.DoesNotExist:
+            instance._pre_save_snapshot = None
+    else:
+        instance._pre_save_snapshot = None
+
+
+@receiver(post_save, sender=SubcontractorLab)
+def subcontractor_post_save(sender, instance, created, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user()
+    try:
+        if created:
+            LabAuditLog.log(user=user, action=LabAuditLog.ACTION_CREATE,
+                            target_type=LabAuditLog.TARGET_SUBCONTRACTOR, target_obj=instance)
+        else:
+            snapshot = getattr(instance, '_pre_save_snapshot', None)
+            changes = _diff(snapshot, instance, SUBCONTRACTOR_AUDIT_FIELDS) if snapshot else {}
+            if changes:
+                LabAuditLog.log(user=user, action=LabAuditLog.ACTION_UPDATE,
+                                target_type=LabAuditLog.TARGET_SUBCONTRACTOR, target_obj=instance, changes=changes)
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_save SubcontractorLab failed: {e}")
+
+
+@receiver(post_delete, sender=SubcontractorLab)
+def subcontractor_post_delete(sender, instance, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user()
+    try:
+        LabAuditLog.log(user=user, action=LabAuditLog.ACTION_DELETE,
+                        target_type=LabAuditLog.TARGET_SUBCONTRACTOR, target_obj=instance)
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_delete SubcontractorLab failed: {e}")
+
+
+# =============================================================================
+# Audit log signals — SubcontractorPrice
+# =============================================================================
+
+PRICE_AUDIT_FIELDS = ['price', 'is_active']
+
+
+@receiver(pre_save, sender=SubcontractorPrice)
+def subcontractor_price_pre_save(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            instance._pre_save_snapshot = SubcontractorPrice.objects.get(pk=instance.pk)
+        except SubcontractorPrice.DoesNotExist:
+            instance._pre_save_snapshot = None
+    else:
+        instance._pre_save_snapshot = None
+
+
+@receiver(post_save, sender=SubcontractorPrice)
+def subcontractor_price_post_save(sender, instance, created, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user()
+    try:
+        if created:
+            LabAuditLog.log(user=user, action=LabAuditLog.ACTION_CREATE,
+                            target_type=LabAuditLog.TARGET_SUBCONTRACTOR_PRICE, target_obj=instance,
+                            changes={'price': [None, str(instance.price)]})
+        else:
+            snapshot = getattr(instance, '_pre_save_snapshot', None)
+            changes = _diff(snapshot, instance, PRICE_AUDIT_FIELDS) if snapshot else {}
+            if changes:
+                LabAuditLog.log(user=user, action=LabAuditLog.ACTION_UPDATE,
+                                target_type=LabAuditLog.TARGET_SUBCONTRACTOR_PRICE, target_obj=instance, changes=changes)
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_save SubcontractorPrice failed: {e}")
