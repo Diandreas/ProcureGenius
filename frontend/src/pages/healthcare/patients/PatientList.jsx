@@ -421,6 +421,7 @@ const PatientList = () => {
                     <SearchIcon color="action" />
                 </InputAdornment>
                 <TextField
+                    id="manual-input-search-patients"
                     fullWidth
                     variant="standard"
                     placeholder={t('common.search', 'Rechercher par nom, ID ou téléphone...')}

@@ -114,6 +114,7 @@ export default function LabAuditLog() {
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={3}>
                             <TextField
+                                id="manual-select-audit-action"
                                 select fullWidth size="small" label="Action"
                                 name="action" value={filters.action} onChange={handleFilterChange}
                             >
@@ -137,6 +138,7 @@ export default function LabAuditLog() {
                         </Grid>
                         <Grid item xs={12} sm={3}>
                             <TextField
+                                id="manual-input-audit-date-from"
                                 fullWidth size="small" label="Du" type="date"
                                 name="date_from" value={filters.date_from} onChange={handleFilterChange}
                                 InputLabelProps={{ shrink: true }}
@@ -144,6 +146,7 @@ export default function LabAuditLog() {
                         </Grid>
                         <Grid item xs={12} sm={3}>
                             <TextField
+                                id="manual-input-audit-date-to"
                                 fullWidth size="small" label="Au" type="date"
                                 name="date_to" value={filters.date_to} onChange={handleFilterChange}
                                 InputLabelProps={{ shrink: true }}

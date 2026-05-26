@@ -202,6 +202,7 @@ const DispensingList = () => {
                         Dispensation & Ventes
                     </Typography>
                     <Button
+                        id="manual-btn-nouvelle-dispensation"
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => navigate('/healthcare/pharmacy/dispense/new')}

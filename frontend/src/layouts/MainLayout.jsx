@@ -980,6 +980,7 @@ function MainLayout() {
             {contextualActions?.action && !contextualActions?.actions && (
               <Button
                 variant="contained"
+                id="manual-btn-new-action"
                 {...(contextualActions.action.icon && { startIcon: contextualActions.action.icon })}
                 onClick={contextualActions.action.onClick}
                 disableElevation

@@ -77,7 +77,7 @@ export default function LabPanelCatalog() {
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Typography variant="h5">Catalogue des Bilans</Typography>
                 {isAdmin && (
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={handleNew}>
+                    <Button id="manual-btn-nouveau-bilan" variant="contained" startIcon={<AddIcon />} onClick={handleNew}>
                         Nouveau bilan
                     </Button>
                 )}

@@ -321,6 +321,7 @@ const LabOrderForm = () => {
                     </Typography>
                 </Stack>
                 <Button
+                    id="manual-btn-creer-ordre"
                     data-testid="lab-btn-submit"
                     variant="contained"
                     startIcon={<SaveIcon />}
@@ -339,12 +340,13 @@ const LabOrderForm = () => {
                         <CardContent>
                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                 <Autocomplete
+                                    id="manual-autocomplete-lab-patient"
                                     fullWidth
                                     options={patients}
                                     getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
                                     value={formData.patient}
                                     onChange={(e, v) => setFormData(prev => ({ ...prev, patient: v }))}
-                                    renderInput={(params) => <TextField {...params} label="Rechercher Patient" required inputProps={{...params.inputProps, 'data-testid': 'lab-input-patient'}} />}
+                                    renderInput={(params) => <TextField {...params} id="manual-input-lab-patient" label="Rechercher Patient" required inputProps={{...params.inputProps, 'data-testid': 'lab-input-patient'}} />}
                                 />
                                 <Button
                                     variant="outlined"

@@ -164,7 +164,7 @@ const SubcontractorList = () => {
                         </Typography>
                     </Box>
                 </Box>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+                <Button id="manual-btn-nouveau-soustraitant" variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
                     Nouveau Sous-traitant
                 </Button>
             </Box>

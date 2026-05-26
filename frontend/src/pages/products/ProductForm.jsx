@@ -523,16 +523,17 @@ function ProductForm() {
                                                         Choisissez si vous créez un article physique (avec gestion de stock et lots) ou une prestation de service.
                                                     </Typography>
                                                     <ToggleButtonGroup
+                                                        id="manual-toggle-product-type"
                                                         value={values.product_type}
                                                         exclusive
                                                         onChange={(e, v) => v && setFieldValue('product_type', v)}
                                                         fullWidth
                                                         color="primary"
                                                     >
-                                                        <ToggleButton value="physical" sx={{ py: 1.5, borderRadius: 2 }}>
+                                                        <ToggleButton id="manual-btn-type-physical" value="physical" sx={{ py: 1.5, borderRadius: 2 }}>
                                                             <Inventory sx={{ mr: 1 }} /> Physique (Médicaments, Réactifs...)
                                                         </ToggleButton>
-                                                        <ToggleButton value="service" sx={{ py: 1.5, borderRadius: 2 }}>
+                                                        <ToggleButton id="manual-btn-type-service" value="service" sx={{ py: 1.5, borderRadius: 2 }}>
                                                             <Build sx={{ mr: 1 }} /> Service (Consultation, Acte...)
                                                         </ToggleButton>
                                                     </ToggleButtonGroup>
@@ -546,10 +547,10 @@ function ProductForm() {
                                                 <CardContent>
                                                     <Grid container spacing={2.5}>
                                                         <Grid item xs={12} sm={8}>
-                                                            <TextField fullWidth name="name" label="Nom du produit" value={values.name} onChange={handleChange} onBlur={handleBlur} error={touched.name && Boolean(errors.name)} helperText={touched.name && errors.name} required placeholder="Ex: Paracétamol 500mg" />
+                                                            <TextField id="manual-input-product-name" fullWidth name="name" label="Nom du produit" value={values.name} onChange={handleChange} onBlur={handleBlur} error={touched.name && Boolean(errors.name)} helperText={touched.name && errors.name} required placeholder="Ex: Paracétamol 500mg" />
                                                         </Grid>
                                                         <Grid item xs={12} sm={4}>
-                                                            <TextField fullWidth name="reference" label="Référence" value={values.reference} onChange={handleChange} placeholder="Génération auto" helperText="Code interne unique" />
+                                                            <TextField id="manual-input-product-ref" fullWidth name="reference" label="Référence" value={values.reference} onChange={handleChange} placeholder="Génération auto" helperText="Code interne unique" />
                                                         </Grid>
                                                         <Grid item xs={12}>
                                                             <TextField fullWidth multiline rows={3} name="description" label="Description détaillée" value={values.description} onChange={handleChange} placeholder="Indications, posologie sommaire ou notes..." />
@@ -565,10 +566,11 @@ function ProductForm() {
                                                 <CardContent>
                                                     <Grid container spacing={2.5}>
                                                         <Grid item xs={12} sm={6}>
-                                                            <TextField 
-                                                                fullWidth type="number" name="price" label="Prix de vente" 
-                                                                value={values.price} onChange={handleChange} onBlur={handleBlur} 
-                                                                error={touched.price && Boolean(errors.price)} helperText={touched.price && errors.price} 
+                                                            <TextField
+                                                                id="manual-input-price"
+                                                                fullWidth type="number" name="price" label="Prix de vente"
+                                                                value={values.price} onChange={handleChange} onBlur={handleBlur}
+                                                                error={touched.price && Boolean(errors.price)} helperText={touched.price && errors.price}
                                                                 required
                                                                 InputProps={{ endAdornment: <Typography variant="caption">XAF</Typography> }}
                                                             />
@@ -576,6 +578,7 @@ function ProductForm() {
                                                         <Grid item xs={12} sm={6}>
                                                             {canSeeCostPrice && (
                                                                 <TextField
+                                                                    id="manual-input-cost-price"
                                                                     fullWidth type="number" name="cost_price" label="Prix d'achat (Coût)"
                                                                     value={values.cost_price} onChange={handleChange}
                                                                     InputProps={{ endAdornment: <Typography variant="caption">XAF</Typography> }}
@@ -586,6 +589,7 @@ function ProductForm() {
                                                         <Grid item xs={12} sm={6}>
                                                             {canSeeCostPrice && (
                                                                 <TextField
+                                                                    id="manual-input-operating-cost"
                                                                     fullWidth type="number" name="operating_cost" label="Coût de revient (PA/Charges)"
                                                                     value={values.operating_cost} onChange={handleChange}
                                                                     InputProps={{ endAdornment: <Typography variant="caption">XAF</Typography> }}
@@ -714,6 +718,7 @@ function ProductForm() {
                                     </Button>
                                     {values.product_type === 'physical' ? (
                                         <Button
+                                            id="manual-btn-suivant-lots"
                                             variant="contained"
                                             size="large"
                                             endIcon={savingStep1 ? <CircularProgress size={20} color="inherit" /> : <ArrowForward />}
@@ -725,6 +730,7 @@ function ProductForm() {
                                         </Button>
                                     ) : (
                                         <Button
+                                            id="manual-btn-enregistrer-service"
                                             variant="contained"
                                             size="large"
                                             startIcon={savingStep1 ? <CircularProgress size={20} color="inherit" /> : <Save />}

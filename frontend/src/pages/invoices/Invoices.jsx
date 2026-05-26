@@ -645,6 +645,7 @@ function Invoices() {
               alignItems: 'stretch',
             }}>
               <TextField
+                id="manual-input-search-invoices"
                 size="small"
                 placeholder={t('invoices:search.placeholder')}
                 value={searchTerm}

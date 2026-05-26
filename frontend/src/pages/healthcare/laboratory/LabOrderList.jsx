@@ -542,6 +542,7 @@ const LabOrderList = () => {
                         Fiches Groupées
                     </Button>
                     <Button
+                        id="manual-btn-nouvelle-commande-labo"
                         variant="contained"
                         size="large"
                         startIcon={<AddIcon />}

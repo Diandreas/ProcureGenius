@@ -241,6 +241,7 @@ const PatientForm = () => {
                     )}
                 </Stack>
                 <Button
+                    id="manual-btn-enregistrer-patient"
                     type="submit"
                     variant="contained"
                     startIcon={<SaveIcon />}
@@ -260,6 +261,7 @@ const PatientForm = () => {
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <TextField
+                                id="manual-input-patient-name"
                                 required
                                 fullWidth
                                 label={t('patients.full_name', 'Nom complet')}

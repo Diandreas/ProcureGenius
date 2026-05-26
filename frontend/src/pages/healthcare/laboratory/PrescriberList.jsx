@@ -84,7 +84,7 @@ export default function PrescriberList() {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h5" fontWeight={700}>Prescripteurs</Typography>
                 {isAdmin && (
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={handleNew}>
+                    <Button id="manual-btn-nouveau-prescripteur" variant="contained" startIcon={<AddIcon />} onClick={handleNew}>
                         Nouveau prescripteur
                     </Button>
                 )}

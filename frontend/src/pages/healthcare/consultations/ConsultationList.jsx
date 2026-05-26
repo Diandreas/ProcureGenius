@@ -280,6 +280,7 @@ const ConsultationList = () => {
                         Consultations Médicales
                     </Typography>
                     <Button
+                        id="manual-btn-nouvelle-consultation"
                         data-testid="consult-list-btn-new"
                         variant="contained"
                         startIcon={<AddIcon />}

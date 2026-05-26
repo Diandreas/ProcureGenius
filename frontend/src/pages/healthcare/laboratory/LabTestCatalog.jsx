@@ -182,6 +182,7 @@ const LabTestCatalog = () => {
                     </Button>
                     {isAdmin && (
                         <Button
+                            id="manual-btn-nouveau-test"
                             variant="contained"
                             startIcon={<AddIcon />}
                             onClick={handleNewTest}

@@ -628,6 +628,7 @@ function InvoiceForm() {
             {t('invoices:buttons.cancel')}
           </Button>
           <Button
+            id="manual-btn-save-invoice"
             variant="contained"
             startIcon={<Save />}
             onClick={handleSubmit}
@@ -983,6 +984,7 @@ function InvoiceForm() {
                         Articles
                       </Typography>
                       <Button
+                        id="manual-btn-ajouter-article"
                         variant="contained"
                         startIcon={<Add />}
                         onClick={() => {
@@ -1192,6 +1194,7 @@ function InvoiceForm() {
                       </IconButton>
                     </Box>
                     <Autocomplete
+                      id="manual-autocomplete-client"
                       options={clients}
                       getOptionLabel={(option) => option.name || ''}
                       value={formData.client}
@@ -1201,6 +1204,7 @@ function InvoiceForm() {
                       renderInput={(params) => (
                         <TextField
                           {...params}
+                          id="manual-input-client"
                           label={`${t('invoices:fields.selectClient')} *`}
                           required
                           sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}

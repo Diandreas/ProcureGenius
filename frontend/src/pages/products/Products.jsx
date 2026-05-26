@@ -767,6 +767,7 @@ function Products() {
           <SearchIcon color="action" />
         </InputAdornment>
         <TextField
+          id="manual-input-search-products"
           fullWidth
           variant="standard"
           placeholder={t('products:search.placeholder') + " (min. 2 caractères)"}

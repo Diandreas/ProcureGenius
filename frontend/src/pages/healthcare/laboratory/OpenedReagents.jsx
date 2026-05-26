@@ -234,6 +234,7 @@ const OpenedReagents = () => {
                             Actualiser
                         </Button>
                         <Button
+                            id="manual-btn-ouvrir-reactif"
                             startIcon={<AddIcon />}
                             onClick={handleOpenDialog}
                             variant="contained"

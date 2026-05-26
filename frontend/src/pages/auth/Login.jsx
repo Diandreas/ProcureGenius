@@ -99,6 +99,7 @@ function Login() {
               type="submit"
               fullWidth
               variant="contained"
+              id="manual-btn-login"
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
