@@ -8,38 +8,57 @@ Usage:
   python manage.py link_lab_stock --dry-run # Simulation
   python manage.py link_lab_stock --reset   # Recrire toutes les liaisons
 
-Source: "Liste des produits du labo a relier au stock.xlsx"
-
-Refs DB verifiees localement :
-  PRD-20260302-0008  HBsAg Hepatitis B Surface Ag Test
+Refs DB verifiees sur VPS prod :
   PRD-20260302-0001  HCV Rapid Test Cassette
-  PRD-20260302-0014  HIV 1/2 Ab Test (Tri-lines)
+  PRD-20260302-0002  HIV 1/2 Test Cassette
+  PRD-20260302-0003  Syphilis Rapid Test Cassette
   PRD-20260302-0004  hCG Pregnancy Test
   PRD-20260302-0005  Lh Ovulation Test
   PRD-20260302-0006  HAV Hepatitis A Virus Ab IgM Test
   PRD-20260302-0007  HBV Hepatitis B Virus 5-in-1 Test
+  PRD-20260302-0008  HBsAg Hepatitis B Surface Ag Test
   PRD-20260302-0009  HBsAb Hepatitis B Surface Ab Test
   PRD-20260302-0010  HBeAg Hepatitis B Envelope Ag Test
   PRD-20260302-0011  HBeAb Hepatitis B Envelope Ab Test
   PRD-20260302-0012  HBcAb Hepatitis B Core Ab Test
   PRD-20260302-0013  HEV Hepatitis E Virus Ab IgM Test
+  PRD-20260302-0014  HIV 1/2 Ab Test (Tri-lines)
   PRD-20260302-0015  Gonorrhea Ag Test
   PRD-20260302-0016  Chlamydia Trachomatis Ag Test
   PRD-20260302-0017  Chlamydia Trachomatis Ab Test
   PRD-20260302-0018  H.Pylori Ab Test
-  PRD-20260302-0019  H.Pylor Ag Test
+  PRD-20260302-0019  H.Pylori Ag Test
   PRD-20260302-0020  Malaria P.f. Ag Test
   PRD-20260302-0021  Malaria P.v. Ag Test
   PRD-20260302-0022  Malaria P.f./P.v. Ag Test
   PRD-20260302-0023  Malaria P.f./Pan Ag Test
+  PRD-20260302-0024  Typhoid Ab IgM/IgG Test
   PRD-20260302-0025  TOXO Toxoplasma Ab IgM Test
   PRD-20260302-0027  HSV-I Herpes Simplex Virus I Ab IgM Test
+  PRD-20260302-0028  HSV-I Herpes Simplex Virus I Ab IgG Test
   PRD-20260302-0029  H185-23WM HSV-II IgM Test
-  PRD-20260302-0041  Hemoglobin A1c (HbA1C) Test Kit
-  PRD-20260302-0044  Anti streptolysin O (ASO) Test Kit
+  PRD-20260302-0030  H185-23WG HSV-II IgG Test
+  PRD-20260302-0031  Urine Analysis Test Strips
+  PRD-20260302-0033  Procalcitonin (PCT) Test Kit
+  PRD-20260302-0034  FSH Test Kit
+  PRD-20260302-0035  LH Test Kit
+  PRD-20260302-0036  TSH Test Kit
+  PRD-20260302-0037  β-HCG Test Kit
+  PRD-20260302-0038  Progesterone Test Kit
+  PRD-20260302-0039  Estradiol (E2) Test Kit
+  PRD-20260302-0040  Testosterone Test Kit
+  PRD-20260302-0041  HbA1C Test Kit
+  PRD-20260302-0042  FT4 Test Kit
+  PRD-20260302-0043  FT3 Test Kit
+  PRD-20260302-0044  ASO Test Kit
   PRD-20260305-0053  Safe AQ pro I - test strips
   PRD-20260305-0054  Safe AQ pro I - blood lancets
   PRD-20260305-0087  C Reactive Protein (reactif automate)
+  PRD-20260326-0013  Prolactin (PRL) Test Kit
+  PRD-20260326-0014  Ferritin Test Kit
+  PRD-20260326-0015  AMH Test Kit
+  PRD-20260511-0003  PSA Total Test Kit
+  PRD-20260511-0004  PSA Libre Test Kit
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -115,6 +134,38 @@ MAPPINGS = [
     ]),
     # -- Groupe sanguin (a creer si absent) -------------------------------
     ('HEM-GS',          [(['DR077-2'], 1, 'reactif groupage ABO/Rh')]),
+
+    # == HORMONES IMMUNOFLUORESCENCE (automate BKP-1000) ==================
+    ('HORM-FSH',        [(['PRD-20260302-0034'], 1, 'kit FSH immunofluorescence')]),
+    ('HORM-LH',         [(['PRD-20260302-0035'], 1, 'kit LH immunofluorescence')]),
+    ('HORM-TSH',        [(['PRD-20260302-0036'], 1, 'kit TSH immunofluorescence')]),
+    ('HORM-HCG-Q',      [(['PRD-20260302-0037'], 1, 'kit β-HCG quantitatif automate')]),
+    ('HORM-PROG',       [(['PRD-20260302-0038'], 1, 'kit Progesterone immunofluorescence')]),
+    ('HORM-OESTRO',     [(['PRD-20260302-0039'], 1, 'kit Estradiol E2 immunofluorescence')]),
+    ('HORM-TESTO',      [(['PRD-20260302-0040'], 1, 'kit Testosterone immunofluorescence')]),
+    ('HORM-FT4',        [(['PRD-20260302-0042'], 1, 'kit FT4 immunofluorescence')]),
+    ('HORM-FT3',        [(['PRD-20260302-0043'], 1, 'kit FT3 immunofluorescence')]),
+    ('HORM-PRL',        [(['PRD-20260326-0013'], 1, 'kit Prolactine immunofluorescence')]),
+    ('HORM-AMH',        [(['PRD-20260326-0015'], 1, 'kit AMH immunofluorescence')]),
+    ('HORM-FER',        [(['PRD-20260326-0014'], 1, 'kit Ferritine immunofluorescence')]),
+    ('HORM-PSA',        [(['PRD-20260511-0003'], 1, 'kit PSA Total immunofluorescence')]),
+    ('HORM-PSAL',       [(['PRD-20260511-0004'], 1, 'kit PSA Libre immunofluorescence')]),
+    ('HORM-PCT',        [(['PRD-20260302-0033'], 1, 'kit PCT immunofluorescence')]),
+    ('HORM-CRP-H',      [(['PRD-20260305-0087'], 1, 'reactif CRP US automate')]),
+
+    # == TESTS RAPIDES (cassettes) manquants ==============================
+    # -- Syphilis cassette rapide -----------------------------------------
+    ('SERO-SYPH',       [(['PRD-20260302-0003'], 1, 'cassette Syphilis rapide')]),
+    # -- HIV cassette alternative -----------------------------------------
+    ('SERO-HIV',        [(['PRD-20260302-0014', 'PRD-20260302-0002'], 1, 'cassette HIV 1/2')]),
+    # -- Typhoide ---------------------------------------------------------
+    ('SERO-TYPH',       [(['PRD-20260302-0024'], 1, 'cassette Typhoide IgM/IgG')]),
+    # -- Herpes IgG -------------------------------------------------------
+    ('SERO-HERPES HSV-I IgG',  [(['PRD-20260302-0028'], 1, 'cassette HSV-I IgG')]),
+    ('SERO-HERPES HSV-II IgG', [(['PRD-20260302-0030'], 1, 'cassette HSV-II IgG')]),
+    # -- Bandelette urinaire ----------------------------------------------
+    ('BIO-CHIM-U',      [(['PRD-20260302-0031'], 1, 'bandelette analyse urinaire')]),
+    ('BIO-BU',          [(['PRD-20260302-0031'], 1, 'bandelette analyse urinaire')]),
 ]
 
 

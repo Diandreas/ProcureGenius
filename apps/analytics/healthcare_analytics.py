@@ -92,15 +92,18 @@ class ExamTypesByPeriodView(APIView):
         organization = request.user.organization
         period = request.GET.get('period', 'week')
 
-        # Base queryset: exclure les commandes annulées (le revenu n'est pas perçu).
+        # Base queryset: uniquement les examens dont la facture est payée
+        # pour que le total corresponde au CA laboratoire.
         queryset = LabOrderItem.objects.filter(
-            lab_order__organization=organization
-        ).exclude(lab_order__status='cancelled')
+            lab_order__organization=organization,
+            lab_order__lab_invoice__status='paid',
+        )
 
         # Apply filters
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
         patient_id = request.GET.get('patient_id')
+        exam_filter = request.GET.get('exam_filter')  # 'exam', 'panel', 'all'
 
         if start_date:
             queryset = queryset.filter(lab_order__order_date__gte=start_date)
@@ -108,6 +111,10 @@ class ExamTypesByPeriodView(APIView):
             queryset = queryset.filter(lab_order__order_date__lte=end_date)
         if patient_id:
             queryset = queryset.filter(lab_order__patient_id=patient_id)
+        if exam_filter == 'panel':
+            queryset = queryset.filter(panel__isnull=False)
+        elif exam_filter == 'exam':
+            queryset = queryset.filter(panel__isnull=True)
 
         # Revenu effectif = panel_price si défini (forfait bilan), sinon price unitaire.
         # Coalesce gère le cas où panel_price est NULL pour les items hors bilan.

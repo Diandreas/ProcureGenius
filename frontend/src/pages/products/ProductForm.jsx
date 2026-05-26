@@ -135,6 +135,7 @@ function ProductForm() {
         category_id: '',
         price: '',
         cost_price: '',
+        operating_cost: '',
         price_editable: false,
         supplier_id: '',
         warehouse_id: '',
@@ -189,6 +190,7 @@ function ProductForm() {
                         warehouse_id: p.warehouse || '',
                         price: p.price ?? '',
                         cost_price: p.cost_price ?? '',
+                        operating_cost: p.operating_cost ?? '',
                     }));
                     // Load batches immediately if editing
                     fetchBatches(id);
@@ -221,6 +223,7 @@ function ProductForm() {
             ...values,
             price: values.price === '' ? 0 : parseFloat(values.price),
             cost_price: values.cost_price === '' ? 0 : parseFloat(values.cost_price),
+            operating_cost: values.operating_cost === '' ? null : parseFloat(values.operating_cost),
             conversion_factor: values.conversion_factor === '' ? 1 : parseFloat(values.conversion_factor),
             category: values.category_id || null,
             warehouse: values.warehouse_id || null,
@@ -572,15 +575,25 @@ function ProductForm() {
                                                         </Grid>
                                                         <Grid item xs={12} sm={6}>
                                                             {canSeeCostPrice && (
-                                                                <TextField 
-                                                                    fullWidth type="number" name="cost_price" label="Prix d'achat (Coût)" 
+                                                                <TextField
+                                                                    fullWidth type="number" name="cost_price" label="Prix d'achat (Coût)"
                                                                     value={values.cost_price} onChange={handleChange}
                                                                     InputProps={{ endAdornment: <Typography variant="caption">XAF</Typography> }}
                                                                     helperText="Utilisé pour calculer vos marges"
                                                                 />
                                                             )}
                                                         </Grid>
-                                                        
+                                                        <Grid item xs={12} sm={6}>
+                                                            {canSeeCostPrice && (
+                                                                <TextField
+                                                                    fullWidth type="number" name="operating_cost" label="Coût de revient (PA/Charges)"
+                                                                    value={values.operating_cost} onChange={handleChange}
+                                                                    InputProps={{ endAdornment: <Typography variant="caption">XAF</Typography> }}
+                                                                    helperText="Pour services/labo : réactifs, charges, amortissement"
+                                                                />
+                                                            )}
+                                                        </Grid>
+
                                                         {values.product_type === 'physical' && (
                                                             <>
                                                                 <Grid item xs={12}><Divider><Chip label="Gestion des unités" size="small" /></Divider></Grid>

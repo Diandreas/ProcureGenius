@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Paper, Typography, Container } from '@mui/material';
+import { Box, Grid, Paper, Typography, Container, ToggleButtonGroup, ToggleButton, Chip } from '@mui/material';
 import { TrendingUp as TrendingUpIcon } from '@mui/icons-material';
 import FilterPanel from '../../../components/analytics/FilterPanel';
 import TimeRangeSelector from '../../../components/analytics/TimeRangeSelector';
@@ -20,17 +20,19 @@ const ExamTypesAnalytics = () => {
     end_date: null,
     patient_id: null
   });
+  const [examFilter, setExamFilter] = useState('all');
 
   useEffect(() => {
     fetchData();
-  }, [filters, period]);
+  }, [filters, period, examFilter]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const result = await healthcareAnalyticsAPI.getExamTypes({
         ...filters,
-        period
+        period,
+        exam_filter: examFilter !== 'all' ? examFilter : undefined
       });
       setData(result);
     } catch (error) {
@@ -94,6 +96,28 @@ const ExamTypesAnalytics = () => {
             onChange={setPeriod}
             label="Période d'Agrégation"
           />
+        </Paper>
+
+        {/* Exam type filter */}
+        <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" color="text.secondary" fontWeight={600}>Type :</Typography>
+          <ToggleButtonGroup
+            value={examFilter}
+            exclusive
+            onChange={(_, v) => v && setExamFilter(v)}
+            size="small"
+          >
+            <ToggleButton value="all">Tous</ToggleButton>
+            <ToggleButton value="exam">Examens seuls</ToggleButton>
+            <ToggleButton value="panel">Bilans / Packs</ToggleButton>
+          </ToggleButtonGroup>
+          {examFilter !== 'all' && (
+            <Chip
+              label={examFilter === 'panel' ? 'Bilans & Packs uniquement' : 'Examens individuels uniquement'}
+              color="primary" size="small" variant="outlined"
+              onDelete={() => setExamFilter('all')}
+            />
+          )}
         </Paper>
 
         {/* Filters */}

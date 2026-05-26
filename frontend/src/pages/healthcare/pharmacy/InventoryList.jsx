@@ -119,13 +119,13 @@ const InventoryList = () => {
         return medications.filter(med => {
             // Quick filter (stock status)
             if (quickFilter === 'low_stock') {
-                if (!(med.stock_quantity <= (med.low_stock_threshold || 5) && med.stock_quantity > 0)) return false;
+                if (!(med.stock_quantity <= (med.low_stock_threshold || 10) && med.stock_quantity > 0)) return false;
             }
             if (quickFilter === 'out_of_stock') {
                 if (!(med.stock_quantity <= 0)) return false;
             }
             if (quickFilter === 'in_stock') {
-                if (!(med.stock_quantity > (med.low_stock_threshold || 5))) return false;
+                if (!(med.stock_quantity > (med.low_stock_threshold || 10))) return false;
             }
             if (quickFilter === 'expired') {
                 if (!med.is_expired) return false;
@@ -164,8 +164,8 @@ const InventoryList = () => {
 
     // Stats
     const totalItems = medications.length;
-    const inStockCount = medications.filter(m => m.stock_quantity > (m.low_stock_threshold || 5)).length;
-    const lowStockCount = medications.filter(m => m.stock_quantity <= (m.low_stock_threshold || 5) && m.stock_quantity > 0).length;
+    const inStockCount = medications.filter(m => m.stock_quantity > (m.low_stock_threshold || 10)).length;
+    const lowStockCount = medications.filter(m => m.stock_quantity <= (m.low_stock_threshold || 10) && m.stock_quantity > 0).length;
     const outStockCount = medications.filter(m => m.stock_quantity <= 0).length;
     const expiredCount = medications.filter(m => m.is_expired).length;
     const expiringSoonCount = medications.filter(m => m.days_until_expiration !== null && m.days_until_expiration !== undefined && m.days_until_expiration >= 0 && m.days_until_expiration <= 30).length;
@@ -176,7 +176,7 @@ const InventoryList = () => {
     const getStockColor = (med) => {
         if (med.is_expired) return theme.palette.error.dark;
         if (med.stock_quantity <= 0) return theme.palette.error.main;
-        if (med.stock_quantity <= (med.low_stock_threshold || 5)) return theme.palette.warning.main;
+        if (med.stock_quantity <= (med.low_stock_threshold || 10)) return theme.palette.warning.main;
         return theme.palette.success.main;
     };
 
@@ -195,7 +195,7 @@ const InventoryList = () => {
     };
 
     const MedicationCard = ({ med, index }) => {
-        const isLow = med.stock_quantity <= (med.low_stock_threshold || 5) && med.stock_quantity > 0;
+        const isLow = med.stock_quantity <= (med.low_stock_threshold || 10) && med.stock_quantity > 0;
         const isOut = med.stock_quantity <= 0;
         const stockColor = getStockColor(med);
         const expirationChip = getExpirationChip(med);
@@ -372,12 +372,12 @@ const InventoryList = () => {
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.3 }}>
                                 <Typography variant="caption" color="text.secondary">Niveau de stock</Typography>
                                 <Typography variant="caption" fontWeight="bold" sx={{ color: stockColor }}>
-                                    {med.stock_quantity} / {(med.low_stock_threshold || 5) * 2}
+                                    {med.stock_quantity} / {(med.low_stock_threshold || 10) * 2}
                                 </Typography>
                             </Box>
                             <LinearProgress
                                 variant="determinate"
-                                value={Math.min(100, (med.stock_quantity / ((med.low_stock_threshold || 5) * 2)) * 100)}
+                                value={Math.min(100, (med.stock_quantity / ((med.low_stock_threshold || 10) * 2)) * 100)}
                                 sx={{
                                     height: 6,
                                     borderRadius: 3,
