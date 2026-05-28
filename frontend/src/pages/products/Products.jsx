@@ -522,6 +522,25 @@ function Products() {
               </Typography>
             </Box>
 
+            {/* Description / Avis */}
+            {product.description && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  mb: 1,
+                  fontStyle: 'italic',
+                  lineHeight: 1.4,
+                }}
+              >
+                {product.description}
+              </Typography>
+            )}
+
             {/* Info Stack */}
             <Stack spacing={0.8} sx={{ mb: 1.5 }}>
               {/* Stock info for physical */}

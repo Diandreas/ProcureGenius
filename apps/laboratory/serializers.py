@@ -293,7 +293,7 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
     """Serializer for LabOrderItem"""
     test_name = serializers.CharField(source='lab_test.name', read_only=True)
     test_code = serializers.CharField(source='lab_test.test_code', read_only=True)
-    price = serializers.DecimalField(source='lab_test.price', max_digits=10, decimal_places=2, read_only=True)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     abnormality_type_display = serializers.CharField(source='get_abnormality_type_display', read_only=True)
     result_template = serializers.CharField(source='lab_test.result_template', read_only=True)
     normal_range_male = serializers.CharField(source='lab_test.normal_range_male', read_only=True)

@@ -637,7 +637,14 @@ const LabOrderForm = () => {
                                                         <TableCell>
                                                             <Chip label={test.category_name || 'N/A'} size="small" variant="outlined" />
                                                         </TableCell>
-                                                        <TableCell>{test.price || 0} XAF</TableCell>
+                                                        <TableCell>
+                                            {getEffectivePrice(test)} XAF
+                                            {subcontractorPrices[test.id] !== undefined && (
+                                                <Typography variant="caption" color="text.secondary" display="block">
+                                                    (catalogue: {test.price || 0})
+                                                </Typography>
+                                            )}
+                                        </TableCell>
                                                         <TableCell onClick={(e) => e.stopPropagation()}>
                                                             {isSelected ? (
                                                                 <TextField

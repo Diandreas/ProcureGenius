@@ -11,6 +11,8 @@ from datetime import timedelta
 import logging
 import threading
 
+LAB_ORDER_AUDIT_FIELDS = ['status', 'priority', 'subcontractor_id', 'payment_method']
+
 logger = logging.getLogger(__name__)
 
 # Thread-local pour stocker l'utilisateur courant (injecté depuis les views)
@@ -235,3 +237,93 @@ def subcontractor_price_post_save(sender, instance, created, **kwargs):
                                 target_type=LabAuditLog.TARGET_SUBCONTRACTOR_PRICE, target_obj=instance, changes=changes)
     except Exception as e:
         logger.warning(f"LabAuditLog post_save SubcontractorPrice failed: {e}")
+
+
+# =============================================================================
+# Audit log signals — LabOrder
+# =============================================================================
+
+@receiver(pre_save, sender=LabOrder)
+def lab_order_pre_save(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            instance._pre_save_snapshot = LabOrder.objects.get(pk=instance.pk)
+        except LabOrder.DoesNotExist:
+            instance._pre_save_snapshot = None
+    else:
+        instance._pre_save_snapshot = None
+
+
+@receiver(post_save, sender=LabOrder)
+def lab_order_post_save(sender, instance, created, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user() or instance.ordered_by
+    try:
+        if created:
+            LabAuditLog.log(
+                user=user,
+                action=LabAuditLog.ACTION_CREATE,
+                target_type=LabAuditLog.TARGET_LAB_ORDER,
+                target_obj=instance,
+                changes={'status': [None, instance.status], 'total_price': [None, str(instance.total_price)]},
+            )
+        else:
+            snapshot = getattr(instance, '_pre_save_snapshot', None)
+            changes = _diff(snapshot, instance, LAB_ORDER_AUDIT_FIELDS) if snapshot else {}
+            if changes:
+                LabAuditLog.log(
+                    user=user,
+                    action=LabAuditLog.ACTION_UPDATE,
+                    target_type=LabAuditLog.TARGET_LAB_ORDER,
+                    target_obj=instance,
+                    changes=changes,
+                )
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_save LabOrder failed: {e}")
+
+
+@receiver(post_delete, sender=LabOrder)
+def lab_order_post_delete(sender, instance, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user()
+    try:
+        LabAuditLog.log(
+            user=user,
+            action=LabAuditLog.ACTION_DELETE,
+            target_type=LabAuditLog.TARGET_LAB_ORDER,
+            target_obj=instance,
+        )
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_delete LabOrder failed: {e}")
+
+
+# =============================================================================
+# Audit log signals — Invoice (annulation = suppression logique)
+# =============================================================================
+
+@receiver(post_save, sender=Invoice)
+def invoice_audit_log(sender, instance, created, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user() or getattr(instance, 'created_by', None)
+    try:
+        if created:
+            LabAuditLog.log(
+                user=user,
+                action=LabAuditLog.ACTION_CREATE,
+                target_type='invoice',
+                target_obj=instance,
+                changes={'status': [None, instance.status], 'total': [None, str(instance.total_amount)]},
+            )
+        else:
+            old_status = getattr(instance, '_old_status', None)
+            if old_status and old_status != instance.status:
+                action = LabAuditLog.ACTION_DELETE if instance.status == 'cancelled' else LabAuditLog.ACTION_UPDATE
+                LabAuditLog.log(
+                    user=user,
+                    action=action,
+                    target_type='invoice',
+                    target_obj=instance,
+                    changes={'status': [old_status, instance.status]},
+                )
+    except Exception as e:
+        logger.warning(f"LabAuditLog invoice_audit_log failed: {e}")
