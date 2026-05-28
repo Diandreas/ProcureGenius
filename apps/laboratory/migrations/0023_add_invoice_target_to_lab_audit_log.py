@@ -7,6 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('laboratory', '0022_merge_0018_merge_20260421_0621_0021_add_lab_audit_log'),
+        ('laboratory', '0020_merge_20260509_2323'),
     ]
 
     operations = [

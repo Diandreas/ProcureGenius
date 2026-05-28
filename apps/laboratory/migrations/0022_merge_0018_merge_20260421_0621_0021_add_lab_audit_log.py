@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('laboratory', '0020_merge_20260509_2323'),
+        ('laboratory', '0018_merge_20260421_0621'),
         ('laboratory', '0021_add_lab_audit_log'),
     ]
 
