@@ -102,6 +102,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',  # Requis pour django-allauth
+    'saas_procurement.middleware.ClearThreadLocalUserMiddleware',
 ]
 
 ROOT_URLCONF = 'saas_procurement.urls'

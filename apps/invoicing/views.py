@@ -375,20 +375,45 @@ def invoice_bulk_action(request):
         messages.warning(request, 'Aucune facture sélectionnée.')
         return redirect('invoicing:invoice_list')
     
-    invoices = Invoice.objects.filter(pk__in=invoice_ids)
-    
+    invoices = list(Invoice.objects.filter(pk__in=invoice_ids))
+
     if action == 'send':
-        invoices.update(status='sent')
+        for inv in invoices:
+            inv.status = 'sent'
+            inv.save(update_fields=['status'])
         messages.success(request, f'{len(invoices)} facture(s) envoyée(s).')
     elif action == 'mark_paid':
-        invoices.update(status='paid')
+        for inv in invoices:
+            inv.status = 'paid'
+            inv.save(update_fields=['status'])
         messages.success(request, f'{len(invoices)} facture(s) marquée(s) comme payée(s).')
     elif action == 'cancel':
-        invoices.update(status='cancelled')
+        from apps.laboratory.signals import set_current_user
+        set_current_user(request.user)
+        for inv in invoices:
+            inv.cancelled_by = request.user
+            inv.status = 'cancelled'
+            inv.save(update_fields=['status', 'cancelled_by'])
         messages.success(request, f'{len(invoices)} facture(s) annulée(s).')
     elif action == 'delete':
-        count = invoices.count()
-        invoices.delete()
+        from apps.laboratory.signals import set_current_user
+        from apps.laboratory.models import LabAuditLog
+        set_current_user(request.user)
+        count = 0
+        for inv in invoices:
+            try:
+                LabAuditLog.log(
+                    user=request.user,
+                    action=LabAuditLog.ACTION_DELETE,
+                    target_type=LabAuditLog.TARGET_INVOICE,
+                    target_obj=inv,
+                    changes={'numero': [inv.invoice_number, None], 'montant': [str(inv.total_amount), None]},
+                )
+                inv._allow_deletion = True
+                inv.delete()
+                count += 1
+            except Exception:
+                pass
         messages.success(request, f'{count} facture(s) supprimée(s).')
     
     return redirect('invoicing:invoice_list')

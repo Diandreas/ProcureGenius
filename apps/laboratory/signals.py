@@ -304,26 +304,32 @@ def lab_order_post_delete(sender, instance, **kwargs):
 @receiver(post_save, sender=Invoice)
 def invoice_audit_log(sender, instance, created, **kwargs):
     from .models import LabAuditLog
-    user = get_current_user() or getattr(instance, 'created_by', None)
+    # Pour les créations : utiliser created_by (fiable, stocké en DB).
+    # Pour les modifications de statut : utiliser cancelled_by ou created_by.
+    # get_current_user() est intentionnellement évité ici car le thread-local
+    # peut être contaminé par des actions d'autres utilisateurs antérieures.
     try:
         if created:
+            user = getattr(instance, 'created_by', None)
             LabAuditLog.log(
                 user=user,
                 action=LabAuditLog.ACTION_CREATE,
-                target_type='invoice',
+                target_type=LabAuditLog.TARGET_INVOICE,
                 target_obj=instance,
-                changes={'status': [None, instance.status], 'total': [None, str(instance.total_amount)]},
+                changes={'status': [None, instance.status], 'montant': [None, str(instance.total_amount)]},
             )
         else:
             old_status = getattr(instance, '_old_status', None)
             if old_status and old_status != instance.status:
+                # Pour l'annulation, cancelled_by est plus précis
+                user = getattr(instance, 'cancelled_by', None) or getattr(instance, 'created_by', None)
                 action = LabAuditLog.ACTION_DELETE if instance.status == 'cancelled' else LabAuditLog.ACTION_UPDATE
                 LabAuditLog.log(
                     user=user,
                     action=action,
-                    target_type='invoice',
+                    target_type=LabAuditLog.TARGET_INVOICE,
                     target_obj=instance,
-                    changes={'status': [old_status, instance.status]},
+                    changes={'statut': [old_status, instance.status]},
                 )
     except Exception as e:
         logger.warning(f"LabAuditLog invoice_audit_log failed: {e}")

@@ -2580,9 +2580,14 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         _allow_deletion pour contourner le signal de protection comptable.
         """
         from rest_framework.exceptions import PermissionDenied as DRFPermissionDenied
+        from apps.laboratory.signals import set_current_user
+        from apps.laboratory.models import LabAuditLog
+
         user_role = getattr(self.request.user, 'role', None)
         if not self.request.user.is_superuser and user_role not in ('admin', 'manager', 'owner'):
             raise DRFPermissionDenied("Seuls les administrateurs et managers peuvent supprimer une facture.")
+
+        set_current_user(self.request.user)
 
         # Détacher les LabOrder liés (on_delete=PROTECT)
         try:
@@ -2593,6 +2598,22 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         # Détacher les coupons appliqués (M2M)
         try:
             instance.applied_coupons.clear()
+        except Exception:
+            pass
+
+        # Logger la suppression dans le journal d'audit avant de supprimer
+        try:
+            LabAuditLog.log(
+                user=self.request.user,
+                action=LabAuditLog.ACTION_DELETE,
+                target_type=LabAuditLog.TARGET_INVOICE,
+                target_obj=instance,
+                changes={
+                    'numero': [instance.invoice_number, None],
+                    'montant': [str(instance.total_amount), None],
+                    'statut': [instance.status, 'supprimé'],
+                },
+            )
         except Exception:
             pass
 
