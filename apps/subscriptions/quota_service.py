@@ -40,12 +40,14 @@ class QuotaService:
             'limit_field': 'max_purchase_orders_per_month',
             'name': _('Bons de commande'),
             'unit': _('ce mois'),
+            'feature': 'has_purchase_orders',
         },
         'ai_requests': {
             'field': 'ai_requests_this_month',
             'limit_field': 'max_ai_requests_per_month',
             'name': _('Requêtes IA'),
             'unit': _('ce mois'),
+            'feature': 'has_ai_assistant',
         },
         'clients': {
             'limit_field': 'max_clients',
@@ -60,6 +62,7 @@ class QuotaService:
             'unit': _('total'),
             'count_model': 'apps.suppliers.models.Supplier',
             'count_filter': 'organization',
+            'feature': 'has_suppliers',
         },
         'products': {
             'limit_field': 'max_products',
@@ -207,9 +210,18 @@ class QuotaService:
         if not subscription:
             return {}
 
+        plan = subscription.plan
         quota_status = {}
 
-        for quota_type in cls.QUOTA_TYPES.keys():
+        for quota_type, conf in cls.QUOTA_TYPES.items():
+            # Ne pas afficher les quotas dont la fonctionnalité n'est pas incluse
+            # dans le plan (sinon un quota "illimité" trompeur s'affiche pour une
+            # fonctionnalité en réalité verrouillée — ex. Bons de commande / IA
+            # sur le plan gratuit).
+            feature = conf.get('feature')
+            if feature and not getattr(plan, feature, False):
+                continue
+
             try:
                 status = cls.check_quota(organization, quota_type, raise_exception=False)
                 quota_status[quota_type] = status

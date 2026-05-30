@@ -18,10 +18,10 @@ PLANS = [
             'max_invoices_per_month': 30,
             'max_clients': 20,
             'max_products': 50,
-            'max_purchase_orders_per_month': None,
-            'max_suppliers': None,
+            'max_purchase_orders_per_month': 0,  # verrouillé (has_purchase_orders=False)
+            'max_suppliers': 0,                  # verrouillé (has_suppliers=False)
             'max_storage_mb': 100,
-            'max_ai_requests_per_month': None,
+            'max_ai_requests_per_month': 0,      # verrouillé (has_ai_assistant=False)
             'has_ads': True,
             'has_ai_assistant': False,
             'has_purchase_orders': False,
@@ -135,6 +135,15 @@ class Command(BaseCommand):
             )
             action = 'created' if created else 'updated'
             self.stdout.write(self.style.SUCCESS(f'[OK] Plan {plan.name} {action}'))
+
+        # Désactiver les plans legacy (standard/premium) qui ne font plus partie
+        # de l'offre canonique free/pro/business/enterprise.
+        canonical = [p['code'] for p in PLANS]
+        legacy = SubscriptionPlan.objects.exclude(code__in=canonical).filter(is_active=True)
+        for plan in legacy:
+            plan.is_active = False
+            plan.save(update_fields=['is_active'])
+            self.stdout.write(self.style.WARNING(f'[OK] Plan legacy {plan.name} désactivé'))
 
         self.stdout.write('\n' + '=' * 60)
         self.stdout.write(self.style.SUCCESS('\n[SUCCESS] Subscription plans successfully populated!\n'))

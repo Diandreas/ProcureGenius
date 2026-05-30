@@ -238,3 +238,6 @@ temp/
 
 # Notes de travail internes de l'assistant (ne pas committer)
 memory/
+
+# Config MCP locale (contient des tokens API — ne pas committer)
+.mcp.json

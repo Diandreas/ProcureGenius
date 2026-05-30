@@ -401,6 +401,18 @@ class Subscription(models.Model):
         else:
             return True, 0, 0
 
+        # Garde-fou : si la fonctionnalité associée n'est pas incluse dans le plan,
+        # le quota est verrouillé (0 autorisé) quelle que soit la valeur en base.
+        # Évite qu'un `None`/`-1` mal configuré n'ouvre un accès illimité (ex. IA
+        # ou Bons de commande sur le plan gratuit).
+        feature_gate = {
+            'purchase_orders': 'has_purchase_orders',
+            'ai_requests': 'has_ai_assistant',
+            'suppliers': 'has_suppliers',
+        }.get(quota_type)
+        if feature_gate and not getattr(self.plan, feature_gate, False):
+            return False, used, 0
+
         if limit is None or limit == -1:
             # Illimité
             return True, used, -1
