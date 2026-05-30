@@ -141,54 +141,12 @@ function InvoiceDetail() {
         title: isMobile ? invoice.invoice_number : '',
         showTitle: isMobile,
         actions: isMobile ? (
-          <Stack direction="row" spacing={0.5}>
-            <IconButton
-              onClick={() => setPdfDialogOpen(true)}
-              size="small"
-              sx={{ color: 'primary.main' }}
-            >
-              <PictureAsPdf fontSize="small" />
+          <Stack direction="row" spacing={0.25}>
+            <IconButton onClick={handleEdit} size="small" sx={{ color: 'text.secondary' }}>
+              <Edit sx={{ fontSize: 18 }} />
             </IconButton>
-            <IconButton
-              onClick={() => {
-                const defaultMessage = t('invoices:dialogs.sendEmail.defaultMessage', {
-                  name: invoice.client?.name || 'Client',
-                  number: invoice.invoice_number
-                });
-                setEmailData({
-                  recipient_email: invoice.client?.email || '',
-                  custom_message: defaultMessage
-                });
-                setSendEmailDialogOpen(true);
-              }}
-              disabled={!invoice.client?.email}
-              size="small"
-              sx={{ color: 'info.main' }}
-            >
-              <Email fontSize="small" />
-            </IconButton>
-            <IconButton
-              onClick={handleEdit}
-              size="small"
-              sx={{ color: 'grey.700' }}
-            >
-              <Edit fontSize="small" />
-            </IconButton>
-            {(['sent', 'pending'].includes(invoice.status) || isOverdue()) && (
-              <IconButton
-                onClick={() => setMarkPaidDialogOpen(true)}
-                size="small"
-                sx={{ color: 'success.main' }}
-              >
-                <Payment fontSize="small" />
-              </IconButton>
-            )}
-            <IconButton
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              size="small"
-              sx={{ color: 'text.secondary' }}
-            >
-              <MoreVert fontSize="small" />
+            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small" sx={{ color: 'text.secondary' }}>
+              <MoreVert sx={{ fontSize: 18 }} />
             </IconButton>
           </Stack>
         ) : null
@@ -325,6 +283,17 @@ function InvoiceDetail() {
     }
   };
 
+  const handleConvertQuote = async () => {
+    try {
+      const response = await invoicesAPI.convertQuote(id);
+      setInvoice(response.data.invoice || response.data);
+      enqueueSnackbar(response.data.message || 'Devis converti en facture.', { variant: 'success' });
+      await fetchInvoice();
+    } catch (error) {
+      enqueueSnackbar(error.response?.data?.error || 'Erreur lors de la conversion du devis.', { variant: 'error' });
+    }
+  };
+
   const handleSendEmail = async () => {
     if (!emailData.recipient_email) {
       enqueueSnackbar(t('invoices:messages.emailRequired') || 'Email destinataire requis', { variant: 'error' });
@@ -445,33 +414,19 @@ function InvoiceDetail() {
   const MobileInvoiceInfoCard = ({ invoice }) => (
     <Card sx={{
       mb: 1.5,
-      borderRadius: 3,
-      boxShadow: theme => theme.palette.mode === 'dark'
-        ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-        : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-      border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-      overflow: 'hidden',
-      transition: 'all 0.3s ease'
-    }}>
-      <CardContent sx={{ p: 1.25, '&:last-child': { pb: 1.25 } }}>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-          <Box flex={1} mr={1}>
-            <Typography variant="h6" sx={{
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              mb: 0.25,
-              letterSpacing: '-0.02em',
-              lineHeight: 1.2,
-              color: 'text.primary'
-            }}>
-              {invoice.title}
-            </Typography>
-            <Typography variant="caption" sx={{
-              fontSize: '0.7rem',
-              color: 'text.secondary',
-              fontWeight: 500,
-              letterSpacing: '0.02em'
-            }}>
+      borderRadius: 2,
+      border: '1px solid',
+      borderColor: 'divider',
+    }} elevation={0}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box flex={1} mr={1} minWidth={0}>
+            {invoice.title && (
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2, mb: 0.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {invoice.title}
+              </Typography>
+            )}
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
               {invoice.invoice_number}
             </Typography>
           </Box>
@@ -480,51 +435,18 @@ function InvoiceDetail() {
             label={isOverdue() ? t('invoices:labels.daysOverdue', { days: getDaysOverdue() }) : getStatusLabel(invoice.status)}
             color={isOverdue() ? 'error' : getStatusColor(invoice.status)}
             size="small"
-            sx={{
-              fontSize: '0.65rem',
-              height: 22,
-              fontWeight: 600,
-              '& .MuiChip-icon': { fontSize: '0.9rem' }
-            }}
+            sx={{ fontSize: '0.65rem', height: 22, fontWeight: 600, '& .MuiChip-icon': { fontSize: '0.9rem' }, flexShrink: 0 }}
           />
         </Box>
 
         {invoice.description && (
-          <Typography variant="body2" sx={{
-            fontSize: '0.75rem',
-            color: 'text.secondary',
-            mb: 1,
-            lineHeight: 1.4,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden'
-          }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', mt: 0.75, lineHeight: 1.4 }}>
             {invoice.description}
           </Typography>
         )}
 
-        <Divider sx={{ my: 1 }} />
-
-        <Stack direction="row" spacing={0.5} justifyContent="center">
-          <IconButton
-            size="small"
-            onClick={() => setPdfDialogOpen(true)}
-            sx={{
-              bgcolor: 'primary.50',
-              color: 'primary.main',
-              width: 32,
-              height: 32,
-              borderRadius: 1,
-              '&:hover': {
-                bgcolor: 'primary.main',
-                color: 'white',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.25)'
-              },
-              transition: 'all 0.2s'
-            }}
-          >
+        <Stack direction="row" spacing={0.5} justifyContent="center" sx={{ display: 'none' }}>
+          <IconButton size="small">
             <PictureAsPdf sx={{ fontSize: '1.1rem' }} />
           </IconButton>
           <Tooltip
@@ -591,6 +513,17 @@ function InvoiceDetail() {
           >
             <Edit sx={{ fontSize: '1.1rem' }} />
           </IconButton>
+          {invoice.status === 'quote' && (
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<Receipt sx={{ fontSize: '1.1rem' }} />}
+              onClick={handleConvertQuote}
+              sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+            >
+              Convertir en facture
+            </Button>
+          )}
           {invoice.status === 'draft' && (
             <IconButton
               size="small"
@@ -758,7 +691,33 @@ Cordialement`
               open={Boolean(anchorEl)}
               onClose={() => setAnchorEl(null)}
             >
-              <MenuItem onClick={() => setAddItemDialogOpen(true)} disabled={invoice.status !== 'draft'}>
+              <MenuItem onClick={() => { setPdfDialogOpen(true); setAnchorEl(null); }}>
+                <PictureAsPdf fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
+                {t('invoices:buttons.generatePdf')}
+              </MenuItem>
+              <MenuItem
+                disabled={!invoice.client?.email}
+                onClick={() => {
+                  setEmailData({ recipient_email: invoice.client?.email || '', custom_message: '' });
+                  setSendEmailDialogOpen(true);
+                  setAnchorEl(null);
+                }}
+              >
+                <Email fontSize="small" sx={{ mr: 1, color: 'info.main' }} />
+                {t('invoices:buttons.sendEmail')}
+              </MenuItem>
+              {(['sent', 'pending'].includes(invoice.status) || isOverdue()) && (
+                <MenuItem onClick={() => { setMarkPaidDialogOpen(true); setAnchorEl(null); }}>
+                  <Payment fontSize="small" sx={{ mr: 1, color: 'success.main' }} />
+                  {t('invoices:buttons.markPaid')}
+                </MenuItem>
+              )}
+              <MenuItem onClick={() => { setAddPaymentOpen(true); setAnchorEl(null); }}>
+                <Add fontSize="small" sx={{ mr: 1, color: 'success.main' }} />
+                Ajouter un paiement
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={() => { setAddItemDialogOpen(true); setAnchorEl(null); }} disabled={invoice.status !== 'draft'}>
                 <Add fontSize="small" sx={{ mr: 1 }} />
                 {t('invoices:buttons.addItem')}
               </MenuItem>
@@ -879,43 +838,32 @@ Cordialement`
             </Card>
           )}
 
-          {/* Financial Summary Mobile - Ultra Compact */}
-          <Card sx={{
-            mb: 1.5,
-            borderRadius: 3,
-            background: theme => theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #5568d3 0%, #6941a8 100%)'
-              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            boxShadow: theme => theme.palette.mode === 'dark'
-              ? '4px 4px 12px rgba(0,0,0,0.6), -2px -2px 10px rgba(102, 126, 234, 0.1)'
-              : '6px 6px 16px rgba(102, 126, 234, 0.3), -4px -4px 12px rgba(255,255,255,0.5)',
-            overflow: 'hidden',
-            transition: 'all 0.3s ease'
-          }}>
+          {/* Financial Summary Mobile */}
+          <Card sx={{ mb: 1.5, borderRadius: 2, border: '1px solid', borderColor: 'divider' }} elevation={0}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Stack spacing={0.75}>
+              <Stack spacing={0.5}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
                     {t('invoices:labels.subtotal')}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+                  <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
                     {formatCurrency(invoice.subtotal || 0)}
                   </Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
                     {t('invoices:labels.taxes')}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>
+                  <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
                     {formatCurrency(invoice.tax_amount || 0)}
                   </Typography>
                 </Box>
-                <Divider sx={{ borderColor: 'rgba(255,255,255,0.2)', my: 0.5 }} />
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'white', fontWeight: 700 }}>
+                <Divider />
+                <Box display="flex" justifyContent="space-between" alignItems="center" pt={0.25}>
+                  <Typography variant="body2" fontWeight={700}>
                     {t('invoices:labels.total')}
                   </Typography>
-                  <Typography variant="h6" sx={{ fontSize: '1.1rem', color: 'white', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                  <Typography variant="subtitle1" fontWeight={800} color="primary.main" sx={{ letterSpacing: '-0.02em' }}>
                     {formatCurrency(invoice.total_amount || 0)}
                   </Typography>
                 </Box>
@@ -1061,9 +1009,11 @@ Cordialement`
                       <Typography variant="caption" fontWeight={700} color="success.main" sx={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                         {formatCurrency(p.amount)}
                       </Typography>
-                      <IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)} sx={{ p: 0.25 }}>
-                        <Delete sx={{ fontSize: '0.9rem' }} />
-                      </IconButton>
+                      {p.can_delete && (
+                        <IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)} sx={{ p: 0.25 }}>
+                          <Delete sx={{ fontSize: '0.9rem' }} />
+                        </IconButton>
+                      )}
                     </Box>
                   ))}
                 </Stack>
@@ -1387,10 +1337,12 @@ Cordialement`
                             {formatCurrency(p.balance_after ?? 0)}
                           </TableCell>
                           <TableCell align="right" sx={{ py: 0.5 }}>
-                            <Tooltip title="Supprimer ce paiement">
-                              <IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)}>
-                                <Delete fontSize="small" />
-                              </IconButton>
+                            <Tooltip title={p.can_delete ? 'Supprimer ce paiement' : 'Suppression impossible après 30 min'}>
+                              <span>
+                                <IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)} disabled={!p.can_delete}>
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                              </span>
                             </Tooltip>
                           </TableCell>
                         </TableRow>

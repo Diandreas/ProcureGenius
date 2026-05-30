@@ -1231,6 +1231,27 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         })
 
     @action(detail=True, methods=['post'])
+    def convert_to_invoice(self, request, pk=None):
+        """Crée (ou récupère) la facture brouillon issue de ce bon de commande."""
+        purchase_order = self.get_object()
+        invoice, created = purchase_order.convert_to_invoice(
+            user=request.user if request.user.is_authenticated else None
+        )
+        from .serializers import InvoiceSerializer
+        return Response(
+            {
+                'invoice': InvoiceSerializer(invoice).data,
+                'created': created,
+                'message': (
+                    'Facture créée à partir du bon de commande.'
+                    if created else
+                    'Une facture existait déjà pour ce bon de commande.'
+                ),
+            },
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=['post'])
     def send(self, request, pk=None):
         """Envoyer un bon de commande par email"""
         purchase_order = self.get_object()
@@ -1580,6 +1601,20 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    @action(detail=True, methods=['post'], url_path='convert-to-invoice')
+    def convert_quote(self, request, pk=None):
+        """Convertit un devis (statut 'quote') en facture brouillon."""
+        invoice = self.get_object()
+        try:
+            invoice.convert_quote_to_draft()
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(invoice)
+        return Response({
+            'message': 'Devis converti en facture brouillon.',
+            'invoice': serializer.data,
+        })
+
     @action(detail=True, methods=['get', 'post'], url_path='payments')
     def payments(self, request, pk=None):
         """Liste et ajout de paiements sur une facture"""
@@ -1614,10 +1649,18 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['delete'], url_path='payments/(?P<payment_id>[^/.]+)')
     def delete_payment(self, request, pk=None, payment_id=None):
-        """Supprimer un paiement d'une facture"""
+        """Supprimer un paiement — seulement dans les 30 minutes suivant sa création"""
+        from django.utils import timezone
+        from datetime import timedelta
         invoice = self.get_object()
         try:
             payment = Payment.objects.get(id=payment_id, invoice=invoice)
+            age = timezone.now() - payment.created_at
+            if age > timedelta(minutes=30):
+                return Response(
+                    {'error': 'Ce paiement ne peut plus être supprimé (délai de 30 minutes dépassé).'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             payment.delete()
             invoice.refresh_from_db()
             return Response({

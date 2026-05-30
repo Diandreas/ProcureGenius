@@ -16,7 +16,11 @@ class SubscriptionPlan(models.Model):
     """
 
     PLAN_CHOICES = [
-        ('free', _('Free')),
+        ('free', _('Libre')),
+        ('pro', _('Pro')),
+        ('business', _('Business')),
+        ('enterprise', _('Enterprise')),
+        # legacy
         ('standard', _('Standard')),
         ('premium', _('Premium')),
     ]
@@ -140,6 +144,11 @@ class SubscriptionPlan(models.Model):
         verbose_name=_("Analytics avancés")
     )
 
+    has_accounting = models.BooleanField(
+        default=False,
+        verbose_name=_("Comptabilité")
+    )
+
     # Configuration
     trial_days = models.IntegerField(
         default=0,
@@ -154,6 +163,14 @@ class SubscriptionPlan(models.Model):
     sort_order = models.IntegerField(
         default=0,
         verbose_name=_("Ordre d'affichage")
+    )
+
+    # Stripe Price IDs
+    stripe_price_id_monthly = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Stripe Price ID mensuel")
+    )
+    stripe_price_id_yearly = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Stripe Price ID annuel")
     )
 
     # Timestamps
@@ -250,12 +267,13 @@ class Subscription(models.Model):
     payment_method = models.CharField(
         max_length=50,
         choices=[
+            ('stripe', 'Stripe'),
             ('paypal', 'PayPal'),
             ('credit_card', _('Carte de crédit')),
             ('bank_transfer', _('Virement bancaire')),
             ('manual', _('Manuel (admin)')),
         ],
-        default='paypal',
+        default='stripe',
         verbose_name=_("Méthode de paiement")
     )
 
@@ -263,6 +281,17 @@ class Subscription(models.Model):
         max_length=255,
         blank=True,
         verbose_name=_("ID abonnement PayPal")
+    )
+
+    # Stripe
+    stripe_customer_id = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Stripe Customer ID")
+    )
+    stripe_subscription_id = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Stripe Subscription ID")
+    )
+    stripe_price_id = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Stripe Price ID actuel")
     )
 
     # Compteurs d'utilisation mensuelle (réinitialisés le 1er du mois)
@@ -298,27 +327,32 @@ class Subscription(models.Model):
         return f"{self.organization.name} - {self.plan.name} ({self.status})"
 
     def save(self, *args, **kwargs):
-        """Auto-calculer trial_ends_at et current_period lors de la création"""
-        if not self.pk:
-            # Nouvel abonnement
+        """Auto-calculer current_period lors de la création si non fourni.
+
+        On ne force plus le statut ni les dates lorsqu'ils sont déjà renseignés
+        explicitement par l'appelant (cf. `start_for_new_organization`), afin de
+        garder une seule source de vérité pour la logique d'essai.
+        """
+        if not self.pk and self.current_period_start is None:
+            # Création sans dates explicites : on déduit du plan.
+            self.current_period_start = timezone.now()
             if self.plan.trial_days > 0:
                 self.trial_ends_at = timezone.now() + timedelta(days=self.plan.trial_days)
-                self.current_period_start = timezone.now()
                 self.current_period_end = self.trial_ends_at
                 self.status = 'trial'
             else:
-                self.current_period_start = timezone.now()
-                if self.billing_period == 'monthly':
-                    self.current_period_end = timezone.now() + timedelta(days=30)
-                else:
-                    self.current_period_end = timezone.now() + timedelta(days=365)
+                days = 30 if self.billing_period == 'monthly' else 365
+                self.current_period_end = timezone.now() + timedelta(days=days)
                 self.status = 'active'
 
         super().save(*args, **kwargs)
 
-        # Synchroniser subscription_type dans Organization
+        # Synchroniser subscription_type ET les modules débloqués dans Organization.
+        # Source de vérité unique : PLAN_MODULES (apps.core.modules).
+        from apps.core.modules import get_modules_for_plan
         self.organization.subscription_type = self.plan.code
-        self.organization.save(update_fields=['subscription_type'])
+        self.organization.enabled_modules = get_modules_for_plan(self.plan.code)
+        self.organization.save(update_fields=['subscription_type', 'enabled_modules'])
 
     @property
     def is_trial(self):
@@ -409,6 +443,70 @@ class Subscription(models.Model):
         self.ai_requests_this_month = 0
         self.save(update_fields=['invoices_this_month', 'purchase_orders_this_month', 'ai_requests_this_month'])
 
+    @classmethod
+    def start_for_new_organization(cls, organization):
+        """
+        Crée l'abonnement initial d'une nouvelle organisation.
+
+        Stratégie « essai sans carte » : on débloque les fonctionnalités du plan
+        d'essai (TRIAL_PLAN_CODE, ex. Pro) pendant TRIAL_PERIOD_DAYS jours, sans
+        demander de carte. À l'expiration, `downgrade_to_free()` ramène au plan
+        gratuit tant que l'utilisateur n'a pas payé via Stripe.
+
+        Retombe proprement sur le plan gratuit si le plan d'essai n'existe pas.
+        """
+        from django.conf import settings
+
+        trial_days = getattr(settings, 'TRIAL_PERIOD_DAYS', 30)
+        trial_code = getattr(settings, 'TRIAL_PLAN_CODE', 'pro')
+
+        trial_plan = cls._safe_get_plan(trial_code) if trial_days > 0 else None
+        if trial_plan:
+            return cls.objects.create(
+                organization=organization,
+                plan=trial_plan,
+                billing_period='monthly',
+                status='trial',
+                trial_ends_at=timezone.now() + timedelta(days=trial_days),
+                current_period_start=timezone.now(),
+                current_period_end=timezone.now() + timedelta(days=trial_days),
+            )
+
+        free_plan = cls._safe_get_plan('free')
+        if not free_plan:
+            return None
+        return cls.objects.create(
+            organization=organization,
+            plan=free_plan,
+            billing_period='monthly',
+            status='active',
+            current_period_start=timezone.now(),
+            current_period_end=timezone.now() + timedelta(days=365 * 10),
+        )
+
+    @staticmethod
+    def _safe_get_plan(code):
+        try:
+            return SubscriptionPlan.objects.get(code=code, is_active=True)
+        except SubscriptionPlan.DoesNotExist:
+            return None
+
+    def downgrade_to_free(self):
+        """Ramène l'abonnement au plan gratuit (essai expiré, sans paiement)."""
+        free_plan = self._safe_get_plan('free')
+        if not free_plan:
+            return False
+        self.plan = free_plan
+        self.status = 'active'
+        self.trial_ends_at = None
+        self.current_period_start = timezone.now()
+        self.current_period_end = timezone.now() + timedelta(days=365 * 10)
+        self.save(update_fields=[
+            'plan', 'status', 'trial_ends_at',
+            'current_period_start', 'current_period_end', 'updated_at',
+        ])
+        return True
+
     def renew_period(self):
         """Renouvelle la période d'abonnement"""
         if self.billing_period == 'monthly':
@@ -440,7 +538,8 @@ class SubscriptionPayment(models.Model):
 
     STATUS_CHOICES = [
         ('pending', _('En attente')),
-        ('success', _('Réussi')),
+        ('completed', _('Réussi')),
+        ('success', _('Réussi (legacy)')),
         ('failed', _('Échoué')),
         ('refunded', _('Remboursé')),
     ]
@@ -490,11 +589,19 @@ class SubscriptionPayment(models.Model):
         verbose_name=_("ID commande PayPal")
     )
 
+    stripe_payment_intent_id = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name=_("Stripe Payment Intent ID")
+    )
+
     period_start = models.DateTimeField(
+        null=True, blank=True,
         verbose_name=_("Début de période couverte")
     )
 
     period_end = models.DateTimeField(
+        null=True, blank=True,
         verbose_name=_("Fin de période couverte")
     )
 

@@ -24,4 +24,9 @@ urlpatterns = [
 
     # Feature access check
     path('features/<str:feature_name>/', api_views.check_feature_access, name='check_feature_access'),
+
+    # Stripe
+    path('stripe/create-checkout/', api_views.stripe_create_checkout, name='stripe_create_checkout'),
+    path('stripe/webhook/', api_views.stripe_webhook, name='stripe_webhook'),
+    path('stripe/portal/', api_views.stripe_portal, name='stripe_portal'),
 ]

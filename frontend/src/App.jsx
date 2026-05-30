@@ -25,7 +25,8 @@ const Register      = React.lazy(() => import('./pages/auth/Register'));
 const OnboardingSetup = React.lazy(() => import('./pages/auth/OnboardingSetup'));
 
 const Landing          = React.lazy(() => import('./pages/Landing'));
-const Pricing          = React.lazy(() => import('./pages/Pricing'));
+const Pricing             = React.lazy(() => import('./pages/Pricing'));
+const SubscriptionSuccess = React.lazy(() => import('./pages/SubscriptionSuccess'));
 const Help             = React.lazy(() => import('./pages/Help'));
 const FAQ              = React.lazy(() => import('./pages/FAQ'));
 const KeyboardShortcuts = React.lazy(() => import('./pages/KeyboardShortcuts'));
@@ -53,6 +54,8 @@ const InvoiceForm   = React.lazy(() => import('./pages/invoices/InvoiceForm'));
 const Products      = React.lazy(() => import('./pages/products/Products'));
 const ProductDetail = React.lazy(() => import('./pages/products/ProductDetail'));
 const ProductForm   = React.lazy(() => import('./pages/products/ProductForm'));
+const ProductMargins = React.lazy(() => import('./pages/products/ProductMargins'));
+const RestockForecast = React.lazy(() => import('./pages/products/RestockForecast'));
 
 const Clients      = React.lazy(() => import('./pages/clients/Clients'));
 const ClientDetail = React.lazy(() => import('./pages/clients/ClientDetail'));
@@ -61,6 +64,7 @@ const ClientForm   = React.lazy(() => import('./pages/clients/ClientForm'));
 const Contracts      = React.lazy(() => import('./pages/contracts/Contracts'));
 const ContractDetail = React.lazy(() => import('./pages/contracts/ContractDetail'));
 const ContractForm   = React.lazy(() => import('./pages/contracts/ContractForm'));
+const ContractAnalyzer = React.lazy(() => import('./pages/contracts/ContractAnalyzer'));
 
 const SourcingEvents      = React.lazy(() => import('./pages/e-sourcing/SourcingEvents'));
 const SourcingEventForm   = React.lazy(() => import('./pages/e-sourcing/SourcingEventForm'));
@@ -815,7 +819,9 @@ function App() {
                           <Route path="/" element={<Navigate to="/landing" replace />} />
                           <Route path="/landing" element={<Landing />} />
                           <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
-                          <Route path="/pricing" element={<Navigate to="/landing#pricing-section" replace />} />
+                          <Route path="/pricing" element={<Pricing />} />
+                          <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+                          <Route path="/subscription/cancel" element={<Navigate to="/pricing" replace />} />
                           <Route path="/terms" element={<TermsOfService />} />
                           <Route path="/support" element={<PublicSupport />} />
                           <Route path="/documentation" element={<Documentation />} />
@@ -864,6 +870,8 @@ function App() {
                             {/* Products */}
                             <Route path="/products" element={<ModuleRoute module="products"><Products /></ModuleRoute>} />
                             <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
+                            <Route path="/products/margins" element={<ModuleRoute module="products"><ProductMargins /></ModuleRoute>} />
+                            <Route path="/products/restock" element={<ModuleRoute module="products"><RestockForecast /></ModuleRoute>} />
                             <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
                             <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
 
@@ -883,6 +891,7 @@ function App() {
 
                             {/* Contracts */}
                             <Route path="/contracts" element={<ModuleRoute module="contracts"><Contracts /></ModuleRoute>} />
+                            <Route path="/contracts/analyze" element={<ModuleRoute module="contracts"><ContractAnalyzer /></ModuleRoute>} />
                             <Route path="/contracts/new" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />
                             <Route path="/contracts/:id" element={<ModuleRoute module="contracts"><ContractDetail /></ModuleRoute>} />
                             <Route path="/contracts/:id/edit" element={<ModuleRoute module="contracts"><ContractForm /></ModuleRoute>} />

@@ -177,7 +177,7 @@ const SubscriptionStatus = ({ compact = false }) => {
             </Box>
           </Box>
 
-          {subscription.plan.code !== 'premium' && (
+          {!['business', 'enterprise'].includes(subscription.plan.code) && (
             <Button
               variant="contained"
               startIcon={<Upgrade />}

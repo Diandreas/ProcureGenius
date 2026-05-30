@@ -45,7 +45,7 @@ export const useTutorial = () => {
 const DEFAULT_TUTORIAL_STEPS = [
   {
     id: 'welcome',
-    title: 'Bienvenue sur ProcureGenius ! 🎉',
+    title: 'Bienvenue sur ProcureGenius ! ',
     description: 'Je suis Procury, votre assistant. Je vais vous faire découvrir les principales fonctionnalités de la plateforme.',
     target: null, // Pas de cible spécifique
     route: '/dashboard',
@@ -122,7 +122,7 @@ const DEFAULT_TUTORIAL_STEPS = [
   },
   {
     id: 'ai-assistant',
-    title: 'Assistant IA 🤖',
+    title: 'Assistant IA ',
     description: 'Votre assistant intelligent peut répondre à vos questions, générer des documents et vous aider dans vos tâches quotidiennes.',
     target: '[data-tutorial="ai-button"]',
     route: '/dashboard',
@@ -130,7 +130,7 @@ const DEFAULT_TUTORIAL_STEPS = [
   },
   {
     id: 'complete',
-    title: 'Vous êtes prêt ! 🚀',
+    title: 'Vous êtes prêt ! ',
     description: 'Vous connaissez maintenant les bases de ProcureGenius. N\'hésitez pas à explorer et à relancer ce tutoriel depuis le menu d\'aide si besoin.',
     target: null,
     route: '/dashboard',

@@ -310,6 +310,13 @@ class AINotification(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.title}"
 
+    def save(self, *args, **kwargs):
+        # Procura n'affiche aucun emoji : on nettoie titre et message à la source.
+        from apps.core.text_utils import strip_emojis
+        self.title = strip_emojis(self.title)
+        self.message = strip_emojis(self.message)
+        super().save(*args, **kwargs)
+
     def mark_as_read(self):
         """Marque la notification comme lue"""
         from django.utils import timezone

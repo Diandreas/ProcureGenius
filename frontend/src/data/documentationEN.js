@@ -7,14 +7,14 @@
 
 // Documentation categories with English labels
 export const documentationCategories = [
-  { id: 'getting-started', name: 'Getting Started', icon: '🚀', color: '#3b82f6' },
-  { id: 'suppliers', name: 'Suppliers', icon: '🏢', color: '#10b981' },
-  { id: 'purchase-orders', name: 'Purchase Orders', icon: '📦', color: '#f59e0b' },
-  { id: 'invoices', name: 'Invoices', icon: '💰', color: '#8b5cf6' },
-  { id: 'products', name: 'Products', icon: '📦', color: '#14b8a6' },
-  { id: 'clients', name: 'Clients', icon: '👥', color: '#06b6d4' },
-  { id: 'settings', name: 'Settings', icon: '⚙️', color: '#64748b' },
-  { id: 'tips', name: 'Tips & Tricks', icon: '💡', color: '#f97316' },
+  { id: 'getting-started', name: 'Getting Started', icon: '', color: '#3b82f6' },
+  { id: 'suppliers', name: 'Suppliers', icon: '', color: '#10b981' },
+  { id: 'purchase-orders', name: 'Purchase Orders', icon: '', color: '#f59e0b' },
+  { id: 'invoices', name: 'Invoices', icon: '', color: '#8b5cf6' },
+  { id: 'products', name: 'Products', icon: '', color: '#14b8a6' },
+  { id: 'clients', name: 'Clients', icon: '', color: '#06b6d4' },
+  { id: 'settings', name: 'Settings', icon: '', color: '#64748b' },
+  { id: 'tips', name: 'Tips & Tricks', icon: '', color: '#f97316' },
 ];
 
 // English documentation articles
@@ -1427,7 +1427,7 @@ To temporarily suspend access:
 5. You can reactivate anytime
 
 ### Delete a User
-⚠️ **Warning**: Deletion is permanent.
+ **Warning**: Deletion is permanent.
 
 To delete:
 1. Open user profile
@@ -1514,7 +1514,7 @@ This is the CRITICAL part that many users miss.
 (The 16-character app password, **WITH or WITHOUT spaces**, both work)
 
 3. Click **"Test Configuration"**
-4. If successful: ✅ "Test email sent successfully"
+4. If successful:  "Test email sent successfully"
 5. Click **"Save"**
 
 ## Outlook / Office 365 Configuration
@@ -1560,7 +1560,7 @@ This is the CRITICAL part that many users miss.
 
 ## Common Problems and Solutions
 
-### ❌ "Authentication failed" (Gmail)
+###  "Authentication failed" (Gmail)
 
 **Causes:**
 1. Using your Gmail password instead of app password
@@ -1572,7 +1572,7 @@ This is the CRITICAL part that many users miss.
 - Create a NEW app password
 - Copy it without extra spaces
 
-### ❌ "Connection refused" or "Connection timed out"
+###  "Connection refused" or "Connection timed out"
 
 **Causes:**
 - Incorrect port
@@ -1583,7 +1583,7 @@ This is the CRITICAL part that many users miss.
 - Verify your firewall allows outgoing connections on port 587
 - Try port **465** with SSL instead of TLS
 
-### ❌ "Less secure app access disabled"
+###  "Less secure app access disabled"
 
 **Cause:**
 - Not using an app password (Gmail)
@@ -1592,7 +1592,7 @@ This is the CRITICAL part that many users miss.
 - Do NOT try to enable "Less secure apps" (Google removed this)
 - Use an app password (see step 2)
 
-### ❌ Emails go to SPAM
+###  Emails go to SPAM
 
 **Causes:**
 - Your domain has no SPF/DKIM configuration
@@ -1632,13 +1632,13 @@ To test if everything works:
 ## Recommendations
 
 ### For small business (< 50 invoices/month)
-✅ **Free Gmail** is more than enough
+ **Free Gmail** is more than enough
 
 ### For medium business (> 100 invoices/month)
-✅ **Google Workspace** (from €5/month/user)
+ **Google Workspace** (from €5/month/user)
 
 ### For large enterprise
-✅ **Office 365** or dedicated SMTP server
+ **Office 365** or dedicated SMTP server
 
 ## Custom SMTP Server Configuration
 
@@ -1680,7 +1680,7 @@ ProcureGenius automatically generates professional PDF invoices and sends them v
 
 ## What IS Possible
 
-### ✅ Automatic PDF Generation
+###  Automatic PDF Generation
 
 Each invoice can be generated as a professional PDF with:
 
@@ -1702,7 +1702,7 @@ Each invoice can be generated as a professional PDF with:
 - Automatic tax calculations (incl./excl. tax)
 - Multi-currency (€, $, £, etc.)
 
-### ✅ Email Sending with PDF Attachment
+###  Email Sending with PDF Attachment
 
 **From the invoice:**
 1. Click "Send"
@@ -1720,7 +1720,7 @@ Each invoice can be generated as a professional PDF with:
 - Sending date recorded
 - Complete sending history
 
-### ✅ Download and Print
+###  Download and Print
 
 **Download:**
 - Click "Download PDF"
@@ -1732,7 +1732,7 @@ Each invoice can be generated as a professional PDF with:
 - PDF opens in a print window
 - A4 format optimized
 
-### ✅ Customizable Templates
+###  Customizable Templates
 
 In **Settings > Invoicing**:
 - Choose your default template
@@ -1743,7 +1743,7 @@ In **Settings > Invoicing**:
 
 ## What is NOT Possible
 
-### ❌ External PDF Upload
+###  External PDF Upload
 
 You **cannot**:
 - Upload a scanned PDF from your computer
@@ -1758,7 +1758,7 @@ Invoices are dynamically generated from system data to ensure consistency and in
 - AI creates the invoice in the system with this data
 - A new PDF is then automatically generated
 
-### ❌ PDF Modification After Generation
+###  PDF Modification After Generation
 
 Once generated, the PDF cannot be:
 - Modified directly
@@ -1769,7 +1769,7 @@ Once generated, the PDF cannot be:
 - Modify the invoice in the system
 - Regenerate a new PDF with the modifications
 
-### ❌ Integrated Electronic Signature
+###  Integrated Electronic Signature
 
 ProcureGenius does not handle:
 - Qualified electronic signatures

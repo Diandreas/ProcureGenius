@@ -397,7 +397,7 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
           const items = data.items || []; // Liste d'éléments si présente
 
           // DEBUG: Log pour comprendre la structure des données
-          console.log('🔍 DEBUG actionResult:', {
+          console.log(' DEBUG actionResult:', {
             index,
             isSuccess,
             entityType,
@@ -527,7 +527,7 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
                               }
                             }}
                           >
-                            📝 Vérifier et Confirmer
+                             Vérifier et Confirmer
                           </Button>
                         )}
 
@@ -543,7 +543,7 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
                               {previewData.nested_previews && previewData.nested_previews.length > 0 && (
                                 <Box sx={{ mb: 3 }}>
                                   <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary', fontWeight: 600 }}>
-                                    📦 Entités associées qui seront créées:
+                                     Entités associées qui seront créées:
                                   </Typography>
                                   <Grid container spacing={2}>
                                     {previewData.nested_previews.map((nestedPreview, idx) => (

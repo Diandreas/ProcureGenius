@@ -14,6 +14,8 @@ from .widget_views import (
     DashboardLayoutViewSet,
     WidgetDataView
 )
+from .margins_view import ProductMarginsView
+from .restock_view import RestockForecastView
 
 app_name = 'analytics_api'
 
@@ -38,6 +40,12 @@ urlpatterns = [
 
     # Cash Flow Widget (algo pur, sans IA)
     path('cashflow-widget/', CashFlowWidgetView.as_view(), name='cashflow_widget'),
+
+    # Marges & bénéfice brut par produit (consultation, sans compta)
+    path('product-margins/', ProductMarginsView.as_view(), name='product_margins'),
+
+    # Restockage prédictif (Premium)
+    path('restock-forecast/', RestockForecastView.as_view(), name='restock_forecast'),
 
     # Widgets
     path('widgets/', WidgetListView.as_view(), name='widgets_list'),

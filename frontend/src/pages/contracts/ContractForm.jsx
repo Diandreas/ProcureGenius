@@ -79,7 +79,7 @@ import 'react-quill/dist/quill.snow.css';
 const BUILTIN_TEMPLATES = [
   {
     id: 'service',
-    icon: '🔧',
+    icon: '',
     label: 'Contrat de services',
     type: 'service',
     description: 'Prestations de services professionnels',
@@ -87,7 +87,7 @@ const BUILTIN_TEMPLATES = [
   },
   {
     id: 'purchase',
-    icon: '🛒',
+    icon: '',
     label: "Contrat d'achat",
     type: 'purchase',
     description: 'Achat de produits ou matières premières',
@@ -95,7 +95,7 @@ const BUILTIN_TEMPLATES = [
   },
   {
     id: 'nda',
-    icon: '🔒',
+    icon: '',
     label: 'Accord de confidentialité',
     type: 'nda',
     description: 'Protection des informations confidentielles',
@@ -103,7 +103,7 @@ const BUILTIN_TEMPLATES = [
   },
   {
     id: 'maintenance',
-    icon: '⚙️',
+    icon: '',
     label: 'Contrat de maintenance',
     type: 'maintenance',
     description: 'Maintenance et support technique',
@@ -111,7 +111,7 @@ const BUILTIN_TEMPLATES = [
   },
   {
     id: 'lease',
-    icon: '🏢',
+    icon: '',
     label: 'Contrat de location',
     type: 'lease',
     description: 'Location de locaux ou équipements',
@@ -119,7 +119,7 @@ const BUILTIN_TEMPLATES = [
   },
   {
     id: 'partnership',
-    icon: '🤝',
+    icon: '',
     label: 'Accord de partenariat',
     type: 'partnership',
     description: 'Partenariat commercial ou stratégique',
@@ -127,7 +127,7 @@ const BUILTIN_TEMPLATES = [
   },
   {
     id: 'freelance',
-    icon: '💻',
+    icon: '',
     label: 'Contrat freelance',
     type: 'service',
     description: 'Mission freelance avec livrables',
@@ -135,7 +135,7 @@ const BUILTIN_TEMPLATES = [
   },
   {
     id: 'distribution',
-    icon: '📦',
+    icon: '',
     label: 'Contrat de distribution',
     type: 'other',
     description: 'Distribution de produits',
@@ -144,8 +144,9 @@ const BUILTIN_TEMPLATES = [
 ];
 
 const STEPS = [
-  { label: 'Type & Description', icon: <SmartToy /> },
-  { label: 'Informations & Sections', icon: <Gavel /> },
+  { label: 'Type & description', icon: <SmartToy /> },
+  { label: 'Informations', icon: <Gavel /> },
+  { label: 'Rédaction des articles', icon: <AutoAwesome /> },
   { label: 'Finalisation', icon: <CheckCircle /> },
 ];
 
@@ -388,7 +389,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
           disabled={generating}
           color="primary"
         >
-          {generating ? 'Personnalisation en cours...' : sections.some(s => s.is_ai_generated) ? '✨ Re-personnaliser tout' : '✨ Personnaliser avec IA'}
+          {generating ? 'Personnalisation en cours...' : sections.some(s => s.is_ai_generated) ? ' Re-personnaliser tout' : ' Personnaliser avec IA'}
         </Button>
       </Box>
 
@@ -505,7 +506,7 @@ function SectionEditor({ section, index, isRegenerating, onRegenerate, onContent
             onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
             disabled={isRegenerating}
           >
-            {isRegenerating ? 'IA en cours...' : section.is_ai_generated ? 'Re-personnaliser IA' : '✨ Personnaliser avec IA'}
+            {isRegenerating ? 'IA en cours...' : section.is_ai_generated ? 'Re-personnaliser IA' : ' Personnaliser avec IA'}
           </Button>
           {hasContent && (
             <Button
@@ -821,14 +822,22 @@ function ContractForm() {
     }
     setSubmitting(true);
     try {
-      const payload = {
+      const raw = {
         ...formData,
         supplier: formData.party_type === 'supplier' ? formData.supplier?.id : null,
         client: formData.party_type === 'client' ? formData.client?.id : null,
         sections_data: sections,
       };
-      delete payload.party_type;
-      delete payload.extra_instructions;
+      delete raw.party_type;
+      delete raw.extra_instructions;
+
+      // Supprimer les champs vides pour éviter les erreurs de validation (dates, etc.)
+      const payload = Object.fromEntries(
+        Object.entries(raw).filter(([, v]) => v !== '' && v !== null && v !== undefined)
+      );
+      // Garder null explicitement pour supplier/client (pour effacer)
+      if (raw.supplier === null) payload.supplier = null;
+      if (raw.client === null) payload.client = null;
 
       if (isEditMode) {
         await dispatch(updateContract({ id, data: payload })).unwrap();
@@ -897,9 +906,9 @@ function ContractForm() {
               <FormControl fullWidth>
                 <InputLabel>Langue du contrat</InputLabel>
                 <Select name="language" value={formData.language} onChange={handleChange} label="Langue du contrat">
-                  <MenuItem value="fr">🇫🇷 Français</MenuItem>
-                  <MenuItem value="en">🇬🇧 English</MenuItem>
-                  <MenuItem value="es">🇪🇸 Español</MenuItem>
+                  <MenuItem value="fr"> Français</MenuItem>
+                  <MenuItem value="en"> English</MenuItem>
+                  <MenuItem value="es"> Español</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -1041,7 +1050,7 @@ function ContractForm() {
           </Grid>
         );
 
-      case 1:
+      case 2:
         return (
           <SectionsStep
             formData={formData}
@@ -1051,7 +1060,7 @@ function ContractForm() {
           />
         );
 
-      case 2:
+      case 3:
         return (
           <Box>
             <Typography variant="h6" fontWeight={700} mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1108,7 +1117,7 @@ function ContractForm() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Langue</Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {formData.language === 'fr' ? '🇫🇷 Français' : formData.language === 'en' ? '🇬🇧 English' : '🇪🇸 Español'}
+                    {formData.language === 'fr' ? ' Français' : formData.language === 'en' ? ' English' : ' Español'}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

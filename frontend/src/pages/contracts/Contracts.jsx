@@ -9,7 +9,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import {
   Search, FilterList, Description, AttachMoney, CheckCircle, Schedule,
-  Gavel, TrendingUp, Warning, Edit,
+  Gavel, TrendingUp, Warning, Edit, FactCheck,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { contractsAPI } from '../../services/api';
@@ -66,21 +66,32 @@ function Contracts() {
     setPageHeader({
       title: t('contracts:title', 'Contrats'),
       actions: (
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Description />}
-          onClick={() => navigate('/contracts/new')}
-          sx={{
-            borderRadius: 2.5,
-            textTransform: 'none',
-            fontWeight: 600,
-            px: { xs: 2, sm: 3 },
-            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
-          }}
-        >
-          {t('navigation:topBar.newContract', 'Nouveau contrat')}
-        </Button>
+        <Box display="flex" gap={1}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<FactCheck />}
+            onClick={() => navigate('/contracts/analyze')}
+            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: { xs: 1.5, sm: 2.5 } }}
+          >
+            {t('contracts:analyzer.cta', 'Analyser un contrat')}
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Description />}
+            onClick={() => navigate('/contracts/new')}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: { xs: 2, sm: 3 },
+              boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+            }}
+          >
+            {t('navigation:topBar.newContract', 'Nouveau contrat')}
+          </Button>
+        </Box>
       )
     });
     return () => setPageHeader({ title: '', actions: null });

@@ -34,6 +34,10 @@ import {
   NotificationsActive,
   SmartToy,
   CheckCircleOutline,
+  Lock,
+  CreditCardOff,
+  Gavel,
+  SupportAgent,
 } from '@mui/icons-material';
 import { useColorMode } from '../App';
 
@@ -73,8 +77,8 @@ const AIChatDemo = () => {
   const [visibleMessages, setVisibleMessages] = useState(0);
   const messages = [
     { role: 'user', text: 'Quels produits sont bientôt en rupture ?' },
-    { role: 'ai', text: '🚨 3 produits critiques détectés :', detail: '• Écran LED 27" — 4 restants (~2 jours)\n• Câble HDMI 2.1 — 8 restants (~5 jours)\n• Souris ergonomique — 2 restants (~1 jour)' },
-    { role: 'ai', text: '💡 Je peux créer automatiquement un bon de commande pour réapprovisionner ces 3 produits. Voulez-vous que je le fasse ?', action: 'Créer le bon de commande' },
+    { role: 'ai', text: ' 3 produits critiques détectés :', detail: '• Écran LED 27" — 4 restants (~2 jours)\n• Câble HDMI 2.1 — 8 restants (~5 jours)\n• Souris ergonomique — 2 restants (~1 jour)' },
+    { role: 'ai', text: ' Je peux créer automatiquement un bon de commande pour réapprovisionner ces 3 produits. Voulez-vous que je le fasse ?', action: 'Créer le bon de commande' },
   ];
 
   useEffect(() => {
@@ -400,11 +404,13 @@ export default function Landing() {
   const location = useLocation();
   const theme = useTheme();
   const { toggleColorMode } = useColorMode();
-  const isDark = theme.palette.mode === 'dark';
   const { currency, convertPrice } = usePricingCurrency();
 
-  const bgColor = isDark ? '#09090b' : '#f8fafc';
-  const bgSection = isDark ? '#0f172a' : '#f1f5f9';
+  // Direction « clair éditorial premium » : landing toujours en clair lumineux
+  // (charte bleu #2563eb + doré #f59e0b), indépendamment du thème de l'app.
+  const isDark = false; // landing toujours claire
+  const bgColor = '#ffffff';       // fond blanc pur
+  const bgSection = '#f6f8fc';     // section légèrement teintée bleu très clair
 
   // Handle hash scroll
   useEffect(() => {
@@ -452,7 +458,9 @@ export default function Landing() {
   }, [t, i18n.language, words]);
 
   return (
-    <Box sx={{ bgcolor: bgColor, color: isDark ? '#fff' : '#0f172a', minHeight: '100vh', overflowX: 'hidden' }}>
+    <Box sx={{ bgcolor: bgColor, color: '#0f172a', minHeight: '100vh', overflowX: 'hidden' }}>
+      {/* Police serif éditoriale pour les titres */}
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" />
 
       {/* ─── Hero ────────────────────────────────────────────── */}
       <Box sx={{
@@ -496,28 +504,29 @@ export default function Landing() {
                   {t('hero.badge')}
                 </Box>
 
-                {/* Headline */}
+                {/* Headline — serif éditorial */}
                 <Typography variant="h1" sx={{
-                  fontWeight: 900,
-                  fontSize: { xs: '2.4rem', sm: '3.2rem', md: '3.8rem' },
-                  lineHeight: 1.08,
+                  fontFamily: '"Fraunces", Georgia, serif',
+                  fontWeight: 500,
+                  fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem' },
+                  lineHeight: 1.04,
                   mb: 0.5,
-                  letterSpacing: -1,
-                  color: isDark ? '#fff' : '#0f172a',
+                  letterSpacing: '-0.02em',
+                  color: '#0f172a',
                 }}>
                   {t('hero.titleStart')}
                 </Typography>
                 <Typography variant="h1" sx={{
-                  fontWeight: 900,
-                  fontSize: { xs: '2.4rem', sm: '3.2rem', md: '3.8rem' },
-                  lineHeight: 1.08,
+                  fontFamily: '"Fraunces", Georgia, serif',
+                  fontWeight: 500,
+                  fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem' },
+                  lineHeight: 1.04,
                   mb: 3,
-                  letterSpacing: -1,
+                  letterSpacing: '-0.02em',
                 }}>
                   <Box component="span" sx={{
-                    background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #f59e0b 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
+                    fontStyle: 'italic',
+                    color: '#f59e0b',
                     minWidth: '200px',
                     display: 'inline-block',
                   }}>
@@ -525,7 +534,7 @@ export default function Landing() {
                   </Box>
                   <Box component="span" sx={{
                     display: 'inline-block', width: '2px', height: '0.8em',
-                    bgcolor: '#2563eb', ml: '3px', verticalAlign: 'text-bottom',
+                    bgcolor: '#f59e0b', ml: '3px', verticalAlign: 'text-bottom',
                     animation: 'blink 0.7s step-end infinite',
                     '@keyframes blink': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0 } },
                   }} />
@@ -584,23 +593,18 @@ export default function Landing() {
                   </Button>
                 </Box>
 
-                {/* Social proof */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={{ display: 'flex' }}>
-                    {['#2563eb', '#f59e0b', '#10b981', '#ef4444'].map((c, i) => (
-                      <Avatar key={i} src={`https://i.pravatar.cc/100?img=${i + 10}`}
-                        sx={{ width: 34, height: 34, ml: i > 0 ? -1.5 : 0, border: `2px solid ${bgColor}` }}
-                      />
-                    ))}
-                  </Box>
-                  <Box>
-                    <Box sx={{ display: 'flex', gap: 0.25 }}>
-                      {[1,2,3,4,5].map(i => <Star key={i} sx={{ fontSize: 15, color: '#f59e0b' }} />)}
+                {/* Réassurance honnête (pas de faux chiffres) */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}>
+                  {[
+                    { icon: <CreditCardOff sx={{ fontSize: 18 }} />, text: '1 mois offert, sans carte' },
+                    { icon: <Lock sx={{ fontSize: 18 }} />, text: 'Données sécurisées' },
+                    { icon: <Gavel sx={{ fontSize: 18 }} />, text: 'Conforme OHADA' },
+                  ].map((it, i) => (
+                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.6)' }}>
+                      <Box sx={{ color: '#2563eb', display: 'flex' }}>{it.icon}</Box>
+                      <Typography sx={{ fontSize: '0.82rem', fontWeight: 600 }}>{it.text}</Typography>
                     </Box>
-                    <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)', fontSize: '0.8rem', fontWeight: 500 }}>
-                      {t('hero.socialProof')}
-                    </Typography>
-                  </Box>
+                  ))}
                 </Box>
               </motion.div>
             </Grid>
@@ -640,10 +644,10 @@ export default function Landing() {
         <Container maxWidth="lg">
           <Grid container spacing={4} textAlign="center">
             {[
-              { value: 500, suffix: '+', label: t('stats.companies'), color: '#2563eb' },
-              { value: 150, suffix: 'k+', label: t('stats.documents'), color: '#f59e0b' },
-              { value: 99, suffix: '.9%', label: t('stats.uptime'), color: '#10b981' },
-              { value: 12, suffix: 'h', label: t('stats.timeSaved'), color: '#8b5cf6' },
+              { icon: <Lock />, title: 'Données sécurisées', desc: 'Chiffrées et sauvegardées. Elles restent les vôtres.', color: '#2563eb' },
+              { icon: <CreditCardOff />, title: '1 mois offert', desc: "Essai gratuit, sans carte bancaire ni engagement.", color: '#10b981' },
+              { icon: <Gavel />, title: 'Conforme OHADA', desc: 'TVA Cameroun, Sénégal, Côte d’Ivoire. Facturation en FCFA.', color: '#f59e0b' },
+              { icon: <SupportAgent />, title: 'Support humain', desc: 'Une équipe joignable sur WhatsApp, réponse sous 2 h.', color: '#8b5cf6' },
             ].map((s, i) => (
               <Grid item xs={6} sm={3} key={i}>
                 <motion.div
@@ -652,15 +656,14 @@ export default function Landing() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: i * 0.1 }}
                 >
-                  <Typography sx={{ fontWeight: 900, fontSize: { xs: '2rem', sm: '2.4rem' }, color: s.color, lineHeight: 1 }}>
-                    <AnimatedCounter end={s.value} suffix={s.suffix} />
+                  <Box sx={{ display: 'inline-flex', p: 1.25, borderRadius: 2, bgcolor: alpha(s.color, 0.1), color: s.color, mb: 1.5 }}>
+                    {React.cloneElement(s.icon, { sx: { fontSize: 26 } })}
+                  </Box>
+                  <Typography sx={{ fontWeight: 800, fontSize: { xs: '0.95rem', sm: '1.05rem' }, color: isDark ? '#fff' : '#0f172a', lineHeight: 1.2 }}>
+                    {s.title}
                   </Typography>
-                  <Typography sx={{
-                    color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-                    fontSize: '0.8rem', fontWeight: 600, mt: 0.75,
-                    textTransform: 'uppercase', letterSpacing: 1,
-                  }}>
-                    {s.label}
+                  <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', fontSize: '0.82rem', mt: 0.5, lineHeight: 1.45, maxWidth: 200, mx: 'auto' }}>
+                    {s.desc}
                   </Typography>
                 </motion.div>
               </Grid>
@@ -850,6 +853,37 @@ export default function Landing() {
         py: { xs: 10, sm: 14 }, bgcolor: bgSection,
         borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
       }} id="pricing-section">
+        <Container maxWidth="md">
+          <Box sx={{ textAlign: 'center' }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <Chip label="Tarifs transparents" sx={{
+                mb: 3, bgcolor: isDark ? 'rgba(37,99,235,0.12)' : 'rgba(37,99,235,0.08)',
+                border: `1px solid ${alpha('#2563eb', 0.25)}`, color: '#2563eb', fontWeight: 700, px: 1, py: 2.5, borderRadius: 2,
+              }} />
+              <Typography variant="h3" sx={{ fontWeight: 900, fontSize: { xs: '1.9rem', sm: '2.6rem' }, mb: 2, color: isDark ? '#fff' : '#0f172a' }}>
+                Commencez gratuitement,{' '}
+                <Box component="span" sx={{ color: '#2563eb' }}>évoluez à votre rythme</Box>
+              </Typography>
+              <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', maxWidth: 560, mx: 'auto', fontSize: '1.08rem', lineHeight: 1.65 }}>
+                Un plan gratuit pour démarrer, le plan Pro à 9&euro;/mois avec un mois d&apos;essai offert (sans carte), et tout illimité dès le plan Business.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', mt: 4 }}>
+                <Button variant="contained" size="large" onClick={() => navigate('/pricing')}
+                  sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, px: 4, py: 1.5, borderRadius: 2, textTransform: 'none', fontWeight: 700, fontSize: '1rem' }}>
+                  Voir les tarifs
+                </Button>
+                <Button variant="outlined" size="large" onClick={() => navigate('/register')}
+                  sx={{ px: 4, py: 1.5, borderRadius: 2, textTransform: 'none', fontWeight: 700, fontSize: '1rem', borderColor: alpha('#2563eb', 0.4), color: '#2563eb', '&:hover': { borderColor: '#2563eb', bgcolor: alpha('#2563eb', 0.04) } }}>
+                  Essayer gratuitement
+                </Button>
+              </Box>
+            </motion.div>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Ancienne grille de prix retirée (infos obsolètes) — source unique : page /pricing */}
+      <Box sx={{ display: 'none' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -950,7 +984,7 @@ export default function Landing() {
               color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
               fontSize: '1.05rem', lineHeight: 1.65, mb: 5,
             }}>
-              Rejoignez 500+ entreprises qui ont déjà optimisé leurs achats avec Procura.
+              Créez votre compte en 2 minutes et gérez votre premier devis, facture ou bon de commande dès aujourd&apos;hui — un mois offert, sans carte.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button

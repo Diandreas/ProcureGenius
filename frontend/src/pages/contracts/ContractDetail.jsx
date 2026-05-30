@@ -87,6 +87,28 @@ function ContractDetail() {
   const [contractText, setContractText] = useState('');
   const [extracting, setExtracting] = useState(false);
 
+  // Aperçu du PDF signé : on le récupère en blob (object URL) pour contourner
+  // X-Frame-Options DENY du backend lors de l'affichage dans une iframe.
+  const [signedPdfBlobUrl, setSignedPdfBlobUrl] = useState(null);
+  useEffect(() => {
+    const url = currentContract?.signed_pdf_url;
+    if (!url) { setSignedPdfBlobUrl(null); return; }
+    let revoked = false;
+    let objectUrl = null;
+    (async () => {
+      try {
+        const token = localStorage.getItem('authToken') || localStorage.getItem('access_token');
+        const res = await fetch(url, token ? { headers: { Authorization: `Token ${token}` } } : undefined);
+        if (!res.ok) return;
+        const blob = await res.blob();
+        if (revoked) return;
+        objectUrl = URL.createObjectURL(blob);
+        setSignedPdfBlobUrl(objectUrl);
+      } catch { /* aperçu indisponible */ }
+    })();
+    return () => { revoked = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [currentContract?.signed_pdf_url]);
+
   // States pour la génération de document
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [templates, setTemplates] = useState([]);
@@ -132,6 +154,25 @@ function ContractDetail() {
       dispatch(fetchContract(id));
     } catch (error) {
       enqueueSnackbar(t('contracts:messages.terminateError'), { variant: 'error' });
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    try {
+      const response = await contractsAPI.generateInvoice(id);
+      const invoiceId = response.data?.invoice?.id;
+      enqueueSnackbar(
+        response.data?.message || 'Facture brouillon créée à partir du contrat.',
+        { variant: 'success' }
+      );
+      if (invoiceId) {
+        navigate(`/invoices/${invoiceId}`);
+      }
+    } catch (error) {
+      enqueueSnackbar(
+        error.response?.data?.message || 'Erreur lors de la génération de la facture.',
+        { variant: 'error' }
+      );
     }
   };
 
@@ -507,6 +548,15 @@ function ContractDetail() {
                 {currentContract.status === 'active' && (
                   <>
                     <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<Receipt />}
+                      onClick={handleGenerateInvoice}
+                      sx={{ borderRadius: 2, textTransform: 'none' }}
+                    >
+                      Générer une facture
+                    </Button>
+                    <Button
                       variant="outlined"
                       size="small"
                       startIcon={<Autorenew />}
@@ -816,6 +866,22 @@ function ContractDetail() {
                         />
                       </Button>
                     </Stack>
+
+                    {/* Aperçu (vignette) du PDF signé, directement dans l'app */}
+                    {signedPdfBlobUrl ? (
+                      <Box sx={{ mt: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1.5, overflow: 'hidden', bgcolor: '#fff' }}>
+                        <Box
+                          component="iframe"
+                          src={`${signedPdfBlobUrl}#toolbar=0&navpanes=0&view=FitH`}
+                          title="Aperçu du contrat signé"
+                          sx={{ width: '100%', height: { xs: 320, md: 460 }, border: 0, display: 'block' }}
+                        />
+                      </Box>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
+                        Chargement de l'aperçu…
+                      </Typography>
+                    )}
                   </Box>
                 ) : (
                   <Box>

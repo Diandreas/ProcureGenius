@@ -12,8 +12,7 @@ from apps.ai_assistant.services import ActionExecutor, AsyncSafeUserContext
 def organization(db):
     """Organisation de test"""
     return Organization.objects.create(
-        name="Test Organization",
-        slug="test-org"
+        name="Test Organization"
     )
 
 

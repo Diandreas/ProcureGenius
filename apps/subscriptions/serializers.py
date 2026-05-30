@@ -31,6 +31,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'has_e_sourcing': obj.has_e_sourcing,
             'has_contracts': obj.has_contracts,
             'has_analytics': obj.has_analytics,
+            'has_accounting': obj.has_accounting,
         }
 
     def get_quotas(self, obj):
@@ -110,15 +111,18 @@ class SubscriptionStatusSerializer(serializers.Serializer):
     warnings = serializers.ListField(child=serializers.CharField(), required=False)
 
 
+PLAN_CODES = ['free', 'pro', 'business', 'enterprise']
+
+
 class SubscribeRequestSerializer(serializers.Serializer):
     """
     Request to subscribe to a plan
     """
-    plan_code = serializers.ChoiceField(choices=['free', 'standard', 'premium'])
+    plan_code = serializers.ChoiceField(choices=PLAN_CODES)
     billing_period = serializers.ChoiceField(choices=['monthly', 'yearly'], default='monthly')
     payment_method = serializers.ChoiceField(
-        choices=['paypal', 'credit_card', 'bank_transfer', 'manual'],
-        default='paypal'
+        choices=['stripe', 'paypal', 'credit_card', 'bank_transfer', 'manual'],
+        default='stripe'
     )
     paypal_subscription_id = serializers.CharField(required=False, allow_blank=True)
 
@@ -127,7 +131,7 @@ class ChangePlanSerializer(serializers.Serializer):
     """
     Request to change subscription plan
     """
-    new_plan_code = serializers.ChoiceField(choices=['free', 'standard', 'premium'])
+    new_plan_code = serializers.ChoiceField(choices=PLAN_CODES)
     billing_period = serializers.ChoiceField(choices=['monthly', 'yearly'], required=False)
     immediately = serializers.BooleanField(default=False)
 

@@ -370,6 +370,26 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
     }
   };
 
+  const handleConvertToInvoice = async () => {
+    try {
+      const response = await purchaseOrdersAPI.convertToInvoice(id);
+      const invoiceId = response.data?.invoice?.id;
+      enqueueSnackbar(
+        response.data?.message || 'Facture créée à partir du bon de commande.',
+        { variant: 'success' }
+      );
+      await fetchPurchaseOrder();
+      if (invoiceId) {
+        navigate(`/invoices/${invoiceId}`);
+      }
+    } catch (error) {
+      enqueueSnackbar(
+        error.response?.data?.error || 'Erreur lors de la conversion en facture.',
+        { variant: 'error' }
+      );
+    }
+  };
+
   const handleAddItem = async () => {
     try {
       const response = await purchaseOrdersAPI.addItem(id, newItem);
@@ -624,6 +644,12 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                   <MenuItem onClick={() => setApproveDialogOpen(true)} sx={{ color: 'success.main' }}>
                     <Done fontSize="small" sx={{ mr: 1 }} />
                     {t('purchaseOrders:buttons.approve')}
+                  </MenuItem>
+                )}
+                {['approved', 'sent', 'received'].includes(purchaseOrder.status) && (
+                  <MenuItem onClick={handleConvertToInvoice} sx={{ color: 'primary.main' }}>
+                    <Receipt fontSize="small" sx={{ mr: 1 }} />
+                    Convertir en facture
                   </MenuItem>
                 )}
                 <Divider />

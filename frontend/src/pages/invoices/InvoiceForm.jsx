@@ -757,6 +757,7 @@ function InvoiceForm() {
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                       sx={{ borderRadius: 2 }}
                     >
+                      <MenuItem value="quote">Devis</MenuItem>
                       <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
                       <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
                       <MenuItem value="pending">En attente</MenuItem>
@@ -1112,6 +1113,7 @@ function InvoiceForm() {
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         sx={{ borderRadius: 2 }}
                       >
+                        <MenuItem value="quote">Devis</MenuItem>
                         <MenuItem value="draft">Brouillon</MenuItem>
                         <MenuItem value="sent">Envoyée</MenuItem>
                         <MenuItem value="pending">En attente</MenuItem>

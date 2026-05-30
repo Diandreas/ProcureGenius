@@ -56,6 +56,7 @@ import {
   Add,
   Edit,
   Delete,
+  LocalShipping,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -182,31 +183,45 @@ function Products() {
   useEffect(() => {
     setPageHeader({
       title: t('products:title', 'Produits'),
-      // Action pour le bouton mobile à gauche
-      action: {
-        label: t('navigation:topBar.new', 'Nouveau'),
-        icon: <Inventory />,
-        onClick: () => navigate('/products/new'),
-        color: 'primary',
-        variant: 'contained'
-      },
-      // Actions pour le desktop à droite
+      // Pas de bouton mobile unique : on laisse le groupe d'actions (responsive)
+      // s'afficher aussi sur mobile, pour garder l'accès aux Marges & bénéfices.
+      // Actions (desktop + mobile)
       actions: (
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Inventory />}
-          onClick={() => navigate('/products/new')}
-          sx={{
-            borderRadius: 2.5,
-            textTransform: 'none',
-            fontWeight: 600,
-            px: { xs: 2, sm: 3 },
-            boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
-          }}
-        >
-          {t('products:newProduct', 'Nouveau produit')}
-        </Button>
+        <Box display="flex" gap={1}>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<TrendingUp />}
+            onClick={() => navigate('/products/margins')}
+            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: { xs: 1.5, sm: 2.5 } }}
+          >
+            {t('products:margins', 'Marges & bénéfices')}
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<LocalShipping />}
+            onClick={() => navigate('/products/restock')}
+            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: { xs: 1.5, sm: 2.5 }, display: { xs: 'none', sm: 'inline-flex' } }}
+          >
+            {t('products:restock.cta', 'Restockage')}
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Inventory />}
+            onClick={() => navigate('/products/new')}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: { xs: 2, sm: 3 },
+              boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
+            }}
+          >
+            {t('products:newProduct', 'Nouveau produit')}
+          </Button>
+        </Box>
       )
     });
     return () => setPageHeader({ title: '', actions: null });
@@ -511,7 +526,7 @@ function Products() {
           {/* Footer */}
           <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
             <Chip
-              label={product.is_active ? (isMobile ? "✓" : t('products:status.active')) : (isMobile ? "✗" : t('products:status.inactive'))}
+              label={product.is_active ? (isMobile ? "" : t('products:status.active')) : (isMobile ? "" : t('products:status.inactive'))}
               size="small"
               color={product.is_active ? 'success' : 'default'}
               sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
@@ -1175,7 +1190,7 @@ function Products() {
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-              📅 Période (optionnel)
+               Période (optionnel)
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
               Filtrer par période - laisser vide pour tout inclure
@@ -1207,7 +1222,7 @@ function Products() {
 
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                📋 Produits à inclure
+                 Produits à inclure
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                 {reportFilters.selectedProducts.length > 0

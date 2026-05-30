@@ -9,11 +9,11 @@
  */
 export const getProductTypeIcon = (productType) => {
   const icons = {
-    physical: '📦',
-    service: '🔧',
-    digital: '💾',
+    physical: '',
+    service: '',
+    digital: '',
   };
-  return icons[productType] || '📦';
+  return icons[productType] || '';
 };
 
 /**

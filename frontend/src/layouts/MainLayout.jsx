@@ -53,6 +53,7 @@ import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider, { useAINotifications } from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
 import OnboardingChecklist from '../components/OnboardingChecklist';
+import ContextualAIPanel from '../components/AI/ContextualAIPanel';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
 import usePushPrompt from '../hooks/usePushPrompt';
@@ -1189,6 +1190,9 @@ function MainLayout() {
 
         {/* Onboarding checklist for new users */}
         <OnboardingChecklist />
+
+        {/* Contextual AI panel — floating button + right drawer */}
+        <ContextualAIPanel />
       </Box>
     </AINotificationProvider>
   );

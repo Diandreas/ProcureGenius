@@ -273,7 +273,7 @@ const PreviewCard = ({
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: config.color, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                  📋 Articles ({draftData.items.length})
+                   Articles ({draftData.items.length})
                 </Typography>
                 <Box sx={{ bgcolor: getBgColor(config.bgColor), borderRadius: 1, p: { xs: 1, sm: 1.5 } }}>
                   {draftData.items.map((item, index) => (
@@ -390,7 +390,7 @@ const PreviewCard = ({
                   },
                 }}
               >
-                ✓ Confirmer
+                 Confirmer
               </Button>
             </Box>
           )}
@@ -409,7 +409,7 @@ const PreviewCard = ({
               }}
             >
               <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                ℹ️ {nestedMessage || 'Cette entité sera créée automatiquement'}
+                ℹ {nestedMessage || 'Cette entité sera créée automatiquement'}
               </Typography>
             </Box>
           )}

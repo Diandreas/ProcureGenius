@@ -2154,7 +2154,16 @@ class ActionExecutor:
             'three_way_match': self._advanced.three_way_match,
             'smart_reminder': self._advanced.smart_reminder,
             # ── Alias pour compatibilité avec les tool calls Mistral ──
+            # Ces outils sont déclarés dans _define_tools() (donc visibles par l'IA)
+            # mais n'avaient pas de handler dédié -> ils renvoyaient "action non
+            # reconnue". On les route vers les handlers génériques existants :
+            #   - les stats par entité -> get_statistics (paramètre `categories`)
+            #   - les insights -> analyze_business (paramètre `focus_area`)
             'get_invoice_stats': self.get_statistics,
+            'get_product_stats': self.get_statistics,
+            'get_stock_stats': self.get_statistics,
+            'get_supplier_stats': self.get_statistics,
+            'get_insights': self.analyze_business,
         }
     
     async def execute(self, action: str, params: Dict, user) -> Dict[str, Any]:
@@ -3272,8 +3281,10 @@ class ActionExecutor:
                         if result.get('price'):
                             message += f"   - Prix: {result['price']}€\n"
 
-                    # Score de correspondance
-                    message += f"   - Correspondance: {result['score']:.0f}% - {result['match_reason']}\n\n"
+                    # Score de correspondance (défensif : la clé peut manquer selon le handler)
+                    _score = result.get('score', result.get('similarity', 0)) or 0
+                    _reason = result.get('match_reason', '')
+                    message += f"   - Correspondance: {_score:.0f}%{(' - ' + _reason) if _reason else ''}\n\n"
 
                 logger.info(f"[search_entity] Final message length: {len(message)} chars")
             except Exception as e:
@@ -5603,7 +5614,8 @@ ProcureGenius
         # Message avec taux de similarité
         if results:
             top_result = results[0]
-            message = f"J'ai trouvé {len(results)} produit(s) pour '{params.get('query')}'. Le plus pertinent est '{top_result['name']}' ({top_result['score']}% de similarité)."
+            _top_score = top_result.get('score', top_result.get('similarity', 0)) or 0
+            message = f"J'ai trouvé {len(results)} produit(s) pour '{params.get('query')}'. Le plus pertinent est '{top_result['name']}' ({_top_score}% de similarité)."
         else:
             message = f"Aucun produit trouvé pour '{params.get('query', '')}'"
 

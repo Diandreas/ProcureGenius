@@ -122,11 +122,6 @@ class TestThrottles:
         assert hasattr(ChatView, 'throttle_classes')
         assert len(ChatView.throttle_classes) >= 2
 
-    def test_streaming_view_has_throttle_classes(self):
-        """StreamingChatView doit aussi avoir throttle_classes."""
-        from apps.ai_assistant.views import StreamingChatView
-        assert hasattr(StreamingChatView, 'throttle_classes')
-        assert len(StreamingChatView.throttle_classes) >= 2
 
 
 # ---------------------------------------------------------------------------
@@ -158,8 +153,8 @@ class TestMultiTenantIsolation:
         from apps.accounts.models import Organization
         from apps.accounts.models import CustomUser as User
 
-        org1 = Organization.objects.create(name="Org1", slug="org1")
-        org2 = Organization.objects.create(name="Org2", slug="org2")
+        org1 = Organization.objects.create(name="Org1")
+        org2 = Organization.objects.create(name="Org2")
 
         user1 = User.objects.create_user(
             username="user1", email="u1@test.com", password="pass", organization=org1

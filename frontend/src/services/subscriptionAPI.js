@@ -32,9 +32,9 @@ const subscriptionAPI = {
   /**
    * Subscribe to a plan
    * @param {Object} data - Subscription data
-   * @param {string} data.plan_code - Plan code (free, standard, premium)
+   * @param {string} data.plan_code - Plan code (free, pro, business, enterprise)
    * @param {string} data.billing_period - Billing period (monthly, yearly)
-   * @param {string} data.payment_method - Payment method (paypal, credit_card, etc.)
+   * @param {string} data.payment_method - Payment method (stripe, paypal, etc.)
    * @param {string} data.paypal_subscription_id - PayPal subscription ID (optional)
    */
   subscribe: async (data) => {
@@ -79,6 +79,35 @@ const subscriptionAPI = {
    */
   checkFeatureAccess: async (featureName) => {
     const response = await api.get(`/subscriptions/features/${featureName}/`);
+    return response.data;
+  },
+
+  // ── Stripe ────────────────────────────────────────────────────────────────
+
+  /**
+   * Create a Stripe Checkout session and redirect to Stripe.
+   * @param {string} planCode - Plan code (pro, business)
+   * @param {string} billingPeriod - 'monthly' | 'yearly'
+   */
+  createStripeCheckout: async (planCode, billingPeriod = 'monthly') => {
+    const response = await api.post('/subscriptions/stripe/create-checkout/', {
+      plan_code: planCode,
+      billing_period: billingPeriod,
+    });
+    if (response.data.checkout_url) {
+      window.location.href = response.data.checkout_url;
+    }
+    return response.data;
+  },
+
+  /**
+   * Open Stripe customer portal (manage billing, cancel, etc.)
+   */
+  openStripePortal: async () => {
+    const response = await api.get('/subscriptions/stripe/portal/');
+    if (response.data.portal_url) {
+      window.location.href = response.data.portal_url;
+    }
     return response.data;
   },
 };

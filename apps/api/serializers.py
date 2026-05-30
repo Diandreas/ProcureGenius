@@ -587,6 +587,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     """Serializer pour les paiements de factures"""
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     balance_after = serializers.SerializerMethodField()
+    can_delete = serializers.SerializerMethodField()
 
     class Meta:
         from apps.invoicing.models import Payment
@@ -594,9 +595,14 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'invoice', 'amount', 'payment_date', 'payment_method',
             'reference_number', 'notes', 'created_by', 'created_by_name',
-            'balance_after', 'created_at',
+            'balance_after', 'can_delete', 'created_at',
         ]
-        read_only_fields = ['id', 'created_at', 'created_by', 'created_by_name', 'balance_after']
+        read_only_fields = ['id', 'created_at', 'created_by', 'created_by_name', 'balance_after', 'can_delete']
+
+    def get_can_delete(self, obj):
+        from django.utils import timezone
+        from datetime import timedelta
+        return (timezone.now() - obj.created_at) <= timedelta(minutes=30)
 
     def get_balance_after(self, obj):
         """Solde restant après ce paiement (calculé à la volée)"""

@@ -291,7 +291,7 @@ function SourcingEventDetail() {
               {currentEvent.public_url && (
                 <Box sx={{ mb: 2, p: 2, bgcolor: 'primary.50', borderRadius: 1, border: 1, borderColor: 'primary.200' }}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-                    🔗 {t('eSourcing:labels.publicEventLink')}
+                     {t('eSourcing:labels.publicEventLink')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                     {t('eSourcing:labels.shareWithSuppliers')}

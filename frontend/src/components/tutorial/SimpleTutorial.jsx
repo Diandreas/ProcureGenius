@@ -27,7 +27,7 @@ const TUTORIAL_STEPS = [
     description: 'On va vous montrer comment ça marche. Ça prend 2 minutes. Suivez les étapes et vous serez prêt à commencer.',
     target: null,
     route: '/dashboard',
-    icon: '👋',
+    icon: '',
   },
   {
     id: 'dashboard',
@@ -35,7 +35,7 @@ const TUTORIAL_STEPS = [
     description: 'Ici vous voyez tout ce qui se passe : vos commandes du jour, vos factures en attente, et vos alertes importantes.',
     target: '[data-tutorial="menu-dashboard"]',
     route: '/dashboard',
-    icon: '📊',
+    icon: '',
   },
   {
     id: 'suppliers',
@@ -44,7 +44,7 @@ const TUTORIAL_STEPS = [
     target: '[data-tutorial="menu-suppliers"]',
     route: '/dashboard',
     module: 'suppliers',
-    icon: '🏭',
+    icon: '',
   },
   {
     id: 'purchase-orders',
@@ -53,7 +53,7 @@ const TUTORIAL_STEPS = [
     target: '[data-tutorial="menu-purchase-orders"]',
     route: '/dashboard',
     module: 'purchase-orders',
-    icon: '📋',
+    icon: '',
   },
   {
     id: 'invoices',
@@ -62,7 +62,7 @@ const TUTORIAL_STEPS = [
     target: '[data-tutorial="menu-invoices"]',
     route: '/dashboard',
     module: 'invoices',
-    icon: '🧾',
+    icon: '',
   },
   {
     id: 'products',
@@ -71,7 +71,7 @@ const TUTORIAL_STEPS = [
     target: '[data-tutorial="menu-products"]',
     route: '/dashboard',
     module: 'products',
-    icon: '📦',
+    icon: '',
   },
   {
     id: 'contracts',
@@ -80,7 +80,7 @@ const TUTORIAL_STEPS = [
     target: '[data-tutorial="menu-contracts"]',
     route: '/dashboard',
     module: 'contracts',
-    icon: '📝',
+    icon: '',
   },
   {
     id: 'accounting',
@@ -88,7 +88,7 @@ const TUTORIAL_STEPS = [
     description: 'Voyez en un coup d\'œil combien vous avez dépensé, ce que vous avez gagné, et si votre activité est rentable.',
     target: '[data-tutorial="menu-accounting"]',
     route: '/dashboard',
-    icon: '📒',
+    icon: '',
   },
   {
     id: 'ai-assistant',
@@ -96,7 +96,7 @@ const TUTORIAL_STEPS = [
     description: 'Posez-lui une question en français simple — "Montre-moi mes factures du mois" ou "Qui est mon meilleur fournisseur ?" — il répond tout de suite.',
     target: '[data-tutorial="menu-ai-assistant"]',
     route: '/dashboard',
-    icon: '🤖',
+    icon: '',
   },
   {
     id: 'settings',
@@ -104,7 +104,7 @@ const TUTORIAL_STEPS = [
     description: 'Mettez le nom de votre boutique, votre logo, votre devise. C\'est aussi ici que vous ajoutez d\'autres personnes de votre équipe.',
     target: '[data-tutorial="menu-settings"]',
     route: '/dashboard',
-    icon: '⚙️',
+    icon: '',
   },
   {
     id: 'complete',
@@ -112,7 +112,7 @@ const TUTORIAL_STEPS = [
     description: 'Vous avez vu l\'essentiel. Commencez par mettre le nom de votre boutique dans les réglages, puis ajoutez votre premier fournisseur.',
     target: null,
     route: '/dashboard',
-    icon: '🚀',
+    icon: '',
   },
 ];
 

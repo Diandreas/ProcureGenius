@@ -234,6 +234,57 @@ class PurchaseOrder(models.Model):
             'total_updated': len(movements)
         }
 
+    def convert_to_invoice(self, user=None):
+        """
+        Crée une facture (brouillon) à partir de ce bon de commande.
+
+        Reprend les lignes du BC (produit, description, quantité, prix unitaire),
+        relie la facture au BC, et bascule le BC en statut 'invoiced'. Idempotent :
+        si une facture existe déjà pour ce BC, on la renvoie sans en recréer.
+
+        Returns:
+            (Invoice, created: bool)
+        """
+        from apps.invoicing.models import Invoice, InvoiceItem
+
+        existing = self.invoices.first()
+        if existing:
+            return existing, False
+
+        organization = getattr(user, 'organization', None) if user else None
+
+        invoice = Invoice.objects.create(
+            title=self.title or f"Facture du BC {self.po_number}",
+            description=self.description,
+            status='draft',
+            created_by=user or self.created_by,
+            organization=organization,
+            purchase_order=self,
+            subtotal=self.subtotal or 0,
+            tax_amount=self.tax_amount,
+            total_amount=self.total_amount or 0,
+            payment_terms="Net 30",
+        )
+
+        for item in self.items.all():
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                product=item.product,
+                product_reference=item.product_reference or "",
+                service_code=item.product_code or "ITEM",
+                description=item.description,
+                quantity=item.quantity,
+                unit_price=item.unit_price,
+                unit_of_measure=item.unit_of_measure,
+            )
+
+        invoice.recalculate_totals()
+
+        # Le statut 'invoiced' est posé automatiquement via update_status_automatically,
+        # appelé ci-dessous pour garder une seule source de vérité.
+        self.update_status_automatically()
+        return invoice, True
+
     def update_status_automatically(self):
         """
         Met à jour automatiquement les statuts 'received' et 'invoiced' basé sur les items et factures.

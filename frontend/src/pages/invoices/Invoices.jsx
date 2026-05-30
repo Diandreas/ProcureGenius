@@ -64,7 +64,6 @@ import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import DateNavigator from '../../components/common/DateNavigator';
-import SmartInvoiceUpload from '../../components/SmartInvoiceUpload';
 import Mascot from '../../components/Mascot';
 import { generateInvoicesBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 import { generateInvoicePDF, openPDFInNewTab as openSinglePDF } from '../../services/pdfService';
@@ -92,7 +91,6 @@ function Invoices() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
-  const [showSmartUpload, setShowSmartUpload] = useState(false);
   const [reportFilters, setReportFilters] = useState({
     dateStart: '',
     dateEnd: '',
@@ -131,23 +129,6 @@ function Invoices() {
       actions: (
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<AutoAwesome />}
-            onClick={() => setShowSmartUpload(prev => !prev)}
-            sx={{
-              borderRadius: 2.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              px: { xs: 1.5, sm: 2 },
-              borderWidth: 2,
-              display: { xs: 'none', sm: 'flex' },
-              '&:hover': { borderWidth: 2 }
-            }}
-          >
-            {showSmartUpload ? 'Fermer' : 'Smart Upload IA'}
-          </Button>
-          <Button
             variant="contained"
             color="primary"
             startIcon={<Receipt />}
@@ -167,7 +148,7 @@ function Invoices() {
     });
 
     return () => setPageHeader({ title: '', actions: null });
-  }, [t, navigate, showSmartUpload, theme.palette.primary.main, setPageHeader]);
+  }, [t, navigate, theme.palette.primary.main, setPageHeader]);
 
   // Enregistrer la fonction de rapport dans la top nav bar
   useEffect(() => {
@@ -649,40 +630,6 @@ function Invoices() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
-
-      {/* Smart Upload Section */}
-      <AnimatePresence>
-        {showSmartUpload && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            transition={{ duration: 0.4, ease: "circOut" }}
-          >
-            <Card sx={{
-              borderRadius: 4,
-              overflow: 'hidden',
-              border: '2px solid',
-              borderColor: 'primary.light',
-              boxShadow: theme => `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
-              position: 'relative'
-            }}>
-              <Box sx={{
-                position: 'absolute',
-                top: -10,
-                right: 20,
-                zIndex: 1,
-                display: { xs: 'none', md: 'block' }
-              }}>
-                <Mascot pose="happy" animation="float" size={100} />
-              </Box>
-              <Box sx={{ p: 1, bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                <SmartInvoiceUpload />
-              </Box>
-            </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
@@ -1201,7 +1148,7 @@ function Invoices() {
           <Box sx={{ pt: 2 }}>
             {/* Période */}
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-              📅 Période (optionnel)
+               Période (optionnel)
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
               Filtrer par période - laisser vide pour tout inclure
@@ -1234,7 +1181,7 @@ function Invoices() {
             {/* Sélection de factures */}
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                📋 Factures à inclure
+                 Factures à inclure
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                 {reportFilters.selectedInvoices.length > 0

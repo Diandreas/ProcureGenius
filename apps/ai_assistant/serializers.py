@@ -58,10 +58,18 @@ class DocumentScanSerializer(serializers.ModelSerializer):
 
 
 class ChatRequestSerializer(serializers.Serializer):
-    """Serializer pour les requêtes de chat"""
+    """Serializer pour les requêtes de chat.
+
+    `page` / `context` : contexte d'interface envoyé par le panneau IA contextuel
+    (ContextualAIPanel) pour améliorer la pertinence des réponses.
+    `confirmation_data` : soit l'ancien format ({force_create, entity_type, ...}),
+    soit le nouveau format structuré ({token, choice}) pour la confirmation par token.
+    """
     message = serializers.CharField(required=True, max_length=2000)
     conversation_id = serializers.UUIDField(required=False, allow_null=True)
     confirmation_data = serializers.JSONField(required=False, allow_null=True)
+    page = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=200)
+    context = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=200)
 
 
 class DocumentAnalysisSerializer(serializers.Serializer):

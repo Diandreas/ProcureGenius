@@ -179,7 +179,7 @@ function ModuleActivationDialog({ open, moduleId, onClose, onActivate }) {
                     borderColor: 'info.light'
                 }}>
                     <Typography variant="body2" color="info.main">
-                        💡 Vous pourrez toujours désactiver ce module dans les paramètres
+                         Vous pourrez toujours désactiver ce module dans les paramètres
                     </Typography>
                 </Box>
             </DialogContent>

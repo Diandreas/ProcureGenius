@@ -121,11 +121,11 @@ class TestQuotaIntegration:
         source = inspect.getsource(ChatView.post)
         assert 'increment_usage' in source
 
-    def test_streaming_view_checks_budget(self):
-        """StreamingChatView doit verifier le budget tokens."""
-        from apps.ai_assistant.views import StreamingChatView
+    def test_chat_view_checks_budget(self):
+        """ChatView doit verifier le budget tokens."""
+        from apps.ai_assistant.views import ChatView
         import inspect
-        source = inspect.getsource(StreamingChatView.post)
+        source = inspect.getsource(ChatView.post)
         assert 'check_budget' in source
 
     def test_chat_view_checks_quota_service(self):
@@ -151,7 +151,7 @@ class TestQuotaIntegration:
                 'usage': {'hourly': 0, 'daily': 100000},
             }
             response = client.post(
-                '/api/ai/chat/',
+                '/api/v1/ai/chat/',
                 data=json.dumps({'message': 'test'}),
                 content_type='application/json',
             )

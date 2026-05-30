@@ -120,6 +120,7 @@ PROFILE_MODULES = {
         Modules.DASHBOARD,
         Modules.PRODUCTS,
         Modules.CLIENTS,
+        Modules.INVOICES,
     ],
     ProfileTypes.BILLING: [
         Modules.DASHBOARD,
@@ -168,6 +169,68 @@ PROFILE_MODULES = {
         Modules.AI_ASSISTANT,
     ],
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mapping ABONNEMENT (code de plan) → modules débloqués.
+# Source de vérité unique pour relier un plan Stripe à l'accès aux modules.
+# Codes de plan : free / pro / business / enterprise (cf. SubscriptionPlan).
+# ─────────────────────────────────────────────────────────────────────────────
+PLAN_MODULES = {
+    'free': [
+        Modules.DASHBOARD,
+        Modules.PRODUCTS,
+        Modules.CLIENTS,
+        Modules.INVOICES,
+    ],
+    'pro': [
+        Modules.DASHBOARD,
+        Modules.PRODUCTS,
+        Modules.CLIENTS,
+        Modules.INVOICES,
+        Modules.SUPPLIERS,
+        Modules.PURCHASE_ORDERS,
+        Modules.CONTRACTS,
+        Modules.ACCOUNTING,
+        Modules.AI_ASSISTANT,
+        Modules.ANALYTICS,
+    ],
+    'business': [
+        Modules.DASHBOARD,
+        Modules.PRODUCTS,
+        Modules.CLIENTS,
+        Modules.INVOICES,
+        Modules.SUPPLIERS,
+        Modules.PURCHASE_ORDERS,
+        Modules.CONTRACTS,
+        Modules.ACCOUNTING,
+        Modules.AI_ASSISTANT,
+        Modules.ANALYTICS,
+        Modules.E_SOURCING,
+    ],
+    'enterprise': [
+        Modules.DASHBOARD,
+        Modules.PRODUCTS,
+        Modules.CLIENTS,
+        Modules.INVOICES,
+        Modules.SUPPLIERS,
+        Modules.PURCHASE_ORDERS,
+        Modules.CONTRACTS,
+        Modules.ACCOUNTING,
+        Modules.AI_ASSISTANT,
+        Modules.ANALYTICS,
+        Modules.E_SOURCING,
+    ],
+}
+
+
+def get_modules_for_plan(plan_code):
+    """Retourne la liste des modules débloqués pour un code de plan donné.
+
+    Retombe sur le plan gratuit si le code est inconnu (sécurité : on ne donne
+    jamais plus que le minimum par défaut).
+    """
+    return list(PLAN_MODULES.get(plan_code, PLAN_MODULES['free']))
+
 
 # Profile Metadata
 PROFILE_METADATA = {

@@ -175,7 +175,7 @@ export default function JournalEntryDetail() {
           </TableContainer>
 
           {entry.is_balanced ? (
-            <Alert severity="success" sx={{ mb: 3 }}>Écriture équilibrée ✓</Alert>
+            <Alert severity="success" sx={{ mb: 3 }}>Écriture équilibrée </Alert>
           ) : (
             <Alert severity="error" sx={{ mb: 3 }}>
               Déséquilibrée — Débit : {format(parseFloat(entry.total_debit))} / Crédit : {format(parseFloat(entry.total_credit))}

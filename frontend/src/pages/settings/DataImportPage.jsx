@@ -515,11 +515,11 @@ const DataImportPage = () => {
                 update_existing: updateExisting,
             };
 
-            console.log('📤 Création du job avec:', { ...jobData, source_file: uploadedFile?.name });
+            console.log(' Création du job avec:', { ...jobData, source_file: uploadedFile?.name });
 
             const result = await dispatch(createMigrationJob(jobData)).unwrap();
-            console.log('✅ Job créé:', result);
-            console.log('✅ Job ID:', result.id);
+            console.log(' Job créé:', result);
+            console.log(' Job ID:', result.id);
 
             // Vérifier que l'ID existe
             if (!result.id) {
@@ -528,12 +528,12 @@ const DataImportPage = () => {
 
             // Attendre puis prévisualiser
             await new Promise(resolve => setTimeout(resolve, 500));
-            console.log('📊 Génération de l\'aperçu pour job:', result.id);
+            console.log(' Génération de l\'aperçu pour job:', result.id);
             const previewResult = await dispatch(previewMigrationData(result.id)).unwrap();
-            console.log('✅ Aperçu généré:', previewResult);
+            console.log(' Aperçu généré:', previewResult);
 
             // Configurer le mapping
-            console.log('⚙️ Configuration du mapping:', fieldMapping);
+            console.log(' Configuration du mapping:', fieldMapping);
             await dispatch(configureMigration({
                 id: result.id,
                 config: {
@@ -542,17 +542,17 @@ const DataImportPage = () => {
                     update_existing: updateExisting,
                 },
             })).unwrap();
-            console.log('✅ Mapping configuré');
+            console.log(' Mapping configuré');
 
             // Démarrer l'import
-            console.log('🚀 Démarrage de l\'import');
+            console.log(' Démarrage de l\'import');
             await dispatch(startMigration(result.id)).unwrap();
-            console.log('✅ Import démarré');
+            console.log(' Import démarré');
 
             setActiveStep(4);
         } catch (err) {
-            console.error('❌ Erreur import complète:', err);
-            console.error('❌ Détails:', {
+            console.error(' Erreur import complète:', err);
+            console.error(' Détails:', {
                 message: err.message,
                 response: err.response?.data,
                 status: err.response?.status,

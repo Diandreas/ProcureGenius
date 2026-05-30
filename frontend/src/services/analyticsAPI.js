@@ -28,6 +28,12 @@ export const analyticsAPI = {
 
   // AI Greeting
   getAiGreeting: () => api.get('/analytics/ai-greeting/'),
+
+  // Marges & bénéfice brut par produit (consultation, sans compta)
+  getProductMargins: (params) => api.get('/analytics/product-margins/', { params }),
+
+  // Restockage prédictif (Premium)
+  getRestockForecast: (params) => api.get('/analytics/restock-forecast/', { params }),
   };
 
 export default analyticsAPI;

@@ -67,14 +67,14 @@ export default function AccountingDashboard() {
 
   if (loading) return (
     <Box p={3}>
-      <AccountingNav title="Comptabilité" subtitle="Gestion financière du centre de santé" />
+      <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
       <Box display="flex" justifyContent="center" p={6}><CircularProgress /></Box>
     </Box>
   );
 
   if (error) return (
     <Box p={3}>
-      <AccountingNav title="Comptabilité" subtitle="Gestion financière du centre de santé" />
+      <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
       <Alert severity="error">{error}</Alert>
     </Box>
   );
@@ -92,7 +92,13 @@ export default function AccountingDashboard() {
 
   return (
     <Box p={3}>
-      <AccountingNav title="Comptabilité" subtitle="Gestion financière du centre de santé" />
+      <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
+
+      <Alert severity="info" sx={{ mb: 3 }}>
+        Vos ventes (factures) et vos achats (bons de commande) sont enregistrés
+        <strong> automatiquement</strong>. Il vous suffit d'ajouter vos autres charges
+        (loyer, salaires, abonnements…) pour connaître votre <strong>bénéfice net</strong>.
+      </Alert>
 
       {/* KPIs mois courant */}
       <Typography variant="overline" color="text.secondary">Mois en cours</Typography>

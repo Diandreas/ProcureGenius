@@ -984,7 +984,7 @@ function PurchaseOrders() {
           <Box sx={{ pt: 2 }}>
             {/* Période */}
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-              📅 Période (optionnel)
+               Période (optionnel)
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
               Filtrer par période - laisser vide pour tout inclure
@@ -1017,7 +1017,7 @@ function PurchaseOrders() {
             {/* Sélection de bons de commande */}
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                📋 Bons de commande à inclure
+                 Bons de commande à inclure
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                 {reportFilters.selectedPOs.length > 0

@@ -788,7 +788,7 @@ function ProductForm() {
                                                                 fontWeight: 700,
                                                                 flexShrink: 0,
                                                             }}>
-                                                                {isDone ? '✓' : index + 1}
+                                                                {isDone ? '' : index + 1}
                                                             </Box>
                                                             <Typography variant="body2" sx={{
                                                                 fontWeight: isActive ? 700 : 500,
@@ -817,7 +817,7 @@ function ProductForm() {
                                                             color: safeActiveStep >= index ? 'white' : 'text.disabled',
                                                             fontSize: '0.75rem', fontWeight: 700, flexShrink: 0,
                                                         }}>
-                                                            {safeActiveStep > index ? '✓' : index + 1}
+                                                            {safeActiveStep > index ? '' : index + 1}
                                                         </Box>
                                                         {index < steps.length - 1 && (
                                                             <Box sx={{ flex: 1, height: 2, mx: 0.5, bgcolor: safeActiveStep > index ? 'success.main' : theme => alpha(theme.palette.divider, 1) }} />

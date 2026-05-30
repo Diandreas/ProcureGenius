@@ -128,6 +128,11 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        # timeout : évite les « database is locked » sous accès concurrent
+        # (notamment les handlers IA asynchrones qui écrivent via sync_to_async).
+        'OPTIONS': {
+            'timeout': 30,
+        },
     }
 }
 
@@ -344,6 +349,16 @@ GOOGLE_SPEECH_CONFIG = {
 PAYPAL_CLIENT_ID = os.getenv('PAYPAL_CLIENT_ID', '')
 PAYPAL_CLIENT_SECRET = os.getenv('PAYPAL_CLIENT_SECRET', '')
 PAYPAL_MODE = os.getenv('PAYPAL_MODE', 'sandbox')  # 'sandbox' or 'live'
+
+# Stripe configuration (abonnements). Laisser vide en local désactive le paiement.
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
+
+# Durée de l'essai gratuit (sans carte bancaire) offert à l'inscription, en jours.
+TRIAL_PERIOD_DAYS = int(os.getenv('TRIAL_PERIOD_DAYS', '30'))
+# Plan dont les fonctionnalités sont débloquées pendant l'essai gratuit.
+TRIAL_PLAN_CODE = os.getenv('TRIAL_PLAN_CODE', 'pro')
 
 # Logging
 LOGGING = {

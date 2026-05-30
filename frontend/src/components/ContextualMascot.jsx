@@ -13,11 +13,11 @@ import Mascot from './Mascot';
 function ContextualMascot({
     showTips = true,
     tips = [
-        "💡 Utilisez l'Assistant IA pour créer rapidement des documents",
-        "⚡ Les raccourcis clavier accélèrent votre travail",
-        "📊 Consultez le dashboard pour suivre vos performances",
-        "🎯 L'e-sourcing vous aide à comparer les offres fournisseurs",
-        "✨ Importez vos données depuis d'autres systèmes facilement",
+        " Utilisez l'Assistant IA pour créer rapidement des documents",
+        " Les raccourcis clavier accélèrent votre travail",
+        " Consultez le dashboard pour suivre vos performances",
+        " L'e-sourcing vous aide à comparer les offres fournisseurs",
+        " Importez vos données depuis d'autres systèmes facilement",
     ]
 }) {
     const [pose, setPose] = useState('happy');

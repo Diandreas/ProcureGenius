@@ -340,7 +340,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
               marginBottom: '4px',
               fontWeight: 500
             }}>
-              ⚠️ Situation déficitaire
+               Situation déficitaire
             </div>
           )}
           <ResponsiveContainer width="100%" height={180}>

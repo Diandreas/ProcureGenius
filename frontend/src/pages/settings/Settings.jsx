@@ -71,9 +71,12 @@ import {
   Warning,
   Person as PersonIcon,
   ChevronRight,
+  CreditCard as CreditCardIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
+import subscriptionAPI from '../../services/subscriptionAPI';
+import SubscriptionStatus from '../../components/SubscriptionStatus';
 import Cropper from 'react-easy-crop';
 import { useModules } from '../../contexts/ModuleContext';
 
@@ -115,6 +118,7 @@ const Settings = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { t } = useTranslation(['settings', 'common']);
 
   // State principal
@@ -313,7 +317,7 @@ const Settings = () => {
           return hex.length === 1 ? '0' + hex : hex;
         }).join('');
 
-        console.log('🎨 Couleur dominante extraite:', hex);
+        console.log(' Couleur dominante extraite:', hex);
         return hex;
       }
 
@@ -445,6 +449,7 @@ const Settings = () => {
     {
       label: 'Compte',
       items: [
+        { id: 8, label: 'Abonnement', icon: <CreditCardIcon fontSize="small" />, description: 'Plan, quotas, facturation' },
         { id: 5, label: 'Profil & Sécurité', icon: <PersonIcon fontSize="small" />, description: 'Informations personnelles, mot de passe' },
         { id: 6, label: 'Apparence', icon: <AppearanceIcon fontSize="small" />, description: 'Langue, thème, formats' },
         { id: 7, label: 'Données', icon: <BackupIcon fontSize="small" />, description: 'Import, export, migration' },
@@ -649,6 +654,26 @@ const Settings = () => {
               )}
               {activeTab === 7 && (
                 <DataSection settings={settings} showSnackbar={showSnackbar} />
+              )}
+              {activeTab === 8 && (
+                <Box>
+                  <SubscriptionStatus />
+                  <Box mt={3} display="flex" gap={2} flexWrap="wrap">
+                    <Button variant="contained" onClick={() => navigate('/pricing')} sx={{ textTransform: 'none', fontWeight: 600 }}>
+                      Changer de plan
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={async () => {
+                        try { await subscriptionAPI.openStripePortal(); }
+                        catch { showSnackbar('La gestion de facturation n\'est pas encore activée.', 'info'); }
+                      }}
+                      sx={{ textTransform: 'none', fontWeight: 600 }}
+                    >
+                      Gérer la facturation
+                    </Button>
+                  </Box>
+                </Box>
               )}
 
               {/* Bouton de sauvegarde (masqué pour onglets sans save global) */}

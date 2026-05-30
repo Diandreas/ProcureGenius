@@ -13,7 +13,7 @@ import { aiChatAPI } from '../../services/api';
 const CATEGORIES = [
   {
     id: 'critique',
-    label: '🔴 Critique',
+    label: ' Critique',
     description: 'Non désactivables — ruptures de stock, quota atteint, factures très en retard',
     color: 'error',
     fields: [
@@ -25,7 +25,7 @@ const CATEGORIES = [
   },
   {
     id: 'important',
-    label: '🟠 Important',
+    label: ' Important',
     description: 'Activées par défaut, désactivables',
     color: 'warning',
     fields: [
@@ -39,7 +39,7 @@ const CATEGORIES = [
   },
   {
     id: 'resume',
-    label: '📋 Résumé hebdo',
+    label: ' Résumé hebdo',
     description: 'Un seul push le lundi matin avec le résumé de la semaine',
     color: 'info',
     fields: [

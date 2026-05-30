@@ -97,7 +97,7 @@ class StatsResponseService:
             stats_type = StatsResponseService.detect_stats_type(message)
             
             # Récupérer les données depuis DashboardStatsView
-            from rest_framework.test import RequestFactory
+            from django.test import RequestFactory
             from apps.core.modules import get_user_accessible_modules
             
             factory = RequestFactory()

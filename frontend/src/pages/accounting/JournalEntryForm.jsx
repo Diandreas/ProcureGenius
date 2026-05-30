@@ -186,7 +186,7 @@ export default function JournalEntryForm() {
           <Box display="flex" justifyContent="space-between" mt={1} alignItems="center">
             <Typography variant="body2">Écart</Typography>
             {isBalanced ? (
-              <Chip label="Équilibrée ✓" color="success" size="small" />
+              <Chip label="Équilibrée " color="success" size="small" />
             ) : (
               <Chip label={`Écart: ${diff > 0 ? '+' : ''}${format(diff)}`} color="error" size="small" />
             )}

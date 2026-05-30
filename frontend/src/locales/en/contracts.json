@@ -98,23 +98,6 @@
       "history": "History"
     },
     "sections": {
-      "information": "Contract Information",
-      "supplier": "Supplier Information",
-      "dates": "Important Dates",
-      "financial": "Financial Information"
-    },
-    "actions": {
-      "edit": "Edit",
-      "renew": "Renew",
-      "terminate": "Terminate",
-      "archive": "Archive",
-      "download": "Download PDF",
-      "delete": "Delete",
-      "approve": "Approve",
-      "activate": "Activate",
-      "extractClauses": "Extract clauses (AI)"
-    },
-    "sections": {
       "description": "Description",
       "terms": "Terms and conditions",
       "paymentTerms": "Payment terms",
@@ -127,6 +110,17 @@
       "autoRenewal": "Auto renewal",
       "purchase": "Purchase",
       "service": "Service"
+    },
+    "actions": {
+      "edit": "Edit",
+      "renew": "Renew",
+      "terminate": "Terminate",
+      "archive": "Archive",
+      "download": "Download PDF",
+      "delete": "Delete",
+      "approve": "Approve",
+      "activate": "Activate",
+      "extractClauses": "Extract clauses (AI)"
     }
   },
   "messages": {
@@ -198,5 +192,27 @@
     "cancel": "Cancel",
     "extract": "Extract clauses",
     "extracting_button": "Extracting..."
+  },
+  "analyzer": {
+    "cta": "Analyze a contract",
+    "title": "Analyze a contract",
+    "subtitle": "Paste a contract received from a third party to study its clauses and risks before accepting. Nothing is saved.",
+    "placeholder": "Paste the full contract text to study here…",
+    "analyze": "Analyze clauses",
+    "analyzing": "Analyzing…",
+    "tooShort": "Paste the full contract text (at least a few lines).",
+    "error": "Error during analysis.",
+    "summary": "Summary",
+    "globalRisk": "Overall risk assessment",
+    "clauses": "Detected clauses",
+    "analysis": "Analysis",
+    "recommendation": "Recommendation",
+    "risk": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "unknown": "Not assessed"
+    }
   }
 }

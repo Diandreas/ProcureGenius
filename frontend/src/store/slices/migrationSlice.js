@@ -22,11 +22,11 @@ export const createMigrationJob = createAsyncThunk(
   'migration/createJob',
   async (data) => {
     const response = await migrationAPI.create(data);
-    console.log('📦 Réponse complète createMigrationJob:', response);
-    console.log('📦 response.data:', response.data);
+    console.log(' Réponse complète createMigrationJob:', response);
+    console.log(' response.data:', response.data);
     // Le backend peut retourner l'objet directement ou dans une structure imbriquée
     const jobData = response.data.id ? response.data : (response.data.data || response.data);
-    console.log('📦 Job data extrait:', jobData);
+    console.log(' Job data extrait:', jobData);
     return jobData;
   }
 );

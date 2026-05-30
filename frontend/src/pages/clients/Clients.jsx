@@ -442,7 +442,7 @@ function Clients() {
         {/* Footer */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Chip
-            label={client.is_active ? (isMobile ? "✓" : t('clients:status.active')) : (isMobile ? "✗" : t('clients:status.inactive'))}
+            label={client.is_active ? (isMobile ? "" : t('clients:status.active')) : (isMobile ? "" : t('clients:status.inactive'))}
             size="small"
             color={client.is_active ? 'success' : 'default'}
             sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
@@ -1023,7 +1023,7 @@ function Clients() {
           <Box sx={{ pt: 2 }}>
             {/* Période */}
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-              📅 Période (optionnel)
+               Période (optionnel)
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
               Filtrer par période - laisser vide pour tout inclure
@@ -1056,7 +1056,7 @@ function Clients() {
             {/* Sélection de clients */}
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                📋 Clients à inclure
+                 Clients à inclure
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                 {reportFilters.selectedClients.length > 0

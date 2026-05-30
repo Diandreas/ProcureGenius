@@ -27,20 +27,29 @@ class ChatView(APIView):
     throttle_classes = [AIUserRateThrottle, AIOrgRateThrottle, AIBurstRateThrottle]
 
     def post(self, request):
-        """Envoyer un message à l'IA"""
+        """Envoyer un message à l'IA.
+
+        Délègue toute l'orchestration à l'Orchestrator (flux à 2 appels LLM :
+        récupération des données via les outils puis synthèse). Retourne un
+        contrat de réponse UNIFIÉ dont le champ `reply` (string non vide) est la
+        source de vérité pour l'affichage côté frontend.
+        """
+        from .services import get_orchestrator, AsyncSafeUserContext
+
         serializer = ChatRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         user_message = serializer.validated_data['message']
         conversation_id = serializer.validated_data.get('conversation_id')
-        confirmation_data = serializer.validated_data.get('confirmation_data')
+        confirmation_data = serializer.validated_data.get('confirmation_data') or {}
+        page = serializer.validated_data.get('page')
 
-        # Sanitisation anti-injection
-        user_message = sanitize_user_input(user_message)
+        # Sanitisation anti-injection (sur le message brut, avant nettoyage)
         detect_injection_attempt(serializer.validated_data['message'])
+        user_message = sanitize_user_input(user_message)
 
-        # Verification quota abonnement IA
+        # Quota / budget IA (inchangé)
         org = getattr(request.user, 'organization', None)
         if org:
             try:
@@ -50,584 +59,6 @@ class ChatView(APIView):
                     return Response({
                         'error': 'quota_exceeded',
                         'message': "Quota de requetes IA atteint pour ce mois. Passez au plan superieur.",
-                    }, status=status.HTTP_402_PAYMENT_REQUIRED)
-            except Exception:
-                pass  # Si le module quota n'est pas configure, on continue
-
-            # Verification budget tokens
-            budget_status = token_monitor.check_budget(org.id)
-            if not budget_status['allowed']:
-                return Response({
-                    'error': 'budget_exceeded',
-                    'message': budget_status['reason'],
-                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
-
-        try:
-            # Récupérer ou créer la conversation (filtre par org pour isolation multi-tenant)
-            user_org = getattr(request.user, 'organization', None)
-            if conversation_id:
-                conv_filter = {'id': conversation_id, 'user': request.user}
-                if user_org:
-                    conv_filter['organization'] = user_org
-                conversation = Conversation.objects.get(**conv_filter)
-            else:
-                conversation = Conversation.objects.create(
-                    user=request.user,
-                    organization=user_org,
-                    title=user_message[:50] + "..." if len(user_message) > 50 else user_message
-                )
-            
-            # Sauvegarder le message utilisateur
-            user_msg = Message.objects.create(
-                conversation=conversation,
-                role='user',
-                content=user_message
-            )
-
-            # NOUVEAU: Si confirmation_data est fourni directement, exécuter l'action immédiatement
-            if confirmation_data and confirmation_data.get('force_create'):
-                logger.info(f"Direct confirmation received with data: {confirmation_data}")
-
-                from .services import ActionExecutor, AsyncSafeUserContext
-                executor = ActionExecutor()
-                user_context = AsyncSafeUserContext.from_user(request.user)
-
-                # Déterminer le type d'entité à créer
-                entity_type = confirmation_data.get('entity_type')
-                action_name = None
-
-                # Si entity_type est explicitement fourni
-                if entity_type:
-                    action_name = f'create_{entity_type}'
-                # Sinon, détecter automatiquement
-                elif confirmation_data.get('client_name') or confirmation_data.get('due_date') or confirmation_data.get('title'):
-                    # C'est probablement une facture
-                    entity_type = 'invoice'
-                    action_name = 'create_invoice'
-                elif confirmation_data.get('supplier_name') or confirmation_data.get('expected_delivery_date'):
-                    # C'est un bon de commande
-                    entity_type = 'purchase_order'
-                    action_name = 'create_purchase_order'
-                elif confirmation_data.get('contact_person') and confirmation_data.get('name'):
-                    # C'est un fournisseur (avec contact_person)
-                    entity_type = 'supplier'
-                    action_name = 'create_supplier'
-                elif confirmation_data.get('name') and confirmation_data.get('email'):
-                    # C'est un client
-                    entity_type = 'client'
-                    action_name = 'create_client'
-                elif confirmation_data.get('name') and confirmation_data.get('reference'):
-                    # C'est un produit
-                    entity_type = 'product'
-                    action_name = 'create_product'
-
-                logger.info(f"Detected entity_type: {entity_type}, action_name: {action_name}")
-
-                if not action_name:
-                    # Fallback: retourner une erreur si le type n'est pas détecté
-                    logger.warning(f"Could not detect entity type from confirmation_data: {confirmation_data}")
-                    ai_response = Message.objects.create(
-                        conversation=conversation,
-                        role='assistant',
-                        content="⚠️ Je n'ai pas pu déterminer le type d'élément à créer. Veuillez réessayer en précisant le type (facture, client, fournisseur, etc.).",
-                        metadata={}
-                    )
-                    return Response({
-                        'message': MessageSerializer(ai_response).data,
-                        'action_results': [],
-                        'conversation_id': str(conversation.id)
-                    })
-
-                if action_name:
-                    # Exécuter l'action avec les données confirmées
-                    action_result = async_to_sync(executor.execute)(
-                        action=action_name,
-                        params=confirmation_data,
-                        user=user_context
-                    )
-
-                    # Formater la réponse
-                    if action_result.get('success'):
-                        final_response = f"✓ {action_result.get('message', 'Création réussie !')}"
-                    else:
-                        final_response = f"✗ {action_result.get('error', 'Une erreur est survenue')}"
-
-                    # Créer le message de réponse
-                    ai_response = Message.objects.create(
-                        conversation=conversation,
-                        role='assistant',
-                        content=final_response,
-                        metadata={
-                            'action_results': [{
-                                'action': action_name,
-                                'result': action_result
-                            }]
-                        }
-                    )
-
-                    return Response({
-                        'message': MessageSerializer(ai_response).data,
-                        'action_results': [{
-                            'action': action_name,
-                            'result': action_result
-                        }],
-                        'conversation_id': str(conversation.id)
-                    })
-
-            # Vérifier si c'est une réponse à une confirmation en attente
-            last_assistant_msg = Message.objects.filter(
-                conversation=conversation,
-                role='assistant'
-            ).order_by('-created_at').first()
-
-            pending_confirmation = None
-            if last_assistant_msg and last_assistant_msg.metadata:
-                action_results_metadata = last_assistant_msg.metadata.get('action_results', [])
-                for result in action_results_metadata:
-                    if result.get('pending_confirmation'):
-                        pending_confirmation = result['pending_confirmation']
-                        break
-
-            # Détecter les intentions de confirmation dans le message utilisateur
-            user_message_lower = user_message.lower().strip()
-            confirmation_detected = None
-
-            if pending_confirmation:
-                # Mots-clés pour "utiliser l'existant"
-                if any(keyword in user_message_lower for keyword in ['utilise', 'utiliser', 'existant', 'premier', '1', 'recommandé', 'ok', 'oui', 'yes']):
-                    confirmation_detected = 'use_existing'
-                # Mots-clés pour "créer nouveau"
-                elif any(keyword in user_message_lower for keyword in ['créer', 'créé', 'nouveau', 'new', 'force', '2', 'quand même']):
-                    confirmation_detected = 'force_create'
-                # Mots-clés pour "annuler"
-                elif any(keyword in user_message_lower for keyword in ['annuler', 'annule', 'cancel', 'non', 'no', '3', 'stop']):
-                    confirmation_detected = 'cancel'
-
-            # Si une confirmation est détectée, exécuter l'action directement
-            if confirmation_detected and pending_confirmation:
-                logger.info(f"Confirmation detected: {confirmation_detected} for action: {pending_confirmation.get('action', 'unknown')}")
-
-                from .services import ActionExecutor, AsyncSafeUserContext
-                executor = ActionExecutor()
-                user_context = AsyncSafeUserContext.from_user(request.user)
-
-                action_result = None
-                final_response = ""
-
-                if confirmation_detected == 'cancel':
-                    # Annulation
-                    final_response = "✓ Opération annulée."
-                    action_result = {
-                        'success': True,
-                        'message': 'Opération annulée par l\'utilisateur'
-                    }
-                else:
-                    # Récupérer les paramètres originaux
-                    import json
-                    original_params = pending_confirmation.get('original_params', {})
-
-                    # S'assurer que original_params est un dict
-                    if isinstance(original_params, str):
-                        try:
-                            original_params = json.loads(original_params)
-                        except:
-                            logger.error(f"Failed to parse original_params: {original_params}")
-                            original_params = {}
-                    elif not isinstance(original_params, dict):
-                        logger.error(f"original_params is not a dict: {type(original_params)}")
-                        original_params = {}
-
-                    # Ajouter les paramètres de confirmation selon le choix
-                    choice_params = pending_confirmation.get('choices', {}).get(confirmation_detected, {})
-
-                    # S'assurer que choice_params est un dict
-                    if choice_params is None:
-                        choice_params = {}
-                    elif isinstance(choice_params, str):
-                        try:
-                            choice_params = json.loads(choice_params)
-                        except:
-                            logger.error(f"Failed to parse choice_params: {choice_params}")
-                            choice_params = {}
-
-                    # Fusionner les paramètres
-                    confirmed_params = {**original_params, **choice_params}
-
-                    logger.info(f"Executing action {pending_confirmation.get('action', 'unknown')} with confirmed params: {confirmed_params}")
-
-                    # Exécuter l'action avec les paramètres confirmés
-                    action_result = async_to_sync(executor.execute)(
-                        action=pending_confirmation.get('action', 'unknown'),
-                        params=confirmed_params,
-                        user=user_context
-                    )
-
-                    # Formater la réponse
-                    if action_result.get('success'):
-                        message = action_result.get('message', 'Action exécutée avec succès')
-
-                        # Messages spécifiques selon le type de confirmation
-                        entity_type = pending_confirmation.get('entity_type', 'entité')
-                        entity_names = {
-                            'client': 'client',
-                            'supplier': 'fournisseur',
-                            'product': 'produit'
-                        }
-                        entity_name = entity_names.get(entity_type, 'entité')
-
-                        if confirmation_detected == 'use_existing':
-                            final_response = f"✓ Parfait ! J'ai utilisé le {entity_name} existant.\n\n{message}"
-                        else:  # force_create
-                            final_response = f"✓ D'accord ! J'ai créé un nouveau {entity_name}.\n\n{message}"
-
-                        # Ajouter un lien si disponible
-                        data = action_result.get('data', {})
-                        if isinstance(data, dict) and data.get('url'):
-                            final_response += f" [Voir les détails]({data['url']})"
-                    else:
-                        error = action_result.get('error', 'Erreur inconnue')
-                        final_response = f"✗ Désolé, une erreur s'est produite : {error}"
-
-                # Sauvegarder la réponse
-                ai_msg = Message.objects.create(
-                    conversation=conversation,
-                    role='assistant',
-                    content=final_response,
-                    metadata={'action_results': [{'result': action_result}]} if action_result else None
-                )
-
-                conversation.last_message_at = timezone.now()
-                conversation.save()
-
-                return Response({
-                    'conversation_id': str(conversation.id),
-                    'message': MessageSerializer(ai_msg).data,
-                    'action_results': [{'result': action_result}] if action_result else None,
-                    'action_buttons': None
-                }, status=status.HTTP_200_OK)
-
-            # NOUVEAU: Détecter si c'est une requête de statistiques
-            from .services.stats_response_service import StatsResponseService
-            stats_response = StatsResponseService.generate_stats_response(request.user, user_message)
-            
-            if stats_response:
-                # Utiliser la réponse de template au lieu d'appeler Mistral
-                final_response = stats_response
-                result = {'response': final_response, 'tool_calls': None}
-            else:
-                # Récupérer l'historique de la conversation
-                history = Message.objects.filter(
-                    conversation=conversation
-                ).order_by('created_at').values('role', 'content')
-                
-                # Appeler Mistral AI (lazy import)
-                from .services import MistralService
-                mistral_service = MistralService()
-
-                # Utiliser async_to_sync au lieu de créer un event loop
-                result = async_to_sync(mistral_service.chat)(
-                    message=user_message,
-                    conversation_history=list(history)[:-1],  # Exclure le dernier message
-                    user_context={'user_id': request.user.id}
-                )
-            
-            # Exécuter les tool_calls si présents AVANT de sauvegarder la réponse
-            action_results = []
-            action_result = None
-            final_response = result['response']
-
-            if result.get('tool_calls'):
-                from .services import ActionExecutor, AsyncSafeUserContext
-                executor = ActionExecutor()
-
-                # IMPORTANT: Convert user to safe dict BEFORE entering async context
-                # This prevents "You cannot call this from an async context" errors
-                user_context = AsyncSafeUserContext.from_user(request.user)
-
-                for tool_call in result['tool_calls']:
-                    try:
-                        # Normaliser les arguments - peut être un dict ou une liste
-                        arguments = tool_call.get('arguments', {})
-                        if isinstance(arguments, list):
-                            # Si c'est une liste, essayer de la convertir en dict
-                            if len(arguments) == 1 and isinstance(arguments[0], dict):
-                                arguments = arguments[0]
-                            else:
-                                # Sinon, créer un dict vide et logger un avertissement
-                                logger.warning(f"Arguments is a list, converting to dict: {arguments}")
-                                arguments = {}
-                        elif not isinstance(arguments, dict):
-                            # Si ce n'est ni une liste ni un dict, essayer de parser comme JSON string
-                            import json
-                            try:
-                                if isinstance(arguments, str):
-                                    arguments = json.loads(arguments)
-                                else:
-                                    arguments = {}
-                            except:
-                                arguments = {}
-
-                        # Utiliser async_to_sync au lieu de créer un event loop
-                        # Récupérer le nom de la fonction correctement
-                        # Dans services.py, tool_call est structuré comme:
-                        # {'id': '...', 'function': 'nom_fonction', 'arguments': {...}}
-                        function_name = tool_call.get('function', '')
-
-                        # Si 'function' n'existe pas, essayer 'name'
-                        if not function_name:
-                            function_name = tool_call.get('name', '')
-
-                        if not function_name:
-                            logger.error(f"Cannot extract function name from tool_call: {tool_call}")
-
-                        # Valider les parametres d'outil avant execution
-                        from .tool_schemas import validate_tool_params
-                        _valid, arguments, _errors = validate_tool_params(function_name, arguments)
-
-                        logger.info(f"Executing function: {function_name} with params: {arguments}")
-
-                        action_result = async_to_sync(executor.execute)(
-                            action=function_name,
-                            params=arguments,
-                            user=user_context
-                        )
-
-                        action_results.append({
-                            'tool_call_id': tool_call['id'],
-                            'function': tool_call['function'],
-                            'result': action_result
-                        })
-
-                        # Ajouter le résultat à la réponse finale de manière plus naturelle
-                        # S'assurer que action_result est un dict
-                        if not isinstance(action_result, dict):
-                            logger.error(f"Action result is not a dict: {type(action_result)} - {action_result}")
-                            action_result = {'success': False, 'error': 'Format de réponse invalide'}
-                        
-                        if action_result.get('success'):
-                            message = action_result.get('message', 'Action exécutée avec succès')
-                            # Ajouter un lien si disponible
-                            data = action_result.get('data', {})
-                            if isinstance(data, dict) and data.get('url'):
-                                message += f" [Voir les détails]({data['url']})"
-                            final_response += f"\n\n✓ {message}"
-                        elif action_result.get('needs_confirmation'):
-                            # C'est une demande de confirmation, ne pas afficher d'erreur
-                            # Le frontend affichera les boutons appropriés via action_results metadata
-                            
-                            # On s'assure que le message de confirmation est dans la réponse finale
-                            conf_message = action_result.get('message', 'Veuillez confirmer cette action')
-                            if conf_message not in final_response:
-                                final_response += f"\n\n{conf_message}"
-                                
-                            # Préparer les boutons pour le frontend
-                            entity_type = action_result.get('entity_type', 'entité')
-                            draft_data = action_result.get('draft_data', {})
-                            
-                            action_results[-1]['action_buttons'] = [
-                                {
-                                    'label': "✓ Confirmer",
-                                    'action': 'force_create',
-                                    'style': 'primary',
-                                    'params': {
-                                        'force_create': True,
-                                        'entity_type': entity_type,
-                                        **draft_data
-                                    }
-                                },
-                                {
-                                    'label': "Modifier",
-                                    'action': 'edit',
-                                    'style': 'secondary'
-                                },
-                                {
-                                    'label': "Annuler",
-                                    'action': 'cancel',
-                                    'style': 'danger'
-                                }
-                            ]
-                        else:
-                            error = action_result.get('error') or action_result.get('message')
-                            # Gestion améliorée des entités similaires trouvées
-                            if error and 'similar_entities_found' in str(error):
-                                similar = action_result.get('similar_entities', [])
-                                entity_type = action_result.get('entity_type', 'entité')
-
-                                # Extraire l'ID de l'entité suggérée depuis similar_entities
-                                suggested_entity_id = similar[0].get('id') if similar else None
-
-                                entity_names = {
-                                    'client': 'client',
-                                    'supplier': 'fournisseur',
-                                    'product': 'produit'
-                                }
-                                entity_name = entity_names.get(entity_type, 'entité')
-
-                                # Format response avec options claires
-                                final_response += f"\n\n⚠️ **Attention**: J'ai trouvé {len(similar)} {entity_name}(s) similaire(s) :\n\n"
-
-                                for i, entity in enumerate(similar, 1):
-                                    final_response += f"**{i}. {entity.get('name', 'N/A')}**\n"
-                                    if entity.get('email'):
-                                        final_response += f"   - Email: {entity['email']}\n"
-                                    if entity.get('phone'):
-                                        final_response += f"   - Téléphone: {entity['phone']}\n"
-                                    final_response += f"   - Similarité: {int(entity.get('similarity', 0))}%\n"
-                                    final_response += f"   - Raison: {entity.get('reason', 'Non spécifiée')}\n\n"
-
-                                # Ne plus afficher le texte "tapez 1/2/3" - les boutons sont gérés par le frontend
-                                final_response += f"\n⚠️ **Attention**: Un {entity_name} similaire existe déjà.\n\n"
-                                final_response += f"**Choisissez une option ci-dessous:**"
-
-                                # Ajouter les boutons d'action dans les métadonnées pour le frontend
-                                pending_conf = action_result.get('pending_confirmation', {})
-                                original_params = pending_conf.get('original_params', {})
-                                
-                                action_results[-1]['action_buttons'] = [
-                                    {
-                                        'label': f"✓ Utiliser {similar[0].get('name', 'entité')}",
-                                        'action': 'use_existing',
-                                        'style': 'primary',
-                                        'params': {
-                                            f'use_existing_{entity_type}_id': suggested_entity_id,
-                                            'force_create': False,
-                                            **original_params
-                                        }
-                                    },
-                                    {
-                                        'label': f"+ Créer nouveau {entity_name}",
-                                        'action': 'force_create',
-                                        'style': 'secondary',
-                                        'params': {
-                                            f'force_create_{entity_type}': True,
-                                            **original_params
-                                        }
-                                    },
-                                    {
-                                        'label': "✗ Annuler",
-                                        'action': 'cancel',
-                                        'style': 'danger'
-                                    }
-                                ]
-
-                                # Stocker le contexte de confirmation pour la suite
-                                # Note: tool_call['function'] est le nom (string), tool_call['arguments'] sont les params (dict)
-                                action_results[-1]['pending_confirmation'] = {
-                                    'action': tool_call['function'],  # Nom de la fonction directement
-                                    'original_params': arguments,  # Arguments déjà parsés plus haut
-                                    'entity_type': entity_type,
-                                    'suggested_entity_id': suggested_entity_id,
-                                    'choices': {
-                                        'use_existing': {f'use_existing_{entity_type}_id': suggested_entity_id},
-                                        'force_create': {f'force_create_{entity_type}': True},
-                                        'cancel': None
-                                    }
-                                }
-                            elif error:
-                                final_response += f"\n\n✗ Désolé, une erreur s'est produite : {error}"
-                            else:
-                                final_response += f"\n\n✗ L'action a échoué (erreur non spécifiée)."
-
-                    except Exception as e:
-                        logger.error(f"Tool call execution error: {e}")
-                        action_results.append({
-                            'tool_call_id': tool_call['id'],
-                            'function': tool_call['function'],
-                            'result': {
-                                'success': False,
-                                'error': str(e)
-                            }
-                        })
-                        final_response += f"\n\n✗ Erreur lors de l'exécution: {str(e)}"
-
-            # Sauvegarder la réponse de l'IA avec les résultats d'actions dans metadata
-            ai_msg = Message.objects.create(
-                conversation=conversation,
-                role='assistant',
-                content=final_response,
-                tool_calls=result.get('tool_calls'),
-                metadata={'action_results': action_results} if action_results else None
-            )
-
-            # Message enregistré et contenu mis à jour
-
-            
-            # Mettre à jour la conversation
-            conversation.last_message_at = timezone.now()
-            conversation.save()
-
-            # Extraire action_buttons depuis action_results pour le frontend
-            action_buttons = None
-            if action_results:
-                for action_res in action_results:
-                    if 'action_buttons' in action_res:
-                        action_buttons = action_res['action_buttons']
-                        break
-
-            # Format de réponse compatible avec le frontend (chat_interface.html)
-            response_data = {
-                'status': 'success',
-                'conversation_id': str(conversation.id),
-                'ai_response': final_response,  # Le contenu du message pour affichage
-                'message': MessageSerializer(ai_msg).data,  # Serialized pour compatibilité
-                'tokens_used': result.get('tokens_used', 0),
-                'action_result': action_result,
-                'action_results': action_results if action_results else None,
-                'action_buttons': action_buttons  # Boutons cliquables
-            }
-
-            # Incrementer le quota IA apres succes
-            if org:
-                try:
-                    from apps.subscriptions.quota_service import QuotaService
-                    QuotaService.increment_usage(org, 'ai_requests')
-                except Exception:
-                    pass
-
-            return Response(response_data, status=status.HTTP_200_OK)
-
-        except Conversation.DoesNotExist:
-            return Response(
-                {'error': 'conversation_not_found', 'message': 'Conversation introuvable.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            logger.error(f"Chat error: {e}", exc_info=True)
-            return Response(
-                {'error': 'service_unavailable', 'message': "Une erreur est survenue. Veuillez reessayer."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-class StreamingChatView(APIView):
-    """Endpoint streaming pour le chat IA — retourne les chunks en temps reel via SSE."""
-    permission_classes = [IsAuthenticated]
-    throttle_classes = [AIUserRateThrottle, AIOrgRateThrottle, AIBurstRateThrottle]
-
-    def post(self, request):
-        from django.http import StreamingHttpResponse
-
-        serializer = ChatRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        user_message = serializer.validated_data['message']
-        conversation_id = serializer.validated_data.get('conversation_id')
-
-        # Sanitisation
-        user_message = sanitize_user_input(user_message)
-        detect_injection_attempt(serializer.validated_data['message'])
-
-        # Budget / quota checks
-        org = getattr(request.user, 'organization', None)
-        if org:
-            try:
-                from apps.subscriptions.quota_service import QuotaService
-                quota = QuotaService.check_quota(org, 'ai_requests', raise_exception=False)
-                if not quota['can_proceed']:
-                    return Response({
-                        'error': 'quota_exceeded',
-                        'message': "Quota de requetes IA atteint pour ce mois.",
                     }, status=status.HTTP_402_PAYMENT_REQUIRED)
             except Exception:
                 pass
@@ -640,91 +71,51 @@ class StreamingChatView(APIView):
                 }, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         try:
-            # Get or create conversation
-            user_org = getattr(request.user, 'organization', None)
-            if conversation_id:
-                conv_filter = {'id': conversation_id, 'user': request.user}
-                if user_org:
-                    conv_filter['organization'] = user_org
-                conversation = Conversation.objects.get(**conv_filter)
+            # Récupérer ou créer la conversation (isolation multi-tenant)
+            conversation = self._get_or_create_conversation(request.user, conversation_id, user_message)
+
+            # Message utilisateur persisté
+            Message.objects.create(conversation=conversation, role='user', content=user_message)
+
+            orchestrator = get_orchestrator()
+            user_ctx = AsyncSafeUserContext.from_user(request.user)
+
+            # --- Confirmation structurée par token (nouveau format) ---
+            token = confirmation_data.get('token')
+            choice = confirmation_data.get('choice')
+            if token and choice:
+                result = async_to_sync(orchestrator.run_confirmation)(
+                    token=token, choice=choice, user_ctx=user_ctx,
+                )
+            # --- Compatibilité : ancien format force_create direct ---
+            elif confirmation_data.get('force_create'):
+                result = self._run_legacy_confirmation(orchestrator, confirmation_data, user_ctx)
             else:
-                conversation = Conversation.objects.create(
+                # --- Flux normal : orchestration 2 appels LLM ---
+                history = list(
+                    Message.objects.filter(conversation=conversation)
+                    .order_by('created_at')
+                    .values('role', 'content')
+                )[:-1]
+                result = async_to_sync(orchestrator.run)(
+                    message=user_message,
+                    user_ctx=user_ctx,
+                    conversation_history=history,
+                    page=page,
                     user=request.user,
-                    organization=user_org,
-                    title=user_message[:50] + "..." if len(user_message) > 50 else user_message,
                 )
 
-            # Save user message
-            Message.objects.create(
-                conversation=conversation,
-                role='user',
-                content=user_message,
-            )
+            response_data = self._persist_and_build_response(conversation, result)
 
-            # Get history
-            history = list(
-                Message.objects.filter(conversation=conversation)
-                .order_by('created_at')
-                .values('role', 'content')[:-1]
-            )
-
-            from .services import MistralService
-            mistral_service = MistralService()
-
-            user = request.user
-            conv_id = str(conversation.id)
-
-            import json as _json
-
-            def event_stream():
-                full_content = ""
-                tokens_used = 0
+            # Incrémenter le quota IA après succès
+            if org:
                 try:
-                    for chunk in mistral_service.chat_stream(
-                        message=user_message,
-                        conversation_history=history,
-                        user_context={'user_id': user.id},
-                    ):
-                        if chunk['type'] == 'chunk':
-                            full_content += chunk['content']
-                            yield f"data: {_json.dumps({'type': 'chunk', 'content': chunk['content']})}\n\n"
-                        elif chunk['type'] == 'done':
-                            tokens_used = chunk.get('tokens_used', 0)
-                        elif chunk['type'] == 'error':
-                            yield f"data: {_json.dumps({'type': 'error', 'message': 'Une erreur est survenue.'})}\n\n"
+                    from apps.subscriptions.quota_service import QuotaService
+                    QuotaService.increment_usage(org, 'ai_requests')
+                except Exception:
+                    pass
 
-                    # Save AI response after stream completes
-                    ai_msg = Message.objects.create(
-                        conversation_id=conv_id,
-                        role='assistant',
-                        content=full_content,
-                        metadata={'tokens_used': tokens_used, 'streamed': True},
-                    )
-                    conversation.last_message_at = timezone.now()
-                    conversation.save()
-
-                    # Increment quota
-                    _org = getattr(user, 'organization', None)
-                    if _org:
-                        try:
-                            from apps.subscriptions.quota_service import QuotaService
-                            QuotaService.increment_usage(_org, 'ai_requests')
-                        except Exception:
-                            pass
-
-                    yield f"data: {_json.dumps({'type': 'done', 'conversation_id': conv_id, 'message_id': str(ai_msg.id), 'tokens_used': tokens_used})}\n\n"
-
-                except Exception as e:
-                    logger.error(f"Streaming error: {e}", exc_info=True)
-                    yield f"data: {_json.dumps({'type': 'error', 'message': 'Une erreur est survenue.'})}\n\n"
-
-            response = StreamingHttpResponse(
-                event_stream(),
-                content_type='text/event-stream',
-            )
-            response['Cache-Control'] = 'no-cache'
-            response['X-Accel-Buffering'] = 'no'
-            return response
+            return Response(response_data, status=status.HTTP_200_OK)
 
         except Conversation.DoesNotExist:
             return Response(
@@ -732,11 +123,99 @@ class StreamingChatView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
-            logger.error(f"StreamingChat error: {e}", exc_info=True)
+            logger.error(f"Chat error: {e}", exc_info=True)
             return Response(
                 {'error': 'service_unavailable', 'message': "Une erreur est survenue. Veuillez reessayer."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    # ------------------------------------------------------------------ helpers
+    def _get_or_create_conversation(self, user, conversation_id, first_message):
+        user_org = getattr(user, 'organization', None)
+        if conversation_id:
+            conv_filter = {'id': conversation_id, 'user': user}
+            if user_org:
+                conv_filter['organization'] = user_org
+            return Conversation.objects.get(**conv_filter)
+        title = first_message[:50] + "..." if len(first_message) > 50 else first_message
+        return Conversation.objects.create(user=user, organization=user_org, title=title)
+
+    def _run_legacy_confirmation(self, orchestrator, confirmation_data, user_ctx):
+        """Compat : exécute directement une création confirmée (ancien front).
+
+        Détecte l'action à partir de `entity_type` puis exécute via le registry.
+        """
+        from .services import OrchestratorResult
+        entity_type = confirmation_data.get('entity_type')
+        action_name = f'create_{entity_type}' if entity_type else None
+        if not action_name:
+            return OrchestratorResult(
+                reply="Je n'ai pas pu déterminer le type d'élément à créer. Veuillez préciser.",
+                success=False,
+            )
+        result = async_to_sync(orchestrator.registry.call)(action_name, confirmation_data, user_ctx)
+        if result.get('success'):
+            reply = result.get('message', 'Création réussie.')
+        else:
+            reply = f"Erreur : {result.get('error', 'inconnue')}"
+        return OrchestratorResult(
+            reply=reply,
+            tool_results=[{'function': action_name, 'result': result}],
+            success=result.get('success', False),
+        )
+
+    def _persist_and_build_response(self, conversation, result):
+        """Persiste la réponse IA et construit le contrat unifié.
+
+        `reply` est TOUJOURS une string non vide (corrige le bug du panneau
+        contextuel qui affichait « Réponse reçue. »).
+        """
+        from apps.core.text_utils import strip_emojis
+        reply = strip_emojis((result.reply or "").strip()) or "Je n'ai pas de réponse à fournir pour le moment."
+
+        # action_results au format attendu par MessageContent.jsx (charts inclus)
+        action_results = result.tool_results or None
+
+        # action_buttons : extraits des success_actions éventuels présents dans les résultats
+        action_buttons = None
+        if action_results:
+            for ar in action_results:
+                res = ar.get('result', {}) if isinstance(ar, dict) else {}
+                if isinstance(res, dict) and res.get('success_actions'):
+                    action_buttons = res['success_actions']
+                    break
+
+        metadata = {}
+        if action_results:
+            metadata['action_results'] = action_results
+        if result.pending_action:
+            metadata['pending_action'] = result.pending_action
+
+        ai_msg = Message.objects.create(
+            conversation=conversation,
+            role='assistant',
+            content=reply,
+            metadata=metadata or None,
+        )
+
+        conversation.last_message_at = timezone.now()
+        conversation.save()
+
+        # chart top-level = miroir du premier graphique (confort front)
+        chart = result.charts[0] if result.charts else None
+
+        return {
+            'status': 'success',
+            'conversation_id': str(conversation.id),
+            'reply': reply,                       # NOUVEAU — source de vérité
+            'ai_response': reply,                 # compat
+            'message': MessageSerializer(ai_msg).data,
+            'action_results': action_results,
+            'action_buttons': action_buttons,
+            'chart': chart,                       # NOUVEAU miroir
+            'needs_confirmation': result.pending_action,  # NOUVEAU
+            'tokens_used': result.tokens,
+        }
 
 
 class ConversationListView(APIView):
@@ -2452,3 +1931,36 @@ class SmartAlertsView(APIView):
         service = SmartAlertsService(request.user)
         alerts = service.get_alerts()
         return Response({'alerts': alerts, 'total': len(alerts)})
+
+
+class MCPToolsView(APIView):
+    """Façade MCP du registre d'outils IA.
+
+    GET  /api/v1/ai/mcp/tools/        -> tools/list (introspection des outils)
+    POST /api/v1/ai/mcp/tools/call/   -> tools/call (exécution d'un outil)
+
+    La même source d'outils (ToolRegistry) sert l'IA (Mistral tool-calling) ET
+    cette façade MCP, sans serveur MCP séparé. L'exécution passe par le contexte
+    utilisateur sécurisé et l'isolation multi-tenant des handlers.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .services.registry.mcp_facade import list_tools
+        tools = list_tools()
+        return Response({'tools': tools, 'total': len(tools)})
+
+    def post(self, request):
+        from .services.registry.mcp_facade import call_tool
+        from .services import AsyncSafeUserContext
+
+        name = request.data.get('name')
+        arguments = request.data.get('arguments', {}) or {}
+        if not name:
+            return Response({'error': 'Le champ `name` est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(arguments, dict):
+            return Response({'error': '`arguments` doit être un objet.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_ctx = AsyncSafeUserContext.from_user(request.user)
+        result = async_to_sync(call_tool)(name, arguments, user_ctx)
+        return Response(result, status=status.HTTP_200_OK)

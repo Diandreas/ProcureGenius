@@ -79,7 +79,8 @@
     "required": "Required",
     "all": "All",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "sales": "Sales"
   },
   "messages": {
     "success": "Operation successful",

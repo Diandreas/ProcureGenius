@@ -6,7 +6,6 @@ app_name = 'ai_assistant_api'
 urlpatterns = [
     # Chat endpoints
     path('chat/', views.ChatView.as_view(), name='chat'),
-    path('chat/stream/', views.StreamingChatView.as_view(), name='chat_stream'),
     path('conversations/', views.ConversationListView.as_view(), name='conversations'),
     path('conversations/<uuid:conversation_id>/', views.ConversationDetailView.as_view(), name='conversation_detail'),
 
@@ -37,6 +36,16 @@ urlpatterns = [
 
     # Smart Alerts (algo pur, sans IA)
     path('smart-alerts/', views.SmartAlertsView.as_view(), name='smart_alerts'),
+
+    # Notifications push navigateur (Web Push)
+    path('push/vapid-key/', views.PushVapidKeyView.as_view(), name='push_vapid_key'),
+    path('push/subscribe/', views.PushSubscribeView.as_view(), name='push_subscribe'),
+    path('push/unsubscribe/', views.PushUnsubscribeView.as_view(), name='push_unsubscribe'),
+    path('push/preferences/', views.NotificationPreferencesView.as_view(), name='push_preferences'),
+
+    # Façade MCP (introspection + exécution des outils IA)
+    path('mcp/tools/', views.MCPToolsView.as_view(), name='mcp_tools'),
+    path('mcp/tools/call/', views.MCPToolsView.as_view(), name='mcp_tools_call'),
 
     # Import Reviews
     path('import-reviews/', views.ImportReviewListView.as_view(), name='import_reviews_list'),

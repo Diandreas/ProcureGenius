@@ -201,7 +201,7 @@ function OnboardingWizard({ open, onComplete }) {
                             <Mascot pose="excited" animation="bounce" size={120} />
                         </Box>
                         <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-                            Bienvenue sur ProcureGenius! 🎉
+                            Bienvenue sur ProcureGenius! 
                         </Typography>
                         <Typography variant="body1" color="text.secondary" sx={{ mt: 2, mb: 4, maxWidth: 600, mx: 'auto' }}>
                             Je suis ravi de vous accompagner dans la configuration de votre espace.
@@ -471,7 +471,7 @@ function OnboardingWizard({ open, onComplete }) {
                         </Box>
                         <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
                         <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-                            Configuration terminée! 🎉
+                            Configuration terminée! 
                         </Typography>
                         <Typography variant="body1" color="text.secondary" sx={{ mt: 2, mb: 4, maxWidth: 600, mx: 'auto' }}>
                             Votre espace est prêt. Vous pouvez toujours modifier ces paramètres dans les réglages.

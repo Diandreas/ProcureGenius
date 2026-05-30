@@ -63,10 +63,19 @@ def get_subscription_status(request):
     subscription = QuotaService.get_subscription(organization)
 
     if not subscription:
-        return Response(
-            {'error': _('No active subscription found')},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        # Pas d'abonnement = plan gratuit par défaut (réponse 200 gracieuse,
+        # pas une erreur 404 qui pollue la console et casse le front).
+        free_features = {
+            'has_ads': True, 'has_ai_assistant': False, 'has_purchase_orders': False,
+            'has_suppliers': False, 'has_e_sourcing': False, 'has_contracts': False,
+            'has_analytics': False, 'has_accounting': False,
+        }
+        return Response({
+            'subscription': None,
+            'plan_code': 'free',
+            'quotas': {},
+            'features': free_features,
+        })
 
     # Get quota status
     quota_status = QuotaService.get_quota_status(organization)
@@ -126,9 +135,9 @@ def subscribe(request):
 
     Body:
         {
-            "plan_code": "standard",
+            "plan_code": "pro",
             "billing_period": "monthly",
-            "payment_method": "paypal",
+            "payment_method": "stripe",
             "paypal_subscription_id": "I-XXX..."  // Optional
         }
     """
@@ -191,7 +200,7 @@ def change_plan(request):
 
     Body:
         {
-            "new_plan_code": "premium",
+            "new_plan_code": "business",
             "billing_period": "yearly",  // Optional
             "immediately": false  // If true, changes immediately. If false, at end of period
         }
@@ -375,3 +384,96 @@ def check_feature_access(request, feature_name):
         'feature': feature_name,
         'has_access': has_access,
     })
+
+
+# ── Stripe Views ──────────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def stripe_create_checkout(request):
+    """
+    Create a Stripe Checkout Session and return the redirect URL.
+    POST /api/v1/subscriptions/stripe/create-checkout/
+    Body: { plan_code, billing_period }
+    """
+    from django.conf import settings
+    from .stripe_service import StripeService
+
+    organization = request.user.organization
+    if not organization:
+        return Response({'error': _('No organization found')}, status=status.HTTP_400_BAD_REQUEST)
+
+    plan_code = request.data.get('plan_code')
+    billing_period = request.data.get('billing_period', 'monthly')
+
+    if not plan_code:
+        return Response({'error': _('plan_code is required')}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        plan = SubscriptionPlan.objects.get(code=plan_code, is_active=True)
+    except SubscriptionPlan.DoesNotExist:
+        return Response({'error': _('Plan not found')}, status=status.HTTP_404_NOT_FOUND)
+
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+    success_url = f"{frontend_url}/subscription/success"
+    cancel_url = f"{frontend_url}/pricing"
+
+    try:
+        session = StripeService.create_checkout_session(
+            organization=organization,
+            user=request.user,
+            plan=plan,
+            billing_period=billing_period,
+            success_url=success_url,
+            cancel_url=cancel_url,
+        )
+        return Response({'checkout_url': session.url, 'session_id': session.id})
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': _('Stripe error: ') + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def stripe_webhook(request):
+    """
+    Receive and process Stripe webhook events.
+    POST /api/v1/subscriptions/stripe/webhook/
+    """
+    from .stripe_service import StripeService
+
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+
+    try:
+        event_type = StripeService.handle_webhook(payload, sig_header)
+        return Response({'received': True, 'event': event_type})
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stripe_portal(request):
+    """
+    Create a Stripe customer portal session.
+    GET /api/v1/subscriptions/stripe/portal/
+    """
+    from django.conf import settings
+    from .stripe_service import StripeService
+
+    organization = request.user.organization
+    if not organization:
+        return Response({'error': _('No organization found')}, status=status.HTTP_400_BAD_REQUEST)
+
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+    return_url = f"{frontend_url}/settings"
+
+    try:
+        session = StripeService.create_portal_session(organization, return_url)
+        return Response({'portal_url': session.url})
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': _('Stripe error: ') + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

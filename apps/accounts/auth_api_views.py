@@ -12,7 +12,7 @@ from django.utils.translation import gettext as _
 from django.db import transaction
 
 from .models import CustomUser, Organization, UserPreferences
-from apps.subscriptions.models import SubscriptionPlan, Subscription
+from apps.subscriptions.models import Subscription
 import requests
 import secrets
 from django.utils import timezone
@@ -102,25 +102,14 @@ def api_register(request):
                 email_verified=False,  # Will be verified via email
             )
 
-            # Create free subscription
+            # Démarrer l'essai gratuit (sans carte) ou retomber sur le plan gratuit
             try:
-                free_plan = SubscriptionPlan.objects.get(code='free')
-                from django.utils import timezone
-                from datetime import timedelta
-                # Set proper date fields required by Subscription model
-                Subscription.objects.create(
-                    organization=organization,
-                    plan=free_plan,
-                    billing_period='monthly',
-                    status='active',  # Free plan is immediately active
-                    current_period_start=timezone.now(),
-                    current_period_end=timezone.now() + timedelta(days=365*10),  # Free plan never expires
-                )
-            except SubscriptionPlan.DoesNotExist:
-                # If plans not yet created, skip subscription creation
-                # This is OK for free tier, organization will still work
+                Subscription.start_for_new_organization(organization)
+            except Exception:
                 import logging
-                logging.getLogger(__name__).warning("Free subscription plan not found, skipping subscription creation")
+                logging.getLogger(__name__).warning(
+                    "Could not create initial subscription; organization will still work."
+                )
 
             # UserPreferences and UserPermissions are created automatically by signals
             # DO NOT mark onboarding as completed - user will go through setup wizard
@@ -487,18 +476,10 @@ def api_google_login(request):
                     logger = logging.getLogger(__name__)
                     logger.error(f"Error creating OrganizationSettings: {e}")
                 
-                # Create free subscription
+                # Démarrer l'essai gratuit (sans carte) ou retomber sur le plan gratuit
                 try:
-                    free_plan = SubscriptionPlan.objects.get(code='free')
-                    Subscription.objects.create(
-                        organization=organization,
-                        plan=free_plan,
-                        billing_period='monthly',
-                        status='active',
-                        current_period_start=timezone.now(),
-                        current_period_end=timezone.now() + timedelta(days=365*10),
-                    )
-                except SubscriptionPlan.DoesNotExist:
+                    Subscription.start_for_new_organization(organization)
+                except Exception:
                     pass
 
                 # Create UserPreferences so onboarding is triggered on first login

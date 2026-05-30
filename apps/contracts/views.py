@@ -180,6 +180,25 @@ class ContractViewSet(viewsets.ModelViewSet):
                 'message': 'Le contrat ne peut pas être résilié'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['post'], url_path='generate-invoice')
+    def generate_invoice(self, request, pk=None):
+        """Génère une facture brouillon à partir des articles/valeur du contrat."""
+        contract = self.get_object()
+        invoice, created = contract.generate_invoice(user=request.user)
+
+        if not created:
+            return Response({
+                'status': 'error',
+                'message': "Ce contrat n'a ni article ni valeur totale à facturer.",
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        from apps.api.serializers import InvoiceSerializer
+        return Response({
+            'status': 'success',
+            'message': 'Facture brouillon créée à partir du contrat.',
+            'invoice': InvoiceSerializer(invoice).data,
+        }, status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=['post'])
     def renew(self, request, pk=None):
         """Renouvelle le contrat"""
@@ -220,6 +239,56 @@ class ContractViewSet(viewsets.ModelViewSet):
             })
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], url_path='analyze-external')
+    def analyze_external(self, request):
+        """
+        Analyse un contrat EXTERNE (collé ou importé) SANS le sauvegarder.
+
+        Cas d'usage : on reçoit un contrat d'un tiers et on veut l'étudier
+        (clauses, risques, points d'attention) avant de l'accepter ou de le
+        saisir dans l'application. Rien n'est persisté : c'est un mode « étude ».
+        """
+        serializer = ClauseExtractionRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        contract_text = serializer.validated_data['contract_text']
+        language = serializer.validated_data.get('language', 'fr')
+
+        if len(contract_text.strip()) < 50:
+            return Response(
+                {'status': 'error', 'message': 'Le texte du contrat est trop court pour être analysé.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ai_service = ContractAIService()
+            result = ai_service.extract_clauses(contract_text, language)
+        except Exception as e:
+            logger.error(f"Erreur analyse contrat externe: {e}")
+            return Response(
+                {'status': 'error', 'message': f"Erreur lors de l'analyse : {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # On renvoie les clauses analysées SANS créer d'objets en base.
+        clauses = result.get('clauses', [])
+        risk_counts = {}
+        for c in clauses:
+            lvl = c.get('risk_level') or 'unknown'
+            risk_counts[lvl] = risk_counts.get(lvl, 0) + 1
+
+        return Response({
+            'status': 'success',
+            'mode': 'study',  # aucune donnée persistée
+            'clauses': clauses,
+            'summary': result.get('summary', ''),
+            'overall_risk_assessment': result.get('overall_risk_assessment', ''),
+            'key_dates': result.get('key_dates', []),
+            'recommendations': result.get('recommendations', []),
+            'risk_summary': risk_counts,
+        })
 
     @action(detail=True, methods=['post'])
     def extract_clauses(self, request, pk=None):

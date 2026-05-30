@@ -49,14 +49,7 @@ class Contract(models.Model):
     counterpart_name = models.CharField(max_length=200, blank=True, verbose_name=_("Nom de la contrepartie"))
     internal_contact = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_contracts', verbose_name=_("Contact interne"))
 
-    # Signature
-    signed_by_us = models.BooleanField(default=False, verbose_name=_("Signé par nous"))
-    signed_by_us_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date signature (nous)"))
-    signed_by_us_name = models.CharField(max_length=200, blank=True, verbose_name=_("Signataire (notre côté)"))
-    signed_by_counterpart = models.BooleanField(default=False, verbose_name=_("Signé par la contrepartie"))
-    signed_by_counterpart_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date signature (contrepartie)"))
-    signed_by_counterpart_name = models.CharField(max_length=200, blank=True, verbose_name=_("Signataire (contrepartie)"))
-    signed_pdf = models.FileField(upload_to='contracts/signed/%Y/%m/', null=True, blank=True, verbose_name=_("PDF signé"))
+    # Signature (champs définis en bas du modèle)
 
     # Modèle source
     template = models.ForeignKey('ContractTemplate', on_delete=models.SET_NULL, null=True, blank=True, related_name='generated_contracts', verbose_name=_("Modèle source"))
@@ -227,6 +220,63 @@ class Contract(models.Model):
             elif self.is_expiring_soon:
                 self.status = 'expiring_soon'
                 self.save(update_fields=['status'])
+
+    def generate_invoice(self, user=None):
+        """
+        Génère une facture (brouillon) à partir du contrat.
+
+        Source des lignes, par ordre de priorité :
+          1. Les articles contractuels (ContractItem) → produit × prix contractuel.
+          2. À défaut, une ligne unique reprenant `total_value`.
+
+        La facture est reliée au contrat et au client (si le contrat est côté client).
+
+        Returns:
+            (Invoice, created: bool) — `created=False` si aucune ligne facturable.
+        """
+        from apps.invoicing.models import Invoice, InvoiceItem
+
+        invoice = Invoice.objects.create(
+            title=f"Facture — {self.title}",
+            description=self.description,
+            status='draft',
+            created_by=user or self.created_by,
+            organization=self.organization,
+            client=self.client,
+            contract=self,
+            subtotal=0,
+            tax_amount=0,
+            total_amount=0,
+            currency=self.currency,
+            payment_terms=self.payment_terms or "Net 30",
+        )
+
+        items = self.items.select_related('product').all()
+        if items:
+            for ci in items:
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=ci.product,
+                    product_reference=getattr(ci.product, 'reference', '') or '',
+                    service_code=getattr(ci.product, 'reference', '') or 'CONTRAT',
+                    description=getattr(ci.product, 'name', self.title),
+                    quantity=ci.min_quantity or 1,
+                    unit_price=ci.contracted_price,
+                )
+        elif self.total_value:
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                service_code='CONTRAT',
+                description=self.title,
+                quantity=1,
+                unit_price=self.total_value,
+            )
+        else:
+            invoice.delete()
+            return None, False
+
+        invoice.recalculate_totals()
+        return invoice, True
 
 
 class ContractClause(models.Model):

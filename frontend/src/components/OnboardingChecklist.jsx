@@ -412,7 +412,7 @@ export default function OnboardingChecklist() {
                     textAlign: 'center',
                   }}>
                     <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#10b981', mb: 0.25 }}>
-                      🎉 Tout est en place !
+                       Tout est en place !
                     </Typography>
                     <Typography sx={{ fontSize: '0.75rem', color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)' }}>
                       Votre espace Procura est configuré.

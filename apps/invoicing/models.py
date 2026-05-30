@@ -235,8 +235,12 @@ class Product(models.Model):
         return 0
 
     def format_price(self):
-        """Formate le prix"""
-        return f"{self.price:,.2f} CAD"
+        """Formate le prix selon la devise de l'organisation (défaut CAD)."""
+        currency = 'CAD'
+        settings_obj = getattr(self.organization, 'settings', None) if self.organization_id else None
+        if settings_obj is not None:
+            currency = getattr(settings_obj, 'default_currency', None) or currency
+        return f"{self.price:,.2f} {currency}"
 
     def sync_stock_from_batches(self):
         """Recalcule stock_quantity comme somme des lots actifs."""

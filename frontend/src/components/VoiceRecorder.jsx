@@ -156,7 +156,7 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
         >
           <Box sx={{ p: 2, bgcolor: 'error.main', color: 'white' }}>
             <Typography variant="body2" fontWeight={600}>
-              ❌ Fonctionnalité non supportée
+               Fonctionnalité non supportée
             </Typography>
           </Box>
           <Box sx={{ p: 2 }}>
@@ -218,7 +218,7 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
               />
             )}
             <Typography variant="body2" fontWeight={600}>
-              {isListening ? '🎤 Écoute en cours...' : '🎤 Message vocal'}
+              {isListening ? ' Écoute en cours...' : ' Message vocal'}
             </Typography>
           </Box>
           <IconButton size="small" onClick={handleCancel} sx={{ color: 'white' }}>

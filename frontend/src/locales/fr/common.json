@@ -80,7 +80,8 @@
     "required": "Requis",
     "all": "Tous",
     "active": "Actif",
-    "inactive": "Inactif"
+    "inactive": "Inactif",
+    "sales": "Ventes"
   },
   "messages": {
     "success": "Opération réussie",

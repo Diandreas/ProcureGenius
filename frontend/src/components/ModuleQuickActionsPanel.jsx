@@ -161,7 +161,7 @@ function ModuleQuickActionsPanel({ currentModule, onActionClick }) {
 
                 {quickActions.length > 0 && (
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, textAlign: 'center' }}>
-                        💡 L'IA peut vous aider à automatiser ces tâches
+                         L'IA peut vous aider à automatiser ces tâches
                     </Typography>
                 )}
             </Collapse>

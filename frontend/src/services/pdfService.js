@@ -24,7 +24,7 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
       organizationCurrency = settingsResponse.data.defaultCurrency ||
                             settingsResponse.data.default_currency ||
                             'CAD';
-      console.log('💰 Devise de l\'organisation pour PDF:', organizationCurrency);
+      console.log(' Devise de l\'organisation pour PDF:', organizationCurrency);
     } catch (error) {
       console.warn('Impossible de récupérer la devise, utilisation de CAD par défaut:', error);
     }
@@ -151,7 +151,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
                             settingsResponse.data.default_currency ||
                             purchaseOrderData.currency ||
                             'CAD';
-      console.log('💰 Devise de l\'organisation pour PDF:', organizationCurrency);
+      console.log(' Devise de l\'organisation pour PDF:', organizationCurrency);
     } catch (error) {
       console.warn('Impossible de récupérer la devise, utilisation de CAD par défaut:', error);
     }

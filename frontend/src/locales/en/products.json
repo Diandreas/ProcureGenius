@@ -1,182 +1,208 @@
 {
-    "title": "Products",
-    "newProduct": "New Product",
+  "title": "Products",
+  "newProduct": "New Product",
+  "editProduct": "Edit Product",
+  "search": {
+    "placeholder": "Search for a product..."
+  },
+  "filters": {
+    "inStock": "In Stock",
+    "lowStock": "Low Stock",
+    "outOfStock": "Out of Stock",
+    "services": "Services",
+    "all": "All",
+    "activeFilter": "Active Filter:",
+    "statusLabel": "Status",
+    "categoryLabel": "Category",
+    "warehouseLabel": "Warehouse",
+    "allCategories": "All",
+    "allWarehouses": "All"
+  },
+  "tabs": {
+    "info": "Info",
+    "invoices": "Invoices",
+    "clients": "Clients",
+    "movements": "Movements",
+    "stock": "Stock"
+  },
+  "labels": {
+    "description": "Description",
+    "supplier": "Supplier",
+    "warehouse": "Warehouse",
+    "leadTime": "Lead Time",
+    "days": "days",
+    "systemInfo": "System Information",
+    "createdOn": "Created on",
+    "updatedOn": "Updated on",
+    "stock": "Stock",
+    "generalInfo": "General Information",
+    "pricing": "Pricing",
+    "inventoryAndLogistics": "Inventory and Logistics",
+    "digitalDistribution": "Digital Distribution",
+    "status": "Status",
+    "image": "Image",
+    "summary": "Summary",
+    "name": "Product Name",
+    "reference": "Reference",
+    "detailedDescription": "Detailed Description",
+    "category": "Category",
+    "sourceType": "Source Type",
+    "sellingPrice": "Selling Price",
+    "pricePerLicense": "Price per License",
+    "costPrice": "Cost Price",
+    "supplierOptional": "Supplier (optional)",
+    "publisher": "Publisher / Platform",
+    "warehouseMain": "Main Warehouse",
+    "stockQuantity": "Stock Quantity",
+    "licensesCount": "Number of Licenses",
+    "lowStockThreshold": "Low Stock Threshold",
+    "activeProduct": "Active Product",
+    "inactiveProduct": "Inactive Product",
+    "generatingLabel": "Generating report...",
+    "mandatory": "Mandatory",
+    "type": "Type",
+    "price": "Price",
+    "noClient": "No client",
+    "qtyShort": "Qty: {{qty}}",
+    "unknownClient": "Unknown client",
+    "purchaseCount_one": "{{count}} purchase",
+    "purchaseCount_other": "{{count}} purchases",
+    "unitsCount_one": "{{count}} unit",
+    "unitsCount_other": "{{count}} units"
+  },
+  "table": {
+    "invoiceNumber": "Invoice #",
+    "client": "Client",
+    "quantity": "Quantity",
+    "amount": "Amount",
+    "date": "Date",
+    "purchaseCount": "Purchase Count",
+    "totalQuantity": "Total Quantity",
+    "totalSpent": "Total Spent"
+  },
+  "productTypes": {
+    "title": "Product Type",
+    "physical": "Physical",
+    "physicalDesc": "Stock, warehouse, shipping",
+    "digital": "Digital",
+    "digitalDesc": "Downloadable, licenses",
+    "service": "Service",
+    "serviceDesc": "Service, consultation"
+  },
+  "sourceTypes": {
+    "purchased": "Purchased (supplier)",
+    "manufactured": "Manufactured (internal)",
+    "resale": "Resale"
+  },
+  "stats": {
+    "sellingPrice": "Selling Price",
+    "costPrice": "Cost Price",
+    "totalSales": "Total Sales"
+  },
+  "tooltips": {
     "editProduct": "Edit Product",
-    "search": {
-        "placeholder": "Search for a product..."
-    },
-    "filters": {
-        "inStock": "In Stock",
-        "lowStock": "Low Stock",
-        "outOfStock": "Out of Stock",
-        "services": "Services",
-        "all": "All",
-        "activeFilter": "Active Filter:",
-        "statusLabel": "Status",
-        "categoryLabel": "Category",
-        "warehouseLabel": "Warehouse",
-        "allCategories": "All",
-        "allWarehouses": "All"
-    },
-    "tabs": {
-        "info": "Info",
-        "invoices": "Invoices",
-        "clients": "Clients",
-        "movements": "Movements",
-        "stock": "Stock"
-    },
-    "labels": {
-        "description": "Description",
-        "supplier": "Supplier",
-        "warehouse": "Warehouse",
-        "leadTime": "Lead Time",
-        "days": "days",
-        "systemInfo": "System Information",
-        "createdOn": "Created on",
-        "updatedOn": "Updated on",
-        "stock": "Stock",
-        "generalInfo": "General Information",
-        "pricing": "Pricing",
-        "inventoryAndLogistics": "Inventory and Logistics",
-        "digitalDistribution": "Digital Distribution",
-        "status": "Status",
-        "image": "Image",
-        "summary": "Summary",
-        "name": "Product Name",
-        "reference": "Reference",
-        "detailedDescription": "Detailed Description",
-        "category": "Category",
-        "sourceType": "Source Type",
-        "sellingPrice": "Selling Price",
-        "pricePerLicense": "Price per License",
-        "costPrice": "Cost Price",
-        "supplierOptional": "Supplier (optional)",
-        "publisher": "Publisher / Platform",
-        "warehouseMain": "Main Warehouse",
-        "stockQuantity": "Stock Quantity",
-        "licensesCount": "Number of Licenses",
-        "lowStockThreshold": "Low Stock Threshold",
-        "activeProduct": "Active Product",
-        "inactiveProduct": "Inactive Product",
-        "generatingLabel": "Generating report...",
-        "mandatory": "Mandatory",
-        "type": "Type",
-        "price": "Price",
-        "noClient": "No client",
-        "qtyShort": "Qty: {{qty}}",
-        "unknownClient": "Unknown client",
-        "purchaseCount_one": "{{count}} purchase",
-        "purchaseCount_other": "{{count}} purchases",
-        "unitsCount_one": "{{count}} unit",
-        "unitsCount_other": "{{count}} units"
-    },
-    "table": {
-        "invoiceNumber": "Invoice #",
-        "client": "Client",
-        "quantity": "Quantity",
-        "amount": "Amount",
-        "date": "Date",
-        "purchaseCount": "Purchase Count",
-        "totalQuantity": "Total Quantity",
-        "totalSpent": "Total Spent"
-    },
-    "productTypes": {
-        "title": "Product Type",
-        "physical": "Physical",
-        "physicalDesc": "Stock, warehouse, shipping",
-        "digital": "Digital",
-        "digitalDesc": "Downloadable, licenses",
-        "service": "Service",
-        "serviceDesc": "Service, consultation"
-    },
-    "sourceTypes": {
-        "purchased": "Purchased (supplier)",
-        "manufactured": "Manufactured (internal)",
-        "resale": "Resale"
-    },
-    "stats": {
-        "sellingPrice": "Selling Price",
-        "costPrice": "Cost Price",
-        "totalSales": "Total Sales"
-    },
-    "tooltips": {
-        "editProduct": "Edit Product",
-        "deleteProduct": "Delete Product",
-        "downloadPdfReport": "Download PDF Report"
-    },
-    "pdf": {
-        "title": "Product PDF Report",
-        "description": "Generating PDF report..."
-    },
-    "status": {
-        "available": "Available",
-        "unavailable": "Unavailable",
-        "active": "Active",
-        "inactive": "Inactive"
-    },
-    "stockStatus": {
-        "outOfStock": "Out of Stock",
-        "low": "Low"
-    },
-    "messages": {
-        "noProducts": "No products",
-        "noProductsDescription": "No products match your search criteria.",
-        "loadingError": "Error loading products",
-        "loadProductError": "Error loading product",
-        "productDeleted": "Product deleted",
-        "deleteError": "Error deleting product",
-        "productNotFound": "Product not found",
-        "deleteConfirmation": "Delete {{name}}?",
-        "createProductDescription": "Fill in the details of your new product or service.",
-        "editProductDescription": "Update the details of your product or service.",
-        "createSuccess": "Product created successfully",
-        "updateSuccess": "Product updated successfully",
-        "saveError": "Error saving product",
-        "missingSupplierModule": "The Suppliers module is not activated.",
-        "missingWarehouses": "No warehouse available. Create one in settings for physical products.",
-        "noWarehouseAvailable": "⚠️ No warehouse available. The product will be created without a warehouse.",
-        "leaveEmptyForAuto": "Leave empty to auto-generate",
-        "alertLowStock": "Alert if stock <= this threshold",
-        "noInvoicesForProduct": "No invoices for this product",
-        "noClientsPurchased": "No client has purchased this product yet",
-        "reportError": "Error generating report",
-        "reportGenerated": "Report generated successfully! Choose an action below.",
-        "pdfGenerationHelpText": "You can preview, download or print the report directly.",
-        "pdfDownloadedSuccess": "PDF downloaded successfully",
-        "printWindowOpened": "Print window opened"
-    },
-    "actions": {
-        "cancel": "Cancel",
-        "create": "Create",
-        "modify": "Modify",
-        "change": "Change",
-        "add": "Add",
-        "generateReport": "PDF Report"
-    },
-    "report": {
-        "title": "Generate Products Report",
-        "itemLabel": "product",
-        "itemsLabel": "products"
-    },
-    "buttons": {
-        "preview": "Preview",
-        "print": "Print",
-        "download": "Download",
-        "cancel": "Cancel"
-    },
-    "dialogs": {
-        "generatePdf": "Generate report PDF"
-    },
-    "validation": {
-        "nameRequired": "Name is required",
-        "descriptionRequired": "Description is required",
-        "pricePositive": "Price must be positive",
-        "priceRequired": "Price is required",
-        "costNegative": "Cost cannot be negative",
-        "warehouseRequired": "Warehouse is required for physical products",
-        "stockNegative": "Stock cannot be negative",
-        "stockRequired": "Stock is required",
-        "thresholdNegative": "Threshold cannot be negative",
-        "thresholdRequired": "Required"
+    "deleteProduct": "Delete Product",
+    "downloadPdfReport": "Download PDF Report"
+  },
+  "pdf": {
+    "title": "Product PDF Report",
+    "description": "Generating PDF report..."
+  },
+  "status": {
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "stockStatus": {
+    "outOfStock": "Out of Stock",
+    "low": "Low"
+  },
+  "messages": {
+    "noProducts": "No products",
+    "noProductsDescription": "No products match your search criteria.",
+    "loadingError": "Error loading products",
+    "loadProductError": "Error loading product",
+    "productDeleted": "Product deleted",
+    "deleteError": "Error deleting product",
+    "productNotFound": "Product not found",
+    "deleteConfirmation": "Delete {{name}}?",
+    "createProductDescription": "Fill in the details of your new product or service.",
+    "editProductDescription": "Update the details of your product or service.",
+    "createSuccess": "Product created successfully",
+    "updateSuccess": "Product updated successfully",
+    "saveError": "Error saving product",
+    "missingSupplierModule": "The Suppliers module is not activated.",
+    "missingWarehouses": "No warehouse available. Create one in settings for physical products.",
+    "noWarehouseAvailable": "⚠️ No warehouse available. The product will be created without a warehouse.",
+    "leaveEmptyForAuto": "Leave empty to auto-generate",
+    "alertLowStock": "Alert if stock <= this threshold",
+    "noInvoicesForProduct": "No invoices for this product",
+    "noClientsPurchased": "No client has purchased this product yet",
+    "reportError": "Error generating report",
+    "reportGenerated": "Report generated successfully! Choose an action below.",
+    "pdfGenerationHelpText": "You can preview, download or print the report directly.",
+    "pdfDownloadedSuccess": "PDF downloaded successfully",
+    "printWindowOpened": "Print window opened"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "create": "Create",
+    "modify": "Modify",
+    "change": "Change",
+    "add": "Add",
+    "generateReport": "PDF Report"
+  },
+  "report": {
+    "title": "Generate Products Report",
+    "itemLabel": "product",
+    "itemsLabel": "products"
+  },
+  "buttons": {
+    "preview": "Preview",
+    "print": "Print",
+    "download": "Download",
+    "cancel": "Cancel"
+  },
+  "dialogs": {
+    "generatePdf": "Generate report PDF"
+  },
+  "validation": {
+    "nameRequired": "Name is required",
+    "descriptionRequired": "Description is required",
+    "pricePositive": "Price must be positive",
+    "priceRequired": "Price is required",
+    "costNegative": "Cost cannot be negative",
+    "warehouseRequired": "Warehouse is required for physical products",
+    "stockNegative": "Stock cannot be negative",
+    "stockRequired": "Stock is required",
+    "thresholdNegative": "Threshold cannot be negative",
+    "thresholdRequired": "Required"
+  },
+  "margins": "Margins & profit",
+  "restock": {
+    "cta": "Restock",
+    "title": "Predictive restock",
+    "subtitle": "What to reorder and how much, based on your recent sales.",
+    "analyzed": "Products analyzed",
+    "toReorder": "To reorder",
+    "critical": "Imminent stockouts",
+    "estCost": "Estimated cost",
+    "product": "Product",
+    "stock": "Stock",
+    "velocity": "Sales/day",
+    "daysLeft": "Days left",
+    "recommended": "To order",
+    "statusCol": "Status",
+    "empty": "No physical product to analyze.",
+    "lockedTitle": "Anticipate your stockouts",
+    "lockedDesc": "Predictive restock automatically computes what to reorder and how much. Available on the Pro plan.",
+    "upgrade": "Upgrade to Pro",
+    "urgency": {
+      "critical": "Imminent stockout",
+      "soon": "To reorder",
+      "ok": "Enough stock",
+      "idle": "No sales"
     }
+  }
 }

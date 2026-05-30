@@ -1,483 +1,387 @@
-/**
- * Pricing Page - Display subscription plans
- * Shows Free, Standard, and Premium plans with features and pricing
- */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  Container,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  Button,
-  Box,
-  Chip,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ToggleButton,
-  ToggleButtonGroup,
-  CircularProgress,
-  Alert,
-  Divider,
+  Container, Grid, Box, Typography, Button, Chip,
+  Table, TableBody, TableCell, TableHead, TableRow,
+  useTheme, useMediaQuery,
 } from '@mui/material';
 import {
-  CheckCircle,
-  Cancel,
-  Star,
-  Rocket,
-  TrendingUp,
-  Bolt,
+  Check, Close, WhatsApp, NorthEast,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import subscriptionAPI from '../services/subscriptionAPI';
-import LoadingState from '../components/LoadingState';
-import ErrorState from '../components/ErrorState';
+
+// ── Direction artistique : éditorial premium, dans la charte Procura ──────────
+// Charte : bleu #2563eb (primaire) + doré #f59e0b (accent) + ardoise.
+// Titres en serif (Fraunces), corps en sans épuré (Inter Tight). Aucun emoji.
+// Carte « Pro » mise en avant en bleu marine profond, accents dorés sobres.
+const INK = '#0f172a';        // texte / fond marine profond (slate-900, charte)
+const NAVY = '#0b1f4d';       // marine premium dérivé du bleu primaire
+const BLUE = '#2563eb';       // bleu primaire de la charte
+const GOLD = '#f59e0b';       // doré accent de la charte (boucle mascotte)
+const IVORY = '#f8fafc';      // fond clair de la charte (subtle)
+const LINE = 'rgba(15,23,42,0.12)';
+
+const FONTS_HREF =
+  'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600;700&display=swap';
+
+const PLANS = [
+  {
+    code: 'free',
+    name: 'Libre',
+    priceMonthly: 0,
+    priceYearly: 0,
+    badge: null,
+    tagline: 'Pour démarrer et découvrir Procura, sans engagement.',
+    cta: 'Commencer',
+    features: ['30 factures / mois', '20 clients', '50 produits', 'Tableau de bord', 'Export PDF'],
+    missing: ['Bons de commande', 'Fournisseurs', 'Comptabilité', 'Contrats', 'Assistant IA'],
+  },
+  {
+    code: 'pro',
+    name: 'Pro',
+    priceMonthly: 9,
+    priceYearly: 79,
+    badge: 'Le plus choisi',
+    tagline: 'Pour les PME qui veulent travailler vite et bien.',
+    cta: "Choisir Pro",
+    features: [
+      'Factures, clients & produits illimités',
+      'Bons de commande illimités',
+      'Fournisseurs illimités',
+      'Comptabilité automatique',
+      'Assistant IA — 100 requêtes / mois',
+      'Contrats & analytics avancés',
+      'Sans publicité',
+    ],
+    missing: ['E-Sourcing'],
+  },
+  {
+    code: 'business',
+    name: 'Business',
+    priceMonthly: 29,
+    priceYearly: 249,
+    badge: 'Tout inclus',
+    tagline: 'Pour les équipes qui veulent tout, sans aucune limite.',
+    cta: 'Choisir Business',
+    features: [
+      'Tout le plan Pro, sans limites',
+      'Assistant IA illimité',
+      'E-Sourcing & appels d’offres',
+      'Support prioritaire',
+      'Stockage 50 Go',
+    ],
+    missing: [],
+  },
+  {
+    code: 'enterprise',
+    name: 'Enterprise',
+    priceMonthly: null,
+    priceYearly: null,
+    badge: null,
+    tagline: 'Déploiement sur mesure pour les grandes structures.',
+    cta: 'Nous contacter',
+    features: ['Tout Business inclus', 'Onboarding dédié', 'Intégrations sur mesure', 'SLA garanti', 'Account manager'],
+    missing: [],
+  },
+];
+
+const COMPARISON = [
+  { label: 'Factures / mois', free: '30', pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
+  { label: 'Clients', free: '20', pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
+  { label: 'Produits', free: '50', pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
+  { label: 'Bons de commande', free: false, pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
+  { label: 'Fournisseurs', free: false, pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
+  { label: 'Comptabilité', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Assistant IA', free: false, pro: '100 / mois', business: 'Illimité', enterprise: 'Illimité' },
+  { label: 'Contrats', free: false, pro: true, business: true, enterprise: true },
+  { label: 'E-Sourcing', free: false, pro: false, business: true, enterprise: true },
+  { label: 'Analytics avancés', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Sans publicité', free: false, pro: true, business: true, enterprise: true },
+  { label: 'Support prioritaire', free: false, pro: false, business: true, enterprise: true },
+];
+
+const CellValue = ({ value }) => {
+  if (value === true) return <Check sx={{ color: GOLD, fontSize: 18 }} />;
+  if (value === false) return <Close sx={{ color: 'rgba(20,17,14,0.22)', fontSize: 18 }} />;
+  return <Typography sx={{ fontFamily: '"Inter Tight", sans-serif', fontSize: 14, fontWeight: 500 }}>{value}</Typography>;
+};
+
+const serif = { fontFamily: '"Fraunces", Georgia, serif' };
+const sans = { fontFamily: '"Inter Tight", system-ui, sans-serif' };
 
 const Pricing = () => {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [billingPeriod, setBillingPeriod] = useState('monthly');
-  const [currentSubscription, setCurrentSubscription] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [billing, setBilling] = useState('monthly');
+  const [loading, setLoading] = useState(null);
 
-  useEffect(() => {
-    fetchPlans();
-    fetchCurrentSubscription();
-  }, []);
-
-  const fetchPlans = async () => {
-    try {
-      setLoading(true);
-      const data = await subscriptionAPI.getPlans();
-      setPlans(data.plans || []);
-    } catch (err) {
-      console.error('Error fetching plans:', err);
-      setError('Impossible de charger les plans. Veuillez réessayer.');
-    } finally {
-      setLoading(false);
-    }
+  const getPrice = (plan) => {
+    if (plan.priceMonthly === null) return null;
+    if (plan.priceMonthly === 0) return 0;
+    return billing === 'monthly' ? plan.priceMonthly : plan.priceYearly;
   };
 
-  const fetchCurrentSubscription = async () => {
-    try {
-      const data = await subscriptionAPI.getStatus();
-      setCurrentSubscription(data.subscription);
-    } catch (err) {
-      // User might not be authenticated or have no subscription
-      console.log('No current subscription');
-    }
-  };
-
-  const handleSubscribe = async (planCode) => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      // Redirect to login with return URL
-      navigate(`/login?return=/pricing&plan=${planCode}`);
+  const handleCTA = async (plan) => {
+    if (plan.code === 'free') { navigate('/register'); return; }
+    if (plan.code === 'enterprise') {
+      window.open('https://wa.me/237693427913?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20le%20plan%20Enterprise%20de%20Procura.', '_blank');
       return;
     }
-
+    const token = localStorage.getItem('authToken') || localStorage.getItem('access_token');
+    if (!token) { navigate('/login?next=/pricing'); return; }
+    setLoading(plan.code);
     try {
-      // For now, just navigate to checkout/payment page
-      // TODO: Implement PayPal integration
-      navigate(`/subscribe/${planCode}?period=${billingPeriod}`);
+      await subscriptionAPI.createStripeCheckout(plan.code, billing);
     } catch (err) {
-      console.error('Error subscribing:', err);
-      alert('Erreur lors de la souscription. Veuillez réessayer.');
+      console.error('Stripe checkout error:', err);
+      alert('Erreur lors de la création du paiement. Veuillez réessayer.');
+    } finally {
+      setLoading(null);
     }
   };
-
-  const handleChangePlan = async (planCode) => {
-    try {
-      await subscriptionAPI.changePlan({
-        new_plan_code: planCode,
-        billing_period: billingPeriod,
-        immediately: false,
-      });
-      alert('Plan modifié avec succès!');
-      fetchCurrentSubscription();
-    } catch (err) {
-      console.error('Error changing plan:', err);
-      alert('Erreur lors du changement de plan. Veuillez réessayer.');
-    }
-  };
-
-  const getPlanIcon = (planCode) => {
-    switch (planCode) {
-      case 'free':
-        return <Star sx={{ fontSize: 40, color: '#757575' }} />;
-      case 'standard':
-        return <TrendingUp sx={{ fontSize: 40, color: '#1976d2' }} />;
-      case 'premium':
-        return <Rocket sx={{ fontSize: 40, color: '#9c27b0' }} />;
-      default:
-        return <Star sx={{ fontSize: 40 }} />;
-    }
-  };
-
-  const getPlanColor = (planCode) => {
-    switch (planCode) {
-      case 'free':
-        return { primary: '#757575', light: '#f5f5f5' };
-      case 'standard':
-        return { primary: '#1976d2', light: '#e3f2fd' };
-      case 'premium':
-        return { primary: '#9c27b0', light: '#f3e5f5' };
-      default:
-        return { primary: '#757575', light: '#f5f5f5' };
-    }
-  };
-
-  const formatPrice = (plan) => {
-    const price = billingPeriod === 'monthly' ? plan.price_monthly : plan.price_yearly;
-    if (price === 0) return 'Gratuit';
-
-    if (billingPeriod === 'yearly') {
-      const monthlyEquivalent = (price / 12).toFixed(2);
-      return (
-        <>
-          <Typography variant="h3" component="span" sx={{ fontWeight: 700 }}>
-            {price}€
-          </Typography>
-          <Typography variant="body2" color="text.secondary" component="div">
-            soit {monthlyEquivalent}€/mois
-          </Typography>
-        </>
-      );
-    }
-
-    return (
-      <Typography variant="h3" component="span" sx={{ fontWeight: 700 }}>
-        {price}€<Typography component="span" variant="h6">/mois</Typography>
-      </Typography>
-    );
-  };
-
-  const getFeatureList = (plan) => {
-    const features = [];
-
-    // Core features
-    features.push({
-      included: true,
-      text: `${plan.quotas.invoices_per_month || 'Illimité'} factures/mois`,
-    });
-    features.push({
-      included: true,
-      text: `${plan.quotas.clients || 'Illimité'} clients`,
-    });
-    features.push({
-      included: true,
-      text: `${plan.quotas.products || 'Illimité'} produits`,
-    });
-
-    // Purchase orders & suppliers
-    if (plan.features.has_purchase_orders) {
-      features.push({
-        included: true,
-        text: `${plan.quotas.purchase_orders_per_month || 'Illimité'} bons de commande/mois`,
-      });
-      features.push({
-        included: true,
-        text: `${plan.quotas.suppliers || 'Illimité'} fournisseurs`,
-      });
-    } else {
-      features.push({
-        included: false,
-        text: 'Bons de commande',
-      });
-      features.push({
-        included: false,
-        text: 'Fournisseurs',
-      });
-    }
-
-    // AI Assistant
-    if (plan.features.has_ai_assistant) {
-      const aiQuota = plan.quotas.ai_requests_per_month;
-      const aiText = aiQuota === -1 ? 'IA illimitée' : `${aiQuota} requêtes IA/mois`;
-      features.push({
-        included: true,
-        text: aiText,
-        highlight: true,
-      });
-    } else {
-      features.push({
-        included: false,
-        text: 'Assistant IA',
-      });
-    }
-
-    // E-Sourcing
-    features.push({
-      included: plan.features.has_e_sourcing,
-      text: 'E-Sourcing',
-    });
-
-    // Contracts
-    features.push({
-      included: plan.features.has_contracts,
-      text: 'Gestion des contrats',
-    });
-
-    // Analytics
-    features.push({
-      included: plan.features.has_analytics,
-      text: 'Analytics avancés',
-    });
-
-    // Storage
-    const storageMB = plan.quotas.storage_mb;
-    const storageText = storageMB >= 1024
-      ? `${(storageMB / 1024).toFixed(0)} GB de stockage`
-      : `${storageMB} MB de stockage`;
-    features.push({
-      included: true,
-      text: storageText,
-    });
-
-    // Ads
-    if (plan.features.has_ads) {
-      features.push({
-        included: false,
-        text: 'Publicités',
-        isNegative: true,
-      });
-    } else {
-      features.push({
-        included: true,
-        text: 'Sans publicité',
-      });
-    }
-
-    return features;
-  };
-
-  const isCurrentPlan = (planCode) => {
-    return currentSubscription?.plan?.code === planCode;
-  };
-
-  if (loading) {
-    return <LoadingState message="Chargement des plans d'abonnement..." />;
-  }
-
-  if (error) {
-    return (
-      <ErrorState
-        title="Erreur de chargement"
-        message={error}
-        showHome={false}
-        onRetry={fetchPlans}
-      />
-    );
-  }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 6 }}>
-      {/* Header */}
-      <Box textAlign="center" mb={6}>
-        <Typography variant="h3" component="h1" gutterBottom fontWeight={700}>
-          Choisissez votre plan
-        </Typography>
-        <Typography variant="h6" color="text.secondary" paragraph>
-          Commencez gratuitement, passez à un plan supérieur quand vous en avez besoin
-        </Typography>
+    <Box sx={{ bgcolor: IVORY, minHeight: '100vh', color: INK, ...sans }}>
+      <link rel="stylesheet" href={FONTS_HREF} />
 
-        {/* Billing Period Toggle */}
-        <Box display="flex" justifyContent="center" mt={4}>
-          <ToggleButtonGroup
-            value={billingPeriod}
-            exclusive
-            onChange={(e, newValue) => newValue && setBillingPeriod(newValue)}
-            aria-label="billing period"
-          >
-            <ToggleButton value="monthly" aria-label="monthly">
-              Mensuel
-            </ToggleButton>
-            <ToggleButton value="yearly" aria-label="yearly">
-              Annuel
-              <Chip
-                label="Économisez 17%"
-                size="small"
-                color="success"
-                sx={{ ml: 1 }}
-              />
-            </ToggleButton>
-          </ToggleButtonGroup>
+      {/* ── En-tête éditorial ─────────────────────────────────────────────── */}
+      <Container maxWidth="lg" sx={{ pt: { xs: 7, md: 12 }, pb: { xs: 5, md: 8 } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 4 }}>
+          <Box sx={{ width: 28, height: 1, bgcolor: GOLD }} />
+          <Typography sx={{ ...sans, fontSize: 12, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, fontWeight: 600 }}>
+            Tarifs Procura
+          </Typography>
         </Box>
-      </Box>
 
-      {/* Plans Grid */}
-      <Grid container spacing={4} alignItems="stretch">
-        {plans.map((plan) => {
-          const colors = getPlanColor(plan.code);
-          const isPopular = plan.code === 'standard';
-          const isCurrent = isCurrentPlan(plan.code);
+        <Grid container spacing={4} alignItems="flex-end">
+          <Grid item xs={12} md={8}>
+            <Typography sx={{ ...serif, fontSize: { xs: 40, md: 68 }, lineHeight: 1.02, fontWeight: 400, letterSpacing: '-0.02em' }}>
+              Un prix juste,
+              <br />
+              <Box component="span" sx={{ fontStyle: 'italic', color: GOLD }}>une croissance</Box> sans friction.
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography sx={{ ...sans, fontSize: 17, lineHeight: 1.6, color: 'rgba(20,17,14,0.66)' }}>
+              Commencez gratuitement. Un mois d&apos;essai offert sur les formules payantes — sans carte bancaire.
+            </Typography>
 
-          return (
-            <Grid item xs={12} md={4} key={plan.id}>
-              <Card
+            {/* Bascule mensuel / annuel */}
+            <Box sx={{ display: 'inline-flex', mt: 3, p: '4px', border: `1px solid ${LINE}`, borderRadius: 999, bgcolor: 'rgba(255,255,255,0.5)' }}>
+              {[['monthly', 'Mensuel'], ['yearly', 'Annuel']].map(([val, label]) => (
+                <Box
+                  key={val}
+                  onClick={() => setBilling(val)}
+                  sx={{
+                    px: 2.5, py: 0.9, borderRadius: 999, cursor: 'pointer', ...sans, fontSize: 13.5, fontWeight: 600,
+                    transition: 'all .2s',
+                    bgcolor: billing === val ? INK : 'transparent',
+                    color: billing === val ? IVORY : 'rgba(20,17,14,0.55)',
+                  }}
+                >
+                  {label}{val === 'yearly' && <Box component="span" sx={{ color: billing === val ? GOLD : GOLD, ml: 0.75, fontWeight: 600 }}>−20%</Box>}
+                </Box>
+              ))}
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* ── Cartes des formules ───────────────────────────────────────────── */}
+      <Container maxWidth="lg" sx={{ pb: { xs: 6, md: 10 } }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' },
+            border: `1px solid ${LINE}`,
+            bgcolor: '#fff',
+            // lignes de séparation fines entre colonnes
+            '& > *': { borderRight: { lg: `1px solid ${LINE}` }, borderBottom: { xs: `1px solid ${LINE}`, lg: 'none' } },
+            '& > *:last-of-type': { borderRight: 'none' },
+          }}
+        >
+          {PLANS.map((plan) => {
+            const price = getPrice(plan);
+            const featured = plan.code === 'pro';
+            return (
+              <Box
+                key={plan.code}
                 sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  border: isPopular ? `2px solid ${colors.primary}` : '1px solid #e0e0e0',
-                  transform: isPopular ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'transform 0.2s',
-                  '&:hover': {
-                    transform: isPopular ? 'scale(1.07)' : 'scale(1.02)',
-                  },
+                  position: 'relative', p: { xs: 3, md: 3.5 }, display: 'flex', flexDirection: 'column',
+                  bgcolor: featured ? NAVY : 'transparent',
+                  color: featured ? '#fff' : INK,
                 }}
               >
-                {/* Popular Badge */}
-                {isPopular && (
-                  <Chip
-                    icon={<Bolt />}
-                    label="Plus populaire"
-                    color="primary"
-                    sx={{
-                      position: 'absolute',
-                      top: -12,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      fontWeight: 600,
-                    }}
-                  />
-                )}
-
-                {/* Current Plan Badge */}
-                {isCurrent && (
-                  <Chip
-                    label="Plan actuel"
-                    color="success"
-                    size="small"
-                    sx={{
-                      position: 'absolute',
-                      top: 16,
-                      right: 16,
-                    }}
-                  />
-                )}
-
-                <CardContent sx={{ flexGrow: 1, pt: 4 }}>
-                  {/* Plan Icon & Name */}
-                  <Box display="flex" alignItems="center" mb={2}>
-                    {getPlanIcon(plan.code)}
-                    <Box ml={2}>
-                      <Typography variant="h5" component="h2" fontWeight={600}>
-                        {plan.name}
-                      </Typography>
-                      {plan.trial_days > 0 && (
-                        <Chip
-                          label={`${plan.trial_days} jours d'essai gratuit`}
-                          size="small"
-                          color="info"
-                          sx={{ mt: 0.5 }}
-                        />
-                      )}
-                    </Box>
-                  </Box>
-
-                  {/* Price */}
-                  <Box mb={3}>
-                    {formatPrice(plan)}
-                    {billingPeriod === 'yearly' && plan.savings_yearly && (
-                      <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>
-                        Économisez {plan.savings_yearly.amount}€ par an
-                      </Typography>
-                    )}
-                  </Box>
-
-                  {/* Description */}
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    {plan.description}
+                {plan.badge && (
+                  <Typography sx={{
+                    ...sans, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600,
+                    color: GOLD, mb: 2,
+                  }}>
+                    {plan.badge}
                   </Typography>
+                )}
+                {!plan.badge && <Box sx={{ height: 27, mb: 2 }} />}
 
-                  <Divider sx={{ my: 2 }} />
+                <Typography sx={{ ...serif, fontSize: 26, fontWeight: 500, mb: 0.5 }}>{plan.name}</Typography>
 
-                  {/* Features List */}
-                  <List dense>
-                    {getFeatureList(plan).map((feature, index) => (
-                      <ListItem key={index} disableGutters>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          {feature.included ? (
-                            <CheckCircle color="success" fontSize="small" />
-                          ) : (
-                            <Cancel color="disabled" fontSize="small" />
-                          )}
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={feature.text}
-                          sx={{
-                            textDecoration: !feature.included ? 'line-through' : 'none',
-                            color: feature.highlight
-                              ? 'primary.main'
-                              : feature.isNegative
-                              ? 'error.main'
-                              : 'text.primary',
-                            fontWeight: feature.highlight ? 600 : 400,
-                          }}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-
-                <CardActions sx={{ p: 2, pt: 0 }}>
-                  {isCurrent ? (
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      disabled
-                      sx={{ py: 1.5 }}
-                    >
-                      Plan actuel
-                    </Button>
-                  ) : currentSubscription ? (
-                    <Button
-                      fullWidth
-                      variant={isPopular ? 'contained' : 'outlined'}
-                      color="primary"
-                      onClick={() => handleChangePlan(plan.code)}
-                      sx={{ py: 1.5 }}
-                    >
-                      Changer de plan
-                    </Button>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, mt: 1.5, mb: 1 }}>
+                  {price === null ? (
+                    <Typography sx={{ ...serif, fontSize: 34, fontWeight: 500 }}>Sur devis</Typography>
+                  ) : price === 0 ? (
+                    <Typography sx={{ ...serif, fontSize: 34, fontWeight: 500 }}>Gratuit</Typography>
                   ) : (
-                    <Button
-                      fullWidth
-                      variant={isPopular ? 'contained' : 'outlined'}
-                      color="primary"
-                      onClick={() => handleSubscribe(plan.code)}
-                      sx={{ py: 1.5 }}
-                    >
-                      {plan.code === 'free' ? 'Commencer gratuitement' : 'Commencer l\'essai'}
-                    </Button>
+                    <>
+                      <Typography sx={{ ...serif, fontSize: 46, fontWeight: 500, lineHeight: 1 }}>{price}€</Typography>
+                      <Typography sx={{ ...sans, fontSize: 14, color: featured ? 'rgba(255,255,255,0.6)' : 'rgba(20,17,14,0.5)' }}>
+                        /{billing === 'monthly' ? 'mois' : 'an'}
+                      </Typography>
+                    </>
                   )}
-                </CardActions>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
+                </Box>
+                <Box sx={{ minHeight: 18, mb: 2 }}>
+                  {billing === 'yearly' && price !== null && price > 0 && (
+                    <Typography sx={{ ...sans, fontSize: 12.5, color: GOLD, fontWeight: 600 }}>
+                      soit {(price / 12).toFixed(0)}€/mois · {Math.round(plan.priceMonthly * 12 - price)}€ économisés
+                    </Typography>
+                  )}
+                </Box>
 
-      {/* FAQ or Additional Info */}
-      <Box mt={8} textAlign="center">
-        <Typography variant="h5" gutterBottom fontWeight={600}>
-          Des questions ?
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          Contactez notre équipe pour trouver le plan qui correspond le mieux à vos besoins.
-        </Typography>
-        <Button variant="outlined" size="large" sx={{ mt: 2 }}>
-          Contactez-nous
-        </Button>
+                <Typography sx={{ ...sans, fontSize: 14, lineHeight: 1.55, color: featured ? 'rgba(255,255,255,0.72)' : 'rgba(20,17,14,0.6)', mb: 3, minHeight: 44 }}>
+                  {plan.tagline}
+                </Typography>
+
+                <Button
+                  fullWidth
+                  disableElevation
+                  disabled={loading === plan.code}
+                  onClick={() => handleCTA(plan)}
+                  endIcon={plan.code === 'enterprise' ? <WhatsApp sx={{ fontSize: 16 }} /> : <NorthEast sx={{ fontSize: 15 }} />}
+                  sx={{
+                    ...sans, textTransform: 'none', fontWeight: 600, fontSize: 14.5, py: 1.25, borderRadius: 0,
+                    mb: 3,
+                    ...(featured
+                      ? { bgcolor: GOLD, color: INK, '&:hover': { bgcolor: '#d97706' } }
+                      : { bgcolor: BLUE, color: '#fff', '&:hover': { bgcolor: '#1d4ed8' } }),
+                  }}
+                >
+                  {loading === plan.code ? 'Redirection…' : plan.cta}
+                </Button>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.1 }}>
+                  {plan.features.map((f, i) => (
+                    <Box key={i} sx={{ display: 'flex', gap: 1.25, alignItems: 'flex-start' }}>
+                      <Check sx={{ fontSize: 17, color: GOLD, mt: '1px', flexShrink: 0 }} />
+                      <Typography sx={{ ...sans, fontSize: 13.5, lineHeight: 1.4 }}>{f}</Typography>
+                    </Box>
+                  ))}
+                  {plan.missing.map((f, i) => (
+                    <Box key={`m-${i}`} sx={{ display: 'flex', gap: 1.25, alignItems: 'flex-start', opacity: 0.42 }}>
+                      <Close sx={{ fontSize: 17, mt: '1px', flexShrink: 0 }} />
+                      <Typography sx={{ ...sans, fontSize: 13.5, lineHeight: 1.4, textDecoration: 'line-through' }}>{f}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      </Container>
+
+      {/* ── Bandeau Afrique ───────────────────────────────────────────────── */}
+      <Box sx={{ bgcolor: INK, color: IVORY, py: { xs: 6, md: 8 } }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={8}>
+              <Typography sx={{ ...sans, fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, fontWeight: 600, mb: 1.5 }}>
+                Pensé pour l&apos;Afrique
+              </Typography>
+              <Typography sx={{ ...serif, fontSize: { xs: 24, md: 32 }, fontWeight: 400, lineHeight: 1.2, mb: 2 }}>
+                Une facturation locale, des règles que vous connaissez.
+              </Typography>
+              <Typography sx={{ ...sans, fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,0.72)' }}>
+                Facturation en FCFA, CDF, XOF, MAD. Contrats adaptés au droit OHADA. TVA Cameroun 19,25 %,
+                Sénégal 18 %, Côte d&apos;Ivoire 18 %. Interface en français, optimisée pour les réseaux mobiles.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4} sx={{ textAlign: { md: 'right' } }}>
+              <Button
+                disableElevation
+                startIcon={<WhatsApp />}
+                onClick={() => window.open('https://wa.me/237693427913', '_blank')}
+                sx={{ ...sans, textTransform: 'none', fontWeight: 600, fontSize: 15, px: 3, py: 1.4, borderRadius: 0, bgcolor: GOLD, color: INK, '&:hover': { bgcolor: '#c79c63' } }}
+              >
+                Parler à un conseiller
+              </Button>
+            </Grid>
+          </Grid>
+        </Container>
       </Box>
-    </Container>
+
+      {/* ── Tableau comparatif ────────────────────────────────────────────── */}
+      {!isMobile && (
+        <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
+          <Typography sx={{ ...serif, fontSize: 34, fontWeight: 400, mb: 1 }}>Le détail, ligne par ligne</Typography>
+          <Typography sx={{ ...sans, fontSize: 15, color: 'rgba(20,17,14,0.55)', mb: 4 }}>
+            Toutes les fonctionnalités, comparées plan par plan.
+          </Typography>
+          <Box sx={{ border: `1px solid ${LINE}`, bgcolor: '#fff' }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ '& th': { borderBottom: `1px solid ${LINE}` } }}>
+                  <TableCell sx={{ ...sans, fontWeight: 600, fontSize: 13, width: '34%', color: 'rgba(20,17,14,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Fonctionnalité
+                  </TableCell>
+                  {PLANS.map((p) => (
+                    <TableCell key={p.code} align="center" sx={{ ...serif, fontWeight: 500, fontSize: 18 }}>
+                      {p.name}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {COMPARISON.map((row, i) => (
+                  <TableRow key={i} sx={{ '& td': { borderBottom: `1px solid ${LINE}` }, '&:last-child td': { borderBottom: 'none' } }}>
+                    <TableCell sx={{ ...sans, fontWeight: 500, fontSize: 14 }}>{row.label}</TableCell>
+                    <TableCell align="center"><CellValue value={row.free} /></TableCell>
+                    <TableCell align="center" sx={{ bgcolor: 'rgba(176,141,87,0.05)' }}><CellValue value={row.pro} /></TableCell>
+                    <TableCell align="center"><CellValue value={row.business} /></TableCell>
+                    <TableCell align="center"><CellValue value={row.enterprise} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        </Container>
+      )}
+
+      {/* ── Contact ───────────────────────────────────────────────────────── */}
+      <Container maxWidth="md" sx={{ py: { xs: 6, md: 9 }, textAlign: 'center' }}>
+        <Typography sx={{ ...serif, fontSize: { xs: 28, md: 38 }, fontWeight: 400, mb: 1.5 }}>
+          Une question avant de vous lancer&nbsp;?
+        </Typography>
+        <Typography sx={{ ...sans, fontSize: 16, color: 'rgba(20,17,14,0.6)', mb: 4 }}>
+          Notre équipe répond en moins de 2 h, du lundi au samedi, de 8 h à 20 h (WAT).
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Button
+            disableElevation
+            startIcon={<WhatsApp />}
+            onClick={() => window.open('https://wa.me/237693427913', '_blank')}
+            sx={{ ...sans, textTransform: 'none', fontWeight: 600, fontSize: 15, px: 3.5, py: 1.4, borderRadius: 0, bgcolor: INK, color: IVORY, '&:hover': { bgcolor: '#2a2520' } }}
+          >
+            WhatsApp
+          </Button>
+          <Button
+            disableElevation
+            onClick={() => { window.location.href = 'mailto:report.makeitreal@gmail.com'; }}
+            sx={{ ...sans, textTransform: 'none', fontWeight: 600, fontSize: 15, px: 3.5, py: 1.4, borderRadius: 0, border: `1px solid ${INK}`, color: INK, '&:hover': { bgcolor: 'rgba(20,17,14,0.04)' } }}
+          >
+            Écrire un email
+          </Button>
+        </Box>
+      </Container>
+    </Box>
   );
 };
 

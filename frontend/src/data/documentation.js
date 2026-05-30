@@ -75,22 +75,22 @@ ProcureGenius est votre solution complète de gestion des achats et de la relati
 
 ## Fonctionnalités principales
 
-### 📦 Gestion des achats
+###  Gestion des achats
 - Création et suivi des bons de commande
 - Gestion des factures fournisseurs
 - Catalogue produits centralisé
 
-### 👥 Gestion des relations
+###  Gestion des relations
 - Fiche fournisseur complète
 - Suivi des contacts
 - Historique des transactions
 
-### 🤖 Intelligence artificielle
+###  Intelligence artificielle
 - Assistant IA pour vous aider dans vos tâches
 - Analyse automatique des documents
 - Suggestions intelligentes
 
-### 📊 Tableaux de bord
+###  Tableaux de bord
 - Vue d'ensemble de votre activité
 - Indicateurs clés de performance
 - Rapports personnalisables
@@ -110,6 +110,49 @@ ProcureGenius est votre solution complète de gestion des achats et de la relati
 `,
     keywords: ['démarrage', 'introduction', 'bienvenue', 'commencer', 'premiers pas'],
     relatedTopics: ['getting-started-navigation', 'getting-started-dashboard'],
+  },
+  {
+    id: 'getting-started-key-features',
+    category: 'getting-started',
+    title: 'Fonctionnalités clés à connaître',
+    content: `
+# Fonctionnalités clés
+
+## Essai gratuit d'un mois, sans carte
+À l'inscription, vous profitez d'un mois complet aux fonctionnalités Pro,
+**sans saisir de carte bancaire**. À la fin de l'essai, vous choisissez de
+passer à un plan payant ou de continuer en version gratuite.
+
+## Devis et factures
+Vous pouvez créer un **devis** (statut « Devis ») puis le **convertir en
+facture** en un clic depuis la fiche du devis. Le numéro passe automatiquement
+du préfixe DEV- au préfixe FAC-.
+
+## Marges & bénéfice brut
+La page **Marges & bénéfices** (depuis Produits) calcule automatiquement votre
+bénéfice brut : ventes − prix d'achat. Renseignez le prix d'achat de vos
+produits pour fiabiliser le calcul, puis ajoutez vos charges dans Comptabilité
+pour obtenir votre bénéfice net.
+
+## Restockage prédictif (Pro)
+La page **Restockage** recommande quoi commander et en quelle quantité selon
+vos ventes récentes. Fonctionnalité disponible avec le plan Pro.
+
+## Analyser un contrat externe
+Depuis Contrats, le bouton **Analyser un contrat** vous permet de coller un
+contrat reçu d'un tiers pour en étudier les clauses et les risques **avant de
+l'accepter**. Rien n'est enregistré : c'est un mode étude.
+
+## Bon de commande → facture
+Depuis un bon de commande approuvé, reçu ou envoyé, le menu propose
+**Convertir en facture** : la facture brouillon reprend les lignes du BC.
+
+## Gérer votre abonnement
+Dans **Paramètres → Abonnement**, consultez votre plan et vos quotas, changez
+de plan ou gérez votre facturation.
+`,
+    keywords: ['nouveautés', 'devis', 'marges', 'restockage', 'contrat', 'abonnement', 'essai', 'fonctionnalités'],
+    relatedTopics: ['getting-started-intro', 'invoices-create'],
   },
   {
     id: 'getting-started-navigation',
@@ -575,7 +618,7 @@ ProcureGenius génère automatiquement des factures PDF professionnelles et les 
 
 ## Ce qui EST possible
 
-### ✅ Génération automatique de PDF
+###  Génération automatique de PDF
 
 Chaque facture peut être générée en PDF professionnel avec :
 
@@ -597,7 +640,7 @@ Chaque facture peut être générée en PDF professionnel avec :
 - Calculs TTC/HT automatiques
 - Multi-devises (€, $, £, etc.)
 
-### ✅ Envoi par email avec PDF attaché
+###  Envoi par email avec PDF attaché
 
 **Depuis la facture :**
 1. Cliquez sur "Envoyer"
@@ -615,7 +658,7 @@ Chaque facture peut être générée en PDF professionnel avec :
 - Date d'envoi enregistrée
 - Historique complet des envois
 
-### ✅ Téléchargement et impression
+###  Téléchargement et impression
 
 **Télécharger :**
 - Cliquez sur "Télécharger PDF"
@@ -627,7 +670,7 @@ Chaque facture peut être générée en PDF professionnel avec :
 - Le PDF s'ouvre dans une fenêtre d'impression
 - Format A4 optimisé
 
-### ✅ Templates personnalisables
+###  Templates personnalisables
 
 Dans **Paramètres > Facturation** :
 - Choisissez votre template par défaut
@@ -638,7 +681,7 @@ Dans **Paramètres > Facturation** :
 
 ## Ce qui N'EST PAS possible
 
-### ❌ Upload de PDF externe
+###  Upload de PDF externe
 
 Vous **ne pouvez pas** :
 - Uploader un PDF scanné depuis votre ordinateur
@@ -653,7 +696,7 @@ Les factures sont générées dynamiquement à partir des données du système p
 - L'IA crée la facture dans le système avec ces données
 - Un nouveau PDF est alors généré automatiquement
 
-### ❌ Modification du PDF après génération
+###  Modification du PDF après génération
 
 Une fois généré, le PDF ne peut pas être :
 - Modifié directement
@@ -664,7 +707,7 @@ Une fois généré, le PDF ne peut pas être :
 - Modifiez la facture dans le système
 - Régénérez un nouveau PDF avec les modifications
 
-### ❌ Signature électronique intégrée
+###  Signature électronique intégrée
 
 ProcureGenius ne gère pas :
 - La signature électronique qualifiée
@@ -1371,7 +1414,7 @@ Générez des rapports :
 
 Pour que ProcureGenius puisse envoyer des emails (factures, bons de commande, relances), vous devez configurer les paramètres SMTP.
 
-## ⚠️ Configuration Gmail (LA PLUS UTILISÉE)
+##  Configuration Gmail (LA PLUS UTILISÉE)
 
 Gmail est le service le plus courant mais nécessite une configuration spécifique à cause de la sécurité renforcée.
 
@@ -1418,7 +1461,7 @@ C'est la partie CRITIQUE que beaucoup d'utilisateurs ratent.
 (Le mot de passe d'application de 16 caractères, **AVEC les espaces** ou sans, ça marche dans les deux cas)
 
 3. Cliquez sur **"Tester la configuration"**
-4. Si ça fonctionne : ✅ "Email de test envoyé avec succès"
+4. Si ça fonctionne :  "Email de test envoyé avec succès"
 5. Cliquez sur **"Enregistrer"**
 
 ## Configuration Outlook / Office 365
@@ -1464,7 +1507,7 @@ C'est la partie CRITIQUE que beaucoup d'utilisateurs ratent.
 
 ## Problèmes fréquents et solutions
 
-### ❌ "Authentification échouée" (Gmail)
+###  "Authentification échouée" (Gmail)
 
 **Causes :**
 1. Vous utilisez votre mot de passe Gmail au lieu du mot de passe d'application
@@ -1476,7 +1519,7 @@ C'est la partie CRITIQUE que beaucoup d'utilisateurs ratent.
 - Créez un NOUVEAU mot de passe d'application
 - Copiez-le sans espaces supplémentaires
 
-### ❌ "Connexion refusée" ou "Connection timed out"
+###  "Connexion refusée" ou "Connection timed out"
 
 **Causes :**
 - Port incorrect
@@ -1487,7 +1530,7 @@ C'est la partie CRITIQUE que beaucoup d'utilisateurs ratent.
 - Vérifiez que votre pare-feu autorise les connexions sortantes sur le port 587
 - Essayez le port **465** avec SSL au lieu de TLS
 
-### ❌ "L'accès au compte moins sécurisé est désactivé"
+###  "L'accès au compte moins sécurisé est désactivé"
 
 **Cause :**
 - Vous n'utilisez pas un mot de passe d'application (Gmail)
@@ -1496,7 +1539,7 @@ C'est la partie CRITIQUE que beaucoup d'utilisateurs ratent.
 - N'essayez PAS d'activer "Accès moins sécurisé" (Google l'a supprimé)
 - Utilisez un mot de passe d'application (voir étape 2)
 
-### ❌ Les emails partent en SPAM
+###  Les emails partent en SPAM
 
 **Causes :**
 - Votre domaine n'a pas de configuration SPF/DKIM
@@ -1536,13 +1579,13 @@ Pour tester si tout fonctionne :
 ## Recommandations
 
 ### Pour une petite entreprise (< 50 factures/mois)
-✅ **Gmail gratuit** suffit largement
+ **Gmail gratuit** suffit largement
 
 ### Pour une moyenne entreprise (> 100 factures/mois)
-✅ **Google Workspace** (à partir de 5€/mois/utilisateur)
+ **Google Workspace** (à partir de 5€/mois/utilisateur)
 
 ### Pour une grande entreprise
-✅ **Office 365** ou serveur SMTP dédié
+ **Office 365** ou serveur SMTP dédié
 
 ## Configuration serveur SMTP personnalisé
 
@@ -1818,7 +1861,7 @@ Pour suspendre temporairement un accès :
 5. Vous pouvez le réactiver à tout moment
 
 ### Supprimer un utilisateur
-⚠️ **Attention** : La suppression est définitive.
+ **Attention** : La suppression est définitive.
 
 Pour supprimer :
 1. Ouvrez la fiche utilisateur

@@ -864,10 +864,16 @@ function AIChat() {
 
       // Ajouter les données de confirmation si présentes
       if (confirmationData) {
-        requestData.confirmation_data = {
-          ...confirmationData,
-          force_create: true,
-        };
+        // Nouveau format structuré : {token, choice} transmis tel quel.
+        // Ancien format (compat) : on force la création.
+        if (confirmationData.token && confirmationData.choice) {
+          requestData.confirmation_data = confirmationData;
+        } else {
+          requestData.confirmation_data = {
+            ...confirmationData,
+            force_create: true,
+          };
+        }
       }
 
       // Only include conversation_id if it exists and is valid
@@ -883,6 +889,7 @@ function AIChat() {
         ...response.data.message,
         action_results: response.data.action_results || [],
         action_buttons: response.data.action_buttons || null,
+        needs_confirmation: response.data.needs_confirmation || null,
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -1420,6 +1427,25 @@ function AIChat() {
                               enqueueSnackbar('Graphique ajouté aux visualisations', { variant: 'success' });
                             }}
                           />
+                          {msg.needs_confirmation?.options?.length > 0 && (
+                            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.25, gap: 1 }}>
+                              {msg.needs_confirmation.options.map((opt, oi) => (
+                                <Button
+                                  key={oi}
+                                  size="small"
+                                  variant={opt.variant === 'primary' ? 'contained' : 'outlined'}
+                                  color={opt.variant === 'danger' ? 'error' : 'primary'}
+                                  onClick={() => handleSendMessage(opt.label, {
+                                    token: msg.needs_confirmation.token,
+                                    choice: opt.choice,
+                                  })}
+                                  sx={{ textTransform: 'none', borderRadius: 2 }}
+                                >
+                                  {opt.label}
+                                </Button>
+                              ))}
+                            </Stack>
+                          )}
                           <Typography
                             variant="caption"
                             sx={{
@@ -1485,10 +1511,10 @@ function AIChat() {
           <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
             <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' } }}>
               {[
-                { label: '📝 Devis', prompt: 'Je veux créer un devis pour un client' },
-                { label: '🔍 Vérifier prix', prompt: 'Vérifie le prix du marché pour un produit' },
-                { label: '📬 Relancer client', prompt: 'Génère une relance pour une facture impayée' },
-                { label: '💰 Cash Flow', prompt: 'Fais une analyse prédictive de ma trésorerie 60 jours' },
+                { label: ' Devis', prompt: 'Je veux créer un devis pour un client' },
+                { label: ' Vérifier prix', prompt: 'Vérifie le prix du marché pour un produit' },
+                { label: ' Relancer client', prompt: 'Génère une relance pour une facture impayée' },
+                { label: ' Cash Flow', prompt: 'Fais une analyse prédictive de ma trésorerie 60 jours' },
               ].map((chip, idx) => (
                 <Box
                   key={idx}

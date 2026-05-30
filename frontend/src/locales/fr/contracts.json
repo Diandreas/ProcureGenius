@@ -98,23 +98,6 @@
       "history": "Historique"
     },
     "sections": {
-      "information": "Informations du Contrat",
-      "supplier": "Informations du Fournisseur",
-      "dates": "Dates Importantes",
-      "financial": "Informations Financières"
-    },
-    "actions": {
-      "edit": "Modifier",
-      "renew": "Renouveler",
-      "terminate": "Résilier",
-      "archive": "Archiver",
-      "download": "Télécharger PDF",
-      "delete": "Supprimer",
-      "approve": "Approuver",
-      "activate": "Activer",
-      "extractClauses": "Extraire les clauses (IA)"
-    },
-    "sections": {
       "description": "Description",
       "terms": "Termes et conditions",
       "paymentTerms": "Conditions de paiement",
@@ -127,6 +110,17 @@
       "autoRenewal": "Renouvellement automatique",
       "purchase": "Achat",
       "service": "Service"
+    },
+    "actions": {
+      "edit": "Modifier",
+      "renew": "Renouveler",
+      "terminate": "Résilier",
+      "archive": "Archiver",
+      "download": "Télécharger PDF",
+      "delete": "Supprimer",
+      "approve": "Approuver",
+      "activate": "Activer",
+      "extractClauses": "Extraire les clauses (IA)"
     }
   },
   "messages": {
@@ -198,5 +192,27 @@
     "cancel": "Annuler",
     "extract": "Extraire les clauses",
     "extracting_button": "Extraction..."
+  },
+  "analyzer": {
+    "cta": "Analyser un contrat",
+    "title": "Analyser un contrat",
+    "subtitle": "Collez un contrat reçu d'un tiers pour en étudier les clauses et les risques avant de l'accepter. Rien n'est enregistré.",
+    "placeholder": "Collez ici le texte intégral du contrat à étudier…",
+    "analyze": "Analyser les clauses",
+    "analyzing": "Analyse en cours…",
+    "tooShort": "Collez le texte complet du contrat (au moins quelques lignes).",
+    "error": "Erreur lors de l'analyse.",
+    "summary": "Résumé",
+    "globalRisk": "Évaluation globale du risque",
+    "clauses": "Clauses détectées",
+    "analysis": "Analyse",
+    "recommendation": "Recommandation",
+    "risk": {
+      "critical": "Critique",
+      "high": "Élevé",
+      "medium": "Moyen",
+      "low": "Faible",
+      "unknown": "Non évalué"
+    }
   }
 }

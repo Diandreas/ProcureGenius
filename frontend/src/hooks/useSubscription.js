@@ -68,13 +68,18 @@ const useSubscription = () => {
     return getPlanCode() === 'free';
   };
 
-  const isPremiumPlan = () => {
-    return getPlanCode() === 'premium';
+  const isTrial = () => {
+    return subscription?.subscription?.is_trial === true
+      || subscription?.subscription?.status === 'trial';
+  };
+
+  const trialDaysRemaining = () => {
+    return subscription?.subscription?.trial_days_remaining ?? 0;
   };
 
   const canUpgrade = () => {
-    const plan = getPlanCode();
-    return plan === 'free' || plan === 'standard';
+    // Tout le monde sauf Business/Enterprise peut monter en gamme.
+    return !['business', 'enterprise'].includes(getPlanCode());
   };
 
   return {
@@ -86,7 +91,8 @@ const useSubscription = () => {
     getPlanCode,
     getPlanName,
     isFreePlan,
-    isPremiumPlan,
+    isTrial,
+    trialDaysRemaining,
     canUpgrade,
     refresh: fetchSubscription,
   };

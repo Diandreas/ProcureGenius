@@ -156,6 +156,11 @@ class ContractCreateSerializer(serializers.ModelSerializer):
     """Serializer pour créer/modifier un contrat"""
 
     sections_data = serializers.ListField(child=serializers.DictField(), required=False, write_only=True)
+    start_date = serializers.DateField(required=False, allow_null=True)
+    end_date = serializers.DateField(required=False, allow_null=True)
+    total_value = serializers.DecimalField(max_digits=14, decimal_places=2, required=False, allow_null=True)
+    signed_by_us_at = serializers.DateTimeField(required=False, allow_null=True)
+    signed_by_counterpart_at = serializers.DateTimeField(required=False, allow_null=True)
 
     class Meta:
         model = Contract

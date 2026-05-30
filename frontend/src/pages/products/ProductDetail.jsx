@@ -333,8 +333,8 @@ function ProductDetail() {
 
       {/* Tab: Informations */}
       {activeTab === 0 && (
-        <Box sx={{ px: isMobile ? 2 : 0 }}>
-          <Grid container spacing={isMobile ? 1.5 : 3}>
+        <Box sx={{ px: isMobile ? 1.5 : 0, overflow: 'hidden' }}>
+          <Grid container spacing={isMobile ? 1 : 3}>
             {/* Card principale - Style mobile app */}
             <Grid item xs={12} md={8}>
               <Card
@@ -368,7 +368,7 @@ function ProductDetail() {
                   }
                 }}
               >
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
                 <Box sx={{
                   display: 'flex',
                   gap: isMobile ? 1.5 : 2,
@@ -548,45 +548,39 @@ function ProductDetail() {
                   </Box>
                 </Box>
 
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: isMobile ? 1 : 2 }} />
 
                 {/* Description */}
                 {product.description && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="subtitle2" fontWeight="600" gutterBottom>
+                  <Box sx={{ mb: isMobile ? 1.5 : 3 }}>
+                    <Typography variant="subtitle2" fontWeight="600" gutterBottom sx={{ fontSize: isMobile ? '0.8rem' : undefined }}>
                       {t('products:labels.description')}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: isMobile ? '0.78rem' : undefined, lineHeight: 1.4 }}>
                       {product.description}
                     </Typography>
                   </Box>
                 )}
 
                 {/* Informations détaillées - Style moderne */}
-                <Grid container spacing={isMobile ? 1.5 : 2.5}>
+                <Grid container spacing={isMobile ? 1 : 2.5}>
                   {product.supplier_name && (
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={isMobile ? 6 : 12} sm={6}>
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
+                          gap: isMobile ? 1 : 2,
+                          p: isMobile ? 1 : 2,
+                          borderRadius: isMobile ? 1.5 : 2,
                           bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
                           border: '1px solid',
                           borderColor: theme => alpha(theme.palette.primary.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.primary.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`
-                          }
                         }}
                       >
                         <Box
                           sx={{
-                            p: 1,
+                            p: isMobile ? 0.75 : 1,
                             borderRadius: 1.5,
                             bgcolor: 'primary.main',
                             display: 'flex',
@@ -595,27 +589,22 @@ function ProductDetail() {
                             flexShrink: 0
                           }}
                         >
-                          <Business sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                          <Business sx={{ fontSize: isMobile ? 16 : 22, color: 'white' }} />
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
+                          <Typography variant="caption" color="text.secondary" fontWeight="500" sx={{ fontSize: '0.65rem' }}>
                             {t('products:labels.supplier')}
                           </Typography>
                           <Typography
                             variant="body2"
                             fontWeight="600"
                             sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              fontSize: isMobile ? '0.75rem' : '0.938rem',
                               color: 'text.primary',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              lineHeight: 1.2,
                             }}
                           >
                             {product.supplier_name}
@@ -626,28 +615,22 @@ function ProductDetail() {
                   )}
 
                   {product.warehouse_name && (
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={isMobile ? 6 : 12} sm={6}>
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
+                          gap: isMobile ? 1 : 2,
+                          p: isMobile ? 1 : 2,
+                          borderRadius: isMobile ? 1.5 : 2,
                           bgcolor: theme => alpha(theme.palette.info.main, 0.08),
                           border: '1px solid',
                           borderColor: theme => alpha(theme.palette.info.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.info.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
-                          }
                         }}
                       >
                         <Box
                           sx={{
-                            p: 1,
+                            p: isMobile ? 0.75 : 1,
                             borderRadius: 1.5,
                             bgcolor: 'info.main',
                             display: 'flex',
@@ -656,27 +639,22 @@ function ProductDetail() {
                             flexShrink: 0
                           }}
                         >
-                          <Warehouse sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
+                          <Warehouse sx={{ fontSize: isMobile ? 16 : 22, color: 'white' }} />
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
+                          <Typography variant="caption" color="text.secondary" fontWeight="500" sx={{ fontSize: '0.65rem' }}>
                             {t('products:labels.warehouse')}
                           </Typography>
                           <Typography
                             variant="body2"
                             fontWeight="600"
                             sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
+                              fontSize: isMobile ? '0.75rem' : '0.938rem',
                               color: 'text.primary',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              lineHeight: 1.2,
                             }}
                           >
                             {product.warehouse_code} - {product.warehouse_name}
@@ -748,7 +726,8 @@ function ProductDetail() {
             </Card>
 
             {/* Prix et statistiques - Style mobile app compact */}
-            <Grid container spacing={isMobile ? 1 : 2}>
+            <Box sx={{ overflow: 'hidden' }}>
+            <Grid container spacing={isMobile ? 0.75 : 2}>
               <Grid item xs={6}>
                 <Card sx={{
                   borderRadius: isMobile ? 3 : 2,
@@ -780,16 +759,16 @@ function ProductDetail() {
                     '&:last-child': { pb: isMobile ? 2 : 3 }
                   }}>
                     <AttachMoney sx={{
-                      fontSize: isMobile ? 28 : 36,
+                      fontSize: isMobile ? 20 : 36,
                       color: 'primary.main',
-                      mb: isMobile ? 1 : 1.5,
+                      mb: isMobile ? 0.5 : 1.5,
                       opacity: 0.9
                     }} />
                     <Typography
                       variant={isMobile ? 'h6' : 'h4'}
                       sx={{
                         fontWeight: 700,
-                        fontSize: isMobile ? '1.125rem' : undefined,
+                        fontSize: isMobile ? '0.9rem' : undefined,
                         background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                         backgroundClip: 'text',
                         WebkitBackgroundClip: 'text',
@@ -802,10 +781,10 @@ function ProductDetail() {
                       variant="caption"
                       color="text.secondary"
                       sx={{
-                        fontSize: isMobile ? '0.75rem' : undefined,
-                        fontWeight: 500,
+                        fontSize: isMobile ? '0.6rem' : undefined,
+                        fontWeight: 600,
                         textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
+                        letterSpacing: '0.04em'
                       }}
                     >
                       {t('products:stats.sellingPrice')}
@@ -846,20 +825,20 @@ function ProductDetail() {
                   }}>
                     <CardContent sx={{
                       textAlign: 'center',
-                      p: isMobile ? 2 : 3,
-                      '&:last-child': { pb: isMobile ? 2 : 3 }
+                      p: isMobile ? 1.25 : 3,
+                      '&:last-child': { pb: isMobile ? 1.25 : 3 }
                     }}>
                       <AttachMoney sx={{
-                        fontSize: isMobile ? 28 : 36,
+                        fontSize: isMobile ? 20 : 36,
                         color: 'info.main',
-                        mb: isMobile ? 1 : 1.5,
+                        mb: isMobile ? 0.5 : 1.5,
                         opacity: 0.9
                       }} />
                       <Typography
                         variant={isMobile ? 'h6' : 'h4'}
                         sx={{
                           fontWeight: 700,
-                          fontSize: isMobile ? '1.125rem' : undefined,
+                          fontSize: isMobile ? '0.9rem' : undefined,
                           background: theme => `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
                           backgroundClip: 'text',
                           WebkitBackgroundClip: 'text',
@@ -918,16 +897,16 @@ function ProductDetail() {
                         '&:last-child': { pb: isMobile ? 2 : 3 }
                       }}>
                         <Receipt sx={{
-                          fontSize: isMobile ? 28 : 36,
+                          fontSize: isMobile ? 20 : 36,
                           color: 'success.main',
-                          mb: isMobile ? 1 : 1.5,
+                          mb: isMobile ? 0.5 : 1.5,
                           opacity: 0.9
                         }} />
                         <Typography
                           variant={isMobile ? 'h6' : 'h4'}
                           sx={{
                             fontWeight: 700,
-                            fontSize: isMobile ? '1.125rem' : undefined,
+                            fontSize: isMobile ? '0.9rem' : undefined,
                             background: theme => `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
                             backgroundClip: 'text',
                             WebkitBackgroundClip: 'text',
@@ -983,9 +962,9 @@ function ProductDetail() {
                         '&:last-child': { pb: isMobile ? 2 : 3 }
                       }}>
                         <TrendingUp sx={{
-                          fontSize: isMobile ? 28 : 36,
+                          fontSize: isMobile ? 20 : 36,
                           color: 'warning.main',
-                          mb: isMobile ? 1 : 1.5,
+                          mb: isMobile ? 0.5 : 1.5,
                           opacity: 0.9
                         }} />
                         <Typography
@@ -1020,6 +999,7 @@ function ProductDetail() {
                 </>
               )}
             </Grid>
+            </Box>
           </Grid>
 
           {/* Sidebar */}
@@ -1037,7 +1017,7 @@ function ProductDetail() {
                   ? `1px solid ${alpha(theme.palette.divider, theme.palette.mode === 'dark' ? 0.3 : 0.5)}`
                   : 'none',
               }}>
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+                <CardContent sx={{ p: isMobile ? 1.5 : 3 }}>
                   <Box sx={{
                     display: 'flex',
                     alignItems: 'center',

@@ -151,11 +151,12 @@ class AIDashboardGreetingView(APIView):
             - Produits en rupture de stock : {low_stock}
 
             Le ton doit être professionnel, encourageant et très bref (max 2 phrases).
-            Réponds uniquement avec le message."""
+            N'utilise AUCUN emoji. Réponds uniquement avec le message."""
 
             mistral_svc = MistralService()
             result = asyncio.run(mistral_svc.chat(message=prompt, user_context={'user_id': request.user.id}))
-            greeting = result.get('response', result.get('message', 'Bonjour !'))
+            from apps.core.text_utils import strip_emojis
+            greeting = strip_emojis(result.get('response', result.get('message', 'Bonjour !')))
             
             return Response({
                 'success': True,

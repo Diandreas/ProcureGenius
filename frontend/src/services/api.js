@@ -96,6 +96,7 @@ export const purchaseOrdersAPI = {
   addItem: (id, item) => api.post(`/purchase-orders/${id}/add_item/`, item),
   approve: (id) => api.post(`/purchase-orders/${id}/approve/`),
   receive: (id) => api.post(`/purchase-orders/${id}/receive/`),
+  convertToInvoice: (id) => api.post(`/purchase-orders/${id}/convert_to_invoice/`),
   sendEmail: (id, data) => api.post(`/purchase-orders/${id}/send/`, data),
   printPDF: (id) => api.get(`/purchase-orders/${id}/print_pdf/`, { responseType: 'blob' }),
 };
@@ -111,6 +112,7 @@ export const invoicesAPI = {
   send: (id, data) => api.post(`/invoices/${id}/send/`, data),
   sendEmail: (id, data) => api.post(`/invoices/${id}/send/`, data),
   markPaid: (id, data) => api.post(`/invoices/${id}/mark_paid/`, data),
+  convertQuote: (id) => api.post(`/invoices/${id}/convert-to-invoice/`),
   getPayments: (id) => api.get(`/invoices/${id}/payments/`),
   addPayment: (id, data) => api.post(`/invoices/${id}/payments/`, data),
   deletePayment: (invoiceId, paymentId) => api.delete(`/invoices/${invoiceId}/payments/${paymentId}/`),
@@ -230,6 +232,8 @@ export const contractsAPI = {
   approve: (id, notes) => api.post(`/contracts/${id}/approve/`, { notes }),
   activate: (id) => api.post(`/contracts/${id}/activate/`),
   terminate: (id) => api.post(`/contracts/${id}/terminate/`),
+  generateInvoice: (id) => api.post(`/contracts/${id}/generate-invoice/`),
+  analyzeExternal: (data) => api.post('/contracts/analyze-external/', data),
   renew: (id, data) => api.post(`/contracts/${id}/renew/`, data),
   exportPDF: (id, data) => api.post(`/contracts/${id}/pdf-report/`, data, { responseType: 'blob' }),
   exportWord: (id, data) => api.post(`/contracts/${id}/word-report/`, data, { responseType: 'blob' }),
@@ -363,11 +367,11 @@ export const eSourcingAPI = {
 // Data Migration API
 export const migrationAPI = {
   list: (params) => {
-    console.log('📋 Liste des jobs - URL:', `${api.defaults.baseURL}/migration/jobs/`);
+    console.log(' Liste des jobs - URL:', `${api.defaults.baseURL}/migration/jobs/`);
     return api.get('/migration/jobs/', { params });
   },
   get: (id) => {
-    console.log('📄 Get job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/`);
+    console.log(' Get job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/`);
     return api.get(`/migration/jobs/${id}/`);
   },
   create: (data) => {
@@ -386,13 +390,13 @@ export const migrationAPI = {
     });
 
     // Log pour debug
-    console.log('📤 Création job - URL:', `${api.defaults.baseURL}/migration/jobs/`);
-    console.log('📤 FormData keys:', Array.from(formData.keys()));
+    console.log(' Création job - URL:', `${api.defaults.baseURL}/migration/jobs/`);
+    console.log(' FormData keys:', Array.from(formData.keys()));
 
     return api.post('/migration/jobs/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).catch((error) => {
-      console.error('❌ Erreur API create:', {
+      console.error(' Erreur API create:', {
         url: error.config?.url,
         method: error.config?.method,
         status: error.response?.status,
@@ -404,18 +408,18 @@ export const migrationAPI = {
     });
   },
   preview: (id) => {
-    console.log('📊 Preview job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/preview/`);
+    console.log(' Preview job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/preview/`);
     return api.post(`/migration/jobs/${id}/preview/`, {}, {
       headers: { 'Content-Type': 'application/json' }
     });
   },
   configure: (id, config) => {
-    console.log('⚙️ Configure job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/configure/`);
-    console.log('⚙️ Config data:', config);
+    console.log(' Configure job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/configure/`);
+    console.log(' Config data:', config);
     return api.post(`/migration/jobs/${id}/configure/`, config, {
       headers: { 'Content-Type': 'application/json' }
     }).catch((error) => {
-      console.error('❌ Erreur API configure:', {
+      console.error(' Erreur API configure:', {
         url: error.config?.url,
         method: error.config?.method,
         status: error.response?.status,
@@ -427,7 +431,7 @@ export const migrationAPI = {
     });
   },
   start: (id) => {
-    console.log('🚀 Start job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/start/`);
+    console.log(' Start job - URL:', `${api.defaults.baseURL}/migration/jobs/${id}/start/`);
     return api.post(`/migration/jobs/${id}/start/`, {}, {
       headers: { 'Content-Type': 'application/json' }
     });
