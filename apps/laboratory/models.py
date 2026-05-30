@@ -1507,12 +1507,14 @@ class LabAuditLog(models.Model):
     TARGET_SUBCONTRACTOR_PRICE = 'subcontractor_price'
     TARGET_LAB_ORDER = 'lab_order'
     TARGET_INVOICE = 'invoice'
+    TARGET_PRESCRIBER = 'prescriber'
     TARGET_CHOICES = [
         (TARGET_LAB_TEST, _('Test de laboratoire')),
         (TARGET_SUBCONTRACTOR, _('Laboratoire sous-traitant')),
         (TARGET_SUBCONTRACTOR_PRICE, _('Tarif sous-traitance')),
         (TARGET_LAB_ORDER, _('Commande de laboratoire')),
         (TARGET_INVOICE, _('Facture')),
+        (TARGET_PRESCRIBER, _('Prescripteur')),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

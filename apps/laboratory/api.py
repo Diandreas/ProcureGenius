@@ -1157,9 +1157,9 @@ class LabTestPanelDetailView(generics.RetrieveUpdateDestroyAPIView):
 class PrescriberListCreateView(generics.ListCreateAPIView):
     """
     GET  /healthcare/laboratory/prescribers/  — List prescribers (all authenticated)
-    POST /healthcare/laboratory/prescribers/  — Create prescriber (admin only)
+    POST /healthcare/laboratory/prescribers/  — Create prescriber (admin/biologist)
     """
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrBiologist]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['first_name', 'last_name', 'clinic_name', 'specialty']
     ordering_fields = ['last_name', 'commission_rate', 'created_at']
@@ -1177,20 +1177,29 @@ class PrescriberListCreateView(generics.ListCreateAPIView):
         return PrescriberSerializer
 
     def perform_create(self, serializer):
+        set_current_user(self.request.user)
         serializer.save(organization=self.request.user.organization)
 
 
 class PrescriberDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET    /healthcare/laboratory/prescribers/<uuid>/  — all authenticated
-    PATCH  /healthcare/laboratory/prescribers/<uuid>/  — admin only
-    DELETE /healthcare/laboratory/prescribers/<uuid>/  — admin only
+    PATCH  /healthcare/laboratory/prescribers/<uuid>/  — admin/biologist
+    DELETE /healthcare/laboratory/prescribers/<uuid>/  — admin/biologist
     """
     serializer_class = PrescriberSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrBiologist]
 
     def get_queryset(self):
         return Prescriber.objects.filter(organization=self.request.user.organization)
+
+    def perform_update(self, serializer):
+        set_current_user(self.request.user)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        set_current_user(self.request.user)
+        instance.delete()
 
 
 # =============================================================================

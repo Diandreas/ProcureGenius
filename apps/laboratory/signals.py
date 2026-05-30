@@ -4,7 +4,7 @@ Creates invoices when lab results are verified
 """
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from .models import LabOrder, LabTest, SubcontractorLab, SubcontractorPrice
+from .models import LabOrder, LabTest, SubcontractorLab, SubcontractorPrice, Prescriber
 from apps.invoicing.models import Invoice
 from django.utils import timezone
 from datetime import timedelta
@@ -327,3 +327,68 @@ def invoice_audit_log(sender, instance, created, **kwargs):
                 )
     except Exception as e:
         logger.warning(f"LabAuditLog invoice_audit_log failed: {e}")
+
+
+# =============================================================================
+# Audit log signals — Prescriber
+# =============================================================================
+
+PRESCRIBER_AUDIT_FIELDS = ['first_name', 'last_name', 'specialty', 'clinic_name', 'commission_rate', 'is_active']
+
+
+@receiver(pre_save, sender=Prescriber)
+def prescriber_pre_save(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            instance._pre_save_snapshot = Prescriber.objects.get(pk=instance.pk)
+        except Prescriber.DoesNotExist:
+            instance._pre_save_snapshot = None
+    else:
+        instance._pre_save_snapshot = None
+
+
+@receiver(post_save, sender=Prescriber)
+def prescriber_post_save(sender, instance, created, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user()
+    try:
+        if created:
+            LabAuditLog.log(
+                user=user,
+                action=LabAuditLog.ACTION_CREATE,
+                target_type=LabAuditLog.TARGET_PRESCRIBER,
+                target_obj=instance,
+                changes={
+                    'nom': [None, instance.get_full_name() if hasattr(instance, 'get_full_name') else str(instance)],
+                    'specialite': [None, instance.specialty or ''],
+                    'commission': [None, str(instance.commission_rate or 0)],
+                },
+            )
+        else:
+            snapshot = getattr(instance, '_pre_save_snapshot', None)
+            changes = _diff(snapshot, instance, PRESCRIBER_AUDIT_FIELDS) if snapshot else {}
+            if changes:
+                LabAuditLog.log(
+                    user=user,
+                    action=LabAuditLog.ACTION_UPDATE,
+                    target_type=LabAuditLog.TARGET_PRESCRIBER,
+                    target_obj=instance,
+                    changes=changes,
+                )
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_save Prescriber failed: {e}")
+
+
+@receiver(post_delete, sender=Prescriber)
+def prescriber_post_delete(sender, instance, **kwargs):
+    from .models import LabAuditLog
+    user = get_current_user()
+    try:
+        LabAuditLog.log(
+            user=user,
+            action=LabAuditLog.ACTION_DELETE,
+            target_type=LabAuditLog.TARGET_PRESCRIBER,
+            target_obj=instance,
+        )
+    except Exception as e:
+        logger.warning(f"LabAuditLog post_delete Prescriber failed: {e}")
