@@ -16,7 +16,7 @@ import useCurrentUser from '../../../hooks/useCurrentUser';
 
 export default function PrescriberList() {
     const { enqueueSnackbar } = useSnackbar();
-    const { isAdmin } = useCurrentUser();
+    const { canManageLab } = useCurrentUser();
     const [prescribers, setPrescribers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -83,7 +83,7 @@ export default function PrescriberList() {
         <Box sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h5" fontWeight={700}>Prescripteurs</Typography>
-                {isAdmin && (
+                {canManageLab && (
                     <Button id="manual-btn-nouveau-prescripteur" variant="contained" startIcon={<AddIcon />} onClick={handleNew}>
                         Nouveau prescripteur
                     </Button>
@@ -122,13 +122,13 @@ export default function PrescriberList() {
                                         <TableCell><strong>Taux (%)</strong></TableCell>
                                         <TableCell><strong>Téléphone</strong></TableCell>
                                         <TableCell><strong>Statut</strong></TableCell>
-                                        {isAdmin && <TableCell align="right"><strong>Actions</strong></TableCell>}
+                                        {canManageLab && <TableCell align="right"><strong>Actions</strong></TableCell>}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {filtered.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={isAdmin ? 7 : 6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                            <TableCell colSpan={canManageLab ? 7 : 6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                                                 Aucun prescripteur trouvé
                                             </TableCell>
                                         </TableRow>
@@ -156,7 +156,7 @@ export default function PrescriberList() {
                                                         color={p.is_active ? 'success' : 'default'}
                                                     />
                                                 </TableCell>
-                                                {isAdmin && (
+                                                {canManageLab && (
                                                     <TableCell align="right">
                                                         <IconButton size="small" onClick={() => handleEdit(p)} title="Modifier">
                                                             <EditIcon fontSize="small" />

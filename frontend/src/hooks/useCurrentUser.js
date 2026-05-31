@@ -26,9 +26,11 @@ const useCurrentUser = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = ['admin', 'manager', 'owner'].includes(user?.role);
+    const isBiologist = user?.role === 'biologist';
+    const canManageLab = isAdmin || isBiologist;
 
-    return { user, loading, isAdmin };
+    return { user, loading, isAdmin, isBiologist, canManageLab };
 };
 
 export default useCurrentUser;
