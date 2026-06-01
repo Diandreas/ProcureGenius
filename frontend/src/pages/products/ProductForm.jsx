@@ -54,6 +54,7 @@ import {
     LockOpen,
     Warning,
     DeleteForever,
+    Science,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -113,6 +114,9 @@ function ProductForm() {
     const [activeStep, setActiveStep] = useState(0);
     const [savedProductId, setSavedProductId] = useState(id || null);
     const [savingStep1, setSavingStep1] = useState(false);
+
+    // Raw product data (pour linked_lab_tests, is_lab_consumable, etc.)
+    const [product, setProduct] = useState(null);
 
     // Batches (step 2)
     const [batches, setBatches] = useState([]);
@@ -183,6 +187,7 @@ function ProductForm() {
                 if (isEdit) {
                     const res = await productsAPI.get(id);
                     const p = res.data;
+                    setProduct(p);
                     setInitialValues(prev => ({
                         ...prev,
                         ...p,
@@ -863,6 +868,50 @@ function ProductForm() {
                                                 </TableBody>
                                             </Table>
                                         </TableContainer>
+                                    </Card>
+                                )}
+
+                                {/* Section Examens Laboratoire associés */}
+                                {product?.linked_lab_tests?.length > 0 && (
+                                    <Card sx={{ mt: 3, borderRadius: 3, border: '2px solid', borderColor: 'secondary.light' }}>
+                                        <CardContent>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                                <Science color="secondary" />
+                                                <Typography variant="h6" fontWeight={700} color="secondary.main">
+                                                    Examens de laboratoire utilisant ce consommable
+                                                </Typography>
+                                                <Chip label={product.linked_lab_tests.length} size="small" color="secondary" />
+                                            </Box>
+                                            <Table size="small">
+                                                <TableHead>
+                                                    <TableRow>
+                                                        <TableCell><strong>Code</strong></TableCell>
+                                                        <TableCell><strong>Examen</strong></TableCell>
+                                                        <TableCell><strong>Catégorie</strong></TableCell>
+                                                        <TableCell align="center"><strong>Prix (XAF)</strong></TableCell>
+                                                        <TableCell align="center"><strong>Nb réalisé</strong></TableCell>
+                                                    </TableRow>
+                                                </TableHead>
+                                                <TableBody>
+                                                    {product.linked_lab_tests.map(t => (
+                                                        <TableRow key={t.id} hover>
+                                                            <TableCell><Typography variant="caption" fontWeight={700}>{t.test_code}</Typography></TableCell>
+                                                            <TableCell><Typography variant="body2">{t.name}</Typography></TableCell>
+                                                            <TableCell><Chip label={t.category || '-'} size="small" variant="outlined" /></TableCell>
+                                                            <TableCell align="center">{t.price ? new Intl.NumberFormat('fr-FR').format(t.price) : '-'}</TableCell>
+                                                            <TableCell align="center">
+                                                                <Chip
+                                                                    label={t.times_performed ?? '—'}
+                                                                    size="small"
+                                                                    color={t.times_performed > 0 ? 'primary' : 'default'}
+                                                                    variant={t.times_performed > 0 ? 'filled' : 'outlined'}
+                                                                />
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </CardContent>
                                     </Card>
                                 )}
 
