@@ -245,14 +245,15 @@ const LabTestCatalog = () => {
                             <TableCell align="center">Statut</TableCell>
                             <TableCell>Délai</TableCell>
                             <TableCell>Consommable / Stock</TableCell>
+                            <TableCell align="center">Réalisé</TableCell>
                             <TableCell align="right">Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {loading ? (
-                            <TableRow><TableCell colSpan={10} align="center">Chargement...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={11} align="center">Chargement...</TableCell></TableRow>
                         ) : tests.length === 0 ? (
-                            <TableRow><TableCell colSpan={10} align="center">Aucun examen trouvé</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={11} align="center">Aucun examen trouvé</TableCell></TableRow>
                         ) : (
                             tests.map((test) => (
                                 <TableRow key={test.id} hover>
@@ -311,6 +312,15 @@ const LabTestCatalog = () => {
                                         ) : (
                                             <Typography variant="caption" color="text.disabled">—</Typography>
                                         )}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <Chip
+                                            label={test.times_performed ?? 0}
+                                            size="small"
+                                            color={test.times_performed > 0 ? 'primary' : 'default'}
+                                            variant={test.times_performed > 0 ? 'filled' : 'outlined'}
+                                            sx={{ fontSize: '0.7rem', minWidth: 32 }}
+                                        />
                                     </TableCell>
                                     <TableCell align="right">
                                         <IconButton size="small" onClick={() => handleConfigParams(test)} title="Configurer les paramètres" color="primary">

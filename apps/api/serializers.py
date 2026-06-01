@@ -135,8 +135,9 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     prev_product_id = serializers.SerializerMethodField()
     next_product_id = serializers.SerializerMethodField()
 
-    # Lab consumable flag
+    # Lab consumable flag + liste des examens liés
     is_lab_consumable = serializers.SerializerMethodField()
+    linked_lab_tests = serializers.SerializerMethodField()
 
     # Warehouse info
     warehouse_name = serializers.CharField(source='warehouse.name', read_only=True)
@@ -190,7 +191,8 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'last_sale_date', 'active_contracts_count',
             'created_at', 'updated_at',
             'prev_product_id', 'next_product_id',
-            'is_lab_consumable'
+            'is_lab_consumable',
+            'linked_lab_tests',
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
@@ -237,6 +239,19 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     def get_is_lab_consumable(self, obj):
         """True si ce produit est lié à au moins un test de laboratoire."""
         return obj.linked_lab_tests.exists()
+
+    def get_linked_lab_tests(self, obj):
+        """Liste des examens de labo qui utilisent ce produit comme consommable."""
+        return [
+            {
+                'id': str(t.id),
+                'name': t.name,
+                'test_code': t.test_code,
+                'category': t.category.name if t.category else None,
+                'price': str(t.price),
+            }
+            for t in obj.linked_lab_tests.select_related('category').filter(is_active=True)
+        ]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

@@ -255,6 +255,7 @@ class LabTestListSerializer(serializers.ModelSerializer):
     has_parameters = serializers.BooleanField(read_only=True)
     linked_product_name = serializers.CharField(source='linked_product.name', read_only=True, default=None)
     linked_product_stock = serializers.SerializerMethodField()
+    times_performed = serializers.SerializerMethodField()
 
     class Meta:
         model = LabTest
@@ -275,6 +276,7 @@ class LabTestListSerializer(serializers.ModelSerializer):
             'linked_product',
             'linked_product_name',
             'linked_product_stock',
+            'times_performed',
         ]
 
     def get_linked_product_stock(self, obj):
@@ -287,6 +289,10 @@ class LabTestListSerializer(serializers.ModelSerializer):
             .aggregate(total=Sum('quantity_remaining'))['total'] or 0
         )
         return max(p.stock_quantity or 0, batch_stock)
+
+    def get_times_performed(self, obj):
+        """Nombre de fois que cet examen a été réalisé (commandes non annulées)."""
+        return obj.order_items.exclude(lab_order__status='cancelled').count()
 
 
 class LabOrderItemSerializer(serializers.ModelSerializer):

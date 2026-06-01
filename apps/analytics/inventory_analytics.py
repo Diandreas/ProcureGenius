@@ -1130,7 +1130,12 @@ class MarginAnalyticsView(APIView):
             if not t:
                 continue
             tid = str(t.id)
-            pv  = float(item.panel_price or item.price or t.price or 0)
+            # panel_price != None → item du bilan (utiliser panel_price s'il est > 0, sinon 0 pour les items secondaires)
+            # item.price → snapshot du prix unitaire au moment de la commande (jamais t.price catalogue)
+            if item.panel_price is not None:
+                pv = float(item.panel_price)   # 0 pour items secondaires du bilan (correct)
+            else:
+                pv = float(item.price or 0)    # snapshot unitaire, jamais le catalogue
             pa  = float(t.operating_cost or 0)
             qty = 1
             if tid not in lab_by_test:

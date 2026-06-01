@@ -616,14 +616,25 @@ function Products() {
                 </Box>
               )}
 
-              {/* Lab consumable badge */}
+              {/* Lab consumable badge + liste des examens */}
               {product.is_lab_consumable && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Chip
-                    label="Consommable Labo"
-                    size="small"
-                    sx={{ bgcolor: '#7c3aed', color: 'white', fontSize: '0.65rem', height: 20, fontWeight: 700 }}
-                  />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip
+                      label="Consommable Labo"
+                      size="small"
+                      sx={{ bgcolor: '#7c3aed', color: 'white', fontSize: '0.65rem', height: 20, fontWeight: 700 }}
+                    />
+                  </Box>
+                  {product.linked_lab_tests && product.linked_lab_tests.length > 0 && (
+                    <Box sx={{ pl: 0.5 }}>
+                      {product.linked_lab_tests.map(t => (
+                        <Typography key={t.id} variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem', lineHeight: 1.4 }}>
+                          • {t.name}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
                 </Box>
               )}
             </Stack>
