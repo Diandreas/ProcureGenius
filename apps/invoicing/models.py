@@ -157,6 +157,11 @@ class Product(models.Model):
         verbose_name="Prix modifiable",
         help_text="Si activé, le prix peut être modifié lors de la création de facture"
     )
+    discount_exempt = models.BooleanField(
+        default=False,
+        verbose_name="Insensible aux réductions",
+        help_text="Si activé, aucune remise (coupon, remise globale) ne s'applique à ce service. Uniquement pour la Consultation médicale."
+    )
     
     # Stock (pour produits physiques)
     stock_quantity = models.IntegerField(default=0, verbose_name="Quantité en stock")
@@ -893,18 +898,21 @@ class Invoice(models.Model):
     def recalculate_totals(self):
         """Recalcule les totaux basés sur les items + remise globale."""
         from decimal import Decimal
-        items = self.items.all()
+        items = list(self.items.select_related('product').all())
         self.subtotal = sum(item.total_price for item in items)
 
-        # Calcul de la remise globale (en plus des remises item-level déjà déduites de total_price)
+        # Calcul de la remise globale — uniquement sur les items NON exemptés (discount_exempt=False)
+        # Les consultations (discount_exempt=True) gardent toujours leur prix plein
         if self.global_discount_value and self.global_discount_value > 0:
+            discountable_subtotal = sum(
+                item.total_price for item in items
+                if not (item.product and item.product.discount_exempt)
+            )
             if self.global_discount_type == 'percent':
-                # Cap à 100% pour éviter les valeurs négatives
                 pct = min(self.global_discount_value, Decimal('100'))
-                self.global_discount_amount = (self.subtotal * pct / Decimal('100')).quantize(Decimal('0.01'))
+                self.global_discount_amount = (discountable_subtotal * pct / Decimal('100')).quantize(Decimal('0.01'))
             else:
-                # Cap au sous-total pour éviter total négatif
-                self.global_discount_amount = min(self.global_discount_value, self.subtotal)
+                self.global_discount_amount = min(self.global_discount_value, discountable_subtotal)
         else:
             self.global_discount_amount = Decimal('0')
 
@@ -1291,8 +1299,13 @@ class InvoiceItem(models.Model):
         
         # Calcul avec remise (Priorité au montant fixe si défini, sinon pourcentage)
         base_total = self.quantity * self.unit_price
-        
-        if self.discount_amount > 0:
+
+        # Si le produit est insensible aux réductions, on force discount = 0
+        if self.product and getattr(self.product, 'discount_exempt', False):
+            actual_discount = Decimal('0')
+            self.discount_amount = Decimal('0')
+            self.discount_percent = Decimal('0')
+        elif self.discount_amount > 0:
             # Si un montant fixe est déjà défini (ex: depuis le labo), on l'utilise
             actual_discount = self.discount_amount
         else:

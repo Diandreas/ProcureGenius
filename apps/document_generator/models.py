@@ -321,7 +321,13 @@ class DiscountCoupon(models.Model):
                 f"Ce coupon nécessite un montant minimum de {int(self.min_amount):,} FCFA."
                 .replace(',', ' ')
             )
-        discount = self.calculate_discount(invoice.subtotal)
+        # La remise ne s'applique qu'aux items dont le produit n'est pas exempt
+        from decimal import Decimal
+        discountable = sum(
+            item.total_price for item in invoice.items.select_related('product').all()
+            if not (item.product and item.product.discount_exempt)
+        )
+        discount = self.calculate_discount(discountable)
         self.uses_count += 1
         if self.uses_count >= self.max_uses:
             self.status = 'used'

@@ -141,6 +141,7 @@ function ProductForm() {
         cost_price: '',
         operating_cost: '',
         price_editable: false,
+        discount_exempt: false,
         supplier_id: '',
         warehouse_id: '',
         low_stock_threshold: 5,
@@ -692,6 +693,19 @@ function ProductForm() {
                                                         <FormControlLabel
                                                             control={<Checkbox name="is_active" checked={values.is_active} onChange={handleChange} color="primary" />}
                                                             label="Produit actif et disponible"
+                                                        />
+                                                        <FormControlLabel
+                                                            control={<Checkbox name="discount_exempt" checked={!!values.discount_exempt} onChange={handleChange} color="warning" />}
+                                                            label={
+                                                                <Box>
+                                                                    <Typography variant="body2" fontWeight={600} color="warning.main">
+                                                                        Insensible aux réductions
+                                                                    </Typography>
+                                                                    <Typography variant="caption" color="text.secondary">
+                                                                        Aucun coupon ni remise globale ne s'applique à ce service (consultation médicale uniquement)
+                                                                    </Typography>
+                                                                </Box>
+                                                            }
                                                         />
                                                     </Stack>
                                                 </CardContent>
