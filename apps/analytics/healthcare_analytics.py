@@ -946,20 +946,25 @@ class EnhancedRevenueAnalyticsView(APIView):
                 # Catégorie inconnue → propharmacie comptoir
                 _add_activity('standard', item.total_price)
 
-        # Correction des remises au niveau facture : si la somme des items dépasse
-        # le total_amount réel des factures, on redistribue proportionnellement.
-        # Exemple : une remise globale de 3 450 FCFA appliquée à la facture entière
-        # n'apparaît pas dans item.total_price → les catégories gonflent sans la corriger.
+        # Correction des remises au niveau facture : si la somme des items discountables
+        # dépasse le montant réel payé, on redistribue proportionnellement.
+        # IMPORTANT : healthcare_consultation est discount_exempt → son montant ne change jamais.
+        # La remise ne s'applique qu'aux catégories discountables (pharmacie, soins, divers).
+        consult_revenue = activity_acc.get('healthcare_consultation', {}).get('revenue', 0.0)
         decomp_inv_total = float(
             invoices.filter(invoice_type__in=['healthcare_consultation', 'standard'])
             .aggregate(t=Sum('total_amount'))['t'] or 0
         )
-        decomp_items_total = sum(v['revenue'] for k, v in activity_acc.items()
-                                 if k != 'healthcare_laboratory')
-        if decomp_items_total > 0 and abs(decomp_items_total - decomp_inv_total) > 0.01:
-            scale = decomp_inv_total / decomp_items_total
+        # Sous-total discountable = total facture - part consultation (qui reste intacte)
+        discountable_inv_total = decomp_inv_total - consult_revenue
+        discountable_items_total = sum(
+            v['revenue'] for k, v in activity_acc.items()
+            if k not in ('healthcare_laboratory', 'healthcare_consultation')
+        )
+        if discountable_items_total > 0 and abs(discountable_items_total - discountable_inv_total) > 0.01:
+            scale = discountable_inv_total / discountable_items_total
             for k in activity_acc:
-                if k != 'healthcare_laboratory':
+                if k not in ('healthcare_laboratory', 'healthcare_consultation'):
                     activity_acc[k]['revenue'] *= scale
 
         # Sous-traitance labo : informationnel uniquement (INCLUSE dans CA Labo healthcare_laboratory)
