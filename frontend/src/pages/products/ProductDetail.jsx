@@ -50,6 +50,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LocalPharmacy as PharmacyIcon,
+  Science,
 } from '@mui/icons-material';
 import {
   Table,
@@ -1509,6 +1510,61 @@ function ProductDetail() {
               </Card>
             </Grid>
           </Grid>
+
+          {/* Section Examens Laboratoire associés */}
+          {product?.linked_lab_tests?.length > 0 && (
+            <Box sx={{ mt: 3, px: isMobile ? 2 : 0 }}>
+              <Card sx={{ borderRadius: 3, border: '2px solid', borderColor: 'secondary.light' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Science color="secondary" />
+                    <Typography variant="h6" fontWeight={700} color="secondary.main">
+                      Examens de laboratoire utilisant ce consommable
+                    </Typography>
+                    <Chip label={product.linked_lab_tests.length} size="small" color="secondary" />
+                  </Box>
+                  <Box sx={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #e0e0e0' }}>
+                          <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, fontSize: '0.8rem' }}>Code</th>
+                          <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, fontSize: '0.8rem' }}>Examen</th>
+                          <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 700, fontSize: '0.8rem' }}>Catégorie</th>
+                          <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700, fontSize: '0.8rem' }}>Prix (XAF)</th>
+                          <th style={{ padding: '8px 12px', textAlign: 'center', fontWeight: 700, fontSize: '0.8rem' }}>Réalisé</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {product.linked_lab_tests.map((t, idx) => (
+                          <tr key={t.id} style={{ borderBottom: '1px solid #f0f0f0', background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
+                            <td style={{ padding: '8px 12px', fontWeight: 600, fontSize: '0.8rem' }}>{t.test_code}</td>
+                            <td style={{ padding: '8px 12px', fontSize: '0.85rem' }}>{t.name}</td>
+                            <td style={{ padding: '8px 12px' }}>
+                              <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '2px 8px', borderRadius: 12, fontSize: '0.75rem' }}>
+                                {t.category || '-'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '8px 12px', textAlign: 'center', fontSize: '0.85rem', fontWeight: 600 }}>
+                              {t.price ? new Intl.NumberFormat('fr-FR').format(t.price) : '-'}
+                            </td>
+                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                              <span style={{
+                                background: t.times_performed > 0 ? '#1976d2' : '#e0e0e0',
+                                color: t.times_performed > 0 ? 'white' : '#666',
+                                padding: '2px 10px', borderRadius: 12, fontSize: '0.75rem', fontWeight: 600
+                              }}>
+                                {t.times_performed ?? 0}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          )}
         </Box>
       )}
 
