@@ -946,6 +946,22 @@ class EnhancedRevenueAnalyticsView(APIView):
                 # Catégorie inconnue → propharmacie comptoir
                 _add_activity('standard', item.total_price)
 
+        # Correction des remises au niveau facture : si la somme des items dépasse
+        # le total_amount réel des factures, on redistribue proportionnellement.
+        # Exemple : une remise globale de 3 450 FCFA appliquée à la facture entière
+        # n'apparaît pas dans item.total_price → les catégories gonflent sans la corriger.
+        decomp_inv_total = float(
+            invoices.filter(invoice_type__in=['healthcare_consultation', 'standard'])
+            .aggregate(t=Sum('total_amount'))['t'] or 0
+        )
+        decomp_items_total = sum(v['revenue'] for k, v in activity_acc.items()
+                                 if k != 'healthcare_laboratory')
+        if decomp_items_total > 0 and abs(decomp_items_total - decomp_inv_total) > 0.01:
+            scale = decomp_inv_total / decomp_items_total
+            for k in activity_acc:
+                if k != 'healthcare_laboratory':
+                    activity_acc[k]['revenue'] *= scale
+
         # Sous-traitance labo : informationnel uniquement (INCLUSE dans CA Labo healthcare_laboratory)
         # On ne l'ajoute PAS à activity_acc pour éviter le double comptage
         sub_qs = LabOrder.objects.filter(
