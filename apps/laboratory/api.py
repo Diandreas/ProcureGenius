@@ -1872,3 +1872,172 @@ class LabAuditLogListView(generics.ListAPIView):
             qs = qs.filter(timestamp__date__lte=date_to)
 
         return qs
+
+
+# =============================================================================
+# Exam Statistics — par examen labo
+# =============================================================================
+
+class LabExamStatsView(APIView):
+    """
+    GET /healthcare/laboratory/exam-stats/
+    Liste tous les examens avec : nb de fois réalisé, CA généré, dernière date,
+    premier rang de date, utilisateurs impliqués.
+    Filtres : ?category=<id>  ?date_from=YYYY-MM-DD  ?date_to=YYYY-MM-DD
+              ?search=<nom>   ?ordering=times_performed|-times_performed|revenue
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import LabTest, LabOrderItem
+        from django.db.models import Count, Sum, Min, Max, Q
+        from django.db.models.functions import TruncDate
+
+        org = request.user.organization
+        date_from = request.GET.get('date_from')
+        date_to   = request.GET.get('date_to')
+        search    = request.GET.get('search', '').strip()
+        category  = request.GET.get('category')
+        ordering  = request.GET.get('ordering', '-times_performed')
+
+        # Base items — hors commandes annulées
+        items_qs = LabOrderItem.objects.filter(
+            lab_order__organization=org,
+        ).exclude(lab_order__status='cancelled')
+
+        if date_from:
+            items_qs = items_qs.filter(lab_order__order_date__date__gte=date_from)
+        if date_to:
+            items_qs = items_qs.filter(lab_order__order_date__date__lte=date_to)
+
+        # Agréger par test
+        stats = (
+            items_qs
+            .values('lab_test')
+            .annotate(
+                times_performed=Count('id'),
+                revenue=Sum('price'),
+                first_date=Min('lab_order__order_date'),
+                last_date=Max('lab_order__order_date'),
+            )
+        )
+
+        # Map test_id → stats
+        stats_map = {str(s['lab_test']): s for s in stats}
+
+        # Tests actifs de l'organisation
+        tests_qs = LabTest.objects.filter(
+            organization=org, is_active=True
+        ).select_related('category')
+
+        if search:
+            tests_qs = tests_qs.filter(
+                Q(name__icontains=search) | Q(test_code__icontains=search)
+            )
+        if category:
+            tests_qs = tests_qs.filter(category_id=category)
+
+        results = []
+        for t in tests_qs:
+            s = stats_map.get(str(t.id), {})
+            results.append({
+                'id': str(t.id),
+                'test_code': t.test_code,
+                'name': t.name,
+                'category': t.category.name if t.category else None,
+                'category_id': str(t.category_id) if t.category_id else None,
+                'price': float(t.price or 0),
+                'times_performed': s.get('times_performed', 0),
+                'revenue': float(s.get('revenue') or 0),
+                'first_date': s['first_date'].strftime('%Y-%m-%d') if s.get('first_date') else None,
+                'last_date': s['last_date'].strftime('%Y-%m-%d') if s.get('last_date') else None,
+            })
+
+        # Tri
+        reverse = ordering.startswith('-')
+        key = ordering.lstrip('-')
+        valid_keys = ('times_performed', 'revenue', 'name', 'test_code', 'last_date', 'first_date')
+        if key in valid_keys:
+            results.sort(key=lambda x: (x[key] or 0) if key in ('times_performed', 'revenue') else (x[key] or ''), reverse=reverse)
+
+        return Response({'results': results, 'count': len(results)})
+
+
+class LabExamStatsDetailView(APIView):
+    """
+    GET /healthcare/laboratory/exam-stats/<test_id>/
+    Détail complet d'un examen : chaque passage (date, patient, prescripteur,
+    biologiste, statut, prix, résultat).
+    Filtres : ?date_from  ?date_to  ?page  ?page_size (défaut 50)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, test_id):
+        from .models import LabTest, LabOrderItem
+        from django.core.paginator import Paginator
+
+        org = request.user.organization
+        try:
+            test = LabTest.objects.get(id=test_id, organization=org)
+        except LabTest.DoesNotExist:
+            return Response({'error': 'Examen introuvable'}, status=404)
+
+        items_qs = LabOrderItem.objects.filter(
+            lab_test=test,
+            lab_order__organization=org,
+        ).exclude(lab_order__status='cancelled').select_related(
+            'lab_order__patient',
+            'lab_order__ordered_by',
+            'lab_order__prescriber',
+            'lab_order__results_verified_by',
+            'lab_order__subcontractor',
+        ).order_by('-lab_order__order_date')
+
+        date_from = request.GET.get('date_from')
+        date_to   = request.GET.get('date_to')
+        if date_from:
+            items_qs = items_qs.filter(lab_order__order_date__date__gte=date_from)
+        if date_to:
+            items_qs = items_qs.filter(lab_order__order_date__date__lte=date_to)
+
+        page_size = min(int(request.GET.get('page_size', 50)), 200)
+        page_num  = int(request.GET.get('page', 1))
+        paginator = Paginator(items_qs, page_size)
+        page_obj  = paginator.get_page(page_num)
+
+        data = []
+        for item in page_obj:
+            order = item.lab_order
+            patient = order.patient
+            data.append({
+                'item_id': str(item.id),
+                'order_id': str(order.id),
+                'order_number': order.order_number,
+                'date': order.order_date.strftime('%Y-%m-%d'),
+                'heure': order.order_date.strftime('%H:%M'),
+                'patient': patient.name if patient else '-',
+                'patient_id': str(patient.id) if patient else None,
+                'ordonne_par': order.ordered_by.get_full_name() if order.ordered_by else '-',
+                'prescripteur': order.prescriber.full_name if order.prescriber else None,
+                'biologiste': order.results_verified_by.get_full_name() if order.results_verified_by else None,
+                'sous_traitant': order.subcontractor.name if order.subcontractor else None,
+                'statut': order.status,
+                'prix': float(item.price or 0),
+                'resultat': item.result_value,
+                'anomalie': item.abnormality_type,
+                'valide': item.result_verified_at.strftime('%Y-%m-%d %H:%M') if item.result_verified_at else None,
+            })
+
+        return Response({
+            'test': {
+                'id': str(test.id),
+                'test_code': test.test_code,
+                'name': test.name,
+                'category': test.category.name if test.category else None,
+                'price': float(test.price or 0),
+            },
+            'results': data,
+            'count': paginator.count,
+            'pages': paginator.num_pages,
+            'page': page_num,
+        })

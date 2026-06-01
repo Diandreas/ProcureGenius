@@ -133,6 +133,7 @@ function MainLayout() {
     { text: 'Prescripteurs', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/prescribers', moduleId: 'laboratory', isCore: false },
     { text: 'Sous-traitants', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/subcontractors', moduleId: 'laboratory', isCore: false },
     { text: 'Réactifs Ouverts', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/opened-reagents', moduleId: 'laboratory', isCore: false },
+    { text: 'Statistiques Examens', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/exam-stats', moduleId: 'laboratory', isCore: false },
     { text: 'Journal d\'audit', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/audit-log', moduleId: 'laboratory', isCore: false },
     { text: 'Pharmacie Stock', iconSrc: '/icon/product.png', path: '/products', moduleId: 'pharmacy', isCore: false },
     { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },

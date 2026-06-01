@@ -79,4 +79,7 @@ urlpatterns = [
     # Audit Log
     path('audit-logs/', api.LabAuditLogListView.as_view(), name='audit-log-list'),
 
+    # Exam Statistics
+    path('exam-stats/', api.LabExamStatsView.as_view(), name='exam-stats'),
+    path('exam-stats/<uuid:test_id>/', api.LabExamStatsDetailView.as_view(), name='exam-stats-detail'),
 ]
