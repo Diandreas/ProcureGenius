@@ -436,7 +436,11 @@
                             <div class="card-label">{% trans "Terms" %}</div>
                             <div class="card-text">
                                 <p>{% trans "Payment upon receipt" %}</p>
+                                {% if discount_amount > 0 %}
+                                <p>{% trans "Discount applied" %}{% if discount_type == "percent" %} : {{ discount_value|floatformat:"-2" }}%{% else %} : {{ discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}{% endif %}</p>
+                                {% else %}
                                 <p>{% trans "No discount" %}</p>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

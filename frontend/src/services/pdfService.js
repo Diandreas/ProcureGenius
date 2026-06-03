@@ -116,6 +116,7 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
 
         <div class="totals">
           <div class="total-row">Sous-total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(invoiceData.subtotal || 0)}</div>
+          ${(invoiceData.discount_amount || 0) > 0 ? `<div class="total-row">Remise${invoiceData.discount_type === 'percent' ? ` (${invoiceData.discount_value}%)` : ''}: −${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(invoiceData.discount_amount)}</div>` : ''}
           ${invoiceData.tax_amount > 0 ? `<div class="total-row">Taxes: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(invoiceData.tax_amount)}</div>` : ''}
           <div class="total-row grand-total">Total: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: organizationCurrency }).format(invoiceData.total_amount || 0)}</div>
         </div>
