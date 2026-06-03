@@ -87,9 +87,11 @@ const NotificationsMenuItem = ({ handleMenuClose }) => {
 };
 
 const pageVariants = {
-  initial: { opacity: 0, y: 10 },
-  enter:   { opacity: 1, y: 0, transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] } },
-  exit:    { opacity: 0, y: -6, transition: { duration: 0.15, ease: [0.4, 0, 1, 1] } },
+  // Fondu pur, sans translation verticale : évite le « saut » des éléments
+  // qui donnait une impression de scintillement au chargement des pages.
+  initial: { opacity: 0 },
+  enter:   { opacity: 1, transition: { duration: 0.18, ease: 'easeOut' } },
+  exit:    { opacity: 0, transition: { duration: 0.1, ease: 'easeIn' } },
 };
 
 function PageTransition({ locationKey, children }) {

@@ -8,7 +8,9 @@
     "sent": "Sent",
     "paid": "Paid",
     "overdue": "Overdue",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "quote": "Quote",
+    "pending": "Pending"
   },
   "filters": {
     "all": "All",
@@ -190,5 +192,23 @@
     "modern": "Modern",
     "minimal": "Minimal",
     "professional": "Professional"
+  },
+  "paymentMethods": {
+    "none": "— Not specified —",
+    "cash": "Cash",
+    "card": "Card",
+    "transfer": "Bank transfer",
+    "cheque": "Cheque",
+    "interac": "Interac"
+  },
+  "discount": {
+    "title": "Discount",
+    "subtitle": "Reduction applied to the subtotal (before tax)",
+    "type": "Discount type",
+    "percent": "Percentage (%)",
+    "amount": "Fixed amount",
+    "valuePercent": "Discount (%)",
+    "valueAmount": "Discount (amount)",
+    "applied": "Discount applied"
   }
 }

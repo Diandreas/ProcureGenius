@@ -45,6 +45,7 @@ import {
   Receipt,
   Send,
   Description,
+  Close,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -520,25 +521,25 @@ function InvoiceForm() {
             {isEdit ? t('invoices:editInvoice') : t('invoices:newInvoice')}
           </Typography>
         </Stack>
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
+        {/* Sur mobile : actions compactes en icônes pour libérer la barre */}
+        <Stack direction="row" spacing={1} alignItems="center">
+          <IconButton
             onClick={() => navigate('/invoices')}
             size="small"
-            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+            aria-label={t('invoices:buttons.cancel')}
+            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
           >
-            {t('invoices:buttons.cancel')}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Save />}
+            <Close fontSize="small" />
+          </IconButton>
+          <IconButton
             onClick={handleSubmit}
             disabled={loading}
             size="small"
-            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+            aria-label={t('invoices:buttons.save')}
+            sx={{ bgcolor: 'primary.main', color: '#fff', borderRadius: 2, '&:hover': { bgcolor: 'primary.dark' }, '&.Mui-disabled': { bgcolor: 'action.disabledBackground' } }}
           >
-            {loading ? t('invoices:labels.savingLabel') : t('invoices:buttons.save')}
-          </Button>
+            {loading ? <CircularProgress size={18} color="inherit" /> : <Save fontSize="small" />}
+          </IconButton>
         </Stack>
       </Box>
       <Box sx={{ px: isMobile ? 2 : 0 }}>
@@ -755,39 +756,45 @@ function InvoiceForm() {
                   size="small"
                   sx={{ mt: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
-                {/* Remise globale (mobile) */}
-                <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
-                  <FormControl size="small" sx={{ minWidth: 110 }}>
-                    <InputLabel>Remise</InputLabel>
-                    <Select
-                      value={formData.discount_type}
-                      label="Remise"
-                      onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      <MenuItem value="percent">%</MenuItem>
-                      <MenuItem value="amount">Montant</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    fullWidth
-                    label={formData.discount_type === 'percent' ? 'Remise (%)' : 'Remise (montant)'}
-                    type="number"
-                    value={formData.discount_value}
-                    onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
-                    inputProps={{ min: 0, step: 0.01 }}
-                    size="small"
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                  />
-                </Box>
-                {calculateDiscount() > 0 && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, px: 0.5 }}>
-                    <Typography variant="body2" color="error.main">Remise appliquée</Typography>
-                    <Typography variant="body2" color="error.main" fontWeight={600}>
-                      −{formatCurrency(calculateDiscount())}
-                    </Typography>
+                {/* Encart Remise dédié (mobile) */}
+                <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, border: '1px dashed', borderColor: 'divider', bgcolor: 'action.hover' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+                    <AttachMoney sx={{ fontSize: 18 }} color="action" />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{t('invoices:discount.title')}</Typography>
                   </Box>
-                )}
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <FormControl size="small" sx={{ minWidth: 104 }}>
+                      <InputLabel>{t('invoices:discount.type')}</InputLabel>
+                      <Select
+                        value={formData.discount_type}
+                        label={t('invoices:discount.type')}
+                        onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="percent">%</MenuItem>
+                        <MenuItem value="amount">{t('invoices:discount.amount')}</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <TextField
+                      fullWidth
+                      label={formData.discount_type === 'percent' ? t('invoices:discount.valuePercent') : t('invoices:discount.valueAmount')}
+                      type="number"
+                      value={formData.discount_value}
+                      onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
+                      inputProps={{ min: 0, step: 0.01 }}
+                      size="small"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                  </Box>
+                  {calculateDiscount() > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, px: 0.5 }}>
+                      <Typography variant="body2" color="error.main">{t('invoices:discount.applied')}</Typography>
+                      <Typography variant="body2" color="error.main" fontWeight={600}>
+                        −{formatCurrency(calculateDiscount())}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
               </CardContent>
             </Card>
 
@@ -806,29 +813,29 @@ function InvoiceForm() {
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                       sx={{ borderRadius: 2 }}
                     >
-                      <MenuItem value="quote">Devis</MenuItem>
+                      <MenuItem value="quote">{t('invoices:status.quote')}</MenuItem>
                       <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
                       <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
-                      <MenuItem value="pending">En attente</MenuItem>
+                      <MenuItem value="pending">{t('invoices:status.pending')}</MenuItem>
                       <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
                       <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
                     </Select>
                   </FormControl>
                   {formData.status === 'paid' && (
                   <FormControl fullWidth size="small">
-                    <InputLabel>Méthode de paiement</InputLabel>
+                    <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
                     <Select
                       value={formData.payment_method || ''}
-                      label="Méthode de paiement"
+                      label={t('invoices:labels.paymentMethod')}
                       onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                       sx={{ borderRadius: 2 }}
                     >
-                      <MenuItem value="">— Non spécifiée —</MenuItem>
-                      <MenuItem value="cash">Comptant</MenuItem>
-                      <MenuItem value="card">Carte</MenuItem>
-                      <MenuItem value="transfer">Virement</MenuItem>
-                      <MenuItem value="cheque">Chèque</MenuItem>
-                      <MenuItem value="interac">Interac</MenuItem>
+                      <MenuItem value="">{t('invoices:paymentMethods.none')}</MenuItem>
+                      <MenuItem value="cash">{t('invoices:paymentMethods.cash')}</MenuItem>
+                      <MenuItem value="card">{t('invoices:paymentMethods.card')}</MenuItem>
+                      <MenuItem value="transfer">{t('invoices:paymentMethods.transfer')}</MenuItem>
+                      <MenuItem value="cheque">{t('invoices:paymentMethods.cheque')}</MenuItem>
+                      <MenuItem value="interac">{t('invoices:paymentMethods.interac')}</MenuItem>
                     </Select>
                   </FormControl>
                   )}
@@ -1029,44 +1036,53 @@ function InvoiceForm() {
                     </Grid>
                   </Grid>
 
-                  {/* Remise globale (desktop) */}
-                  <Grid container spacing={2} sx={{ mt: 0.5, alignItems: 'center' }}>
-                    <Grid item xs={12} sm={3}>
-                      <FormControl fullWidth>
-                        <InputLabel>Type de remise</InputLabel>
-                        <Select
-                          value={formData.discount_type}
-                          label="Type de remise"
-                          onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
-                          sx={{ borderRadius: 2 }}
-                        >
-                          <MenuItem value="percent">Pourcentage (%)</MenuItem>
-                          <MenuItem value="amount">Montant fixe</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                      <TextField
-                        fullWidth
-                        label={formData.discount_type === 'percent' ? 'Remise (%)' : 'Remise (montant)'}
-                        type="number"
-                        value={formData.discount_value}
-                        onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
-                        inputProps={{ min: 0, step: 0.01 }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
-                    </Grid>
-                    {calculateDiscount() > 0 && (
-                      <Grid item xs={12} sm={6}>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 1 }}>
-                          <Typography variant="body2" color="text.secondary">Remise appliquée :</Typography>
-                          <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>
-                            −{formatCurrency(calculateDiscount())}
-                          </Typography>
-                        </Box>
+                  {/* Encart Remise dédié (desktop) */}
+                  <Box sx={{ mt: 2, p: 2, borderRadius: 2, border: '1px dashed', borderColor: 'divider', bgcolor: 'action.hover' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <AttachMoney fontSize="small" color="action" />
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{t('invoices:discount.title')}</Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+                        — {t('invoices:discount.subtitle')}
+                      </Typography>
+                    </Box>
+                    <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+                      <Grid item xs={12} sm={3}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>{t('invoices:discount.type')}</InputLabel>
+                          <Select
+                            value={formData.discount_type}
+                            label={t('invoices:discount.type')}
+                            onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
+                            sx={{ borderRadius: 2 }}
+                          >
+                            <MenuItem value="percent">{t('invoices:discount.percent')}</MenuItem>
+                            <MenuItem value="amount">{t('invoices:discount.amount')}</MenuItem>
+                          </Select>
+                        </FormControl>
                       </Grid>
-                    )}
-                  </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <TextField
+                          fullWidth size="small"
+                          label={formData.discount_type === 'percent' ? t('invoices:discount.valuePercent') : t('invoices:discount.valueAmount')}
+                          type="number"
+                          value={formData.discount_value}
+                          onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
+                          inputProps={{ min: 0, step: 0.01 }}
+                          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                        />
+                      </Grid>
+                      {calculateDiscount() > 0 && (
+                        <Grid item xs={12} sm={6}>
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 1 }}>
+                            <Typography variant="body2" color="text.secondary">{t('invoices:discount.applied')} :</Typography>
+                            <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>
+                              −{formatCurrency(calculateDiscount())}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      )}
+                    </Grid>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>

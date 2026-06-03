@@ -17,7 +17,10 @@ import {
   Checkbox,
   InputLabel,
   Select,
+  Menu,
   MenuItem,
+  ListItemIcon,
+  ListItemText,
   Grid,
   Chip,
   Avatar,
@@ -57,6 +60,7 @@ import {
   Edit,
   Delete,
   LocalShipping,
+  MoreVert,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -90,6 +94,81 @@ const TYPE_CONFIG = {
     bgColor: 'rgba(156, 39, 176, 0.1)'
   },
 };
+
+// Actions du header de la liste produits.
+// Desktop : boutons complets. Mobile : un menu overflow (⋮) regroupe
+// « Marges & bénéfices » et « Restockage » pour ne pas saturer le top nav,
+// et « Nouveau produit » devient un bouton icône.
+function ProductsHeaderActions() {
+  const { t } = useTranslation(['products', 'common']);
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  if (isMobile) {
+    return (
+      <Box display="flex" gap={0.5} alignItems="center">
+        <IconButton
+          color="primary"
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+          sx={{ border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`, borderRadius: 2 }}
+          aria-label={t('common:more', 'Plus')}
+        >
+          <MoreVert />
+        </IconButton>
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+          <MenuItem onClick={() => { setAnchorEl(null); navigate('/products/margins'); }}>
+            <ListItemIcon><TrendingUp fontSize="small" color="primary" /></ListItemIcon>
+            <ListItemText>{t('products:margins', 'Marges & bénéfices')}</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => { setAnchorEl(null); navigate('/products/restock'); }}>
+            <ListItemIcon><LocalShipping fontSize="small" color="primary" /></ListItemIcon>
+            <ListItemText>{t('products:restock.cta', 'Restockage')}</ListItemText>
+          </MenuItem>
+        </Menu>
+        <IconButton
+          color="primary"
+          onClick={() => navigate('/products/new')}
+          sx={{
+            bgcolor: 'primary.main', color: '#fff', borderRadius: 2,
+            boxShadow: `0 6px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
+            '&:hover': { bgcolor: 'primary.dark' },
+          }}
+          aria-label={t('products:newProduct', 'Nouveau produit')}
+        >
+          <Add />
+        </IconButton>
+      </Box>
+    );
+  }
+
+  return (
+    <Box display="flex" gap={1}>
+      <Button
+        variant="outlined" color="primary" startIcon={<TrendingUp />}
+        onClick={() => navigate('/products/margins')}
+        sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 2.5 }}
+      >
+        {t('products:margins', 'Marges & bénéfices')}
+      </Button>
+      <Button
+        variant="outlined" color="primary" startIcon={<LocalShipping />}
+        onClick={() => navigate('/products/restock')}
+        sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 2.5 }}
+      >
+        {t('products:restock.cta', 'Restockage')}
+      </Button>
+      <Button
+        variant="contained" color="primary" startIcon={<Inventory />}
+        onClick={() => navigate('/products/new')}
+        sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 3, boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}` }}
+      >
+        {t('products:newProduct', 'Nouveau produit')}
+      </Button>
+    </Box>
+  );
+}
 
 function Products() {
   const { t } = useTranslation(['products', 'common']);
@@ -183,49 +262,11 @@ function Products() {
   useEffect(() => {
     setPageHeader({
       title: t('products:title', 'Produits'),
-      // Pas de bouton mobile unique : on laisse le groupe d'actions (responsive)
-      // s'afficher aussi sur mobile, pour garder l'accès aux Marges & bénéfices.
-      // Actions (desktop + mobile)
-      actions: (
-        <Box display="flex" gap={1}>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<TrendingUp />}
-            onClick={() => navigate('/products/margins')}
-            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: { xs: 1.5, sm: 2.5 } }}
-          >
-            {t('products:margins', 'Marges & bénéfices')}
-          </Button>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<LocalShipping />}
-            onClick={() => navigate('/products/restock')}
-            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: { xs: 1.5, sm: 2.5 }, display: { xs: 'none', sm: 'inline-flex' } }}
-          >
-            {t('products:restock.cta', 'Restockage')}
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Inventory />}
-            onClick={() => navigate('/products/new')}
-            sx={{
-              borderRadius: 2.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              px: { xs: 2, sm: 3 },
-              boxShadow: `0 8px 16px ${alpha(theme.palette.primary.main, 0.3)}`
-            }}
-          >
-            {t('products:newProduct', 'Nouveau produit')}
-          </Button>
-        </Box>
-      )
+      // Actions responsives : menu overflow sur mobile (cf. ProductsHeaderActions)
+      actions: <ProductsHeaderActions />,
     });
     return () => setPageHeader({ title: '', actions: null });
-  }, [t, navigate, theme.palette.primary.main, setPageHeader]);
+  }, [t, setPageHeader]);
 
   // Enregistrer la fonction de rapport dans la top nav bar
   useEffect(() => {

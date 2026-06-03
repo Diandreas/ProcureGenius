@@ -109,34 +109,13 @@ function ProductDetail() {
   // Update Global Header
   useEffect(() => {
     if (product) {
+      // Sur mobile, les actions (PDF / Modifier / Supprimer) sont déjà
+      // présentes dans le corps de la page : on ne les duplique plus dans le
+      // top nav, on n'y garde que le titre.
       setPageHeader({
         title: isMobile ? product.name : '',
         showTitle: isMobile,
-        actions: isMobile ? (
-          <Stack direction="row" spacing={0.5}>
-            <IconButton
-              onClick={() => setPdfDialogOpen(true)}
-              size="small"
-              sx={{ color: 'success.main' }}
-            >
-              <PictureAsPdf fontSize="small" />
-            </IconButton>
-            <IconButton
-              onClick={() => navigate(`/products/${id}/edit`)}
-              size="small"
-              sx={{ color: 'primary.main' }}
-            >
-              <Edit fontSize="small" />
-            </IconButton>
-            <IconButton
-              onClick={handleDelete}
-              size="small"
-              sx={{ color: 'error.main' }}
-            >
-              <Delete fontSize="small" />
-            </IconButton>
-          </Stack>
-        ) : null
+        actions: null,
       });
     }
     
@@ -427,13 +406,28 @@ function ProductDetail() {
                               p: 1,
                               color: 'primary.main',
                               bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
-                              boxShadow: theme => theme.palette.mode === 'dark' 
+                              boxShadow: theme => theme.palette.mode === 'dark'
                                 ? '4px 4px 8px rgba(0,0,0,0.4), -2px -2px 8px rgba(255,255,255,0.05)'
                                 : '4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.8)',
                               borderRadius: 2,
                             }}
                           >
                             <Edit sx={{ fontSize: 20 }} />
+                          </IconButton>
+                          <IconButton
+                            onClick={handleDelete}
+                            size="small"
+                            sx={{
+                              p: 1,
+                              color: 'error.main',
+                              bgcolor: theme => alpha(theme.palette.error.main, 0.08),
+                              boxShadow: theme => theme.palette.mode === 'dark'
+                                ? '4px 4px 8px rgba(0,0,0,0.4), -2px -2px 8px rgba(255,255,255,0.05)'
+                                : '4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.8)',
+                              borderRadius: 2,
+                            }}
+                          >
+                            <Delete sx={{ fontSize: 20 }} />
                           </IconButton>
                         </Stack>
                       )}

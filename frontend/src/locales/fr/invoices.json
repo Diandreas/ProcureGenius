@@ -8,7 +8,9 @@
     "sent": "Envoyée",
     "paid": "Payée",
     "overdue": "En retard",
-    "cancelled": "Annulée"
+    "cancelled": "Annulée",
+    "quote": "Devis",
+    "pending": "En attente"
   },
   "filters": {
     "all": "Tous",
@@ -203,5 +205,23 @@
     "modern": "Moderne",
     "minimal": "Minimaliste",
     "professional": "Professionnel"
+  },
+  "paymentMethods": {
+    "none": "— Non spécifiée —",
+    "cash": "Comptant",
+    "card": "Carte",
+    "transfer": "Virement",
+    "cheque": "Chèque",
+    "interac": "Interac"
+  },
+  "discount": {
+    "title": "Remise",
+    "subtitle": "Réduction appliquée sur le sous-total (avant taxes)",
+    "type": "Type de remise",
+    "percent": "Pourcentage (%)",
+    "amount": "Montant fixe",
+    "valuePercent": "Remise (%)",
+    "valueAmount": "Remise (montant)",
+    "applied": "Remise appliquée"
   }
 }
