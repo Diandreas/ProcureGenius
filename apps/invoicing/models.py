@@ -454,6 +454,26 @@ class Invoice(models.Model):
     subtotal = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Sous-total"))
     tax_amount = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name=_("Montant des taxes"))
     total_amount = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Montant total"))
+
+    # Remise globale appliquée sur l'ensemble de la facture (en plus des
+    # remises éventuelles par ligne). Peut être un pourcentage du sous-total
+    # ou un montant fixe.
+    DISCOUNT_TYPE_CHOICES = [
+        ('percent', _('Pourcentage (%)')),
+        ('amount', _('Montant fixe')),
+    ]
+    discount_type = models.CharField(
+        max_length=10,
+        choices=DISCOUNT_TYPE_CHOICES,
+        default='percent',
+        verbose_name=_("Type de remise"),
+    )
+    discount_value = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Valeur de la remise"),
+    )
     
     # Relations et informations supplémentaires
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices', verbose_name=_("Créé par"))
@@ -570,11 +590,35 @@ class Invoice(models.Model):
             if self.due_date < self.created_at.date():
                 raise ValidationError("La date d'échéance ne peut pas être antérieure à la date de création.")
     
+    @property
+    def discount_amount(self):
+        """Montant de la remise globale, calculé à partir du sous-total.
+
+        - type 'percent' : pourcentage du sous-total
+        - type 'amount'  : montant fixe (plafonné au sous-total)
+        """
+        from decimal import Decimal
+        subtotal = self.subtotal or Decimal('0')
+        value = self.discount_value or Decimal('0')
+        if value <= 0 or subtotal <= 0:
+            return Decimal('0')
+        if self.discount_type == 'percent':
+            amount = subtotal * (value / Decimal('100'))
+        else:
+            amount = value
+        # Une remise ne peut pas dépasser le sous-total.
+        return min(amount, subtotal)
+
     def recalculate_totals(self):
-        """Recalcule les totaux basés sur les items"""
+        """Recalcule les totaux basés sur les items et la remise globale.
+
+        Le sous-total reflète les lignes (remises par ligne incluses). La remise
+        globale réduit ensuite la base, puis les taxes (fournies par l'appelant,
+        calculées sur la base après remise) sont ajoutées.
+        """
         items = self.items.all()
         self.subtotal = sum(item.total_price for item in items)
-        self.total_amount = self.subtotal + self.tax_amount
+        self.total_amount = self.subtotal - self.discount_amount + self.tax_amount
         self.save(update_fields=['subtotal', 'total_amount'])
 
     def generate_qr_code(self):

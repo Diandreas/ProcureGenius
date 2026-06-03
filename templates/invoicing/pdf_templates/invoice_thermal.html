@@ -229,6 +229,12 @@
             <span>Sous-total:</span>
             <span>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>
         </div>
+        {% if discount_amount > 0 %}
+        <div class="total-line">
+            <span>Remise{% if discount_type == "percent" %} ({{ discount_value|floatformat:"-2" }}%){% endif %}:</span>
+            <span>−{{ discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>
+        </div>
+        {% endif %}
         {% if tax_amount > 0 %}
         <div class="total-line">
             <span>Taxes:</span>

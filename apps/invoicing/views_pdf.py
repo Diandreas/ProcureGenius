@@ -160,6 +160,9 @@ else:
             context['subtotal'] = getattr(invoice, 'subtotal', 0) or 0
             context['tax_amount'] = getattr(invoice, 'tax_amount', 0) or 0
             context['total_amount'] = getattr(invoice, 'total_amount', 0) or 0
+            context['discount_amount'] = getattr(invoice, 'discount_amount', 0) or 0
+            context['discount_type'] = getattr(invoice, 'discount_type', 'percent')
+            context['discount_value'] = getattr(invoice, 'discount_value', 0) or 0
 
             # Ajouter les dates
             context['issue_date'] = getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)

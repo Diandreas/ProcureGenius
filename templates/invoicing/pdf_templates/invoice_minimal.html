@@ -414,6 +414,12 @@
                     <td>{% trans "Subtotal" %}</td>
                     <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
                 </tr>
+                {% if discount_amount > 0 %}
+                <tr>
+                    <td>{% trans "Discount" %}{% if discount_type == "percent" %} ({{ discount_value|floatformat:"-2" }}%){% endif %}</td>
+                    <td>−{{ discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                </tr>
+                {% endif %}
                 {% if tax_amount > 0 %}
                 <tr>
                     <td>{% trans "Taxes" %}</td>

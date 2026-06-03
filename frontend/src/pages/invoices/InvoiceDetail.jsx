@@ -850,6 +850,16 @@ Cordialement`
                     {formatCurrency(invoice.subtotal || 0)}
                   </Typography>
                 </Box>
+                {(invoice.discount_amount || 0) > 0 && (
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" color="error.main" sx={{ fontSize: '0.72rem' }}>
+                      Remise{invoice.discount_type === 'percent' ? ` (${invoice.discount_value}%)` : ''}
+                    </Typography>
+                    <Typography variant="body2" color="error.main" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                      −{formatCurrency(invoice.discount_amount || 0)}
+                    </Typography>
+                  </Box>
+                )}
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
                     {t('invoices:labels.taxes')}
@@ -1250,6 +1260,16 @@ Cordialement`
                     </Box>
                   </Grid>
                 </Grid>
+                {(invoice.discount_amount || 0) > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 1.5, mt: 2, pr: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Remise{invoice.discount_type === 'percent' ? ` (${invoice.discount_value}%)` : ' (montant fixe)'} :
+                    </Typography>
+                    <Typography variant="h6" color="error.main" sx={{ fontWeight: 700 }}>
+                      −{formatCurrency(invoice.discount_amount || 0)}
+                    </Typography>
+                  </Box>
+                )}
               </CardContent>
             </Card>
           {/* Payment Ledger - Desktop */}

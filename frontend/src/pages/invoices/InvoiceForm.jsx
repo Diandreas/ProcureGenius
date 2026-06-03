@@ -81,6 +81,8 @@ function InvoiceForm() {
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
     tax_rate: 20,
+    discount_type: 'percent',
+    discount_value: 0,
     status: 'paid',
     payment_method: '',
   });
@@ -179,6 +181,8 @@ function InvoiceForm() {
         issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
         due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
         tax_rate: invoice.tax_rate || 20,
+        discount_type: invoice.discount_type || 'percent',
+        discount_value: invoice.discount_value || 0,
         status: invoice.status || 'paid',
         payment_method: invoice.payment_method || '',
       });
@@ -196,17 +200,27 @@ function InvoiceForm() {
     return isNaN(subtotal) ? 0 : subtotal;
   };
 
+  // Remise globale : pourcentage du sous-total ou montant fixe (plafonné au sous-total)
+  const calculateDiscount = () => {
+    const subtotal = calculateSubtotal();
+    const value = parseFloat(formData.discount_value) || 0;
+    if (value <= 0 || subtotal <= 0) return 0;
+    const discount = formData.discount_type === 'percent'
+      ? (subtotal * value) / 100
+      : value;
+    return Math.min(discount, subtotal);
+  };
+
   const calculateTaxAmount = () => {
     const taxRate = formData.tax_rate || 0;
-    const subtotal = calculateSubtotal();
-    const taxAmount = (subtotal * taxRate) / 100;
+    // La taxe s'applique sur la base après remise
+    const base = calculateSubtotal() - calculateDiscount();
+    const taxAmount = (base * taxRate) / 100;
     return isNaN(taxAmount) ? 0 : taxAmount;
   };
 
   const calculateTotal = () => {
-    const subtotal = calculateSubtotal();
-    const taxAmount = calculateTaxAmount();
-    const total = subtotal + taxAmount;
+    const total = calculateSubtotal() - calculateDiscount() + calculateTaxAmount();
     return isNaN(total) ? 0 : total;
   };
 
@@ -321,7 +335,9 @@ function InvoiceForm() {
         })),
         subtotal: subtotal || 0,
         tax_amount: taxAmount || 0,
-        total_amount: totalAmount || 0
+        total_amount: totalAmount || 0,
+        discount_type: formData.discount_type || 'percent',
+        discount_value: parseFloat(formData.discount_value) || 0
       };
 
       if (isEdit) {
@@ -739,6 +755,39 @@ function InvoiceForm() {
                   size="small"
                   sx={{ mt: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
+                {/* Remise globale (mobile) */}
+                <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
+                  <FormControl size="small" sx={{ minWidth: 110 }}>
+                    <InputLabel>Remise</InputLabel>
+                    <Select
+                      value={formData.discount_type}
+                      label="Remise"
+                      onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      <MenuItem value="percent">%</MenuItem>
+                      <MenuItem value="amount">Montant</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    label={formData.discount_type === 'percent' ? 'Remise (%)' : 'Remise (montant)'}
+                    type="number"
+                    value={formData.discount_value}
+                    onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
+                    inputProps={{ min: 0, step: 0.01 }}
+                    size="small"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  />
+                </Box>
+                {calculateDiscount() > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, px: 0.5 }}>
+                    <Typography variant="body2" color="error.main">Remise appliquée</Typography>
+                    <Typography variant="body2" color="error.main" fontWeight={600}>
+                      −{formatCurrency(calculateDiscount())}
+                    </Typography>
+                  </Box>
+                )}
               </CardContent>
             </Card>
 
@@ -978,6 +1027,45 @@ function InvoiceForm() {
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
                     </Grid>
+                  </Grid>
+
+                  {/* Remise globale (desktop) */}
+                  <Grid container spacing={2} sx={{ mt: 0.5, alignItems: 'center' }}>
+                    <Grid item xs={12} sm={3}>
+                      <FormControl fullWidth>
+                        <InputLabel>Type de remise</InputLabel>
+                        <Select
+                          value={formData.discount_type}
+                          label="Type de remise"
+                          onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          <MenuItem value="percent">Pourcentage (%)</MenuItem>
+                          <MenuItem value="amount">Montant fixe</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <TextField
+                        fullWidth
+                        label={formData.discount_type === 'percent' ? 'Remise (%)' : 'Remise (montant)'}
+                        type="number"
+                        value={formData.discount_value}
+                        onChange={(e) => setFormData({ ...formData, discount_value: parseFloat(e.target.value) || 0 })}
+                        inputProps={{ min: 0, step: 0.01 }}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      />
+                    </Grid>
+                    {calculateDiscount() > 0 && (
+                      <Grid item xs={12} sm={6}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', gap: 1 }}>
+                          <Typography variant="body2" color="text.secondary">Remise appliquée :</Typography>
+                          <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>
+                            −{formatCurrency(calculateDiscount())}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
                   </Grid>
                 </CardContent>
               </Card>

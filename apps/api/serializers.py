@@ -649,6 +649,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     client_name = serializers.CharField(source='client.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     purchase_order_number = serializers.CharField(source='purchase_order.po_number', read_only=True, required=False)
+    discount_amount = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
 
     # Hide fields for disabled modules
     module_dependent_fields = {
@@ -659,19 +660,21 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     class Meta:
         model = Invoice
         fields = [
-            'id', 'invoice_number', 'title', 'description', 
+            'id', 'invoice_number', 'title', 'description',
             'client', 'client_name', 'client_detail',
             'contract',
             'status', 'currency', 'subtotal', 'tax_amount',
+            'discount_type', 'discount_value', 'discount_amount',
             'total_amount', 'due_date', 'payment_method',
-            'billing_address', 'payment_terms', 
+            'billing_address', 'payment_terms',
             'purchase_order', 'purchase_order_number',
             'created_by', 'created_by_name', 'created_by_detail',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
             'id', 'invoice_number', 'subtotal', 'total_amount',
-            'created_at', 'updated_at', 'created_by', 
+            'discount_amount',
+            'created_at', 'updated_at', 'created_by',
             'purchase_order_number', 'client_name', 'created_by_name',
             'client_detail', 'created_by_detail'
         ]
