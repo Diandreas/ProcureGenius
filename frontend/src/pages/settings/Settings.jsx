@@ -773,7 +773,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
 
   return (
     <Box>
-      <Grid container spacing={2}>
+      <Grid container spacing={{ xs: 1.25, md: 2 }}>
         {/* Informations entreprise */}
         <Grid item xs={12} md={6}>
           <TextField
@@ -796,7 +796,8 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
             onChange={(e) => onUpdate('companyEmail', e.target.value)}
           />
         </Grid>
-        <Grid item xs={12} md={6}>
+        {/* Téléphone + Site web côte à côte sur mobile pour compacter */}
+        <Grid item xs={6} md={6}>
           <TextField
             fullWidth
             size="small"
@@ -806,7 +807,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
             onChange={(e) => onUpdate('companyPhone', e.target.value)}
           />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={6} md={6}>
           <TextField
             fullWidth
             size="small"
@@ -937,7 +938,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
             {t('settings:general.legalInfo')}
           </Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.25, md: 2 }}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth size="small">
                 <InputLabel>{t('settings:general.taxRegion')}</InputLabel>

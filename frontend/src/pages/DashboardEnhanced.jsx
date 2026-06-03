@@ -239,7 +239,13 @@ function DashboardEnhanced() {
   };
 
   if (loading) {
-    return <LoadingState message="Chargement de votre tableau de bord..." fullScreen />;
+    // Loader inline (pas en plein écran) pour un chargement cohérent avec les
+    // autres pages — évite l'overlay fixe qui « saute » vers le contenu.
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', p: 3 }}>
+        <LoadingState message="Chargement de votre tableau de bord..." />
+      </Box>
+    );
   }
 
   if (!stats) {
