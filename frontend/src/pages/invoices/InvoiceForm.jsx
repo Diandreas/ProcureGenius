@@ -275,16 +275,18 @@ function InvoiceForm() {
   };
 
   const handleEditItem = (index) => {
+    const item = items[index];
+    if (!item) return;
     // S'assurer de récupérer l'objet produit complet pour l'Autocomplete si possible
-    const fullProduct = typeof item.product === 'string' || typeof item.product === 'number' 
-      ? products.find(p => p.id === item.product) 
+    const fullProduct = typeof item.product === 'string' || typeof item.product === 'number'
+      ? products.find(p => p.id === item.product)
       : item.product;
-      
+
     setNewItem({
       ...item,
       product: fullProduct || item.product,
-      batch: typeof item.batch === 'string' || typeof item.batch === 'number' && fullProduct?.batches 
-        ? fullProduct.batches.find(b => b.id === item.batch) 
+      batch: typeof item.batch === 'string' || typeof item.batch === 'number' && fullProduct?.batches
+        ? fullProduct.batches.find(b => b.id === item.batch)
         : item.batch
     });
     setEditingItemIndex(index);
