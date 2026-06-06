@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -99,10 +98,7 @@ const AIChatDemo = () => {
 
   return (
     <Box
-      component={motion.div}
-      initial={{ opacity: 0, y: 40, rotateX: 10 }}
-      animate={{ opacity: 1, y: 0, rotateX: 0 }}
-      transition={{ duration: 0.8, delay: 0.2 }}
+      className="gsap-reveal"
       sx={{
         bgcolor: isDark ? '#111827' : '#ffffff',
         borderRadius: 4,
@@ -132,13 +128,18 @@ const AIChatDemo = () => {
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: 220 }}>
-        <AnimatePresence>
           {messages.slice(0, visibleMessages).map((msg, i) => (
-            <motion.div
+            <Box
               key={i}
-              initial={{ opacity: 0, scale: 0.9, y: 20, originX: msg.role === 'user' ? 1 : 0 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%' }}
+              sx={{
+                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                maxWidth: '85%',
+                animation: 'msgIn 0.35s cubic-bezier(0.16,1,0.3,1) both',
+                '@keyframes msgIn': {
+                  from: { opacity: 0, transform: 'scale(0.92) translateY(16px)' },
+                  to: { opacity: 1, transform: 'scale(1) translateY(0)' },
+                },
+              }}
             >
               <Box sx={{
                 p: 1.5,
@@ -175,11 +176,10 @@ const AIChatDemo = () => {
                   </Button>
                 )}
               </Box>
-            </motion.div>
+            </Box>
           ))}
-        </AnimatePresence>
         {visibleMessages < messages.length && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', gap: 4, paddingLeft: 8 }}>
+          <Box sx={{ display: 'flex', gap: '4px', pl: 1, animation: 'fadeIn 0.3s ease both', '@keyframes fadeIn': { from: { opacity: 0 }, to: { opacity: 1 } } }}>
             {[0, 1, 2].map((i) => (
               <Box key={i} sx={{
                 width: 6, height: 6, borderRadius: '50%', bgcolor: '#2563eb',
@@ -188,7 +188,7 @@ const AIChatDemo = () => {
                 '@keyframes blink': { '0%,80%,100%': { opacity: 0.2 }, '40%': { opacity: 1 } }
               }} />
             ))}
-          </motion.div>
+          </Box>
         )}
       </Box>
     </Box>
@@ -201,14 +201,7 @@ const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
   const isDark = theme.palette.mode === 'dark';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -6, transition: { duration: 0.2 } }}
-      style={{ height: '100%' }}
-    >
+    <Box className="gsap-reveal" sx={{ height: '100%' }}>
       <Card sx={{
         bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
@@ -217,8 +210,9 @@ const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
         position: 'relative',
         overflow: 'hidden',
         boxShadow: isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.04)',
-        transition: 'all 0.3s',
+        transition: 'transform 0.25s ease, box-shadow 0.3s, border-color 0.3s',
         '&:hover': {
+          transform: 'translateY(-6px)',
           borderColor: alpha(color, 0.3),
           boxShadow: `0 16px 40px -8px ${alpha(color, 0.12)}`,
         }
@@ -235,7 +229,7 @@ const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
           </Typography>
         </CardContent>
       </Card>
-    </motion.div>
+    </Box>
   );
 };
 
@@ -245,14 +239,7 @@ const PricingCard = ({ t, title, price, originalPrice, period, features, isPopul
   const isDark = theme.palette.mode === 'dark';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay }}
-      whileHover={{ y: -6 }}
-      style={{ height: '100%' }}
-    >
+    <Box className="gsap-reveal" sx={{ height: '100%' }}>
       <Card sx={{
         bgcolor: isPopular
           ? (isDark ? 'rgba(37,99,235,0.1)' : '#eff6ff')
@@ -264,6 +251,8 @@ const PricingCard = ({ t, title, price, originalPrice, period, features, isPopul
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
+        transition: 'transform 0.25s ease',
+        '&:hover': { transform: 'translateY(-6px)' },
         boxShadow: isPopular
           ? `0 20px 60px ${alpha('#2563eb', 0.12)}`
           : (isDark ? '0 8px 24px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.04)'),
@@ -343,7 +332,7 @@ const PricingCard = ({ t, title, price, originalPrice, period, features, isPopul
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </Box>
   );
 };
 
@@ -468,9 +457,9 @@ export default function Landing() {
   useGSAP(() => {
     const mm = gsap.matchMedia();
 
-    // Respect de prefers-reduced-motion : pas d'animation, rien ne bouge.
+    // Respect de prefers-reduced-motion : pas d'animation, tout est visible.
     mm.add('(prefers-reduced-motion: reduce)', () => {
-      gsap.set('.hero-left, .hero-right', { clearProps: 'all', opacity: 1 });
+      gsap.set('.hero-left, .hero-right, .gsap-reveal', { clearProps: 'all', opacity: 1, y: 0 });
     });
 
     // Animations complètes (mouvement OK)
@@ -491,6 +480,19 @@ export default function Landing() {
         ease: 'none',
         scrollTrigger: { trigger: '.hero-section', start: 'top top', end: 'bottom top', scrub: 1 },
       });
+
+      // Révélations au scroll des sections (cartes, blocs, CTA…)
+      // État initial masqué appliqué avant le paint (useGSAP = layoutEffect).
+      gsap.set('.gsap-reveal', { opacity: 0, y: 28 });
+      ScrollTrigger.batch('.gsap-reveal', {
+        start: 'top 88%',
+        once: true,
+        onEnter: (batch) => gsap.to(batch, {
+          opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', stagger: 0.09, overwrite: true,
+        }),
+      });
+      // Recalcul après chargement des polices/images (positions fiables).
+      ScrollTrigger.refresh();
     });
 
     return () => mm.revert();
@@ -682,12 +684,7 @@ export default function Landing() {
               { icon: <SupportAgent />, title: 'Support humain', desc: 'Une équipe joignable sur WhatsApp, réponse sous 2 h.', color: '#8b5cf6' },
             ].map((s, i) => (
               <Grid item xs={6} sm={3} key={i}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                >
+                <div className="gsap-reveal">
                   <Box sx={{ display: 'inline-flex', p: 1.25, borderRadius: 2, bgcolor: alpha(s.color, 0.1), color: s.color, mb: 1.5 }}>
                     {React.cloneElement(s.icon, { sx: { fontSize: 26 } })}
                   </Box>
@@ -697,7 +694,7 @@ export default function Landing() {
                   <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', fontSize: '0.82rem', mt: 0.5, lineHeight: 1.45, maxWidth: 200, mx: 'auto' }}>
                     {s.desc}
                   </Typography>
-                </motion.div>
+                </div>
               </Grid>
             ))}
           </Grid>
@@ -708,7 +705,7 @@ export default function Landing() {
       <Box sx={{ py: { xs: 10, sm: 14 }, bgcolor: bgColor }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <div className="gsap-reveal">
               <Chip label={t('platform.badge')} sx={{
                 mb: 3,
                 bgcolor: isDark ? 'rgba(37,99,235,0.12)' : 'rgba(37,99,235,0.08)',
@@ -731,7 +728,7 @@ export default function Landing() {
               }}>
                 {t('platform.subtitle')}
               </Typography>
-            </motion.div>
+            </div>
           </Box>
 
           <Grid container spacing={3}>
@@ -760,7 +757,7 @@ export default function Landing() {
         <Container maxWidth="lg">
           <Grid container spacing={8} alignItems="center">
             <Grid item xs={12} md={6}>
-              <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+              <div className="gsap-reveal">
                 <Box sx={{
                   borderRadius: 4, overflow: 'hidden',
                   border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
@@ -768,10 +765,10 @@ export default function Landing() {
                 }}>
                   <img src="/procura.png" alt="Interface Procura" style={{ width: '100%', display: 'block' }} />
                 </Box>
-              </motion.div>
+              </div>
             </Grid>
             <Grid item xs={12} md={6}>
-              <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+              <div className="gsap-reveal">
                 <Chip label={t('interface.badge')} sx={{
                   mb: 3,
                   bgcolor: isDark ? 'rgba(37,99,235,0.12)' : 'rgba(37,99,235,0.08)',
@@ -805,7 +802,7 @@ export default function Landing() {
                 >
                   Découvrir l'interface
                 </Button>
-              </motion.div>
+              </div>
             </Grid>
           </Grid>
         </Container>
@@ -819,7 +816,7 @@ export default function Landing() {
         <Container maxWidth="lg">
           <Grid container spacing={8} alignItems="center">
             <Grid item xs={12} md={5}>
-              <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <div className="gsap-reveal">
                 <Chip
                   icon={<Psychology sx={{ fontSize: '1rem !important' }} />}
                   label="L'Avantage IA"
@@ -850,7 +847,7 @@ export default function Landing() {
                     { icon: <Speed />, title: 'Actions en un clic', desc: "Transformez une alerte de stock en bon de commande via l'interface conversationnelle.", color: '#f59e0b' },
                     { icon: <NotificationsActive />, title: 'Alertes intelligentes', desc: "Soyez notifié quand les marges d'un produit baissent en dessous du seuil.", color: '#10b981' },
                   ].map((item, i) => (
-                    <motion.div key={i} whileHover={{ scale: 1.02 }} style={{ display: 'flex', gap: 16 }}>
+                    <Box key={i} sx={{ display: 'flex', gap: 2, transition: 'transform 0.2s ease', '&:hover': { transform: 'scale(1.02)' } }}>
                       <Box sx={{
                         width: 46, height: 46, borderRadius: 3, flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -866,15 +863,15 @@ export default function Landing() {
                           {item.desc}
                         </Typography>
                       </Box>
-                    </motion.div>
+                    </Box>
                   ))}
                 </Stack>
-              </motion.div>
+              </div>
             </Grid>
             <Grid item xs={12} md={7}>
-              <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+              <div className="gsap-reveal">
                 <AIChatDemo />
-              </motion.div>
+              </div>
             </Grid>
           </Grid>
         </Container>
@@ -887,7 +884,7 @@ export default function Landing() {
       }} id="pricing-section">
         <Container maxWidth="md">
           <Box sx={{ textAlign: 'center' }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <div className="gsap-reveal">
               <Chip label="Tarifs transparents" sx={{
                 mb: 3, bgcolor: isDark ? 'rgba(37,99,235,0.12)' : 'rgba(37,99,235,0.08)',
                 border: `1px solid ${alpha('#2563eb', 0.25)}`, color: '#2563eb', fontWeight: 700, px: 1, py: 2.5, borderRadius: 2,
@@ -909,7 +906,7 @@ export default function Landing() {
                   Essayer gratuitement
                 </Button>
               </Box>
-            </motion.div>
+            </div>
           </Box>
         </Container>
       </Box>
@@ -918,7 +915,7 @@ export default function Landing() {
       <Box sx={{ display: 'none' }}>
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <div className="gsap-reveal">
               <Chip label={t('pricing.badge')} sx={{
                 mb: 3,
                 bgcolor: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.08)',
@@ -943,7 +940,7 @@ export default function Landing() {
                   Prix indicatifs en {CURRENCY_SYMBOLS_SIMPLE[currency] || currency} ({currency}) · Facturation en EUR
                 </Typography>
               )}
-            </motion.div>
+            </div>
           </Box>
 
           <Grid container spacing={3} justifyContent="center" alignItems="stretch">
@@ -1004,7 +1001,7 @@ export default function Landing() {
           pointerEvents: 'none',
         }} />
         <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+          <div className="gsap-reveal">
             <Typography variant="h2" sx={{
               fontWeight: 900, fontSize: { xs: '2rem', sm: '2.8rem' },
               mb: 2.5, color: isDark ? '#fff' : '#0f172a',
@@ -1050,7 +1047,7 @@ export default function Landing() {
                 Se connecter
               </Button>
             </Box>
-          </motion.div>
+          </div>
         </Container>
       </Box>
 
