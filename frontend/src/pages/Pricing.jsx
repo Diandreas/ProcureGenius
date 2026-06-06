@@ -9,6 +9,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import subscriptionAPI from '../services/subscriptionAPI';
+import { PLANS } from '../data/pricingPlans';
 
 // ── Direction artistique : éditorial premium, dans la charte Procura ──────────
 // Charte : bleu #2563eb (primaire) + doré #f59e0b (accent) + ardoise.
@@ -23,67 +24,6 @@ const LINE = 'rgba(15,23,42,0.12)';
 
 const FONTS_HREF =
   'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600;700&display=swap';
-
-const PLANS = [
-  {
-    code: 'free',
-    name: 'Libre',
-    priceMonthly: 0,
-    priceYearly: 0,
-    badge: null,
-    tagline: 'Pour démarrer et découvrir Procura, sans engagement.',
-    cta: 'Commencer',
-    features: ['30 factures / mois', '20 clients', '50 produits', 'Tableau de bord', 'Export PDF'],
-    missing: ['Bons de commande', 'Fournisseurs', 'Comptabilité', 'Contrats', 'Assistant IA'],
-  },
-  {
-    code: 'pro',
-    name: 'Pro',
-    priceMonthly: 9,
-    priceYearly: 79,
-    badge: 'Le plus choisi',
-    tagline: 'Pour les PME qui veulent travailler vite et bien.',
-    cta: "Choisir Pro",
-    features: [
-      'Factures, clients & produits illimités',
-      'Bons de commande illimités',
-      'Fournisseurs illimités',
-      'Comptabilité automatique',
-      'Assistant IA — 100 requêtes / mois',
-      'Contrats & analytics avancés',
-      'Sans publicité',
-    ],
-    missing: ['E-Sourcing'],
-  },
-  {
-    code: 'business',
-    name: 'Business',
-    priceMonthly: 29,
-    priceYearly: 249,
-    badge: 'Tout inclus',
-    tagline: 'Pour les équipes qui veulent tout, sans aucune limite.',
-    cta: 'Choisir Business',
-    features: [
-      'Tout le plan Pro, sans limites',
-      'Assistant IA illimité',
-      'E-Sourcing & appels d’offres',
-      'Support prioritaire',
-      'Stockage 50 Go',
-    ],
-    missing: [],
-  },
-  {
-    code: 'enterprise',
-    name: 'Enterprise',
-    priceMonthly: null,
-    priceYearly: null,
-    badge: null,
-    tagline: 'Déploiement sur mesure pour les grandes structures.',
-    cta: 'Nous contacter',
-    features: ['Tout Business inclus', 'Onboarding dédié', 'Intégrations sur mesure', 'SLA garanti', 'Account manager'],
-    missing: [],
-  },
-];
 
 const COMPARISON = [
   { label: 'Factures / mois', free: '30', pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },

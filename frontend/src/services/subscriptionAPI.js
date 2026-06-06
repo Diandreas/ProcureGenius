@@ -101,6 +101,14 @@ const subscriptionAPI = {
   },
 
   /**
+   * Démarre un essai (sans carte) du palier choisi, ou repasse en gratuit.
+   */
+  startTrial: async (planCode) => {
+    const response = await api.post('/subscriptions/start-trial/', { plan_code: planCode });
+    return response.data;
+  },
+
+  /**
    * Confirme et active l'abonnement après paiement, à partir du session_id.
    * Fiable même si le webhook n'est pas (encore) configuré.
    */

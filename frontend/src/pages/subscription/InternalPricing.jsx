@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  Box, Container, Typography, Button, Grid, Card, CardContent, Chip,
+  Box, Container, Typography, Button, Grid, Chip,
   Stack, Divider, CircularProgress, ToggleButtonGroup, ToggleButton, Alert,
 } from '@mui/material';
-import { CheckCircleOutline, Bolt, WorkspacePremium, ArrowForward, OpenInNew } from '@mui/icons-material';
+import { Check, Close, ArrowForward, OpenInNew, Bolt } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
 import subscriptionAPI from '../../services/subscriptionAPI';
+import { PLANS } from '../../data/pricingPlans';
 
-// Pricing interne (utilisateur connecté) : lance directement le checkout Stripe,
-// reste dans l'app, met en avant le plan courant.
+const BLUE = '#2563eb';
+const NAVY = '#0b1f4d';
+const GOLD = '#f59e0b';
+
+// Pricing interne (utilisateur connecté) — MÊME contenu que la page publique
+// (data/pricingPlans), avec checkout Stripe direct et mise en avant du plan courant.
 export default function InternalPricing() {
-  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const [plans, setPlans] = useState([]);
-  const [current, setCurrent] = useState(null);
+  const [current, setCurrent] = useState('free');
   const [billing, setBilling] = useState('monthly');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
@@ -23,11 +25,7 @@ export default function InternalPricing() {
   useEffect(() => {
     (async () => {
       try {
-        const [p, status] = await Promise.all([
-          subscriptionAPI.getPlans(),
-          subscriptionAPI.getStatus().catch(() => null),
-        ]);
-        setPlans((p.plans || []).filter((pl) => pl.code !== 'free'));
+        const status = await subscriptionAPI.getStatus().catch(() => null);
         setCurrent(status?.subscription?.plan?.code || status?.plan_code || 'free');
       } finally {
         setLoading(false);
@@ -35,7 +33,15 @@ export default function InternalPricing() {
     })();
   }, []);
 
-  const handleSubscribe = async (plan) => {
+  const handleCTA = async (plan) => {
+    if (plan.code === current) return;
+    if (plan.code === 'free') {
+      setBusy('free');
+      try { await subscriptionAPI.startTrial('free'); enqueueSnackbar('Plan gratuit activé.', { variant: 'success' }); setCurrent('free'); }
+      catch { enqueueSnackbar('Action impossible.', { variant: 'error' }); }
+      finally { setBusy(null); }
+      return;
+    }
     if (plan.code === 'enterprise') {
       window.open('https://wa.me/237693427913?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20le%20plan%20Enterprise%20de%20Procura.', '_blank');
       return;
@@ -43,25 +49,25 @@ export default function InternalPricing() {
     setBusy(plan.code);
     try {
       await subscriptionAPI.createStripeCheckout(plan.code, billing); // redirige vers Stripe
-    } catch (err) {
-      enqueueSnackbar("Impossible de lancer le paiement. Réessayez.", { variant: 'error' });
+    } catch {
+      enqueueSnackbar('Impossible de lancer le paiement. Réessayez.', { variant: 'error' });
       setBusy(null);
     }
   };
 
+  const priceOf = (plan) => billing === 'yearly' ? plan.priceYearly : plan.priceMonthly;
   const fmt = (n) => new Intl.NumberFormat('fr-FR').format(n);
-  const priceOf = (plan) => billing === 'yearly' ? plan.price_yearly : plan.price_monthly;
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}><CircularProgress /></Box>;
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 2, md: 4 } }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 } }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>Choisissez votre plan</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>Votre abonnement</Typography>
         <Typography color="text.secondary" sx={{ mb: 3 }}>
-          1 mois d'essai offert sur les formules payantes — sans carte. Changez ou annulez à tout moment.
+          1 mois d'essai offert sur Pro et Business — sans carte. Changez ou annulez à tout moment.
         </Typography>
         <ToggleButtonGroup
           exclusive value={billing} onChange={(_, v) => v && setBilling(v)} size="small"
@@ -75,85 +81,89 @@ export default function InternalPricing() {
       </Box>
 
       <Grid container spacing={3} justifyContent="center" alignItems="stretch">
-        {plans.map((plan) => {
+        {PLANS.map((plan) => {
           const isCurrent = current === plan.code;
-          const popular = plan.code === 'pro';
+          const featured = plan.code === 'pro';
           const price = priceOf(plan);
-          const isEnterprise = plan.code === 'enterprise';
           return (
-            <Grid item xs={12} sm={6} md={4} key={plan.code}>
-              <Card sx={{
-                height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 4,
-                border: popular ? `2px solid ${alpha('#2563eb', 0.5)}` : '1px solid',
-                borderColor: popular ? undefined : 'divider',
+            <Grid item xs={12} sm={6} md={3} key={plan.code}>
+              <Box sx={{
+                height: '100%', display: 'flex', flexDirection: 'column', p: 3, borderRadius: 4,
                 position: 'relative', overflow: 'visible',
-                boxShadow: popular ? `0 18px 50px -12px ${alpha('#2563eb', 0.3)}` : 'var(--shadow-md)',
+                bgcolor: featured ? NAVY : 'background.paper',
+                color: featured ? '#fff' : 'text.primary',
+                border: isCurrent ? `2px solid ${GOLD}` : (featured ? 'none' : '1px solid'),
+                borderColor: isCurrent ? GOLD : 'divider',
+                boxShadow: featured ? `0 20px 50px -16px ${alpha(BLUE, 0.45)}` : 'var(--shadow-md)',
               }}>
-                {popular && (
-                  <Chip icon={<Bolt sx={{ fontSize: 16 }} />} label="Le plus choisi" color="primary"
-                    sx={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontWeight: 700 }} />
-                )}
-                <CardContent sx={{ p: 3.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                    {plan.code === 'business' || isEnterprise ? <WorkspacePremium color="primary" /> : <Bolt color="primary" />}
-                    <Typography sx={{ fontWeight: 800, fontSize: '1.1rem' }}>{plan.name}</Typography>
-                    {isCurrent && <Chip label="Plan actuel" size="small" color="success" variant="outlined" sx={{ ml: 'auto', fontWeight: 700 }} />}
-                  </Box>
-
-                  <Box sx={{ mb: 2 }}>
-                    {isEnterprise ? (
-                      <Typography variant="h4" sx={{ fontWeight: 900 }}>Sur devis</Typography>
-                    ) : (
-                      <>
-                        <Typography variant="h3" sx={{ fontWeight: 900, lineHeight: 1, display: 'inline' }}>{fmt(price)}€</Typography>
-                        <Typography component="span" color="text.secondary" sx={{ ml: 0.5 }}>/{billing === 'monthly' ? 'mois' : 'an'}</Typography>
-                      </>
-                    )}
-                  </Box>
-
-                  <Typography color="text.secondary" sx={{ fontSize: '0.9rem', mb: 2, minHeight: 40 }}>
-                    {plan.description}
+                {plan.badge && (
+                  <Typography sx={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700, color: GOLD, mb: 1.5 }}>
+                    {plan.badge}
                   </Typography>
-                  <Divider sx={{ mb: 2 }} />
+                )}
+                {!plan.badge && <Box sx={{ height: 24, mb: 1.5 }} />}
 
-                  <Stack spacing={1.25} sx={{ mb: 3, flex: 1 }}>
-                    {Object.entries(plan.features || {}).filter(([, v]) => v === true).slice(0, 6).map(([k]) => (
-                      <Box key={k} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <CheckCircleOutline sx={{ fontSize: 18, color: '#10b981' }} />
-                        <Typography sx={{ fontSize: '0.85rem' }}>{FEATURE_LABELS[k] || k}</Typography>
-                      </Box>
-                    ))}
-                  </Stack>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography sx={{ fontFamily: '"Fraunces", Georgia, serif', fontSize: 24, fontWeight: 600 }}>{plan.name}</Typography>
+                  {isCurrent && <Chip label="Plan actuel" size="small" sx={{ ml: 'auto', fontWeight: 700, bgcolor: alpha(GOLD, 0.18), color: featured ? '#fff' : '#9a6500' }} />}
+                </Box>
 
-                  <Button
-                    fullWidth variant={popular ? 'contained' : 'outlined'}
-                    disabled={isCurrent || busy === plan.code}
-                    onClick={() => handleSubscribe(plan)}
-                    endIcon={busy === plan.code ? <CircularProgress size={16} color="inherit" /> : (isEnterprise ? <OpenInNew /> : <ArrowForward />)}
-                    sx={{ py: 1.4, borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}
-                  >
-                    {isCurrent ? 'Votre plan' : isEnterprise ? 'Nous contacter' : busy === plan.code ? 'Redirection…' : "S'abonner"}
-                  </Button>
-                </CardContent>
-              </Card>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, mt: 1.5, mb: 1 }}>
+                  {price === null ? (
+                    <Typography sx={{ fontFamily: '"Fraunces", serif', fontSize: 30, fontWeight: 600 }}>Sur devis</Typography>
+                  ) : price === 0 ? (
+                    <Typography sx={{ fontFamily: '"Fraunces", serif', fontSize: 30, fontWeight: 600 }}>Gratuit</Typography>
+                  ) : (
+                    <>
+                      <Typography sx={{ fontFamily: '"Fraunces", serif', fontSize: 40, fontWeight: 600, lineHeight: 1 }}>{fmt(price)}€</Typography>
+                      <Typography sx={{ fontSize: 13, color: featured ? 'rgba(255,255,255,0.6)' : 'text.secondary' }}>/{billing === 'monthly' ? 'mois' : 'an'}</Typography>
+                    </>
+                  )}
+                </Box>
+
+                <Typography sx={{ fontSize: 13.5, lineHeight: 1.5, color: featured ? 'rgba(255,255,255,0.72)' : 'text.secondary', mb: 2.5, minHeight: 44 }}>
+                  {plan.tagline}
+                </Typography>
+
+                <Button
+                  fullWidth disableElevation
+                  disabled={isCurrent || busy === plan.code}
+                  onClick={() => handleCTA(plan)}
+                  endIcon={busy === plan.code ? <CircularProgress size={16} color="inherit" /> : (plan.code === 'enterprise' ? <OpenInNew sx={{ fontSize: 16 }} /> : <ArrowForward sx={{ fontSize: 16 }} />)}
+                  sx={{
+                    py: 1.25, mb: 2.5, borderRadius: 2, textTransform: 'none', fontWeight: 700, fontSize: 14.5,
+                    ...(featured
+                      ? { bgcolor: GOLD, color: '#0f172a', '&:hover': { bgcolor: '#d97706' } }
+                      : { bgcolor: BLUE, color: '#fff', '&:hover': { bgcolor: '#1d4ed8' } }),
+                    '&.Mui-disabled': { bgcolor: alpha('#94a3b8', 0.3), color: featured ? 'rgba(255,255,255,0.6)' : 'text.disabled' },
+                  }}
+                >
+                  {isCurrent ? 'Votre plan' : busy === plan.code ? 'Redirection…' : plan.cta}
+                </Button>
+
+                <Stack spacing={1.1} sx={{ flex: 1 }}>
+                  {plan.features.map((f, i) => (
+                    <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                      <Check sx={{ fontSize: 17, color: featured ? GOLD : '#10b981', mt: '1px', flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: 13, color: featured ? 'rgba(255,255,255,0.9)' : 'text.primary' }}>{f}</Typography>
+                    </Box>
+                  ))}
+                  {plan.missing.map((f, i) => (
+                    <Box key={`m${i}`} sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', opacity: 0.5 }}>
+                      <Close sx={{ fontSize: 17, mt: '1px', flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: 13, textDecoration: 'line-through' }}>{f}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
             </Grid>
           );
         })}
       </Grid>
 
       <Alert severity="info" sx={{ mt: 4, borderRadius: 2 }}>
-        Le paiement est sécurisé par Stripe. Après le paiement, votre compte est activé automatiquement et vous êtes redirigé vers votre tableau de bord.
+        Paiement sécurisé par Stripe. Après le paiement, votre compte est activé automatiquement et vous êtes redirigé vers votre tableau de bord.
       </Alert>
     </Container>
   );
 }
-
-const FEATURE_LABELS = {
-  has_ai_assistant: 'Assistant IA',
-  has_purchase_orders: 'Bons de commande',
-  has_suppliers: 'Fournisseurs',
-  has_contracts: 'Contrats',
-  has_analytics: 'Analytics avancés',
-  has_accounting: 'Comptabilité',
-  has_e_sourcing: 'E-Sourcing (appels d\'offres)',
-};

@@ -1,0 +1,64 @@
+// Source unique des plans tarifaires — partagée par la page publique (/pricing)
+// et le pricing interne (/subscription/plans) pour rester synchronisées.
+// Charte : free / pro / business / enterprise.
+
+export const PLANS = [
+  {
+    code: 'free',
+    name: 'Libre',
+    priceMonthly: 0,
+    priceYearly: 0,
+    badge: null,
+    tagline: 'Pour démarrer et découvrir Procura, sans engagement.',
+    cta: 'Commencer',
+    features: ['30 factures / mois', '20 clients', '50 produits', 'Tableau de bord', 'Export PDF'],
+    missing: ['Bons de commande', 'Fournisseurs', 'Comptabilité', 'Contrats', 'Assistant IA'],
+  },
+  {
+    code: 'pro',
+    name: 'Pro',
+    priceMonthly: 9,
+    priceYearly: 79,
+    badge: 'Le plus choisi',
+    tagline: 'Pour les PME qui veulent travailler vite et bien.',
+    cta: 'Choisir Pro',
+    features: [
+      'Factures, clients & produits illimités',
+      'Bons de commande illimités',
+      'Fournisseurs illimités',
+      'Comptabilité automatique',
+      'Assistant IA — 100 requêtes / mois',
+      'Contrats & analytics avancés',
+      'Sans publicité',
+    ],
+    missing: ['E-Sourcing'],
+  },
+  {
+    code: 'business',
+    name: 'Business',
+    priceMonthly: 29,
+    priceYearly: 249,
+    badge: 'Tout inclus',
+    tagline: 'Pour les équipes qui veulent tout, sans aucune limite.',
+    cta: 'Choisir Business',
+    features: [
+      'Tout le plan Pro, sans limites',
+      'Assistant IA illimité',
+      'E-Sourcing & appels d’offres',
+      'Support prioritaire',
+      'Stockage 50 Go',
+    ],
+    missing: [],
+  },
+  {
+    code: 'enterprise',
+    name: 'Enterprise',
+    priceMonthly: null,
+    priceYearly: null,
+    badge: null,
+    tagline: 'Déploiement sur mesure pour les grandes structures.',
+    cta: 'Nous contacter',
+    features: ['Tout Business inclus', 'Onboarding dédié', 'Intégrations sur mesure', 'SLA garanti', 'Account manager'],
+    missing: [],
+  },
+];

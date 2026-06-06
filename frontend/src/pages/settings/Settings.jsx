@@ -665,8 +665,17 @@ const Settings = () => {
                     <Button
                       variant="outlined"
                       onClick={async () => {
-                        try { await subscriptionAPI.openStripePortal(); }
-                        catch { showSnackbar('La gestion de facturation n\'est pas encore activée.', 'info'); }
+                        try {
+                          await subscriptionAPI.openStripePortal();
+                        } catch (err) {
+                          const noCustomer = err?.response?.status === 400 || err?.response?.status === 404;
+                          showSnackbar(
+                            noCustomer
+                              ? "Aucun paiement à gérer pour l'instant. Souscrivez à une formule payante pour accéder à la facturation."
+                              : "Service de facturation momentanément indisponible. Réessayez.",
+                            'info'
+                          );
+                        }
                       }}
                       sx={{ textTransform: 'none', fontWeight: 600 }}
                     >
