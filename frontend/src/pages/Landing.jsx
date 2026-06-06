@@ -469,17 +469,18 @@ export default function Landing() {
       tl.from('.hero-left', { opacity: 0, x: -48, duration: 0.8 })
         .from('.hero-right', { opacity: 0, scale: 0.86, y: 36, duration: 0.9 }, '-=0.55');
 
-      // Parallaxe / profondeur : le halo et la carte visuelle se décalent au scroll
-      gsap.to('.hero-glow', {
-        yPercent: 28,
-        ease: 'none',
-        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: 'bottom top', scrub: true },
-      });
-      gsap.to('.hero-right', {
-        yPercent: -12,
-        ease: 'none',
-        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: 'bottom top', scrub: 1 },
-      });
+      // Parallaxe / profondeur multi-couches : chaque couche se déplace à une
+      // vitesse différente au scroll → effet de profondeur bien perceptible.
+      // Plage élargie ("top top" → "bottom 20%") pour un mouvement ample.
+      const paraTrigger = { trigger: '.hero-section', start: 'top top', end: 'bottom 20%', scrub: 1 };
+      // Couche de fond (halo bleu) : descend fortement (effet "loin", lent)
+      gsap.to('.hero-glow', { yPercent: 60, ease: 'none', scrollTrigger: paraTrigger });
+      // Halo doré : monte (couche opposée → profondeur accentuée)
+      gsap.to('.hero-glow-2', { yPercent: -45, ease: 'none', scrollTrigger: paraTrigger });
+      // Carte visuelle : remonte (couche rapide, premier plan)
+      gsap.to('.hero-right', { yPercent: -22, ease: 'none', scrollTrigger: paraTrigger });
+      // Bloc texte : léger décalage vers le bas (profondeur intermédiaire)
+      gsap.to('.hero-left', { yPercent: 14, ease: 'none', scrollTrigger: paraTrigger });
 
       // Révélations au scroll des sections (cartes, blocs, CTA…)
       // État initial masqué appliqué avant le paint (useGSAP = layoutEffect).
@@ -513,17 +514,26 @@ export default function Landing() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Subtle background glow */}
+        {/* Halos de fond (parallaxe couche lointaine) */}
         <Box className="hero-glow" sx={{
           position: 'absolute',
-          top: '20%', right: '10%',
-          width: 600, height: 600,
+          top: '8%', right: '4%',
+          width: 680, height: 680,
           borderRadius: '50%',
-          background: isDark
-            ? `radial-gradient(circle, ${alpha('#2563eb', 0.08)} 0%, transparent 70%)`
-            : `radial-gradient(circle, ${alpha('#2563eb', 0.05)} 0%, transparent 70%)`,
+          background: `radial-gradient(circle, ${alpha('#2563eb', 0.16)} 0%, transparent 68%)`,
           pointerEvents: 'none',
           willChange: 'transform',
+          zIndex: 0,
+        }} />
+        <Box className="hero-glow-2" sx={{
+          position: 'absolute',
+          bottom: '2%', left: '-6%',
+          width: 520, height: 520,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, ${alpha('#f59e0b', 0.12)} 0%, transparent 70%)`,
+          pointerEvents: 'none',
+          willChange: 'transform',
+          zIndex: 0,
         }} />
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
