@@ -343,11 +343,13 @@ function InvoiceForm() {
         discount_value: parseFloat(formData.discount_value) || 0
       };
 
+      let targetId = id;
       if (isEdit) {
         await invoicesAPI.update(id, payload);
         enqueueSnackbar(t('invoices:messages.invoiceUpdatedSuccess'), { variant: 'success' });
       } else {
-        await invoicesAPI.create(payload);
+        const res = await invoicesAPI.create(payload);
+        targetId = res?.data?.id || null;
         enqueueSnackbar(t('invoices:messages.invoiceCreatedSuccess'), { variant: 'success' });
         // Rétention phase 1 : déclencher la demande push après la 1ère facture
         if (!localStorage.getItem('first_invoice_created')) {
@@ -356,7 +358,8 @@ function InvoiceForm() {
         }
       }
 
-      navigate('/invoices');
+      // Rediriger vers le détail de la facture (et non l'index)
+      navigate(targetId ? `/invoices/${targetId}` : '/invoices');
     } catch (error) {
       console.error('Erreur API:', error);
       console.error('Response data:', error.response?.data);
