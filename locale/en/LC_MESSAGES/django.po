@@ -434,3 +434,35 @@ msgstr "Taxes"
 msgid "Payment upon receipt"
 msgstr "Payment upon receipt"
 
+
+# --- Devis / en-tete PDF pro ---
+msgid "Quote"
+msgstr "Quote"
+
+msgid "QUOTE"
+msgstr "QUOTE"
+
+msgid "Billed to"
+msgstr "Billed to"
+
+msgid "Quote for"
+msgstr "Quote for"
+
+msgid "Subject"
+msgstr "Subject"
+
+msgid "Valid until"
+msgstr "Valid until"
+
+msgid "Payment details"
+msgstr "Payment details"
+
+msgid "Note"
+msgstr "Note"
+
+msgid "This quote is valid until the date indicated above."
+msgstr "This quote is valid until the date indicated above."
+
+msgid "Pending"
+msgstr "Pending"
+

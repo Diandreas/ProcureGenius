@@ -2,7 +2,7 @@
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{% trans "Invoice" %} {{ invoice.invoice_number }}</title>
+    <title>{% if invoice.status == "quote" %}{% trans "Quote" %}{% else %}{% trans "Invoice" %}{% endif %} {{ invoice.invoice_number }}</title>
     <style>
         @page {
             {% if paper_size == 'thermal_80' %}
@@ -291,9 +291,9 @@
         {% endif %}
     </div>
 
-    <!-- Invoice Title -->
+    <!-- Invoice / Quote Title -->
     <div class="invoice-title">
-        <h1>{% trans "INVOICE" %}</h1>
+        <h1>{% if invoice.status == "quote" %}{% trans "QUOTE" %}{% else %}{% trans "INVOICE" %}{% endif %}</h1>
         <div class="invoice-number">{{ invoice.invoice_number }}</div>
     </div>
 

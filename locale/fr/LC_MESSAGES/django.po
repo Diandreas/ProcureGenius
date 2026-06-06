@@ -468,3 +468,32 @@ msgstr "Taxes"
 msgid "Payment upon receipt"
 msgstr "Paiement à réception"
 
+
+# --- Devis / en-tete PDF pro ---
+msgid "Quote"
+msgstr "Devis"
+
+msgid "QUOTE"
+msgstr "DEVIS"
+
+msgid "Billed to"
+msgstr "Facturé à"
+
+msgid "Quote for"
+msgstr "Devis pour"
+
+msgid "Subject"
+msgstr "Objet"
+
+msgid "Valid until"
+msgstr "Valable jusqu’au"
+
+msgid "Payment details"
+msgstr "Coordonnées de paiement"
+
+msgid "Note"
+msgstr "Note"
+
+msgid "This quote is valid until the date indicated above."
+msgstr "Ce devis est valable jusqu’à la date indiquée ci-dessus."
+

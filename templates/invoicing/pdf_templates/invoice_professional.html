@@ -2,526 +2,314 @@
 <html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 <head>
     <meta charset="UTF-8">
-    <title>{% trans "Invoice" %} {{ invoice.invoice_number }}</title>
+    <title>{% if invoice.status == "quote" %}{% trans "Quote" %}{% else %}{% trans "Invoice" %}{% endif %} {{ invoice.invoice_number }}</title>
     <style>
         @page {
             {% if paper_size == 'thermal_80' %}
-            size: 80mm 297mm;
-            margin: {{ print_margins|default:5 }}mm;
+            size: 80mm 297mm; margin: {{ print_margins|default:5 }}mm;
             {% elif paper_size == 'thermal_58' %}
-            size: 58mm 297mm;
-            margin: {{ print_margins|default:3 }}mm;
+            size: 58mm 297mm; margin: {{ print_margins|default:3 }}mm;
             {% else %}
             size: {{ paper_size|default:'A4' }} {{ paper_orientation|default:'portrait' }};
-            margin: {{ print_margins|default:12 }}mm;
+            margin: {{ print_margins|default:14 }}mm;
             {% endif %}
         }
 
+        * { box-sizing: border-box; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            font-size: 9pt;
-            line-height: 1.4;
-            color: #1f2937;
+            font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.5;
+            color: #2b2f36;
             margin: 0;
             padding: 0;
+            -weasy-hyphens: none;
         }
 
-        /* Sidebar Layout */
-        .document-wrapper {
-            display: table;
-            width: 100%;
-            min-height: 100%;
-        }
-
-        .sidebar {
-            display: table-cell;
-            width: 170px;
+        .accent-top {
+            height: 4px;
             background: {{ brand_color|default:'#2563eb' }};
-            color: white;
-            padding: 15px 12px;
-            vertical-align: top;
+            margin-bottom: 20px;
         }
 
-        .main-content {
-            display: table-cell;
-            padding: 0 0 0 18px;
-            vertical-align: top;
+        /* ===== Header ===== */
+        .header { display: table; width: 100%; margin-bottom: 6px; }
+        .header-left { display: table-cell; width: 58%; vertical-align: top; }
+        .header-right { display: table-cell; width: 42%; vertical-align: top; text-align: right; }
+
+        .company-logo img { max-width: 150px; max-height: 56px; margin-bottom: 8px; }
+        .company-name {
+            font-size: 14pt; font-weight: 700; color: #14181f; letter-spacing: -0.2px;
+        }
+        .company-meta { font-size: 8.5pt; color: #6b7280; line-height: 1.55; margin-top: 4px; }
+        .company-meta strong { color: #4b5563; font-weight: 600; }
+
+        .doc-type {
+            font-size: 26pt; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+            color: {{ brand_color|default:'#2563eb' }}; line-height: 1; margin-bottom: 6px;
+        }
+        .doc-number { font-size: 10pt; font-weight: 600; color: #14181f; }
+        .doc-number span { color: #9ca3af; font-weight: 500; }
+
+        .status-pill {
+            display: inline-block; margin-top: 8px; padding: 3px 11px; border-radius: 20px;
+            font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+        }
+        .st-paid    { background: #e7f7ee; color: #1d8a4e; }
+        .st-sent    { background: #e8effe; color: #2456c9; }
+        .st-draft   { background: #f1f3f5; color: #5b636e; }
+        .st-overdue { background: #fdeaea; color: #c0392b; }
+        .st-quote   { background: #fff4e5; color: #b06a00; }
+        .st-pending { background: #fff4e5; color: #b06a00; }
+
+        .header-rule {
+            border: none; border-top: 1px solid #e8eaed; margin: 16px 0 18px;
         }
 
-        /* Sidebar Styles */
-        .sidebar-logo {
-            text-align: center;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        /* ===== Parties (Émetteur / Client) ===== */
+        .parties { display: table; width: 100%; margin-bottom: 20px; }
+        .party { display: table-cell; width: 50%; vertical-align: top; padding-right: 18px; }
+        .party:last-child { padding-right: 0; padding-left: 18px; }
+        .party-label {
+            font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            color: {{ brand_color|default:'#2563eb' }}; margin-bottom: 6px;
         }
+        .party-name { font-size: 10.5pt; font-weight: 700; color: #14181f; }
+        .party-meta { font-size: 8.8pt; color: #5b636e; line-height: 1.55; margin-top: 3px; }
 
-        .sidebar-logo img {
-            max-width: 110px;
-            max-height: 50px;
-            background: white;
-            padding: 6px;
-            border-radius: 3px;
+        /* ===== Meta (dates) ===== */
+        .meta-strip {
+            display: table; width: 100%; margin-bottom: 18px;
+            background: #f8f9fb; border: 1px solid #eceef1; border-radius: 6px;
         }
-
-        .sidebar-section {
-            margin-bottom: 15px;
+        .meta-cell {
+            display: table-cell; padding: 9px 14px; vertical-align: middle;
+            border-right: 1px solid #eceef1; width: 33.33%;
         }
+        .meta-cell:last-child { border-right: none; }
+        .meta-k { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.7px; color: #9ca3af; font-weight: 600; }
+        .meta-v { font-size: 9pt; font-weight: 600; color: #2b2f36; margin-top: 2px; }
 
-        .sidebar-title {
-            font-size: 7pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 7px;
-            opacity: 0.9;
+        /* ===== Items ===== */
+        table.items { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+        table.items thead th {
+            background: {{ brand_color|default:'#2563eb' }}; color: #fff;
+            font-size: 8pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 9px 10px; text-align: left;
         }
-
-        .sidebar-content {
-            font-size: 8pt;
-            line-height: 1.4;
-            opacity: 0.95;
+        table.items thead th:first-child { border-top-left-radius: 6px; }
+        table.items thead th:last-child { border-top-right-radius: 6px; }
+        table.items tbody td {
+            padding: 8px 10px; font-size: 9pt; color: #3a3f47;
+            border-bottom: 1px solid #eef0f2; vertical-align: top;
         }
+        table.items tbody tr:nth-child(even) td { background: #fafbfc; }
+        .t-center { text-align: center; }
+        .t-right  { text-align: right; white-space: nowrap; }
+        .item-ref { color: #9ca3af; font-size: 8pt; }
+        .item-desc { font-weight: 500; color: #14181f; }
 
-        .sidebar-content p {
-            margin: 3px 0;
+        /* ===== Totals ===== */
+        .totals-wrap { display: table; width: 100%; margin-top: 16px; }
+        .totals-spacer { display: table-cell; width: 55%; }
+        .totals-box { display: table-cell; width: 45%; vertical-align: top; }
+        table.totals { width: 100%; border-collapse: collapse; }
+        table.totals td { padding: 6px 12px; font-size: 9pt; }
+        table.totals td.k { color: #6b7280; }
+        table.totals td.v { text-align: right; font-weight: 600; color: #14181f; white-space: nowrap; }
+        table.totals tr.discount td { color: #c0392b; font-weight: 600; }
+        table.totals tr.sep td { border-top: 1px solid #e8eaed; }
+        table.totals tr.grand td {
+            background: {{ brand_color|default:'#2563eb' }}; color: #fff;
+            font-size: 11pt; font-weight: 800; padding: 11px 12px;
         }
+        table.totals tr.grand td.k { color: #fff; }
+        table.totals tr.grand td:first-child { border-bottom-left-radius: 6px; }
+        table.totals tr.grand td:last-child { border-bottom-right-radius: 6px; }
 
-        .sidebar-qr {
-            text-align: center;
-            margin-top: 18px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
+        /* ===== Notes + QR ===== */
+        .bottom { display: table; width: 100%; margin-top: 26px; }
+        .notes { display: table-cell; vertical-align: top; padding-right: 18px; }
+        .notes-label {
+            font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            color: {{ brand_color|default:'#2563eb' }}; margin-bottom: 5px;
         }
+        .notes-text { font-size: 8.5pt; color: #5b636e; line-height: 1.6; }
+        .qr-cell { display: table-cell; width: 96px; vertical-align: top; text-align: center; }
+        .qr-cell img { width: 84px; height: 84px; }
+        .qr-cap { font-size: 6pt; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 3px; }
 
-        .sidebar-qr img {
-            width: 70px;
-            height: 70px;
-            background: white;
-            padding: 5px;
-            border-radius: 3px;
-        }
-
-        .qr-text {
-            font-size: 5.5pt;
-            margin-top: 5px;
-            opacity: 0.8;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        /* Main Content Header */
-        .content-header {
-            margin-bottom: 18px;
-        }
-
-        .invoice-title {
-            font-size: 28pt;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 5px;
-            letter-spacing: -1px;
-        }
-
-        .invoice-subtitle {
-            font-size: 9.5pt;
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .invoice-number-badge {
-            display: inline-block;
-            background: #f3f4f6;
-            color: {{ brand_color|default:'#2563eb' }};
-            padding: 5px 12px;
-            font-weight: 700;
-            font-size: 9pt;
-            margin-top: 7px;
-            border-left: 4px solid {{ brand_color|default:'#2563eb' }};
-        }
-
-        /* Info Cards */
-        .info-cards {
-            display: table;
-            width: 100%;
-            margin: 15px 0;
-            table-layout: fixed;
-        }
-
-        .info-card {
-            display: table-cell;
-            background: #f9fafb;
-            padding: 11px;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-        }
-
-        .info-card + .info-card {
-            margin-left: 3%;
-        }
-
-        .card-label {
-            font-size: 7pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: {{ brand_color|default:'#2563eb' }};
-            margin-bottom: 7px;
-        }
-
-        .card-text {
-            font-size: 8pt;
-            color: #374151;
-            line-height: 1.5;
-        }
-
-        .card-text p {
-            margin: 2px 0;
-        }
-
-        .card-text strong {
-            color: #111827;
-            font-weight: 600;
-        }
-
-        /* Status Badge */
-        .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            font-size: 6.5pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-radius: 3px;
-            margin-top: 5px;
-            letter-spacing: 0.4px;
-        }
-
-        .status-paid {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-sent {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        .status-draft {
-            background: #f3f4f6;
-            color: #4b5563;
-        }
-
-        .status-overdue {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        /* Items Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .items-section {
-            margin: 18px 0;
-        }
-
-        .section-header {
-            font-size: 9.5pt;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid {{ brand_color|default:'#2563eb' }};
-        }
-
-        .items-table {
-            width: 100%;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .items-table thead {
-            background: {{ brand_color|default:'#2563eb' }};
-            color: white;
-        }
-
-        .items-table thead th {
-            padding: 7px 8px;
-            text-align: left;
-            font-size: 8pt;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-        }
-
-        .items-table tbody td {
-            padding: 7px 8px;
-            font-size: 8pt;
-            color: #374151;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .items-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .items-table tbody tr:nth-child(odd) {
-            background: #fafafa;
-        }
-
-        .items-table .text-center {
-            text-align: center;
-        }
-
-        .items-table .text-right {
-            text-align: right;
-            font-weight: 500;
-        }
-
-        /* Totals */
-        .totals-area {
-            margin-top: 15px;
-        }
-
-        .totals-table {
-            width: 290px;
-            margin-left: auto;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .totals-table tr {
-            background: #fafafa;
-        }
-
-        .totals-table td {
-            padding: 7px 12px;
-            font-size: 8pt;
-        }
-
-        .totals-table td:first-child {
-            text-align: left;
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .totals-table td:last-child {
-            text-align: right;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .totals-table .total-row {
-            background: {{ brand_color|default:'#2563eb' }};
-            color: white;
-        }
-
-        .totals-table .total-row td {
-            padding: 10px 12px;
-            font-size: 11.5pt;
-            font-weight: 700;
-        }
-
-        /* Footer */
+        /* ===== Footer ===== */
         .footer {
-            margin-top: 30px;
-            padding-top: 12px;
-            border-top: 1px solid #e5e7eb;
-            font-size: 7pt;
-            color: #6b7280;
-            line-height: 1.4;
+            margin-top: 30px; padding-top: 12px; border-top: 1px solid #e8eaed;
+            font-size: 7.5pt; color: #9ca3af; line-height: 1.5; text-align: center;
         }
-
-        .footer-meta {
-            margin-top: 7px;
-            font-size: 6.5pt;
-            color: #9ca3af;
-        }
+        .footer strong { color: #6b7280; }
     </style>
 </head>
 <body>
-    <table class="document-wrapper">
-        <tr>
-            <!-- Sidebar -->
-            <td class="sidebar">
-                <div class="sidebar-logo">
-                    {% if logo_base64 %}
-                    <img src="{{ logo_base64 }}" alt="Logo">
-                    {% endif %}
-                </div>
+    <div class="accent-top"></div>
 
-                <div class="sidebar-section">
-                    <div class="sidebar-title">{% trans "Issuer" %}</div>
-                    <div class="sidebar-content">
-                        {% if organization.name %}
-                        <p><strong>{{ organization.name }}</strong></p>
-                        {% endif %}
-                        {% if organization.address %}
-                        <p>{{ organization.address|striptags|truncatewords:12 }}</p>
-                        {% endif %}
-                        {% if organization.phone %}
-                        <p>{% trans "Tel" %}: {{ organization.phone }}</p>
-                        {% endif %}
-                        {% if organization.email %}
-                        <p>{{ organization.email }}</p>
-                        {% endif %}
-                        {# Affichage conditionnel selon la région fiscale #}
-                        {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
-                            {% if organization.niu %}<p><strong>NIU:</strong> {{ organization.niu }}</p>{% endif %}
-                            {% if organization.rc_number %}<p><strong>RC:</strong> {{ organization.rc_number }}</p>{% elif organization.rccm_number %}<p><strong>RCCM:</strong> {{ organization.rccm_number }}</p>{% endif %}
-                        {% elif organization.tax_region == 'eu' %}
-                            {% if organization.vat_number %}<p><strong>{% trans "VAT" %}:</strong> {{ organization.vat_number }}</p>{% endif %}
-                        {% elif organization.tax_region == 'canada' %}
-                            {% if organization.neq %}<p><strong>NEQ:</strong> {{ organization.neq }}</p>{% endif %}
-                            {% if organization.gst_number %}<p><strong>GST/HST:</strong> {{ organization.gst_number }}</p>{% endif %}
-                            {% if organization.qst_number %}<p><strong>QST:</strong> {{ organization.qst_number }}</p>{% endif %}
-                        {% elif organization.tax_region == 'usa' %}
-                            {% if organization.tax_number %}<p><strong>TIN:</strong> {{ organization.tax_number }}</p>{% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-
-                {% if client %}
-                <div class="sidebar-section">
-                    <div class="sidebar-title">{% trans "Client" %}</div>
-                    <div class="sidebar-content">
-                        <p><strong>{{ client.name }}</strong></p>
-                        {% if client.email %}<p>{{ client.email }}</p>{% endif %}
-                        {% if client.address %}<p>{{ client.address }}</p>{% endif %}
-                    </div>
-                </div>
+    <!-- ===== Header ===== -->
+    <div class="header">
+        <div class="header-left">
+            {% if logo_base64 %}<div class="company-logo"><img src="{{ logo_base64 }}" alt="Logo"></div>{% endif %}
+            {% if organization.name %}<div class="company-name">{{ organization.name }}</div>{% endif %}
+            <div class="company-meta">
+                {% if organization.address %}{{ organization.address|striptags|truncatewords:14 }}<br>{% endif %}
+                {% if organization.phone %}{% trans "Tel" %}: {{ organization.phone }}{% endif %}{% if organization.phone and organization.email %} • {% endif %}{% if organization.email %}{{ organization.email }}{% endif %}
+                {% if organization.tax_region == 'cameroon' or organization.tax_region == 'ohada' %}
+                    {% if organization.niu %}<br><strong>NIU:</strong> {{ organization.niu }}{% endif %}
+                    {% if organization.rc_number %} • <strong>RC:</strong> {{ organization.rc_number }}{% elif organization.rccm_number %} • <strong>RCCM:</strong> {{ organization.rccm_number }}{% endif %}
+                {% elif organization.tax_region == 'eu' %}
+                    {% if organization.vat_number %}<br><strong>{% trans "VAT" %}:</strong> {{ organization.vat_number }}{% endif %}
+                {% elif organization.tax_region == 'canada' %}
+                    {% if organization.gst_number %}<br><strong>GST/HST:</strong> {{ organization.gst_number }}{% endif %}{% if organization.qst_number %} • <strong>QST:</strong> {{ organization.qst_number }}{% endif %}
+                {% elif organization.tax_region == 'usa' %}
+                    {% if organization.tax_number %}<br><strong>TIN:</strong> {{ organization.tax_number }}{% endif %}
                 {% endif %}
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="doc-type">{% if invoice.status == "quote" %}{% trans "QUOTE" %}{% else %}{% trans "INVOICE" %}{% endif %}</div>
+            <div class="doc-number"><span>N°</span> {{ invoice.invoice_number }}</div>
+            {% if invoice.status == 'paid' %}<span class="status-pill st-paid">{% trans "Paid" %}</span>
+            {% elif invoice.status == 'sent' %}<span class="status-pill st-sent">{% trans "Sent" %}</span>
+            {% elif invoice.status == 'draft' %}<span class="status-pill st-draft">{% trans "Draft" %}</span>
+            {% elif invoice.status == 'overdue' %}<span class="status-pill st-overdue">{% trans "Overdue" %}</span>
+            {% elif invoice.status == 'quote' %}<span class="status-pill st-quote">{% trans "Quote" %}</span>
+            {% elif invoice.status == 'pending' %}<span class="status-pill st-pending">{% trans "Pending" %}</span>
+            {% endif %}
+        </div>
+    </div>
 
-                {% if qr_code_base64 %}
-                <div class="sidebar-qr">
-                    <img src="{{ qr_code_base64 }}" alt="QR Code">
-                    <div class="qr-text">{% trans "Verification code" %}</div>
-                </div>
-                {% endif %}
-            </td>
+    <hr class="header-rule">
 
-            <!-- Main Content -->
-            <td class="main-content">
-                <!-- Header -->
-                <div class="content-header">
-                    <div class="invoice-title">{% trans "Invoice" %}</div>
-                    <div class="invoice-subtitle">{% if invoice.title %}{{ invoice.title }}{% else %}{% trans "Untitled" %}{% endif %}</div>
-                    <div class="invoice-number-badge">N° {{ invoice.invoice_number }}</div>
-                    {% if invoice.status == 'paid' %}
-                    <span class="status-badge status-paid">{% trans "Paid" %}</span>
-                    {% elif invoice.status == 'sent' %}
-                    <span class="status-badge status-sent">{% trans "Sent" %}</span>
-                    {% elif invoice.status == 'draft' %}
-                    <span class="status-badge status-draft">{% trans "Draft" %}</span>
-                    {% elif invoice.status == 'overdue' %}
-                    <span class="status-badge status-overdue">{% trans "Overdue" %}</span>
-                    {% endif %}
-                </div>
+    <!-- ===== Parties ===== -->
+    <div class="parties">
+        <div class="party">
+            <div class="party-label">{% if invoice.status == "quote" %}{% trans "Quote for" %}{% else %}{% trans "Billed to" %}{% endif %}</div>
+            {% if client %}
+            <div class="party-name">{{ client.name }}</div>
+            <div class="party-meta">
+                {% if client.address %}{{ client.address }}<br>{% endif %}
+                {% if client.email %}{{ client.email }}{% endif %}
+            </div>
+            {% else %}
+            <div class="party-meta">—</div>
+            {% endif %}
+        </div>
+        <div class="party">
+            {% if invoice.title %}
+            <div class="party-label">{% trans "Subject" %}</div>
+            <div class="party-meta" style="margin-top:0;">{{ invoice.title }}</div>
+            {% endif %}
+            {% if invoice.description %}
+            <div class="party-meta">{{ invoice.description|truncatewords:30 }}</div>
+            {% endif %}
+        </div>
+    </div>
 
-                <!-- Info Cards -->
-                <table class="info-cards">
-                    <tr>
-                        <td class="info-card">
-                            <div class="card-label">{% trans "Information" %}</div>
-                            <div class="card-text">
-                                {% if invoice.description %}<p>{{ invoice.description }}</p>{% endif %}
-                                {% if issue_date %}<p><strong>{% trans "Issue Date" %}:</strong> {{ issue_date|date:"d/m/Y" }}</p>{% endif %}
-                                {% if due_date %}<p><strong>{% trans "Due Date" %}:</strong> {{ due_date|date:"d/m/Y" }}</p>{% endif %}
-                            </div>
-                        </td>
-                        <td style="width: 3%;"></td>
-                        <td class="info-card">
-                            <div class="card-label">{% trans "Terms" %}</div>
-                            <div class="card-text">
-                                <p>{% trans "Payment upon receipt" %}</p>
-                                {% if discount_amount > 0 %}
-                                <p style="color:#c0392b;font-weight:600;">{% trans "Discount applied" %}{% if discount_type == "percent" %} : {{ discount_value|floatformat:"-2" }}%{% else %} : {{ discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}{% endif %}</p>
-                                {% else %}
-                                <p>{% trans "No discount" %}</p>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+    <!-- ===== Dates ===== -->
+    <div class="meta-strip">
+        <div class="meta-cell">
+            <div class="meta-k">{% trans "Issue Date" %}</div>
+            <div class="meta-v">{% if issue_date %}{{ issue_date|date:"d/m/Y" }}{% else %}—{% endif %}</div>
+        </div>
+        <div class="meta-cell">
+            <div class="meta-k">{% if invoice.status == "quote" %}{% trans "Valid until" %}{% else %}{% trans "Due Date" %}{% endif %}</div>
+            <div class="meta-v">{% if due_date %}{{ due_date|date:"d/m/Y" }}{% else %}—{% endif %}</div>
+        </div>
+        <div class="meta-cell">
+            <div class="meta-k">{% trans "Terms" %}</div>
+            <div class="meta-v">{% trans "Payment upon receipt" %}</div>
+        </div>
+    </div>
 
-                <!-- Items -->
-                <div class="items-section">
-                    <div class="section-header">{% trans "Service Details" %}</div>
-                    <table class="items-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 15%;">{% trans "Reference" %}</th>
-                                <th style="width: 40%;">{% trans "Description" %}</th>
-                                <th style="width: 12%;" class="text-center">{% trans "Qty" %}</th>
-                                <th style="width: 15%;" class="text-right">{% trans "Unit Price" %}</th>
-                                <th style="width: 18%;" class="text-right">{% trans "Total" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in items %}
-                            <tr>
-                                <td>{{ item.product_reference|default:"-" }}</td>
-                                <td>{{ item.description|default:"-" }}</td>
-                                <td class="text-center">{{ item.quantity|default:0 }}</td>
-                                <td class="text-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                                <td class="text-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 20px; color: #9ca3af;">{% trans "No items" %}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Totals -->
-                <div class="totals-area">
-                    <table class="totals-table">
-                        <tr>
-                            <td>{% trans "Subtotal" %}</td>
-                            <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                        </tr>
-                        {% if discount_amount > 0 %}
-                        <tr style="color:#c0392b;font-weight:600;">
-                            <td>{% trans "Discount" %}{% if discount_type == "percent" %} ({{ discount_value|floatformat:"-2" }}%){% endif %}</td>
-                            <td>−{{ discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                        </tr>
-                        {% endif %}
-                        {% if tax_amount > 0 %}
-                        <tr>
-                            <td>{% trans "Taxes" %}</td>
-                            <td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                        </tr>
-                        {% endif %}
-                        <tr class="total-row">
-                            <td>{% trans "Total Due" %}</td>
-                            <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <!-- Footer -->
-                <div class="footer">
-                    {% if organization.name %}<p><strong>{{ organization.name }}</strong></p>{% endif %}
-                    <p>
-                        {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}{% endif %}
-                        {% if organization.phone %} • {% trans "Tel" %}: {{ organization.phone }}{% endif %}
-                    </p>
-                    {# Coordonnées bancaires (optionnel) #}
-                    {% if organization.bank_account %}
-                    <p>
-                        <strong>{% trans "Bank" %}:</strong> {{ organization.bank_name|default:"" }}{% if organization.bank_name %} • {% endif %}{% trans "Account" %}: {{ organization.bank_account }}
-                    </p>
-                    {% endif %}
-                    <div class="footer-meta">
-                        {% trans "Document generated on" %} {% now "d/m/Y à H:i" %}
-                    </div>
-                </div>
-            </td>
-        </tr>
+    <!-- ===== Items ===== -->
+    <table class="items">
+        <thead>
+            <tr>
+                <th style="width:14%;">{% trans "Reference" %}</th>
+                <th style="width:42%;">{% trans "Description" %}</th>
+                <th style="width:10%;" class="t-center">{% trans "Qty" %}</th>
+                <th style="width:16%;" class="t-right">{% trans "Unit Price" %}</th>
+                <th style="width:18%;" class="t-right">{% trans "Total" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td class="item-ref">{{ item.product_reference|default:"-" }}</td>
+                <td class="item-desc">{{ item.description|default:"-" }}</td>
+                <td class="t-center">{{ item.quantity|default:0 }}</td>
+                <td class="t-right">{{ item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                <td class="t-right">{{ item.quantity|default:0|mul:item.unit_price|default:0|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center; padding:18px; color:#9ca3af;">{% trans "No items" %}</td></tr>
+            {% endfor %}
+        </tbody>
     </table>
+
+    <!-- ===== Totals ===== -->
+    <div class="totals-wrap">
+        <div class="totals-spacer"></div>
+        <div class="totals-box">
+            <table class="totals">
+                <tr>
+                    <td class="k">{% trans "Subtotal" %}</td>
+                    <td class="v">{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                </tr>
+                {% if discount_amount > 0 %}
+                <tr class="discount">
+                    <td class="k">{% trans "Discount" %}{% if discount_type == "percent" %} ({{ discount_value|floatformat:"-2" }}%){% endif %}</td>
+                    <td class="v">−{{ discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                </tr>
+                {% endif %}
+                {% if tax_amount > 0 %}
+                <tr>
+                    <td class="k">{% trans "Taxes" %}</td>
+                    <td class="v">{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                </tr>
+                {% endif %}
+                <tr class="grand">
+                    <td class="k">{% trans "Total Due" %}</td>
+                    <td class="v">{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== Notes + QR ===== -->
+    <div class="bottom">
+        <div class="notes">
+            {% if organization.bank_account %}
+            <div class="notes-label">{% trans "Payment details" %}</div>
+            <div class="notes-text">
+                {% if organization.bank_name %}<strong>{% trans "Bank" %}:</strong> {{ organization.bank_name }}<br>{% endif %}
+                {% trans "Account" %}: {{ organization.bank_account }}
+            </div>
+            {% endif %}
+            {% if invoice.status == "quote" %}
+            <div class="notes-label" style="margin-top:10px;">{% trans "Note" %}</div>
+            <div class="notes-text">{% trans "This quote is valid until the date indicated above." %}</div>
+            {% endif %}
+        </div>
+        {% if qr_code_base64 %}
+        <div class="qr-cell">
+            <img src="{{ qr_code_base64 }}" alt="QR">
+            <div class="qr-cap">{% trans "Verification code" %}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <div class="footer">
+        {% if organization.name %}<strong>{{ organization.name }}</strong>{% endif %}
+        {% if organization.address %} — {{ organization.address|striptags|truncatewords:15 }}{% endif %}
+        <br>{% trans "Document generated on" %} {% now "d/m/Y à H:i" %}
+    </div>
 </body>
 </html>
