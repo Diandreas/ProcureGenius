@@ -497,3 +497,5 @@ msgstr "Note"
 msgid "This quote is valid until the date indicated above."
 msgstr "Ce devis est valable jusqu’à la date indiquée ci-dessus."
 
+msgid "INVOICE"
+msgstr "FACTURE"

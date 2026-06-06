@@ -466,3 +466,5 @@ msgstr "This quote is valid until the date indicated above."
 msgid "Pending"
 msgstr "Pending"
 
+msgid "INVOICE"
+msgstr "INVOICE"
