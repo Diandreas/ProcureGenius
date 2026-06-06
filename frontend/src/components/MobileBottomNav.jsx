@@ -156,41 +156,34 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     <Paper
       data-tutorial="mobile-nav"
       sx={{
+        // Barre flottante : détachée du bas et des bords, centrée et arrondie
         position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+        left: 12,
+        right: 12,
+        mx: 'auto',
+        maxWidth: 460,
         display: { xs: 'block', md: 'none' },
         zIndex: 1000,
-        bgcolor: isDark ? alpha(theme.palette.background.paper, 0.98) : alpha(theme.palette.background.paper, 0.95),
+        borderRadius: 999,
+        overflow: 'hidden',
+        bgcolor: isDark ? alpha(theme.palette.background.paper, 0.98) : theme.palette.background.paper,
         backdropFilter: 'blur(20px)',
-        borderTop: 'none',
-        // Ombres neumorphiques douces pour la barre
+        border: 'none',
+        // Ombre neumorphique (effet flottant)
         boxShadow: isDark
-          ? '0 -4px 24px rgba(0, 0, 0, 0.5), 0 -2px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-          : '0 -4px 20px rgba(0, 0, 0, 0.08), 0 -2px 10px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-        // Bordure subtile en haut
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: '10%',
-          right: '10%',
-          height: '1px',
-          background: isDark
-            ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)'
-            : 'linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent)',
-        }
+          ? '6px 6px 16px rgba(0,0,0,0.55), -6px -6px 16px rgba(255,255,255,0.04)'
+          : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
       }}
       elevation={0}
     >
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        px: 0.5, 
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: 1,
         py: 0.75,
-        maxWidth: 500,
+        maxWidth: 460,
         mx: 'auto',
       }}>
         {/* Items de gauche */}

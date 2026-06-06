@@ -1195,14 +1195,22 @@ function MainLayout() {
             variant="permanent"
             sx={{
               display: { xs: 'none', md: 'block' },
+              // Sidebar flottante : détachée des bords (marges), arrondie,
+              // ombre neumorphique — reste dans sa colonne réservée (sidebarWidth).
               '& .MuiDrawer-paper': {
                 boxSizing: 'border-box',
-                width: sidebarWidth,
+                width: sidebarWidth - 24,
+                left: 12,
+                top: 12,
+                height: 'calc(100% - 24px)',
+                borderRadius: 18,
                 overflowX: 'hidden',
                 transition: 'width 0.25s ease',
-                bgcolor: mode === 'light' ? '#f8fafc' : 'background.paper',
-                borderRight: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
-                boxShadow: mode === 'light' ? '1px 0 0 rgba(0,0,0,0.04)' : 'none',
+                bgcolor: 'background.paper',
+                border: 'none',
+                boxShadow: mode === 'light'
+                  ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+                  : '6px 6px 16px #14191f, -6px -6px 16px #283041',
               },
             }}
             open
