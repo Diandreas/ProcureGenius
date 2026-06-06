@@ -16,6 +16,7 @@ urlpatterns = [
 
     # Subscription management
     path('subscribe/', api_views.subscribe, name='subscribe'),
+    path('start-trial/', api_views.start_trial, name='start_trial'),
     path('change-plan/', api_views.change_plan, name='change_plan'),
     path('cancel/', api_views.cancel_subscription, name='cancel_subscription'),
 

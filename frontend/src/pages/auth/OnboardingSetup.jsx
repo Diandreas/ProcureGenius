@@ -154,6 +154,20 @@ function OnboardingSetup() {
   const registeredCompanyName = localStorage.getItem('onboarding_company_name') || '';
 
   const [activeStep, setActiveStep] = useState(0);
+  const [selectedPlan, setSelectedPlan] = useState('pro'); // palier d'essai choisi
+  const [startingPlan, setStartingPlan] = useState(false);
+
+  const handleStartAndEnter = async () => {
+    setStartingPlan(true);
+    try {
+      await api.post('/subscriptions/start-trial/', { plan_code: selectedPlan });
+    } catch (e) {
+      // non bloquant : l'utilisateur reste sur son plan par défaut
+      console.warn('start-trial:', e?.response?.data || e?.message);
+    } finally {
+      window.location.href = '/dashboard';
+    }
+  };
   const [loading, setLoading] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
 
@@ -746,6 +760,54 @@ function OnboardingSetup() {
                 </Box>
               </Box>
             </Paper>
+
+            {/* Choix de la formule — essai 30 jours sans carte */}
+            <Box sx={{ maxWidth: 720, mx: 'auto', mt: 5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+                Démarrez avec la formule qui vous convient
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                1 mois d'essai offert sur Pro et Business — <strong>sans carte bancaire</strong>. Vous pourrez changer à tout moment.
+              </Typography>
+              <Grid container spacing={2}>
+                {[
+                  { code: 'free', name: 'Gratuit', tag: 'Pour démarrer', desc: 'Clients, produits et facturation de base.', cta: 'Rester en gratuit' },
+                  { code: 'pro', name: 'Pro', tag: '30 jours offerts', desc: 'IA, contrats, comptabilité, analytics.', cta: 'Essayer Pro', popular: true },
+                  { code: 'business', name: 'Business', tag: '30 jours offerts', desc: 'Tout illimité + E-Sourcing et support prioritaire.', cta: 'Essayer Business' },
+                ].map((p) => {
+                  const sel = selectedPlan === p.code;
+                  return (
+                    <Grid item xs={12} sm={4} key={p.code}>
+                      <Paper
+                        onClick={() => setSelectedPlan(p.code)}
+                        variant="outlined"
+                        sx={{
+                          p: 2.5, borderRadius: 3, cursor: 'pointer', height: '100%',
+                          position: 'relative', transition: 'all 0.2s',
+                          borderColor: sel ? 'primary.main' : 'divider',
+                          borderWidth: sel ? 2 : 1,
+                          boxShadow: sel ? '0 12px 30px -10px rgba(37,99,235,0.35)' : 'none',
+                          bgcolor: sel ? 'rgba(37,99,235,0.04)' : 'background.paper',
+                        }}
+                      >
+                        {p.popular && (
+                          <Box sx={{ position: 'absolute', top: -10, right: 12, bgcolor: '#f59e0b', color: '#0f172a', fontWeight: 800, fontSize: 11, px: 1, py: 0.25, borderRadius: 1 }}>
+                            Recommandé
+                          </Box>
+                        )}
+                        <Typography sx={{ fontWeight: 800, fontSize: '1.05rem' }}>{p.name}</Typography>
+                        <Typography variant="caption" sx={{ color: p.code === 'free' ? 'text.secondary' : 'success.main', fontWeight: 700 }}>
+                          {p.tag}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, lineHeight: 1.5 }}>
+                          {p.desc}
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
           </Box>
         );
 
@@ -846,15 +908,23 @@ function OnboardingSetup() {
 
         {/* Completion screen CTA */}
         {isCompletionScreen && (
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
+          <Box sx={{ textAlign: 'center', mt: 4 }}>
             <Button
               variant="contained"
               size="large"
-              sx={{ minWidth: 220 }}
-              onClick={() => { window.location.href = '/dashboard'; }}
+              disabled={startingPlan}
+              sx={{ minWidth: 260, py: 1.4, fontWeight: 700, textTransform: 'none' }}
+              onClick={handleStartAndEnter}
             >
-              Accéder au dashboard
+              {startingPlan
+                ? 'Activation…'
+                : selectedPlan === 'free'
+                  ? 'Démarrer en gratuit'
+                  : `Démarrer l'essai ${selectedPlan === 'pro' ? 'Pro' : 'Business'} — 30 jours offerts`}
             </Button>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>
+              Aucune carte bancaire requise. Annulation à tout moment.
+            </Typography>
           </Box>
         )}
       </Container>

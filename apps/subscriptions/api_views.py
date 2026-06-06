@@ -192,6 +192,62 @@ def subscribe(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def start_trial(request):
+    """
+    Démarre un essai gratuit (sans carte) du palier choisi à l'inscription.
+
+    POST /api/v1/subscriptions/start-trial/  { "plan_code": "pro" | "business" | "free" }
+
+    - free : reste/repasse en plan gratuit
+    - pro/business : essai de TRIAL_PERIOD_DAYS jours (status=trial), sans carte
+    Refuse de toucher un abonnement déjà payant/actif via Stripe.
+    """
+    from django.conf import settings as dj_settings
+    from datetime import timedelta
+
+    organization = request.user.organization
+    if not organization:
+        return Response({'error': _('No organization found')}, status=status.HTTP_400_BAD_REQUEST)
+
+    plan_code = (request.data.get('plan_code') or 'free').lower()
+    try:
+        plan = SubscriptionPlan.objects.get(code=plan_code, is_active=True)
+    except SubscriptionPlan.DoesNotExist:
+        return Response({'error': _('Invalid plan code')}, status=status.HTTP_400_BAD_REQUEST)
+
+    sub = QuotaService.get_subscription(organization)
+    # Ne pas écraser un abonnement déjà payé via Stripe
+    if sub and getattr(sub, 'stripe_subscription_id', ''):
+        return Response({'error': _('Un abonnement payant est déjà actif.')}, status=status.HTTP_400_BAD_REQUEST)
+
+    trial_days = getattr(dj_settings, 'TRIAL_PERIOD_DAYS', 30)
+    now = timezone.now()
+
+    if plan_code == 'free':
+        new_status, ends = 'active', now + timedelta(days=365 * 10)
+        trial_ends = None
+    else:
+        new_status, ends = 'trial', now + timedelta(days=trial_days)
+        trial_ends = ends
+
+    if not sub:
+        sub = Subscription(organization=organization)
+    sub.plan = plan
+    sub.status = new_status
+    sub.billing_period = 'monthly'
+    sub.current_period_start = now
+    sub.current_period_end = ends
+    sub.trial_ends_at = trial_ends
+    sub.save()
+
+    return Response({
+        'message': _('Essai démarré') if new_status == 'trial' else _('Plan gratuit activé'),
+        'subscription': SubscriptionSerializer(sub).data,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def change_plan(request):
     """
     Change subscription plan (upgrade or downgrade)
