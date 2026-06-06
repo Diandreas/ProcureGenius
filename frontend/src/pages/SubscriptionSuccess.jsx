@@ -12,18 +12,26 @@ const SubscriptionSuccess = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStatus = async () => {
+    let redirectTimer;
+    const activate = async () => {
       try {
+        // Activer l'abonnement de façon synchrone (sans dépendre du webhook)
+        if (sessionId) {
+          try { await subscriptionAPI.confirmStripeSession(sessionId); } catch { /* le webhook prendra le relais */ }
+        }
         const data = await subscriptionAPI.getStatus();
         setStatus(data);
       } catch {
         // ignore
       } finally {
         setLoading(false);
+        // Redirection automatique vers le dashboard après un court instant
+        redirectTimer = setTimeout(() => navigate('/dashboard'), 2500);
       }
     };
-    fetchStatus();
-  }, []);
+    activate();
+    return () => clearTimeout(redirectTimer);
+  }, [sessionId, navigate]);
 
   const planName = status?.subscription?.plan?.name || 'votre nouveau plan';
 

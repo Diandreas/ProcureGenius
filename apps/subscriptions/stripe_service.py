@@ -194,7 +194,7 @@ class StripeService:
             currency='EUR',
             status='completed',
             payment_method='stripe',
-            stripe_payment_intent_id=session.get('payment_intent', ''),
+            stripe_payment_intent_id=session.get('payment_intent') or '',
         )
         logger.info(f"Subscription activated: org={org_id} plan={plan_code}")
 

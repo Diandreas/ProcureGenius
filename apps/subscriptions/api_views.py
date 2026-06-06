@@ -434,6 +434,54 @@ def stripe_create_checkout(request):
         return Response({'error': _('Stripe error: ') + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['POST', 'GET'])
+@permission_classes([IsAuthenticated])
+def stripe_confirm_session(request):
+    """
+    Active l'abonnement de façon synchrone après un paiement réussi, à partir
+    du session_id Stripe — sans dépendre du webhook (fiabilité + redirection).
+
+    POST/GET /api/v1/subscriptions/stripe/confirm-session/?session_id=cs_...
+    """
+    import stripe
+    from django.conf import settings
+    from .stripe_service import StripeService
+
+    organization = request.user.organization
+    if not organization:
+        return Response({'error': _('No organization found')}, status=status.HTTP_400_BAD_REQUEST)
+
+    session_id = request.data.get('session_id') or request.query_params.get('session_id')
+    if not session_id:
+        return Response({'error': 'session_id requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+    key = getattr(settings, 'STRIPE_SECRET_KEY', '')
+    if not key:
+        return Response({'error': 'Stripe non configuré'}, status=status.HTTP_400_BAD_REQUEST)
+    stripe.api_key = key
+
+    try:
+        session = stripe.checkout.Session.retrieve(session_id, expand=['subscription'])
+    except Exception as e:
+        return Response({'error': f'Session introuvable: {e}'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Sécurité : la session doit appartenir à l'organisation de l'utilisateur
+    sess_org = (session.get('metadata') or {}).get('organization_id')
+    if sess_org and str(sess_org) != str(organization.id):
+        return Response({'error': 'Session non autorisée'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Activer seulement si le paiement est confirmé
+    if session.get('payment_status') == 'paid' or session.get('status') == 'complete':
+        try:
+            # Réutilise la logique d'activation du webhook (idempotente)
+            StripeService._handle_checkout_completed(session)
+        except Exception as e:
+            return Response({'error': f'Activation échouée: {e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'activated': True})
+
+    return Response({'activated': False, 'payment_status': session.get('payment_status')})
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def stripe_webhook(request):

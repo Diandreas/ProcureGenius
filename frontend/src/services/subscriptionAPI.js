@@ -101,6 +101,15 @@ const subscriptionAPI = {
   },
 
   /**
+   * Confirme et active l'abonnement après paiement, à partir du session_id.
+   * Fiable même si le webhook n'est pas (encore) configuré.
+   */
+  confirmStripeSession: async (sessionId) => {
+    const response = await api.post('/subscriptions/stripe/confirm-session/', { session_id: sessionId });
+    return response.data;
+  },
+
+  /**
    * Open Stripe customer portal (manage billing, cancel, etc.)
    */
   openStripePortal: async () => {
