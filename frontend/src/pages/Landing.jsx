@@ -407,6 +407,16 @@ export default function Landing() {
   const bgColor = '#ffffff';       // fond blanc pur
   const bgSection = '#f6f8fc';     // section légèrement teintée bleu très clair
 
+  // Styles éditoriaux partagés (premium, aéré)
+  const eyebrow = {
+    display: 'inline-block', fontSize: '0.78rem', fontWeight: 700,
+    letterSpacing: '0.22em', textTransform: 'uppercase', color: '#2563eb', mb: 2.5,
+  };
+  const serifTitle = {
+    fontFamily: '"Fraunces", Georgia, serif', fontWeight: 500,
+    letterSpacing: '-0.02em', lineHeight: 1.08, color: '#0f172a',
+  };
+
   // Handle hash scroll
   useEffect(() => {
     if (location.hash) {
@@ -481,6 +491,10 @@ export default function Landing() {
       gsap.to('.hero-right', { yPercent: -22, ease: 'none', scrollTrigger: paraTrigger });
       // Bloc texte : léger décalage vers le bas (profondeur intermédiaire)
       gsap.to('.hero-left', { yPercent: 14, ease: 'none', scrollTrigger: paraTrigger });
+
+      // Flottement doux et continu de la mascotte et de la carte-preuve (vie)
+      gsap.to('.hero-float', { y: -14, duration: 2.4, ease: 'sine.inOut', repeat: -1, yoyo: true });
+      gsap.to('.hero-chip', { y: 10, duration: 2.8, ease: 'sine.inOut', repeat: -1, yoyo: true, delay: 0.4 });
 
       // Révélations au scroll des sections (cartes, blocs, CTA…)
       // État initial masqué appliqué avant le paint (useGSAP = layoutEffect).
@@ -658,19 +672,53 @@ export default function Landing() {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Box className="hero-right" sx={{ willChange: 'transform' }}>
+              <Box className="hero-right" sx={{ willChange: 'transform', position: 'relative' }}>
+                {/* Carte visuelle principale (Lottie) */}
                 <Box sx={{
-                  borderRadius: 4,
+                  borderRadius: 5,
                   overflow: 'hidden',
-                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-                  boxShadow: isDark ? '0 40px 80px rgba(0,0,0,0.5)' : '0 24px 60px rgba(37,99,235,0.08)',
-                  bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(37,99,235,0.02)',
+                  border: '1px solid rgba(37,99,235,0.10)',
+                  boxShadow: '0 40px 90px -30px rgba(37,99,235,0.28)',
+                  bgcolor: 'rgba(37,99,235,0.025)',
+                  position: 'relative',
+                  zIndex: 1,
                 }}>
                   <dotlottie-wc
                     src="https://lottie.host/ea0ff272-a2d1-4a4d-a09d-b9d190ae1244/nTY70f1Nfx.lottie"
-                    style={{ width: '100%', height: '560px' }}
+                    style={{ width: '100%', height: '520px' }}
                     autoplay loop
                   />
+                </Box>
+
+                {/* Mascotte Procura — accent de marque flottant */}
+                <Box
+                  component="img"
+                  src="/mascote/Procura_thumbup.png"
+                  alt="Procura"
+                  className="hero-float"
+                  sx={{
+                    position: 'absolute', bottom: -28, left: -34, width: { xs: 120, sm: 168 },
+                    zIndex: 2, pointerEvents: 'none',
+                    filter: 'drop-shadow(0 18px 30px rgba(15,23,42,0.18))',
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                />
+
+                {/* Carte flottante "preuve" — chiffre clé */}
+                <Box className="hero-chip" sx={{
+                  position: 'absolute', top: 28, right: -18, zIndex: 3,
+                  bgcolor: '#fff', borderRadius: 3, px: 2, py: 1.25,
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 16px 40px -12px rgba(15,23,42,0.2)',
+                  display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1.25,
+                }}>
+                  <Box sx={{ width: 34, height: 34, borderRadius: 2, bgcolor: 'rgba(16,185,129,0.12)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <TrendingUp sx={{ fontSize: 20 }} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 600, fontSize: '1.1rem', lineHeight: 1, color: '#0f172a' }}>−30%</Typography>
+                    <Typography sx={{ fontSize: '0.68rem', color: 'rgba(0,0,0,0.5)', fontWeight: 600 }}>de temps admin</Typography>
+                  </Box>
                 </Box>
               </Box>
             </Grid>
@@ -711,30 +759,69 @@ export default function Landing() {
         </Container>
       </Box>
 
+      {/* ─── Comment ça marche — guidé par la mascotte ───────────── */}
+      <Box sx={{ py: { xs: 11, sm: 16 }, bgcolor: bgColor }}>
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: { xs: 7, sm: 10 } }}>
+            <div className="gsap-reveal">
+              <Typography sx={{ ...eyebrow }}>En 3 étapes</Typography>
+              <Typography variant="h2" sx={{ ...serifTitle, fontSize: { xs: '2rem', sm: '3rem' } }}>
+                De la question à l'action,<br />
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>sans effort</Box>.
+              </Typography>
+            </div>
+          </Box>
+
+          <Grid container spacing={{ xs: 5, md: 6 }} alignItems="flex-start">
+            {[
+              { img: '/mascote/Procura_thinking.png', step: '01', title: 'Vous demandez', desc: 'Posez une question en langage naturel : « Quels produits sont bientôt en rupture ? »' },
+              { img: '/mascote/Procura_reading.png', step: '02', title: 'Procura analyse', desc: 'L\'IA parcourt vos stocks, ventes et marges, puis détecte ce qui compte vraiment.' },
+              { img: '/mascote/Procura_thumbup.png', step: '03', title: 'Vous validez', desc: 'Un bon de commande, une facture, une relance — généré et prêt en un clic.' },
+            ].map((s, i) => (
+              <Grid item xs={12} md={4} key={i}>
+                <Box className="gsap-reveal" sx={{ textAlign: 'center', px: { xs: 2, md: 1 } }}>
+                  <Box sx={{
+                    position: 'relative', width: 150, height: 150, mx: 'auto', mb: 3,
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle at 50% 40%, rgba(37,99,235,0.10), rgba(37,99,235,0) 70%)',
+                    display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+                  }}>
+                    <Box component="img" src={s.img} alt={s.title} sx={{ width: 132, filter: 'drop-shadow(0 14px 24px rgba(15,23,42,0.14))' }} />
+                    <Box sx={{
+                      position: 'absolute', top: 4, right: 6,
+                      fontFamily: '"Fraunces", serif', fontSize: '1.6rem', fontWeight: 600,
+                      color: 'rgba(37,99,235,0.22)',
+                    }}>{s.step}</Box>
+                  </Box>
+                  <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 600, fontSize: '1.35rem', color: '#0f172a', mb: 1 }}>
+                    {s.title}
+                  </Typography>
+                  <Typography sx={{ color: 'rgba(0,0,0,0.55)', fontSize: '0.98rem', lineHeight: 1.6, maxWidth: 320, mx: 'auto' }}>
+                    {s.desc}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
       {/* ─── Features ─────────────────────────────────────────── */}
       <Box sx={{ py: { xs: 10, sm: 14 }, bgcolor: bgColor }}>
         <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 7, sm: 9 } }}>
             <div className="gsap-reveal">
-              <Chip label={t('platform.badge')} sx={{
-                mb: 3,
-                bgcolor: isDark ? 'rgba(37,99,235,0.12)' : 'rgba(37,99,235,0.08)',
-                border: `1px solid ${alpha('#2563eb', 0.25)}`,
-                color: '#2563eb', fontWeight: 700, px: 1, py: 2.5, borderRadius: 2,
-              }} />
-              <Typography variant="h2" sx={{
-                fontWeight: 900, fontSize: { xs: '1.8rem', sm: '2.6rem' },
-                mb: 2.5, color: isDark ? '#fff' : '#0f172a',
-              }}>
+              <Typography sx={{ ...eyebrow }}>{t('platform.badge')}</Typography>
+              <Typography variant="h2" sx={{ ...serifTitle, fontSize: { xs: '2rem', sm: '3rem' }, mb: 2 }}>
                 {t('platform.titleStart')}{' '}
-                <Box component="span" sx={{ color: '#2563eb' }}>
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>
                   {t('platform.titleHighlight')}
                 </Box>{' '}
                 {t('platform.titleEnd')}
               </Typography>
               <Typography sx={{
-                color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)',
-                maxWidth: 580, mx: 'auto', fontSize: '1.05rem', lineHeight: 1.65,
+                color: 'rgba(0,0,0,0.55)',
+                maxWidth: 560, mx: 'auto', fontSize: '1.05rem', lineHeight: 1.65,
               }}>
                 {t('platform.subtitle')}
               </Typography>
@@ -1012,18 +1099,22 @@ export default function Landing() {
         }} />
         <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
           <div className="gsap-reveal">
-            <Typography variant="h2" sx={{
-              fontWeight: 900, fontSize: { xs: '2rem', sm: '2.8rem' },
-              mb: 2.5, color: isDark ? '#fff' : '#0f172a',
-            }}>
-              Prêt à transformer votre gestion{' '}
-              <Box component="span" sx={{ color: '#2563eb' }}>achats</Box> ?
+            <Box
+              component="img"
+              src="/mascote/Procura_excited.png"
+              alt="Procura"
+              className="hero-float"
+              sx={{ width: { xs: 110, sm: 138 }, mb: 2, filter: 'drop-shadow(0 16px 28px rgba(15,23,42,0.16))' }}
+            />
+            <Typography variant="h2" sx={{ ...serifTitle, fontSize: { xs: '2.1rem', sm: '3rem' }, mb: 2.5 }}>
+              Prêt à gagner{' '}
+              <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>du temps</Box> ?
             </Typography>
             <Typography sx={{
-              color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
-              fontSize: '1.05rem', lineHeight: 1.65, mb: 5,
+              color: 'rgba(0,0,0,0.55)',
+              fontSize: '1.08rem', lineHeight: 1.65, mb: 5, maxWidth: 460, mx: 'auto',
             }}>
-              Créez votre compte en 2 minutes et gérez votre premier devis, facture ou bon de commande dès aujourd&apos;hui — un mois offert, sans carte.
+              Créez votre compte en 2 minutes. Un mois offert, sans carte.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
