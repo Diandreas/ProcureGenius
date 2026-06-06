@@ -22,12 +22,12 @@ body.light,
   /* Secondary */
   --color-secondary: #64748b;
   
-  /* Backgrounds - Neumorphism */
-  --color-bg: #e6e9ef;
-  --color-bg-paper: #e6e9ef;
-  --color-bg-subtle: #e6e9ef;
-  --color-bg-hover: rgba(0, 0, 0, 0.04);
-  --color-bg-card: #e6e9ef;
+  /* Backgrounds - Neumorphism (surface unifiée, premium) */
+  --color-bg: #eef1f6;
+  --color-bg-paper: #eef1f6;
+  --color-bg-subtle: #eef1f6;
+  --color-bg-hover: rgba(15, 23, 42, 0.035);
+  --color-bg-card: #eef1f6;
   
   /* Text */
   --color-text: #0f172a;
@@ -48,11 +48,11 @@ body.light,
   --color-info: #3b82f6;
   --color-info-bg: rgba(59, 130, 246, 0.1);
   
-  /* Shadows - Neumorphism Doux */
-  --shadow-sm: 3px 3px 6px #d1d5db, -3px -3px 6px #ffffff;
-  --shadow-md: 5px 5px 10px #d1d5db, -5px -5px 10px #ffffff;
-  --shadow-lg: 8px 8px 16px #d1d5db, -8px -8px 16px #ffffff;
-  --shadow-inset: inset 3px 3px 6px #d1d5db, inset -3px -3px 6px #ffffff;
+  /* Shadows - Neumorphism premium (doux, diffus, teinte froide subtile) */
+  --shadow-sm: 4px 4px 10px #cdd4e0, -4px -4px 10px #ffffff;
+  --shadow-md: 7px 7px 18px #c9d1de, -7px -7px 18px #ffffff;
+  --shadow-lg: 12px 12px 28px #c4cddc, -12px -12px 28px #ffffff;
+  --shadow-inset: inset 4px 4px 9px #cdd4e0, inset -4px -4px 9px #ffffff;
   
   /* Scrollbar */
   --scrollbar-track: #f1f5f9;

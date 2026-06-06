@@ -1,16 +1,16 @@
 // Tokens de couleurs pour le neumorphism
 export const neumorphicColors = {
   light: {
-    background: '#e6e9ef',
-    paper: '#e6e9ef',
-    shadowDark: '#c1c5cc',
+    background: '#eef1f6',
+    paper: '#eef1f6',
+    shadowDark: '#cdd4e0',   // bleu-gris doux (raffiné, pas un gris plat)
     shadowLight: '#ffffff',
   },
   dark: {
     background: '#1e2530',
     paper: '#1e2530',
-    shadowDark: '#151820',
-    shadowLight: '#272e3d',
+    shadowDark: '#14191f',
+    shadowLight: '#283041',
   },
 };
 
