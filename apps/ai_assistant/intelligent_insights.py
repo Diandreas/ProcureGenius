@@ -64,8 +64,8 @@ class IntelligentInsightsEngine:
         insights = []
 
         try:
-            # Factures brouillon de plus de 24h
-            threshold = timezone.now() - timedelta(hours=24)
+            # Factures brouillon de plus de 3 jours (vrais oublis, moins de bruit)
+            threshold = timezone.now() - timedelta(days=3)
 
             draft_invoices = list(Invoice.objects.filter(
                 created_by__organization=self.organization,

@@ -554,17 +554,19 @@ function MainLayout() {
       </Box>
 
       {/* Bottom Section */}
-      <Box sx={{ px: 2, pb: 3 }}>
+      <Box sx={{ px: collapsed ? 1 : 2, pb: 3 }}>
         {userPermissions?.can_manage_users && (
           <ListItem disablePadding sx={{ mb: 1 }}>
+            <Tooltip title={collapsed ? t('navigation:menu.users') : ''} placement="right" arrow>
             <ListItemButton
               onClick={() => navigate('/settings/users')}
               sx={{
-                minHeight: 48, px: 2, borderRadius: 3,
+                minHeight: 48, px: 1.5, borderRadius: 3,
+                justifyContent: collapsed ? 'center' : 'flex-start',
                 '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
               }}
             >
-              <ListItemIcon sx={{ minWidth: 40 }}>
+              <ListItemIcon sx={{ minWidth: collapsed ? 0 : 40, justifyContent: 'center' }}>
                 {mode === 'dark' ? (
                   <Box sx={{
                     width: 30, height: 30, borderRadius: '8px',
@@ -578,23 +580,28 @@ function MainLayout() {
                   <SupervisorAccount sx={{ fontSize: 22, color: 'text.secondary' }} />
                 )}
               </ListItemIcon>
-              <ListItemText
-                primary={t('navigation:menu.users')}
-                primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
-              />
+              {!collapsed && (
+                <ListItemText
+                  primary={t('navigation:menu.users')}
+                  primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
+                />
+              )}
             </ListItemButton>
+            </Tooltip>
           </ListItem>
         )}
         <ListItem disablePadding>
+          <Tooltip title={collapsed ? t('navigation:menu.settings') : ''} placement="right" arrow>
           <ListItemButton
             onClick={() => navigate('/settings')}
             data-tutorial="menu-settings"
             sx={{
-              minHeight: 48, px: 2, borderRadius: 3,
+              minHeight: 48, px: 1.5, borderRadius: 3,
+              justifyContent: collapsed ? 'center' : 'flex-start',
               '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
             }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
+            <ListItemIcon sx={{ minWidth: collapsed ? 0 : 40, justifyContent: 'center' }}>
               <IconImage
                 src="/icon/setting.png"
                 alt="Settings"
@@ -602,11 +609,14 @@ function MainLayout() {
                 withBackground={mode === 'dark'}
               />
             </ListItemIcon>
-            <ListItemText
-              primary={t('navigation:menu.settings')}
-              primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
-            />
+            {!collapsed && (
+              <ListItemText
+                primary={t('navigation:menu.settings')}
+                primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
+              />
+            )}
           </ListItemButton>
+          </Tooltip>
         </ListItem>
       </Box>
     </Box>
@@ -625,19 +635,20 @@ function MainLayout() {
           position="fixed"
           elevation={0}
           sx={{
-            width: { xs: 'calc(100% - 32px)', md: `calc(100% - ${sidebarWidth}px)` },
-            ml: { xs: '16px', md: `${sidebarWidth}px` },
-            mr: { xs: '16px', md: 0 },
-            transition: 'width 0.25s ease, margin-left 0.25s ease',
-            mt: { xs: 1.5, md: 0 },
-            borderRadius: { xs: 2.5, md: 0 },
+            // Barre détachée et flottante : marges autour, coins arrondis,
+            // ombre neumorphique (effet "carte qui flotte").
+            width: { xs: 'calc(100% - 32px)', md: `calc(100% - ${sidebarWidth}px - 36px)` },
+            ml: { xs: '16px', md: `${sidebarWidth + 18}px` },
+            mr: { xs: '16px', md: '18px' },
+            mt: { xs: 1.5, md: 1.5 },
+            borderRadius: { xs: 2.5, md: 3 },
             bgcolor: 'background.paper',
-            borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+            border: 'none',
             boxShadow: mode === 'light'
-              ? '0 1px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.02)'
-              : '0 1px 8px rgba(0,0,0,0.3)',
+              ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+              : '6px 6px 16px #14191f, -6px -6px 16px #283041',
             color: 'text.primary',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'width 0.25s ease, margin-left 0.25s ease',
           }}
         >
           <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.5, sm: 4 }, gap: { xs: 0.5, sm: 1 } }}>
@@ -1213,7 +1224,8 @@ function MainLayout() {
             bgcolor: 'background.default',
           }}
         >
-          <Toolbar sx={{ minHeight: { xs: 56, sm: 60 } }} />
+          {/* Espaceur : tient compte de la barre flottante (marge haute) */}
+          <Toolbar sx={{ minHeight: { xs: 72, sm: 80 } }} />
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             <LayoutGroup>
               <PageTransition locationKey={location.pathname}>

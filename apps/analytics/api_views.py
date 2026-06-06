@@ -118,61 +118,35 @@ class AIDashboardGreetingView(APIView):
     """Génère un message de bienvenue personnalisé par l'IA basé sur les stats réelles"""
     permission_classes = [IsAuthenticated]
 
+    # Bibliothèque de citations courtes — aucune dépendance LLM (économie de tokens).
+    QUOTES = [
+        "La simplicité est la sophistication suprême.",
+        "Ce qui se mesure s'améliore.",
+        "Le succès, c'est la somme de petits efforts répétés chaque jour.",
+        "Bien commencer, c'est déjà à moitié réussir.",
+        "La discipline est le pont entre les objectifs et les résultats.",
+        "Un client satisfait est la meilleure stratégie commerciale.",
+        "La trésorerie est le souffle de l'entreprise.",
+        "Fais aujourd'hui ce que les autres remettent à demain.",
+        "La qualité n'est jamais un accident, c'est toujours un choix.",
+        "Les grandes choses se construisent une facture à la fois.",
+        "L'organisation d'aujourd'hui est la sérénité de demain.",
+        "Mieux vaut un pas chaque jour qu'un grand bond une fois par an.",
+        "Vendre, c'est aider quelqu'un à résoudre un problème.",
+        "Le temps gagné sur l'administratif est du temps gagné pour grandir.",
+        "La rigueur dans les détails fait la solidité de l'ensemble.",
+    ]
+
     def get(self, request):
-        try:
-            import asyncio
-            from apps.ai_assistant.services import MistralService
-            # Récupérer quelques stats clés pour le prompt
-            stats_service = DashboardStatsService(
-                user=request.user,
-                start_date=timezone.now() - timedelta(days=30),
-                end_date=timezone.now()
-            )
-            stats = stats_service.get_comprehensive_stats()
-
-            # Extraire les données pertinentes
-            financials = stats.get('financials', {})
-            revenue = financials.get('total_revenue', 0)
-            revenue_change = financials.get('revenue_change_pct', 0)
-
-            invoices = stats.get('invoices', {})
-            pending_invoices = invoices.get('pending_count', 0)
-
-            products = stats.get('products', {})
-            low_stock = products.get('low_stock_count', 0)
-
-            user_name = request.user.first_name or request.user.username
-
-            # Construire le prompt pour Mistral
-            prompt = f"""Génère un message de bienvenue court et motivant pour un entrepreneur nommé {user_name}.
-            Voici ses stats des 30 derniers jours :
-            - CA : {revenue}€ ({'+' if revenue_change > 0 else ''}{revenue_change}% par rapport au mois dernier)
-            - Factures en attente : {pending_invoices}
-            - Produits en rupture de stock : {low_stock}
-
-            Le ton doit être professionnel, encourageant et très bref (max 2 phrases).
-            N'utilise AUCUN emoji. Réponds uniquement avec le message."""
-
-            mistral_svc = MistralService()
-            result = asyncio.run(mistral_svc.chat(message=prompt, user_context={'user_id': request.user.id}))
-            from apps.core.text_utils import strip_emojis
-            greeting = strip_emojis(result.get('response', result.get('message', 'Bonjour !')))
-            
-            return Response({
-                'success': True,
-                'greeting': greeting,
-                'stats_summary': {
-                    'revenue_trend': 'up' if revenue_change > 0 else 'down',
-                    'has_alerts': low_stock > 0 or pending_invoices > 5
-                }
-            })
-        except Exception as e:
-            logger.error(f"Error generating AI greeting: {e}")
-            user_name = request.user.first_name or request.user.username
-            return Response({
-                'success': False,
-                'greeting': f"Ravi de vous revoir, {user_name} ! Prêt à gérer votre business ?"
-            })
+        import random
+        from datetime import date
+        user_name = request.user.first_name or request.user.username
+        # Une citation stable sur la journée (varie chaque jour, pas à chaque refresh)
+        idx = (date.today().toordinal() + (request.user.id or 0)) % len(self.QUOTES)
+        return Response({
+            'success': True,
+            'greeting': f"Bonjour {user_name}. {self.QUOTES[idx]}",
+        })
 
 
 class DashboardExportView(APIView):

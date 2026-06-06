@@ -43,9 +43,32 @@ def check_and_push_overdue_invoices(organization=None):
         logger.error(f"check_and_push_overdue_invoices error: {e}")
 
 
+def _recently_pushed(user, notif_type, hours):
+    """True si une notif de ce type a déjà été envoyée à l'utilisateur récemment."""
+    try:
+        from django.utils import timezone
+        from .models import NotificationLog
+        cutoff = timezone.now() - timedelta(hours=hours)
+        return NotificationLog.objects.filter(
+            user=user, notification_type=notif_type, sent_at__gte=cutoff,
+        ).exists()
+    except Exception:
+        return False
+
+
+def _log_push(user, notif_type):
+    try:
+        from .models import NotificationLog
+        NotificationLog.objects.create(user=user, notification_type=notif_type, channel='push')
+    except Exception:
+        pass
+
+
 def check_and_push_draft_invoices(organization=None):
     """
-    Vérifie les factures brouillon depuis +24h et envoie un push groupé.
+    Rappel des factures brouillon oubliées — non spammant :
+    - seuil porté à 3 jours (vrais oublis, pas un brouillon créé hier)
+    - cooldown de 72h par utilisateur (pas de rappel quotidien répétitif)
     """
     try:
         from django.utils import timezone
@@ -54,7 +77,7 @@ def check_and_push_draft_invoices(organization=None):
         from .web_push_service import notify_facture_brouillon
 
         User = get_user_model()
-        cutoff = timezone.now() - timedelta(hours=24)
+        cutoff = timezone.now() - timedelta(days=3)
         qs = Invoice.objects.filter(
             status='draft',
             created_at__lt=cutoff,
@@ -72,7 +95,11 @@ def check_and_push_draft_invoices(organization=None):
         for row in counts:
             try:
                 user = User.objects.get(id=row['created_by'])
+                # Anti-spam : pas plus d'un rappel brouillon tous les 3 jours
+                if _recently_pushed(user, 'invoice_draft', 72):
+                    continue
                 notify_facture_brouillon(user, row['cnt'])
+                _log_push(user, 'invoice_draft')
             except Exception:
                 pass
 
