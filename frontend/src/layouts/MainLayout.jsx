@@ -472,7 +472,7 @@ function MainLayout() {
       )}
 
       {/* Navigation */}
-      <Box sx={{ flexGrow: 1, overflow: 'auto', py: 2, px: 2 }}>
+      <Box sx={{ flexGrow: 1, overflow: 'auto', py: 2, px: collapsed ? 1 : 2 }}>
         <List disablePadding>
           {menuItems.filter(item => item.divider || item.isCore || hasModule(item.moduleId)).map((item, idx) => {
             if (item.divider) {
@@ -500,7 +500,8 @@ function MainLayout() {
                   data-tutorial={`menu-${item.moduleId}`}
                   sx={{
                     minHeight: 44,
-                    px: 1.5,
+                    width: '100%',
+                    px: collapsed ? 0 : 1.5,
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     borderRadius: 2.5,
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -513,9 +514,13 @@ function MainLayout() {
                       bgcolor: mode === 'light'
                         ? alpha(theme.palette.primary.main, 0.1)
                         : alpha(theme.palette.primary.main, 0.18),
-                      boxShadow: mode === 'light'
-                        ? `inset 3px 0 0 ${theme.palette.primary.main}`
-                        : `inset 3px 0 0 ${theme.palette.primary.light}`,
+                      // Barre d'accent à gauche uniquement quand déplié (sinon
+                      // elle décentre l'icône en mode replié).
+                      boxShadow: collapsed
+                        ? 'none'
+                        : (mode === 'light'
+                            ? `inset 3px 0 0 ${theme.palette.primary.main}`
+                            : `inset 3px 0 0 ${theme.palette.primary.light}`),
                       '& .MuiListItemText-primary': {
                         color: mode === 'light' ? 'primary.main' : 'primary.light',
                         fontWeight: 700,
@@ -561,7 +566,8 @@ function MainLayout() {
             <ListItemButton
               onClick={() => navigate('/settings/users')}
               sx={{
-                minHeight: 48, px: 1.5, borderRadius: 3,
+                minHeight: 44, width: '100%', borderRadius: 3,
+                px: collapsed ? 0 : 1.5,
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
               }}
@@ -596,7 +602,8 @@ function MainLayout() {
             onClick={() => navigate('/settings')}
             data-tutorial="menu-settings"
             sx={{
-              minHeight: 48, px: 1.5, borderRadius: 3,
+              minHeight: 44, width: '100%', borderRadius: 3,
+              px: collapsed ? 0 : 1.5,
               justifyContent: collapsed ? 'center' : 'flex-start',
               '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
             }}
