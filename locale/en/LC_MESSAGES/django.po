@@ -404,3 +404,33 @@ msgstr "Nunavut"
 
 msgid "Yukon"
 msgstr "Yukon"
+
+
+# --- Totaux PDF facture (remise / i18n) ---
+msgid "Discount"
+msgstr "Discount"
+
+msgid "Discount applied"
+msgstr "Discount applied"
+
+msgid "No discount"
+msgstr "No discount"
+
+msgid "TOTAL"
+msgstr "TOTAL"
+
+msgid "TOTAL DUE"
+msgstr "TOTAL DUE"
+
+msgid "Total Due"
+msgstr "Total Due"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Taxes"
+msgstr "Taxes"
+
+msgid "Payment upon receipt"
+msgstr "Payment upon receipt"
+

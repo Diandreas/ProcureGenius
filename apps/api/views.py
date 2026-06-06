@@ -1680,10 +1680,20 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             invoice = self.get_object()
             template_type = request.query_params.get('template', 'classic')
 
+            # Langue : priorité au paramètre explicite, sinon préférence de
+            # l'utilisateur, sinon langue active de la requête (LocaleMiddleware).
+            from django.utils import translation
+            language = (
+                request.query_params.get('language')
+                or getattr(request.user, 'preferred_language', None)
+                or translation.get_language()
+                or 'fr'
+            )
+
             # Générer le PDF avec WeasyPrint
             from .services.pdf_generator_weasy import generate_invoice_pdf_weasy
-            pdf_buffer = generate_invoice_pdf_weasy(invoice, template_type)
-            print(f"✓ PDF généré avec WeasyPrint (template: {template_type})")
+            pdf_buffer = generate_invoice_pdf_weasy(invoice, template_type, language=language)
+            print(f"✓ PDF généré avec WeasyPrint (template: {template_type}, langue: {language})")
 
             # Créer la réponse HTTP avec le PDF
             response = HttpResponse(

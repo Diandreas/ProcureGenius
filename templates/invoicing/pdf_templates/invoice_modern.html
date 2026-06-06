@@ -403,23 +403,23 @@
     <div class="totals-wrapper">
         <table class="totals-table">
             <tr>
-                <td>Sous-total</td>
+                <td>{% trans "Subtotal" %}</td>
                 <td>{{ subtotal|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% if discount_amount > 0 %}
             <tr style="color:#c0392b;font-weight:600;">
-                <td>Remise{% if discount_type == "percent" %} ({{ discount_value|floatformat:"-2" }}%){% endif %}</td>
+                <td>{% trans "Discount" %}{% if discount_type == "percent" %} ({{ discount_value|floatformat:"-2" }}%){% endif %}</td>
                 <td>−{{ discount_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% endif %}
             {% if tax_amount > 0 %}
             <tr>
-                <td>Taxes</td>
+                <td>{% trans "Taxes" %}</td>
                 <td>{{ tax_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
             {% endif %}
             <tr class="grand-total">
-                <td>TOTAL À PAYER</td>
+                <td>{% trans "TOTAL DUE" %}</td>
                 <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
         </table>
