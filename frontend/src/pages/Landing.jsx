@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 import { useTranslation } from 'react-i18next';
 import '@lottiefiles/dotlottie-wc';
 import {
@@ -40,6 +43,9 @@ import {
   SupportAgent,
 } from '@mui/icons-material';
 import { useColorMode } from '../App';
+
+// Enregistrer les plugins GSAP une seule fois (côté client).
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 // ─── Animated counter ────────────────────────────────────────────
 const AnimatedCounter = ({ end, suffix = '', duration = 2000 }) => {
@@ -457,13 +463,46 @@ export default function Landing() {
     metaDesc.content = t('hero.subtitle');
   }, [t, i18n.language, words]);
 
+  // ─── Animations GSAP (hero choréographié + parallaxe/profondeur) ───
+  const pageRef = useRef(null);
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+
+    // Respect de prefers-reduced-motion : pas d'animation, rien ne bouge.
+    mm.add('(prefers-reduced-motion: reduce)', () => {
+      gsap.set('.hero-left, .hero-right', { clearProps: 'all', opacity: 1 });
+    });
+
+    // Animations complètes (mouvement OK)
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      // Entrée chorégraphiée du hero
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      tl.from('.hero-left', { opacity: 0, x: -48, duration: 0.8 })
+        .from('.hero-right', { opacity: 0, scale: 0.86, y: 36, duration: 0.9 }, '-=0.55');
+
+      // Parallaxe / profondeur : le halo et la carte visuelle se décalent au scroll
+      gsap.to('.hero-glow', {
+        yPercent: 28,
+        ease: 'none',
+        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: 'bottom top', scrub: true },
+      });
+      gsap.to('.hero-right', {
+        yPercent: -12,
+        ease: 'none',
+        scrollTrigger: { trigger: '.hero-section', start: 'top top', end: 'bottom top', scrub: 1 },
+      });
+    });
+
+    return () => mm.revert();
+  }, { scope: pageRef });
+
   return (
-    <Box sx={{ bgcolor: bgColor, color: '#0f172a', minHeight: '100vh', overflowX: 'hidden' }}>
+    <Box ref={pageRef} sx={{ bgcolor: bgColor, color: '#0f172a', minHeight: '100vh', overflowX: 'hidden' }}>
       {/* Police serif éditoriale pour les titres */}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" />
 
       {/* ─── Hero ────────────────────────────────────────────── */}
-      <Box sx={{
+      <Box className="hero-section" sx={{
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
@@ -473,7 +512,7 @@ export default function Landing() {
         overflow: 'hidden',
       }}>
         {/* Subtle background glow */}
-        <Box sx={{
+        <Box className="hero-glow" sx={{
           position: 'absolute',
           top: '20%', right: '10%',
           width: 600, height: 600,
@@ -482,16 +521,13 @@ export default function Landing() {
             ? `radial-gradient(circle, ${alpha('#2563eb', 0.08)} 0%, transparent 70%)`
             : `radial-gradient(circle, ${alpha('#2563eb', 0.05)} 0%, transparent 70%)`,
           pointerEvents: 'none',
+          willChange: 'transform',
         }} />
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={8} alignItems="center">
             <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-              >
+              <Box className="hero-left">
                 {/* Badge */}
                 <Box sx={{
                   display: 'inline-flex', alignItems: 'center', gap: 1, mb: 4,
@@ -606,15 +642,11 @@ export default function Landing() {
                     </Box>
                   ))}
                 </Box>
-              </motion.div>
+              </Box>
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 1, ease: 'easeOut', delay: 0.2 }}
-              >
+              <Box className="hero-right" sx={{ willChange: 'transform' }}>
                 <Box sx={{
                   borderRadius: 4,
                   overflow: 'hidden',
@@ -628,7 +660,7 @@ export default function Landing() {
                     autoplay loop
                   />
                 </Box>
-              </motion.div>
+              </Box>
             </Grid>
           </Grid>
         </Container>
