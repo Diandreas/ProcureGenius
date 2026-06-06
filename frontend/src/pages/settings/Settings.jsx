@@ -659,7 +659,7 @@ const Settings = () => {
                 <Box>
                   <SubscriptionStatus />
                   <Box mt={3} display="flex" gap={2} flexWrap="wrap">
-                    <Button variant="contained" onClick={() => navigate('/pricing')} sx={{ textTransform: 'none', fontWeight: 600 }}>
+                    <Button variant="contained" onClick={() => navigate('/subscription/plans')} sx={{ textTransform: 'none', fontWeight: 600 }}>
                       Changer de plan
                     </Button>
                     <Button

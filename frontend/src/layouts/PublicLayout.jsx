@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Container, Typography, Button, Divider, useTheme } from '@mui/material';
-import { LightMode, DarkMode, Translate } from '@mui/icons-material';
+import { LightMode, DarkMode, Translate, SpaceDashboard } from '@mui/icons-material';
 import { useColorMode } from '../App';
 
 export default function PublicLayout() {
   const { t, i18n } = useTranslation(['landing', 'public']);
   const navigate = useNavigate();
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const theme = useTheme();
   const { toggleColorMode } = useColorMode();
   const isDark = theme.palette.mode === 'dark';
@@ -123,36 +125,48 @@ export default function PublicLayout() {
                 >
                   Documentation
                 </Button>
-                <Button 
-                  onClick={() => navigate('/login')} 
-                  sx={{ 
-                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
-                    textTransform: 'none', 
-                    fontWeight: 600, 
-                    fontSize: { xs: '0.85rem', sm: '0.95rem' }, 
-                    '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }, 
-                    borderRadius: 2, 
-                    px: { xs: 1, sm: 2 } 
-                  }}
-                >
-                  {t('nav.login')}
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => navigate('/register')}
-                  sx={{
-                    bgcolor: '#2563eb',
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    fontSize: { xs: '0.8rem', sm: '0.95rem' },
-                    borderRadius: 2.5,
-                    px: { xs: 1.5, sm: 4 },
-                    color: '#fff',
-                    '&:hover': { bgcolor: '#1d4ed8' }
-                  }}
-                >
-                  {t('nav.freeTrial')}
-                </Button>
+                {isAuthenticated ? (
+                  <Button
+                    variant="contained"
+                    startIcon={<SpaceDashboard />}
+                    onClick={() => navigate('/dashboard')}
+                    sx={{
+                      bgcolor: '#2563eb', textTransform: 'none', fontWeight: 700,
+                      fontSize: { xs: '0.8rem', sm: '0.95rem' }, borderRadius: 2.5,
+                      px: { xs: 1.5, sm: 3.5 }, color: '#fff',
+                      '&:hover': { bgcolor: '#1d4ed8' },
+                    }}
+                  >
+                    {t('nav.goToDashboard', 'Tableau de bord')}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      onClick={() => navigate('/login')}
+                      sx={{
+                        color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)',
+                        textTransform: 'none', fontWeight: 600,
+                        fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                        '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                        borderRadius: 2, px: { xs: 1, sm: 2 },
+                      }}
+                    >
+                      {t('nav.login')}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={() => navigate('/register')}
+                      sx={{
+                        bgcolor: '#2563eb', textTransform: 'none', fontWeight: 700,
+                        fontSize: { xs: '0.8rem', sm: '0.95rem' }, borderRadius: 2.5,
+                        px: { xs: 1.5, sm: 4 }, color: '#fff',
+                        '&:hover': { bgcolor: '#1d4ed8' },
+                      }}
+                    >
+                      {t('nav.freeTrial')}
+                    </Button>
+                  </>
+                )}
               </Box>
 
             </Box>

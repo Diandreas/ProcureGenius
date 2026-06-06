@@ -191,12 +191,13 @@ export default function ContextualAIPanel() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button — desktop uniquement (cache sur mobile) */}
       <Fab
         onClick={() => setOpen(true)}
         sx={{
           position: 'fixed',
-          bottom: { xs: 80, md: 24 },
+          display: { xs: 'none', md: 'inline-flex' },
+          bottom: 24,
           right: 20,
           zIndex: 1200,
           bgcolor: ctx.color,

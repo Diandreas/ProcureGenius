@@ -27,6 +27,7 @@ const OnboardingSetup = React.lazy(() => import('./pages/auth/OnboardingSetup'))
 const Landing          = React.lazy(() => import('./pages/Landing'));
 const Pricing             = React.lazy(() => import('./pages/Pricing'));
 const SubscriptionSuccess = React.lazy(() => import('./pages/SubscriptionSuccess'));
+const InternalPricing      = React.lazy(() => import('./pages/subscription/InternalPricing'));
 const Help             = React.lazy(() => import('./pages/Help'));
 const FAQ              = React.lazy(() => import('./pages/FAQ'));
 const KeyboardShortcuts = React.lazy(() => import('./pages/KeyboardShortcuts'));
@@ -97,6 +98,7 @@ const SIG                 = React.lazy(() => import('./pages/accounting/SIG'));
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
+import GuestRoute from './components/guards/GuestRoute';
 import ModuleRoute from './components/guards/ModuleRoute';
 
 import PublicLayout from './layouts/PublicLayout';
@@ -833,10 +835,12 @@ function App() {
                           <Route path="/help/shortcuts" element={<KeyboardShortcuts />} />
                         </Route>
 
-                        {/* Auth Routes */}
-                        <Route element={<AuthLayout />}>
-                          <Route path="/login" element={<LoginEnhanced />} />
-                          <Route path="/register" element={<Register />} />
+                        {/* Auth Routes — inaccessibles si déjà connecté (-> dashboard) */}
+                        <Route element={<GuestRoute />}>
+                          <Route element={<AuthLayout />}>
+                            <Route path="/login" element={<LoginEnhanced />} />
+                            <Route path="/register" element={<Register />} />
+                          </Route>
                         </Route>
 
                         {/* Onboarding */}
@@ -848,6 +852,7 @@ function App() {
                         <Route element={<PrivateRoute />}>
                           <Route element={<MainLayout />}>
                             <Route path="/dashboard" element={<DashboardEnhanced />} />
+                            <Route path="/subscription/plans" element={<InternalPricing />} />
 
                             {/* Suppliers */}
                             <Route path="/suppliers" element={<ModuleRoute module="suppliers"><Suppliers /></ModuleRoute>} />

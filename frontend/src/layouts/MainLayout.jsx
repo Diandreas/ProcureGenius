@@ -37,6 +37,8 @@ import {
   Notifications,
   Lightbulb,
   Menu as MenuIcon,
+  ChevronLeft,
+  ChevronRight,
   Assignment,
   ArrowBack,
   PowerSettingsNew,
@@ -117,11 +119,21 @@ function MainLayout() {
   const location = useLocation();
   const dispatch = useDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('sidebarCollapsed') === '1'
+  );
+  const toggleCollapsed = () => setCollapsed((p) => {
+    const next = !p;
+    try { localStorage.setItem('sidebarCollapsed', next ? '1' : '0'); } catch {}
+    return next;
+  });
   const [anchorEl, setAnchorEl] = useState(null);
   const [dashboardPeriod, setDashboardPeriod] = useState('last_30_days');
   const [aiChatStats, setAiChatStats] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // Largeur effective de la sidebar (rétractable sur desktop)
+  const sidebarWidth = collapsed ? 76 : drawerWidth;
   const { toggleColorMode, mode } = useColorMode();
   const { headerConfig } = useHeader();
   const isAIChatPage = location.pathname === '/ai-chat' || location.pathname.startsWith('/ai-chat/');
@@ -374,18 +386,25 @@ function MainLayout() {
       flexDirection: 'column',
       height: '100%',
     }}>
-      {/* Logo */}
+      {/* Logo + bouton de repli (desktop) */}
+      <Box sx={{
+        px: collapsed ? 1.5 : 2.5,
+        py: 2.5,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
+        mb: 0.5,
+        justifyContent: collapsed ? 'center' : 'space-between',
+      }}>
       <Box
         onClick={() => navigate('/landing')}
         sx={{
-          px: 2.5,
-          py: 2.5,
           display: 'flex',
           alignItems: 'center',
           gap: 1.5,
-          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
-          mb: 0.5,
           cursor: 'pointer',
+          minWidth: 0,
           '&:hover': { opacity: 0.85 },
         }}>
         <Box
@@ -415,20 +434,42 @@ function MainLayout() {
         >
           P
         </Box>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 800,
-            fontSize: '1.25rem',
-            background: `linear-gradient(to right, ${theme.palette.text.primary}, ${theme.palette.text.secondary})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          Procura
-        </Typography>
+        {!collapsed && (
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 800,
+              fontSize: '1.25rem',
+              background: `linear-gradient(to right, ${theme.palette.text.primary}, ${theme.palette.text.secondary})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.02em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Procura
+          </Typography>
+        )}
       </Box>
+      {/* Bouton replier / déplier (desktop uniquement) */}
+      {!collapsed && (
+        <IconButton
+          onClick={toggleCollapsed}
+          size="small"
+          sx={{ display: { xs: 'none', md: 'inline-flex' }, color: 'text.secondary' }}
+          aria-label="Réduire le menu"
+        >
+          <ChevronLeft />
+        </IconButton>
+      )}
+      </Box>
+      {collapsed && (
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mb: 1 }}>
+          <IconButton onClick={toggleCollapsed} size="small" sx={{ color: 'text.secondary' }} aria-label="Déplier le menu">
+            <ChevronRight />
+          </IconButton>
+        </Box>
+      )}
 
       {/* Navigation */}
       <Box sx={{ flexGrow: 1, overflow: 'auto', py: 2, px: 2 }}>
@@ -452,6 +493,7 @@ function MainLayout() {
 
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
+                <Tooltip title={collapsed ? item.text : ''} placement="right" arrow>
                 <ListItemButton
                   selected={isSelected}
                   onClick={() => handleModuleClick(item)}
@@ -459,6 +501,7 @@ function MainLayout() {
                   sx={{
                     minHeight: 44,
                     px: 1.5,
+                    justifyContent: collapsed ? 'center' : 'flex-start',
                     borderRadius: 2.5,
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     position: 'relative',
@@ -483,7 +526,7 @@ function MainLayout() {
                     },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 40, color: isSelected ? 'primary.main' : 'text.secondary' }}>
+                  <ListItemIcon sx={{ minWidth: collapsed ? 0 : 40, justifyContent: 'center', color: isSelected ? 'primary.main' : 'text.secondary' }}>
                     <IconImage
                       src={item.iconSrc}
                       alt={item.text}
@@ -492,15 +535,18 @@ function MainLayout() {
                       style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${alpha(theme.palette.primary.main, 0.3)})` : 'none' }}
                     />
                   </ListItemIcon>
-                  <ListItemText
-                    primary={item.text}
-                    primaryTypographyProps={{
-                      fontSize: '0.9rem',
-                      fontWeight: isSelected ? 700 : 500,
-                      color: isSelected ? 'primary.main' : 'text.secondary',
-                    }}
-                  />
+                  {!collapsed && (
+                    <ListItemText
+                      primary={item.text}
+                      primaryTypographyProps={{
+                        fontSize: '0.9rem',
+                        fontWeight: isSelected ? 700 : 500,
+                        color: isSelected ? 'primary.main' : 'text.secondary',
+                      }}
+                    />
+                  )}
                 </ListItemButton>
+                </Tooltip>
               </ListItem>
             );
           })}
@@ -579,9 +625,10 @@ function MainLayout() {
           position="fixed"
           elevation={0}
           sx={{
-            width: { xs: 'calc(100% - 32px)', md: `calc(100% - ${drawerWidth}px)` },
-            ml: { xs: '16px', md: `${drawerWidth}px` },
+            width: { xs: 'calc(100% - 32px)', md: `calc(100% - ${sidebarWidth}px)` },
+            ml: { xs: '16px', md: `${sidebarWidth}px` },
             mr: { xs: '16px', md: 0 },
+            transition: 'width 0.25s ease, margin-left 0.25s ease',
             mt: { xs: 1.5, md: 0 },
             borderRadius: { xs: 2.5, md: 0 },
             bgcolor: 'background.paper',
@@ -1113,7 +1160,7 @@ function MainLayout() {
         </AppBar>
 
         {/* Sidebar */}
-        <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+        <Box component="nav" sx={{ width: { md: sidebarWidth }, flexShrink: { md: 0 }, transition: 'width 0.25s ease' }}>
           {/* Mobile Drawer */}
           <Drawer
             variant="temporary"
@@ -1139,7 +1186,9 @@ function MainLayout() {
               display: { xs: 'none', md: 'block' },
               '& .MuiDrawer-paper': {
                 boxSizing: 'border-box',
-                width: drawerWidth,
+                width: sidebarWidth,
+                overflowX: 'hidden',
+                transition: 'width 0.25s ease',
                 bgcolor: mode === 'light' ? '#f8fafc' : 'background.paper',
                 borderRight: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'}`,
                 boxShadow: mode === 'light' ? '1px 0 0 rgba(0,0,0,0.04)' : 'none',
@@ -1158,7 +1207,8 @@ function MainLayout() {
             flexGrow: 1,
             p: { xs: 2, sm: 2.5 },
             pb: { xs: 10, sm: 2.5 },
-            width: { md: `calc(100% - ${drawerWidth}px)` },
+            width: { md: `calc(100% - ${sidebarWidth}px)` },
+            transition: 'width 0.25s ease',
             minHeight: '100vh',
             bgcolor: 'background.default',
           }}

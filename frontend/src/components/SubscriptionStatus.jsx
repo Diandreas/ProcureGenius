@@ -78,7 +78,7 @@ const SubscriptionStatus = ({ compact = false }) => {
   };
 
   const handleUpgrade = () => {
-    navigate('/pricing');
+    navigate('/subscription/plans');
   };
 
   if (loading) {
