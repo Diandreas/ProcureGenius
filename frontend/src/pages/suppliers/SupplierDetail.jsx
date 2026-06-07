@@ -70,6 +70,7 @@ import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../s
 import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
+import useSwipeTabs from '../../hooks/useSwipeTabs';
 
 const IS_NATIVE = isNativePlatform();
 import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
@@ -274,6 +275,9 @@ function SupplierDetail() {
     { icon: Inventory, label: t('suppliers:tabs.products') },
   ];
 
+  // Swipe horizontal entre onglets (mobile).
+  const swipeHandlers = useSwipeTabs(activeTab, SUPPLIER_TABS.length, setActiveTab, IS_NATIVE);
+
   return (
     <Box sx={{
       p: { xs: 0, sm: 2, md: 3 },
@@ -414,6 +418,9 @@ function SupplierDetail() {
           })}
         </Box>
       </Box>
+
+      {/* Zone de contenu des onglets : swipe horizontal sur mobile */}
+      <Box {...swipeHandlers}>
 
       {/* Tab: Informations */}
       {activeTab === 0 && (
@@ -634,6 +641,9 @@ function SupplierDetail() {
           </NeumorphicPanel>
         </Box>
       )}
+
+      </Box>
+      {/* fin zone swipeable */}
 
       {/* PDF Dialog - Génération automatique */}
       <Dialog open={pdfDialogOpen} onClose={handleClosePdfDialog} maxWidth="sm" fullWidth>

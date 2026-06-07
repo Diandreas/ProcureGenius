@@ -61,6 +61,7 @@ import { generateProductReportPDF, downloadPDF, openPDFInNewTab } from '../../se
 import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
+import useSwipeTabs from '../../hooks/useSwipeTabs';
 
 const IS_NATIVE = isNativePlatform();
 import { useHeader } from '../../contexts/HeaderContext';
@@ -251,6 +252,9 @@ function ProductDetail() {
     ...(isPhysical ? [{ icon: History, label: t('products:tabs.movements') }] : []),
   ];
 
+  // Swipe horizontal entre onglets (mobile). Base sur le nombre reel d'onglets.
+  const swipeHandlers = useSwipeTabs(activeTab, PRODUCT_TABS.length, setActiveTab, IS_NATIVE);
+
   return (
     <Box sx={{
       p: { xs: 0, sm: 2, md: 3 },
@@ -330,6 +334,9 @@ function ProductDetail() {
           })}
         </Box>
       </Box>
+
+      {/* Zone de contenu des onglets : swipe horizontal sur mobile */}
+      <Box {...swipeHandlers}>
 
       {/* Tab: Informations */}
       {activeTab === 0 && (
@@ -542,6 +549,9 @@ function ProductDetail() {
           </NeumorphicPanel>
         </Box>
       )}
+
+      </Box>
+      {/* fin zone swipeable */}
 
       {/* PDF Dialog - Génération automatique */}
       <Dialog open={pdfDialogOpen} onClose={handleClosePdfDialog} maxWidth="sm" fullWidth>

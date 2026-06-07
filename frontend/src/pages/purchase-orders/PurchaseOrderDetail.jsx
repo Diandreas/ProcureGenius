@@ -94,6 +94,7 @@ import { useHeader } from '../../contexts/HeaderContext';
 import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
+import useSwipeTabs from '../../hooks/useSwipeTabs';
 
 const IS_NATIVE = isNativePlatform();
 import LoadingState from '../../components/LoadingState';
@@ -517,6 +518,9 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
     { icon: Psychology, label: 'Analyse IA' },
   ];
 
+  // Swipe horizontal entre onglets (mobile).
+  const swipeHandlers = useSwipeTabs(activeTab, PO_TABS.length, setActiveTab, IS_NATIVE);
+
   return (
     <Box sx={{
       p: { xs: 0, sm: 2, md: 3 },
@@ -816,6 +820,9 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
           })}
         </Box>
       </Box>
+
+      {/* Zone de contenu des onglets : swipe horizontal sur mobile */}
+      <Box {...swipeHandlers}>
 
       {/* Tab: General Information */}
       {activeTab === 0 && (
@@ -1428,6 +1435,9 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
           </Grid>
         </Box>
       )}
+
+      </Box>
+      {/* fin zone swipeable */}
 
       {/* Approve Dialog */}
       <Dialog open={approveDialogOpen} onClose={() => setApproveDialogOpen(false)}>

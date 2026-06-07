@@ -60,6 +60,7 @@ import LoadingState from '../../components/LoadingState';
 import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
+import useSwipeTabs from '../../hooks/useSwipeTabs';
 
 const IS_NATIVE = isNativePlatform();
 import ErrorState from '../../components/ErrorState';
@@ -245,6 +246,9 @@ function ClientDetail() {
     { icon: Inventory, label: t('clients:tabs.products') },
   ];
 
+  // Swipe horizontal entre onglets (mobile).
+  const swipeHandlers = useSwipeTabs(activeTab, CLIENT_TABS.length, setActiveTab, IS_NATIVE);
+
   return (
     <Box
       sx={{
@@ -381,6 +385,9 @@ function ClientDetail() {
           })}
         </Box>
       </Box>
+
+      {/* Zone de contenu des onglets : swipe horizontal sur mobile */}
+      <Box {...swipeHandlers}>
 
       {/* Loading skeleton pendant le chargement */}
       {loading && !client && (
@@ -590,6 +597,9 @@ function ClientDetail() {
           />
         </NeumorphicPanel>
       )}
+
+      </Box>
+      {/* fin zone swipeable */}
 
       {/* Delete Confirmation Dialog */}
       <Dialog
