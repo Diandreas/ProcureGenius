@@ -382,10 +382,16 @@ function DashboardEnhanced() {
   if (isMobile) {
     const mobileSection = currentTab;
     return (
-      <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', pb: 14, overflowX: 'hidden' }}>
+      <Box sx={{
+        bgcolor: 'background.default', minHeight: '100vh', pb: 14,
+        overflowX: 'hidden',
+        // Respecte l'encoche / status bar (Capacitor) : evite que le contenu
+        // passe dessous.
+        pt: 'env(safe-area-inset-top, 0px)',
+      }}>
         {/* Sticky top bar */}
         <Box sx={{
-          position: 'sticky', top: 0, zIndex: 10,
+          position: 'sticky', top: 'env(safe-area-inset-top, 0px)', zIndex: 10,
           bgcolor: 'background.paper',
           borderBottom: '1px solid', borderColor: 'divider',
           px: 2, py: 1,
@@ -417,7 +423,8 @@ function DashboardEnhanced() {
           </Stack>
         </Box>
 
-        {/* Section tabs — barre neumorphique scrollable (icone + label) */}
+        {/* Section tabs — barre neumorphique segmentee (tient sur la largeur).
+            Onglet actif : icone + label en relief ; autres : icone seule. */}
         <Box sx={{ px: 1.5, py: 1.5 }}>
           <Box
             sx={{
@@ -427,19 +434,14 @@ function DashboardEnhanced() {
               borderRadius: 3,
               bgcolor: '#e0e5ec',
               boxShadow: 'inset 3px 3px 7px #b8bec7, inset -3px -3px 7px #ffffff',
-              overflowX: 'auto',
-              '&::-webkit-scrollbar': { display: 'none' },
-              scrollbarWidth: 'none',
-              // Fade a droite : indique qu'il y a plus d'onglets a faire defiler.
-              WebkitMaskImage:
-                'linear-gradient(to right, #000 calc(100% - 18px), transparent 100%)',
+              width: '100%',
             }}
           >
             {[
-              { label: 'Aperçu', icon: <TrendingUp sx={{ fontSize: 17 }} /> },
-              { label: 'Factures', icon: <Receipt sx={{ fontSize: 17 }} /> },
-              { label: 'Clients', icon: <People sx={{ fontSize: 17 }} /> },
-              { label: 'Alertes', icon: <Warning sx={{ fontSize: 17 }} />, badge: stats.alerts?.length },
+              { label: 'Aperçu', icon: <TrendingUp sx={{ fontSize: 18 }} /> },
+              { label: 'Factures', icon: <Receipt sx={{ fontSize: 18 }} /> },
+              { label: 'Clients', icon: <People sx={{ fontSize: 18 }} /> },
+              { label: 'Alertes', icon: <Warning sx={{ fontSize: 18 }} />, badge: stats.alerts?.length },
             ].map((s, i) => {
               const selected = mobileSection === i;
               return (
@@ -448,24 +450,35 @@ function DashboardEnhanced() {
                   component="button"
                   type="button"
                   onClick={() => setCurrentTab(i)}
+                  aria-label={s.label}
                   sx={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: 0.5, px: 1.5, py: 0.85, borderRadius: 2.25,
-                    whiteSpace: 'nowrap', cursor: 'pointer', flex: '0 0 auto',
+                    gap: 0.5,
+                    // L'onglet actif prend plus de place (pour son label), les
+                    // autres se contentent de l'icone -> tout tient sans scroll.
+                    flex: selected ? '1 1 auto' : '0 0 auto',
+                    minWidth: selected ? 0 : 44,
+                    px: selected ? 1.25 : 0, py: 0.9, borderRadius: 2.25,
+                    whiteSpace: 'nowrap', overflow: 'hidden', cursor: 'pointer',
                     border: 'none', fontFamily: 'inherit',
-                    fontWeight: selected ? 700 : 500, fontSize: '0.78rem',
+                    fontWeight: selected ? 700 : 500, fontSize: '0.8rem',
                     color: selected ? 'primary.main' : 'text.secondary',
                     bgcolor: selected ? '#e0e5ec' : 'transparent',
                     boxShadow: selected
-                      ? '3px 3px 7px #b8bec7, -3px -3px 7px #ffffff'
+                      ? '4px 4px 9px #b8bec7, -4px -4px 9px #ffffff'
                       : 'none',
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.22s ease',
                     position: 'relative',
                   }}
                 >
-                  {s.icon}{s.label}
+                  {s.icon}
+                  {selected && (
+                    <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {s.label}
+                    </Box>
+                  )}
                   {s.badge > 0 && (
-                    <Box sx={{ position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, px: 0.4, borderRadius: '8px', bgcolor: 'error.main', color: 'white', fontSize: '0.6rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box sx={{ position: 'absolute', top: 2, right: selected ? 6 : 6, minWidth: 15, height: 15, px: 0.35, borderRadius: '8px', bgcolor: 'error.main', color: 'white', fontSize: '0.58rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {s.badge}
                     </Box>
                   )}
