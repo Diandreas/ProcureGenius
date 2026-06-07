@@ -53,13 +53,15 @@ export default function BillingPanel() {
   const openPortal = async () => {
     setPortalBusy(true);
     try {
-      await subscriptionAPI.openStripePortal();
+      const res = await subscriptionAPI.openStripePortal();
+      if (!res?.portal_url) throw new Error('no-url');
     } catch (err) {
-      const noCustomer = err?.response?.status === 400 || err?.response?.status === 404;
+      // Le portail ne concerne que les abonnements payants : message unique et clair.
+      const backendMsg = err?.response?.data?.error;
       enqueueSnackbar(
-        noCustomer
-          ? "Aucun paiement à gérer pour l'instant. Souscrivez à une formule payante pour gérer la facturation."
-          : "Service de facturation momentanément indisponible. Réessayez.",
+        backendMsg && !/stripe error/i.test(backendMsg)
+          ? backendMsg
+          : "Vous n'avez pas encore d'abonnement payant. Choisissez une formule pour activer la facturation.",
         { variant: 'info' }
       );
     } finally { setPortalBusy(false); }

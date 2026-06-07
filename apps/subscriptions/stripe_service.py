@@ -90,17 +90,29 @@ class StripeService:
 
     @staticmethod
     def create_portal_session(organization, return_url):
-        """Create a Stripe customer portal session."""
+        """Create a Stripe customer portal session.
+
+        Lève ValueError (→ 400 côté API) si l'organisation n'a pas encore de
+        client Stripe (pas d'abonnement payant) ou si Stripe refuse le client,
+        plutôt qu'une 500 alarmante.
+        """
         StripeService._ensure_configured()
         try:
             customer_id = organization.subscription.stripe_customer_id
         except Exception:
-            raise ValueError("No Stripe customer found for this organization")
+            customer_id = None
 
-        session = stripe.billing_portal.Session.create(
-            customer=customer_id,
-            return_url=return_url,
-        )
+        if not customer_id:
+            raise ValueError("Aucun abonnement payant : pas de client Stripe à gérer.")
+
+        try:
+            session = stripe.billing_portal.Session.create(
+                customer=customer_id,
+                return_url=return_url,
+            )
+        except stripe.error.InvalidRequestError as e:
+            # Client introuvable / portail non configuré → traiter comme "rien à gérer"
+            raise ValueError(f"Facturation indisponible : {e.user_message or str(e)}")
         return session
 
     @staticmethod
