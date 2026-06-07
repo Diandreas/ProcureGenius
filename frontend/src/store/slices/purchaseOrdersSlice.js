@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { purchaseOrdersAPI } from '../../services/api';
-import { readListWithCache, readOneWithCache } from '../../services/offline';
+import { readListWithCache, readOneWithCache, createWithQueue, updateWithQueue, deleteWithQueue, newUuid } from '../../services/offline';
 
 // Async thunks
 export const fetchPurchaseOrders = createAsyncThunk(
@@ -20,23 +20,28 @@ export const fetchPurchaseOrder = createAsyncThunk(
 export const createPurchaseOrder = createAsyncThunk(
   'purchaseOrders/createPurchaseOrder',
   async (data) => {
-    const response = await purchaseOrdersAPI.create(data);
-    return response.data;
+    // Offline : numero de BC provisoire (le serveur attribuera le definitif).
+    const withProvisional = data.po_number
+      ? data
+      : { ...data, po_number: `BROUILLON-${newUuid().slice(0, 6).toUpperCase()}` };
+    return await createWithQueue('purchaseOrders', withProvisional, (d) => {
+      const { po_number, ...online } = d;
+      return purchaseOrdersAPI.create(online);
+    });
   }
 );
 
 export const updatePurchaseOrder = createAsyncThunk(
   'purchaseOrders/updatePurchaseOrder',
   async ({ id, data }) => {
-    const response = await purchaseOrdersAPI.update(id, data);
-    return response.data;
+    return await updateWithQueue('purchaseOrders', id, data, (i, d) => purchaseOrdersAPI.update(i, d));
   }
 );
 
 export const deletePurchaseOrder = createAsyncThunk(
   'purchaseOrders/deletePurchaseOrder',
   async (id) => {
-    await purchaseOrdersAPI.delete(id);
+    await deleteWithQueue('purchaseOrders', id, (i) => purchaseOrdersAPI.delete(i));
     return id;
   }
 );

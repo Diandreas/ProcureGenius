@@ -1,6 +1,7 @@
 // PDF Service for generating and handling PDF documents
 import api from './api';
 import { isNativePlatform } from '../utils/platform';
+import { isOffline } from './offline';
 
 // Convertit un Blob en chaîne base64 (sans le préfixe data:) pour Filesystem.
 const blobToBase64 = (blob) =>
@@ -47,6 +48,23 @@ export const TEMPLATE_TYPES = {
 
 // Generate Invoice PDF
 export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classic') => {
+  // Hors-ligne (natif) ou facture BROUILLON non synchronisee : le PDF backend
+  // n'est pas joignable -> on genere un PDF local epure cote client (version
+  // rapide / provisoire). On evite ainsi de bloquer l'utilisateur.
+  const isDraft = !invoiceData?.invoice_number
+    || String(invoiceData?.invoice_number).startsWith('BROUILLON')
+    || invoiceData?._offline;
+  if (isNativePlatform() && (isOffline() || isDraft)) {
+    const { buildOfflineInvoicePdf } = await import('./offlineInvoicePdf.jsx');
+    let currency = 'FCFA';
+    try {
+      if (!isOffline()) {
+        const s = await api.get('/accounts/organization/settings/');
+        currency = s.data.defaultCurrency || s.data.default_currency || 'FCFA';
+      }
+    } catch { /* ignore, garde FCFA */ }
+    return await buildOfflineInvoicePdf(invoiceData, currency);
+  }
   try {
     console.log('Generating invoice PDF for:', invoiceData);
 

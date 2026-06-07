@@ -68,6 +68,7 @@ import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
 import PullToRefresh from '../../components/mobile/PullToRefresh';
+import OfflineBadge from '../../components/mobile/OfflineBadge';
 
 const IS_NATIVE = isNativePlatform();
 
@@ -238,10 +239,13 @@ function Clients() {
         footer={(client.total_invoices || 0) + ' facture(s)'}
         onClick={(e) => handleCardClick(e, client)}
         actions={(
-          <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/clients/${client.id}/edit`); }}
-            sx={{ width: 30, height: 30, borderRadius: 2, color: 'text.disabled', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) } }}>
-            <Edit sx={{ fontSize: 16 }} />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <OfflineBadge record={client} compact />
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/clients/${client.id}/edit`); }}
+              sx={{ width: 30, height: 30, borderRadius: 2, color: 'text.disabled', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) } }}>
+              <Edit sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
         )}
       />
     );

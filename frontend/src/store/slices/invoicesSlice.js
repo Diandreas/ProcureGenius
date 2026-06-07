@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { invoicesAPI } from '../../services/api';
-import { readListWithCache, readOneWithCache } from '../../services/offline';
+import { readListWithCache, readOneWithCache, createWithQueue, updateWithQueue, deleteWithQueue, newUuid } from '../../services/offline';
 
 // Async thunks
 export const fetchInvoices = createAsyncThunk(
@@ -20,23 +20,30 @@ export const fetchInvoice = createAsyncThunk(
 export const createInvoice = createAsyncThunk(
   'invoices/createInvoice',
   async (data) => {
-    const response = await invoicesAPI.create(data);
-    return response.data;
+    // Offline : numero provisoire affichable (le serveur attribuera le numero
+    // definitif a la synchro, invoice_number etant read-only cote backend).
+    const withProvisional = data.invoice_number
+      ? data
+      : { ...data, invoice_number: `BROUILLON-${newUuid().slice(0, 6).toUpperCase()}` };
+    return await createWithQueue('invoices', withProvisional, (d) => {
+      // En ligne : on n'envoie pas le numero provisoire (le serveur le genere).
+      const { invoice_number, ...online } = d;
+      return invoicesAPI.create(online);
+    });
   }
 );
 
 export const updateInvoice = createAsyncThunk(
   'invoices/updateInvoice',
   async ({ id, data }) => {
-    const response = await invoicesAPI.update(id, data);
-    return response.data;
+    return await updateWithQueue('invoices', id, data, (i, d) => invoicesAPI.update(i, d));
   }
 );
 
 export const deleteInvoice = createAsyncThunk(
   'invoices/deleteInvoice',
   async (id) => {
-    await invoicesAPI.delete(id);
+    await deleteWithQueue('invoices', id, (i) => invoicesAPI.delete(i));
     return id;
   }
 );

@@ -385,9 +385,8 @@ function DashboardEnhanced() {
       <Box sx={{
         bgcolor: 'background.default', minHeight: '100vh', pb: 14,
         overflowX: 'hidden',
-        // Respecte l'encoche / status bar (Capacitor) : evite que le contenu
-        // passe dessous.
-        pt: 'env(safe-area-inset-top, 0px)',
+        // Pas de safe-area ici : le spacer du MainLayout gere deja l'espace
+        // sous la status bar (sinon double marge).
       }}>
         {/* Barre titre + periode (en flux normal : le header global de
             MainLayout est deja sticky, pas besoin d'une 2e barre collante qui

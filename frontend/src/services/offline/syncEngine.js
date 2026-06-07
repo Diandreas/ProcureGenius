@@ -49,10 +49,14 @@ async function applyMutation(m) {
   if (!api) throw new Error(`API inconnue pour ${m.entity}`);
 
   if (m.op === 'create') {
-    // Le backend genere son propre id (id read-only) : on envoie le payload
-    // sans l'id provisoire, puis on remplace l'enregistrement local provisoire
-    // par la version serveur (evite les doublons).
-    const { id: _provisional, _offline, _pending, ...body } = m.payload || {};
+    // Le backend genere lui-meme id, invoice_number, po_number (read-only) :
+    // on les retire du payload, puis on remplace l'enregistrement local
+    // provisoire par la version serveur (evite les doublons).
+    const {
+      id: _id, _offline, _pending,
+      invoice_number, po_number, // numeros provisoires -> serveur
+      ...body
+    } = m.payload || {};
     const res = await api.create(body);
     await removeCached(m.entity, m.record_id);       // retire l'id provisoire
     if (res?.data) await cacheOne(m.entity, res.data); // ajoute la version serveur
