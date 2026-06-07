@@ -53,6 +53,8 @@ import {
   CloudUpload,
   Edit,
   Delete,
+  Close,
+  CalendarToday,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -60,6 +62,8 @@ import { fetchInvoices } from '../../store/slices/invoicesSlice';
 import { formatDate } from '../../utils/formatters';
 import { useHeader } from '../../contexts/HeaderContext';
 import useCurrency from '../../hooks/useCurrency';
+import PullToRefresh from '../../components/mobile/PullToRefresh';
+import OfflineBadge from '../../components/mobile/OfflineBadge';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
@@ -99,6 +103,11 @@ function Invoices() {
 
   useEffect(() => {
     dispatch(fetchInvoices());
+  }, [dispatch]);
+
+  // Pull-to-refresh : recharge les factures.
+  const handleRefresh = useCallback(async () => {
+    await dispatch(fetchInvoices());
   }, [dispatch]);
 
   const handleQuickFilterClick = (filterValue) => {
@@ -380,235 +389,93 @@ function Invoices() {
     );
   };
 
-  // Keep old InvoiceCard for any backward reference but InvoiceRow is used in the list
+  // ─── Carte facture — design neumorphique moderne, epure et anime ─────────
   const InvoiceCard = ({ invoice, index }) => {
-    const statusColor = invoice.status === 'paid' ? '#10b981' : invoice.status === 'sent' ? '#2563eb' : '#f59e0b';
-
+    const statusColor = statusColorMap[invoice.status] || '#94a3b8';
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        layout
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{
-          duration: 0.4,
-          delay: index * 0.05,
-          ease: [0.6, 0.05, 0.01, 0.9]
-        }}
-        whileHover={{
-          boxShadow: `0 20px 60px ${alpha(statusColor, 0.2)}`
-        }}
+        exit={{ opacity: 0, scale: 0.97 }}
+        transition={{ duration: 0.4, delay: Math.min(index * 0.035, 0.4), ease: [0.22, 1, 0.36, 1] }}
+        whileHover={{ y: -4 }}
         style={{ height: '100%' }}
       >
-        <Card
+        <Box
           onClick={() => navigate(`/invoices/${invoice.id}`)}
           sx={{
             cursor: 'pointer',
             height: '100%',
-            borderRadius: 3,
-            background: theme => `linear-gradient(145deg,
-              ${alpha(theme.palette.background.paper, 0.95)} 0%,
-              ${alpha(statusColor, 0.03)} 50%,
-              ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-            boxShadow: theme => `0 4px 20px ${alpha(statusColor, 0.08)}, 0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`,
-            backdropFilter: 'blur(20px)',
+            display: 'flex',
+            flexDirection: 'column',
+            p: { xs: 1.5, sm: 2.25 },
+            borderRadius: { xs: 3, sm: 4 },
+            bgcolor: 'background.paper',
             position: 'relative',
             overflow: 'hidden',
-            transition: 'box-shadow 0.3s ease',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 4,
-              background: `linear-gradient(90deg, ${statusColor}, ${alpha(statusColor, 0.5)})`,
-              borderRadius: '3px 3px 0 0',
-              boxShadow: `0 2px 8px ${alpha(statusColor, 0.3)}`
+            transition: 'box-shadow 0.3s cubic-bezier(0.22,1,0.36,1)',
+            boxShadow: theme => theme.palette.mode === 'light'
+              ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+              : '6px 6px 16px #14191f, -6px -6px 16px #283041',
+            '&:hover': {
+              boxShadow: theme => theme.palette.mode === 'light'
+                ? '10px 10px 24px #c4cddc, -10px -10px 24px #ffffff'
+                : '10px 10px 24px #11161c, -10px -10px 24px #2a3344',
+              '& .inv-actions': { opacity: 1 },
             },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: `radial-gradient(circle at top right, ${alpha(statusColor, 0.05)} 0%, transparent 70%)`,
-              pointerEvents: 'none'
-            }
           }}
         >
-      <CardContent sx={{ p: 2 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <Avatar
-            sx={{
-              width: isMobile ? 36 : 56,
-              height: isMobile ? 36 : 56,
-              bgcolor: 'primary.main',
-              borderRadius: 2,
-              boxShadow: 2,
-            }}
-          >
-            <Receipt sx={{ fontSize: isMobile ? 20 : 28 }} />
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 600,
-                mb: 0.5,
-                color: 'primary.main',
-                fontSize: isMobile ? '0.75rem' : '0.95rem',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+          {/* Accent de statut en haut */}
+          <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: statusColor, opacity: 0.9 }} />
+
+          {/* Ligne haut : numero + pastille statut (point seul sur mobile) */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: { xs: 1, sm: 1.5 }, mt: 0.5, gap: 1 }}>
+            <Typography sx={{ fontFamily: 'monospace', fontWeight: 700, fontSize: { xs: '0.68rem', sm: '0.78rem' }, color: 'text.secondary', letterSpacing: '0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {invoice.invoice_number}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                fontSize: isMobile ? '0.65rem' : '0.75rem',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'block',
-              }}
-            >
-              {invoice.title}
-            </Typography>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6, px: { xs: 0.6, sm: 1 }, py: 0.3, borderRadius: 999, bgcolor: alpha(statusColor, 0.12), flexShrink: 0 }}>
+              <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: statusColor }} />
+              <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontSize: '0.62rem', fontWeight: 700, color: statusColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {getStatusLabel(invoice.status)}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
 
-        {/* Prix */}
-        <Box
-          sx={{
-            bgcolor: (theme) => theme.palette.mode === 'dark'
-              ? 'rgba(52, 211, 153, 0.1)'
-              : 'rgba(16, 185, 129, 0.08)',
-            borderRadius: 1,
-            p: isMobile ? 0.75 : 1,
-            mb: isMobile ? 1 : 1.5,
-            textAlign: 'center',
-          }}
-        >
-          <Typography
-            variant="subtitle1"
-            color="success.main"
-            sx={{ fontWeight: 700, fontSize: isMobile ? '0.9rem' : '1.25rem' }}
-          >
-            {formatCurrency(invoice.total_amount)}
-          </Typography>
-        </Box>
-
-        {/* Infos */}
-        <Stack spacing={0.5}>
-          {invoice.client_name && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Business sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: isMobile ? '0.65rem' : '0.8rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+          {/* Titre + client */}
+          <Box sx={{ flex: 1, minWidth: 0, mb: { xs: 1, sm: 1.5 } }}>
+            <Typography sx={{ fontWeight: 600, fontSize: { xs: '0.82rem', sm: '0.95rem' }, color: 'text.primary', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              {invoice.title || invoice.client_name || 'Facture'}
+            </Typography>
+            {invoice.client_name && invoice.title && (
+              <Typography sx={{ fontSize: '0.72rem', color: 'text.disabled', mt: 0.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {invoice.client_name}
               </Typography>
-            </Box>
-          )}
+            )}
+          </Box>
 
-          {invoice.due_date && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Schedule sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
-              <Typography variant="body2" sx={{ fontSize: isMobile ? '0.65rem' : '0.8rem' }}>
-                {isMobile ? formatDate(invoice.due_date) : `${t('invoices:labels.dueDate')} ${formatDate(invoice.due_date)}`}
-              </Typography>
-            </Box>
-          )}
-        </Stack>
+          {/* Montant (police de l'app) */}
+          <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', sm: '1.45rem' }, color: 'text.primary', lineHeight: 1, mb: { xs: 0.75, sm: 1.25 }, letterSpacing: '-0.01em' }}>
+            {formatCurrency(invoice.total_amount)}
+          </Typography>
 
-        {/* Footer */}
-        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip
-            label={getStatusLabel(invoice.status)}
-            size="small"
-            color={getStatusColor(invoice.status)}
-            sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
-          />
-        </Box>
-
-        {/* Mobile Actions Overlay - Compact */}
-        {isMobile && (
-          <Box 
-            sx={{ 
-              mt: 1.5, 
-              pt: 1.5, 
-              borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
-              Actions
+          {/* Bas : echeance + actions (actions cachees sur mobile) */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto', pt: { xs: 0.75, sm: 1.25 }, borderTop: theme => `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
+            <Typography sx={{ fontSize: { xs: '0.62rem', sm: '0.68rem' }, color: 'text.disabled', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {invoice.due_date ? `Échéance ${formatDate(invoice.due_date)}` : (invoice.issue_date ? formatDate(invoice.issue_date) : '')}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <IconButton 
-                size="small"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  const blob = await generateInvoicePDF(invoice);
-                  openSinglePDF(blob);
-                }}
-                sx={{ 
-                  bgcolor: alpha(theme.palette.success.main, 0.1), 
-                  color: 'success.main',
-                  width: 32,
-                  height: 32
-                }}
-              >
-                <PictureAsPdf sx={{ fontSize: 18 }} />
+            <Box className="inv-actions" sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5, opacity: 0, transition: 'opacity 0.2s' }}>
+              <IconButton size="small" onClick={async (e) => { e.stopPropagation(); try { const blob = await generateInvoicePDF(invoice); openSinglePDF(blob); } catch {} }}
+                sx={{ width: 30, height: 30, borderRadius: 2, color: 'text.disabled', '&:hover': { color: 'success.main', bgcolor: alpha('#10b981', 0.1) } }}>
+                <PictureAsPdf sx={{ fontSize: 16 }} />
               </IconButton>
-              <IconButton 
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/invoices/${invoice.id}/edit`);
-                }}
-                sx={{ 
-                  bgcolor: alpha(theme.palette.primary.main, 0.1), 
-                  color: 'primary.main',
-                  width: 32,
-                  height: 32
-                }}
-              >
-                <Edit sx={{ fontSize: 18 }} />
-              </IconButton>
-              <IconButton 
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  enqueueSnackbar("Fonction de suppression protégée en démo", { variant: 'info' });
-                }}
-                sx={{ 
-                  bgcolor: alpha(theme.palette.error.main, 0.1), 
-                  color: 'error.main',
-                  width: 32,
-                  height: 32
-                }}
-              >
-                <Delete sx={{ fontSize: 18 }} />
+              <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/invoices/${invoice.id}/edit`); }}
+                sx={{ width: 30, height: 30, borderRadius: 2, color: 'text.disabled', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) } }}>
+                <Edit sx={{ fontSize: 16 }} />
               </IconButton>
             </Box>
           </Box>
-        )}
-      </CardContent>
-    </Card>
+        </Box>
       </motion.div>
     );
   };
@@ -629,494 +496,118 @@ function Invoices() {
   }
 
   return (
-    <Box sx={{ p: isMobile ? 2 : 3 }}>
+    <PullToRefresh onRefresh={handleRefresh}>
+    <Box sx={{ p: { xs: 1.5, sm: 2.5 }, maxWidth: 1280, mx: 'auto' }}>
 
-      {/* Header avec stats */}
-      <Box sx={{ mb: 3 }}>
-        {/* Stats Cards - Clickable Filters - Design Compact et Moderne */}
-        <Grid container spacing={isMobile ? 0.75 : 1.5}>
-          {/* Payées */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('paid')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'paid' ? 'success.main' : theme => alpha(theme.palette.success.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.success.main, 0.3)}`,
-                  borderColor: 'success.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'paid' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.success.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{
-                p: isMobile ? 1 : 1.5,
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <CheckCircle sx={{
-                    fontSize: isMobile ? 20 : 24,
-                    color: 'success.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography
-                    variant={isMobile ? 'h6' : 'h5'}
-                    fontWeight="700"
-                    sx={{
-                      color: 'success.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {paidInvoices}
+      {/* KPI / Filtres rapides (tuiles neumorphiques) */}
+      <Grid container spacing={{ xs: 1.25, sm: 2 }} sx={{ mb: 2.5 }}>
+        {[
+          { key: '', label: 'Total facture', value: formatCurrency(totalAmount), sub: totalInvoices + ' facture(s)', color: '#2563eb' },
+          { key: 'paid', label: 'Payees', value: paidInvoices, sub: 'encaissees', color: '#10b981' },
+          { key: 'unpaid', label: 'Impayees', value: unpaidInvoices, sub: 'envoyees', color: '#3b82f6' },
+          { key: 'overdue', label: 'En retard', value: overdueInvoices, sub: 'a relancer', color: '#ef4444' },
+          { key: 'draft', label: 'Brouillons', value: draftInvoices, sub: 'a finaliser', color: '#94a3b8' },
+        ].map((kpi) => {
+          const active = quickFilter === kpi.key && kpi.key !== '';
+          return (
+            <Grid item xs={kpi.key === '' ? 12 : 3} sm={4} md={kpi.key === '' ? 4 : 2} key={kpi.label}>
+              <Box
+                onClick={() => kpi.key !== '' && handleQuickFilterClick(kpi.key)}
+                sx={{
+                  cursor: kpi.key !== '' ? 'pointer' : 'default',
+                  p: { xs: 1.1, sm: 2 },
+                  borderRadius: { xs: 3, sm: 4 },
+                  textAlign: { xs: 'center', sm: 'left' },
+                  bgcolor: 'background.paper',
+                  transition: 'box-shadow 0.25s, transform 0.25s',
+                  boxShadow: (th) => active
+                    ? (th.palette.mode === 'light'
+                        ? 'inset 4px 4px 10px #cdd4e0, inset -4px -4px 10px #ffffff'
+                        : 'inset 4px 4px 10px #14191f, inset -4px -4px 10px #283041')
+                    : (th.palette.mode === 'light'
+                        ? '5px 5px 14px #cdd4e0, -5px -5px 14px #ffffff'
+                        : '5px 5px 14px #14191f, -5px -5px 14px #283041'),
+                  '&:hover': kpi.key !== '' && !active ? { transform: 'translateY(-2px)' } : {},
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'center', sm: 'flex-start' }, gap: { xs: 0.5, sm: 1 }, mb: { xs: 0.4, sm: 0.75 } }}>
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: kpi.color, flexShrink: 0 }} />
+                  <Typography sx={{ fontSize: { xs: '0.58rem', sm: '0.7rem' }, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.03em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {kpi.label}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('invoices:filters.paid')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+                </Box>
+                <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', sm: '1.6rem' }, lineHeight: 1, color: 'text.primary', letterSpacing: '-0.01em' }}>
+                  {kpi.value}
+                </Typography>
+                <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontSize: '0.68rem', color: 'text.disabled', mt: 0.5 }}>{kpi.sub}</Typography>
+              </Box>
+            </Grid>
+          );
+        })}
+      </Grid>
 
-          {/* Impayées */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('unpaid')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'unpaid' ? 'warning.main' : theme => alpha(theme.palette.warning.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.warning.main, 0.3)}`,
-                  borderColor: 'warning.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'unpaid' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.warning.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{
-                p: isMobile ? 1 : 1.5,
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Warning sx={{
-                    fontSize: isMobile ? 20 : 24,
-                    color: 'warning.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography
-                    variant={isMobile ? 'h6' : 'h5'}
-                    fontWeight="700"
-                    sx={{
-                      color: 'warning.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {unpaidInvoices}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('invoices:filters.unpaid')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* En retard */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('overdue')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'overdue' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.error.main, 0.3)}`,
-                  borderColor: 'error.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'overdue' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.error.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${alpha(theme.palette.error.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{
-                p: isMobile ? 1 : 1.5,
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Error sx={{
-                    fontSize: isMobile ? 20 : 24,
-                    color: 'error.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography
-                    variant={isMobile ? 'h6' : 'h5'}
-                    fontWeight="700"
-                    sx={{
-                      color: 'error.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {overdueInvoices}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('invoices:filters.overdue')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Brouillons */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('draft')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.grey[500], 0.1)} 0%, ${alpha(theme.palette.grey[500], 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'draft' ? 'grey.600' : theme => alpha(theme.palette.grey[500], 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.grey[500], 0.3)}`,
-                  borderColor: 'grey.600'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'draft' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.grey[500], 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.grey[600]}, ${alpha(theme.palette.grey[400], 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{
-                p: isMobile ? 1 : 1.5,
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Description sx={{
-                    fontSize: isMobile ? 20 : 24,
-                    color: 'grey.600',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography
-                    variant={isMobile ? 'h6' : 'h5'}
-                    fontWeight="700"
-                    sx={{
-                      color: 'grey.700',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {draftInvoices}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('invoices:filters.drafts')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Filter Indicator */}
-        {quickFilter && (
-          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">{t('invoices:filters.activeFilter')}</Typography>
-            <Chip
-              label={
-                quickFilter === 'paid' ? t('invoices:filters.paid') :
-                  quickFilter === 'unpaid' ? t('invoices:filters.unpaid') :
-                    quickFilter === 'overdue' ? t('invoices:filters.overdue') :
-                      quickFilter === 'draft' ? t('invoices:filters.drafts') : ''
-              }
-              onDelete={() => setQuickFilter('')}
-              color={
-                quickFilter === 'paid' ? 'success' :
-                  quickFilter === 'unpaid' ? 'warning' :
-                    quickFilter === 'overdue' ? 'error' :
-                      quickFilter === 'draft' ? 'default' : 'primary'
-              }
-              size="small"
-            />
-          </Box>
-        )}
+      {/* Barre de recherche neumorphique (inset) */}
+      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
+        <Box sx={{
+          flex: 1, minWidth: 220, display: 'flex', alignItems: 'center', gap: 1,
+          px: 2, py: 1, borderRadius: 999, bgcolor: 'background.paper',
+          boxShadow: (th) => th.palette.mode === 'light'
+            ? 'inset 4px 4px 9px #cdd4e0, inset -4px -4px 9px #ffffff'
+            : 'inset 4px 4px 9px #14191f, inset -4px -4px 9px #283041',
+        }}>
+          <Search sx={{ fontSize: 20, color: 'text.disabled' }} />
+          <Box
+            component="input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Rechercher une facture, un client..."
+            sx={{
+              flex: 1, border: 'none', outline: 'none', bgcolor: 'transparent',
+              fontSize: '0.9rem', color: 'text.primary', fontFamily: 'inherit',
+              '&::placeholder': { color: 'text.disabled' },
+            }}
+          />
+          {searchTerm && (
+            <IconButton size="small" onClick={() => setSearchTerm('')} sx={{ p: 0.25 }}>
+              <Close sx={{ fontSize: 16 }} />
+            </IconButton>
+          )}
+        </Box>
+        {/* Filtre date — pastille neumorphique cohérente avec la recherche */}
+        <Box sx={{
+          display: 'flex', alignItems: 'center', gap: 1,
+          px: 1.75, py: 1, borderRadius: 999, bgcolor: 'background.paper',
+          boxShadow: theme => theme.palette.mode === 'light'
+            ? 'inset 4px 4px 9px #cdd4e0, inset -4px -4px 9px #ffffff'
+            : 'inset 4px 4px 9px #14191f, inset -4px -4px 9px #283041',
+        }}>
+          <CalendarToday sx={{ fontSize: 17, color: 'text.disabled' }} />
+          <Box
+            component="input"
+            type="date"
+            value={selectedDate || ''}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            sx={{
+              border: 'none', outline: 'none', bgcolor: 'transparent',
+              fontSize: '0.85rem', color: selectedDate ? 'text.primary' : 'text.disabled',
+              fontFamily: 'inherit', cursor: 'pointer', colorScheme: 'light',
+            }}
+          />
+        </Box>
       </Box>
 
-      {/* Search & Filters - Design Neumorphique Amélioré */}
-      <Card
-        sx={{
-          mb: 3,
-          borderRadius: 3,
-          boxShadow: theme => theme.palette.mode === 'dark'
-            ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-            : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-          border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-        }}
-      >
-        <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-          <Stack spacing={isMobile ? 1.5 : 2}>
-            <Box sx={{
-              display: 'flex',
-              gap: 1,
-              alignItems: 'center',
-              flexWrap: 'nowrap'
-            }}>
-              <TextField
-                size="small"
-                placeholder={isMobile ? t('invoices:search.placeholder_mobile', 'Chercher...') : t('invoices:search.placeholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search sx={{ fontSize: isMobile ? 20 : 24 }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  flex: 1,
-                  minWidth: isMobile ? 'calc(100% - 100px)' : '200px',
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 40,
-                    fontSize: isMobile ? '0.875rem' : '1rem',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                    },
-                    '&.Mui-focused': {
-                      boxShadow: theme => alpha(theme.palette.primary.main, 0.2) + ' 0px 0px 0px 3px',
-                    }
-                  }
-                }}
-              />
-              {!isMobile && (
-                <DateNavigator
-                  value={selectedDate}
-                  onChange={setSelectedDate}
-                />
-              )}
-              <IconButton
-                onClick={() => setShowFilters(!showFilters)}
-                sx={{
-                  bgcolor: (showFilters || selectedDate || statusFilter) ? 'primary.main' : 'transparent',
-                  color: (showFilters || selectedDate || statusFilter) ? 'white' : 'inherit',
-                  borderRadius: 2,
-                  width: 40,
-                  height: 40,
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: (showFilters || selectedDate || statusFilter)
-                    ? theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
-                    : 'none',
-                  '&:hover': {
-                    bgcolor: (showFilters || selectedDate || statusFilter) ? 'primary.dark' : 'action.hover',
-                    transform: 'scale(1.05)',
-                  },
-                  '&:active': {
-                    transform: 'scale(0.95)',
-                  }
-                }}
-              >
-                <FilterList />
-              </IconButton>
-            </Box>
+      {(quickFilter || selectedDate) && (
+        <Box sx={{ display: 'flex', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
+          {quickFilter && (
+            <Chip label={'Filtre : ' + getStatusLabel(quickFilter === 'unpaid' ? 'sent' : quickFilter)} onDelete={() => setQuickFilter('')} size="small" sx={{ fontWeight: 600 }} />
+          )}
+          {selectedDate && (
+            <Chip label={'Date : ' + formatDate(selectedDate)} onDelete={() => setSelectedDate('')} size="small" sx={{ fontWeight: 600 }} />
+          )}
+        </Box>
+      )}
 
-            {/* Date filter indicator */}
-            {selectedDate && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {t('invoices:filters.dateFilter', 'Filtre par date')}:
-                </Typography>
-                <Chip
-                  label={formatDate(selectedDate)}
-                  onDelete={() => setSelectedDate('')}
-                  color="primary"
-                  size="small"
-                />
-              </Box>
-            )}
-
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Stack spacing={2} sx={{ pt: 1, pb: 1 }}>
-                  {isMobile && (
-                    <Box sx={{ 
-                      p: 1.5, 
-                      bgcolor: theme => alpha(theme.palette.primary.main, 0.05),
-                      borderRadius: 2,
-                      border: theme => `1px solid ${alpha(theme.palette.primary.main, 0.1)}`
-                    }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main', mb: 1, display: 'block' }}>
-                        {t('invoices:filters.period', 'Période')}
-                      </Typography>
-                      <DateNavigator
-                        value={selectedDate}
-                        onChange={setSelectedDate}
-                      />
-                    </Box>
-                  )}
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel>{t('invoices:filters.statusLabel')}</InputLabel>
-                        <Select
-                          value={statusFilter}
-                          onChange={(e) => setStatusFilter(e.target.value)}
-                          label={t('invoices:filters.statusLabel')}
-                          sx={{
-                            borderRadius: 2,
-                            transition: 'all 0.3s ease',
-                            '&:hover': {
-                              boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                            },
-                          }}
-                        >
-                          <MenuItem value="">{t('invoices:filters.all')}</MenuItem>
-                          <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
-                          <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
-                          <MenuItem value="pending">En attente</MenuItem>
-                          <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
-                          <MenuItem value="overdue">{t('invoices:status.overdue')}</MenuItem>
-                          <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                  </Grid>
-                </Stack>
-              </motion.div>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {/* Invoices Grid */}
+      {/* Grille de factures (cartes neumorphiques) */}
       {filteredInvoices.length === 0 ? (
         <EmptyState
           title={t('invoices:messages.noInvoices')}
@@ -1125,7 +616,7 @@ function Invoices() {
           onAction={() => navigate('/invoices/new')}
         />
       ) : (
-        <Grid container spacing={isMobile ? 1.5 : 3}>
+        <Grid container spacing={{ xs: 2, sm: 2.5 }}>
           <AnimatePresence mode="popLayout">
             {filteredInvoices.map((invoice, index) => (
               <Grid item xs={6} sm={6} md={4} lg={3} key={invoice.id}>
@@ -1135,6 +626,7 @@ function Invoices() {
           </AnimatePresence>
         </Grid>
       )}
+
 
       {/* Configuration Dialog */}
       <Dialog open={reportConfigOpen} onClose={() => setReportConfigOpen(false)} maxWidth="md" fullWidth>
@@ -1333,6 +825,7 @@ function Invoices() {
         </DialogActions>
       </Dialog>
     </Box>
+    </PullToRefresh>
   );
 }
 

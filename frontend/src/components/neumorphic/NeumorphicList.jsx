@@ -100,7 +100,7 @@ export function NeumorphicSearch({ value, onChange, placeholder = 'Rechercher…
  * Props: accentColor, code, status:{label,color}, title, subtitle, amount,
  *        footer, actions (node), onClick, index
  */
-export function NeumorphicCard({ accentColor = '#94a3b8', code, status, title, subtitle, amount, footer, actions, onClick, index = 0 }) {
+export function NeumorphicCard({ accentColor = '#94a3b8', code, status, title, subtitle, amount, footer, actions, badge, onClick, index = 0 }) {
   return (
     <motion.div
       layout
@@ -130,6 +130,8 @@ export function NeumorphicCard({ accentColor = '#94a3b8', code, status, title, s
               {code}
             </Typography>
           )}
+          {/* Badge (ex. "a synchroniser") : toujours visible, meme sur mobile. */}
+          {badge && <Box sx={{ ml: code != null ? 0 : 'auto', flexShrink: 0 }}>{badge}</Box>}
           {status && (
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6, px: { xs: 0.6, sm: 1 }, py: 0.3, borderRadius: 999, bgcolor: alpha(status.color, 0.12), flexShrink: 0, ml: 'auto' }}>
               <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: status.color }} />

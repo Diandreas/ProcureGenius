@@ -238,14 +238,12 @@ function Clients() {
         amount={client.total_sales_amount ? formatCurrency(client.total_sales_amount) : null}
         footer={(client.total_invoices || 0) + ' facture(s)'}
         onClick={(e) => handleCardClick(e, client)}
+        badge={<OfflineBadge record={client} compact />}
         actions={(
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <OfflineBadge record={client} compact />
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/clients/${client.id}/edit`); }}
-              sx={{ width: 30, height: 30, borderRadius: 2, color: 'text.disabled', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) } }}>
-              <Edit sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Box>
+          <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/clients/${client.id}/edit`); }}
+            sx={{ width: 30, height: 30, borderRadius: 2, color: 'text.disabled', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) } }}>
+            <Edit sx={{ fontSize: 16 }} />
+          </IconButton>
         )}
       />
     );
