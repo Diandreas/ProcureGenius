@@ -21,6 +21,24 @@ export const ModuleProvider = ({ children }) => {
         fetchModules();
     }, []);
 
+    // Cache local des modules : permet a la barre de navigation d'afficher les
+    // memes boutons hors-ligne (sinon les modules echouent et les boutons
+    // non-core disparaissent).
+    const MODULES_CACHE_KEY = 'cached_modules_v1';
+
+    const applyCachedModules = () => {
+        try {
+            const raw = localStorage.getItem(MODULES_CACHE_KEY);
+            if (raw) {
+                const cached = JSON.parse(raw);
+                setModules(cached.module_codes || []);
+                setModuleMetadata(cached.modules || []);
+                return true;
+            }
+        } catch { /* ignore */ }
+        return false;
+    };
+
     const fetchModules = async () => {
         try {
             const token = localStorage.getItem('authToken');
@@ -29,23 +47,26 @@ export const ModuleProvider = ({ children }) => {
                 return;
             }
 
-            // Utiliser axios au lieu de fetch pour une meilleure gestion d'erreur
+            // Affiche d'abord les modules en cache (instantane, fonctionne offline)
+            applyCachedModules();
+
             const response = await api.get('/accounts/modules/');
             const data = response.data;
-            setModules(data.module_codes || []);
-            setModuleMetadata(data.modules || []);
+            const codes = data.module_codes || [];
+            const meta = data.modules || [];
+            setModules(codes);
+            setModuleMetadata(meta);
+            setError(null);
+            // Mise en cache pour les prochains demarrages / le mode hors-ligne.
+            try {
+                localStorage.setItem(MODULES_CACHE_KEY, JSON.stringify({ module_codes: codes, modules: meta }));
+            } catch { /* quota : ignore */ }
         } catch (err) {
-            console.error('Error fetching modules:', err);
-            // Si c'est une erreur de parsing JSON (réponse HTML), donner un message plus clair
-            if (err.response) {
-                const contentType = err.response.headers['content-type'] || '';
-                if (contentType.includes('text/html')) {
-                    setError('Le serveur a retourné une page HTML au lieu de JSON. Vérifiez la configuration du proxy.');
-                    console.error('Response was HTML instead of JSON:', err.response.data?.substring?.(0, 200));
-                } else {
-                    setError(`Erreur HTTP ${err.response.status}: ${err.response.statusText}`);
-                }
-            } else {
+            // Hors-ligne / erreur reseau : on garde les modules en cache (deja
+            // appliques ci-dessus) au lieu de vider la barre de navigation.
+            const hadCache = applyCachedModules();
+            if (!hadCache) {
+                console.error('Error fetching modules:', err);
                 setError(err.message || 'Erreur lors du chargement des modules');
             }
         } finally {

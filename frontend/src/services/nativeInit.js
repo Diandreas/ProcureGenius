@@ -42,8 +42,9 @@ export async function initNativeApp() {
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
     await StatusBar.setStyle({ style: Style.Light }); // icones sombres
-    await StatusBar.setBackgroundColor({ color: THEME_BG }).catch(() => {});
-    await StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+    // Overlay : le contenu remonte sous la status bar ; les paddings
+    // env(safe-area-inset-top) gerent l'espacement (sinon ils valent 0).
+    await StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
   } catch { /* plugin absent : ignore */ }
 
   // --- Splash : on le cache une fois l'app prete ---

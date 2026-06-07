@@ -667,7 +667,8 @@ function MainLayout() {
             width: { xs: 'calc(100% - 32px)', md: `calc(100% - ${sidebarWidth}px - 36px)` },
             ml: { xs: '16px', md: `${sidebarWidth + 18}px` },
             mr: { xs: '16px', md: '18px' },
-            mt: { xs: 1.5, md: 1.5 },
+            // Marge haute + hauteur de la status bar / encoche (app native).
+            mt: { xs: 'calc(12px + env(safe-area-inset-top, 0px))', md: 1.5 },
             borderRadius: { xs: 2.5, md: 3 },
             bgcolor: 'background.paper',
             border: 'none',
