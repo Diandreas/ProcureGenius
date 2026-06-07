@@ -27,8 +27,8 @@ import { useTranslation } from 'react-i18next';
 import { isNativePlatform } from '../../utils/platform';
 import { signInWithGoogleNative } from '../../services/mobileGoogleAuth';
 
-// Sur mobile natif, Google passe par le navigateur systeme (page pont
-// /mobile-auth + deep link), car la webview embarquee est bloquee par Google.
+// Sur mobile natif, Google passe par le selecteur natif (plugin), car la
+// webview embarquee est bloquee par Google.
 const IS_NATIVE = isNativePlatform();
 
 const BG = '#e0e5ec';

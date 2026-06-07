@@ -10,6 +10,11 @@ import { ModuleProvider } from './contexts/ModuleContext';
 import { SharedElementProvider } from './contexts/SharedElementContext';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
+import { isNativePlatform } from './utils/platform';
+
+// Sur l'app mobile native, on demarre sur /login (puis /dashboard si connecte)
+// au lieu de la page marketing /landing.
+const ROOT_REDIRECT = isNativePlatform() ? '/login' : '/landing';
 import { fetchSettings } from './store/slices/settingsSlice';
 import { HeaderProvider } from './contexts/HeaderContext';
 import { AccountingHelpProvider } from './contexts/AccountingHelpContext';
@@ -22,6 +27,8 @@ import AuthLayout from './layouts/AuthLayout';
 const Login         = React.lazy(() => import('./pages/auth/Login'));
 const LoginEnhanced = React.lazy(() => import('./pages/auth/LoginEnhanced'));
 const Register      = React.lazy(() => import('./pages/auth/Register'));
+const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword  = React.lazy(() => import('./pages/auth/ResetPassword'));
 const OnboardingSetup = React.lazy(() => import('./pages/auth/OnboardingSetup'));
 
 const Landing          = React.lazy(() => import('./pages/Landing'));
@@ -814,8 +821,10 @@ function App() {
                       <Routes>
                         {/* Public Routes */}
                         <Route element={<PublicLayout />}>
-                          <Route path="/" element={<Navigate to="/landing" replace />} />
+                          <Route path="/" element={<Navigate to={ROOT_REDIRECT} replace />} />
                           <Route path="/landing" element={<Landing />} />
+                          <Route path="/forgot-password" element={<ForgotPassword />} />
+                          <Route path="/reset-password" element={<ResetPassword />} />
                           <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
                           <Route path="/pricing" element={<Pricing />} />
                           <Route path="/subscription/success" element={<SubscriptionSuccess />} />

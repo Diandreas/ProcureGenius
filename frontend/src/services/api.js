@@ -90,6 +90,9 @@ export const authAPI = {
     return Promise.resolve();
   },
   getProfile: () => api.get('/auth/profile/'),
+  forgotPassword: (email) => api.post('/auth/forgot-password/', { email }),
+  resetPassword: ({ email, token, new_password }) =>
+    api.post('/auth/reset-password/', { email, token, new_password }),
   // Web : `arg` est l'access_token (string).
   // Natif : `arg` est { idToken, accessToken } (idToken privilégié par le backend).
   googleLogin: (arg) => {

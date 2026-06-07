@@ -38,12 +38,13 @@ export const signInWithGoogleNative = async () => {
   const { SocialLogin } = await import('@capgo/capacitor-social-login');
   await ensureInitialized();
 
+  // NB: ne PAS passer de `scopes` ici. Le plugin capgo exige une modification
+  // de MainActivity pour les scopes custom ("You CANNOT use scopes without
+  // modifying the main activity"). Sans scopes, on recupere quand meme
+  // l'idToken + le profil de base (email/profile), ce qui suffit au backend.
   const res = await SocialLogin.login({
     provider: 'google',
-    options: {
-      // Demande l'idToken (et un accessToken si dispo) ; profil de base.
-      scopes: ['email', 'profile'],
-    },
+    options: {},
   });
 
   // Forme du resultat capgo : { provider, result: { idToken, accessToken, profile, ... } }
