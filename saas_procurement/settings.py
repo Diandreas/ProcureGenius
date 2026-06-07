@@ -268,6 +268,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
     "http://127.0.0.1:5173",
     "https://procura.mirhosty.com",
+    "https://procura.mirlab.cloud",  # Front web en production
+    # --- App mobile native (Capacitor) ---
+    # Android sert la webview depuis https://localhost (androidScheme: 'https')
+    "https://localhost",
+    # iOS sert la webview depuis capacitor://localhost
+    "capacitor://localhost",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
