@@ -77,6 +77,7 @@ import { useNavigate } from 'react-router-dom';
 import { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
 import subscriptionAPI from '../../services/subscriptionAPI';
 import SubscriptionStatus from '../../components/SubscriptionStatus';
+import BillingPanel from '../../components/settings/BillingPanel';
 import Cropper from 'react-easy-crop';
 import { useModules } from '../../contexts/ModuleContext';
 
@@ -655,35 +656,7 @@ const Settings = () => {
               {activeTab === 7 && (
                 <DataSection settings={settings} showSnackbar={showSnackbar} />
               )}
-              {activeTab === 8 && (
-                <Box>
-                  <SubscriptionStatus />
-                  <Box mt={3} display="flex" gap={2} flexWrap="wrap">
-                    <Button variant="contained" onClick={() => navigate('/subscription/plans')} sx={{ textTransform: 'none', fontWeight: 600 }}>
-                      Changer de plan
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={async () => {
-                        try {
-                          await subscriptionAPI.openStripePortal();
-                        } catch (err) {
-                          const noCustomer = err?.response?.status === 400 || err?.response?.status === 404;
-                          showSnackbar(
-                            noCustomer
-                              ? "Aucun paiement à gérer pour l'instant. Souscrivez à une formule payante pour accéder à la facturation."
-                              : "Service de facturation momentanément indisponible. Réessayez.",
-                            'info'
-                          );
-                        }
-                      }}
-                      sx={{ textTransform: 'none', fontWeight: 600 }}
-                    >
-                      Gérer la facturation
-                    </Button>
-                  </Box>
-                </Box>
-              )}
+              {activeTab === 8 && <BillingPanel />}
 
               {/* Bouton de sauvegarde (masqué pour onglets sans save global) */}
               {[0, 2, 6].includes(activeTab) && (

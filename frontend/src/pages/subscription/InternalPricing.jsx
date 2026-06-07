@@ -49,8 +49,9 @@ export default function InternalPricing() {
     setBusy(plan.code);
     try {
       await subscriptionAPI.createStripeCheckout(plan.code, billing); // redirige vers Stripe
-    } catch {
-      enqueueSnackbar('Impossible de lancer le paiement. Réessayez.', { variant: 'error' });
+    } catch (err) {
+      const detail = err?.response?.data?.error || err?.response?.data?.detail;
+      enqueueSnackbar(detail || 'Impossible de lancer le paiement. Réessayez.', { variant: 'error' });
       setBusy(null);
     }
   };
