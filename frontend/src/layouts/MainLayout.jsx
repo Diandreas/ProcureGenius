@@ -88,6 +88,22 @@ const NotificationsMenuItem = ({ handleMenuClose }) => {
   );
 };
 
+// Avatar du top nav avec pastille de notifications non lues (badge sur l'avatar)
+const AvatarWithBadge = ({ children }) => {
+  const { unreadCount } = useAINotifications();
+  return (
+    <Badge
+      badgeContent={unreadCount}
+      color="error"
+      overlap="circular"
+      anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      sx={{ '& .MuiBadge-badge': { fontSize: '0.6rem', height: 17, minWidth: 17, fontWeight: 700, boxShadow: '0 0 0 2px #fff' } }}
+    >
+      {children}
+    </Badge>
+  );
+};
+
 const pageVariants = {
   // Fondu pur, sans translation verticale : évite le « saut » des éléments
   // qui donnait une impression de scintillement au chargement des pages.
@@ -1118,21 +1134,23 @@ function MainLayout() {
                 }}
                 data-tutorial="profile-menu"
               >
-                <Avatar
-                  src={userProfile?.avatar || undefined}
-                  sx={{
-                    width: { xs: 28, sm: 34 },
-                    height: { xs: 28, sm: 34 },
-                    bgcolor: userProfile?.avatar
-                      ? 'transparent'
-                      : theme.palette.primary.main,
-                    fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                    fontWeight: 700,
-                    border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                  }}
-                >
-                  {!userProfile?.avatar && getUserInitials()}
-                </Avatar>
+                <AvatarWithBadge>
+                  <Avatar
+                    src={userProfile?.avatar || undefined}
+                    sx={{
+                      width: { xs: 28, sm: 34 },
+                      height: { xs: 28, sm: 34 },
+                      bgcolor: userProfile?.avatar
+                        ? 'transparent'
+                        : theme.palette.primary.main,
+                      fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                      fontWeight: 700,
+                      border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                    }}
+                  >
+                    {!userProfile?.avatar && getUserInitials()}
+                  </Avatar>
+                </AvatarWithBadge>
               </IconButton>
             </Tooltip>
 

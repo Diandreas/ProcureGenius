@@ -39,24 +39,17 @@ const AINotificationProvider = ({ children }) => {
     }
   }, []);
 
-  // Poll les notifications toutes les 30 secondes
+  // Poll les notifications toutes les 60 secondes — UNIQUEMENT pour rafraîchir
+  // le compteur (badge sur l'avatar). Plus aucun popup/snackbar envahissant.
   const checkForNotifications = useCallback(async () => {
     try {
       const response = await aiChatAPI.getNotifications(true); // unread_only=true
-
       if (response.data.notifications && response.data.notifications.length > 0) {
-        // Ajouter à la liste locale si pas déjà présente
         const newNotifs = response.data.notifications;
         setNotifications(prev => {
           const combined = [...newNotifs, ...prev];
-          // Dédupliquer par ID
           return Array.from(new Map(combined.map(item => [item.id, item])).values());
         });
-
-        // Afficher la première notification non lue dans le snackbar
-        const notif = newNotifs[0];
-        setNotification(notif);
-        setOpen(true);
       }
     } catch (error) {
       console.error('Error polling notifications:', error);
@@ -67,8 +60,8 @@ const AINotificationProvider = ({ children }) => {
     // Charger l'historique au début
     fetchNotifications();
 
-    // Puis vérifier toutes les 30 secondes
-    const interval = setInterval(checkForNotifications, 30000);
+    // Puis rafraîchir le compteur toutes les 60 secondes (sans popup)
+    const interval = setInterval(checkForNotifications, 60000);
 
     return () => clearInterval(interval);
   }, [checkForNotifications, fetchNotifications]);
@@ -129,45 +122,12 @@ const AINotificationProvider = ({ children }) => {
     }}>
       {children}
 
-      <NotificationsCenter 
+      <NotificationsCenter
         open={centerOpen}
         onClose={() => setCenterOpen(false)}
         notifications={notifications}
         onMarkRead={markAsRead}
       />
-
-      <Snackbar
-        open={open}
-        autoHideDuration={10000}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ mt: 8 }}
-      >
-        <Alert
-          severity={getSeverity(notification?.type)}
-          icon={getIcon(notification?.type)}
-          action={
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <Button color="inherit" size="small" onClick={() => { setCenterOpen(true); handleClose(); }}>
-                Voir tout
-              </Button>
-              <IconButton size="small" color="inherit" onClick={handleClose}>
-                <Close fontSize="small" />
-              </IconButton>
-            </Box>
-          }
-          sx={{ width: '100%', maxWidth: 500 }}
-        >
-          <Box>
-            <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-              {notification?.title}
-            </Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-              {notification?.message}
-            </Typography>
-          </Box>
-        </Alert>
-      </Snackbar>
     </AINotificationContext.Provider>
   );
 };

@@ -52,12 +52,15 @@ import {
   PictureAsPdf,
   Print,
   Download,
+  Edit,
+  Close,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { fetchClients } from '../../store/slices/clientsSlice';
 import { useHeader } from '../../contexts/HeaderContext';
 import useCurrency from '../../hooks/useCurrency';
+import { NeumorphicKpis, NeumorphicSearch, NeumorphicCard } from '../../components/neumorphic/NeumorphicList';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
@@ -219,239 +222,29 @@ function Clients() {
     navigate(`/clients/${client.id}`);
   }, [registerSharedElement, navigate]);
 
-  const ClientCard = ({ client, index }) => (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{
-        duration: 0.4,
-        delay: index * 0.05,
-        ease: [0.6, 0.05, 0.01, 0.9]
-      }}
-      whileHover={{
-        boxShadow: client.is_active
-          ? '0 20px 60px rgba(25, 118, 210, 0.2)'
-          : '0 20px 60px rgba(0, 0, 0, 0.15)'
-      }}
-      style={{ height: '100%' }}
-    >
-      <Card
-        component={motion.div}
-        layoutId={`client-card-${client.id}`}
+  const ClientCard = ({ client, index }) => {
+    const isActive = client.is_active;
+    const isVip = (client.total_sales_amount || 0) > 10000;
+    const accent = isVip ? '#8b5cf6' : isActive ? '#10b981' : '#94a3b8';
+    return (
+      <NeumorphicCard
+        index={index}
+        accentColor={accent}
+        status={{ label: isVip ? 'VIP' : isActive ? 'Actif' : 'Inactif', color: accent }}
+        title={client.name}
+        subtitle={client.contact_person || client.email || ''}
+        amount={client.total_sales_amount ? formatCurrency(client.total_sales_amount) : null}
+        footer={(client.total_invoices || 0) + ' facture(s)'}
         onClick={(e) => handleCardClick(e, client)}
-        sx={{
-          cursor: 'pointer',
-          height: '100%',
-          borderRadius: 3,
-          background: theme => client.is_active
-            ? `linear-gradient(145deg,
-                ${alpha(theme.palette.background.paper, 0.95)} 0%,
-                ${alpha(theme.palette.primary.main, 0.03)} 50%,
-                ${alpha(theme.palette.background.paper, 0.95)} 100%)`
-            : `linear-gradient(145deg,
-                ${alpha(theme.palette.background.paper, 0.9)} 0%,
-                ${alpha(theme.palette.grey[500], 0.05)} 100%)`,
-          boxShadow: theme => client.is_active
-            ? `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}, 0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`
-            : `0 4px 16px ${alpha(theme.palette.common.black, 0.06)}`,
-          backdropFilter: 'blur(20px)',
-          position: 'relative',
-          overflow: 'hidden',
-          transition: 'box-shadow 0.3s ease',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            background: theme => client.is_active
-              ? `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
-              : `linear-gradient(90deg, ${theme.palette.grey[400]}, ${theme.palette.grey[500]})`,
-            borderRadius: '3px 3px 0 0',
-            boxShadow: theme => client.is_active
-              ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
-              : 'none'
-          },
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: theme => `radial-gradient(circle at top right, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 70%)`,
-            pointerEvents: 'none',
-            opacity: client.is_active ? 1 : 0.3
-          }
-        }}
-      >
-      <CardContent sx={{ p: 2 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <motion.div layoutId={`client-avatar-${client.id}`}>
-            <Avatar
-              sx={{
-                width: isMobile ? 36 : 56,
-                height: isMobile ? 36 : 56,
-                bgcolor: 'primary.main',
-                borderRadius: 2,
-                fontSize: isMobile ? '1rem' : '1.5rem',
-                fontWeight: 'bold',
-                boxShadow: 2,
-              }}
-            >
-              {client.name?.charAt(0)?.toUpperCase() || '?'}
-            </Avatar>
-          </motion.div>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <motion.div layoutId={`client-name-${client.id}`}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  fontWeight: 600,
-                  mb: 0.25,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  fontSize: isMobile ? '0.75rem' : '0.95rem',
-                  lineHeight: 1.2
-                }}
-              >
-                {client.name}
-              </Typography>
-            </motion.div>
-            {client.legal_name && client.legal_name !== client.name && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', display: 'block' }}
-              >
-                {client.legal_name}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-
-        {/* Infos de contact */}
-        <Stack spacing={0.5} sx={{ mb: 1 }}>
-          {client.contact_person && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Person sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: isMobile ? '0.65rem' : '0.8rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'block',
-                }}
-              >
-                {client.contact_person}
-              </Typography>
-            </Box>
-          )}
-
-          {client.email && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Email sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: isMobile ? '0.65rem' : '0.8rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'block',
-                }}
-              >
-                {client.email}
-              </Typography>
-            </Box>
-          )}
-        </Stack>
-
-        {/* Stats */}
-        {(client.total_invoices > 0 || client.total_sales_amount > 0) && (
-          <Box
-            sx={{
-              background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.12)} 0%, ${alpha(theme.palette.success.main, 0.06)} 100%)`,
-              borderRadius: 2,
-              p: 1.5,
-              mb: 1.5,
-              border: '1px solid',
-              borderColor: theme => alpha(theme.palette.success.main, 0.2),
-              position: 'relative',
-              overflow: 'hidden',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                bottom: 0,
-                width: 3,
-                background: theme => theme.palette.success.main,
-                borderRadius: '2px 0 0 2px'
-              }
-            }}
-          >
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
-              {client.total_invoices > 0 && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                  <Box
-                    sx={{
-                      p: 0.75,
-                      borderRadius: 1,
-                      bgcolor: 'success.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Receipt sx={{ fontSize: 16, color: 'white' }} />
-                  </Box>
-                  <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 700, color: 'success.main' }}>
-                    {client.total_invoices}
-                  </Typography>
-                </Box>
-              )}
-              {client.total_sales_amount > 0 && (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontSize: '0.938rem',
-                    fontWeight: 800,
-                    background: theme => `linear-gradient(135deg, ${theme.palette.success.dark}, ${theme.palette.success.main})`,
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent'
-                  }}
-                >
-                  {formatCurrency(client.total_sales_amount)}
-                </Typography>
-              )}
-            </Stack>
-          </Box>
+        actions={(
+          <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/clients/${client.id}/edit`); }}
+            sx={{ width: 30, height: 30, borderRadius: 2, color: 'text.disabled', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) } }}>
+            <Edit sx={{ fontSize: 16 }} />
+          </IconButton>
         )}
-
-        {/* Footer */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Chip
-            label={client.is_active ? (isMobile ? "" : t('clients:status.active')) : (isMobile ? "" : t('clients:status.inactive'))}
-            size="small"
-            color={client.is_active ? 'success' : 'default'}
-            sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
-          />
-        </Box>
-      </CardContent>
-    </Card>
-    </motion.div>
-  );
+      />
+    );
+  };
 
   if (loading && clients.length === 0) {
     return <LoadingState message={t('clients:messages.loading', 'Chargement des clients...')} />;
@@ -525,473 +318,26 @@ function Clients() {
 
 
   return (
-    <Box sx={{ p: isMobile ? 2 : 3 }}>
+    <Box sx={{ p: { xs: 1.5, sm: 2.5 }, maxWidth: 1280, mx: 'auto' }}>
 
-      {/* Header avec stats */}
-      <Box sx={{ mb: 3 }}>
-        {/* Stats Cards - Clickable Filters - Design Compact et Moderne */}
-        <Grid container spacing={isMobile ? 0.75 : 1.5}>
-          {/* Actifs */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('active')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'active' ? 'success.main' : theme => alpha(theme.palette.success.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.success.main, 0.3)}`,
-                  borderColor: 'success.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'active' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.success.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <CheckCircle sx={{ 
-                    fontSize: isMobile ? 20 : 24, 
-                    color: 'success.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography 
-                    variant={isMobile ? 'h6' : 'h5'} 
-                    fontWeight="700" 
-                    sx={{
-                      color: 'success.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {activeClients}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('clients:filters.active')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+      <NeumorphicKpis
+        activeKey={quickFilter}
+        onSelect={handleQuickFilterClick}
+        kpis={[
+          { key: '', label: 'Chiffre clients', value: formatCurrency(totalRevenue), sub: totalClients + ' client(s)', color: '#2563eb' },
+          { key: 'active', label: 'Actifs', value: activeClients, sub: 'en activite', color: '#10b981' },
+          { key: 'vip', label: 'VIP', value: vipClients, sub: '+ 10k', color: '#8b5cf6' },
+          { key: 'new', label: 'Nouveaux', value: newClients, sub: 'ce mois', color: '#3b82f6' },
+          { key: 'inactive', label: 'Inactifs', value: inactiveClients, sub: 'dormants', color: '#94a3b8' },
+        ]}
+      />
 
-          {/* Inactifs */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('inactive')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'inactive' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.error.main, 0.3)}`,
-                  borderColor: 'error.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'inactive' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.error.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${alpha(theme.palette.error.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Block sx={{ 
-                    fontSize: isMobile ? 20 : 24, 
-                    color: 'error.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography 
-                    variant={isMobile ? 'h6' : 'h5'} 
-                    fontWeight="700" 
-                    sx={{
-                      color: 'error.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {inactiveClients}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('clients:filters.inactive')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+      <NeumorphicSearch
+        value={searchTerm}
+        onChange={setSearchTerm}
+        placeholder="Rechercher un client, un contact, un email..."
+      />
 
-          {/* VIP */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('vip')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'vip' ? 'secondary.main' : theme => alpha(theme.palette.secondary.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.secondary.main, 0.3)}`,
-                  borderColor: 'secondary.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'vip' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.secondary.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.secondary.main}, ${alpha(theme.palette.secondary.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Star sx={{ 
-                    fontSize: isMobile ? 20 : 24, 
-                    color: 'secondary.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography 
-                    variant={isMobile ? 'h6' : 'h5'} 
-                    fontWeight="700" 
-                    sx={{
-                      color: 'secondary.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {vipClients}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('clients:filters.vip')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Nouveaux */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('new')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'new' ? 'info.main' : theme => alpha(theme.palette.info.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.info.main, 0.3)}`,
-                  borderColor: 'info.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'new' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.info.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <FiberNew sx={{ 
-                    fontSize: isMobile ? 20 : 24, 
-                    color: 'info.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography 
-                    variant={isMobile ? 'h6' : 'h5'} 
-                    fontWeight="700" 
-                    sx={{
-                      color: 'info.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {newClients}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('clients:filters.new')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Filter Indicator */}
-        {quickFilter && (
-          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">{t('clients:filters.activeFilter')}</Typography>
-            <Chip
-              label={
-                quickFilter === 'active' ? t('clients:filters.active') :
-                  quickFilter === 'inactive' ? t('clients:filters.inactive') :
-                    quickFilter === 'vip' ? t('clients:filters.vip') :
-                      quickFilter === 'new' ? t('clients:filters.new') : ''
-              }
-              onDelete={() => setQuickFilter('')}
-              color={
-                quickFilter === 'active' ? 'success' :
-                  quickFilter === 'inactive' ? 'error' :
-                    quickFilter === 'vip' ? 'secondary' :
-                      quickFilter === 'new' ? 'info' : 'primary'
-              }
-              size="small"
-            />
-          </Box>
-        )}
-      </Box>
-
-      {/* Search & Filters - Design Neumorphique Amélioré */}
-      <Card
-        sx={{
-          mb: 3,
-          borderRadius: 3,
-          boxShadow: theme => theme.palette.mode === 'dark'
-            ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-            : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-          border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-        }}
-      >
-        <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-          <Stack spacing={2}>
-            <Box sx={{
-              display: 'flex',
-              gap: 1,
-              alignItems: 'stretch',
-            }}>
-              <TextField
-                size="small"
-                placeholder={isMobile ? t('clients:search.placeholder_mobile', 'Chercher...') : t('clients:search.placeholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search sx={{ fontSize: isMobile ? 20 : 24 }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  flex: 1,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 40,
-                    fontSize: isMobile ? '0.875rem' : '1rem',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                    },
-                    '&.Mui-focused': {
-                      boxShadow: theme => alpha(theme.palette.primary.main, 0.2) + ' 0px 0px 0px 3px',
-                    }
-                  }
-                }}
-              />
-              <IconButton
-                onClick={() => setShowFilters(!showFilters)}
-                sx={{
-                  bgcolor: showFilters ? 'primary.main' : 'transparent',
-                  color: showFilters ? 'white' : 'inherit',
-                  borderRadius: 2,
-                  minWidth: 40,
-                  height: 40,
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: showFilters
-                    ? theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
-                    : 'none',
-                  '&:hover': {
-                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
-                    transform: 'scale(1.05)',
-                  },
-                  '&:active': {
-                    transform: 'scale(0.95)',
-                  }
-                }}
-              >
-                <FilterList />
-              </IconButton>
-            </Box>
-
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>{t('clients:filters.statusLabel')}</InputLabel>
-                      <Select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        label={t('clients:filters.statusLabel')}
-                        sx={{
-                          borderRadius: 2,
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                          },
-                        }}
-                      >
-                        <MenuItem value="">{t('clients:filters.all')}</MenuItem>
-                        <MenuItem value="active">{t('clients:status.active')}</MenuItem>
-                        <MenuItem value="inactive">{t('clients:status.inactive')}</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>{t('clients:filters.paymentTermsLabel')}</InputLabel>
-                      <Select
-                        value={paymentTermsFilter}
-                        onChange={(e) => setPaymentTermsFilter(e.target.value)}
-                        label={t('clients:filters.paymentTermsLabel')}
-                        sx={{
-                          borderRadius: 2,
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                          },
-                        }}
-                      >
-                        <MenuItem value="">{t('clients:filters.allPaymentTerms')}</MenuItem>
-                        <MenuItem value="NET 15">NET 15</MenuItem>
-                        <MenuItem value="NET 30">NET 30</MenuItem>
-                        <MenuItem value="NET 45">NET 45</MenuItem>
-                        <MenuItem value="NET 60">NET 60</MenuItem>
-                        <MenuItem value="CASH">CASH</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </Grid>
-              </motion.div>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {/* Clients Grid */}
       {filteredClients.length === 0 ? (
         <EmptyState
           title={t('clients:messages.noClients')}
@@ -1000,7 +346,7 @@ function Clients() {
           onAction={() => navigate('/clients/new')}
         />
       ) : (
-        <Grid container spacing={isMobile ? 1.5 : 3}>
+        <Grid container spacing={{ xs: 2, sm: 2.5 }}>
           <AnimatePresence mode="popLayout">
             {filteredClients.map((client, index) => (
               <Grid item xs={6} sm={6} md={4} lg={3} key={client.id}>
@@ -1010,6 +356,7 @@ function Clients() {
           </AnimatePresence>
         </Grid>
       )}
+
 
       {/* Configuration Dialog */}
       <Dialog open={reportConfigOpen} onClose={() => setReportConfigOpen(false)} maxWidth="md" fullWidth>

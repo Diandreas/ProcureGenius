@@ -52,12 +52,15 @@ import {
   Print,
   Download,
   Receipt,
+  Edit,
+  Close,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
 import { getStatusColor, getStatusLabel, parseRating } from '../../utils/formatters';
 import { useHeader } from '../../contexts/HeaderContext';
+import { NeumorphicKpis, NeumorphicSearch, NeumorphicCard } from '../../components/neumorphic/NeumorphicList';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
@@ -254,189 +257,30 @@ function Suppliers() {
     navigate(`/suppliers/${supplier.id}`);
   }, [registerSharedElement, navigate]);
 
-  const SupplierCard = ({ supplier, index }) => (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{
-        duration: 0.4,
-        delay: index * 0.05,
-        ease: [0.6, 0.05, 0.01, 0.9]
-      }}
-      whileHover={{
-        boxShadow: supplier.status === 'active'
-          ? '0 20px 60px rgba(25, 118, 210, 0.2)'
-          : '0 20px 60px rgba(0, 0, 0, 0.15)'
-      }}
-      style={{ height: '100%' }}
-    >
-      <Card
-        component={motion.div}
-        layoutId={`supplier-card-${supplier.id}`}
+  const SupplierCard = ({ supplier, index }) => {
+    const isActive = supplier.status === 'active';
+    const rating = parseRating(supplier.rating);
+    const top = rating >= 4;
+    const accent = top ? '#8b5cf6' : isActive ? '#10b981' : '#94a3b8';
+    return (
+      <NeumorphicCard
+        index={index}
+        accentColor={accent}
+        status={{ label: top ? 'Top' : isActive ? 'Actif' : 'Inactif', color: accent }}
+        title={supplier.name}
+        subtitle={supplier.contact_person || supplier.email || ''}
+        amount={rating ? rating.toFixed(1) + '/5' : null}
+        footer={supplier.is_local ? 'Local' : 'International'}
         onClick={(e) => handleCardClick(e, supplier)}
-      sx={{
-        cursor: 'pointer',
-        height: '100%',
-        borderRadius: 3,
-        background: theme => supplier.status === 'active'
-          ? `linear-gradient(145deg,
-              ${alpha(theme.palette.background.paper, 0.95)} 0%,
-              ${alpha(theme.palette.primary.main, 0.03)} 50%,
-              ${alpha(theme.palette.background.paper, 0.95)} 100%)`
-          : `linear-gradient(145deg,
-              ${alpha(theme.palette.background.paper, 0.9)} 0%,
-              ${alpha(theme.palette.grey[500], 0.05)} 100%)`,
-        boxShadow: theme => supplier.status === 'active'
-          ? `0 4px 20px ${alpha(theme.palette.primary.main, 0.08)}, 0 2px 8px ${alpha(theme.palette.common.black, 0.04)}`
-          : `0 4px 16px ${alpha(theme.palette.common.black, 0.06)}`,
-        backdropFilter: 'blur(20px)',
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'box-shadow 0.3s ease',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 4,
-          background: theme => supplier.status === 'active'
-            ? `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
-            : `linear-gradient(90deg, ${theme.palette.grey[400]}, ${theme.palette.grey[500]})`,
-          borderRadius: '3px 3px 0 0',
-          boxShadow: theme => supplier.status === 'active'
-            ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
-            : 'none'
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: theme => `radial-gradient(circle at top right, ${alpha(theme.palette.primary.main, 0.05)} 0%, transparent 70%)`,
-          pointerEvents: 'none',
-          opacity: supplier.status === 'active' ? 1 : 0.3
-        }
-      }}
-    >
-      <CardContent sx={{ p: 2 }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <motion.div layoutId={`supplier-avatar-${supplier.id}`}>
-            <Avatar
-              sx={{
-                width: isMobile ? 36 : 56,
-                height: isMobile ? 36 : 56,
-                bgcolor: 'primary.main',
-                borderRadius: 2,
-                fontSize: isMobile ? '1rem' : '1.5rem',
-                fontWeight: 'bold',
-                boxShadow: 2,
-              }}
-            >
-              {supplier.name?.charAt(0)?.toUpperCase() || '?'}
-            </Avatar>
-          </motion.div>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <motion.div layoutId={`supplier-name-${supplier.id}`}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  fontWeight: 600,
-                  mb: 0.25,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  fontSize: isMobile ? '0.75rem' : '0.95rem',
-                  lineHeight: 1.2
-                }}
-              >
-                {supplier.name}
-              </Typography>
-            </motion.div>
-            {parseRating(supplier.rating) > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
-                <Rating
-                  value={parseRating(supplier.rating)}
-                  readOnly
-                  size="small"
-                  sx={{ fontSize: isMobile ? '0.75rem' : '0.9rem' }}
-                />
-                {!isMobile && (
-                  <Typography variant="caption" color="text.secondary">
-                    ({parseRating(supplier.rating).toFixed(1)})
-                  </Typography>
-                )}
-              </Box>
-            )}
-          </Box>
-        </Box>
-
-        {/* Infos de contact */}
-        <Stack spacing={0.5} sx={{ mb: 1 }}>
-          {supplier.contact_person && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Business sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: isMobile ? '0.65rem' : '0.8rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {supplier.contact_person}
-              </Typography>
-            </Box>
-          )}
-
-          {supplier.email && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Email sx={{ fontSize: isMobile ? 14 : 16, color: 'text.secondary' }} />
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: isMobile ? '0.65rem' : '0.8rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {supplier.email}
-              </Typography>
-            </Box>
-          )}
-        </Stack>
-
-        {/* Footer - Tags diversité */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5 }}>
-          <Chip
-            label={getStatusLabel(supplier.status)}
-            size="small"
-            color={getStatusColor(supplier.status)}
-            sx={{ fontSize: isMobile ? '0.6rem' : '0.7rem', height: isMobile ? 16 : 20 }}
-          />
-          {supplier.is_local && (
-            <Chip
-              label={isMobile ? "Loc" : "Local"}
-              size="small"
-              color="success"
-              variant="outlined"
-              sx={{ fontSize: isMobile ? '0.55rem' : '0.65rem', height: isMobile ? 16 : 18 }}
-            />
-          )}
-        </Box>
-      </CardContent>
-    </Card>
-    </motion.div>
-  );
+        actions={(
+          <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/suppliers/${supplier.id}/edit`); }}
+            sx={{ width: 30, height: 30, borderRadius: 2, color: 'text.disabled', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.1) } }}>
+            <Edit sx={{ fontSize: 16 }} />
+          </IconButton>
+        )}
+      />
+    );
+  };
 
   const handlePdfAction = (action) => {
     if (!generatedPdfBlob) return;
@@ -468,536 +312,26 @@ function Suppliers() {
   };
 
   return (
-    <Box sx={{ p: isMobile ? 2 : 3 }}>
+    <Box sx={{ p: { xs: 1.5, sm: 2.5 }, maxWidth: 1280, mx: 'auto' }}>
 
-      {/* Header avec stats */}
-      <Box sx={{ mb: 3 }}>
-        {/* Stats Cards - Cliquables pour filtrer - Design Compact et Moderne */}
-        <Grid container spacing={isMobile ? 0.75 : 1.5}>
-          {/* Actifs */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('active')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'active' ? 'success.main' : theme => alpha(theme.palette.success.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.success.main, 0.3)}`,
-                  borderColor: 'success.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'active' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.success.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <CheckCircle sx={{ 
-                    fontSize: isMobile ? 20 : 24, 
-                    color: 'success.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography 
-                    variant={isMobile ? 'h6' : 'h5'} 
-                    fontWeight="700" 
-                    sx={{
-                      color: 'success.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {activeSuppliers}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('suppliers:filters.active')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+      <NeumorphicKpis
+        activeKey={quickFilter}
+        onSelect={handleQuickFilterClick}
+        kpis={[
+          { key: '', label: 'Fournisseurs', value: totalSuppliers, sub: 'au total', color: '#2563eb' },
+          { key: 'active', label: 'Actifs', value: activeSuppliers, sub: 'en activite', color: '#10b981' },
+          { key: 'top_rated', label: 'Top notes', value: topRatedSuppliers, sub: '4+ etoiles', color: '#8b5cf6' },
+          { key: 'local', label: 'Locaux', value: localSuppliers, sub: 'proximite', color: '#3b82f6' },
+          { key: 'international', label: 'Internat.', value: internationalSuppliers, sub: 'a l etranger', color: '#f59e0b' },
+        ]}
+      />
 
-          {/* Inactifs */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('inactive')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'inactive' ? 'error.main' : theme => alpha(theme.palette.error.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.error.main, 0.3)}`,
-                  borderColor: 'error.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'inactive' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.error.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.error.main}, ${alpha(theme.palette.error.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Block sx={{ 
-                    fontSize: isMobile ? 20 : 24, 
-                    color: 'error.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography 
-                    variant={isMobile ? 'h6' : 'h5'} 
-                    fontWeight="700" 
-                    sx={{
-                      color: 'error.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {inactiveSuppliers}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('suppliers:filters.inactive')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+      <NeumorphicSearch
+        value={searchTerm}
+        onChange={setSearchTerm}
+        placeholder="Rechercher un fournisseur, un contact..."
+      />
 
-          {/* Locaux */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('local')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'local' ? 'warning.main' : theme => alpha(theme.palette.warning.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.warning.main, 0.3)}`,
-                  borderColor: 'warning.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'local' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.warning.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <LocalShipping sx={{ 
-                    fontSize: isMobile ? 20 : 24, 
-                    color: 'warning.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography 
-                    variant={isMobile ? 'h6' : 'h5'} 
-                    fontWeight="700" 
-                    sx={{
-                      color: 'warning.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {localSuppliers}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('suppliers:filters.local')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Internationaux */}
-          <Grid item xs={3} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('international')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'international' ? 'info.main' : theme => alpha(theme.palette.info.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.info.main, 0.3)}`,
-                  borderColor: 'info.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'international' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.info.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack direction="column" alignItems="center" spacing={isMobile ? 0.5 : 0.75}>
-                  <Public sx={{ 
-                    fontSize: isMobile ? 20 : 24, 
-                    color: 'info.main',
-                    mb: isMobile ? 0.25 : 0.5
-                  }} />
-                  <Typography 
-                    variant={isMobile ? 'h6' : 'h5'} 
-                    fontWeight="700" 
-                    sx={{
-                      color: 'info.main',
-                      fontSize: isMobile ? '1rem' : undefined,
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {internationalSuppliers}
-                  </Typography>
-                  <Typography 
-                    variant="caption" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: isMobile ? '0.625rem' : '0.7rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('suppliers:filters.international')}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Top Rated */}
-          <Grid item xs={6} sm={2.4}>
-            <Card
-              onClick={() => handleQuickFilterClick('top_rated')}
-              sx={{
-                borderRadius: isMobile ? 2 : 2.5,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
-                border: '1.5px solid',
-                borderColor: quickFilter === 'top_rated' ? 'secondary.main' : theme => alpha(theme.palette.secondary.main, 0.2),
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px) scale(1.02)',
-                  boxShadow: theme => `0 8px 24px ${alpha(theme.palette.secondary.main, 0.3)}`,
-                  borderColor: 'secondary.main'
-                },
-                '&:active': {
-                  transform: 'translateY(0) scale(0.98)'
-                },
-                ...(quickFilter === 'top_rated' && {
-                  boxShadow: theme => `0 4px 16px ${alpha(theme.palette.secondary.main, 0.4)}`,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 3,
-                    background: theme => `linear-gradient(90deg, ${theme.palette.secondary.main}, ${alpha(theme.palette.secondary.light, 0.8)})`,
-                    borderRadius: '2px 2px 0 0'
-                  }
-                })
-              }}
-            >
-              <CardContent sx={{ 
-                p: isMobile ? 1 : 1.5, 
-                '&:last-child': { pb: isMobile ? 1 : 1.5 },
-                textAlign: 'center'
-              }}>
-                <Stack 
-                  direction={isMobile ? "row" : "column"} 
-                  alignItems="center" 
-                  justifyContent={isMobile ? "center" : "center"}
-                  spacing={isMobile ? 1 : 0.75}
-                >
-                  <Star sx={{ 
-                    fontSize: isMobile ? 18 : 24, 
-                    color: 'secondary.main',
-                    mb: isMobile ? 0 : 0.5
-                  }} />
-                  <Box sx={{ textAlign: isMobile ? 'left' : 'center' }}>
-                    <Typography 
-                      variant={isMobile ? 'h6' : 'h5'} 
-                      fontWeight="700" 
-                      sx={{
-                        color: 'secondary.main',
-                        fontSize: isMobile ? '1rem' : undefined,
-                        lineHeight: 1.2
-                      }}
-                    >
-                      {topRatedSuppliers}
-                    </Typography>
-                    <Typography 
-                      variant="caption" 
-                      color="text.secondary" 
-                      sx={{ 
-                        fontSize: isMobile ? '0.625rem' : '0.7rem',
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        lineHeight: 1.2
-                      }}
-                    >
-                      {t('suppliers:filters.topRated')}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Indicateur de filtre actif */}
-        {quickFilter && (
-          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" color="text.secondary">{t('suppliers:filters.activeFilter')}</Typography>
-            <Chip
-              label={
-                quickFilter === 'active' ? t('suppliers:filters.active') :
-                quickFilter === 'inactive' ? t('suppliers:filters.inactive') :
-                quickFilter === 'local' ? t('suppliers:filters.local') :
-                quickFilter === 'international' ? t('suppliers:filters.internationalFull') :
-                quickFilter === 'top_rated' ? t('suppliers:filters.topRated') : ''
-              }
-              onDelete={() => setQuickFilter('')}
-              color={
-                quickFilter === 'active' ? 'success' :
-                quickFilter === 'inactive' ? 'error' :
-                quickFilter === 'local' ? 'warning' :
-                quickFilter === 'international' ? 'info' :
-                quickFilter === 'top_rated' ? 'secondary' : 'default'
-              }
-              size="small"
-            />
-          </Box>
-        )}
-      </Box>
-
-      {/* Search & Filters - Design Neumorphique Amélioré */}
-      <Card
-        sx={{
-          mb: 3,
-          borderRadius: 3,
-          boxShadow: theme => theme.palette.mode === 'dark'
-            ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-            : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-          border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-        }}
-      >
-        <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-          <Stack spacing={2}>
-            <Box sx={{
-              display: 'flex',
-              gap: 1,
-              alignItems: 'stretch',
-            }}>
-              <TextField
-                size="small"
-                placeholder={isMobile ? t('suppliers:search.placeholder_mobile', 'Chercher...') : t('suppliers:search.placeholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search sx={{ fontSize: isMobile ? 20 : 24 }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  flex: 1,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    height: 40,
-                    fontSize: isMobile ? '0.875rem' : '1rem',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                    },
-                    '&.Mui-focused': {
-                      boxShadow: theme => alpha(theme.palette.primary.main, 0.2) + ' 0px 0px 0px 3px',
-                    }
-                  }
-                }}
-              />
-              <IconButton
-                onClick={() => setShowFilters(!showFilters)}
-                sx={{
-                  bgcolor: showFilters ? 'primary.main' : 'transparent',
-                  color: showFilters ? 'white' : 'inherit',
-                  borderRadius: 2,
-                  minWidth: 40,
-                  height: 40,
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: showFilters
-                    ? theme => `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`
-                    : 'none',
-                  '&:hover': {
-                    bgcolor: showFilters ? 'primary.dark' : 'action.hover',
-                    transform: 'scale(1.05)',
-                  },
-                  '&:active': {
-                    transform: 'scale(0.95)',
-                  }
-                }}
-              >
-                <FilterList />
-              </IconButton>
-            </Box>
-
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={4}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>{t('suppliers:filters.statusLabel')}</InputLabel>
-                      <Select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        label={t('suppliers:filters.statusLabel')}
-                        sx={{
-                          borderRadius: 2,
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: theme => alpha(theme.palette.primary.main, 0.1) + ' 0px 0px 0px 2px',
-                          },
-                        }}
-                      >
-                        <MenuItem value="">{t('suppliers:filters.all')}</MenuItem>
-                        <MenuItem value="active">{t('suppliers:status.active')}</MenuItem>
-                        <MenuItem value="pending">{t('suppliers:status.pending')}</MenuItem>
-                        <MenuItem value="inactive">{t('suppliers:status.inactive')}</MenuItem>
-                        <MenuItem value="blocked">{t('suppliers:status.blocked')}</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </Grid>
-              </motion.div>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {/* Suppliers Grid */}
       {loading && suppliers.length === 0 ? (
         <LoadingState message={t('suppliers:messages.loading', 'Chargement des fournisseurs...')} />
       ) : filteredSuppliers.length === 0 ? (
@@ -1008,7 +342,7 @@ function Suppliers() {
           onAction={() => navigate('/suppliers/new')}
         />
       ) : (
-        <Grid container spacing={isMobile ? 1.5 : 3}>
+        <Grid container spacing={{ xs: 2, sm: 2.5 }}>
           <AnimatePresence mode="popLayout">
             {filteredSuppliers.map((supplier, index) => (
               <Grid item xs={6} sm={6} md={4} lg={3} key={supplier.id}>
@@ -1018,6 +352,7 @@ function Suppliers() {
           </AnimatePresence>
         </Grid>
       )}
+
 
       {/* PDF Dialog - Génération automatique */}
       <Dialog open={pdfDialogOpen} onClose={handleClosePdfDialog} maxWidth="sm" fullWidth>
