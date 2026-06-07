@@ -91,6 +91,11 @@ import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatte
 import useCurrency from '../../hooks/useCurrency';
 import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 import { useHeader } from '../../contexts/HeaderContext';
+import usePdfViewer from '../../hooks/usePdfViewer';
+import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
+import { isNativePlatform } from '../../utils/platform';
+
+const IS_NATIVE = isNativePlatform();
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
@@ -115,6 +120,7 @@ function PurchaseOrderDetail() {
   const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const pdfViewer = usePdfViewer();
   const [sendingEmail, setSendingEmail] = useState(false);
   const [settings, setSettings] = useState(null);
   const [emailData, setEmailData] = useState({
@@ -442,25 +448,28 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
     try {
       const pdfBlob = await generatePurchaseOrderPDF(purchaseOrder, selectedTemplate);
 
+      const fname = `bon-commande-${purchaseOrder.po_number}.pdf`;
+
       if (action === 'download') {
-        await downloadPDF(pdfBlob, `bon-commande-${purchaseOrder.po_number}.pdf`);
+        await pdfViewer.download(pdfBlob, fname);
         enqueueSnackbar(t('purchaseOrders:messages.pdfDownloadedSuccess'), { variant: 'success' });
       } else if (action === 'preview') {
-        await openPDFInNewTab(pdfBlob, `bon-commande-${purchaseOrder.po_number}.pdf`);
+        pdfViewer.preview(pdfBlob, fname, `Bon de commande ${purchaseOrder.po_number}`);
       } else if (action === 'print') {
-        // Ouvrir le PDF dans une nouvelle fenêtre et déclencher l'impression
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-        const printWindow = window.open(pdfUrl, '_blank');
-
-        if (printWindow) {
-          printWindow.onload = () => {
-            printWindow.print();
-            // Libérer l'URL après impression
-            setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
-          };
-          enqueueSnackbar(t('purchaseOrders:messages.printWindowOpened'), { variant: 'success' });
+        if (IS_NATIVE) {
+          pdfViewer.preview(pdfBlob, fname, `Bon de commande ${purchaseOrder.po_number}`);
         } else {
-          enqueueSnackbar(t('purchaseOrders:messages.printWindowError'), { variant: 'error' });
+          const pdfUrl = URL.createObjectURL(pdfBlob);
+          const printWindow = window.open(pdfUrl, '_blank');
+          if (printWindow) {
+            printWindow.onload = () => {
+              printWindow.print();
+              setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+            };
+            enqueueSnackbar(t('purchaseOrders:messages.printWindowOpened'), { variant: 'success' });
+          } else {
+            enqueueSnackbar(t('purchaseOrders:messages.printWindowError'), { variant: 'error' });
+          }
         }
       }
 
@@ -1532,28 +1541,33 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
           </Button>
           <Button
             onClick={() => handleGeneratePDF('preview')}
-            variant="outlined"
+            variant={IS_NATIVE ? 'contained' : 'outlined'}
             disabled={generatingPdf}
-            startIcon={<PictureAsPdf />}
+            startIcon={generatingPdf ? <CircularProgress size={20} /> : <PictureAsPdf />}
           >
             {t('purchaseOrders:buttons.preview')}
           </Button>
-          <Button
-            onClick={() => handleGeneratePDF('print')}
-            variant="outlined"
-            disabled={generatingPdf}
-            startIcon={<Print />}
-          >
-            {t('purchaseOrders:buttons.print')}
-          </Button>
-          <Button
-            onClick={() => handleGeneratePDF('download')}
-            variant="contained"
-            disabled={generatingPdf}
-            startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
-          >
-            {generatingPdf ? t('purchaseOrders:labels.generating') : t('purchaseOrders:buttons.download')}
-          </Button>
+          {/* Imprimer + Telecharger masques sur mobile (apercu integre suffit). */}
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handleGeneratePDF('print')}
+              variant="outlined"
+              disabled={generatingPdf}
+              startIcon={<Print />}
+            >
+              {t('purchaseOrders:buttons.print')}
+            </Button>
+          )}
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handleGeneratePDF('download')}
+              variant="contained"
+              disabled={generatingPdf}
+              startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
+            >
+              {generatingPdf ? t('purchaseOrders:labels.generating') : t('purchaseOrders:buttons.download')}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -1639,6 +1653,9 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Visionneuse PDF integree (apercu dans l'app) */}
+      <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
   );
 }

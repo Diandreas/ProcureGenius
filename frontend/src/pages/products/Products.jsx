@@ -73,6 +73,11 @@ import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { generateProductsBulkReport, downloadPDF, openPDFInNewTab, generateProductReportPDF } from '../../services/pdfReportService';
+import usePdfViewer from '../../hooks/usePdfViewer';
+import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
+import { isNativePlatform } from '../../utils/platform';
+
+const IS_NATIVE = isNativePlatform();
 
 // Product type visual configuration
 const TYPE_CONFIG = {
@@ -199,6 +204,7 @@ function Products() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const pdfViewer = usePdfViewer();
   const [reportFilters, setReportFilters] = useState({
     dateStart: '',
     dateEnd: '',
@@ -312,17 +318,23 @@ function Products() {
     setGeneratedPdfBlob(null);
   };
 
-  const handlePdfAction = (action) => {
+  const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
+    const fname = `rapport-produits-${new Date().getTime()}.pdf`;
 
     if (action === 'download') {
-      downloadPDF(generatedPdfBlob, `rapport-produits-${new Date().getTime()}.pdf`);
+      await pdfViewer.download(generatedPdfBlob, fname);
       enqueueSnackbar(t('products:messages.pdfDownloadedSuccess', 'PDF téléchargé avec succès'), {
         variant: 'success',
       });
     } else if (action === 'preview') {
-      openPDFInNewTab(generatedPdfBlob);
+      pdfViewer.preview(generatedPdfBlob, fname, 'Rapport produits');
+      return;
     } else if (action === 'print') {
+      if (IS_NATIVE) {
+        pdfViewer.preview(generatedPdfBlob, fname, 'Rapport produits');
+        return;
+      }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
       const printWindow = window.open(pdfUrl, '_blank');
       if (printWindow) {
@@ -651,31 +663,38 @@ function Products() {
             <>
               <Button
                 onClick={() => handlePdfAction('preview')}
-                variant="outlined"
+                variant={IS_NATIVE ? 'contained' : 'outlined'}
                 startIcon={<Receipt />}
               >
                 {t('products:buttons.preview', 'Aperçu')}
               </Button>
-              <Button
-                onClick={() => handlePdfAction('print')}
-                variant="outlined"
-                color="secondary"
-                startIcon={<Print />}
-              >
-                {t('products:buttons.print', 'Imprimer')}
-              </Button>
-              <Button
-                onClick={() => handlePdfAction('download')}
-                variant="contained"
-                color="success"
-                startIcon={<Download />}
-              >
-                {t('products:buttons.download', 'Télécharger')}
-              </Button>
+              {!IS_NATIVE && (
+                <Button
+                  onClick={() => handlePdfAction('print')}
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<Print />}
+                >
+                  {t('products:buttons.print', 'Imprimer')}
+                </Button>
+              )}
+              {!IS_NATIVE && (
+                <Button
+                  onClick={() => handlePdfAction('download')}
+                  variant="contained"
+                  color="success"
+                  startIcon={<Download />}
+                >
+                  {t('products:buttons.download', 'Télécharger')}
+                </Button>
+              )}
             </>
           )}
         </DialogActions>
       </Dialog>
+
+      {/* Visionneuse PDF integree (apercu dans l'app) */}
+      <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
   );
 }

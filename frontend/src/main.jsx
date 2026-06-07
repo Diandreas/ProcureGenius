@@ -3,8 +3,12 @@ import ReactDOM from 'react-dom/client'
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App.jsx'
 import './index.css'
+import { initNativeApp } from './services/nativeInit';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+// Initialise l'experience native (status bar, splash, bouton retour) — no-op en web.
+initNativeApp();
 
 // Enregistrement du Service Worker pour la PWA (web uniquement).
 // En natif (Capacitor), on n'enregistre pas le SW : il pourrait intercepter

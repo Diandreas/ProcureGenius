@@ -75,6 +75,11 @@ import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatte
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 import { useHeader } from '../../contexts/HeaderContext';
+import usePdfViewer from '../../hooks/usePdfViewer';
+import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
+import { isNativePlatform } from '../../utils/platform';
+
+const IS_NATIVE = isNativePlatform();
 import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
 
 function InvoiceDetail() {
@@ -97,6 +102,7 @@ function InvoiceDetail() {
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATE_TYPES.CLASSIC);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const pdfViewer = usePdfViewer();
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailData, setEmailData] = useState({
     recipient_email: '',
@@ -357,25 +363,31 @@ function InvoiceDetail() {
     try {
       const pdfBlob = await generateInvoicePDF(invoice, selectedTemplate);
 
+      const fname = `facture-${invoice.invoice_number}.pdf`;
+
       if (action === 'download') {
-        await downloadPDF(pdfBlob, `facture-${invoice.invoice_number}.pdf`);
+        await pdfViewer.download(pdfBlob, fname);
         enqueueSnackbar(t('invoices:messages.pdfDownloadedSuccess'), { variant: 'success' });
       } else if (action === 'preview') {
-        await openPDFInNewTab(pdfBlob, `facture-${invoice.invoice_number}.pdf`);
+        // Visionneuse integree (dans l'app), avec Telecharger/Partager.
+        pdfViewer.preview(pdfBlob, fname, `Facture ${invoice.invoice_number}`);
       } else if (action === 'print') {
-        // Ouvrir le PDF dans une nouvelle fenêtre et déclencher l'impression
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-        const printWindow = window.open(pdfUrl, '_blank');
-
-        if (printWindow) {
-          printWindow.onload = () => {
-            printWindow.print();
-            // Libérer l'URL après impression
-            setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
-          };
-          enqueueSnackbar(t('invoices:messages.printWindowOpened'), { variant: 'success' });
+        if (IS_NATIVE) {
+          // Pas d'impression directe en natif : on ouvre la visionneuse
+          // (l'utilisateur imprime depuis le lecteur PDF du systeme).
+          pdfViewer.preview(pdfBlob, fname, `Facture ${invoice.invoice_number}`);
         } else {
-          enqueueSnackbar(t('invoices:messages.cannotOpenPrintWindow'), { variant: 'error' });
+          const pdfUrl = URL.createObjectURL(pdfBlob);
+          const printWindow = window.open(pdfUrl, '_blank');
+          if (printWindow) {
+            printWindow.onload = () => {
+              printWindow.print();
+              setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+            };
+            enqueueSnackbar(t('invoices:messages.printWindowOpened'), { variant: 'success' });
+          } else {
+            enqueueSnackbar(t('invoices:messages.cannotOpenPrintWindow'), { variant: 'error' });
+          }
         }
       }
 
@@ -1444,31 +1456,40 @@ Cordialement`
           </Button>
           <Button
             onClick={() => handleGeneratePDF('preview')}
-            variant="outlined"
+            variant={IS_NATIVE ? 'contained' : 'outlined'}
             disabled={generatingPdf}
-            startIcon={<Receipt />}
+            startIcon={generatingPdf ? <CircularProgress size={20} /> : <Receipt />}
           >
             {t('invoices:buttons.preview')}
           </Button>
-          <Button
-            onClick={() => handleGeneratePDF('print')}
-            variant="outlined"
-            color="secondary"
-            disabled={generatingPdf}
-            startIcon={<Print />}
-          >
-            {t('invoices:buttons.print')}
-          </Button>
-          <Button
-            onClick={() => handleGeneratePDF('download')}
-            variant="contained"
-            disabled={generatingPdf}
-            startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
-          >
-            {generatingPdf ? t('invoices:labels.generatingLabel') : t('invoices:buttons.download')}
-          </Button>
+          {/* Imprimer + Telecharger masques sur mobile : l'apercu integre
+              propose deja Telecharger et Partager. */}
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handleGeneratePDF('print')}
+              variant="outlined"
+              color="secondary"
+              disabled={generatingPdf}
+              startIcon={<Print />}
+            >
+              {t('invoices:buttons.print')}
+            </Button>
+          )}
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handleGeneratePDF('download')}
+              variant="contained"
+              disabled={generatingPdf}
+              startIcon={generatingPdf ? <CircularProgress size={20} /> : <Download />}
+            >
+              {generatingPdf ? t('invoices:labels.generatingLabel') : t('invoices:buttons.download')}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
+
+      {/* Visionneuse PDF integree (apercu dans l'app) */}
+      <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
   );
 }

@@ -58,6 +58,11 @@ import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
 import ProductBatchesTab from '../../components/ProductBatchesTab';
 import { generateProductReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import usePdfViewer from '../../hooks/usePdfViewer';
+import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
+import { isNativePlatform } from '../../utils/platform';
+
+const IS_NATIVE = isNativePlatform();
 import { useHeader } from '../../contexts/HeaderContext';
 import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
 
@@ -96,6 +101,7 @@ function ProductDetail() {
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const pdfViewer = usePdfViewer();
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
@@ -177,15 +183,21 @@ function ProductDetail() {
     }
   }, [pdfDialogOpen, product, generatedPdfBlob, generatingPdf]);
 
-  const handlePdfAction = (action) => {
+  const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
+    const fname = `rapport-produit-${product.name}.pdf`;
 
     if (action === 'download') {
-      downloadPDF(generatedPdfBlob, `rapport-produit-${product.name}.pdf`);
+      await pdfViewer.download(generatedPdfBlob, fname);
       enqueueSnackbar(t('products:messages.pdfDownloaded', 'Rapport PDF téléchargé avec succès'), { variant: 'success' });
     } else if (action === 'preview') {
-      openPDFInNewTab(generatedPdfBlob);
+      pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${product.name}`);
+      return;
     } else if (action === 'print') {
+      if (IS_NATIVE) {
+        pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${product.name}`);
+        return;
+      }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
       const printWindow = window.open(pdfUrl, '_blank');
       if (printWindow) {
@@ -563,31 +575,38 @@ function ProductDetail() {
           </Button>
           <Button
             onClick={() => handlePdfAction('preview')}
-            variant="outlined"
+            variant={IS_NATIVE ? 'contained' : 'outlined'}
             disabled={generatingPdf || !generatedPdfBlob}
             startIcon={<Receipt />}
           >
             {t('common:buttons.preview', 'Aperçu')}
           </Button>
-          <Button
-            onClick={() => handlePdfAction('print')}
-            variant="outlined"
-            color="secondary"
-            disabled={generatingPdf || !generatedPdfBlob}
-            startIcon={<Print />}
-          >
-            {t('common:buttons.print', 'Imprimer')}
-          </Button>
-          <Button
-            onClick={() => handlePdfAction('download')}
-            variant="contained"
-            disabled={generatingPdf || !generatedPdfBlob}
-            startIcon={<Download />}
-          >
-            {t('common:buttons.download', 'Télécharger')}
-          </Button>
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handlePdfAction('print')}
+              variant="outlined"
+              color="secondary"
+              disabled={generatingPdf || !generatedPdfBlob}
+              startIcon={<Print />}
+            >
+              {t('common:buttons.print', 'Imprimer')}
+            </Button>
+          )}
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handlePdfAction('download')}
+              variant="contained"
+              disabled={generatingPdf || !generatedPdfBlob}
+              startIcon={<Download />}
+            >
+              {t('common:buttons.download', 'Télécharger')}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
+
+      {/* Visionneuse PDF integree (apercu dans l'app) */}
+      <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
   );
 }

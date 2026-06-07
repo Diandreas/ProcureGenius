@@ -67,6 +67,11 @@ import { useHeader } from '../../contexts/HeaderContext';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import usePdfViewer from '../../hooks/usePdfViewer';
+import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
+import { isNativePlatform } from '../../utils/platform';
+
+const IS_NATIVE = isNativePlatform();
 import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
 
 function SupplierDetail() {
@@ -82,6 +87,7 @@ function SupplierDetail() {
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const pdfViewer = usePdfViewer();
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
@@ -210,15 +216,21 @@ function SupplierDetail() {
     }
   }, [pdfDialogOpen, supplier, generatedPdfBlob, generatingPdf]);
 
-  const handlePdfAction = (action) => {
+  const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
+    const fname = `rapport-fournisseur-${supplier.name}.pdf`;
 
     if (action === 'download') {
-      downloadPDF(generatedPdfBlob, `rapport-fournisseur-${supplier.name}.pdf`);
+      await pdfViewer.download(generatedPdfBlob, fname);
       enqueueSnackbar(t('suppliers:messages.pdfDownloaded', 'Rapport PDF téléchargé avec succès'), { variant: 'success' });
     } else if (action === 'preview') {
-      openPDFInNewTab(generatedPdfBlob);
+      pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${supplier.name}`);
+      return;
     } else if (action === 'print') {
+      if (IS_NATIVE) {
+        pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${supplier.name}`);
+        return;
+      }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
       const printWindow = window.open(pdfUrl, '_blank');
       if (printWindow) {
@@ -655,31 +667,38 @@ function SupplierDetail() {
           </Button>
           <Button
             onClick={() => handlePdfAction('preview')}
-            variant="outlined"
+            variant={IS_NATIVE ? 'contained' : 'outlined'}
             disabled={generatingPdf || !generatedPdfBlob}
             startIcon={<Receipt />}
           >
             {t('common:buttons.preview', 'Aperçu')}
           </Button>
-          <Button
-            onClick={() => handlePdfAction('print')}
-            variant="outlined"
-            color="secondary"
-            disabled={generatingPdf || !generatedPdfBlob}
-            startIcon={<Print />}
-          >
-            {t('common:buttons.print', 'Imprimer')}
-          </Button>
-          <Button
-            onClick={() => handlePdfAction('download')}
-            variant="contained"
-            disabled={generatingPdf || !generatedPdfBlob}
-            startIcon={<Download />}
-          >
-            {t('common:buttons.download', 'Télécharger')}
-          </Button>
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handlePdfAction('print')}
+              variant="outlined"
+              color="secondary"
+              disabled={generatingPdf || !generatedPdfBlob}
+              startIcon={<Print />}
+            >
+              {t('common:buttons.print', 'Imprimer')}
+            </Button>
+          )}
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handlePdfAction('download')}
+              variant="contained"
+              disabled={generatingPdf || !generatedPdfBlob}
+              startIcon={<Download />}
+            >
+              {t('common:buttons.download', 'Télécharger')}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
+
+      {/* Visionneuse PDF integree (apercu dans l'app) */}
+      <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
   );
 }

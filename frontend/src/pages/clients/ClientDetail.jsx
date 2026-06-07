@@ -57,6 +57,11 @@ import ClientProductsTable from '../../components/clients/ClientProductsTable';
 import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
 import { generateClientReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 import LoadingState from '../../components/LoadingState';
+import usePdfViewer from '../../hooks/usePdfViewer';
+import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
+import { isNativePlatform } from '../../utils/platform';
+
+const IS_NATIVE = isNativePlatform();
 import ErrorState from '../../components/ErrorState';
 import { useHeader } from '../../contexts/HeaderContext';
 
@@ -73,6 +78,7 @@ function ClientDetail() {
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const pdfViewer = usePdfViewer();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -175,25 +181,30 @@ function ClientDetail() {
     }
   }, [pdfDialogOpen, client, generatedPdfBlob, generatingPdf]);
 
-  const handlePdfAction = (action) => {
+  const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
+    const fname = `rapport-client-${client.name}.pdf`;
 
     if (action === 'download') {
-      downloadPDF(generatedPdfBlob, `rapport-client-${client.name}.pdf`);
+      await pdfViewer.download(generatedPdfBlob, fname);
       enqueueSnackbar(t('clients:messages.pdfDownloaded', 'Rapport PDF téléchargé avec succès'), { variant: 'success' });
     } else if (action === 'preview') {
-      openPDFInNewTab(generatedPdfBlob);
+      pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${client.name}`);
     } else if (action === 'print') {
-      const pdfUrl = URL.createObjectURL(generatedPdfBlob);
-      const printWindow = window.open(pdfUrl, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-          printWindow.print();
-          setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
-        };
-        enqueueSnackbar(t('clients:messages.printWindowOpened', 'Fenêtre d\'impression ouverte'), { variant: 'success' });
+      if (IS_NATIVE) {
+        pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${client.name}`);
       } else {
-        enqueueSnackbar(t('clients:messages.cannotOpenPrintWindow', 'Impossible d\'ouvrir la fenêtre d\'impression'), { variant: 'error' });
+        const pdfUrl = URL.createObjectURL(generatedPdfBlob);
+        const printWindow = window.open(pdfUrl, '_blank');
+        if (printWindow) {
+          printWindow.onload = () => {
+            printWindow.print();
+            setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+          };
+          enqueueSnackbar(t('clients:messages.printWindowOpened', 'Fenêtre d\'impression ouverte'), { variant: 'success' });
+        } else {
+          enqueueSnackbar(t('clients:messages.cannotOpenPrintWindow', 'Impossible d\'ouvrir la fenêtre d\'impression'), { variant: 'error' });
+        }
       }
     }
     setPdfDialogOpen(false);
@@ -684,31 +695,39 @@ function ClientDetail() {
           </Button>
           <Button
             onClick={() => handlePdfAction('preview')}
-            variant="outlined"
+            variant={IS_NATIVE ? 'contained' : 'outlined'}
             disabled={generatingPdf || !generatedPdfBlob}
             startIcon={<Receipt />}
           >
             {t('common:buttons.preview', 'Aperçu')}
           </Button>
-          <Button
-            onClick={() => handlePdfAction('print')}
-            variant="outlined"
-            color="secondary"
-            disabled={generatingPdf || !generatedPdfBlob}
-            startIcon={<Print />}
-          >
-            {t('common:buttons.print', 'Imprimer')}
-          </Button>
-          <Button
-            onClick={() => handlePdfAction('download')}
-            variant="contained"
-            disabled={generatingPdf || !generatedPdfBlob}
-            startIcon={<Download />}
-          >
-            {t('common:buttons.download', 'Télécharger')}
-          </Button>
+          {/* Imprimer + Telecharger masques sur mobile (apercu integre suffit). */}
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handlePdfAction('print')}
+              variant="outlined"
+              color="secondary"
+              disabled={generatingPdf || !generatedPdfBlob}
+              startIcon={<Print />}
+            >
+              {t('common:buttons.print', 'Imprimer')}
+            </Button>
+          )}
+          {!IS_NATIVE && (
+            <Button
+              onClick={() => handlePdfAction('download')}
+              variant="contained"
+              disabled={generatingPdf || !generatedPdfBlob}
+              startIcon={<Download />}
+            >
+              {t('common:buttons.download', 'Télécharger')}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
+
+      {/* Visionneuse PDF integree (apercu dans l'app) */}
+      <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
   );
 }

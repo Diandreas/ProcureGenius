@@ -64,6 +64,11 @@ import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { generateClientsBulkReport, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import usePdfViewer from '../../hooks/usePdfViewer';
+import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
+import { isNativePlatform } from '../../utils/platform';
+
+const IS_NATIVE = isNativePlatform();
 
 function Clients() {
   const { t } = useTranslation(['clients', 'common']);
@@ -88,6 +93,7 @@ function Clients() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const pdfViewer = usePdfViewer();
   const [reportFilters, setReportFilters] = useState({
     dateStart: '',
     dateEnd: '',
@@ -279,17 +285,22 @@ function Clients() {
     setGeneratedPdfBlob(null);
   };
 
-  const handlePdfAction = (action) => {
+  const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
+    const fname = `rapport-clients-${new Date().getTime()}.pdf`;
 
     if (action === 'download') {
-      downloadPDF(generatedPdfBlob, `rapport-clients-${new Date().getTime()}.pdf`);
+      await pdfViewer.download(generatedPdfBlob, fname);
       enqueueSnackbar(t('clients:messages.pdfDownloadedSuccess', 'PDF téléchargé avec succès'), {
         variant: 'success',
       });
     } else if (action === 'preview') {
-      openPDFInNewTab(generatedPdfBlob);
+      pdfViewer.preview(generatedPdfBlob, fname, 'Rapport clients');
     } else if (action === 'print') {
+      if (IS_NATIVE) {
+        pdfViewer.preview(generatedPdfBlob, fname, 'Rapport clients');
+        return;
+      }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
       const printWindow = window.open(pdfUrl, '_blank');
       if (printWindow) {
@@ -518,31 +529,38 @@ function Clients() {
             <>
               <Button
                 onClick={() => handlePdfAction('preview')}
-                variant="outlined"
+                variant={IS_NATIVE ? 'contained' : 'outlined'}
                 startIcon={<Receipt />}
               >
                 {t('clients:buttons.preview', 'Aperçu')}
               </Button>
-              <Button
-                onClick={() => handlePdfAction('print')}
-                variant="outlined"
-                color="secondary"
-                startIcon={<Print />}
-              >
-                {t('clients:buttons.print', 'Imprimer')}
-              </Button>
-              <Button
-                onClick={() => handlePdfAction('download')}
-                variant="contained"
-                color="success"
-                startIcon={<Download />}
-              >
-                {t('clients:buttons.download', 'Télécharger')}
-              </Button>
+              {!IS_NATIVE && (
+                <Button
+                  onClick={() => handlePdfAction('print')}
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<Print />}
+                >
+                  {t('clients:buttons.print', 'Imprimer')}
+                </Button>
+              )}
+              {!IS_NATIVE && (
+                <Button
+                  onClick={() => handlePdfAction('download')}
+                  variant="contained"
+                  color="success"
+                  startIcon={<Download />}
+                >
+                  {t('clients:buttons.download', 'Télécharger')}
+                </Button>
+              )}
             </>
           )}
         </DialogActions>
       </Dialog>
+
+      {/* Visionneuse PDF integree (apercu dans l'app) */}
+      <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
   );
 }

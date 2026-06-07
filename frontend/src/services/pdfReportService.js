@@ -1,8 +1,15 @@
 import api from './api';
+import { isNativePlatform, savePdfToDevice, openPdfNatively } from './pdfNative';
 
 // Download PDF file
-export const downloadPDF = (blob, filename) => {
+// - Natif (Capacitor) : enregistre dans Documents + ouvre le lecteur natif.
+// - Web : <a download>.
+export const downloadPDF = async (blob, filename) => {
   try {
+    if (isNativePlatform()) {
+      await savePdfToDevice(blob, filename);
+      return;
+    }
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -17,9 +24,13 @@ export const downloadPDF = (blob, filename) => {
   }
 };
 
-// Open PDF in new tab
-export const openPDFInNewTab = (blob) => {
+// Open PDF (lecteur natif en mobile, nouvel onglet en web)
+export const openPDFInNewTab = async (blob, filename = 'document.pdf') => {
   try {
+    if (isNativePlatform()) {
+      await openPdfNatively(blob, filename);
+      return;
+    }
     const url = window.URL.createObjectURL(blob);
     window.open(url, '_blank');
     // Note: URL is not revoked here as the new tab needs it
