@@ -93,6 +93,7 @@ import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES 
 import { useHeader } from '../../contexts/HeaderContext';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
 
 function PurchaseOrderDetail() {
   const { id } = useParams();
@@ -499,8 +500,16 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
     );
   }
 
+  // Onglets (icône seule sur mobile, icône + label desktop)
+  const PO_TABS = [
+    { icon: Info, label: t('purchaseOrders:tabs.general') },
+    { icon: Inventory, label: t('purchaseOrders:tabs.items') },
+    { icon: AttachMoney, label: t('purchaseOrders:tabs.financial') },
+    { icon: Psychology, label: 'Analyse IA' },
+  ];
+
   return (
-    <Box sx={{ 
+    <Box sx={{
       p: { xs: 0, sm: 2, md: 3 },
       pb: isMobile ? 12 : 3, // Space for mobile nav
       bgcolor: 'background.default',
@@ -741,59 +750,72 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
         </Tooltip>
       </Box>
 
-      {/* Tabs */}
-      <Tabs
-        value={activeTab}
-        onChange={(e, v) => setActiveTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{
-          mb: 3,
-          borderBottom: 1,
-          borderColor: 'divider',
-          '& .MuiTab-root': {
-            minWidth: isMobile ? 'auto' : 120,
-            fontSize: isMobile ? '0.75rem' : '0.875rem',
-            px: isMobile ? 1 : 2,
-          }
-        }}
-      >
-        <Tab
-          icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('purchaseOrders:tabs.general')}
-          iconPosition="start"
-        />
-        <Tab
-          icon={<Inventory sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('purchaseOrders:tabs.items')}
-          iconPosition="start"
-        />
-        <Tab
-          icon={<AttachMoney sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('purchaseOrders:tabs.financial')}
-          iconPosition="start"
-        />
-        <Tab
-          icon={<Psychology sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label="Analyse IA"
-          iconPosition="start"
-          sx={{ color: 'primary.main' }}
-        />
-      </Tabs>
+      {/* Onglets segmentés neumorphiques (icônes seules sur mobile) */}
+      <Box sx={{ mb: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: isMobile ? 0.5 : 1,
+            p: isMobile ? 0.5 : 0.75,
+            borderRadius: 3,
+            boxShadow: th => neuShadows.shadowInset(th),
+            bgcolor: 'background.default',
+            overflowX: 'auto',
+            '&::-webkit-scrollbar': { display: 'none' },
+            scrollbarWidth: 'none',
+          }}
+        >
+          {PO_TABS.map((tab, idx) => {
+            const TabIcon = tab.icon;
+            const selected = activeTab === idx;
+            return (
+              <Tooltip key={idx} title={isMobile ? tab.label : ''} arrow disableHoverListener={!isMobile}>
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => setActiveTab(idx)}
+                  aria-label={tab.label}
+                  aria-selected={selected}
+                  sx={{
+                    flex: isMobile ? '0 0 auto' : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: isMobile ? 0 : 0.75,
+                    minWidth: isMobile ? 44 : 0,
+                    px: isMobile ? 0 : 2,
+                    py: isMobile ? 1 : 1.1,
+                    border: 'none',
+                    cursor: 'pointer',
+                    borderRadius: 2.25,
+                    fontFamily: 'inherit',
+                    fontSize: '0.82rem',
+                    fontWeight: selected ? 700 : 500,
+                    whiteSpace: 'nowrap',
+                    color: selected ? 'primary.main' : 'text.secondary',
+                    bgcolor: selected ? 'background.paper' : 'transparent',
+                    boxShadow: selected ? (th => neuShadows.shadowRaisedSm(th)) : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': { color: selected ? 'primary.main' : 'text.primary' },
+                  }}
+                >
+                  <TabIcon sx={{ fontSize: isMobile ? 20 : 18, color: selected ? 'primary.main' : 'inherit' }} />
+                  {!isMobile && tab.label}
+                </Box>
+              </Tooltip>
+            );
+          })}
+        </Box>
+      </Box>
 
       {/* Tab: General Information */}
       {activeTab === 0 && (
         <Grid container spacing={isMobile ? 1.5 : 2.5}>
           {/* Résumé compact — pleine largeur */}
           <Grid item xs={12}>
-            <Card sx={{ borderRadius: 2, boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff', overflow: 'hidden' }}>
+            <NeumorphicPanel accent="primary.main" sx={{ p: isMobile ? 1.5 : 2 }}>
+              {/* Ligne 1 : Fournisseur + Dates + Créé par */}
               <Box sx={{
-                height: 3,
-                background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
-              }} />
-              <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-                {/* Ligne 1 : Fournisseur + Dates + Créé par */}
-                <Box sx={{
                   display: 'flex',
                   flexWrap: 'wrap',
                   gap: 0,
@@ -887,14 +909,12 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     )}
                   </Box>
                 )}
-              </CardContent>
-            </Card>
+            </NeumorphicPanel>
           </Grid>
 
           {/* Articles — pleine largeur sous le résumé */}
           <Grid item xs={12}>
-            <Card sx={{ borderRadius: 2, boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' }}>
-              <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
+            <NeumorphicPanel sx={{ p: isMobile ? 2 : 2.5 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Inventory color="primary" fontSize="small" />
@@ -994,8 +1014,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     </Box>
                   </Box>
                 )}
-              </CardContent>
-            </Card>
+            </NeumorphicPanel>
           </Grid>
         </Grid>
       )}
@@ -1003,8 +1022,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
       {/* Tab: Items */}
       {activeTab === 1 && (
         <Box>
-          <Card sx={{ borderRadius: 2, boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' }}>
-            <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+          <NeumorphicPanel sx={{ p: isMobile ? 2 : 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Inventory color="primary" />
@@ -1118,34 +1136,14 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                   </Table>
                 </TableContainer>
               )}
-            </CardContent>
-          </Card>
+          </NeumorphicPanel>
         </Box>
       )}
 
       {/* Tab: Financial Summary */}
       {activeTab === 2 && (
         <Box>
-          <Card sx={{
-            borderRadius: 3,
-            boxShadow: theme => `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
-            background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-            border: '1px solid',
-            borderColor: theme => alpha(theme.palette.divider, 0.1),
-            backdropFilter: 'blur(20px)',
-            position: 'relative',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 4,
-              background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.success.main})`,
-              borderRadius: '3px 3px 0 0'
-            }
-          }}>
-            <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+          <NeumorphicPanel accent="primary.main" sx={{ p: isMobile ? 2 : 3 }}>
               <Typography variant="h6" gutterBottom sx={{
                 fontWeight: 700,
                 mb: isMobile ? 2 : 3,
@@ -1302,8 +1300,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                   </Box>
                 </Grid>
               </Grid>
-            </CardContent>
-          </Card>
+          </NeumorphicPanel>
         </Box>
       )}
 
