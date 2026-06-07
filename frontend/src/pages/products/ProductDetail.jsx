@@ -229,6 +229,16 @@ function ProductDetail() {
   const typeConfig = TYPE_CONFIG[product.product_type] || TYPE_CONFIG.physical;
   const TypeIcon = typeConfig.icon;
 
+  // Définition des onglets (icône seule sur mobile, icône + label desktop)
+  const isPhysical = product?.product_type === 'physical';
+  const PRODUCT_TABS = [
+    { icon: Info, label: t('products:tabs.info') },
+    { icon: Receipt, label: t('products:tabs.invoices') },
+    { icon: People, label: t('products:tabs.clients') },
+    ...(isPhysical ? [{ icon: Warehouse, label: 'Lots' }] : []),
+    ...(isPhysical ? [{ icon: History, label: t('products:tabs.movements') }] : []),
+  ];
+
   return (
     <Box sx={{
       p: { xs: 0, sm: 2, md: 3 },
@@ -249,67 +259,65 @@ function ProductDetail() {
       </Box>
 
 
-      {/* Tabs - Style mobile app */}
-      <Tabs
-        value={activeTab}
-        onChange={(e, v) => setActiveTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{
-          mb: isMobile ? 1.5 : 3,
-          px: isMobile ? 2 : 0,
-          borderBottom: 1,
-          borderColor: 'divider',
-          '& .MuiTab-root': {
-            minWidth: isMobile ? 'auto' : 120,
-            fontSize: isMobile ? '0.75rem' : '0.875rem',
-            px: isMobile ? 1.5 : 2,
-            py: isMobile ? 1 : 1.5,
-            minHeight: isMobile ? 40 : 48,
-            borderRadius: isMobile ? 1.5 : 0,
-            mr: isMobile ? 0.5 : 0,
-            '&:hover': {
-              bgcolor: theme => isMobile ? alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.08 : 0.04) : 'transparent',
-            },
-            transition: 'all 0.2s ease'
-          },
-          '& .MuiTabs-indicator': {
-            height: isMobile ? 3 : 2,
-            borderRadius: isMobile ? 1.5 : 0,
-          }
-        }}
-      >
-        <Tab
-          icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('products:tabs.info')}
-          iconPosition="start"
-        />
-        <Tab
-          icon={<Receipt sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('products:tabs.invoices')}
-          iconPosition="start"
-        />
-        <Tab
-          icon={<People sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('products:tabs.clients')}
-          iconPosition="start"
-        />
-        {/* Afficher l'onglet Stock et Lots uniquement pour les produits physiques */}
-        {product?.product_type === 'physical' && (
-          <Tab
-            icon={<Warehouse sx={{ fontSize: isMobile ? 18 : 20 }} />}
-            label="Lots"
-            iconPosition="start"
-          />
-        )}
-        {product?.product_type === 'physical' && (
-          <Tab
-            icon={<History sx={{ fontSize: isMobile ? 18 : 20 }} />}
-            label={t('products:tabs.movements')}
-            iconPosition="start"
-          />
-        )}
-      </Tabs>
+      {/* Onglets segmentés neumorphiques (icônes seules sur mobile) */}
+      <Box sx={{ px: isMobile ? 1.5 : 0, mb: isMobile ? 1.5 : 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: isMobile ? 0.5 : 1,
+            p: isMobile ? 0.5 : 0.75,
+            borderRadius: 3,
+            boxShadow: th => neuShadows.shadowInset(th),
+            bgcolor: 'background.default',
+            overflowX: 'auto',
+            '&::-webkit-scrollbar': { display: 'none' },
+            scrollbarWidth: 'none',
+          }}
+        >
+          {PRODUCT_TABS.map((tab, idx) => {
+            const TabIcon = tab.icon;
+            const selected = activeTab === idx;
+            return (
+              <Tooltip key={idx} title={isMobile ? tab.label : ''} arrow disableHoverListener={!isMobile}>
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => setActiveTab(idx)}
+                  aria-label={tab.label}
+                  aria-selected={selected}
+                  sx={{
+                    flex: isMobile ? '0 0 auto' : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: isMobile ? 0 : 0.75,
+                    minWidth: isMobile ? 44 : 0,
+                    px: isMobile ? 0 : 2,
+                    py: isMobile ? 1 : 1.1,
+                    border: 'none',
+                    cursor: 'pointer',
+                    borderRadius: 2.25,
+                    fontFamily: 'inherit',
+                    fontSize: '0.82rem',
+                    fontWeight: selected ? 700 : 500,
+                    whiteSpace: 'nowrap',
+                    color: selected ? typeConfig.color : 'text.secondary',
+                    bgcolor: selected ? 'background.paper' : 'transparent',
+                    boxShadow: selected ? (th => neuShadows.shadowRaisedSm(th)) : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      color: selected ? typeConfig.color : 'text.primary',
+                    },
+                  }}
+                >
+                  <TabIcon sx={{ fontSize: isMobile ? 20 : 18, color: selected ? typeConfig.color : 'inherit' }} />
+                  {!isMobile && tab.label}
+                </Box>
+              </Tooltip>
+            );
+          })}
+        </Box>
+      </Box>
 
       {/* Tab: Informations */}
       {activeTab === 0 && (
@@ -461,43 +469,65 @@ function ProductDetail() {
 
       {/* Tab: Factures */}
       {activeTab === 1 && (
-        <Box>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Receipt color="primary" />
-            {t('products:tabs.invoices')}
-          </Typography>
-          <ProductInvoicesTable
-            invoices={statistics?.recent_invoices}
-            loading={!statistics}
-          />
+        <Box sx={{ px: isMobile ? 1.5 : 0 }}>
+          <NeumorphicPanel accent={typeConfig.color} sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Receipt sx={{ color: typeConfig.color, fontSize: 22 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
+                {t('products:tabs.invoices')}
+              </Typography>
+            </Box>
+            <ProductInvoicesTable
+              invoices={statistics?.recent_invoices}
+              loading={!statistics}
+            />
+          </NeumorphicPanel>
         </Box>
       )}
 
       {/* Tab: Clients */}
       {activeTab === 2 && (
-        <Box>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <People color="primary" />
-            {t('products:tabs.clients')}
-          </Typography>
-          <ProductClientsTable
-            clients={statistics?.top_clients}
-            loading={!statistics}
-          />
+        <Box sx={{ px: isMobile ? 1.5 : 0 }}>
+          <NeumorphicPanel accent={typeConfig.color} sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <People sx={{ color: typeConfig.color, fontSize: 22 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
+                {t('products:tabs.clients')}
+              </Typography>
+            </Box>
+            <ProductClientsTable
+              clients={statistics?.top_clients}
+              loading={!statistics}
+            />
+          </NeumorphicPanel>
         </Box>
       )}
 
       {/* Tab: Lots - Affiché uniquement pour les produits physiques (Index 3 si type physical) */}
       {product?.product_type === 'physical' && activeTab === 3 && (
-        <Box>
-          <ProductBatchesTab productId={id} onStockChange={fetchProduct} />
+        <Box sx={{ px: isMobile ? 1.5 : 0 }}>
+          <NeumorphicPanel accent={typeConfig.color} sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Warehouse sx={{ color: typeConfig.color, fontSize: 22 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>Lots</Typography>
+            </Box>
+            <ProductBatchesTab productId={id} onStockChange={fetchProduct} />
+          </NeumorphicPanel>
         </Box>
       )}
 
       {/* Tab: Mouvements de Stock - Affiché uniquement pour les produits physiques (Index 4 maintenant car on a ajouté Lots) */}
       {product?.product_type === 'physical' && activeTab === 4 && (
-        <Box>
-          <StockMovementsTab productId={id} productType={product?.product_type} />
+        <Box sx={{ px: isMobile ? 1.5 : 0 }}>
+          <NeumorphicPanel accent={typeConfig.color} sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <History sx={{ color: typeConfig.color, fontSize: 22 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
+                {t('products:tabs.movements')}
+              </Typography>
+            </Box>
+            <StockMovementsTab productId={id} productType={product?.product_type} />
+          </NeumorphicPanel>
         </Box>
       )}
 
