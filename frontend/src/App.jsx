@@ -22,7 +22,6 @@ import AuthLayout from './layouts/AuthLayout';
 const Login         = React.lazy(() => import('./pages/auth/Login'));
 const LoginEnhanced = React.lazy(() => import('./pages/auth/LoginEnhanced'));
 const Register      = React.lazy(() => import('./pages/auth/Register'));
-const MobileAuthBridge = React.lazy(() => import('./pages/auth/MobileAuthBridge'));
 const OnboardingSetup = React.lazy(() => import('./pages/auth/OnboardingSetup'));
 
 const Landing          = React.lazy(() => import('./pages/Landing'));
@@ -817,8 +816,6 @@ function App() {
                         <Route element={<PublicLayout />}>
                           <Route path="/" element={<Navigate to="/landing" replace />} />
                           <Route path="/landing" element={<Landing />} />
-                          {/* Page pont Google pour l'app mobile (ouverte dans le navigateur systeme) */}
-                          <Route path="/mobile-auth" element={<MobileAuthBridge />} />
                           <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />
                           <Route path="/pricing" element={<Pricing />} />
                           <Route path="/subscription/success" element={<SubscriptionSuccess />} />

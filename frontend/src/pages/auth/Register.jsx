@@ -153,10 +153,11 @@ function Register() {
     }
   };
 
-  const onGoogleToken = async (accessToken) => {
+  // `arg` = access_token (web) ou { idToken, accessToken } (natif).
+  const onGoogleToken = async (arg) => {
     setLoading(true);
     try {
-      await dispatch(googleLogin(accessToken)).unwrap();
+      await dispatch(googleLogin(arg)).unwrap();
       navigate('/dashboard');
     } catch (err) {
       setError(err || t('auth:register.messages.error'));
@@ -170,12 +171,12 @@ function Register() {
     onError: () => setError(t('auth:register.messages.serverError')),
   });
 
-  // En natif : navigateur systeme + deep link. En web : flux classique.
+  // En natif : selecteur Google natif (plugin). En web : flux classique.
   const handleGoogleLogin = async () => {
     if (IS_NATIVE) {
       try {
-        const token = await signInWithGoogleNative();
-        await onGoogleToken(token);
+        const tokens = await signInWithGoogleNative();
+        await onGoogleToken(tokens);
       } catch (e) {
         setError(e?.message || t('auth:register.messages.serverError'));
       }

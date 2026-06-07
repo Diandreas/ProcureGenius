@@ -90,7 +90,17 @@ export const authAPI = {
     return Promise.resolve();
   },
   getProfile: () => api.get('/auth/profile/'),
-  googleLogin: (token) => api.post('/auth/google/', { token }),
+  // Web : `arg` est l'access_token (string).
+  // Natif : `arg` est { idToken, accessToken } (idToken privilégié par le backend).
+  googleLogin: (arg) => {
+    if (arg && typeof arg === 'object') {
+      return api.post('/auth/google/', {
+        token: arg.accessToken || undefined,
+        id_token: arg.idToken || undefined,
+      });
+    }
+    return api.post('/auth/google/', { token: arg });
+  },
 };
 
 // Suppliers API

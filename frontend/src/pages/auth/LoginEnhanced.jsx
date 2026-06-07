@@ -93,8 +93,9 @@ function LoginEnhanced() {
     return false;
   };
 
-  const onGoogleToken = async (accessToken) => {
-    const result = await dispatch(googleLogin(accessToken));
+  // `arg` = access_token (web) ou { idToken, accessToken } (natif).
+  const onGoogleToken = async (arg) => {
+    const result = await dispatch(googleLogin(arg));
     if (googleLogin.fulfilled.match(result)) {
       const user = result.payload.user;
       if (checkIfOnboardingNeeded(user)) {
@@ -111,12 +112,12 @@ function LoginEnhanced() {
     onError: () => console.error('Login Failed'),
   });
 
-  // En natif : navigateur systeme + deep link. En web : flux classique.
+  // En natif : selecteur Google natif (plugin). En web : flux classique.
   const handleGoogleLogin = async () => {
     if (IS_NATIVE) {
       try {
-        const token = await signInWithGoogleNative();
-        await onGoogleToken(token);
+        const tokens = await signInWithGoogleNative();
+        await onGoogleToken(tokens);
       } catch (e) {
         console.error('Google natif:', e?.message || e);
       }

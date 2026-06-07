@@ -1,74 +1,65 @@
-// Connexion Google sur app native (Capacitor).
+// Connexion Google sur app native (Capacitor) via le plugin natif
+// @capgo/capacitor-social-login : ouvre le vrai selecteur de compte Google
+// du systeme (pas de webview, pas de navigateur). Renvoie un idToken (JWT)
+// que le backend verifie.
 //
-// Google interdit son ecran OAuth dans une webview embarquee
-// ("disallowed_useragent"). On ouvre donc une page web pont
-// (/mobile-auth, servie par le front sur https://procura.mirlab.cloud)
-// dans le NAVIGATEUR SYSTEME via @capacitor/browser. Cette page fait le
-// vrai flux Google web (autorise dans Chrome), recupere l'access_token,
-// puis redirige vers le deep link procura://auth?token=XXX.
-// L'app capte ce deep link via @capacitor/app et resout le token.
+// Prerequis Google Cloud Console :
+//  - 1 client OAuth "Web" (= VITE_GOOGLE_CLIENT_ID) -> sert de webClientId / audience
+//  - 1 client OAuth "Android" lie au package cloud.mirlab.procura + SHA-1
+//    (le client Android n'a pas de secret, il valide juste la signature de l'app)
 
 import { isNativePlatform } from '../utils/platform';
 
-// URL de la page pont (meme origine que le front web de prod).
-const BRIDGE_URL =
-  (import.meta.env.VITE_MOBILE_API_URL || 'https://procura.mirlab.cloud').replace(/\/$/, '') +
-  '/mobile-auth';
+// Client OAuth "Web" Google (le meme que pour le login web).
+const WEB_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-const DEEP_LINK_SCHEME = 'procura://auth';
+let initialized = false;
+
+const ensureInitialized = async () => {
+  if (initialized) return;
+  const { SocialLogin } = await import('@capgo/capacitor-social-login');
+  await SocialLogin.initialize({
+    google: {
+      // webClientId sert d'audience pour l'idToken (cote Android comme iOS).
+      webClientId: WEB_CLIENT_ID,
+    },
+  });
+  initialized = true;
+};
 
 /**
- * Lance la connexion Google native. Resout avec l'access_token Google,
- * ou rejette en cas d'annulation/erreur.
+ * Lance la connexion Google native.
+ * Resout avec { idToken, accessToken } (idToken privilegie par le backend).
  */
 export const signInWithGoogleNative = async () => {
   if (!isNativePlatform()) {
     throw new Error('signInWithGoogleNative ne doit etre appele qu en natif');
   }
-  const { Browser } = await import('@capacitor/browser');
-  const { App } = await import('@capacitor/app');
+  const { SocialLogin } = await import('@capgo/capacitor-social-login');
+  await ensureInitialized();
 
-  return new Promise(async (resolve, reject) => {
-    let settled = false;
-    let urlListener = null;
-    let finishListener = null;
-
-    const cleanup = async () => {
-      if (urlListener) { await urlListener.remove(); urlListener = null; }
-      if (finishListener) { await finishListener.remove(); finishListener = null; }
-    };
-
-    // Capte le retour via deep link procura://auth?token=...
-    urlListener = await App.addListener('appUrlOpen', async ({ url }) => {
-      if (!url || !url.startsWith(DEEP_LINK_SCHEME)) return;
-      settled = true;
-      try {
-        const params = new URL(url).searchParams;
-        const token = params.get('token');
-        const error = params.get('error');
-        await Browser.close().catch(() => {});
-        await cleanup();
-        if (error) return reject(new Error(error));
-        if (!token) return reject(new Error('Token Google manquant'));
-        resolve(token);
-      } catch (e) {
-        await cleanup();
-        reject(e);
-      }
-    });
-
-    // Si l'utilisateur ferme le navigateur sans aller au bout.
-    finishListener = await Browser.addListener('browserFinished', async () => {
-      if (settled) return;
-      await cleanup();
-      reject(new Error('Connexion Google annulee'));
-    });
-
-    try {
-      await Browser.open({ url: BRIDGE_URL, presentationStyle: 'popover' });
-    } catch (e) {
-      await cleanup();
-      reject(e);
-    }
+  const res = await SocialLogin.login({
+    provider: 'google',
+    options: {
+      // Demande l'idToken (et un accessToken si dispo) ; profil de base.
+      scopes: ['email', 'profile'],
+    },
   });
+
+  // Forme du resultat capgo : { provider, result: { idToken, accessToken, profile, ... } }
+  const result = res?.result || res || {};
+  const idToken =
+    result.idToken ||
+    result.id_token ||
+    (result.accessToken && result.accessToken.token) ||
+    null;
+  const accessToken =
+    (result.accessToken && result.accessToken.token) ||
+    result.accessToken ||
+    null;
+
+  if (!idToken && !accessToken) {
+    throw new Error('Aucun token Google recupere');
+  }
+  return { idToken, accessToken };
 };

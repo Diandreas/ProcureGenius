@@ -411,29 +411,51 @@ def api_google_login(request):
     Login with Google Access Token
     
     POST /api/accounts/google/
-    
-    Body:
-        {
-            "token": "google_access_token"
-        }
+
+    Body (web) :     { "token": "google_access_token" }
+    Body (mobile) :  { "id_token": "google_id_token" }   # app native (Capacitor)
+
+    Le client mobile (plugin natif) renvoie un id_token (JWT) : on le verifie
+    via l'endpoint tokeninfo de Google. Le client web renvoie un access_token :
+    on recupere le profil via userinfo. Les deux restent supportes.
     """
-    token = request.data.get('token')
-    if not token:
+    access_token = request.data.get('token')
+    id_token_value = request.data.get('id_token')
+
+    if not access_token and not id_token_value:
         return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # Verify token with Google
-        google_response = requests.get(
-            'https://www.googleapis.com/oauth2/v3/userinfo',
-            headers={'Authorization': f'Bearer {token}'}
-        )
-        
-        if google_response.status_code != 200:
-            return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
-            
-        google_data = google_response.json()
+        google_data = None
+
+        # 1) Mobile natif : verification de l'id_token (JWT) via tokeninfo.
+        if id_token_value:
+            verify = requests.get(
+                'https://oauth2.googleapis.com/tokeninfo',
+                params={'id_token': id_token_value},
+                timeout=10,
+            )
+            if verify.status_code != 200:
+                return Response({'error': 'Invalid Google id_token'}, status=status.HTTP_400_BAD_REQUEST)
+            payload = verify.json()
+            # Google a deja verifie la signature ; on s'assure que l'email est validé.
+            if payload.get('email_verified') in (False, 'false'):
+                return Response({'error': 'Email Google non verifie'}, status=status.HTTP_400_BAD_REQUEST)
+            google_data = payload
+
+        # 2) Web : access_token -> userinfo.
+        else:
+            google_response = requests.get(
+                'https://www.googleapis.com/oauth2/v3/userinfo',
+                headers={'Authorization': f'Bearer {access_token}'},
+                timeout=10,
+            )
+            if google_response.status_code != 200:
+                return Response({'error': 'Invalid Google token'}, status=status.HTTP_400_BAD_REQUEST)
+            google_data = google_response.json()
+
         email = google_data.get('email')
-        
+
         if not email:
              return Response({'error': 'Email not found in Google data'}, status=status.HTTP_400_BAD_REQUEST)
 

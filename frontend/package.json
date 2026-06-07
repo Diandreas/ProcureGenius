@@ -12,6 +12,7 @@
     "@capacitor/core": "^8.4.0",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/ios": "^8.4.0",
+    "@capgo/capacitor-social-login": "^8.3.22",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@gsap/react": "^2.1.2",
@@ -84,6 +85,7 @@
     ]
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@types/react": "^18.2.47",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",
