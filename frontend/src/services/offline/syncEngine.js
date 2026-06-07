@@ -10,6 +10,15 @@ import {
 } from '../api';
 import { pendingMutations, removeMutation, markMutationError, pendingCount } from './mutationQueue';
 import { cacheOne } from './cache';
+import { getDb } from './db';
+
+// Supprime un enregistrement du cache (ex. id provisoire remplace par le serveur).
+async function removeCached(entity, id) {
+  const db = await getDb();
+  if (!db) return;
+  try { await db.run('DELETE FROM cache WHERE entity = ? AND id = ?;', [entity, String(id)]); }
+  catch { /* ignore */ }
+}
 
 // Registre des API par entite : map op -> appel reseau.
 const API_BY_ENTITY = {
@@ -40,9 +49,13 @@ async function applyMutation(m) {
   if (!api) throw new Error(`API inconnue pour ${m.entity}`);
 
   if (m.op === 'create') {
-    // On envoie le payload (avec son UUID). Le backend (UUID PK) l'accepte.
-    const res = await api.create(m.payload);
-    if (res?.data) await cacheOne(m.entity, res.data); // remplace par la version serveur
+    // Le backend genere son propre id (id read-only) : on envoie le payload
+    // sans l'id provisoire, puis on remplace l'enregistrement local provisoire
+    // par la version serveur (evite les doublons).
+    const { id: _provisional, _offline, _pending, ...body } = m.payload || {};
+    const res = await api.create(body);
+    await removeCached(m.entity, m.record_id);       // retire l'id provisoire
+    if (res?.data) await cacheOne(m.entity, res.data); // ajoute la version serveur
   } else if (m.op === 'update') {
     const res = await api.update(m.record_id, m.payload);
     if (res?.data) await cacheOne(m.entity, res.data);

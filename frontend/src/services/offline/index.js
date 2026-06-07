@@ -95,20 +95,42 @@ export async function readOneWithCache(entity, id, apiCall) {
  * @param {object} data        corps de creation
  * @param {(d)=>Promise<any>} apiCall  fonction (data) -> {data}
  */
+// Vrai si l'erreur est un probleme reseau (pas une erreur applicative 4xx).
+// Couvre le cas "wifi sans internet" : navigator.onLine ment, l'appel jette.
+const isNetworkError = (e) => {
+  if (!e) return false;
+  if (e.response) return false;            // le serveur a repondu (4xx/5xx applicatif)
+  const msg = (e.message || '').toLowerCase();
+  return e.code === 'ERR_NETWORK' || e.code === 'ECONNABORTED'
+    || msg.includes('network') || msg.includes('failed to fetch') || msg.includes('timeout');
+};
+
+async function queueCreate(entity, data) {
+  const id = data.id || newUuid();
+  const record = { ...data, id, _offline: true, _pending: 'create', updated_at: new Date().toISOString() };
+  await cacheOne(entity, record);
+  await enqueueMutation({ entity, op: 'create', recordId: id, payload: record });
+  return record;
+}
+
 export async function createWithQueue(entity, data, apiCall) {
   const native = isNativePlatform();
 
   if (native && isOffline()) {
-    const id = data.id || newUuid();
-    const record = { ...data, id, _offline: true, _pending: 'create', updated_at: new Date().toISOString() };
-    await cacheOne(entity, record);
-    await enqueueMutation({ entity, op: 'create', recordId: id, payload: record });
-    return record;
+    return await queueCreate(entity, data);
   }
 
-  const res = await apiCall(data);
-  if (native && res?.data) cacheOne(entity, res.data);
-  return res.data;
+  try {
+    const res = await apiCall(data);
+    if (native && res?.data) cacheOne(entity, res.data);
+    return res.data;
+  } catch (e) {
+    // Wifi sans internet : on bascule en file offline plutot que d'echouer.
+    if (native && isNetworkError(e)) {
+      return await queueCreate(entity, data);
+    }
+    throw e;
+  }
 }
 
 /**
@@ -118,20 +140,31 @@ export async function createWithQueue(entity, data, apiCall) {
  * @param {object} data
  * @param {(id,data)=>Promise<any>} apiCall
  */
+async function queueUpdate(entity, id, data) {
+  const prev = (await readOne(entity, id)) || {};
+  const record = { ...prev, ...data, id, _offline: true, _pending: 'update', updated_at: new Date().toISOString() };
+  await cacheOne(entity, record);
+  await enqueueMutation({ entity, op: 'update', recordId: id, payload: record });
+  return record;
+}
+
 export async function updateWithQueue(entity, id, data, apiCall) {
   const native = isNativePlatform();
 
   if (native && isOffline()) {
-    const prev = (await readOne(entity, id)) || {};
-    const record = { ...prev, ...data, id, _offline: true, _pending: 'update', updated_at: new Date().toISOString() };
-    await cacheOne(entity, record);
-    await enqueueMutation({ entity, op: 'update', recordId: id, payload: record });
-    return record;
+    return await queueUpdate(entity, id, data);
   }
 
-  const res = await apiCall(id, data);
-  if (native && res?.data) cacheOne(entity, res.data);
-  return res.data;
+  try {
+    const res = await apiCall(id, data);
+    if (native && res?.data) cacheOne(entity, res.data);
+    return res.data;
+  } catch (e) {
+    if (native && isNetworkError(e)) {
+      return await queueUpdate(entity, id, data);
+    }
+    throw e;
+  }
 }
 
 /**
@@ -140,16 +173,27 @@ export async function updateWithQueue(entity, id, data, apiCall) {
  * @param {string|number} id
  * @param {(id)=>Promise<any>} apiCall
  */
+async function queueDelete(entity, id) {
+  await removeFromCache(entity, id);
+  await enqueueMutation({ entity, op: 'delete', recordId: id, payload: null });
+  return id;
+}
+
 export async function deleteWithQueue(entity, id, apiCall) {
   const native = isNativePlatform();
 
   if (native && isOffline()) {
-    await removeFromCache(entity, id);
-    await enqueueMutation({ entity, op: 'delete', recordId: id, payload: null });
-    return id;
+    return await queueDelete(entity, id);
   }
 
-  await apiCall(id);
-  if (native) await removeFromCache(entity, id);
-  return id;
+  try {
+    await apiCall(id);
+    if (native) await removeFromCache(entity, id);
+    return id;
+  } catch (e) {
+    if (native && isNetworkError(e)) {
+      return await queueDelete(entity, id);
+    }
+    throw e;
+  }
 }

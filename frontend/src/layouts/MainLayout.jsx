@@ -1262,8 +1262,15 @@ function MainLayout() {
             bgcolor: 'background.default',
           }}
         >
-          {/* Espaceur : tient compte de la barre flottante (marge haute) */}
-          <Toolbar sx={{ minHeight: { xs: 72, sm: 80 } }} />
+          {/* Espaceur : tient compte de la barre flottante + status bar / encoche
+              (la barre a mt = 12px + safe-area-inset-top, donc le spacer doit
+              ajouter cette meme hauteur sinon le contenu passe dessous). */}
+          <Box sx={{
+            height: {
+              xs: 'calc(72px + env(safe-area-inset-top, 0px))',
+              sm: 80,
+            },
+          }} />
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             <LayoutGroup>
               <PageTransition locationKey={location.pathname}>

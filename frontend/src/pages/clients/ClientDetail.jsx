@@ -61,6 +61,7 @@ import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
 import useSwipeTabs from '../../hooks/useSwipeTabs';
+import { readOneWithCache } from '../../services/offline';
 
 const IS_NATIVE = isNativePlatform();
 import ErrorState from '../../components/ErrorState';
@@ -135,8 +136,15 @@ function ClientDetail() {
   const fetchClient = async () => {
     setLoading(true);
     try {
-      const response = await clientsAPI.get(id);
-      setClient(response.data);
+      // Passe par le cache hors-ligne (natif) : sert la fiche depuis SQLite si
+      // pas de reseau, au lieu de rediriger vers la liste.
+      const data = await readOneWithCache('clients', id, () => clientsAPI.get(id));
+      if (data) {
+        setClient(data);
+      } else {
+        enqueueSnackbar(t('clients:messages.loadClientError'), { variant: 'error' });
+        navigate('/clients');
+      }
     } catch (error) {
       enqueueSnackbar(t('clients:messages.loadClientError'), { variant: 'error' });
       navigate('/clients');
