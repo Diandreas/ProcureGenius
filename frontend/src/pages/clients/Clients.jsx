@@ -67,6 +67,7 @@ import { generateClientsBulkReport, downloadPDF, openPDFInNewTab } from '../../s
 import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
+import PullToRefresh from '../../components/mobile/PullToRefresh';
 
 const IS_NATIVE = isNativePlatform();
 
@@ -108,6 +109,11 @@ function Clients() {
       hasMountedRef.current = true;
       dispatch(fetchClients());
     }
+  }, [dispatch]);
+
+  // Pull-to-refresh : recharge la liste des clients.
+  const handleRefresh = useCallback(async () => {
+    await dispatch(fetchClients());
   }, [dispatch]);
 
   const handleGenerateReportClick = useCallback(() => {
@@ -318,6 +324,7 @@ function Clients() {
 
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <Box sx={{ p: { xs: 1.5, sm: 2.5 }, maxWidth: 1280, mx: 'auto' }}>
 
       <NeumorphicKpis
@@ -562,6 +569,7 @@ function Clients() {
       {/* Visionneuse PDF integree (apercu dans l'app) */}
       <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
+    </PullToRefresh>
   );
 }
 
