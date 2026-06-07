@@ -597,21 +597,34 @@ function InvoiceDetail() {
       bgcolor: 'background.default',
       minHeight: '100vh'
     }}>
-      {/* Header - Caché sur mobile (géré par top navbar) */}
-      <Box sx={{ mb: 3, display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {/* Header neumorphique - Caché sur mobile (géré par top navbar) */}
+      <Box sx={{
+        mb: 3, display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center',
+        gap: 2, p: 2.5, borderRadius: 4, bgcolor: 'background.paper', position: 'relative', overflow: 'hidden',
+        boxShadow: theme => theme.palette.mode === 'light'
+          ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+          : '6px 6px 16px #14191f, -6px -6px 16px #283041',
+      }}>
+        <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: theme => (theme.palette[getStatusColor(invoice.status)] || {}).main || theme.palette.grey[400] }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
           <IconButton
             onClick={() => navigate('/invoices')}
-            sx={{
-              bgcolor: 'grey.100',
-              '&:hover': { bgcolor: 'grey.200' }
-            }}
+            sx={{ borderRadius: 2.5, bgcolor: theme => alpha(theme.palette.action.hover, 0.6), '&:hover': { bgcolor: 'action.selected' } }}
           >
             <ArrowBack />
           </IconButton>
-          <Typography variant="h4" sx={{ fontSize: '2rem', fontWeight: 600 }}>
-            {invoice.invoice_number}
-          </Typography>
+          <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+              <Typography variant="h4" sx={{ fontSize: '1.7rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+                {invoice.invoice_number}
+              </Typography>
+              <Chip label={getStatusLabel(invoice.status)} color={getStatusColor(invoice.status)} size="small" sx={{ fontWeight: 700 }} />
+            </Box>
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', mt: 0.25 }}>
+              {invoice.client?.name || invoice.title || '—'}
+              {invoice.total_amount != null && <Box component="span" sx={{ ml: 1.5, fontWeight: 700, color: 'text.primary' }}>{formatCurrency(invoice.total_amount)}</Box>}
+            </Typography>
+          </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
