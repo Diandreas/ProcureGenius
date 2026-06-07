@@ -415,9 +415,11 @@ function InvoiceDetail() {
   const MobileInvoiceInfoCard = ({ invoice }) => (
     <Card sx={{
       mb: 1.5,
-      borderRadius: 2,
-      border: '1px solid',
-      borderColor: 'divider',
+      borderRadius: 3,
+      border: 'none',
+      boxShadow: theme => theme.palette.mode === 'light'
+        ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+        : '6px 6px 16px #14191f, -6px -6px 16px #283041',
     }} elevation={0}>
       <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -753,9 +755,9 @@ Cordialement`
               mb: 2,
               borderRadius: 3,
               boxShadow: theme => theme.palette.mode === 'dark'
-                ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-                : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-              border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
+                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
+              border: 'none',
               transition: 'all 0.3s ease'
             }}>
               <CardContent sx={{ p: 2 }}>
@@ -791,8 +793,8 @@ Cordialement`
               mb: 2,
               borderRadius: 3,
               boxShadow: theme => theme.palette.mode === 'dark'
-                ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-                : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
+                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
+                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
               border: '2px dashed',
               borderColor: 'warning.main',
               transition: 'all 0.3s ease'
@@ -817,9 +819,9 @@ Cordialement`
               mb: 2,
               borderRadius: 3,
               boxShadow: theme => theme.palette.mode === 'dark'
-                ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-                : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-              border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
+                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
+              border: 'none',
               transition: 'all 0.3s ease'
             }}>
               <CardContent sx={{ p: 2 }}>
@@ -853,7 +855,7 @@ Cordialement`
           )}
 
           {/* Financial Summary Mobile */}
-          <Card sx={{ mb: 1.5, borderRadius: 2, border: '1px solid', borderColor: 'divider' }} elevation={0}>
+          <Card sx={{ mb: 1.5, borderRadius: 3, border: 'none', boxShadow: theme => theme.palette.mode === 'light' ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' : '6px 6px 16px #14191f, -6px -6px 16px #283041' }} elevation={0}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Stack spacing={0.5}>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -899,11 +901,10 @@ Cordialement`
           <Card sx={{
             mb: 1.5,
             borderRadius: 3,
-            boxShadow: theme => theme.palette.mode === 'dark'
-              ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-              : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-            transition: 'all 0.3s ease'
+            boxShadow: theme => theme.palette.mode === 'light'
+              ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+              : '6px 6px 16px #14191f, -6px -6px 16px #283041',
+            border: 'none'
           }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
@@ -970,11 +971,10 @@ Cordialement`
           <Card sx={{
             mb: 1.5,
             borderRadius: 3,
-            boxShadow: theme => theme.palette.mode === 'dark'
-              ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-              : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-            transition: 'all 0.3s ease'
+            boxShadow: theme => theme.palette.mode === 'light'
+              ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+              : '6px 6px 16px #14191f, -6px -6px 16px #283041',
+            border: 'none'
           }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -1049,11 +1049,10 @@ Cordialement`
           <Card sx={{
             mb: 1.5,
             borderRadius: 3,
-            boxShadow: theme => theme.palette.mode === 'dark'
-              ? '4px 4px 12px rgba(0,0,0,0.4), -2px -2px 10px rgba(255,255,255,0.05)'
-              : '6px 6px 16px rgba(0,0,0,0.1), -4px -4px 12px rgba(255,255,255,0.9)',
-            border: theme => `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-            transition: 'all 0.3s ease'
+            boxShadow: theme => theme.palette.mode === 'light'
+              ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+              : '6px 6px 16px #14191f, -6px -6px 16px #283041',
+            border: 'none'
           }}>
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
