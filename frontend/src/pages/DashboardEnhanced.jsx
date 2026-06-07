@@ -389,12 +389,15 @@ function DashboardEnhanced() {
         // passe dessous.
         pt: 'env(safe-area-inset-top, 0px)',
       }}>
-        {/* Sticky top bar */}
+        {/* Barre titre + periode (en flux normal : le header global de
+            MainLayout est deja sticky, pas besoin d'une 2e barre collante qui
+            chevauchait la barre d'onglets). */}
         <Box sx={{
-          position: 'sticky', top: 'env(safe-area-inset-top, 0px)', zIndex: 10,
           bgcolor: 'background.paper',
-          borderBottom: '1px solid', borderColor: 'divider',
-          px: 2, py: 1,
+          borderRadius: 3,
+          boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff',
+          mx: 1.5, mt: 1.5,
+          px: 2, py: 1.25,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <Box>
@@ -497,13 +500,19 @@ function DashboardEnhanced() {
                 <Grid item xs={6} key={i}>
                   <Box sx={{
                     bgcolor: 'background.paper',
-                    borderRadius: 2.5,
-                    border: '1px solid', borderColor: 'divider',
+                    borderRadius: 3,
+                    // Relief neumorphique + fin liseré d'accent à gauche.
+                    boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff',
                     borderLeft: `3px solid ${stat.color}`,
-                    p: 1.25,
+                    p: 1.4,
                   }}>
-                    <Box sx={{ width: 28, height: 28, borderRadius: 1, bgcolor: `${stat.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.75 }}>
-                      {React.cloneElement(stat.icon, { sx: { fontSize: '0.9rem', color: stat.color } })}
+                    <Box sx={{
+                      width: 30, height: 30, borderRadius: 2,
+                      bgcolor: `${stat.color}18`,
+                      boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.06), inset -2px -2px 4px rgba(255,255,255,0.7)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.85,
+                    }}>
+                      {React.cloneElement(stat.icon, { sx: { fontSize: '0.95rem', color: stat.color } })}
                     </Box>
                     <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', lineHeight: 1.1, color: 'text.primary', mb: 0.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {stat.value}
@@ -517,7 +526,7 @@ function DashboardEnhanced() {
             </Grid>
 
             {/* Graphique tendances */}
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider', p: 1.5, mb: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Tendances</Typography>
               <Line data={lineChartData} options={{
                 responsive: true,
@@ -533,7 +542,7 @@ function DashboardEnhanced() {
             </Box>
 
             {/* Top clients mini */}
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider', p: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top clients</Typography>
               {(clientStats.top_clients || []).slice(0, 3).map((c, i, arr) => (
                 <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.75, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
@@ -555,14 +564,14 @@ function DashboardEnhanced() {
         {mobileSection === 1 && (
           <Box sx={{ px: 1.5 }}>
             {/* Donut */}
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider', p: 1.5, mb: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>État des factures</Typography>
               <Box sx={{ height: 180, display: 'flex', justifyContent: 'center' }}>
                 <Doughnut data={donutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, cutout: '68%' }} />
               </Box>
             </Box>
             {/* Résumé */}
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider', p: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Résumé</Typography>
               {[
                 { label: 'Factures émises', value: invoiceStats.period?.count || 0, color: 'text.primary' },
@@ -582,7 +591,7 @@ function DashboardEnhanced() {
         {/* ── Mobile Section 2: Clients ── */}
         {mobileSection === 2 && (
           <Box sx={{ px: 1.5 }}>
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider', p: 1.5, mb: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top clients</Typography>
               {(clientStats.top_clients || []).length === 0
                 ? <Typography variant="caption" color="text.secondary">Aucun client pour la période</Typography>
@@ -600,7 +609,7 @@ function DashboardEnhanced() {
                 ))
               }
             </Box>
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider', p: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top fournisseurs</Typography>
               {(stats.suppliers?.top_suppliers || []).length === 0
                 ? <Typography variant="caption" color="text.secondary">Aucun fournisseur pour la période</Typography>
@@ -624,7 +633,7 @@ function DashboardEnhanced() {
         {/* ── Mobile Section 3: Alertes ── */}
         {mobileSection === 3 && (
           <Box sx={{ px: 1.5 }}>
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider', p: 1.5, mb: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                 <ErrorOutline color="error" sx={{ fontSize: 18 }} />
                 <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Alertes ({stats.alerts?.length || 0})</Typography>
@@ -642,7 +651,7 @@ function DashboardEnhanced() {
                 ))
               }
             </Box>
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2.5, border: '1px solid', borderColor: 'divider', p: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                 <Inventory2 color="info" sx={{ fontSize: 18 }} />
                 <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Stock</Typography>
