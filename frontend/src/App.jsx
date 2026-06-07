@@ -13,8 +13,9 @@ import i18n from './i18n/config';
 import { isNativePlatform } from './utils/platform';
 
 // Sur l'app mobile native, on demarre sur /login (puis /dashboard si connecte)
-// au lieu de la page marketing /landing.
-const ROOT_REDIRECT = isNativePlatform() ? '/login' : '/landing';
+// au lieu de la page marketing /landing, et /landing est bloque -> /login.
+const NATIVE_APP = isNativePlatform();
+const ROOT_REDIRECT = NATIVE_APP ? '/login' : '/landing';
 import { fetchSettings } from './store/slices/settingsSlice';
 import { HeaderProvider } from './contexts/HeaderContext';
 import { AccountingHelpProvider } from './contexts/AccountingHelpContext';
@@ -822,7 +823,11 @@ function App() {
                         {/* Public Routes */}
                         <Route element={<PublicLayout />}>
                           <Route path="/" element={<Navigate to={ROOT_REDIRECT} replace />} />
-                          <Route path="/landing" element={<Landing />} />
+                          {/* Sur l'app mobile, pas de landing marketing : on renvoie vers /login. */}
+                          <Route
+                            path="/landing"
+                            element={NATIVE_APP ? <Navigate to="/login" replace /> : <Landing />}
+                          />
                           <Route path="/forgot-password" element={<ForgotPassword />} />
                           <Route path="/reset-password" element={<ResetPassword />} />
                           <Route path="/sourcing/public/:token" element={<PublicBidSubmission />} />

@@ -44,6 +44,10 @@ import {
   PowerSettingsNew,
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
+import { isNativePlatform } from '../utils/platform';
+
+// Clic sur le logo : web -> landing marketing ; app mobile -> dashboard.
+const LOGO_TARGET = isNativePlatform() ? '/dashboard' : '/landing';
 import { useModules } from '../contexts/ModuleContext';
 import { useColorMode } from '../App';
 import { useHeader } from '../contexts/HeaderContext';
@@ -414,7 +418,7 @@ function MainLayout() {
         justifyContent: collapsed ? 'center' : 'space-between',
       }}>
       <Box
-        onClick={() => navigate('/landing')}
+        onClick={() => navigate(LOGO_TARGET)}
         sx={{
           display: 'flex',
           alignItems: 'center',
