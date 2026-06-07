@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSharedElement } from '../../contexts/SharedElementContext';
 import {
   Box,
   Card,
@@ -70,7 +68,6 @@ function ClientDetail() {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { consumeSharedElement, clearSharedElement } = useSharedElement();
 
   const [client, setClient] = useState(null);
   const [statistics, setStatistics] = useState(null);
@@ -80,39 +77,6 @@ function ClientDetail() {
   const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
-
-  // Morphing animation state
-  const [isAnimating, setIsAnimating] = useState(true);
-  const [sharedElementData, setSharedElementData] = useState(null);
-  const targetCardRef = useRef(null);
-  const [targetRect, setTargetRect] = useState(null);
-
-  // Capturer l'élément partagé au montage
-  useLayoutEffect(() => {
-    const shared = consumeSharedElement(`client-${id}`);
-    if (shared) {
-      setSharedElementData(shared);
-    } else {
-      setIsAnimating(false);
-    }
-  }, [id, consumeSharedElement]);
-
-  // Mesurer la position cible après le premier rendu
-  useLayoutEffect(() => {
-    if (targetCardRef.current && sharedElementData && !loading && client) {
-      const rect = targetCardRef.current.getBoundingClientRect();
-      setTargetRect(rect);
-    }
-  }, [sharedElementData, loading, client]);
-
-  // Terminer l'animation
-  const handleAnimationComplete = () => {
-    // Ajouter un petit délai pour s'assurer que l'animation est complètement terminée
-    setTimeout(() => {
-      setIsAnimating(false);
-      clearSharedElement();
-    }, 50); // 50ms delay to ensure smooth transition
-  };
 
   const { setHeaderConfig } = useHeader();
 
@@ -271,217 +235,12 @@ function ClientDetail() {
   ];
 
   return (
-    <>
-      {/* Morphing Animation Overlay - Ghost Card Complète */}
-      <AnimatePresence>
-        {isAnimating && sharedElementData && targetRect && (
-          <motion.div
-            initial={{
-              position: 'fixed',
-              top: sharedElementData.rect.top,
-              left: sharedElementData.rect.left,
-              width: sharedElementData.rect.width,
-              height: sharedElementData.rect.height,
-              zIndex: 9999,
-              borderRadius: 12,
-              background: sharedElementData.data.is_active
-                ? 'linear-gradient(145deg, rgba(230, 233, 239, 0.95) 0%, rgba(37, 99, 235, 0.03) 50%, rgba(230, 233, 239, 0.95) 100%)'
-                : 'linear-gradient(145deg, rgba(230, 233, 239, 0.9) 0%, rgba(100, 116, 139, 0.05) 100%)',
-              boxShadow: sharedElementData.data.is_active
-                ? '0 4px 20px rgba(37, 99, 235, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)'
-                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
-              backdropFilter: 'blur(20px)',
-              overflow: 'hidden',
-            }}
-            animate={{
-              top: targetRect.top,
-              left: targetRect.left,
-              width: targetRect.width,
-              height: targetRect.height,
-              borderRadius: 12,
-            }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: 0.5,
-              ease: [0.4, 0, 0.2, 1],
-            }}
-            onAnimationComplete={handleAnimationComplete}
-            style={{ pointerEvents: 'none' }} // Prevent interaction during animation
-          >
-            {/* Barre de couleur en haut */}
-            <Box
-              component={motion.div}
-              initial={{ scaleX: 1 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.5 }}
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 4,
-                background: sharedElementData.data.is_active
-                  ? 'linear-gradient(90deg, #10b981, #2563eb, #64748b)'
-                  : 'linear-gradient(90deg, #9ca3af, #6b7280)',
-                borderRadius: '12px 12px 0 0',
-                transformOrigin: 'left',
-              }}
-            />
-
-            {/* Contenu de la card source - exactement comme dans la liste */}
-            <Box
-              component={motion.div}
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 0 }}
-              transition={{ duration: 0.25, delay: 0.25 }}
-              sx={{ p: 2 }}
-            >
-              {/* Header avec Avatar et Nom */}
-              <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-                <Avatar
-                  sx={{
-                    width: isMobile ? 48 : 56,
-                    height: isMobile ? 48 : 56,
-                    bgcolor: 'primary.main',
-                    borderRadius: 2,
-                    fontSize: isMobile ? '1.2rem' : '1.5rem',
-                    fontWeight: 'bold',
-                    boxShadow: 2,
-                  }}
-                >
-                  {sharedElementData.data.avatar}
-                </Avatar>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      fontWeight: 600,
-                      mb: 0.5,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      fontSize: isMobile ? '0.875rem' : '0.95rem',
-                    }}
-                  >
-                    {sharedElementData.data.name}
-                  </Typography>
-                  {sharedElementData.data.legal_name && sharedElementData.data.legal_name !== sharedElementData.data.name && (
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block' }}>
-                      {sharedElementData.data.legal_name}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-
-              {/* Infos de contact */}
-              <Stack spacing={0.75} sx={{ mb: 1.5 }}>
-                {sharedElementData.data.contact_person && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <Person sx={{ fontSize: 16, color: 'text.secondary' }} />
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {sharedElementData.data.contact_person}
-                    </Typography>
-                  </Box>
-                )}
-                {sharedElementData.data.email && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <Email sx={{ fontSize: 16, color: 'text.secondary' }} />
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {sharedElementData.data.email}
-                    </Typography>
-                  </Box>
-                )}
-                {sharedElementData.data.phone && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <Phone sx={{ fontSize: 16, color: 'text.secondary' }} />
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                      {sharedElementData.data.phone}
-                    </Typography>
-                  </Box>
-                )}
-                {sharedElementData.data.payment_terms && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                    <CreditCard sx={{ fontSize: 16, color: 'text.secondary' }} />
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                      {sharedElementData.data.payment_terms}
-                    </Typography>
-                  </Box>
-                )}
-              </Stack>
-
-              {/* Stats si présentes */}
-              {(sharedElementData.data.total_invoices > 0 || sharedElementData.data.total_sales_amount > 0) && (
-                <Box
-                  sx={{
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.12)} 0%, ${alpha(theme.palette.success.main, 0.06)} 100%)`,
-                    borderRadius: 2,
-                    p: 1.5,
-                    mb: 1.5,
-                    border: '1px solid',
-                    borderColor: theme => alpha(theme.palette.success.main, 0.2),
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    {sharedElementData.data.total_invoices > 0 && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                        <Box sx={{ p: 0.75, borderRadius: 1, bgcolor: 'success.main', display: 'flex' }}>
-                          <Receipt sx={{ fontSize: 16, color: 'white' }} />
-                        </Box>
-                        <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 700, color: 'success.main' }}>
-                          {sharedElementData.data.total_invoices}
-                        </Typography>
-                      </Box>
-                    )}
-                    {sharedElementData.data.total_sales_amount > 0 && (
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: '0.938rem',
-                          fontWeight: 800,
-                          background: theme => `linear-gradient(135deg, ${theme.palette.success.dark}, ${theme.palette.success.main})`,
-                          backgroundClip: 'text',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                        }}
-                      >
-                        {formatCurrency(sharedElementData.data.total_sales_amount)}
-                      </Typography>
-                    )}
-                  </Stack>
-                </Box>
-              )}
-
-              {/* Footer */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip
-                  label={sharedElementData.data.is_active ? 'Actif' : 'Inactif'}
-                  size="small"
-                  color={sharedElementData.data.is_active ? 'success' : 'default'}
-                  sx={{ fontSize: '0.7rem', height: 20 }}
-                />
-                {sharedElementData.data.business_number && (
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-                    N° {sharedElementData.data.business_number}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Box
-        sx={{
-          p: { xs: 1.5, sm: 2, md: 3 },
-          pb: { xs: 12, sm: 2, md: 3 }, // Space for mobile nav
-          opacity: isAnimating ? 0 : 1,
-          transition: 'opacity 0.2s ease',
-        }}
-      >
+    <Box
+      sx={{
+        p: { xs: 1.5, sm: 2, md: 3 },
+        pb: { xs: 12, sm: 2, md: 3 }, // Space for mobile nav
+      }}
+    >
         {/* Header - Caché sur mobile (géré par top navbar) */}
         <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
@@ -630,29 +389,25 @@ function ClientDetail() {
               sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 2, sm: 2.5 } }}
             >
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <motion.div layoutId={`client-avatar-${id}`} initial={false} transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}>
-                  <Avatar
-                    sx={{
-                      width: { xs: 60, sm: 84 },
-                      height: { xs: 60, sm: 84 },
-                      bgcolor: 'primary.main',
-                      borderRadius: 3,
-                      fontSize: { xs: '1.6rem', sm: '2.2rem' },
-                      fontWeight: 800,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {client?.name?.charAt(0)?.toUpperCase() || '?'}
-                  </Avatar>
-                </motion.div>
+                <Avatar
+                  sx={{
+                    width: { xs: 60, sm: 84 },
+                    height: { xs: 60, sm: 84 },
+                    bgcolor: 'primary.main',
+                    borderRadius: 3,
+                    fontSize: { xs: '1.6rem', sm: '2.2rem' },
+                    fontWeight: 800,
+                    flexShrink: 0,
+                  }}
+                >
+                  {client?.name?.charAt(0)?.toUpperCase() || '?'}
+                </Avatar>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
                     <Box sx={{ minWidth: 0 }}>
-                      <motion.div layoutId={`client-name-${id}`} initial={false} transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}>
-                        <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', sm: '1.4rem' }, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {client?.name}
-                        </Typography>
-                      </motion.div>
+                      <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', sm: '1.4rem' }, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {client?.name}
+                      </Typography>
                       {client?.legal_name && client.legal_name !== client.name && (
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
                           {client.legal_name}
@@ -954,8 +709,7 @@ function ClientDetail() {
           </Button>
         </DialogActions>
       </Dialog>
-      </Box>
-    </>
+    </Box>
   );
 }
 

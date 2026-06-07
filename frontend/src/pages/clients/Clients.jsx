@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSharedElement } from '../../contexts/SharedElementContext';
 import {
   Box,
   Card,
@@ -74,7 +73,6 @@ function Clients() {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { registerSharedElement } = useSharedElement();
   const { setPageHeader } = useHeader();
 
   // Redux state
@@ -209,18 +207,9 @@ function Clients() {
   const totalInvoices = clients.reduce((sum, c) => sum + (c.total_invoices || 0), 0);
 
   const handleCardClick = useCallback((event, client) => {
-    const cardElement = event.currentTarget;
-    const rect = cardElement.getBoundingClientRect();
-
-    // Enregistrer la position et TOUTES les données de la card
-    registerSharedElement(`client-${client.id}`, rect, {
-      ...client, // Toutes les données du client
-      avatar: client.name?.charAt(0)?.toUpperCase() || '?',
-    });
-
-    // Naviguer vers la page de détails
+    // Navigation simple vers le détail (sans animation morph)
     navigate(`/clients/${client.id}`);
-  }, [registerSharedElement, navigate]);
+  }, [navigate]);
 
   const ClientCard = ({ client, index }) => {
     const isActive = client.is_active;
