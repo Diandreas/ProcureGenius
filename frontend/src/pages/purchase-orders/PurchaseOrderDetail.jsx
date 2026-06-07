@@ -495,6 +495,17 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
     return icons[status] || null;
   };
 
+  // Onglets (icône seule sur mobile, icône + label desktop)
+  const PO_TABS = [
+    { icon: Info, label: t('purchaseOrders:tabs.general') },
+    { icon: Inventory, label: t('purchaseOrders:tabs.items') },
+    { icon: AttachMoney, label: t('purchaseOrders:tabs.financial') },
+    { icon: Psychology, label: 'Analyse IA' },
+  ];
+
+  // Swipe entre onglets (mobile). AVANT tout return conditionnel (regle des hooks).
+  const swipeHandlers = useSwipeTabs(activeTab, PO_TABS.length, setActiveTab, IS_NATIVE);
+
   if (loading) {
     return <LoadingState message={t('purchaseOrders:messages.loading', 'Chargement du bon de commande...')} />;
   }
@@ -509,17 +520,6 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
       />
     );
   }
-
-  // Onglets (icône seule sur mobile, icône + label desktop)
-  const PO_TABS = [
-    { icon: Info, label: t('purchaseOrders:tabs.general') },
-    { icon: Inventory, label: t('purchaseOrders:tabs.items') },
-    { icon: AttachMoney, label: t('purchaseOrders:tabs.financial') },
-    { icon: Psychology, label: 'Analyse IA' },
-  ];
-
-  // Swipe horizontal entre onglets (mobile).
-  const swipeHandlers = useSwipeTabs(activeTab, PO_TABS.length, setActiveTab, IS_NATIVE);
 
   return (
     <Box sx={{

@@ -253,6 +253,16 @@ function SupplierDetail() {
     setGeneratedPdfBlob(null);
   };
 
+  // Onglets (icône seule sur mobile, icône + label desktop)
+  const SUPPLIER_TABS = [
+    { icon: Info, label: t('suppliers:tabs.info') },
+    { icon: ShoppingCart, label: t('suppliers:tabs.orders') },
+    { icon: Inventory, label: t('suppliers:tabs.products') },
+  ];
+
+  // Swipe entre onglets (mobile). AVANT tout return conditionnel (regle des hooks).
+  const swipeHandlers = useSwipeTabs(activeTab, SUPPLIER_TABS.length, setActiveTab, IS_NATIVE);
+
   if (loading) {
     return <LoadingState message={t('suppliers:messages.loading', 'Chargement du fournisseur...')} />;
   }
@@ -267,16 +277,6 @@ function SupplierDetail() {
       />
     );
   }
-
-  // Onglets (icône seule sur mobile, icône + label desktop)
-  const SUPPLIER_TABS = [
-    { icon: Info, label: t('suppliers:tabs.info') },
-    { icon: ShoppingCart, label: t('suppliers:tabs.orders') },
-    { icon: Inventory, label: t('suppliers:tabs.products') },
-  ];
-
-  // Swipe horizontal entre onglets (mobile).
-  const swipeHandlers = useSwipeTabs(activeTab, SUPPLIER_TABS.length, setActiveTab, IS_NATIVE);
 
   return (
     <Box sx={{

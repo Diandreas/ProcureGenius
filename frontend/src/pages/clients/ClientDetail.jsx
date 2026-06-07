@@ -228,6 +228,16 @@ function ClientDetail() {
     }
   };
 
+  // Onglets (icône seule sur mobile, icône + label desktop)
+  const CLIENT_TABS = [
+    { icon: Info, label: t('clients:tabs.info') },
+    { icon: Receipt, label: t('clients:tabs.invoices') },
+    { icon: Inventory, label: t('clients:tabs.products') },
+  ];
+
+  // Swipe entre onglets (mobile). AVANT tout return conditionnel (regle des hooks).
+  const swipeHandlers = useSwipeTabs(activeTab, CLIENT_TABS.length, setActiveTab, IS_NATIVE);
+
   if (!loading && !client) {
     return (
       <ErrorState
@@ -238,16 +248,6 @@ function ClientDetail() {
       />
     );
   }
-
-  // Onglets (icône seule sur mobile, icône + label desktop)
-  const CLIENT_TABS = [
-    { icon: Info, label: t('clients:tabs.info') },
-    { icon: Receipt, label: t('clients:tabs.invoices') },
-    { icon: Inventory, label: t('clients:tabs.products') },
-  ];
-
-  // Swipe horizontal entre onglets (mobile).
-  const swipeHandlers = useSwipeTabs(activeTab, CLIENT_TABS.length, setActiveTab, IS_NATIVE);
 
   return (
     <Box

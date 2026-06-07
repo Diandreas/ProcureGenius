@@ -220,6 +220,12 @@ function ProductDetail() {
     setGeneratedPdfBlob(null);
   };
 
+  // Swipe entre onglets (mobile). IMPORTANT : appele AVANT tout return
+  // conditionnel pour respecter la regle des hooks (sinon React error #310).
+  // Nombre d'onglets : 3 + 2 si produit physique.
+  const tabsCount = 3 + (product?.product_type === 'physical' ? 2 : 0);
+  const swipeHandlers = useSwipeTabs(activeTab, tabsCount, setActiveTab, IS_NATIVE);
+
   if (loading) {
     return <LoadingState message={t('products:messages.loading', 'Chargement du produit...')} />;
   }
@@ -251,9 +257,6 @@ function ProductDetail() {
     ...(isPhysical ? [{ icon: Warehouse, label: 'Lots' }] : []),
     ...(isPhysical ? [{ icon: History, label: t('products:tabs.movements') }] : []),
   ];
-
-  // Swipe horizontal entre onglets (mobile). Base sur le nombre reel d'onglets.
-  const swipeHandlers = useSwipeTabs(activeTab, PRODUCT_TABS.length, setActiveTab, IS_NATIVE);
 
   return (
     <Box sx={{
