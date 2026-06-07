@@ -172,4 +172,25 @@ export function NeumorphicCard({ accentColor = '#94a3b8', code, status, title, s
   );
 }
 
+/**
+ * Panneau neumorphique générique (pour les pages de détail) — conteneur surélevé,
+ * coins arrondis, ombre douce. `accent` ajoute une fine barre de couleur en haut.
+ */
+export function NeumorphicPanel({ children, accent, sx = {}, ...props }) {
+  return (
+    <Box
+      {...props}
+      sx={{
+        position: 'relative', borderRadius: 4, bgcolor: 'background.paper',
+        p: { xs: 2, sm: 2.5 }, overflow: 'hidden',
+        boxShadow: (th) => shadowRaised(th),
+        ...sx,
+      }}
+    >
+      {accent && <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: accent, opacity: 0.9 }} />}
+      {children}
+    </Box>
+  );
+}
+
 export const neuShadows = { shadowRaised, shadowRaisedSm, shadowHover, shadowInset };

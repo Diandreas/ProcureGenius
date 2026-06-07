@@ -346,19 +346,15 @@ const getDesignTokens = (mode) => ({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          border: mode === 'light' ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.06)',
-          background: mode === 'light' ? '#ffffff' : '#1e2a3a',
+          borderRadius: 18,
+          border: 'none',
+          backgroundImage: 'none',
+          background: mode === 'light' ? '#ffffff' : '#1e2530',
+          // Neumorphisme premium (charte #cdd4e0 / #fff)
           boxShadow: mode === 'light'
-            ? '0 2px 8px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04)'
-            : '0 2px 8px rgba(0,0,0,0.3)',
-          transition: 'box-shadow 0.2s ease, transform 0.2s ease',
-          '&:hover': {
-            boxShadow: mode === 'light'
-              ? '0 6px 20px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06)'
-              : '0 6px 20px rgba(0,0,0,0.4)',
-            transform: 'translateY(-1px)',
-          },
+            ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
+            : '6px 6px 16px #14191f, -6px -6px 16px #283041',
+          transition: 'box-shadow 0.3s cubic-bezier(0.22,1,0.36,1)',
         },
       },
     },
