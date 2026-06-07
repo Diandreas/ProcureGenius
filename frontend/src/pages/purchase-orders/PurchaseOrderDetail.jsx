@@ -443,10 +443,10 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
       const pdfBlob = await generatePurchaseOrderPDF(purchaseOrder, selectedTemplate);
 
       if (action === 'download') {
-        downloadPDF(pdfBlob, `bon-commande-${purchaseOrder.po_number}.pdf`);
+        await downloadPDF(pdfBlob, `bon-commande-${purchaseOrder.po_number}.pdf`);
         enqueueSnackbar(t('purchaseOrders:messages.pdfDownloadedSuccess'), { variant: 'success' });
       } else if (action === 'preview') {
-        openPDFInNewTab(pdfBlob);
+        await openPDFInNewTab(pdfBlob, `bon-commande-${purchaseOrder.po_number}.pdf`);
       } else if (action === 'print') {
         // Ouvrir le PDF dans une nouvelle fenêtre et déclencher l'impression
         const pdfUrl = URL.createObjectURL(pdfBlob);

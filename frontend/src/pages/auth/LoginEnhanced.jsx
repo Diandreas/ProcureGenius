@@ -24,6 +24,12 @@ import {
 import { login, googleLogin, clearError } from '../../store/slices/authSlice';
 import Mascot from '../../components/Mascot';
 import { useTranslation } from 'react-i18next';
+import { isNativePlatform } from '../../utils/platform';
+import { signInWithGoogleNative } from '../../services/mobileGoogleAuth';
+
+// Sur mobile natif, Google passe par le navigateur systeme (page pont
+// /mobile-auth + deep link), car la webview embarquee est bloquee par Google.
+const IS_NATIVE = isNativePlatform();
 
 const BG = '#e0e5ec';
 const SHADOW_OUT = '12px 12px 30px #b8bec7, -12px -12px 30px #ffffff';
@@ -87,20 +93,37 @@ function LoginEnhanced() {
     return false;
   };
 
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      const result = await dispatch(googleLogin(tokenResponse.access_token));
-      if (googleLogin.fulfilled.match(result)) {
-        const user = result.payload.user;
-        if (checkIfOnboardingNeeded(user)) {
-          window.location.href = '/onboarding';
-        } else {
-          window.location.href = '/dashboard';
-        }
+  const onGoogleToken = async (accessToken) => {
+    const result = await dispatch(googleLogin(accessToken));
+    if (googleLogin.fulfilled.match(result)) {
+      const user = result.payload.user;
+      if (checkIfOnboardingNeeded(user)) {
+        window.location.href = '/onboarding';
+      } else {
+        window.location.href = '/dashboard';
       }
-    },
+    }
+  };
+
+  // Flux web (navigateur) : popup/redirect Google standard.
+  const webGoogleLogin = useGoogleLogin({
+    onSuccess: (tokenResponse) => onGoogleToken(tokenResponse.access_token),
     onError: () => console.error('Login Failed'),
   });
+
+  // En natif : navigateur systeme + deep link. En web : flux classique.
+  const handleGoogleLogin = async () => {
+    if (IS_NATIVE) {
+      try {
+        const token = await signInWithGoogleNative();
+        await onGoogleToken(token);
+      } catch (e) {
+        console.error('Google natif:', e?.message || e);
+      }
+    } else {
+      webGoogleLogin();
+    }
+  };
 
   return (
     <Box

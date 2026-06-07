@@ -1,5 +1,38 @@
 // PDF Service for generating and handling PDF documents
 import api from './api';
+import { isNativePlatform } from '../utils/platform';
+
+// Convertit un Blob en chaîne base64 (sans le préfixe data:) pour Filesystem.
+const blobToBase64 = (blob) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result; // "data:application/pdf;base64,XXXX"
+      const base64 = String(dataUrl).split(',')[1] || '';
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
+// En natif (Capacitor) : écrit le PDF dans le cache puis l'ouvre avec l'app
+// PDF du téléphone. Les plugins sont importés dynamiquement pour ne pas
+// alourdir le bundle web.
+const openPdfNatively = async (blob, filename = 'document.pdf') => {
+  const { Filesystem, Directory } = await import('@capacitor/filesystem');
+  const { FileOpener } = await import('@capacitor-community/file-opener');
+  const base64 = await blobToBase64(blob);
+  const safeName = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+  const result = await Filesystem.writeFile({
+    path: safeName,
+    data: base64,
+    directory: Directory.Cache,
+  });
+  await FileOpener.open({
+    filePath: result.uri,
+    contentType: 'application/pdf',
+  });
+};
 
 export const TEMPLATE_TYPES = {
   INVOICE: 'invoice',
@@ -291,8 +324,15 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
 };
 
 // Download PDF file
-export const downloadPDF = (blob, filename) => {
+// - Web : déclenche un téléchargement via <a download>.
+// - Natif (Capacitor) : écrit le fichier et l'ouvre avec l'app PDF native
+//   (le <a download> / blob URL ne fonctionne pas dans la webview).
+export const downloadPDF = async (blob, filename) => {
   try {
+    if (isNativePlatform()) {
+      await openPdfNatively(blob, filename);
+      return;
+    }
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -307,9 +347,13 @@ export const downloadPDF = (blob, filename) => {
   }
 };
 
-// Open PDF in new tab
-export const openPDFInNewTab = (blob) => {
+// Open PDF (new tab en web, app PDF native en mobile)
+export const openPDFInNewTab = async (blob, filename = 'document.pdf') => {
   try {
+    if (isNativePlatform()) {
+      await openPdfNatively(blob, filename);
+      return;
+    }
     const url = window.URL.createObjectURL(blob);
     window.open(url, '_blank');
     // Note: URL is not revoked here as the new tab needs it

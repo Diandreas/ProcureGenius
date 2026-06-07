@@ -5,6 +5,11 @@ import { useDispatch } from 'react-redux';
 import { setAuthenticated, googleLogin, clearError } from '../../store/slices/authSlice';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
+import { isNativePlatform } from '../../utils/platform';
+import { signInWithGoogleNative } from '../../services/mobileGoogleAuth';
+
+// Sur mobile natif, Google passe par le navigateur systeme (page pont + deep link).
+const IS_NATIVE = isNativePlatform();
 import {
   Box,
   TextField,
@@ -148,20 +153,36 @@ function Register() {
     }
   };
 
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true);
-      try {
-        await dispatch(googleLogin(tokenResponse.access_token)).unwrap();
-        navigate('/dashboard');
-      } catch (err) {
-        setError(err || t('auth:register.messages.error'));
-      } finally {
-        setLoading(false);
-      }
-    },
+  const onGoogleToken = async (accessToken) => {
+    setLoading(true);
+    try {
+      await dispatch(googleLogin(accessToken)).unwrap();
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err || t('auth:register.messages.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const webGoogleLogin = useGoogleLogin({
+    onSuccess: (tokenResponse) => onGoogleToken(tokenResponse.access_token),
     onError: () => setError(t('auth:register.messages.serverError')),
   });
+
+  // En natif : navigateur systeme + deep link. En web : flux classique.
+  const handleGoogleLogin = async () => {
+    if (IS_NATIVE) {
+      try {
+        const token = await signInWithGoogleNative();
+        await onGoogleToken(token);
+      } catch (e) {
+        setError(e?.message || t('auth:register.messages.serverError'));
+      }
+    } else {
+      webGoogleLogin();
+    }
+  };
 
   if (success) {
     return (

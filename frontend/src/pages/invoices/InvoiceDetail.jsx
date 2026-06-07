@@ -358,10 +358,10 @@ function InvoiceDetail() {
       const pdfBlob = await generateInvoicePDF(invoice, selectedTemplate);
 
       if (action === 'download') {
-        downloadPDF(pdfBlob, `facture-${invoice.invoice_number}.pdf`);
+        await downloadPDF(pdfBlob, `facture-${invoice.invoice_number}.pdf`);
         enqueueSnackbar(t('invoices:messages.pdfDownloadedSuccess'), { variant: 'success' });
       } else if (action === 'preview') {
-        openPDFInNewTab(pdfBlob);
+        await openPDFInNewTab(pdfBlob, `facture-${invoice.invoice_number}.pdf`);
       } else if (action === 'print') {
         // Ouvrir le PDF dans une nouvelle fenêtre et déclencher l'impression
         const pdfUrl = URL.createObjectURL(pdfBlob);
