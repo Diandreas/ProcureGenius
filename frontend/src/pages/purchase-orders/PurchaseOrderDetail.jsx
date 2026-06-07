@@ -786,7 +786,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
         <Grid container spacing={isMobile ? 1.5 : 2.5}>
           {/* Résumé compact — pleine largeur */}
           <Grid item xs={12}>
-            <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+            <Card sx={{ borderRadius: 2, boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff', overflow: 'hidden' }}>
               <Box sx={{
                 height: 3,
                 background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
@@ -893,7 +893,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
 
           {/* Articles — pleine largeur sous le résumé */}
           <Grid item xs={12}>
-            <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+            <Card sx={{ borderRadius: 2, boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' }}>
               <CardContent sx={{ p: isMobile ? 2 : 2.5 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1003,7 +1003,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
       {/* Tab: Items */}
       {activeTab === 1 && (
         <Box>
-          <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <Card sx={{ borderRadius: 2, boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' }}>
             <CardContent sx={{ p: isMobile ? 2 : 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

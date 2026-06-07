@@ -280,7 +280,7 @@ function ClientDetail() {
                 : 'linear-gradient(145deg, rgba(230, 233, 239, 0.9) 0%, rgba(100, 116, 139, 0.05) 100%)',
               boxShadow: sharedElementData.data.is_active
                 ? '0 4px 20px rgba(37, 99, 235, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)'
-                : '0 4px 16px rgba(0, 0, 0, 0.06)',
+                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
               backdropFilter: 'blur(20px)',
               overflow: 'hidden',
             }}
@@ -999,7 +999,7 @@ function ClientDetail() {
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                        boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                        boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
                       },
                       position: 'relative',
                       overflow: 'hidden',
@@ -1051,7 +1051,7 @@ function ClientDetail() {
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                        boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                        boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
                       },
                       position: 'relative',
                       overflow: 'hidden',
@@ -1105,7 +1105,7 @@ function ClientDetail() {
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
                           transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                          boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                          boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
                         },
                         position: 'relative',
                         overflow: 'hidden',
@@ -1159,7 +1159,7 @@ function ClientDetail() {
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
                           transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                          boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                          boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
                         },
                         position: 'relative',
                         overflow: 'hidden',
@@ -1478,7 +1478,7 @@ function ClientDetail() {
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: '0 8px 25px rgba(25, 118, 210, 0.15)'
+                boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
               }
             }}
           >
@@ -1529,7 +1529,7 @@ function ClientDetail() {
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: '0 8px 25px rgba(25, 118, 210, 0.15)'
+                boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
               }
             }}
           >

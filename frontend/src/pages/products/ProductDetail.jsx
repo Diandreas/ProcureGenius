@@ -392,8 +392,8 @@ function ProductDetail() {
                               color: 'success.main',
                               bgcolor: theme => alpha(theme.palette.success.main, 0.08),
                               boxShadow: theme => theme.palette.mode === 'dark' 
-                                ? '4px 4px 8px rgba(0,0,0,0.4), -2px -2px 8px rgba(255,255,255,0.05)'
-                                : '4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.8)',
+                                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
+                                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
                               borderRadius: 2,
                             }}
                           >
@@ -407,8 +407,8 @@ function ProductDetail() {
                               color: 'primary.main',
                               bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
                               boxShadow: theme => theme.palette.mode === 'dark'
-                                ? '4px 4px 8px rgba(0,0,0,0.4), -2px -2px 8px rgba(255,255,255,0.05)'
-                                : '4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.8)',
+                                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
+                                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
                               borderRadius: 2,
                             }}
                           >
@@ -422,8 +422,8 @@ function ProductDetail() {
                               color: 'error.main',
                               bgcolor: theme => alpha(theme.palette.error.main, 0.08),
                               boxShadow: theme => theme.palette.mode === 'dark'
-                                ? '4px 4px 8px rgba(0,0,0,0.4), -2px -2px 8px rgba(255,255,255,0.05)'
-                                : '4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.8)',
+                                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
+                                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
                               borderRadius: 2,
                             }}
                           >

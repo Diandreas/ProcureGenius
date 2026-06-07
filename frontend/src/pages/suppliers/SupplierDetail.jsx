@@ -289,7 +289,7 @@ function SupplierDetail() {
               py: 1,
               bgcolor: 'primary.main',
               boxShadow: 'none',
-              '&:hover': { bgcolor: 'primary.dark', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
+              '&:hover': { bgcolor: 'primary.dark', boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' }
             }}
           >
             {t('suppliers:actions.newPurchaseOrder')}
@@ -307,7 +307,7 @@ function SupplierDetail() {
               py: 1,
               bgcolor: 'success.main',
               boxShadow: 'none',
-              '&:hover': { bgcolor: 'success.dark', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
+              '&:hover': { bgcolor: 'success.dark', boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' }
             }}
           >
             {t('suppliers:actions.addProducts')}
@@ -327,7 +327,7 @@ function SupplierDetail() {
                 bgcolor: 'warning.main',
                 color: 'white',
                 boxShadow: 'none',
-                '&:hover': { bgcolor: 'warning.dark', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }
+                '&:hover': { bgcolor: 'warning.dark', boxShadow: '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' }
               }}
             >
               {t('suppliers:actions.generateReport')}
@@ -393,7 +393,7 @@ function SupplierDetail() {
                 borderRadius: isMobile ? 3 : 1.5,
                 mb: isMobile ? 1.5 : 2,
                 background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-                boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : '0 2px 12px rgba(0,0,0,0.06)',
+                boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid',
                 borderColor: theme => alpha(theme.palette.divider, 0.08),
@@ -801,7 +801,7 @@ function SupplierDetail() {
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                      boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                      boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
                     },
                     position: 'relative',
                     overflow: 'hidden',
@@ -850,7 +850,7 @@ function SupplierDetail() {
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                      boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                      boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
                     },
                     position: 'relative',
                     overflow: 'hidden',
@@ -899,7 +899,7 @@ function SupplierDetail() {
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                      boxShadow: isMobile ? '0 8px 32px rgba(0,0,0,0.15)' : '0 4px 16px rgba(0,0,0,0.12)'
+                      boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
                     },
                     position: 'relative',
                     overflow: 'hidden',
