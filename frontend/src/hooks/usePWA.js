@@ -28,8 +28,9 @@ export function usePWA() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Enregistrer le Service Worker
-    if ('serviceWorker' in navigator) {
+    // Enregistrer le Service Worker (web uniquement, pas en natif Capacitor)
+    const isNativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
+    if (!isNativeApp && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js')
         .then((registration) => {
           console.log('Service Worker enregistré:', registration);

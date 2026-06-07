@@ -4,6 +4,10 @@
   "description": "Frontend React pour l'application de gestion avec IA Chatbot",
   "private": true,
   "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/ios": "^8.4.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@gsap/react": "^2.1.2",

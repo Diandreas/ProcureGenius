@@ -1,11 +1,31 @@
 import axios from 'axios';
 
+// Détecte si l'app tourne dans le conteneur natif Capacitor (iOS/Android).
+// En natif, l'app est servie depuis capacitor://localhost (Android) ou
+// https://localhost (iOS) : il n'y a pas de proxy Nginx, donc les URLs
+// relatives /api/v1 ne pointent vers rien. Il faut une URL absolue.
+const isNativePlatform = () => {
+  if (typeof window === 'undefined') return false;
+  const cap = window.Capacitor;
+  // isNativePlatform() existe dès @capacitor/core ; fallback sur le flag global.
+  if (cap && typeof cap.isNativePlatform === 'function') {
+    return cap.isNativePlatform();
+  }
+  return Boolean(cap && cap.isNative);
+};
+
 // Configuration de l'URL de base de l'API
-// L'URL du backend est définie dans vite.config.js (VITE_BACKEND_URL)
-// En production: utilise l'URL complète du backend
-// En développement: utilise l'URL relative (le proxy Vite s'en charge)
+// - Natif (Capacitor) : URL absolue du backend en ligne (VITE_MOBILE_API_URL)
+// - Web prod : URL relative /api/v1 (Nginx/CloudPanel proxifie vers Django)
+// - Web dev : URL via VITE_BACKEND_URL (proxy Vite)
 const getApiBaseUrl = () => {
-  // Utiliser l'URL du backend définie dans vite.config.js
+  // En natif, on vise toujours le backend en ligne via une URL absolue.
+  if (isNativePlatform()) {
+    const mobileUrl = import.meta.env.VITE_MOBILE_API_URL || 'https://procura.mirlab.cloud';
+    return `${mobileUrl.replace(/\/$/, '')}/api/v1`;
+  }
+
+  // Utiliser l'URL du backend définie dans vite.config.js (web)
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   if (backendUrl) {

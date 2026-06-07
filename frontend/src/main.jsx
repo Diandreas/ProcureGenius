@@ -6,8 +6,11 @@ import './index.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-// Enregistrement du Service Worker pour la PWA
-if ('serviceWorker' in navigator) {
+// Enregistrement du Service Worker pour la PWA (web uniquement).
+// En natif (Capacitor), on n'enregistre pas le SW : il pourrait intercepter
+// les requêtes de la webview et le bundle est déjà servi localement.
+const isNativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
+if (!isNativeApp && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/service-worker.js')
