@@ -747,372 +747,156 @@ Cordialement`
 
       {isMobile ? (
         <Box>
-          <MobileInvoiceInfoCard invoice={invoice} />
+          {/* Hero compact */}
+          <NeumorphicPanel accent={(theme.palette[getStatusColor(invoice.status)] || {}).main} sx={{ mb: 1.5, p: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'text.secondary', fontWeight: 700 }}>{invoice.invoice_number}</Typography>
+                {invoice.title && <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mt: 0.25, lineHeight: 1.25 }}>{invoice.title}</Typography>}
+              </Box>
+              <Chip
+                icon={getStatusIcon(isOverdue() ? 'overdue' : invoice.status)}
+                label={isOverdue() ? t('invoices:labels.daysOverdue', { days: getDaysOverdue() }) : getStatusLabel(invoice.status)}
+                color={isOverdue() ? 'error' : getStatusColor(invoice.status)}
+                size="small"
+                sx={{ fontSize: '0.62rem', height: 22, fontWeight: 700, flexShrink: 0, '& .MuiChip-icon': { fontSize: '0.9rem' } }}
+              />
+            </Box>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.6rem', mt: 1, letterSpacing: '-0.02em' }}>{formatCurrency(invoice.total_amount || 0)}</Typography>
+            {invoice.client?.name && <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>{invoice.client.name}</Typography>}
+          </NeumorphicPanel>
 
-          {/* Client Info Mobile */}
-          {invoice.client ? (
-            <Card sx={{
-              mb: 2,
-              borderRadius: 3,
-              boxShadow: theme => theme.palette.mode === 'dark'
-                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
-                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
-              border: 'none',
-              transition: 'all 0.3s ease'
-            }}>
-              <CardContent sx={{ p: 2 }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  {t('invoices:labels.client')}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
-                  <Avatar sx={{ bgcolor: 'secondary.main', width: 32, height: 32 }}>
-                    <Business fontSize="small" />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                      {invoice.client.name || t('invoices:labels.clientWithoutName')}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      {invoice.client.email || t('invoices:labels.noEmail')}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  onClick={() => navigate(`/clients/${invoice.client.id}`)}
-                  sx={{ borderRadius: 2, textTransform: 'none', fontSize: '0.875rem' }}
-                >
-                  {t('invoices:buttons.viewClient')}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card sx={{
-              mb: 2,
-              borderRadius: 3,
-              boxShadow: theme => theme.palette.mode === 'dark'
-                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
-                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
-              border: '2px dashed',
-              borderColor: 'warning.main',
-              transition: 'all 0.3s ease'
-            }}>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <Warning color="warning" fontSize="small" />
-                  <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                    {t('invoices:labels.noClientAssociated')}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                  {t('invoices:labels.noClientDescription')}
-                </Typography>
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Contract Info Mobile */}
-          {invoice.contract && (
-            <Card sx={{
-              mb: 2,
-              borderRadius: 3,
-              boxShadow: theme => theme.palette.mode === 'dark'
-                ? '6px 6px 16px #14191f, -6px -6px 16px #283041'
-                : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
-              border: 'none',
-              transition: 'all 0.3s ease'
-            }}>
-              <CardContent sx={{ p: 2 }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
-                  {t('invoices:labels.contract', 'Contrat')}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
-                  <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32 }}>
-                    <Description fontSize="small" />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                      {invoice.contract_title || t('invoices:labels.contractAssociated', 'Contrat associé')}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                      {invoice.contract_number}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                  onClick={() => navigate(`/contracts/${invoice.contract}`)}
-                  sx={{ borderRadius: 2, textTransform: 'none', fontSize: '0.875rem' }}
-                >
-                  {t('invoices:buttons.viewContract', 'Voir le contrat')}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Financial Summary Mobile */}
-          <Card sx={{ mb: 1.5, borderRadius: 3, border: 'none', boxShadow: theme => theme.palette.mode === 'light' ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff' : '6px 6px 16px #14191f, -6px -6px 16px #283041' }} elevation={0}>
-            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Stack spacing={0.5}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
-                    {t('invoices:labels.subtotal')}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                    {formatCurrency(invoice.subtotal || 0)}
-                  </Typography>
-                </Box>
-                {(invoice.discount_amount || 0) > 0 && (
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" color="error.main" sx={{ fontSize: '0.72rem' }}>
-                      Remise{invoice.discount_type === 'percent' ? ` (${invoice.discount_value}%)` : ''}
-                    </Typography>
-                    <Typography variant="body2" color="error.main" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                      −{formatCurrency(invoice.discount_amount || 0)}
-                    </Typography>
-                  </Box>
-                )}
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
-                    {t('invoices:labels.taxes')}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                    {formatCurrency(invoice.tax_amount || 0)}
-                  </Typography>
-                </Box>
-                <Divider />
-                <Box display="flex" justifyContent="space-between" alignItems="center" pt={0.25}>
-                  <Typography variant="body2" fontWeight={700}>
-                    {t('invoices:labels.total')}
-                  </Typography>
-                  <Typography variant="subtitle1" fontWeight={800} color="primary.main" sx={{ letterSpacing: '-0.02em' }}>
-                    {formatCurrency(invoice.total_amount || 0)}
-                  </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-
-          {/* Items Table Mobile - Compact */}
-          <Card sx={{
-            mb: 1.5,
-            borderRadius: 3,
-            boxShadow: theme => theme.palette.mode === 'light'
-              ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
-              : '6px 6px 16px #14191f, -6px -6px 16px #283041',
-            border: 'none'
-          }}>
-            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
-                {t('invoices:labels.itemsCount', { count: invoice.items?.length || 0 })}
-              </Typography>
-              {invoice.items?.map((item, index) => (
-                <Box key={index} sx={{
-                  mb: 1,
-                  pb: 1,
-                  borderBottom: index < invoice.items.length - 1 ? '1px solid' : 'none',
-                  borderColor: 'rgba(0,0,0,0.06)'
-                }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
-                    {item.product ? (
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          color: 'primary.main',
-                          cursor: 'pointer',
-                          '&:hover': { textDecoration: 'underline' }
-                        }}
-                        onClick={() => navigate(`/products/${item.product}`)}
-                      >
-                        {item.product_reference || 'REF-?'}
-                      </Typography>
-                    ) : (
-                      <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, color: 'primary.main' }}>
-                        {item.product_reference || 'REF-?'}
-                      </Typography>
-                    )}
-                    <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 700, color: 'text.primary' }}>
-                      {formatCurrency(item.total_price)}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{
-                    fontSize: '0.75rem',
-                    color: 'text.secondary',
-                    mb: 0.25,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 1,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
+          {/* Articles */}
+          <NeumorphicPanel sx={{ mb: 1.5, p: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('invoices:labels.itemsCount', { count: invoice.items?.length || 0 })}</Typography>
+              {invoice.status === 'draft' && (
+                <IconButton size="small" color="primary" onClick={() => setAddItemDialogOpen(true)} sx={{ p: 0.4, boxShadow: th => neuShadows.shadowInset(th), borderRadius: 1.5 }}><Add fontSize="small" /></IconButton>
+              )}
+            </Box>
+            {invoice.items?.map((item, index) => (
+              <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, py: 0.85, borderBottom: index < invoice.items.length - 1 ? th => `1px solid ${alpha(th.palette.divider, 0.5)}` : 'none' }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontSize: '0.8rem', fontWeight: 600, color: item.product ? 'primary.main' : 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    onClick={() => item.product && navigate(`/products/${item.product}`)}>
                     {item.description}
                   </Typography>
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.disabled' }}>
-                    {item.quantity} × {formatCurrency(item.unit_price)}
-                  </Typography>
+                  <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled' }}>{item.quantity} × {formatCurrency(item.unit_price)}</Typography>
                 </Box>
-              ))}
-              {(!invoice.items || invoice.items.length === 0) && (
-                <Box sx={{ textAlign: 'center', py: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                    {t('invoices:labels.noItems')}
-                  </Typography>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Paiements Mobile */}
-          <Card sx={{
-            mb: 1.5,
-            borderRadius: 3,
-            boxShadow: theme => theme.palette.mode === 'light'
-              ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
-              : '6px 6px 16px #14191f, -6px -6px 16px #283041',
-            border: 'none'
-          }}>
-            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, color: 'text.primary' }}>
-                  Paiements reçus
-                </Typography>
-                <IconButton size="small" color="primary" onClick={() => setAddPaymentOpen(true)} sx={{ bgcolor: 'primary.50', borderRadius: 1 }}>
-                  <Add fontSize="small" />
-                </IconButton>
+                <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{formatCurrency(item.total_price)}</Typography>
               </Box>
-
-              {paymentsInfo && (
-                <Stack direction="row" spacing={0.75} sx={{ mb: 1.25 }}>
-                  <Box sx={{ flex: 1, p: 1, bgcolor: 'primary.50', borderRadius: 1, textAlign: 'center' }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.62rem' }}>Total</Typography>
-                    <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ fontSize: '0.72rem' }}>
-                      {formatCurrency(paymentsInfo.total_amount)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: 1, p: 1, bgcolor: 'success.50', borderRadius: 1, textAlign: 'center' }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.62rem' }}>Payé</Typography>
-                    <Typography variant="caption" fontWeight={700} color="success.main" sx={{ fontSize: '0.72rem' }}>
-                      {formatCurrency(paymentsInfo.total_paid)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: 1, p: 1, bgcolor: paymentsInfo.balance_due <= 0 ? 'success.50' : 'error.50', borderRadius: 1, textAlign: 'center' }}>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.62rem' }}>Solde</Typography>
-                    <Typography variant="caption" fontWeight={700} color={paymentsInfo.balance_due <= 0 ? 'success.main' : 'error.main'} sx={{ fontSize: '0.72rem' }}>
-                      {formatCurrency(paymentsInfo.balance_due)}
-                    </Typography>
-                  </Box>
-                </Stack>
-              )}
-
-              {payments.length === 0 ? (
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', py: 1 }}>
-                  Aucun paiement enregistré
-                </Typography>
-              ) : (
-                <Stack spacing={0.5}>
-                  {payments.map((p) => (
-                    <Box key={p.id} sx={{
-                      display: 'flex', alignItems: 'center', gap: 1,
-                      p: 0.75, bgcolor: 'grey.50', borderRadius: 1
-                    }}>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 600, display: 'block' }}>
-                          {formatDate(p.payment_date)} · {paymentMethodLabel(p.payment_method)}
-                        </Typography>
-                        {p.reference_number && (
-                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-                            {p.reference_number}
-                          </Typography>
-                        )}
-                      </Box>
-                      <Typography variant="caption" fontWeight={700} color="success.main" sx={{ fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
-                        {formatCurrency(p.amount)}
-                      </Typography>
-                      {p.can_delete && (
-                        <IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)} sx={{ p: 0.25 }}>
-                          <Delete sx={{ fontSize: '0.9rem' }} />
-                        </IconButton>
-                      )}
-                    </Box>
-                  ))}
-                </Stack>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Dates Mobile - Compact */}
-          <Card sx={{
-            mb: 1.5,
-            borderRadius: 3,
-            boxShadow: theme => theme.palette.mode === 'light'
-              ? '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
-              : '6px 6px 16px #14191f, -6px -6px 16px #283041',
-            border: 'none'
-          }}>
-            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Typography variant="subtitle2" sx={{ fontSize: '0.85rem', fontWeight: 700, mb: 1, color: 'text.primary' }}>
-                {t('invoices:labels.datesLabel')}
-              </Typography>
-              <Stack spacing={0.5}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                    {t('invoices:labels.creationDate')}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                    {formatDate(invoice.created_at)}
-                  </Typography>
+            ))}
+            {(!invoice.items || invoice.items.length === 0) && (
+              <Typography sx={{ textAlign: 'center', py: 1.5, color: 'text.secondary', fontSize: '0.78rem' }}>{t('invoices:labels.noItems')}</Typography>
+            )}
+            <Box sx={{ mt: 1.25, p: 1.5, borderRadius: 2.5, boxShadow: th => neuShadows.shadowInset(th) }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{t('invoices:labels.subtotal')}</Typography>
+                <Typography sx={{ fontSize: '0.78rem', fontWeight: 600 }}>{formatCurrency(invoice.subtotal || 0)}</Typography>
+              </Box>
+              {(invoice.discount_amount || 0) > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography sx={{ fontSize: '0.75rem', color: 'error.main' }}>Remise{invoice.discount_type === 'percent' ? ` (${invoice.discount_value}%)` : ''}</Typography>
+                  <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'error.main' }}>−{formatCurrency(invoice.discount_amount || 0)}</Typography>
                 </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                    {t('invoices:labels.issueDate')}
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                    {formatDate(invoice.issue_date)}
-                  </Typography>
-                </Box>
-                {invoice.due_date && (
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                      {t('invoices:labels.dueDateShort')}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isOverdue() ? 'error.main' : 'success.main'
-                    }}>
-                      {formatDate(invoice.due_date)}
-                    </Typography>
+              )}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
+                <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{t('invoices:labels.taxes')}</Typography>
+                <Typography sx={{ fontSize: '0.78rem', fontWeight: 600 }}>{formatCurrency(invoice.tax_amount || 0)}</Typography>
+              </Box>
+              <Divider sx={{ mb: 0.75 }} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.82rem' }}>{t('invoices:labels.total')}</Typography>
+                <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: 'primary.main' }}>{formatCurrency(invoice.total_amount || 0)}</Typography>
+              </Box>
+            </Box>
+          </NeumorphicPanel>
+
+          {/* Paiements */}
+          <NeumorphicPanel sx={{ mb: 1.5, p: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Paiements reçus</Typography>
+              <IconButton size="small" color="primary" onClick={() => setAddPaymentOpen(true)} sx={{ p: 0.4, boxShadow: th => neuShadows.shadowInset(th), borderRadius: 1.5 }}><Add fontSize="small" /></IconButton>
+            </Box>
+            {paymentsInfo && (
+              <Stack direction="row" spacing={1} sx={{ mb: 1.25 }}>
+                {[
+                  { label: 'Total', value: paymentsInfo.total_amount, color: 'primary.main' },
+                  { label: 'Payé', value: paymentsInfo.total_paid, color: 'success.main' },
+                  { label: 'Solde', value: paymentsInfo.balance_due, color: paymentsInfo.balance_due <= 0 ? 'success.main' : 'error.main' },
+                ].map((b) => (
+                  <Box key={b.label} sx={{ flex: 1, p: 1, borderRadius: 2, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
+                    <Typography sx={{ fontSize: '0.58rem', color: 'text.secondary', textTransform: 'uppercase', display: 'block' }}>{b.label}</Typography>
+                    <Typography sx={{ fontWeight: 800, fontSize: '0.72rem', color: b.color }}>{formatCurrency(b.value)}</Typography>
                   </Box>
-                )}
-                {invoice.payment_date && (
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                      {t('invoices:labels.paymentDate')}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'success.main' }}>
-                      {formatDate(invoice.payment_date)}
-                    </Typography>
-                  </Box>
-                )}
-                {(invoice.sent_at || invoice.sent_date) && (
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
-                      {t('invoices:labels.sentDateLabel', 'Date d\'envoi')}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'info.main' }}>
-                      {formatDate(invoice.sent_at || invoice.sent_date)}
-                    </Typography>
-                  </Box>
-                )}
+                ))}
               </Stack>
-            </CardContent>
-          </Card>
+            )}
+            {payments.length === 0 ? (
+              <Typography sx={{ textAlign: 'center', py: 1, color: 'text.secondary', fontSize: '0.75rem' }}>Aucun paiement enregistré</Typography>
+            ) : (
+              <Stack spacing={0.75}>
+                {payments.map((p) => (
+                  <Box key={p.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 0.9, borderRadius: 2, boxShadow: th => neuShadows.shadowInset(th) }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontSize: '0.72rem', fontWeight: 600 }}>{formatDate(p.payment_date)} · {paymentMethodLabel(p.payment_method)}</Typography>
+                      {p.reference_number && <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary' }}>{p.reference_number}</Typography>}
+                    </Box>
+                    <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: 'success.main', whiteSpace: 'nowrap' }}>{formatCurrency(p.amount)}</Typography>
+                    {p.can_delete && <IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)} sx={{ p: 0.25 }}><Delete sx={{ fontSize: '0.9rem' }} /></IconButton>}
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </NeumorphicPanel>
+
+          {/* Client */}
+          {invoice.client ? (
+            <NeumorphicPanel sx={{ mb: 1.5, p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.25 }}>
+                <Avatar sx={{ bgcolor: 'secondary.main', width: 34, height: 34 }}><Business fontSize="small" /></Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.88rem' }}>{invoice.client.name || t('invoices:labels.clientWithoutName')}</Typography>
+                  <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{invoice.client.email || t('invoices:labels.noEmail')}</Typography>
+                </Box>
+              </Box>
+              <Button fullWidth variant="outlined" size="small" onClick={() => navigate(`/clients/${invoice.client.id}`)} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>{t('invoices:buttons.viewClient')}</Button>
+            </NeumorphicPanel>
+          ) : (
+            <NeumorphicPanel accent="#f59e0b" sx={{ mb: 1.5, p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Warning color="warning" fontSize="small" />
+                <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: 'warning.main' }}>{t('invoices:labels.noClientAssociated')}</Typography>
+              </Box>
+            </NeumorphicPanel>
+          )}
+
+          {/* Contrat */}
+          {invoice.contract && (
+            <NeumorphicPanel sx={{ mb: 1.5, p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.25 }}>
+                <Avatar sx={{ bgcolor: 'primary.light', width: 34, height: 34 }}><Description fontSize="small" /></Avatar>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.88rem' }}>{invoice.contract_title || t('invoices:labels.contractAssociated', 'Contrat associé')}</Typography>
+                  <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>{invoice.contract_number}</Typography>
+                </Box>
+              </Box>
+              <Button fullWidth variant="outlined" size="small" onClick={() => navigate(`/contracts/${invoice.contract}`)} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>{t('invoices:buttons.viewContract', 'Voir le contrat')}</Button>
+            </NeumorphicPanel>
+          )}
+
+          {/* Dates */}
+          <NeumorphicPanel sx={{ mb: 1.5, p: 2 }}>
+            <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1 }}>{t('invoices:labels.datesLabel')}</Typography>
+            <Stack spacing={0.6}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>{t('invoices:labels.creationDate')}</Typography><Typography sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{formatDate(invoice.created_at)}</Typography></Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>{t('invoices:labels.issueDate')}</Typography><Typography sx={{ fontSize: '0.75rem', fontWeight: 600 }}>{formatDate(invoice.issue_date)}</Typography></Box>
+              {invoice.due_date && <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>{t('invoices:labels.dueDateShort')}</Typography><Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: isOverdue() ? 'error.main' : 'success.main' }}>{formatDate(invoice.due_date)}</Typography></Box>}
+              {invoice.payment_date && <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>{t('invoices:labels.paymentDate')}</Typography><Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'success.main' }}>{formatDate(invoice.payment_date)}</Typography></Box>}
+            </Stack>
+          </NeumorphicPanel>
         </Box>
+
       ) : (
         <Grid container spacing={2.5}>
           {/* ── Colonne principale ─────────────────────────────────────── */}
