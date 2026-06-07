@@ -3,11 +3,37 @@
 
 import { isNativePlatform } from '../utils/platform';
 import { initOfflineDb } from './offline/db';
+import { BACKEND_ROOT } from './api';
 
 const THEME_BG = '#e0e5ec'; // fond neumorphique clair de l'app
 
+// En natif, l'app est servie depuis https://localhost : tout appel
+// window.fetch('/api/...') taperait localhost (et recevrait le index.html au
+// lieu du JSON). On patche fetch UNE fois pour reecrire ces URLs vers le
+// backend en ligne. Couvre tous les fetch directs du code (onboarding,
+// permissions, settings, tutoriel...) sans les modifier un par un.
+export function patchFetchForNative() {
+  if (!isNativePlatform()) return;
+  if (!BACKEND_ROOT || typeof window === 'undefined' || window.__procuraFetchPatched) return;
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+    try {
+      if (typeof input === 'string' && input.startsWith('/api')) {
+        return originalFetch(`${BACKEND_ROOT}${input}`, init);
+      }
+      if (input instanceof Request && input.url && input.url.startsWith('/api')) {
+        return originalFetch(new Request(`${BACKEND_ROOT}${input.url}`, input), init);
+      }
+    } catch { /* fallback ci-dessous */ }
+    return originalFetch(input, init);
+  };
+  window.__procuraFetchPatched = true;
+}
+
 export async function initNativeApp() {
   if (!isNativePlatform()) return;
+
+  // (patchFetchForNative est appele tres tot depuis main.jsx)
 
   // --- Base locale hors-ligne (cache de lecture) ---
   initOfflineDb().catch(() => {});

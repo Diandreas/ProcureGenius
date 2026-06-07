@@ -39,6 +39,37 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+// Racine du backend (sans le /api/v1) pour reconstruire des URLs absolues
+// quand du code utilise window.fetch('/api/...') directement.
+const getBackendRoot = () => {
+  if (isNativePlatform()) {
+    const mobileUrl = import.meta.env.VITE_MOBILE_API_URL || 'https://procura.mirlab.cloud';
+    return mobileUrl.replace(/\/$/, '');
+  }
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  return backendUrl ? backendUrl.replace(/\/$/, '') : '';
+};
+
+export const BACKEND_ROOT = getBackendRoot();
+
+// Reecrit une URL d'API relative (/api/...) en URL absolue quand on est en
+// natif (Capacitor) ou en dev avec backend distinct. En web prod, laisse tel
+// quel (Nginx proxifie). A utiliser pour tous les appels window.fetch directs.
+export const apiUrl = (path) => {
+  if (typeof path !== 'string') return path;
+  if (/^https?:\/\//i.test(path)) return path; // deja absolue
+  if (path.startsWith('/api') && BACKEND_ROOT) {
+    return `${BACKEND_ROOT}${path}`;
+  }
+  return path;
+};
+
+// Remplacant direct de window.fetch pour les appels API : reecrit l'URL.
+export const apiFetch = (input, init) => {
+  if (typeof input === 'string') return fetch(apiUrl(input), init);
+  return fetch(input, init);
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
