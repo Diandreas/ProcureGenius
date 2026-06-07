@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSharedElement } from '../../contexts/SharedElementContext';
 import { alpha } from '@mui/material/styles';
 import {
   Box,
@@ -72,7 +71,6 @@ function Suppliers() {
   const { t } = useTranslation(['suppliers', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { registerSharedElement } = useSharedElement();
   const { setPageHeader } = useHeader();
 
   const [suppliers, setSuppliers] = useState([]);
@@ -244,18 +242,9 @@ function Suppliers() {
   };
 
   const handleCardClick = useCallback((event, supplier) => {
-    const cardElement = event.currentTarget;
-    const rect = cardElement.getBoundingClientRect();
-
-    // Enregistrer la position et TOUTES les données du supplier
-    registerSharedElement(`supplier-${supplier.id}`, rect, {
-      ...supplier,
-      avatar: supplier.name?.charAt(0)?.toUpperCase() || '?',
-    });
-
-    // Naviguer vers la page de détails
+    // Navigation simple vers le détail (sans animation morph)
     navigate(`/suppliers/${supplier.id}`);
-  }, [registerSharedElement, navigate]);
+  }, [navigate]);
 
   const SupplierCard = ({ supplier, index }) => {
     const isActive = supplier.status === 'active';
