@@ -43,6 +43,7 @@ import {
   AttachMoney,
   ShoppingCart,
   Inventory,
+  CalendarToday,
   TrendingUp,
   Info,
   CheckCircle,
@@ -66,6 +67,7 @@ import { useHeader } from '../../contexts/HeaderContext';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
+import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
 
 function SupplierDetail() {
   const { id } = useParams();
@@ -253,6 +255,13 @@ function SupplierDetail() {
     );
   }
 
+  // Onglets (icône seule sur mobile, icône + label desktop)
+  const SUPPLIER_TABS = [
+    { icon: Info, label: t('suppliers:tabs.info') },
+    { icon: ShoppingCart, label: t('suppliers:tabs.orders') },
+    { icon: Inventory, label: t('suppliers:tabs.products') },
+  ];
+
   return (
     <Box sx={{
       p: { xs: 0, sm: 2, md: 3 },
@@ -336,805 +345,281 @@ function SupplierDetail() {
         </Stack>
       </Box>
 
-      {/* Tabs - Style mobile app */}
-      <Tabs
-        value={activeTab}
-        onChange={(e, v) => setActiveTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{
-          mb: isMobile ? 1.5 : 3,
-          px: isMobile ? 2 : 0,
-          borderBottom: 1,
-          borderColor: 'divider',
-          '& .MuiTab-root': {
-            minWidth: isMobile ? 'auto' : 120,
-            fontSize: isMobile ? '0.75rem' : '0.875rem',
-            px: isMobile ? 1.5 : 2,
-            py: isMobile ? 1 : 1.5,
-            minHeight: isMobile ? 40 : 48,
-            borderRadius: isMobile ? 1.5 : 0,
-            mr: isMobile ? 0.5 : 0,
-            '&:hover': {
-              bgcolor: isMobile ? 'rgba(0,0,0,0.04)' : 'transparent',
-            },
-            transition: 'all 0.2s ease'
-          },
-          '& .MuiTabs-indicator': {
-            height: isMobile ? 3 : 2,
-            borderRadius: isMobile ? 1.5 : 0,
-          }
-        }}
-      >
-        <Tab
-          icon={<Info sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('suppliers:tabs.info')}
-          iconPosition="start"
-        />
-        <Tab
-          icon={<ShoppingCart sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('suppliers:tabs.orders')}
-          iconPosition="start"
-        />
-        <Tab
-          icon={<Inventory sx={{ fontSize: isMobile ? 18 : 20 }} />}
-          label={t('suppliers:tabs.products')}
-          iconPosition="start"
-        />
-      </Tabs>
+      {/* Onglets segmentés neumorphiques (icônes seules sur mobile) */}
+      <Box sx={{ px: isMobile ? 2 : 0, mb: isMobile ? 1.5 : 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: isMobile ? 0.5 : 1,
+            p: isMobile ? 0.5 : 0.75,
+            borderRadius: 3,
+            boxShadow: th => neuShadows.shadowInset(th),
+            bgcolor: 'background.default',
+            overflowX: 'auto',
+            '&::-webkit-scrollbar': { display: 'none' },
+            scrollbarWidth: 'none',
+          }}
+        >
+          {SUPPLIER_TABS.map((tab, idx) => {
+            const TabIcon = tab.icon;
+            const selected = activeTab === idx;
+            return (
+              <Tooltip key={idx} title={isMobile ? tab.label : ''} arrow disableHoverListener={!isMobile}>
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => setActiveTab(idx)}
+                  aria-label={tab.label}
+                  aria-selected={selected}
+                  sx={{
+                    flex: isMobile ? '0 0 auto' : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: isMobile ? 0 : 0.75,
+                    minWidth: isMobile ? 44 : 0,
+                    px: isMobile ? 0 : 2,
+                    py: isMobile ? 1 : 1.1,
+                    border: 'none',
+                    cursor: 'pointer',
+                    borderRadius: 2.25,
+                    fontFamily: 'inherit',
+                    fontSize: '0.82rem',
+                    fontWeight: selected ? 700 : 500,
+                    whiteSpace: 'nowrap',
+                    color: selected ? 'primary.main' : 'text.secondary',
+                    bgcolor: selected ? 'background.paper' : 'transparent',
+                    boxShadow: selected ? (th => neuShadows.shadowRaisedSm(th)) : 'none',
+                    transition: 'all 0.2s ease',
+                    '&:hover': { color: selected ? 'primary.main' : 'text.primary' },
+                  }}
+                >
+                  <TabIcon sx={{ fontSize: isMobile ? 20 : 18, color: selected ? 'primary.main' : 'inherit' }} />
+                  {!isMobile && tab.label}
+                </Box>
+              </Tooltip>
+            );
+          })}
+        </Box>
+      </Box>
 
       {/* Tab: Informations */}
       {activeTab === 0 && (
         <Box sx={{ px: isMobile ? 2 : 0 }}>
-          <Grid container spacing={isMobile ? 1.5 : 3}>
-            {/* Card principale - Style mobile app */}
+          <Grid container spacing={isMobile ? 1.5 : 2.5}>
+            {/* Colonne principale */}
             <Grid item xs={12} md={8}>
-              <Card sx={{
-                borderRadius: isMobile ? 3 : 1.5,
-                mb: isMobile ? 1.5 : 2,
-                background: theme => `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.paper, 0.95)} 100%)`,
-                boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid',
-                borderColor: theme => alpha(theme.palette.divider, 0.08),
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 3,
-                  background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  borderRadius: '1.5px 1.5px 0 0'
-                }
-              }}>
-                <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-                <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
-                  <Avatar
-                    sx={{
-                      width: isMobile ? 60 : 80,
-                      height: isMobile ? 60 : 80,
-                      bgcolor: 'primary.main',
-                      borderRadius: 1,
-                      fontSize: isMobile ? '2rem' : '2.5rem',
-                    }}
-                  >
+              {/* Hero fournisseur */}
+              <NeumorphicPanel accent="primary.main" sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 2, sm: 2.5 } }}>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Avatar sx={{ width: { xs: 60, sm: 84 }, height: { xs: 60, sm: 84 }, bgcolor: 'primary.main', borderRadius: 3, fontSize: { xs: '1.6rem', sm: '2.2rem' }, fontWeight: 800, flexShrink: 0 }}>
                     {supplier.name?.charAt(0)?.toUpperCase() || '?'}
                   </Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
-                      <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" sx={{ flex: 1 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                      <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', sm: '1.4rem' }, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {supplier.name}
                       </Typography>
-                      <Stack direction="row" spacing={0.5} sx={{ display: isMobile ? 'none' : 'flex' }}>
-                        <Tooltip title={t('suppliers:actions.downloadPdf', 'Rapport PDF')}>
-                          <IconButton
-                            onClick={() => setPdfDialogOpen(true)}
-                            size="small"
-                            sx={{
-                              p: 0.75,
-                              color: 'success.main',
-                              bgcolor: theme => alpha(theme.palette.success.main, 0.1),
-                              borderRadius: 1.5,
-                              '&:hover': { bgcolor: 'success.main', color: 'white' }
-                            }}
-                          >
-                            <PictureAsPdf sx={{ fontSize: 18 }} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={t('suppliers:actions.edit')}>
-                          <IconButton
-                            onClick={() => navigate(`/suppliers/${id}/edit`)}
-                            size="small"
-                            sx={{
-                              p: 0.75,
-                              color: 'primary.main',
-                              bgcolor: theme => alpha(theme.palette.primary.main, 0.1),
-                              borderRadius: 1.5,
-                              '&:hover': { bgcolor: 'primary.main', color: 'white' }
-                            }}
-                          >
-                            <Edit sx={{ fontSize: 18 }} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={t('suppliers:actions.delete')}>
-                          <IconButton
-                            onClick={handleDelete}
-                            size="small"
-                            sx={{
-                              p: 0.75,
-                              color: 'error.main',
-                              bgcolor: theme => alpha(theme.palette.error.main, 0.1),
-                              borderRadius: 1.5,
-                              '&:hover': { bgcolor: 'error.main', color: 'white' }
-                            }}
-                          >
-                            <Delete sx={{ fontSize: 18 }} />
-                          </IconButton>
-                        </Tooltip>
+                      {/* Actions mobile */}
+                      <Stack direction="row" spacing={0.5} sx={{ display: { xs: 'flex', md: 'none' }, flexShrink: 0 }}>
+                        <IconButton size="small" onClick={() => setPdfDialogOpen(true)} sx={{ color: 'success.main' }}><PictureAsPdf fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={() => navigate(`/suppliers/${id}/edit`)} sx={{ color: 'primary.main' }}><Edit fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={handleDelete} sx={{ color: 'error.main' }}><Delete fontSize="small" /></IconButton>
                       </Stack>
                     </Box>
                     {parseRating(supplier.rating) > 0 && (
-                      <Box sx={{ mb: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Rating value={parseRating(supplier.rating)} readOnly size={isMobile ? 'small' : 'medium'} />
-                          <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                            {parseRating(supplier.rating).toFixed(1)}/5
-                          </Typography>
-                          {supplier.rating_details && (
-                            <Chip
-                              label={t('suppliers:labels.autoCalculated')}
-                              size="small"
-                              variant="outlined"
-                              color="info"
-                              sx={{ ml: 1 }}
-                            />
-                          )}
-                        </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5 }}>
+                        <Rating value={parseRating(supplier.rating)} readOnly size="small" precision={0.1} />
+                        <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{parseRating(supplier.rating).toFixed(1)}/5</Typography>
                         {supplier.rating_details && (
-                          <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                            <Typography variant="caption" color="text.secondary">
-                              {t('suppliers:labels.punctuality')}: {supplier.rating_details.punctuality_score}/5 ({Math.round(supplier.rating_details.weights.punctuality_weight * 100)}% {t('suppliers:labels.ofScore', 'du score')})
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {t('suppliers:labels.quality')}: {supplier.rating_details.quality_score}/5 ({Math.round(supplier.rating_details.weights.quality_weight * 100)}% {t('suppliers:labels.ofScore', 'du score')})
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {t('suppliers:labels.payment')}: {supplier.rating_details.payment_score}/5 ({Math.round(supplier.rating_details.weights.payment_weight * 100)}% {t('suppliers:labels.ofScore', 'du score')})
-                            </Typography>
-                          </Box>
+                          <Chip label={t('suppliers:labels.autoCalculated')} size="small" variant="outlined" sx={{ height: 18, fontSize: '0.62rem' }} />
                         )}
                       </Box>
                     )}
-                    <Stack direction="row" spacing={1} flexWrap="wrap">
-                      <Chip
-                        label={getStatusLabel(supplier.status)}
-                        color={getStatusColor(supplier.status)}
-                        size="small"
-                      />
-                      {supplier.is_local && (
-                        <Chip label={t('suppliers:labels.local')} size="small" color="success" variant="outlined" />
-                      )}
-                      {supplier.is_minority_owned && (
-                        <Chip label={t('suppliers:diversity.minority')} size="small" color="info" variant="outlined" />
-                      )}
-                      {supplier.is_woman_owned && (
-                        <Chip label={t('suppliers:diversity.woman')} size="small" color="secondary" variant="outlined" />
-                      )}
-                      {supplier.is_indigenous && (
-                        <Chip label={t('suppliers:diversity.indigenous')} size="small" color="warning" variant="outlined" />
-                      )}
+                    <Stack direction="row" spacing={0.75} sx={{ mt: 1, flexWrap: 'wrap', gap: 0.5 }}>
+                      <Chip label={getStatusLabel(supplier.status)} color={getStatusColor(supplier.status)} size="small" sx={{ fontWeight: 600, height: 22, fontSize: '0.7rem' }} />
+                      {supplier.is_local && <Chip label={t('suppliers:labels.local')} size="small" color="success" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />}
+                      {supplier.is_minority_owned && <Chip label={t('suppliers:labels.minorityOwned')} size="small" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />}
+                      {supplier.is_woman_owned && <Chip label={t('suppliers:labels.womanOwned')} size="small" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />}
+                      {supplier.is_indigenous && <Chip label={t('suppliers:labels.indigenousOwned')} size="small" variant="outlined" sx={{ height: 22, fontSize: '0.7rem' }} />}
                     </Stack>
                   </Box>
                 </Box>
+              </NeumorphicPanel>
 
-                <Divider sx={{ my: 1.5 }} />
-
-                {/* Informations de contact */}
-                <Grid container spacing={1.5}>
-                  {supplier.contact_person && (
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
-                          bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
-                          border: '1px solid',
-                          borderColor: theme => alpha(theme.palette.primary.main, 0.2),
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            bgcolor: 'primary.main',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
-                          <Person sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
-                            {t('suppliers:labels.contactPerson')}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontWeight="600"
-                            sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
-                              color: 'text.primary'
-                            }}
-                          >
-                            {supplier.contact_person}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  )}
-
-                  {supplier.email && (
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
-                          bgcolor: theme => alpha(theme.palette.info.main, 0.08),
-                          border: '1px solid',
-                          borderColor: theme => alpha(theme.palette.info.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.info.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.info.main, 0.2)}`
-                          }
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            bgcolor: 'info.main',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
-                          <Email sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
-                            {t('suppliers:labels.email')}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontWeight="600"
-                            component="a"
-                            href={`mailto:${supplier.email}`}
-                            sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
-                              color: 'info.main',
-                              textDecoration: 'none',
-                              display: 'block',
-                              '&:hover': { textDecoration: 'underline' }
-                            }}
-                          >
-                            {supplier.email}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  )}
-
-                  {supplier.phone && (
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
-                          bgcolor: theme => alpha(theme.palette.success.main, 0.08),
-                          border: '1px solid',
-                          borderColor: theme => alpha(theme.palette.success.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.success.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.success.main, 0.2)}`
-                          }
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            bgcolor: 'success.main',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
-                          <Phone sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
-                            {t('suppliers:labels.phone')}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontWeight="600"
-                            component="a"
-                            href={`tel:${supplier.phone}`}
-                            sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
-                              color: 'success.main',
-                              textDecoration: 'none',
-                              display: 'block',
-                              '&:hover': { textDecoration: 'underline' }
-                            }}
-                          >
-                            {supplier.phone}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  )}
-
-                  {(supplier.address || supplier.city || supplier.province) && (
-                    <Grid item xs={12} sm={6}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: isMobile ? 1.5 : 2,
-                          p: isMobile ? 1.5 : 2,
-                          borderRadius: 2,
-                          bgcolor: theme => alpha(theme.palette.secondary.main, 0.08),
-                          border: '1px solid',
-                          borderColor: theme => alpha(theme.palette.secondary.main, 0.2),
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: theme => alpha(theme.palette.secondary.main, 0.12),
-                            transform: 'translateY(-2px)',
-                            boxShadow: theme => `0 4px 12px ${alpha(theme.palette.secondary.main, 0.2)}`
-                          }
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            p: 1,
-                            borderRadius: 1.5,
-                            bgcolor: 'secondary.main',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
-                          <LocationOn sx={{ fontSize: isMobile ? 20 : 22, color: 'white' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight="500"
-                            sx={{ fontSize: isMobile ? '0.688rem' : '0.75rem' }}
-                          >
-                            {t('suppliers:labels.address')}
-                          </Typography>
-                          {supplier.address && (
-                            <Typography
-                              variant="body2"
-                              fontWeight="600"
-                              sx={{
-                                mt: 0.5,
-                                fontSize: isMobile ? '0.875rem' : '0.938rem',
-                                color: 'text.primary'
-                              }}
-                            >
-                              {supplier.address}
-                            </Typography>
-                          )}
-                          <Typography
-                            variant="body2"
-                            fontWeight="600"
-                            sx={{
-                              mt: 0.5,
-                              fontSize: isMobile ? '0.875rem' : '0.938rem',
-                              color: 'text.primary'
-                            }}
-                          >
-                            {[supplier.city, supplier.province].filter(Boolean).join(', ')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  )}
-                </Grid>
-              </CardContent>
-            </Card>
-
-            {/* Statistiques */}
-            {statistics?.financial_stats && (
-              <Grid container spacing={isMobile ? 2 : 3}>
-                <Grid item xs={6} sm={4}>
-                  <Card sx={{
-                    borderRadius: 3,
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
-                    border: '1px solid',
-                    borderColor: theme => alpha(theme.palette.primary.main, 0.2),
-                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                      boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
-                    },
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 3,
-                      background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.light, 0.8)})`,
-                      borderRadius: '3px 3px 0 0'
-                    }
-                  }}>
-                    <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <AttachMoney sx={{
-                        fontSize: isMobile ? 32 : 36,
-                        color: 'primary.main',
-                        mb: isMobile ? 1 : 1.5,
-                        opacity: 0.9
-                      }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
-                        fontWeight: 700,
-                        mb: 1,
-                        background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                      }}>
-                        {formatCurrency(statistics.financial_stats.total_spent || 0)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {t('suppliers:labels.totalSpent')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={6} sm={4}>
-                  <Card sx={{
-                    borderRadius: 3,
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
-                    border: '1px solid',
-                    borderColor: theme => alpha(theme.palette.success.main, 0.2),
-                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                      boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
-                    },
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 3,
-                      background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
-                      borderRadius: '3px 3px 0 0'
-                    }
-                  }}>
-                    <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <ShoppingCart sx={{
-                        fontSize: isMobile ? 32 : 36,
-                        color: 'success.main',
-                        mb: isMobile ? 1 : 1.5,
-                        opacity: 0.9
-                      }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
-                        fontWeight: 700,
-                        mb: 1,
-                        background: theme => `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                      }}>
-                        {statistics.financial_stats.total_orders || 0}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {t('suppliers:labels.orders')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid item xs={12} sm={4}>
-                  <Card sx={{
-                    borderRadius: 3,
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.info.main, 0.1)} 0%, ${alpha(theme.palette.info.main, 0.05)} 100%)`,
-                    border: '1px solid',
-                    borderColor: theme => alpha(theme.palette.info.main, 0.2),
-                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      transform: isMobile ? 'translateY(-4px) scale(1.02)' : 'translateY(-2px)',
-                      boxShadow: isMobile ? '6px 6px 16px #14191f, -6px -6px 16px #283041' : '6px 6px 16px #cdd4e0, -6px -6px 16px #ffffff'
-                    },
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 3,
-                      background: theme => `linear-gradient(90deg, ${theme.palette.info.main}, ${alpha(theme.palette.info.light, 0.8)})`,
-                      borderRadius: '3px 3px 0 0'
-                    }
-                  }}>
-                    <CardContent sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-                      <TrendingUp sx={{
-                        fontSize: isMobile ? 32 : 36,
-                        color: 'info.main',
-                        mb: isMobile ? 1 : 1.5,
-                        opacity: 0.9
-                      }} />
-                      <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
-                        fontWeight: 700,
-                        mb: 1,
-                        background: theme => `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent'
-                      }}>
-                        {formatCurrency(statistics.financial_stats.average_order_value || 0)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {t('suppliers:labels.averageValue')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            )}
-
-            {/* Détails du rating calculé */}
-            {supplier?.rating_details && (
-              <Grid container spacing={isMobile ? 2 : 3} sx={{ mt: 1 }}>
-                <Grid item xs={12}>
-                  <Card sx={{
-                    borderRadius: 3,
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
-                    border: '1px solid',
-                    borderColor: theme => alpha(theme.palette.warning.main, 0.2),
-                    boxShadow: isMobile ? '0 4px 16px rgba(0,0,0,0.08)' : 'none',
-                  }}>
-                    <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                      <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600 }}>
-                        {t('suppliers:labels.ratingDetails')}
-                      </Typography>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                              {supplier.rating_details.punctuality_score}/5
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                              {t('suppliers:labels.punctuality')}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {Math.round(supplier.rating_details.weights.punctuality_weight * 100)}% {t('suppliers:labels.ofScore')}
-                            </Typography>
+              {/* Coordonnées */}
+              <NeumorphicPanel sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 1.75, sm: 2.25 } }}>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1.5 }}>{t('suppliers:tabs.info')}</Typography>
+                <Grid container spacing={1.25}>
+                  {[
+                    { show: !!supplier.contact_person, icon: Person, label: t('suppliers:labels.contactPerson'), value: supplier.contact_person },
+                    { show: !!supplier.email, icon: Email, label: t('suppliers:labels.email'), value: supplier.email },
+                    { show: !!supplier.phone, icon: Phone, label: t('suppliers:labels.phone'), value: supplier.phone },
+                    { show: !!(supplier.address || supplier.city || supplier.province), icon: LocationOn, label: t('suppliers:labels.address'), value: [supplier.address, supplier.city, supplier.province].filter(Boolean).join(', '), full: true },
+                  ].filter(f => f.show).map((f, i) => {
+                    const FIcon = f.icon;
+                    return (
+                      <Grid item xs={12} sm={f.full ? 12 : 6} key={i}>
+                        <Box sx={{ display: 'flex', gap: 1.25, alignItems: 'flex-start', p: 1.25, borderRadius: 2, boxShadow: th => neuShadows.shadowInset(th) }}>
+                          <FIcon sx={{ fontSize: 18, color: 'primary.main', mt: 0.25, flexShrink: 0 }} />
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', fontWeight: 600 }}>{f.label}</Typography>
+                            <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', wordBreak: 'break-word' }}>{f.value}</Typography>
                           </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                              {supplier.rating_details.quality_score}/5
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                              {t('suppliers:labels.quality')}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {Math.round(supplier.rating_details.weights.quality_weight * 100)}% {t('suppliers:labels.ofScore')}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-                              {supplier.rating_details.payment_score}/5
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                              {t('suppliers:labels.payment')}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {Math.round(supplier.rating_details.weights.payment_weight * 100)}% {t('suppliers:labels.ofScore')}
-                            </Typography>
-                          </Box>
-                        </Grid>
+                        </Box>
                       </Grid>
-                    </CardContent>
-                  </Card>
+                    );
+                  })}
                 </Grid>
-              </Grid>
-            )}
-          </Grid>
+              </NeumorphicPanel>
 
-          {/* Sidebar */}
-          <Grid item xs={12} md={4}>
-            {/* Diversité */}
-            <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <Business sx={{ color: 'primary.main' }} />
-                  <Typography variant="subtitle1" fontWeight="600">
-                    {t('suppliers:labels.diversity')}
-                  </Typography>
-                </Box>
-                <List dense>
-                  <ListItem>
-                    <ListItemIcon>
-                      {supplier.is_local ? <CheckCircle color="success" /> : <Block color="disabled" />}
-                    </ListItemIcon>
-                    <ListItemText primary={t('suppliers:labels.localSupplier')} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      {supplier.is_minority_owned ? <CheckCircle color="success" /> : <Block color="disabled" />}
-                    </ListItemIcon>
-                    <ListItemText primary={t('suppliers:labels.minorityOwned')} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      {supplier.is_woman_owned ? <CheckCircle color="success" /> : <Block color="disabled" />}
-                    </ListItemIcon>
-                    <ListItemText primary={t('suppliers:labels.womanOwned')} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemIcon>
-                      {supplier.is_indigenous ? <CheckCircle color="success" /> : <Block color="disabled" />}
-                    </ListItemIcon>
-                    <ListItemText primary={t('suppliers:labels.indigenousOwned')} />
-                  </ListItem>
-                </List>
-              </CardContent>
-            </Card>
+              {/* Performance financière */}
+              {statistics?.financial_stats && (
+                <NeumorphicPanel sx={{ p: { xs: 1.75, sm: 2.25 } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <TrendingUp sx={{ color: 'success.main', fontSize: 20 }} />
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{t('suppliers:labels.performance', 'Performance')}</Typography>
+                  </Box>
+                  <Grid container spacing={1.25}>
+                    {[
+                      { label: t('suppliers:labels.totalSpent'), value: formatCurrency(statistics.financial_stats.total_spent || 0), color: 'success.main' },
+                      { label: t('suppliers:labels.orders'), value: statistics.financial_stats.total_orders || 0, color: 'primary.main' },
+                      { label: t('suppliers:labels.averageValue'), value: formatCurrency(statistics.financial_stats.average_order_value || 0), color: 'info.main' },
+                    ].map((s, i) => (
+                      <Grid item xs={4} key={i}>
+                        <Box sx={{ p: 1.5, borderRadius: 2, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
+                          <Typography sx={{ fontWeight: 800, fontSize: { xs: '0.9rem', sm: '1.1rem' }, color: s.color, lineHeight: 1.1 }}>{s.value}</Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>{s.label}</Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </NeumorphicPanel>
+              )}
+            </Grid>
 
-            {/* Catégories */}
-            {supplier.categories && supplier.categories.length > 0 && (
-              <Card sx={{ borderRadius: 1, mb: isMobile ? 2 : 3 }}>
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                  <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                    {t('suppliers:labels.categories')}
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                    {supplier.categories.map((category) => (
-                      <Chip
-                        key={category.id}
-                        label={category.name}
-                        size="small"
-                        variant="outlined"
-                      />
+            {/* Sidebar */}
+            <Grid item xs={12} md={4}>
+              {/* Détail notation */}
+              {supplier?.rating_details && (
+                <NeumorphicPanel sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 1.75, sm: 2.25 } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <Star sx={{ color: 'warning.main', fontSize: 20 }} />
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{t('suppliers:labels.ratingDetails')}</Typography>
+                  </Box>
+                  <Stack spacing={1}>
+                    {[
+                      { label: t('suppliers:labels.punctuality'), score: supplier.rating_details.punctuality_score, weight: supplier.rating_details.weights.punctuality_weight },
+                      { label: t('suppliers:labels.quality'), score: supplier.rating_details.quality_score, weight: supplier.rating_details.weights.quality_weight },
+                      { label: t('suppliers:labels.payment'), score: supplier.rating_details.payment_score, weight: supplier.rating_details.weights.payment_weight },
+                    ].map((r, i) => (
+                      <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 1.25, borderRadius: 2, boxShadow: th => neuShadows.shadowInset(th) }}>
+                        <Box>
+                          <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>{r.label}</Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>{Math.round(r.weight * 100)}% {t('suppliers:labels.ofScore', 'du score')}</Typography>
+                        </Box>
+                        <Typography sx={{ fontWeight: 800, color: 'warning.main', fontSize: '0.95rem' }}>{r.score}/5</Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </NeumorphicPanel>
+              )}
+
+              {/* Diversité */}
+              <NeumorphicPanel sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 1.75, sm: 2.25 } }}>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1.5 }}>{t('suppliers:labels.diversity')}</Typography>
+                <Stack spacing={1}>
+                  {[
+                    { ok: supplier.is_local, label: t('suppliers:labels.localSupplier') },
+                    { ok: supplier.is_minority_owned, label: t('suppliers:labels.minorityOwned') },
+                    { ok: supplier.is_woman_owned, label: t('suppliers:labels.womanOwned') },
+                    { ok: supplier.is_indigenous, label: t('suppliers:labels.indigenousOwned') },
+                  ].map((d, i) => (
+                    <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {d.ok ? <CheckCircle sx={{ fontSize: 18 }} color="success" /> : <Block sx={{ fontSize: 18 }} color="disabled" />}
+                      <Typography sx={{ fontSize: '0.82rem', color: d.ok ? 'text.primary' : 'text.secondary', fontWeight: d.ok ? 600 : 400 }}>{d.label}</Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </NeumorphicPanel>
+
+              {/* Catégories */}
+              {supplier.categories && supplier.categories.length > 0 && (
+                <NeumorphicPanel sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 1.75, sm: 2.25 } }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1.5 }}>{t('suppliers:labels.categories')}</Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {supplier.categories.map((category, i) => (
+                      <Chip key={i} label={typeof category === 'string' ? category : category.name} size="small" sx={{ height: 24, fontSize: '0.72rem' }} />
                     ))}
                   </Box>
-                </CardContent>
-              </Card>
-            )}
+                </NeumorphicPanel>
+              )}
 
-            {/* Dates */}
-            <Card sx={{ borderRadius: 1 }}>
-              <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  {t('suppliers:labels.systemInfo')}
-                </Typography>
-                <Stack spacing={1.5} sx={{ mt: 2 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('suppliers:labels.createdOn')}
-                    </Typography>
-                    <Typography variant="body2">
-                      {formatDate(supplier.created_at)}
-                    </Typography>
+              {/* Dates */}
+              <NeumorphicPanel sx={{ p: { xs: 1.75, sm: 2.25 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                  <CalendarToday sx={{ color: 'text.secondary', fontSize: 18 }} />
+                  <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{t('suppliers:labels.systemInfo')}</Typography>
+                </Box>
+                <Stack spacing={1.25}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">{t('suppliers:labels.createdOn')}</Typography>
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>{formatDate(supplier.created_at)}</Typography>
                   </Box>
-                  <Divider />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('suppliers:labels.modifiedOn')}
-                    </Typography>
-                    <Typography variant="body2">
-                      {formatDate(supplier.updated_at)}
-                    </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" color="text.secondary">{t('suppliers:labels.modifiedOn')}</Typography>
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>{formatDate(supplier.updated_at)}</Typography>
                   </Box>
                 </Stack>
-              </CardContent>
-            </Card>
+              </NeumorphicPanel>
+            </Grid>
           </Grid>
-        </Grid>
         </Box>
       )}
 
       {/* Tab: Commandes */}
       {activeTab === 1 && (
-        <Box>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <ShoppingCart color="primary" />
-            {t('suppliers:labels.purchaseOrders')}
-          </Typography>
-          {statistics?.purchase_orders?.recent && statistics.purchase_orders.recent.length > 0 ? (
-            <Card sx={{ borderRadius: 1 }}>
-              <CardContent>
+        <Box sx={{ px: isMobile ? 2 : 0 }}>
+          <NeumorphicPanel accent="primary.main" sx={{ p: { xs: 1.75, sm: 2.5 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <ShoppingCart sx={{ color: 'primary.main', fontSize: 22 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
+                {t('suppliers:labels.purchaseOrders')}
+              </Typography>
+            </Box>
+            {statistics?.purchase_orders?.recent && statistics.purchase_orders.recent.length > 0 ? (
+              <Box sx={{ p: 1.5, borderRadius: 2, boxShadow: th => neuShadows.shadowInset(th) }}>
                 <Typography variant="body2" color="text.secondary">
                   {t('suppliers:labels.totalOrders', { count: statistics.purchase_orders.total_count })}
                 </Typography>
-              </CardContent>
-            </Card>
-          ) : (
-            <Alert severity="info">{t('suppliers:labels.noOrders')}</Alert>
-          )}
+              </Box>
+            ) : (
+              <Alert severity="info" sx={{ borderRadius: 2 }}>{t('suppliers:labels.noOrders')}</Alert>
+            )}
+          </NeumorphicPanel>
         </Box>
       )}
 
       {/* Tab: Produits */}
       {activeTab === 2 && (
-        <Box>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Inventory color="primary" />
-            {t('suppliers:labels.topProducts')}
-          </Typography>
-          {statistics?.top_products && statistics.top_products.length > 0 ? (
-            <Card sx={{ borderRadius: 1 }}>
-              <CardContent>
+        <Box sx={{ px: isMobile ? 2 : 0 }}>
+          <NeumorphicPanel accent="info.main" sx={{ p: { xs: 1.75, sm: 2.5 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Inventory sx={{ color: 'info.main', fontSize: 22 }} />
+              <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
+                {t('suppliers:labels.topProducts')}
+              </Typography>
+            </Box>
+            {statistics?.top_products && statistics.top_products.length > 0 ? (
+              <Box sx={{ p: 1.5, borderRadius: 2, boxShadow: th => neuShadows.shadowInset(th) }}>
                 <Typography variant="body2" color="text.secondary">
                   {t('suppliers:labels.totalProducts', { count: statistics.top_products.length })}
                 </Typography>
-              </CardContent>
-            </Card>
-          ) : (
-            <Alert severity="info">{t('suppliers:labels.noProducts')}</Alert>
-          )}
+              </Box>
+            ) : (
+              <Alert severity="info" sx={{ borderRadius: 2 }}>{t('suppliers:labels.noProducts')}</Alert>
+            )}
+          </NeumorphicPanel>
         </Box>
       )}
 
