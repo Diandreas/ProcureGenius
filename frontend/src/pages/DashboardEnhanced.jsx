@@ -63,6 +63,8 @@ import {
 } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
 import { analyticsAPI } from '../services/analyticsAPI';
+import { isNativePlatform } from '../utils/platform';
+import { cacheOne, readOne, isOffline } from '../services/offline';
 import useCurrency from '../hooks/useCurrency';
 import Mascot from '../components/Mascot';
 import LoadingState from '../components/LoadingState';
@@ -150,6 +152,8 @@ function DashboardEnhanced() {
   }, [period, compare]);
 
   const fetchAiGreeting = async () => {
+    // Hors-ligne : on garde le message d'accueil local (fallback), pas d'appel.
+    if (isNativePlatform() && isOffline()) return;
     try {
       // On utilise api.get car analyticsAPI n'a peut-être pas encore cette méthode
       const response = await analyticsAPI.getAiGreeting();
@@ -157,13 +161,25 @@ function DashboardEnhanced() {
         setAiGreeting(response.data);
       }
     } catch (error) {
-      console.error('Error fetching AI greeting:', error);
+      // Silencieux : le fallback local (welcome) est deja affiche.
     }
   };
 
   const fetchDashboardData = async () => {
+    const native = isNativePlatform();
+    // Cle de cache par periode (les chiffres different selon la periode choisie).
+    const cacheId = `stats_${period}_${compare}`;
+
     try {
       setLoading(true);
+
+      // Hors-ligne (natif) : on sert directement la derniere version en cache.
+      if (native && isOffline()) {
+        const cached = await readOne('dashboard', cacheId);
+        if (cached) setStats(cached.data ?? cached);
+        return;
+      }
+
       const params = {
         period,
         compare: compare.toString(),
@@ -176,7 +192,14 @@ function DashboardEnhanced() {
 
       const response = await analyticsAPI.getStats(params);
       setStats(response.data.data);
+      // Mise en cache pour consultation hors-ligne.
+      if (native) cacheOne('dashboard', { id: cacheId, data: response.data.data });
     } catch (error) {
+      // En natif, repli silencieux sur le cache (pas d'erreur bloquante offline).
+      if (native) {
+        const cached = await readOne('dashboard', cacheId);
+        if (cached) { setStats(cached.data ?? cached); return; }
+      }
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
@@ -394,36 +417,62 @@ function DashboardEnhanced() {
           </Stack>
         </Box>
 
-        {/* Section tabs — icon pill bar */}
-        <Box sx={{ display: 'flex', gap: 1, px: 2, py: 1.5, overflowX: 'auto', '&::-webkit-scrollbar': { display: 'none' } }}>
-          {[
-            { label: 'Aperçu', icon: <TrendingUp sx={{ fontSize: 16 }} /> },
-            { label: 'Factures', icon: <Receipt sx={{ fontSize: 16 }} /> },
-            { label: 'Clients', icon: <People sx={{ fontSize: 16 }} /> },
-            { label: 'Alertes', icon: <Warning sx={{ fontSize: 16 }} />, badge: stats.alerts?.length },
-          ].map((s, i) => (
-            <Box
-              key={i}
-              onClick={() => setCurrentTab(i)}
-              sx={{
-                display: 'flex', alignItems: 'center', gap: 0.5,
-                px: 1.5, py: 0.75, borderRadius: 5, whiteSpace: 'nowrap',
-                cursor: 'pointer', flexShrink: 0,
-                fontWeight: 600, fontSize: '0.75rem',
-                bgcolor: mobileSection === i ? 'primary.main' : 'action.hover',
-                color: mobileSection === i ? 'primary.contrastText' : 'text.secondary',
-                transition: 'all 0.15s',
-                position: 'relative',
-              }}
-            >
-              {s.icon}{s.label}
-              {s.badge > 0 && (
-                <Box sx={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: '50%', bgcolor: 'error.main', color: 'white', fontSize: '0.6rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {s.badge}
+        {/* Section tabs — barre neumorphique scrollable (icone + label) */}
+        <Box sx={{ px: 1.5, py: 1.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 0.5,
+              p: 0.5,
+              borderRadius: 3,
+              bgcolor: '#e0e5ec',
+              boxShadow: 'inset 3px 3px 7px #b8bec7, inset -3px -3px 7px #ffffff',
+              overflowX: 'auto',
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
+              // Fade a droite : indique qu'il y a plus d'onglets a faire defiler.
+              WebkitMaskImage:
+                'linear-gradient(to right, #000 calc(100% - 18px), transparent 100%)',
+            }}
+          >
+            {[
+              { label: 'Aperçu', icon: <TrendingUp sx={{ fontSize: 17 }} /> },
+              { label: 'Factures', icon: <Receipt sx={{ fontSize: 17 }} /> },
+              { label: 'Clients', icon: <People sx={{ fontSize: 17 }} /> },
+              { label: 'Alertes', icon: <Warning sx={{ fontSize: 17 }} />, badge: stats.alerts?.length },
+            ].map((s, i) => {
+              const selected = mobileSection === i;
+              return (
+                <Box
+                  key={i}
+                  component="button"
+                  type="button"
+                  onClick={() => setCurrentTab(i)}
+                  sx={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: 0.5, px: 1.5, py: 0.85, borderRadius: 2.25,
+                    whiteSpace: 'nowrap', cursor: 'pointer', flex: '0 0 auto',
+                    border: 'none', fontFamily: 'inherit',
+                    fontWeight: selected ? 700 : 500, fontSize: '0.78rem',
+                    color: selected ? 'primary.main' : 'text.secondary',
+                    bgcolor: selected ? '#e0e5ec' : 'transparent',
+                    boxShadow: selected
+                      ? '3px 3px 7px #b8bec7, -3px -3px 7px #ffffff'
+                      : 'none',
+                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                  }}
+                >
+                  {s.icon}{s.label}
+                  {s.badge > 0 && (
+                    <Box sx={{ position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, px: 0.4, borderRadius: '8px', bgcolor: 'error.main', color: 'white', fontSize: '0.6rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {s.badge}
+                    </Box>
+                  )}
                 </Box>
-              )}
-            </Box>
-          ))}
+              );
+            })}
+          </Box>
         </Box>
 
         {/* ── Mobile Section 0: Aperçu ── */}

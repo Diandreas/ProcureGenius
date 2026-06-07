@@ -1,10 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { aiChatAPI } from '../../services/api';
+import { isOffline } from '../../services/offline';
 
 // Async thunks
 export const sendMessage = createAsyncThunk(
   'aiChat/sendMessage',
-  async (data) => {
+  async (data, { rejectWithValue }) => {
+    // L'assistant IA necessite une connexion (appel LLM distant).
+    if (isOffline()) {
+      return rejectWithValue("Connexion requise pour l'assistant IA. Réessayez une fois en ligne.");
+    }
     const response = await aiChatAPI.sendMessage(data);
     return response.data;
   }
