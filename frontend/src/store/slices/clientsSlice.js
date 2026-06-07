@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { clientsAPI } from '../../services/api';
-import { readListWithCache, readOneWithCache } from '../../services/offline';
+import { readListWithCache, readOneWithCache, createWithQueue, updateWithQueue, deleteWithQueue } from '../../services/offline';
 
 // Async thunks
 export const fetchClients = createAsyncThunk(
@@ -21,23 +21,22 @@ export const fetchClient = createAsyncThunk(
 export const createClient = createAsyncThunk(
   'clients/createClient',
   async (data) => {
-    const response = await clientsAPI.create(data);
-    return response.data;
+    // Offline (natif) : ecrit en local + file de synchro ; online : API directe.
+    return await createWithQueue('clients', data, (d) => clientsAPI.create(d));
   }
 );
 
 export const updateClient = createAsyncThunk(
   'clients/updateClient',
   async ({ id, data }) => {
-    const response = await clientsAPI.update(id, data);
-    return response.data;
+    return await updateWithQueue('clients', id, data, (i, d) => clientsAPI.update(i, d));
   }
 );
 
 export const deleteClient = createAsyncThunk(
   'clients/deleteClient',
   async (id) => {
-    await clientsAPI.delete(id);
+    await deleteWithQueue('clients', id, (i) => clientsAPI.delete(i));
     return id;
   }
 );

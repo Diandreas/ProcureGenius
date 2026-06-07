@@ -3,6 +3,7 @@
 
 import { isNativePlatform } from '../utils/platform';
 import { initOfflineDb } from './offline/db';
+import { startSyncEngine } from './offline/syncEngine';
 import { BACKEND_ROOT } from './api';
 
 const THEME_BG = '#e0e5ec'; // fond neumorphique clair de l'app
@@ -35,8 +36,10 @@ export async function initNativeApp() {
 
   // (patchFetchForNative est appele tres tot depuis main.jsx)
 
-  // --- Base locale hors-ligne (cache de lecture) ---
-  initOfflineDb().catch(() => {});
+  // --- Base locale hors-ligne (cache + file de mutations) ---
+  initOfflineDb()
+    .then(() => startSyncEngine()) // rejoue la file au retour reseau
+    .catch(() => {});
 
   // --- Status bar : texte sombre sur fond clair, assortie au theme ---
   try {

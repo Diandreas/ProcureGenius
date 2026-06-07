@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { productsAPI } from '../../services/api';
-import { readListWithCache, readOneWithCache } from '../../services/offline';
+import { readListWithCache, readOneWithCache, createWithQueue, updateWithQueue, deleteWithQueue } from '../../services/offline';
 
 // Async thunks
 export const fetchProducts = createAsyncThunk(
@@ -20,23 +20,21 @@ export const fetchProduct = createAsyncThunk(
 export const createProduct = createAsyncThunk(
   'products/createProduct',
   async (data) => {
-    const response = await productsAPI.create(data);
-    return response.data;
+    return await createWithQueue('products', data, (d) => productsAPI.create(d));
   }
 );
 
 export const updateProduct = createAsyncThunk(
   'products/updateProduct',
   async ({ id, data }) => {
-    const response = await productsAPI.update(id, data);
-    return response.data;
+    return await updateWithQueue('products', id, data, (i, d) => productsAPI.update(i, d));
   }
 );
 
 export const deleteProduct = createAsyncThunk(
   'products/deleteProduct',
   async (id) => {
-    await productsAPI.delete(id);
+    await deleteWithQueue('products', id, (i) => productsAPI.delete(i));
     return id;
   }
 );

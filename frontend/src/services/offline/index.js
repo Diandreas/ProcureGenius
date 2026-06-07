@@ -2,9 +2,20 @@
 
 import { isNativePlatform } from '../../utils/platform';
 import { cacheList, readList, cacheOne, readOne, getLastSync } from './cache';
-import { initOfflineDb } from './db';
+import { initOfflineDb, getDb } from './db';
+import { enqueueMutation, newUuid, pendingCount } from './mutationQueue';
 
 export { initOfflineDb, cacheList, readList, cacheOne, readOne, getLastSync };
+export { newUuid, pendingCount } from './mutationQueue';
+
+// Supprime un enregistrement du cache local (ex. delete offline).
+async function removeFromCache(entity, id) {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.run('DELETE FROM cache WHERE entity = ? AND id = ?;', [entity, String(id)]);
+  } catch { /* ignore */ }
+}
 
 /** Vrai si on est hors-ligne (navigateur). */
 export const isOffline = () =>
@@ -68,4 +79,77 @@ export async function readOneWithCache(entity, id, apiCall) {
     }
     throw e;
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ECRITURE avec file hors-ligne (Phase 2)
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Creation avec repli hors-ligne.
+ * - online : appelle l'API, met le resultat en cache, le retourne.
+ * - offline (natif) : genere un UUID client, ecrit l'objet en cache (visible
+ *   immediatement, marque _offline), empile une mutation 'create'.
+ *
+ * @param {string} entity
+ * @param {object} data        corps de creation
+ * @param {(d)=>Promise<any>} apiCall  fonction (data) -> {data}
+ */
+export async function createWithQueue(entity, data, apiCall) {
+  const native = isNativePlatform();
+
+  if (native && isOffline()) {
+    const id = data.id || newUuid();
+    const record = { ...data, id, _offline: true, _pending: 'create', updated_at: new Date().toISOString() };
+    await cacheOne(entity, record);
+    await enqueueMutation({ entity, op: 'create', recordId: id, payload: record });
+    return record;
+  }
+
+  const res = await apiCall(data);
+  if (native && res?.data) cacheOne(entity, res.data);
+  return res.data;
+}
+
+/**
+ * Mise a jour avec repli hors-ligne.
+ * @param {string} entity
+ * @param {string|number} id
+ * @param {object} data
+ * @param {(id,data)=>Promise<any>} apiCall
+ */
+export async function updateWithQueue(entity, id, data, apiCall) {
+  const native = isNativePlatform();
+
+  if (native && isOffline()) {
+    const prev = (await readOne(entity, id)) || {};
+    const record = { ...prev, ...data, id, _offline: true, _pending: 'update', updated_at: new Date().toISOString() };
+    await cacheOne(entity, record);
+    await enqueueMutation({ entity, op: 'update', recordId: id, payload: record });
+    return record;
+  }
+
+  const res = await apiCall(id, data);
+  if (native && res?.data) cacheOne(entity, res.data);
+  return res.data;
+}
+
+/**
+ * Suppression avec repli hors-ligne.
+ * @param {string} entity
+ * @param {string|number} id
+ * @param {(id)=>Promise<any>} apiCall
+ */
+export async function deleteWithQueue(entity, id, apiCall) {
+  const native = isNativePlatform();
+
+  if (native && isOffline()) {
+    await removeFromCache(entity, id);
+    await enqueueMutation({ entity, op: 'delete', recordId: id, payload: null });
+    return id;
+  }
+
+  await apiCall(id);
+  if (native) await removeFromCache(entity, id);
+  return id;
 }

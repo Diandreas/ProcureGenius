@@ -7,6 +7,7 @@ import React, { useRef, useState, useCallback } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { ArrowDownward } from '@mui/icons-material';
 import { isNativePlatform } from '../../utils/platform';
+import { syncNow } from '../../services/offline/syncEngine';
 
 const THRESHOLD = 70;   // distance de declenchement (px)
 const MAX_PULL = 110;   // tirage max affiche
@@ -58,7 +59,10 @@ export default function PullToRefresh({ onRefresh, children, disabled = false })
       setRefreshing(true);
       setPull(THRESHOLD);
       haptic();
-      try { await onRefresh(); } finally {
+      try {
+        await syncNow().catch(() => {}); // pousse d'abord les modifs en attente
+        await onRefresh();
+      } finally {
         setRefreshing(false);
         setPull(0);
       }

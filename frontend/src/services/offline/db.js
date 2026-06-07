@@ -7,7 +7,7 @@
 import { isNativePlatform } from '../../utils/platform';
 
 const DB_NAME = 'procura_offline';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let sqlite = null;        // connexion plugin
 let db = null;            // handle base
@@ -29,6 +29,20 @@ CREATE TABLE IF NOT EXISTS sync_meta (
   entity        TEXT PRIMARY KEY,
   last_sync_at  TEXT
 );
+
+-- File des mutations faites hors-ligne, a rejouer au retour du reseau.
+CREATE TABLE IF NOT EXISTS mutations (
+  mutation_id TEXT PRIMARY KEY,   -- uuid de la mutation
+  entity      TEXT NOT NULL,      -- 'clients', 'products', ...
+  op          TEXT NOT NULL,      -- 'create' | 'update' | 'delete'
+  record_id   TEXT NOT NULL,      -- uuid de l'enregistrement vise
+  payload     TEXT,               -- JSON du corps (create/update)
+  status      TEXT NOT NULL DEFAULT 'pending', -- pending | error
+  attempts    INTEGER NOT NULL DEFAULT 0,
+  last_error  TEXT,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_mutations_status ON mutations (status, created_at);
 `;
 
 /** Initialise la base (idempotent). Retourne true si la base est prete. */
