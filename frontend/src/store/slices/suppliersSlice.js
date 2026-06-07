@@ -1,20 +1,19 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { suppliersAPI } from '../../services/api';
+import { readListWithCache, readOneWithCache } from '../../services/offline';
 
 // Async thunks
 export const fetchSuppliers = createAsyncThunk(
   'suppliers/fetchSuppliers',
   async (params = {}) => {
-    const response = await suppliersAPI.list(params);
-    return response.data;
+    return await readListWithCache('suppliers', () => suppliersAPI.list(params));
   }
 );
 
 export const fetchSupplier = createAsyncThunk(
   'suppliers/fetchSupplier',
   async (id) => {
-    const response = await suppliersAPI.get(id);
-    return response.data;
+    return await readOneWithCache('suppliers', id, () => suppliersAPI.get(id));
   }
 );
 

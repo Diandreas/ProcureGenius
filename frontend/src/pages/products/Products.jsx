@@ -76,6 +76,7 @@ import { generateProductsBulkReport, downloadPDF, openPDFInNewTab, generateProdu
 import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
+import PullToRefresh from '../../components/mobile/PullToRefresh';
 
 const IS_NATIVE = isNativePlatform();
 
@@ -223,6 +224,11 @@ function Products() {
   useEffect(() => {
     dispatch(fetchProducts());
     fetchWarehousesData();
+  }, [dispatch, fetchWarehousesData]);
+
+  // Pull-to-refresh : recharge produits + entrepots.
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([dispatch(fetchProducts()), fetchWarehousesData()]);
   }, [dispatch, fetchWarehousesData]);
 
   const filteredProducts = products.filter(product => {
@@ -420,6 +426,7 @@ function Products() {
   );
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <Box sx={{ p: { xs: 1.5, sm: 2.5 }, maxWidth: 1280, mx: 'auto' }}>
       {/* Mode entrepôt - si disponible */}
       {warehouses.length > 0 && (
@@ -696,6 +703,7 @@ function Products() {
       {/* Visionneuse PDF integree (apercu dans l'app) */}
       <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
+    </PullToRefresh>
   );
 }
 

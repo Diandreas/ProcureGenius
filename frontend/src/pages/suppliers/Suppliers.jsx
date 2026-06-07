@@ -67,6 +67,7 @@ import { generateSupplierReportPDF, downloadPDF, openPDFInNewTab } from '../../s
 import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
+import PullToRefresh from '../../components/mobile/PullToRefresh';
 
 const IS_NATIVE = isNativePlatform();
 
@@ -313,6 +314,7 @@ function Suppliers() {
   };
 
   return (
+    <PullToRefresh onRefresh={fetchSuppliers}>
     <Box sx={{ p: { xs: 1.5, sm: 2.5 }, maxWidth: 1280, mx: 'auto' }}>
 
       <NeumorphicKpis
@@ -420,6 +422,7 @@ function Suppliers() {
       {/* Visionneuse PDF integree (apercu dans l'app) */}
       <PdfViewerDialog {...pdfViewer.dialogProps} />
     </Box>
+    </PullToRefresh>
   );
 }
 

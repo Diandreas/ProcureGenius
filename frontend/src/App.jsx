@@ -11,6 +11,7 @@ import { SharedElementProvider } from './contexts/SharedElementContext';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
 import { isNativePlatform } from './utils/platform';
+import OfflineBanner from './components/mobile/OfflineBanner';
 
 // Sur l'app mobile native, on demarre sur /login (puis /dashboard si connecte)
 // au lieu de la page marketing /landing, et /landing est bloque -> /login.
@@ -818,6 +819,7 @@ function App() {
                       <AdSenseScript />
                       {onboardingChecked && (
                         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                      <OfflineBanner />
                       <React.Suspense fallback={<PageSkeleton />}>
                       <Routes>
                         {/* Public Routes */}

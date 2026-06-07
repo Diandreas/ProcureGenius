@@ -2,11 +2,15 @@
 // bouton retour Android. Appele une fois au demarrage (main.jsx), no-op en web.
 
 import { isNativePlatform } from '../utils/platform';
+import { initOfflineDb } from './offline/db';
 
 const THEME_BG = '#e0e5ec'; // fond neumorphique clair de l'app
 
 export async function initNativeApp() {
   if (!isNativePlatform()) return;
+
+  // --- Base locale hors-ligne (cache de lecture) ---
+  initOfflineDb().catch(() => {});
 
   // --- Status bar : texte sombre sur fond clair, assortie au theme ---
   try {

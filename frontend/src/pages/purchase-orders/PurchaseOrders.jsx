@@ -27,6 +27,7 @@ import { useSnackbar } from 'notistack';
 import { purchaseOrdersAPI } from '../../services/api';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import PullToRefresh from '../../components/mobile/PullToRefresh';
 import { useHeader } from '../../contexts/HeaderContext';
 import { NeumorphicKpis, NeumorphicSearch, NeumorphicCard } from '../../components/neumorphic/NeumorphicList';
 import EmptyState from '../../components/EmptyState';
@@ -268,6 +269,7 @@ function PurchaseOrders() {
   }
 
   return (
+    <PullToRefresh onRefresh={fetchPurchaseOrders}>
     <Box sx={{ p: { xs: 1.5, sm: 2.5 }, maxWidth: 1280, mx: 'auto' }}>
 
       <NeumorphicKpis
@@ -505,6 +507,7 @@ function PurchaseOrders() {
         </DialogActions>
       </Dialog>
     </Box>
+    </PullToRefresh>
   );
 }
 

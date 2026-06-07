@@ -1,20 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { clientsAPI } from '../../services/api';
+import { readListWithCache, readOneWithCache } from '../../services/offline';
 
 // Async thunks
 export const fetchClients = createAsyncThunk(
   'clients/fetchClients',
   async (params = {}) => {
-    const response = await clientsAPI.list(params);
-    return response.data;
+    // Lecture avec cache hors-ligne (natif) ; en web, appel direct.
+    return await readListWithCache('clients', () => clientsAPI.list(params));
   }
 );
 
 export const fetchClient = createAsyncThunk(
   'clients/fetchClient',
   async (id) => {
-    const response = await clientsAPI.get(id);
-    return response.data;
+    return await readOneWithCache('clients', id, () => clientsAPI.get(id));
   }
 );
 
