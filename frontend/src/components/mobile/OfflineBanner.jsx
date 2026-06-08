@@ -8,24 +8,18 @@ import { Box, Typography } from '@mui/material';
 import { CloudOff, CloudSync } from '@mui/icons-material';
 import { isNativePlatform } from '../../utils/platform';
 import { onPendingChange, syncNow } from '../../services/offline/syncEngine';
+import { onConnectivityChange } from '../../services/offline/connectivity';
 
 const IS_NATIVE = isNativePlatform();
 
 export default function OfflineBanner() {
-  const [offline, setOffline] = useState(
-    typeof navigator !== 'undefined' && navigator.onLine === false
-  );
+  const [offline, setOffline] = useState(false);
   const [pending, setPending] = useState(0);
 
   useEffect(() => {
-    const on = () => setOffline(false);
-    const off = () => setOffline(true);
-    window.addEventListener('online', on);
-    window.addEventListener('offline', off);
-    return () => {
-      window.removeEventListener('online', on);
-      window.removeEventListener('offline', off);
-    };
+    // Detection fiable (ping backend) au lieu de navigator.onLine.
+    const unsub = onConnectivityChange((isOnline) => setOffline(!isOnline));
+    return unsub;
   }, []);
 
   useEffect(() => {

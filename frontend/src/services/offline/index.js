@@ -4,9 +4,11 @@ import { isNativePlatform } from '../../utils/platform';
 import { cacheList, readList, cacheOne, readOne, getLastSync } from './cache';
 import { initOfflineDb, getDb } from './db';
 import { enqueueMutation, newUuid, pendingCount } from './mutationQueue';
+import { getOffline } from './connectivity';
 
 export { initOfflineDb, cacheList, readList, cacheOne, readOne, getLastSync };
 export { newUuid, pendingCount } from './mutationQueue';
+export { getOnline, getOffline, onConnectivityChange, checkConnectivity, startConnectivityWatch } from './connectivity';
 
 // Supprime un enregistrement du cache local (ex. delete offline).
 async function removeFromCache(entity, id) {
@@ -17,9 +19,9 @@ async function removeFromCache(entity, id) {
   } catch { /* ignore */ }
 }
 
-/** Vrai si on est hors-ligne (navigateur). */
-export const isOffline = () =>
-  typeof navigator !== 'undefined' && navigator.onLine === false;
+/** Vrai si on est hors-ligne. Detection fiable (ping backend), pas seulement
+ *  navigator.onLine qui ment sur certains appareils (wifi sans internet, etc.). */
+export const isOffline = () => getOffline();
 
 /**
  * Lecture d'une LISTE avec repli hors-ligne.
@@ -36,6 +38,7 @@ export async function readListWithCache(entity, apiCall, pick = (d) => d?.result
 
   if (native && isOffline()) {
     const items = await readList(entity);
+    console.log(`[offline] OFFLINE read ${entity}: ${items.length} en cache`);
     return { results: items, count: items.length, __offline: true };
   }
 
@@ -43,7 +46,8 @@ export async function readListWithCache(entity, apiCall, pick = (d) => d?.result
     const res = await apiCall();
     if (native) {
       const items = pick(res.data);
-      if (Array.isArray(items)) cacheList(entity, items); // fire-and-forget
+      console.log(`[offline] ONLINE ${entity}: ${Array.isArray(items) ? items.length : 'non-array'} a cacher`);
+      if (Array.isArray(items)) await cacheList(entity, items);
     }
     return res.data;
   } catch (e) {

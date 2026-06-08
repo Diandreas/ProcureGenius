@@ -4,6 +4,7 @@
 import { isNativePlatform } from '../utils/platform';
 import { initOfflineDb } from './offline/db';
 import { startSyncEngine } from './offline/syncEngine';
+import { startConnectivityWatch } from './offline/connectivity';
 import { BACKEND_ROOT } from './api';
 
 const THEME_BG = '#e0e5ec'; // fond neumorphique clair de l'app
@@ -35,6 +36,9 @@ export async function initNativeApp() {
   if (!isNativePlatform()) return;
 
   // (patchFetchForNative est appele tres tot depuis main.jsx)
+
+  // --- Detection fiable de la connectivite (ping backend) ---
+  startConnectivityWatch();
 
   // --- Base locale hors-ligne (cache + file de mutations) ---
   initOfflineDb()

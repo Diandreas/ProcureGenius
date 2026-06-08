@@ -25,9 +25,10 @@ export async function cacheList(entity, items) {
       [entity, new Date().toISOString()]
     );
     await db.execute('COMMIT;');
+    console.log(`[offline] cacheList OK ${entity}: ${items.length} ecrits`);
   } catch (e) {
     try { await db.execute('ROLLBACK;'); } catch { /* ignore */ }
-    console.warn('[offline] cacheList', entity, e?.message || e);
+    console.warn('[offline] cacheList ERREUR', entity, e?.message || e);
   }
 }
 
