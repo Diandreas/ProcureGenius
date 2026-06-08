@@ -2041,3 +2041,154 @@ class LabExamStatsDetailView(APIView):
             'pages': paginator.num_pages,
             'page': page_num,
         })
+
+
+# =============================================================================
+# Panel (Bilan) Statistics
+# =============================================================================
+
+class LabPanelStatsView(APIView):
+    """
+    GET /healthcare/laboratory/panel-stats/
+    Statistiques par bilan/pack : nb de fois commandé, CA généré, première/dernière date.
+    Filtres : ?date_from ?date_to ?search ?ordering
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import LabTestPanel, LabOrderItem
+        from django.db.models import Count, Sum, Min, Max, Q
+
+        org = request.user.organization
+        date_from = request.GET.get('date_from')
+        date_to   = request.GET.get('date_to')
+        search    = request.GET.get('search', '').strip()
+        ordering  = request.GET.get('ordering', '-times_ordered')
+
+        # Items from panel orders — panel_price is only set on first item per panel per order
+        items_qs = LabOrderItem.objects.filter(
+            lab_order__organization=org,
+            panel__isnull=False,
+            panel_price__isnull=False,  # first item of the panel in each order
+        ).exclude(lab_order__status='cancelled')
+
+        if date_from:
+            items_qs = items_qs.filter(lab_order__order_date__date__gte=date_from)
+        if date_to:
+            items_qs = items_qs.filter(lab_order__order_date__date__lte=date_to)
+
+        stats = (
+            items_qs
+            .values('panel')
+            .annotate(
+                times_ordered=Count('id'),
+                revenue=Sum('panel_price'),
+                first_date=Min('lab_order__order_date'),
+                last_date=Max('lab_order__order_date'),
+            )
+        )
+        stats_map = {str(s['panel']): s for s in stats}
+
+        panels_qs = LabTestPanel.objects.filter(organization=org, is_active=True)
+        if search:
+            panels_qs = panels_qs.filter(Q(name__icontains=search) | Q(code__icontains=search))
+
+        results = []
+        for p in panels_qs:
+            s = stats_map.get(str(p.id), {})
+            results.append({
+                'id': str(p.id),
+                'code': p.code or '',
+                'name': p.name,
+                'price': float(p.price or 0),
+                'tests_count': p.tests.count(),
+                'times_ordered': s.get('times_ordered', 0),
+                'revenue': float(s.get('revenue') or 0),
+                'first_date': s['first_date'].strftime('%Y-%m-%d') if s.get('first_date') else None,
+                'last_date': s['last_date'].strftime('%Y-%m-%d') if s.get('last_date') else None,
+            })
+
+        reverse = ordering.startswith('-')
+        key = ordering.lstrip('-')
+        valid_keys = ('times_ordered', 'revenue', 'name', 'code', 'last_date', 'first_date')
+        if key in valid_keys:
+            results.sort(
+                key=lambda x: (x[key] or 0) if key in ('times_ordered', 'revenue') else (x[key] or ''),
+                reverse=reverse
+            )
+
+        return Response({'results': results, 'count': len(results)})
+
+
+class LabPanelStatsDetailView(APIView):
+    """
+    GET /healthcare/laboratory/panel-stats/<panel_id>/
+    Détail d'un bilan : chaque commande (date, patient, ordonnateur, statut, prix).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, panel_id):
+        from .models import LabTestPanel, LabOrderItem
+        from django.core.paginator import Paginator
+
+        org = request.user.organization
+        try:
+            panel = LabTestPanel.objects.get(id=panel_id, organization=org)
+        except LabTestPanel.DoesNotExist:
+            return Response({'error': 'Bilan introuvable'}, status=404)
+
+        items_qs = LabOrderItem.objects.filter(
+            panel=panel,
+            panel_price__isnull=False,
+            lab_order__organization=org,
+        ).exclude(lab_order__status='cancelled').select_related(
+            'lab_order__patient',
+            'lab_order__ordered_by',
+            'lab_order__prescriber',
+            'lab_order__results_verified_by',
+        ).order_by('-lab_order__order_date')
+
+        date_from = request.GET.get('date_from')
+        date_to   = request.GET.get('date_to')
+        if date_from:
+            items_qs = items_qs.filter(lab_order__order_date__date__gte=date_from)
+        if date_to:
+            items_qs = items_qs.filter(lab_order__order_date__date__lte=date_to)
+
+        page_size = min(int(request.GET.get('page_size', 50)), 200)
+        page_num  = int(request.GET.get('page', 1))
+        paginator = Paginator(items_qs, page_size)
+        page_obj  = paginator.get_page(page_num)
+
+        data = []
+        for item in page_obj:
+            order = item.lab_order
+            patient = order.patient
+            data.append({
+                'item_id': str(item.id),
+                'order_id': str(order.id),
+                'order_number': order.order_number,
+                'date': order.order_date.strftime('%Y-%m-%d'),
+                'heure': order.order_date.strftime('%H:%M'),
+                'patient': patient.name if patient else '-',
+                'patient_id': str(patient.id) if patient else None,
+                'ordonne_par': order.ordered_by.get_full_name() if order.ordered_by else '-',
+                'prescripteur': order.prescriber.full_name if order.prescriber else None,
+                'biologiste': order.results_verified_by.get_full_name() if order.results_verified_by else None,
+                'statut': order.status,
+                'prix': float(item.panel_price or 0),
+            })
+
+        return Response({
+            'panel': {
+                'id': str(panel.id),
+                'code': panel.code or '',
+                'name': panel.name,
+                'price': float(panel.price or 0),
+                'tests_count': panel.tests.count(),
+            },
+            'results': data,
+            'count': paginator.count,
+            'pages': paginator.num_pages,
+            'page': page_num,
+        })

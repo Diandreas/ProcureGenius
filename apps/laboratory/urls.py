@@ -82,4 +82,6 @@ urlpatterns = [
     # Exam Statistics
     path('exam-stats/', api.LabExamStatsView.as_view(), name='exam-stats'),
     path('exam-stats/<uuid:test_id>/', api.LabExamStatsDetailView.as_view(), name='exam-stats-detail'),
+    path('panel-stats/', api.LabPanelStatsView.as_view(), name='panel-stats'),
+    path('panel-stats/<uuid:panel_id>/', api.LabPanelStatsDetailView.as_view(), name='panel-stats-detail'),
 ]
