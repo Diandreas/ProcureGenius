@@ -350,11 +350,22 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
-        """Produits avec stock faible"""
-        products = self.get_queryset().filter(
-            product_type='physical',
-            stock_quantity__lte=F('low_stock_threshold')
+        """Produits avec stock faible (utilise total_stock = max(stock_quantity, sum(lots actifs)))"""
+        from django.db.models import Case, When, Sum, IntegerField
+        qs = self.get_queryset().filter(product_type='physical')
+        annotated = qs.annotate(
+            _effective_stock=Case(
+                When(
+                    batches__status__in=['available', 'opened'],
+                    then=Sum('batches__quantity_remaining'),
+                ),
+                default=F('stock_quantity'),
+                output_field=IntegerField(),
+            )
         )
+        products = annotated.filter(
+            _effective_stock__lte=F('low_stock_threshold')
+        ).distinct()
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
 

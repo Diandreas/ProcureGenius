@@ -1242,16 +1242,16 @@ class MarginAnalyticsView(APIView):
             },
             'pharmacy': {
                 'summary': pharma_summary,
-                'products': pharma_list[:50],
+                'products': pharma_list,
             },
             'laboratory': {
                 'summary': lab_summary,
-                'tests': lab_list[:50],
+                'tests': lab_list,
                 'note': None if lab_has_costs else "Renseignez le coût de fonctionnement sur chaque examen pour activer les marges labo.",
             },
             'services': {
                 'summary': svc_summary,
-                'products': svc_list[:50],
+                'products': svc_list,
                 'note': None if svc_has_costs else "Renseignez le coût de fonctionnement sur chaque service pour activer les marges.",
             },
         })
