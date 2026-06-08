@@ -270,8 +270,85 @@ function Invoices() {
     .reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
 
   const InvoiceCard = ({ invoice, index }) => {
-    const statusColor = invoice.status === 'paid' ? '#10b981' : invoice.status === 'sent' ? '#2563eb' : '#f59e0b';
+    const statusColor = invoice.status === 'paid' ? '#10b981'
+      : invoice.status === 'sent' ? '#2563eb'
+      : invoice.status === 'overdue' ? '#ef4444'
+      : invoice.status === 'cancelled' ? '#9ca3af'
+      : '#f59e0b';
 
+    // ── VUE MOBILE : ligne compacte ──────────────────────────────────────────
+    if (isMobile) {
+      return (
+        <motion.div
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25, delay: Math.min(index * 0.03, 0.3) }}
+        >
+          <Box
+            onClick={() => navigate(`/invoices/${invoice.id}`)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              px: 1.5,
+              py: 1.25,
+              borderRadius: 2.5,
+              mb: 1,
+              cursor: 'pointer',
+              background: theme => theme.palette.background.paper,
+              boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+              borderLeft: `4px solid ${statusColor}`,
+              transition: 'all 0.2s',
+              '&:active': { transform: 'scale(0.98)', opacity: 0.9 },
+            }}
+          >
+            {/* Colonne gauche : N° + date */}
+            <Box sx={{ minWidth: 0, flex: '0 0 auto', width: 115 }}>
+              <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ fontSize: '0.72rem', display: 'block', lineHeight: 1.2 }}>
+                {invoice.invoice_number}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+                {formatDate(invoice.created_at)}
+              </Typography>
+            </Box>
+
+            {/* Colonne centre : client + titre */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              {invoice.client_name && (
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {invoice.client_name}
+                </Typography>
+              )}
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                {invoice.title}
+              </Typography>
+              <Chip
+                label={getStatusLabel(invoice.status)}
+                size="small"
+                color={getStatusColor(invoice.status)}
+                sx={{ fontSize: '0.6rem', height: 16, mt: 0.3, '& .MuiChip-label': { px: 0.75 } }}
+              />
+            </Box>
+
+            {/* Colonne droite : montant */}
+            <Box sx={{ flex: '0 0 auto', textAlign: 'right' }}>
+              <Typography variant="body2" fontWeight={800} color="success.main" sx={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                {formatCurrency(invoice.total_amount)}
+              </Typography>
+              {invoice.payment_method === 'mobile_money' && (
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.62rem' }}>Mobile</Typography>
+              )}
+              {(!invoice.payment_method || invoice.payment_method === 'cash') && invoice.status === 'paid' && (
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.62rem' }}>Espèces</Typography>
+              )}
+            </Box>
+          </Box>
+        </motion.div>
+      );
+    }
+
+    // ── VUE DESKTOP : card existante ─────────────────────────────────────────
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -305,9 +382,7 @@ function Invoices() {
             '&::before': {
               content: '""',
               position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
+              top: 0, left: 0, right: 0,
               height: 4,
               background: `linear-gradient(90deg, ${statusColor}, ${alpha(statusColor, 0.5)})`,
               borderRadius: '3px 3px 0 0',
@@ -316,113 +391,50 @@ function Invoices() {
             '&::after': {
               content: '""',
               position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+              top: 0, left: 0, right: 0, bottom: 0,
               background: `radial-gradient(circle at top right, ${alpha(statusColor, 0.05)} 0%, transparent 70%)`,
               pointerEvents: 'none'
             }
           }}
         >
           <CardContent sx={{ p: 2 }}>
-            {/* Header */}
             <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-              <Avatar
-                sx={{
-                  width: isMobile ? 48 : 56,
-                  height: isMobile ? 48 : 56,
-                  bgcolor: 'primary.main',
-                  borderRadius: 2,
-                  boxShadow: 2,
-                }}
-              >
+              <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main', borderRadius: 2, boxShadow: 2 }}>
                 <Receipt />
               </Avatar>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{
-                    fontWeight: 600,
-                    mb: 0.5,
-                    color: 'primary.main',
-                    fontSize: isMobile ? '0.875rem' : '0.95rem',
-                  }}
-                >
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5, color: 'primary.main', fontSize: '0.95rem' }}>
                   {invoice.invoice_number}
                 </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{
-                    fontSize: '0.75rem',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    display: 'block',
-                  }}
-                >
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                   {invoice.title}
                 </Typography>
               </Box>
             </Box>
 
-            {/* Prix */}
-            <Box
-              sx={{
-                bgcolor: (theme) => theme.palette.mode === 'dark'
-                  ? 'rgba(52, 211, 153, 0.1)'
-                  : 'rgba(16, 185, 129, 0.08)',
-                borderRadius: 1,
-                p: 1,
-                mb: 1.5,
-                textAlign: 'center',
-              }}
-            >
-              <Typography
-                variant="h6"
-                color="success.main"
-                sx={{ fontWeight: 700, fontSize: isMobile ? '1.1rem' : '1.25rem' }}
-              >
+            <Box sx={{ bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(52,211,153,0.1)' : 'rgba(16,185,129,0.08)', borderRadius: 1, p: 1, mb: 1.5, textAlign: 'center' }}>
+              <Typography variant="h6" color="success.main" sx={{ fontWeight: 700, fontSize: '1.25rem' }}>
                 {formatCurrency(invoice.total_amount)}
               </Typography>
             </Box>
 
-            {/* Infos */}
             <Stack spacing={0.75}>
               {invoice.client_name && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                   <Business sx={{ fontSize: 16, color: 'text.secondary' }} />
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: '0.8rem',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <Typography variant="body2" sx={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {invoice.client_name}
                   </Typography>
                 </Box>
               )}
-
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                  {formatDate(invoice.created_at)}
-                </Typography>
+                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{formatDate(invoice.created_at)}</Typography>
               </Box>
             </Stack>
 
-            {/* Footer */}
             <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chip
-                label={getStatusLabel(invoice.status)}
-                size="small"
-                color={getStatusColor(invoice.status)}
-                sx={{ fontSize: '0.7rem', height: 20 }}
-              />
+              <Chip label={getStatusLabel(invoice.status)} size="small" color={getStatusColor(invoice.status)} sx={{ fontSize: '0.7rem', height: 20 }} />
             </Box>
           </CardContent>
         </Card>
@@ -772,8 +784,18 @@ function Invoices() {
           actionLabel={t('invoices:newInvoice')}
           onAction={() => navigate('/invoices/new')}
         />
+      ) : isMobile ? (
+        /* Mobile : liste compacte sans grid */
+        <Box sx={{ mt: 1 }}>
+          <AnimatePresence mode="popLayout">
+            {filteredInvoices.map((invoice, index) => (
+              <InvoiceCard key={invoice.id} invoice={invoice} index={index} />
+            ))}
+          </AnimatePresence>
+        </Box>
       ) : (
-        <Grid container spacing={isMobile ? 2 : 3}>
+        /* Desktop : grille de cards */
+        <Grid container spacing={3}>
           <AnimatePresence mode="popLayout">
             {filteredInvoices.map((invoice, index) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={invoice.id}>

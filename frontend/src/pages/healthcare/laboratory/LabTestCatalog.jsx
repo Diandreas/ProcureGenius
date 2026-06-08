@@ -21,7 +21,10 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    useTheme,
+    useMediaQuery,
+    Divider
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -45,6 +48,8 @@ const LabTestCatalog = () => {
     const { t } = useTranslation();
     const { enqueueSnackbar } = useSnackbar();
     const { isAdmin } = useCurrentUser();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const [loading, setLoading] = useState(false);
     const [downloadingCatalog, setDownloadingCatalog] = useState(false);
@@ -166,19 +171,20 @@ const LabTestCatalog = () => {
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
-                <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: isMobile ? 2 : 3, alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                <Typography variant={isMobile ? 'h5' : 'h4'} component="h1" sx={{ fontWeight: 600 }}>
                     Catalogue des Examens
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     <Button
                         variant="outlined"
                         startIcon={<PdfIcon />}
                         onClick={handleDownloadCatalog}
                         disabled={downloadingCatalog}
-                        sx={{ borderRadius: 2 }}
+                        sx={{ borderRadius: 2, fontSize: isMobile ? '0.75rem' : undefined }}
+                        size={isMobile ? 'small' : 'medium'}
                     >
-                        {downloadingCatalog ? 'Génération...' : 'Valeurs de Référence PDF'}
+                        {downloadingCatalog ? 'Génération...' : isMobile ? 'PDF Ref.' : 'Valeurs de Référence PDF'}
                     </Button>
                     {isAdmin && (
                         <Button
@@ -187,8 +193,9 @@ const LabTestCatalog = () => {
                             startIcon={<AddIcon />}
                             onClick={handleNewTest}
                             sx={{ borderRadius: 2 }}
+                            size={isMobile ? 'small' : 'medium'}
                         >
-                            Nouveau Test
+                            {isMobile ? 'Nouveau' : 'Nouveau Test'}
                         </Button>
                     )}
                 </Box>
@@ -231,118 +238,209 @@ const LabTestCatalog = () => {
                 </CardContent>
             </Card>
 
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3 }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Code</TableCell>
-                            <TableCell>Nom</TableCell>
-                            <TableCell>Catégorie</TableCell>
-                            <TableCell>Prix (XAF)</TableCell>
-                            <TableCell>Réduction</TableCell>
-                            <TableCell>Échantillon</TableCell>
-                            <TableCell align="center">Jeûne</TableCell>
-                            <TableCell align="center">Statut</TableCell>
-                            <TableCell>Délai</TableCell>
-                            <TableCell>Consommable / Stock</TableCell>
-                            <TableCell align="center">Réalisé</TableCell>
-                            <TableCell align="right">Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow><TableCell colSpan={11} align="center">Chargement...</TableCell></TableRow>
-                        ) : tests.length === 0 ? (
-                            <TableRow><TableCell colSpan={11} align="center">Aucun examen trouvé</TableCell></TableRow>
-                        ) : (
-                            tests.map((test) => (
-                                <TableRow key={test.id} hover>
-                                    <TableCell>
-                                        <Typography variant="body2" fontWeight="600">{test.test_code}</Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" fontWeight="500">{test.name}</Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Chip label={test.category_name} size="small" />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" fontWeight="600">
-                                            {test.price ? new Intl.NumberFormat('fr-FR').format(test.price) : '-'}
+            {isMobile ? (
+                /* ── Mobile card list ── */
+                <Box>
+                    {loading ? (
+                        <Typography align="center" color="text.secondary" sx={{ py: 4 }}>Chargement...</Typography>
+                    ) : tests.length === 0 ? (
+                        <Typography align="center" color="text.secondary" sx={{ py: 4 }}>Aucun examen trouvé</Typography>
+                    ) : (
+                        tests.map((test) => (
+                            <Card key={test.id} variant="outlined" sx={{ mb: 1.5, borderRadius: 2 }}>
+                                <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+                                    {/* Row 1: code + name + status */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                        <Typography variant="caption" fontWeight="700" color="text.secondary" sx={{ minWidth: 50 }}>
+                                            {test.test_code}
                                         </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2" color="success.main">
-                                            {test.discount ? new Intl.NumberFormat('fr-FR').format(test.discount) : '0'}
+                                        <Typography variant="body2" fontWeight="700" sx={{ flex: 1 }} noWrap>
+                                            {test.name}
                                         </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">{test.sample_type || '-'}</Typography>
-                                    </TableCell>
-                                    <TableCell align="center">
+                                        <Chip
+                                            label={test.is_active ? 'Actif' : 'Inactif'}
+                                            size="small"
+                                            color={test.is_active ? 'success' : 'default'}
+                                            variant="outlined"
+                                            sx={{ height: 20, fontSize: '0.65rem' }}
+                                        />
+                                    </Box>
+                                    {/* Row 2: category + price + fasting */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
+                                        <Chip label={test.category_name} size="small" sx={{ height: 20, fontSize: '0.65rem' }} />
+                                        <Typography variant="body2" fontWeight="700" color="primary.main">
+                                            {test.price ? new Intl.NumberFormat('fr-FR').format(test.price) : '-'} XAF
+                                        </Typography>
+                                        {test.discount > 0 && (
+                                            <Typography variant="caption" color="success.main">
+                                                -{new Intl.NumberFormat('fr-FR').format(test.discount)}
+                                            </Typography>
+                                        )}
                                         {test.fasting_required && (
                                             <FastingIcon color="warning" fontSize="small" titleAccess="Jeûne requis" />
                                         )}
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        {test.is_active ? (
-                                            <Chip label="Actif" size="small" color="success" variant="outlined" />
-                                        ) : (
-                                            <Chip label="Inactif" size="small" color="default" variant="outlined" />
+                                        {test.estimated_turnaround_hours && (
+                                            <Typography variant="caption" color="text.secondary">{test.estimated_turnaround_hours}h</Typography>
                                         )}
-                                    </TableCell>
-                                    <TableCell>{test.estimated_turnaround_hours ? `${test.estimated_turnaround_hours}h` : '-'}</TableCell>
-                                    <TableCell>
-                                        {test.linked_product_name ? (
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                <InventoryIcon fontSize="small" color="primary" sx={{ opacity: 0.7 }} />
-                                                <Box>
-                                                    <Typography variant="caption" display="block" noWrap sx={{ maxWidth: 130 }}>
-                                                        {test.linked_product_name}
-                                                    </Typography>
-                                                    <Chip
-                                                        label={`Stock: ${test.linked_product_stock ?? 0}`}
-                                                        size="small"
-                                                        color={test.linked_product_stock > 0 ? 'success' : 'error'}
-                                                        variant="outlined"
-                                                        sx={{ fontSize: '0.6rem', height: 16 }}
-                                                    />
-                                                </Box>
-                                            </Box>
-                                        ) : (
-                                            <Typography variant="caption" color="text.disabled">—</Typography>
-                                        )}
-                                    </TableCell>
-                                    <TableCell align="center">
                                         <Chip
-                                            label={test.times_performed ?? 0}
+                                            label={`×${test.times_performed ?? 0}`}
                                             size="small"
                                             color={test.times_performed > 0 ? 'primary' : 'default'}
                                             variant={test.times_performed > 0 ? 'filled' : 'outlined'}
-                                            sx={{ fontSize: '0.7rem', minWidth: 32 }}
+                                            sx={{ fontSize: '0.65rem', height: 20 }}
                                         />
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <IconButton size="small" onClick={() => handleConfigParams(test)} title="Configurer les paramètres" color="primary">
+                                    </Box>
+                                    {/* Row 3: stock + actions */}
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        {test.linked_product_name ? (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
+                                                <InventoryIcon fontSize="small" color="primary" sx={{ opacity: 0.7, fontSize: 14 }} />
+                                                <Typography variant="caption" noWrap sx={{ maxWidth: 120 }}>{test.linked_product_name}</Typography>
+                                                <Chip
+                                                    label={`Stock: ${test.linked_product_stock ?? 0}`}
+                                                    size="small"
+                                                    color={test.linked_product_stock > 0 ? 'success' : 'error'}
+                                                    variant="outlined"
+                                                    sx={{ fontSize: '0.6rem', height: 16 }}
+                                                />
+                                            </Box>
+                                        ) : (
+                                            <Box sx={{ flex: 1 }} />
+                                        )}
+                                        <IconButton size="small" onClick={() => handleConfigParams(test)} color="primary">
                                             <SettingsIcon fontSize="small" />
                                         </IconButton>
                                         {isAdmin && (
-                                            <IconButton size="small" onClick={() => handleEditTest(test)} title="Modifier">
+                                            <IconButton size="small" onClick={() => handleEditTest(test)}>
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
                                         )}
                                         {isAdmin && (
-                                            <IconButton size="small" onClick={() => handleDeleteClick(test)} title="Supprimer" color="error">
+                                            <IconButton size="small" onClick={() => handleDeleteClick(test)} color="error">
                                                 <DeleteIcon fontSize="small" />
                                             </IconButton>
                                         )}
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        ))
+                    )}
+                </Box>
+            ) : (
+                /* ── Desktop table ── */
+                <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3 }}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Code</TableCell>
+                                <TableCell>Nom</TableCell>
+                                <TableCell>Catégorie</TableCell>
+                                <TableCell>Prix (XAF)</TableCell>
+                                <TableCell>Réduction</TableCell>
+                                <TableCell>Échantillon</TableCell>
+                                <TableCell align="center">Jeûne</TableCell>
+                                <TableCell align="center">Statut</TableCell>
+                                <TableCell>Délai</TableCell>
+                                <TableCell>Consommable / Stock</TableCell>
+                                <TableCell align="center">Réalisé</TableCell>
+                                <TableCell align="right">Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow><TableCell colSpan={11} align="center">Chargement...</TableCell></TableRow>
+                            ) : tests.length === 0 ? (
+                                <TableRow><TableCell colSpan={11} align="center">Aucun examen trouvé</TableCell></TableRow>
+                            ) : (
+                                tests.map((test) => (
+                                    <TableRow key={test.id} hover>
+                                        <TableCell>
+                                            <Typography variant="body2" fontWeight="600">{test.test_code}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" fontWeight="500">{test.name}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip label={test.category_name} size="small" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" fontWeight="600">
+                                                {test.price ? new Intl.NumberFormat('fr-FR').format(test.price) : '-'}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" color="success.main">
+                                                {test.discount ? new Intl.NumberFormat('fr-FR').format(test.discount) : '0'}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{test.sample_type || '-'}</Typography>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            {test.fasting_required && (
+                                                <FastingIcon color="warning" fontSize="small" titleAccess="Jeûne requis" />
+                                            )}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            {test.is_active ? (
+                                                <Chip label="Actif" size="small" color="success" variant="outlined" />
+                                            ) : (
+                                                <Chip label="Inactif" size="small" color="default" variant="outlined" />
+                                            )}
+                                        </TableCell>
+                                        <TableCell>{test.estimated_turnaround_hours ? `${test.estimated_turnaround_hours}h` : '-'}</TableCell>
+                                        <TableCell>
+                                            {test.linked_product_name ? (
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                    <InventoryIcon fontSize="small" color="primary" sx={{ opacity: 0.7 }} />
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" noWrap sx={{ maxWidth: 130 }}>
+                                                            {test.linked_product_name}
+                                                        </Typography>
+                                                        <Chip
+                                                            label={`Stock: ${test.linked_product_stock ?? 0}`}
+                                                            size="small"
+                                                            color={test.linked_product_stock > 0 ? 'success' : 'error'}
+                                                            variant="outlined"
+                                                            sx={{ fontSize: '0.6rem', height: 16 }}
+                                                        />
+                                                    </Box>
+                                                </Box>
+                                            ) : (
+                                                <Typography variant="caption" color="text.disabled">—</Typography>
+                                            )}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Chip
+                                                label={test.times_performed ?? 0}
+                                                size="small"
+                                                color={test.times_performed > 0 ? 'primary' : 'default'}
+                                                variant={test.times_performed > 0 ? 'filled' : 'outlined'}
+                                                sx={{ fontSize: '0.7rem', minWidth: 32 }}
+                                            />
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            <IconButton size="small" onClick={() => handleConfigParams(test)} title="Configurer les paramètres" color="primary">
+                                                <SettingsIcon fontSize="small" />
+                                            </IconButton>
+                                            {isAdmin && (
+                                                <IconButton size="small" onClick={() => handleEditTest(test)} title="Modifier">
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
+                                            {isAdmin && (
+                                                <IconButton size="small" onClick={() => handleDeleteClick(test)} title="Supprimer" color="error">
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
 
             {/* Form Modal */}
             <LabTestFormModal

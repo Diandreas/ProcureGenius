@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Card, CardContent, Grid, Typography, Chip, IconButton, Avatar, Tabs, LinearProgress, Tooltip, Badge, Divider, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Button, Card, CardContent, Grid, Typography, Chip, IconButton, Avatar, Tabs, LinearProgress, Tooltip, Badge, Divider, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, useMediaQuery } from '@mui/material';
 import { SafeTab } from '../../../components/safe';
 import {
     Add as AddIcon,
@@ -116,7 +116,7 @@ const StatCard = ({ title, value, icon, color, subtitle }) => (
 
 // ── Queue Order Card (single row in queue) ──
 
-const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, onDelete, isAdmin }) => {
+const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, onDelete, isAdmin, isMobile }) => {
     const waitMinutes = order.wait_minutes || 0;
     const waitColor = getWaitColor(waitMinutes);
     const waitBg = getWaitBgColor(waitMinutes);
@@ -211,118 +211,102 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, 
                 })
             }}
         >
-            <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    {/* Position number */}
-                    <Avatar
-                        sx={{
-                            width: 36, height: 36,
-                            bgcolor: waitColor,
-                            color: 'white',
-                            fontSize: '0.9rem',
-                            fontWeight: 800
-                        }}
-                    >
-                        {position}
-                    </Avatar>
-
-                    {/* Patient info */}
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle1" fontWeight="700" noWrap>
+            <CardContent sx={{ py: 1.5, px: isMobile ? 1.5 : 2, '&:last-child': { pb: 1.5 } }}>
+                {isMobile ? (
+                    /* ── Mobile layout ── */
+                    <Box>
+                        {/* Top row: position + patient name + wait badge */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Avatar sx={{ width: 28, height: 28, bgcolor: waitColor, color: 'white', fontSize: '0.75rem', fontWeight: 800, flexShrink: 0 }}>
+                                {position}
+                            </Avatar>
+                            <Typography variant="body2" fontWeight="700" noWrap sx={{ flex: 1 }}>
                                 {order.patient_name}
                             </Typography>
-                            {pConfig.icon && (
-                                <Chip
-                                    icon={pConfig.icon}
-                                    label={pConfig.label}
-                                    size="small"
-                                    color={pConfig.color}
-                                    sx={{ fontWeight: 600, height: 22 }}
-                                />
-                            )}
-                            {order.is_subcontracted && (
-                                <Chip
-                                    icon={<SubcontractedIcon sx={{ fontSize: '14px !important' }} />}
-                                    label={order.subcontractor_name || 'Sous-traité'}
-                                    size="small"
-                                    color="secondary"
-                                    variant="outlined"
-                                    sx={{ fontWeight: 600, height: 22, fontSize: '0.7rem' }}
-                                />
-                            )}
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.3 }}>
-                            <Typography variant="caption" color="text.secondary">
-                                {order.order_number}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                                {order.tests_count || 0} test(s)
-                            </Typography>
-                            {order.items?.slice(0, 3).map(item => (
-                                <Chip
-                                    key={item.id}
-                                    label={item.lab_test_name || item.test_name}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ height: 20, fontSize: '0.7rem' }}
-                                />
-                            ))}
-                            {(order.items?.length || 0) > 3 && (
-                                <Typography variant="caption" color="text.secondary">
-                                    +{order.items.length - 3}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3, bgcolor: waitBg, px: 1, py: 0.3, borderRadius: 2 }}>
+                                <TimerIcon sx={{ fontSize: 13, color: waitColor }} />
+                                <Typography variant="caption" fontWeight="700" sx={{ color: waitColor }}>
+                                    {formatWaitTime(waitMinutes)}
                                 </Typography>
+                            </Box>
+                        </Box>
+                        {/* Middle row: order number + tests + status */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, flexWrap: 'wrap', mb: 0.8, pl: 4.5 }}>
+                            <Typography variant="caption" color="text.secondary">{order.order_number}</Typography>
+                            <Typography variant="caption" color="text.secondary">·</Typography>
+                            <Typography variant="caption" color="text.secondary">{order.tests_count || 0} test(s)</Typography>
+                            {pConfig.icon && (
+                                <Chip icon={pConfig.icon} label={pConfig.label} size="small" color={pConfig.color} sx={{ fontWeight: 600, height: 18, fontSize: '0.65rem' }} />
+                            )}
+                            <Chip label={statusLabels[order.status] || order.status} size="small" color={statusColors[order.status] || 'default'} sx={{ fontWeight: 600, height: 18, fontSize: '0.65rem' }} />
+                        </Box>
+                        {/* Action row */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 4.5 }}>
+                            <Box sx={{ flex: 1 }}>{getActionButton()}</Box>
+                            {isAdmin && (
+                                <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDelete(order); }}>
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
                             )}
                         </Box>
                     </Box>
+                ) : (
+                    /* ── Desktop layout ── */
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {/* Position number */}
+                        <Avatar sx={{ width: 36, height: 36, bgcolor: waitColor, color: 'white', fontSize: '0.9rem', fontWeight: 800 }}>
+                            {position}
+                        </Avatar>
 
-                    {/* Wait time */}
-                    <Tooltip title={`Commande créée: ${order.order_date ? formatDate(order.order_date) + ' ' + formatTime(order.order_date) : '-'}`}>
-                        <Box sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                            bgcolor: waitBg,
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: 2,
-                            minWidth: 90,
-                            justifyContent: 'center'
-                        }}>
-                            <TimerIcon sx={{ fontSize: 16, color: waitColor }} />
-                            <Typography variant="body2" fontWeight="700" sx={{ color: waitColor }}>
-                                {formatWaitTime(waitMinutes)}
-                            </Typography>
+                        {/* Patient info */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="subtitle1" fontWeight="700" noWrap>
+                                    {order.patient_name}
+                                </Typography>
+                                {pConfig.icon && (
+                                    <Chip icon={pConfig.icon} label={pConfig.label} size="small" color={pConfig.color} sx={{ fontWeight: 600, height: 22 }} />
+                                )}
+                                {order.is_subcontracted && (
+                                    <Chip icon={<SubcontractedIcon sx={{ fontSize: '14px !important' }} />} label={order.subcontractor_name || 'Sous-traité'} size="small" color="secondary" variant="outlined" sx={{ fontWeight: 600, height: 22, fontSize: '0.7rem' }} />
+                                )}
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.3 }}>
+                                <Typography variant="caption" color="text.secondary">{order.order_number}</Typography>
+                                <Typography variant="caption" color="text.secondary">{order.tests_count || 0} test(s)</Typography>
+                                {order.items?.slice(0, 3).map(item => (
+                                    <Chip key={item.id} label={item.lab_test_name || item.test_name} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
+                                ))}
+                                {(order.items?.length || 0) > 3 && (
+                                    <Typography variant="caption" color="text.secondary">+{order.items.length - 3}</Typography>
+                                )}
+                            </Box>
                         </Box>
-                    </Tooltip>
 
-                    {/* Status chip */}
-                    <Chip
-                        label={statusLabels[order.status] || order.status}
-                        size="small"
-                        color={statusColors[order.status] || 'default'}
-                        sx={{ fontWeight: 600, minWidth: 100 }}
-                    />
-
-                    {/* Action button */}
-                    <Box sx={{ minWidth: 140, textAlign: 'right' }}>
-                        {getActionButton()}
-                    </Box>
-
-                    {/* Delete button — admin only */}
-                    {isAdmin && (
-                        <Tooltip title="Supprimer (admin)">
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); onDelete(order); }}
-                                sx={{ ml: 0.5 }}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
+                        {/* Wait time */}
+                        <Tooltip title={`Commande créée: ${order.order_date ? formatDate(order.order_date) + ' ' + formatTime(order.order_date) : '-'}`}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, bgcolor: waitBg, px: 1.5, py: 0.5, borderRadius: 2, minWidth: 90, justifyContent: 'center' }}>
+                                <TimerIcon sx={{ fontSize: 16, color: waitColor }} />
+                                <Typography variant="body2" fontWeight="700" sx={{ color: waitColor }}>{formatWaitTime(waitMinutes)}</Typography>
+                            </Box>
                         </Tooltip>
-                    )}
-                </Box>
+
+                        {/* Status chip */}
+                        <Chip label={statusLabels[order.status] || order.status} size="small" color={statusColors[order.status] || 'default'} sx={{ fontWeight: 600, minWidth: 100 }} />
+
+                        {/* Action button */}
+                        <Box sx={{ minWidth: 140, textAlign: 'right' }}>{getActionButton()}</Box>
+
+                        {/* Delete button — admin only */}
+                        {isAdmin && (
+                            <Tooltip title="Supprimer (admin)">
+                                <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDelete(order); }} sx={{ ml: 0.5 }}>
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                    </Box>
+                )}
             </CardContent>
         </Card>
     );
@@ -334,6 +318,8 @@ const LabQueueDashboard = () => {
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
     const { isAdmin } = useCurrentUser();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState(null);
@@ -429,6 +415,7 @@ const LabQueueDashboard = () => {
                 onNavigate={handleNavigate}
                 onDelete={setDeleteTarget}
                 isAdmin={isAdmin}
+                isMobile={isMobile}
             />
         ));
     };
@@ -436,41 +423,57 @@ const LabQueueDashboard = () => {
     return (
         <Box>
             {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: isMobile ? 2 : 3, alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
                 <Box>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+                    <Typography variant={isMobile ? 'h5' : 'h4'} component="h1" sx={{ fontWeight: 700 }}>
                         Laboratoire
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        File d'attente et suivi des commandes
-                    </Typography>
+                    {!isMobile && (
+                        <Typography variant="body2" color="text.secondary">
+                            File d'attente et suivi des commandes
+                        </Typography>
+                    )}
                 </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<CatalogIcon />}
-                        onClick={() => navigate('/healthcare/laboratory/catalog')}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        Catalogue
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        startIcon={<ListIcon />}
-                        onClick={() => navigate('/healthcare/laboratory/orders')}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        Historique
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        color="secondary"
-                        startIcon={<SubcontractedIcon />}
-                        onClick={() => navigate('/healthcare/laboratory/subcontractors/batch-order')}
-                        sx={{ borderRadius: 2 }}
-                    >
-                        Saisie sous-traitance
-                    </Button>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {!isMobile && (
+                        <>
+                            <Button
+                                variant="outlined"
+                                startIcon={<CatalogIcon />}
+                                onClick={() => navigate('/healthcare/laboratory/catalog')}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Catalogue
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<ListIcon />}
+                                onClick={() => navigate('/healthcare/laboratory/orders')}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Historique
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                startIcon={<SubcontractedIcon />}
+                                onClick={() => navigate('/healthcare/laboratory/subcontractors/batch-order')}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Saisie sous-traitance
+                            </Button>
+                        </>
+                    )}
+                    {isMobile && (
+                        <>
+                            <IconButton size="small" color="primary" onClick={() => navigate('/healthcare/laboratory/catalog')} title="Catalogue">
+                                <CatalogIcon />
+                            </IconButton>
+                            <IconButton size="small" color="primary" onClick={() => navigate('/healthcare/laboratory/orders')} title="Historique">
+                                <ListIcon />
+                            </IconButton>
+                        </>
+                    )}
                     <Button
                         data-testid="lab-btn-new-order"
                         variant="contained"

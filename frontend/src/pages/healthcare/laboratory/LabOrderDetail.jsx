@@ -40,7 +40,9 @@ import {
     List,
     ListItem,
     ListItemText,
-    ListItemButton
+    ListItemButton,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -265,6 +267,8 @@ const LabOrderDetail = () => {
     const { id } = useParams();
     const { enqueueSnackbar } = useSnackbar();
     const { isAdmin } = useCurrentUser();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const [loading, setLoading] = useState(true);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -1017,44 +1021,47 @@ const LabOrderDetail = () => {
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/laboratory')} sx={{ mr: 2 }}>
+            {/* Header */}
+            <Box sx={{ mb: isMobile ? 2 : 3 }}>
+                {/* Top: back + title */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: isMobile ? 1.5 : 2, flexWrap: 'wrap', gap: 1 }}>
+                    <Button size={isMobile ? 'small' : 'medium'} startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/laboratory')}>
                         Retour
                     </Button>
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-                        Commande #{order.order_number}
+                    <Typography variant={isMobile ? 'h6' : 'h4'} component="h1" sx={{ fontWeight: 600, flex: 1 }}>
+                        #{order.order_number}
                     </Typography>
                     {order.is_subcontracted && (
                         <Chip
-                            label={`Sous-traité — ${order.subcontractor_name || 'Laboratoire externe'}`}
+                            label={isMobile ? 'Sous-traité' : `Sous-traité — ${order.subcontractor_name || 'Laboratoire externe'}`}
                             color="secondary"
                             variant="outlined"
                             size="small"
-                            sx={{ ml: 1.5, fontWeight: 600 }}
+                            sx={{ fontWeight: 600 }}
                         />
                     )}
                 </Box>
-                <Box>
+                {/* Action buttons — wrap on mobile */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {isAdmin && (
                         <Button
                             variant="outlined"
                             color="error"
                             startIcon={<DeleteIcon />}
                             onClick={() => setDeleteDialogOpen(true)}
-                            sx={{ mr: 1 }}
+                            size={isMobile ? 'small' : 'medium'}
                         >
                             Supprimer
                         </Button>
                     )}
                     {order.status === 'in_progress' && (
-                        <Button data-testid="lab-detail-btn-report-provisional" variant="outlined" color="warning" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
-                            Rapport Provisoire
+                        <Button data-testid="lab-detail-btn-report-provisional" variant="outlined" color="warning" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} size={isMobile ? 'small' : 'medium'}>
+                            {isMobile ? 'Prov.' : 'Rapport Provisoire'}
                         </Button>
                     )}
                     {['completed', 'results_ready', 'results_delivered'].includes(order.status) && (
-                        <Button data-testid="lab-detail-btn-report" variant="outlined" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} sx={{ mr: 1 }}>
-                            Rapport Complet
+                        <Button data-testid="lab-detail-btn-report" variant="outlined" startIcon={<PdfIcon />} onClick={() => handleOpenPrintModal('report')} size={isMobile ? 'small' : 'medium'}>
+                            {isMobile ? 'Rapport' : 'Rapport Complet'}
                         </Button>
                     )}
 
@@ -1066,13 +1073,13 @@ const LabOrderDetail = () => {
                                 color="primary"
                                 startIcon={<ReceiptIcon />}
                                 onClick={() => handleOpenPrintModal('receipt')}
-                                sx={{ mr: 1 }}
+                                size={isMobile ? 'small' : 'medium'}
                             >
-                                Imprimer Reçu
+                                {isMobile ? 'Reçu' : 'Imprimer Reçu'}
                             </Button>
 
-                            <Button data-testid="lab-detail-btn-labels" variant="outlined" startIcon={<PrintIcon />} onClick={() => handleOpenPrintModal('tube_labels')} sx={{ mr: 1 }}>
-                                Étiquettes Thermiques
+                            <Button data-testid="lab-detail-btn-labels" variant="outlined" startIcon={<PrintIcon />} onClick={() => handleOpenPrintModal('tube_labels')} size={isMobile ? 'small' : 'medium'}>
+                                {isMobile ? 'Étiquettes' : 'Étiquettes Thermiques'}
                             </Button>
 
                             {order.lab_invoice && (
@@ -1081,9 +1088,9 @@ const LabOrderDetail = () => {
                                     color="success"
                                     startIcon={<InvoiceIcon />}
                                     onClick={() => navigate(`/invoices/${order.lab_invoice.id}`)}
-                                    sx={{ mr: 1 }}
+                                    size={isMobile ? 'small' : 'medium'}
                                 >
-                                    Voir Facture
+                                    {isMobile ? 'Facture' : 'Voir Facture'}
                                 </Button>
                             )}
                         </>
@@ -1097,7 +1104,7 @@ const LabOrderDetail = () => {
                             color="warning"
                             startIcon={<ColorizeIcon />}
                             onClick={() => handleStatusUpdate('collect_sample')}
-                            sx={{ mr: 1 }}
+                            size={isMobile ? 'small' : 'medium'}
                         >
                             Prélèvement
                         </Button>
@@ -1110,20 +1117,20 @@ const LabOrderDetail = () => {
                             color="info"
                             startIcon={<ScienceIcon />}
                             onClick={() => handleStatusUpdate('start_processing')}
-                            sx={{ mr: 1 }}
+                            size={isMobile ? 'small' : 'medium'}
                         >
                             Analyser
                         </Button>
                     )}
 
                     {canEdit && (
-                        <Button data-testid="lab-detail-btn-save-results" variant="contained" startIcon={<SaveIcon />} onClick={saveResults} sx={{ mr: 1 }}>
+                        <Button data-testid="lab-detail-btn-save-results" variant="contained" startIcon={<SaveIcon />} onClick={saveResults} size={isMobile ? 'small' : 'medium'}>
                             Enregistrer
                         </Button>
                     )}
 
                     {canEdit && (
-                        <Button data-testid="lab-detail-btn-validate-results" variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} sx={{ mr: 1 }}>
+                        <Button data-testid="lab-detail-btn-validate-results" variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} size={isMobile ? 'small' : 'medium'}>
                             Valider
                         </Button>
                     )}
@@ -1134,15 +1141,14 @@ const LabOrderDetail = () => {
                             color="primary"
                             startIcon={<SendIcon />}
                             onClick={() => handleStatusUpdate('deliver')}
-                            sx={{ mr: 1 }}
+                            size={isMobile ? 'small' : 'medium'}
                         >
-                            Remettre Résultats
+                            {isMobile ? 'Remettre' : 'Remettre Résultats'}
                         </Button>
                     )}
 
-                    {/* Invalidate Button - Show only if results_ready to allow re-editing */}
                     {order.status === 'results_ready' && (
-                        <Button variant="outlined" color="warning" onClick={invalidateOrder} sx={{ ml: 1 }}>
+                        <Button variant="outlined" color="warning" onClick={invalidateOrder} size={isMobile ? 'small' : 'medium'}>
                             Invalider
                         </Button>
                     )}
@@ -1243,17 +1249,25 @@ const LabOrderDetail = () => {
 
             {/* Workflow Progress Stepper */}
             {order.status !== 'cancelled' ? (
-                <Card sx={{ mb: 3 }}>
-                    <CardContent sx={{ py: 2 }}>
-                        <Stepper activeStep={getActiveStep(order.status)} alternativeLabel>
-                            {WORKFLOW_STEPS.map((step) => (
-                                <Step key={step.status} completed={getActiveStep(order.status) > WORKFLOW_STEPS.findIndex(s => s.status === step.status)}>
-                                    <StepLabel>{step.label}</StepLabel>
-                                </Step>
-                            ))}
-                        </Stepper>
-                    </CardContent>
-                </Card>
+                isMobile ? (
+                    <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="caption" color="text.secondary" fontWeight="600">Statut :</Typography>
+                        <Chip label={getStatusLabel(order.status)} color={getStatusColor(order.status)} size="small" sx={{ fontWeight: 600 }} />
+                        <Typography variant="caption" color="text.secondary">étape {getActiveStep(order.status) + 1}/{WORKFLOW_STEPS.length}</Typography>
+                    </Box>
+                ) : (
+                    <Card sx={{ mb: 3 }}>
+                        <CardContent sx={{ py: 2 }}>
+                            <Stepper activeStep={getActiveStep(order.status)} alternativeLabel>
+                                {WORKFLOW_STEPS.map((step) => (
+                                    <Step key={step.status} completed={getActiveStep(order.status) > WORKFLOW_STEPS.findIndex(s => s.status === step.status)}>
+                                        <StepLabel>{step.label}</StepLabel>
+                                    </Step>
+                                ))}
+                            </Stepper>
+                        </CardContent>
+                    </Card>
+                )
             ) : (
                 <Alert severity="error" sx={{ mb: 3 }}>
                     Cette commande a été annulée.
