@@ -88,16 +88,14 @@ class ExamTypesByPeriodView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from django.db.models.functions import Coalesce
         organization = request.user.organization
         period = request.GET.get('period', 'week')
 
-        # Base queryset: uniquement les examens dont la facture est payée
-        # pour que le total corresponde au CA laboratoire.
+        # Base queryset: tous les examens non annulés
+        # (pas de filtre sur la facture — sinon les commandes sans facture payée disparaissent)
         queryset = LabOrderItem.objects.filter(
             lab_order__organization=organization,
-            lab_order__lab_invoice__status='paid',
-        )
+        ).exclude(lab_order__status='cancelled')
 
         # Apply filters
         start_date = request.GET.get('start_date')
@@ -116,29 +114,21 @@ class ExamTypesByPeriodView(APIView):
         elif exam_filter == 'exam':
             queryset = queryset.filter(panel__isnull=True)
 
-        # Revenu effectif = panel_price si défini (forfait bilan), sinon price unitaire.
-        # Coalesce gère le cas où panel_price est NULL pour les items hors bilan.
-        effective_price = Coalesce(
-            'panel_price',
-            'price',
-            output_field=DecimalField(max_digits=12, decimal_places=2),
-        )
-
-        # By test type
+        # By test type — on compte tous les items et on somme le prix unitaire
         by_test = queryset.values(
             'lab_test__name',
             'lab_test__test_code'
         ).annotate(
             count=Count('id'),
-            revenue=Sum(effective_price)
-        ).order_by('-count')[:20]  # Top 20 tests
+            revenue=Sum('price')
+        ).order_by('-count')
 
         # By category
         by_category = queryset.values(
             'lab_test__category__name'
         ).annotate(
             count=Count('id'),
-            revenue=Sum(effective_price)
+            revenue=Sum('price')
         ).order_by('-count')
 
         # Timeline aggregation
@@ -153,7 +143,7 @@ class ExamTypesByPeriodView(APIView):
             period_date=trunc_func('lab_order__order_date')
         ).values('period_date').annotate(
             count=Count('id'),
-            revenue=Sum(effective_price)
+            revenue=Sum('price')
         ).order_by('period_date')
 
         # Format timeline data
