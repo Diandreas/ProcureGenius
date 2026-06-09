@@ -881,6 +881,8 @@ function Products() {
                   <MenuItem value="">Tous</MenuItem>
                   <MenuItem value="expired">Périmés</MenuItem>
                   <MenuItem value="expiring_soon">Expire bientôt (&lt;30j)</MenuItem>
+                  <MenuItem value="expiring_90days">Péremption dans 90 jours</MenuItem>
+                  <MenuItem value="expiring_1year">Péremption dans 1 an</MenuItem>
                   <MenuItem value="valid">Valide (&gt;30j)</MenuItem>
                 </Select>
               </FormControl>
@@ -953,7 +955,13 @@ function Products() {
           )}
           {expirationFilter && (
             <Chip
-              label={`Péremption: ${expirationFilter === 'expired' ? 'Périmés' : expirationFilter === 'expiring_soon' ? 'Bientôt' : expirationFilter === 'valid' ? 'Valide' : 'Sans date'}`}
+              label={`Péremption: ${
+                expirationFilter === 'expired' ? 'Périmés' :
+                expirationFilter === 'expiring_soon' ? 'Bientôt (<30j)' :
+                expirationFilter === 'expiring_90days' ? 'Dans 90 jours' :
+                expirationFilter === 'expiring_1year' ? 'Dans 1 an' :
+                expirationFilter === 'valid' ? 'Valide' : expirationFilter
+              }`}
               onDelete={() => setExpirationFilter('')}
               color="secondary"
               size="small"

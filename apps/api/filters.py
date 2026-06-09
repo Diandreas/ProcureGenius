@@ -20,7 +20,13 @@ class ProductFilter(django_filters.FilterSet):
     )
     expiration_status = django_filters.ChoiceFilter(
         method='filter_expiration_status',
-        choices=(('expired', 'Expired'), ('expiring_soon', 'Expiring soon'), ('ok', 'OK'))
+        choices=(
+            ('expired', 'Expired'),
+            ('expiring_soon', 'Expiring soon (<30j)'),
+            ('expiring_90days', 'Expiring in 90 days'),
+            ('expiring_1year', 'Expiring in 1 year'),
+            ('ok', 'OK'),
+        )
     )
     registered_after = django_filters.DateFilter(field_name='created_at', lookup_expr='gte')
     registered_before = django_filters.DateFilter(field_name='created_at', lookup_expr='lte')
@@ -96,6 +102,32 @@ class ProductFilter(django_filters.FilterSet):
                     active_batches_filter,
                     batches__expiry_date__gte=today,
                     batches__expiry_date__lte=thirty_days
+                )
+            ).distinct()
+
+        elif value == 'expiring_90days':
+            ninety_days = today + datetime.timedelta(days=90)
+            return queryset.filter(
+                product_type='physical'
+            ).filter(
+                Q(expiration_date__gte=today, expiration_date__lte=ninety_days) |
+                Q(
+                    active_batches_filter,
+                    batches__expiry_date__gte=today,
+                    batches__expiry_date__lte=ninety_days
+                )
+            ).distinct()
+
+        elif value == 'expiring_1year':
+            one_year = today + datetime.timedelta(days=365)
+            return queryset.filter(
+                product_type='physical'
+            ).filter(
+                Q(expiration_date__gte=today, expiration_date__lte=one_year) |
+                Q(
+                    active_batches_filter,
+                    batches__expiry_date__gte=today,
+                    batches__expiry_date__lte=one_year
                 )
             ).distinct()
 
