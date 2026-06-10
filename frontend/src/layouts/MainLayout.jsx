@@ -45,6 +45,7 @@ import {
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { isNativePlatform } from '../utils/platform';
+import TrialChip from '../components/TrialChip';
 
 // Clic sur le logo : web -> landing marketing ; app mobile -> dashboard.
 const LOGO_TARGET = isNativePlatform() ? '/dashboard' : '/landing';
@@ -854,6 +855,11 @@ function MainLayout() {
                 </Box>
               );
             })()}
+
+            {/* Chip d'essai (visible mobile + desktop, rien si pas d'essai) */}
+            <Box sx={{ mr: { xs: 0.5, sm: 1 }, display: 'flex', alignItems: 'center' }}>
+              <TrialChip />
+            </Box>
 
             {/* Actions AI Chat - Masquer sur mobile pour éviter redondance avec les boutons dans l'interface AI */}
             {isAIChatPage && (

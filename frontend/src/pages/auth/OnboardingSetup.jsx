@@ -1,149 +1,56 @@
 /**
- * Page d'onboarding dédiée - Configuration initiale de l'organisation
- * Étapes : Entreprise → Fiscal → Modules → Terminé
+ * Onboarding allégé — 2 étapes, piloté par le PLAN (pas par une sélection
+ * technique de modules que les utilisateurs ne comprennent pas).
+ *   Étape 1 : Votre entreprise (nom requis, ville/logo/devise optionnels)
+ *   Étape 2 : Votre formule (Gratuit / Pro essai 30j / Business essai 30j)
+ * Le plan choisi débloque les modules côté backend (start-trial).
+ * Le fiscal détaillé (NIU, TVA, NEQ…) est désormais dans les Paramètres.
  */
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
-  Box,
-  Container,
-  Stepper,
-  Step,
-  StepLabel,
-  Button,
-  Typography,
-  TextField,
-  Card,
-  CardContent,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
-  Paper,
-  Chip,
-  LinearProgress,
-  Divider,
-  Switch,
+  Box, Container, Button, Typography, TextField, Card, CardContent, Grid,
+  FormControl, InputLabel, Select, MenuItem, Paper, LinearProgress,
 } from '@mui/material';
-import {
-  Business,
-  CheckCircle,
-  Dashboard as DashboardIcon,
-  ShoppingCart,
-  Receipt,
-  Inventory,
-  People,
-  CompareArrows,
-  Gavel,
-  Analytics,
-  CloudUpload,
-  CelebrationOutlined,
-  LocationOn,
-  AccountBalance,
-  SmartToy,
-  Description,
-} from '@mui/icons-material';
+import { CloudUpload, LocationOn, CheckCircle } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 
-const steps = ['Entreprise', 'Fiscal', 'Modules'];
+const steps = ['Votre entreprise', 'Votre formule'];
 
-// Modules disponibles — doit correspondre exactement aux codes dans apps/core/modules.py
-const AVAILABLE_MODULES = [
+// Formules en langage métier (pas de codes module). Le plan débloque les
+// modules automatiquement côté serveur.
+const PLANS = [
   {
-    id: 'dashboard',
-    name: 'Tableau de bord',
-    description: 'Vue d\'ensemble, statistiques et activité récente',
-    icon: <DashboardIcon />,
-    required: true,
+    code: 'free',
+    name: 'Gratuit',
+    tag: 'Pour démarrer',
+    tagColor: 'text.secondary',
+    features: ['Clients & produits', 'Facturation de base', 'Tableau de bord'],
+    cta: 'Rester en gratuit (sans essai)',
   },
   {
-    id: 'suppliers',
-    name: 'Fournisseurs',
-    description: 'Gestion de votre base fournisseurs',
-    icon: <Business />,
-    recommended: true,
+    code: 'pro',
+    name: 'Pro',
+    tag: '30 jours offerts',
+    tagColor: 'success.main',
+    popular: true,
+    features: ['Tout le Gratuit', 'Fournisseurs & bons de commande', 'Comptabilité, IA & analytics'],
+    cta: "Démarrer l'essai Pro",
   },
   {
-    id: 'purchase-orders',
-    name: 'Bons de commande',
-    description: 'Création et suivi des commandes fournisseurs',
-    icon: <ShoppingCart />,
-    recommended: true,
-    requires: 'suppliers',
+    code: 'business',
+    name: 'Business',
+    tag: '30 jours offerts',
+    tagColor: 'success.main',
+    features: ['Tout le Pro', 'E-Sourcing (appels d\'offres)', 'Support prioritaire'],
+    cta: "Démarrer l'essai Business",
   },
-  {
-    id: 'invoices',
-    name: 'Factures',
-    description: 'Facturation clients et suivi des paiements',
-    icon: <Receipt />,
-    recommended: true,
-  },
-  {
-    id: 'clients',
-    name: 'Clients',
-    description: 'Gestion de votre portefeuille clients',
-    icon: <People />,
-    recommended: true,
-  },
-  {
-    id: 'products',
-    name: 'Produits & Stock',
-    description: 'Catalogue produits et gestion des stocks',
-    icon: <Inventory />,
-  },
-  {
-    id: 'accounting',
-    name: 'Comptabilité',
-    description: 'Écritures comptables en partie double, plan comptable',
-    icon: <AccountBalance />,
-  },
-  {
-    id: 'analytics',
-    name: 'Analytics',
-    description: 'Rapports, analyses et tableaux de bord avancés',
-    icon: <Analytics />,
-  },
-  {
-    id: 'contracts',
-    name: 'Contrats',
-    description: 'Gestion et suivi des contrats fournisseurs',
-    icon: <Description />,
-    requires: 'suppliers',
-  },
-  {
-    id: 'e-sourcing',
-    name: 'E-Sourcing (RFQ)',
-    description: 'Appels d\'offres et mise en concurrence des fournisseurs',
-    icon: <CompareArrows />,
-    requires: 'suppliers',
-  },
-  {
-    id: 'ai-assistant',
-    name: 'Assistant IA',
-    description: 'Automatisation intelligente de toutes vos tâches',
-    icon: <SmartToy />,
-  },
-];
-
-// Régions fiscales
-const TAX_REGIONS = [
-  { value: 'cameroon', label: 'Cameroun (OHADA)' },
-  { value: 'ohada', label: 'Zone OHADA (Afrique francophone)' },
-  { value: 'canada', label: 'Canada' },
-  { value: 'eu', label: 'Union Européenne' },
-  { value: 'usa', label: 'États-Unis' },
-  { value: 'international', label: 'International' },
 ];
 
 function OnboardingSetup() {
-  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
-  // Pre-fill company name from Redux state or localStorage (set during register)
   const reduxCompanyName = useSelector(
     (state) =>
       state?.settings?.companyName ||
@@ -152,780 +59,247 @@ function OnboardingSetup() {
       ''
   );
   const registeredCompanyName = localStorage.getItem('onboarding_company_name') || '';
+  const prefillName = reduxCompanyName || registeredCompanyName;
 
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedPlan, setSelectedPlan] = useState('pro'); // palier d'essai choisi
-  const [startingPlan, setStartingPlan] = useState(false);
-
-  const handleStartAndEnter = async () => {
-    setStartingPlan(true);
-    try {
-      await api.post('/subscriptions/start-trial/', { plan_code: selectedPlan });
-    } catch (e) {
-      // non bloquant : l'utilisateur reste sur son plan par défaut
-      console.warn('start-trial:', e?.response?.data || e?.message);
-    } finally {
-      window.location.href = '/dashboard';
-    }
-  };
-  const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('pro');
+  const [submitting, setSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
-
   const [formData, setFormData] = useState({
-    // Étape 0 : Informations entreprise
-    companyName: reduxCompanyName || registeredCompanyName,
+    companyName: prefillName,
     address: '',
     logo: null,
-
-    // Étape 1 : Paramètres fiscaux
-    taxRegion: 'international',
-    companyNiu: '',
-    companyRcNumber: '',
-    companyTaxNumber: '',
-    companyVatNumber: '',
-    companyGstNumber: '',
-    companyQstNumber: '',
-    companyNeq: '',
-    defaultCurrency: 'CAD',
-    defaultTaxRate: 15,
-
-    // Étape 2 : Modules — sélection par défaut recommandée
-    selectedModules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'clients'],
+    defaultCurrency: 'XAF',
   });
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const handleChange = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
 
   const handleLogoUpload = (event) => {
     const file = event.target.files[0];
-    if (file) {
-      setFormData(prev => ({ ...prev, logo: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    setFormData((p) => ({ ...p, logo: file }));
+    const reader = new FileReader();
+    reader.onloadend = () => setLogoPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const goToPlan = () => {
+    if (!formData.companyName.trim()) {
+      enqueueSnackbar("Le nom de l'entreprise est requis", { variant: 'error' });
+      return;
     }
+    setActiveStep(1);
   };
 
-  const handleModuleToggle = (moduleId) => {
-    const module = AVAILABLE_MODULES.find(m => m.id === moduleId);
-    setFormData(prev => {
-      const current = prev.selectedModules;
-      if (current.includes(moduleId)) {
-        // Désactiver ce module + tous ceux qui en dépendent
-        const dependents = AVAILABLE_MODULES
-          .filter(m => m.requires === moduleId)
-          .map(m => m.id);
-        return {
-          ...prev,
-          selectedModules: current.filter(id => id !== moduleId && !dependents.includes(id)),
-        };
-      } else {
-        // Activer ce module + sa dépendance si nécessaire
-        const toAdd = [moduleId];
-        if (module?.requires && !current.includes(module.requires)) {
-          toAdd.push(module.requires);
-        }
-        return {
-          ...prev,
-          selectedModules: [...current, ...toAdd],
-        };
-      }
-    });
-  };
-
-  const handleNext = () => {
-    if (activeStep === 0) {
-      if (!formData.companyName.trim()) {
-        enqueueSnackbar("Le nom de l'entreprise est requis", { variant: 'error' });
-        return;
-      }
-    }
-    setActiveStep(prev => prev + 1);
-  };
-
-  const handleBack = () => {
-    setActiveStep(prev => prev - 1);
-  };
-
-  const handleComplete = async () => {
-    setLoading(true);
+  // Finalise : enregistre les paramètres (sans modules — le plan s'en charge),
+  // marque l'onboarding terminé, démarre l'essai/plan choisi, puis dashboard.
+  const handleFinish = async () => {
+    setSubmitting(true);
     try {
-      // 1. Sauvegarder les paramètres de l'organisation
-      const settingsFormData = new FormData();
-      settingsFormData.append('company_name', formData.companyName);
-      settingsFormData.append('tax_region', formData.taxRegion);
-      settingsFormData.append('default_currency', formData.defaultCurrency);
-      settingsFormData.append('default_tax_rate', isNaN(formData.defaultTaxRate) ? 0 : formData.defaultTaxRate);
-
-      if (formData.logo) {
-        settingsFormData.append('company_logo', formData.logo);
-      }
-
-      // Paramètres fiscaux selon la région
-      if (formData.taxRegion === 'cameroon' || formData.taxRegion === 'ohada') {
-        if (formData.companyNiu) settingsFormData.append('company_niu', formData.companyNiu);
-        if (formData.companyRcNumber) settingsFormData.append('company_rc_number', formData.companyRcNumber);
-        if (formData.companyTaxNumber) settingsFormData.append('company_tax_number', formData.companyTaxNumber);
-      } else if (formData.taxRegion === 'canada') {
-        if (formData.companyNeq) settingsFormData.append('company_neq', formData.companyNeq);
-        if (formData.companyGstNumber) settingsFormData.append('company_gst_number', formData.companyGstNumber);
-        if (formData.companyQstNumber) settingsFormData.append('company_qst_number', formData.companyQstNumber);
-      } else if (formData.taxRegion === 'eu') {
-        if (formData.companyVatNumber) settingsFormData.append('company_vat_number', formData.companyVatNumber);
-      }
-
-      // Add enabled_modules to sync with Organization
-      settingsFormData.append('enabled_modules', JSON.stringify(formData.selectedModules));
-
-      // Use correct endpoint for organization settings
-      console.log('Onboarding POST data:', Object.fromEntries(settingsFormData));
-      await api.post('/accounts/organization/settings/', settingsFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      // 1. Paramètres organisation (logo, devise). Région par défaut: à régler
+      //    plus finement dans les Paramètres.
+      const settings = new FormData();
+      settings.append('company_name', formData.companyName);
+      settings.append('default_currency', formData.defaultCurrency);
+      if (formData.logo) settings.append('company_logo', formData.logo);
+      await api.post('/accounts/organization/settings/', settings, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      // 2. Sauvegarder les préférences utilisateur (modules et onboarding complété)
+      // 2. Onboarding terminé.
       await api.put('/accounts/preferences/', {
-        enabled_modules: formData.selectedModules,
         onboarding_completed: true,
         onboarding_data: {
           completed_at: new Date().toISOString(),
           company_name: formData.companyName,
-          tax_region: formData.taxRegion,
-          selected_modules: formData.selectedModules,
+          plan: selectedPlan,
         },
       });
 
-      // 3. Créer un layout de dashboard par défaut pour ce nouvel utilisateur
+      // 3. Démarrer le plan/essai choisi (débloque les modules côté serveur).
       try {
-        await api.post('/analytics/layouts/', {
-          name: 'default',
-          is_default: true,
-          layout: [
-            { i: 'stats', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
-            { i: 'revenue-chart', x: 0, y: 2, w: 6, h: 3, minW: 4, minH: 3 },
-            { i: 'recent-activity', x: 6, y: 2, w: 6, h: 3, minW: 4, minH: 3 },
-          ],
-          widgets: ['stats', 'revenue-chart', 'recent-activity'],
-        });
-      } catch (error) {
-        console.warn('Could not create default layout:', error);
-        // Continue anyway - layout can be created later
+        await api.post('/subscriptions/start-trial/', { plan_code: selectedPlan });
+      } catch (e) {
+        console.warn('start-trial:', e?.response?.data || e?.message);
       }
 
       localStorage.removeItem('onboarding_company_name');
-      enqueueSnackbar('Configuration terminée avec succès !', { variant: 'success' });
-
-      // Afficher l'écran de célébration
-      setActiveStep(3);
+      window.location.href = '/dashboard';
     } catch (error) {
-      console.error('Onboarding error:', error);
-      const errorMsg = error.response?.data?.error || error.response?.data?.detail || error.message || 'Erreur inconnue';
-      console.error('Onboarding error detail:', errorMsg, 'Status:', error.response?.status, 'Data:', error.response?.data);
-      enqueueSnackbar(`Erreur: ${errorMsg}`, { variant: 'error' });
-    } finally {
-      setLoading(false);
+      const msg = error.response?.data?.error || error.response?.data?.detail || error.message || 'Erreur inconnue';
+      enqueueSnackbar(`Erreur : ${msg}`, { variant: 'error' });
+      setSubmitting(false);
     }
   };
 
-  const progressPercent = activeStep >= 3 ? 100 : Math.round((activeStep / steps.length) * 100);
-
-  const renderStepContent = () => {
-    switch (activeStep) {
-      case 0: // Informations entreprise
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
-              Votre entreprise
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              Ces informations apparaîtront sur vos documents (factures, bons de commande, etc.)
-            </Typography>
-
-            <Grid container spacing={3}>
-              {/* Logo upload zone */}
-              <Grid item xs={12}>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500, color: 'text.secondary' }}>
-                  Logo de l'entreprise
-                </Typography>
-                <input
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id="logo-upload"
-                  type="file"
-                  onChange={handleLogoUpload}
-                />
-                <label htmlFor="logo-upload" style={{ display: 'block', width: 'fit-content' }}>
-                  <Box
-                    sx={{
-                      width: 180,
-                      height: 120,
-                      border: '2px dashed',
-                      borderColor: logoPreview ? 'primary.main' : 'divider',
-                      borderRadius: 2,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      overflow: 'hidden',
-                      bgcolor: logoPreview ? 'transparent' : 'action.hover',
-                      transition: 'border-color 0.2s, background-color 0.2s',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: 'primary.50',
-                      },
-                    }}
-                  >
-                    {logoPreview ? (
-                      <img
-                        src={logoPreview}
-                        alt="Logo preview"
-                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                      />
-                    ) : (
-                      <>
-                        <CloudUpload sx={{ fontSize: 32, color: 'text.disabled', mb: 0.5 }} />
-                        <Typography variant="caption" color="text.secondary" align="center" sx={{ px: 1 }}>
-                          Cliquez pour ajouter votre logo
-                        </Typography>
-                      </>
-                    )}
-                  </Box>
-                </label>
-                <Typography variant="caption" color="text.disabled" sx={{ mt: 0.75, display: 'block' }}>
-                  (apparaîtra sur vos documents)
-                </Typography>
-              </Grid>
-
-              {/* Nom de l'entreprise */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Nom de l'entreprise"
-                  value={formData.companyName}
-                  onChange={(e) => handleChange('companyName', e.target.value)}
-                  placeholder="Ex: ACME Corporation"
-                  helperText={(reduxCompanyName || registeredCompanyName) ? 'Pré-rempli depuis votre inscription' : ''}
-                />
-              </Grid>
-
-              {/* Adresse */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Ville / Pays"
-                  value={formData.address}
-                  onChange={(e) => handleChange('address', e.target.value)}
-                  placeholder="Ex: Douala, Cameroun"
-                  InputProps={{
-                    startAdornment: (
-                      <LocationOn sx={{ color: 'text.disabled', mr: 0.5, fontSize: 20 }} />
-                    ),
-                  }}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        );
-
-      case 1: // Paramètres fiscaux
-        return (
-          <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
-              Région & Devise
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              Configurez vos paramètres fiscaux selon votre région d'activité
-            </Typography>
-
-            <Grid container spacing={3}>
-              {/* Région fiscale */}
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Région fiscale</InputLabel>
-                  <Select
-                    value={formData.taxRegion}
-                    onChange={(e) => handleChange('taxRegion', e.target.value)}
-                    label="Région fiscale"
-                  >
-                    {TAX_REGIONS.map(region => (
-                      <MenuItem key={region.value} value={region.value}>
-                        {region.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Devise */}
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Devise par défaut</InputLabel>
-                  <Select
-                    value={formData.defaultCurrency}
-                    onChange={(e) => handleChange('defaultCurrency', e.target.value)}
-                    label="Devise par défaut"
-                  >
-                    <MenuItem value="CAD">CAD — Dollar canadien</MenuItem>
-                    <MenuItem value="EUR">EUR — Euro</MenuItem>
-                    <MenuItem value="USD">USD — Dollar américain</MenuItem>
-                    <MenuItem value="XAF">XAF — Franc CFA (Afrique centrale)</MenuItem>
-                    <MenuItem value="XOF">XOF — Franc CFA (Afrique de l'Ouest)</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Taux de taxe par défaut */}
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Taux de taxe par défaut (%)"
-                  type="number"
-                  value={formData.defaultTaxRate}
-                  onChange={(e) => handleChange('defaultTaxRate', parseFloat(e.target.value))}
-                  inputProps={{ step: 0.1, min: 0, max: 100 }}
-                />
-              </Grid>
-
-              {/* Champs conditionnels selon la région */}
-              {(formData.taxRegion === 'cameroon' || formData.taxRegion === 'ohada') && (
-                <>
-                  <Grid item xs={12}>
-                    <Divider>
-                      <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-                        Identifiants légaux (OHADA)
-                      </Typography>
-                    </Divider>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="NIU (Numéro Identifiant Unique)"
-                      value={formData.companyNiu}
-                      onChange={(e) => handleChange('companyNiu', e.target.value)}
-                      placeholder="Ex: M012345678901Z"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Numéro de Registre de Commerce (RC)"
-                      value={formData.companyRcNumber}
-                      onChange={(e) => handleChange('companyRcNumber', e.target.value)}
-                    />
-                  </Grid>
-                </>
-              )}
-
-              {formData.taxRegion === 'canada' && (
-                <>
-                  <Grid item xs={12}>
-                    <Divider>
-                      <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-                        Identifiants légaux (Canada)
-                      </Typography>
-                    </Divider>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="NEQ (Numéro d'entreprise du Québec)"
-                      value={formData.companyNeq}
-                      onChange={(e) => handleChange('companyNeq', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Numéro TPS/TVH (GST/HST)"
-                      value={formData.companyGstNumber}
-                      onChange={(e) => handleChange('companyGstNumber', e.target.value)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Numéro TVQ (QST)"
-                      value={formData.companyQstNumber}
-                      onChange={(e) => handleChange('companyQstNumber', e.target.value)}
-                    />
-                  </Grid>
-                </>
-              )}
-
-              {formData.taxRegion === 'eu' && (
-                <>
-                  <Grid item xs={12}>
-                    <Divider>
-                      <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>
-                        Identifiants légaux (UE)
-                      </Typography>
-                    </Divider>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="Numéro de TVA intracommunautaire"
-                      value={formData.companyVatNumber}
-                      onChange={(e) => handleChange('companyVatNumber', e.target.value)}
-                      placeholder="Ex: FR12345678901"
-                    />
-                  </Grid>
-                </>
-              )}
-            </Grid>
-          </Box>
-        );
-
-      case 2: // Sélection des modules
-        return (
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
-              Modules
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Activez les fonctionnalités dont vous avez besoin. Modifiables à tout moment.
-            </Typography>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-              {AVAILABLE_MODULES.map((module, idx) => {
-                const isSelected = formData.selectedModules.includes(module.id);
-                const isRequired = module.required;
-                const isRecommended = module.recommended;
-                const depName = module.requires
-                  ? AVAILABLE_MODULES.find(m => m.id === module.requires)?.name
-                  : null;
-
-                return (
-                  <Box
-                    key={module.id}
-                    onClick={() => !isRequired && handleModuleToggle(module.id)}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      px: 2,
-                      py: 1.25,
-                      borderRadius: 2,
-                      cursor: isRequired ? 'default' : 'pointer',
-                      bgcolor: isSelected ? 'primary.50' : 'transparent',
-                      border: '1px solid',
-                      borderColor: isSelected ? 'primary.200' : 'transparent',
-                      transition: 'all 0.15s ease',
-                      '&:hover': {
-                        bgcolor: isRequired ? 'transparent' : isSelected ? 'primary.50' : 'action.hover',
-                      },
-                    }}
-                  >
-                    {/* Icon */}
-                    <Box sx={{
-                      color: isSelected ? 'primary.main' : 'text.disabled',
-                      display: 'flex', flexShrink: 0,
-                      transition: 'color 0.15s',
-                    }}>
-                      {module.icon}
-                    </Box>
-
-                    {/* Text */}
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                          {module.name}
-                        </Typography>
-                        {isRequired && <Chip label="Requis" size="small" sx={{ height: 18, fontSize: '0.65rem' }} color="primary" variant="outlined" />}
-                        {!isRequired && isRecommended && <Chip label="Recommandé" size="small" sx={{ height: 18, fontSize: '0.65rem' }} color="success" variant="outlined" />}
-                      </Box>
-                      {depName && (
-                        <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.7rem' }}>
-                          Nécessite : {depName}
-                        </Typography>
-                      )}
-                    </Box>
-
-                    {/* Switch */}
-                    <Switch
-                      checked={isSelected}
-                      disabled={isRequired}
-                      size="small"
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={() => !isRequired && handleModuleToggle(module.id)}
-                      color="primary"
-                    />
-                  </Box>
-                );
-              })}
-            </Box>
-
-            <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 2, textAlign: 'right' }}>
-              {formData.selectedModules.length} module(s) activé(s) — modifiable dans les Paramètres
-            </Typography>
-          </Box>
-        );
-
-      case 3: // Terminé — écran de célébration
-        return (
-          <Box sx={{ textAlign: 'center', py: 3 }}>
-            <Box
-              sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                bgcolor: 'success.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 3,
-              }}
-            >
-              <CelebrationOutlined sx={{ fontSize: 40, color: 'success.dark' }} />
-            </Box>
-
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-              Tout est prêt !
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-              Votre espace de travail est configuré et prêt à l'emploi.
-            </Typography>
-
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                textAlign: 'left',
-                maxWidth: 420,
-                mx: 'auto',
-              }}
-            >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: 'text.primary' }}>
-                Récapitulatif de votre configuration
-              </Typography>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Business fontSize="small" color="primary" />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Entreprise
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {formData.companyName}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {formData.address && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <LocationOn fontSize="small" color="primary" />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Localisation
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {formData.address}
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <AccountBalance fontSize="small" color="primary" />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Région fiscale & devise
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {TAX_REGIONS.find(r => r.value === formData.taxRegion)?.label} — {formData.defaultCurrency}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <CheckCircle fontSize="small" color="primary" />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Modules activés
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {formData.selectedModules.length} module(s)
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Choix de la formule — essai 30 jours sans carte */}
-            <Box sx={{ maxWidth: 720, mx: 'auto', mt: 5 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Démarrez avec la formule qui vous convient
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                1 mois d'essai offert sur Pro et Business — <strong>sans carte bancaire</strong>. Vous pourrez changer à tout moment.
-              </Typography>
-              <Grid container spacing={2}>
-                {[
-                  { code: 'free', name: 'Gratuit', tag: 'Pour démarrer', desc: 'Clients, produits et facturation de base.', cta: 'Rester en gratuit' },
-                  { code: 'pro', name: 'Pro', tag: '30 jours offerts', desc: 'IA, contrats, comptabilité, analytics.', cta: 'Essayer Pro', popular: true },
-                  { code: 'business', name: 'Business', tag: '30 jours offerts', desc: 'Tout illimité + E-Sourcing et support prioritaire.', cta: 'Essayer Business' },
-                ].map((p) => {
-                  const sel = selectedPlan === p.code;
-                  return (
-                    <Grid item xs={12} sm={4} key={p.code}>
-                      <Paper
-                        onClick={() => setSelectedPlan(p.code)}
-                        variant="outlined"
-                        sx={{
-                          p: 2.5, borderRadius: 3, cursor: 'pointer', height: '100%',
-                          position: 'relative', transition: 'all 0.2s',
-                          borderColor: sel ? 'primary.main' : 'divider',
-                          borderWidth: sel ? 2 : 1,
-                          boxShadow: sel ? '0 12px 30px -10px rgba(37,99,235,0.35)' : 'none',
-                          bgcolor: sel ? 'rgba(37,99,235,0.04)' : 'background.paper',
-                        }}
-                      >
-                        {p.popular && (
-                          <Box sx={{ position: 'absolute', top: -10, right: 12, bgcolor: '#f59e0b', color: '#0f172a', fontWeight: 800, fontSize: 11, px: 1, py: 0.25, borderRadius: 1 }}>
-                            Recommandé
-                          </Box>
-                        )}
-                        <Typography sx={{ fontWeight: 800, fontSize: '1.05rem' }}>{p.name}</Typography>
-                        <Typography variant="caption" sx={{ color: p.code === 'free' ? 'text.secondary' : 'success.main', fontWeight: 700 }}>
-                          {p.tag}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, lineHeight: 1.5 }}>
-                          {p.desc}
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            </Box>
-          </Box>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const isCompletionScreen = activeStep === 3;
+  const progressPercent = Math.round(((activeStep + 1) / steps.length) * 100);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 6 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 4, sm: 6 } }}>
       <Container maxWidth="md">
         {/* Header */}
-        <Box sx={{ textAlign: 'center', mb: 5 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
           <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-            Configuration de votre espace
+            Bienvenue sur Procura
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Quelques étapes pour personnaliser votre expérience Procura
+            Deux étapes rapides pour démarrer
           </Typography>
         </Box>
 
-        {/* Stepper + Progress */}
-        {!isCompletionScreen && (
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                Étape {activeStep + 1} sur {steps.length}
-              </Typography>
-              <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                {progressPercent}%
-              </Typography>
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={progressPercent}
-              sx={{ borderRadius: 4, height: 6, mb: 3 }}
-            />
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+        {/* Progress */}
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+              Étape {activeStep + 1} sur {steps.length} — {steps[activeStep]}
+            </Typography>
+            <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
+              {progressPercent}%
+            </Typography>
           </Box>
-        )}
+          <LinearProgress variant="determinate" value={progressPercent} sx={{ borderRadius: 4, height: 6 }} />
+        </Box>
 
-        {/* Content card */}
-        <Card
-          variant="outlined"
-          sx={{
-            mb: 3,
-            borderRadius: 3,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          }}
-        >
-          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-            {renderStepContent()}
+        <Card variant="outlined" sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+          <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+            {/* ── Étape 1 : Entreprise ── */}
+            {activeStep === 0 && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Votre entreprise</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Ces informations apparaîtront sur vos factures et documents.
+                </Typography>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <input accept="image/*" style={{ display: 'none' }} id="logo-upload" type="file" onChange={handleLogoUpload} />
+                    <label htmlFor="logo-upload" style={{ display: 'block', width: 'fit-content' }}>
+                      <Box sx={{
+                        width: 160, height: 110, border: '2px dashed',
+                        borderColor: logoPreview ? 'primary.main' : 'divider', borderRadius: 2,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', overflow: 'hidden', bgcolor: logoPreview ? 'transparent' : 'action.hover',
+                      }}>
+                        {logoPreview
+                          ? <img src={logoPreview} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                          : <><CloudUpload sx={{ fontSize: 30, color: 'text.disabled', mb: 0.5 }} /><Typography variant="caption" color="text.secondary">Logo (optionnel)</Typography></>}
+                      </Box>
+                    </label>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      required fullWidth label="Nom de l'entreprise"
+                      value={formData.companyName}
+                      onChange={(e) => handleChange('companyName', e.target.value)}
+                      placeholder="Ex : ACME SARL"
+                      helperText={prefillName ? 'Pré-rempli depuis votre inscription' : ''}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth label="Ville / Pays (optionnel)"
+                      value={formData.address}
+                      onChange={(e) => handleChange('address', e.target.value)}
+                      placeholder="Ex : Douala, Cameroun"
+                      InputProps={{ startAdornment: <LocationOn sx={{ color: 'text.disabled', mr: 0.5, fontSize: 20 }} /> }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Devise</InputLabel>
+                      <Select value={formData.defaultCurrency} label="Devise" onChange={(e) => handleChange('defaultCurrency', e.target.value)}>
+                        <MenuItem value="XAF">XAF — Franc CFA (Afrique centrale)</MenuItem>
+                        <MenuItem value="XOF">XOF — Franc CFA (Afrique de l'Ouest)</MenuItem>
+                        <MenuItem value="EUR">EUR — Euro</MenuItem>
+                        <MenuItem value="USD">USD — Dollar américain</MenuItem>
+                        <MenuItem value="CAD">CAD — Dollar canadien</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+
+            {/* ── Étape 2 : Formule ── */}
+            {activeStep === 1 && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Votre formule</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, p: 1.5, mb: 3, borderRadius: 2, bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
+                  <CheckCircle sx={{ color: 'success.main', fontSize: 20, mt: 0.2 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>30 jours d'essai Pro offerts</strong>, sans carte bancaire. Vous pouvez aussi
+                    rester en <strong>Gratuit</strong> — changement possible à tout moment.
+                  </Typography>
+                </Box>
+
+                <Grid container spacing={2}>
+                  {PLANS.map((p) => {
+                    const sel = selectedPlan === p.code;
+                    return (
+                      <Grid item xs={12} sm={4} key={p.code}>
+                        <Paper
+                          onClick={() => setSelectedPlan(p.code)}
+                          variant="outlined"
+                          sx={{
+                            p: 2, borderRadius: 3, cursor: 'pointer', height: '100%', position: 'relative',
+                            transition: 'all 0.2s',
+                            borderColor: sel ? 'primary.main' : 'divider', borderWidth: sel ? 2 : 1,
+                            boxShadow: sel ? '0 12px 30px -10px rgba(37,99,235,0.35)' : 'none',
+                            bgcolor: sel ? 'rgba(37,99,235,0.04)' : 'background.paper',
+                          }}
+                        >
+                          {p.popular && (
+                            <Box sx={{ position: 'absolute', top: -10, right: 12, bgcolor: '#f59e0b', color: '#0f172a', fontWeight: 800, fontSize: 11, px: 1, py: 0.25, borderRadius: 1 }}>
+                              Recommandé
+                            </Box>
+                          )}
+                          <Typography sx={{ fontWeight: 800, fontSize: '1.05rem' }}>{p.name}</Typography>
+                          <Typography variant="caption" sx={{ color: p.tagColor, fontWeight: 700 }}>{p.tag}</Typography>
+                          <Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                            {p.features.map((f, i) => (
+                              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                <CheckCircle sx={{ fontSize: 15, color: sel ? 'primary.main' : 'text.disabled' }} />
+                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>{f}</Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        </Paper>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </Box>
+            )}
           </CardContent>
         </Card>
 
         {/* Actions */}
-        {!isCompletionScreen && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button
-              onClick={handleBack}
-              disabled={activeStep === 0 || loading}
-              variant="outlined"
-              sx={{ minWidth: 100 }}
-            >
-              Retour
-            </Button>
-
-            {activeStep === steps.length - 1 ? (
-              <Button
-                variant="contained"
-                onClick={handleComplete}
-                disabled={loading}
-                size="large"
-                sx={{ minWidth: 180 }}
-              >
-                {loading ? 'Finalisation...' : 'Terminer la configuration'}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3 }}>
+          {activeStep === 0 ? (
+            <>
+              <Button onClick={() => { setSelectedPlan('pro'); setActiveStep(1); }} color="inherit" sx={{ color: 'text.secondary' }}>
+                Passer
               </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={loading}
-                sx={{ minWidth: 120 }}
-              >
-                Suivant
+              <Button variant="contained" onClick={goToPlan} sx={{ minWidth: 140 }}>
+                Continuer
               </Button>
-            )}
-          </Box>
-        )}
-
-        {/* Completion screen CTA */}
-        {isCompletionScreen && (
-          <Box sx={{ textAlign: 'center', mt: 4 }}>
-            <Button
-              variant="contained"
-              size="large"
-              disabled={startingPlan}
-              sx={{ minWidth: 260, py: 1.4, fontWeight: 700, textTransform: 'none' }}
-              onClick={handleStartAndEnter}
-            >
-              {startingPlan
-                ? 'Activation…'
-                : selectedPlan === 'free'
-                  ? 'Démarrer en gratuit'
-                  : `Démarrer l'essai ${selectedPlan === 'pro' ? 'Pro' : 'Business'} — 30 jours offerts`}
-            </Button>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>
-              Aucune carte bancaire requise. Annulation à tout moment.
-            </Typography>
-          </Box>
+            </>
+          ) : (
+            <>
+              <Button onClick={() => setActiveStep(0)} variant="outlined" disabled={submitting} sx={{ minWidth: 100 }}>
+                Retour
+              </Button>
+              <Button variant="contained" size="large" onClick={handleFinish} disabled={submitting} sx={{ minWidth: 220, fontWeight: 700, textTransform: 'none' }}>
+                {submitting ? 'Activation…' : (PLANS.find((p) => p.code === selectedPlan)?.cta || 'Démarrer')}
+              </Button>
+            </>
+          )}
+        </Box>
+        {activeStep === 1 && (
+          <Typography variant="caption" color="text.secondary" display="block" textAlign="center" sx={{ mt: 1.5 }}>
+            Aucune carte bancaire requise. Annulation à tout moment.
+          </Typography>
         )}
       </Container>
     </Box>

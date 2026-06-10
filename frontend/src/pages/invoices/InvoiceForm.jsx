@@ -30,6 +30,7 @@ import {
   Select,
   MenuItem,
   Stack,
+  Collapse,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -46,6 +47,9 @@ import {
   Send,
   Description,
   Close,
+  Tune,
+  ExpandMore,
+  ExpandLess,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -74,6 +78,8 @@ function InvoiceForm() {
   const [products, setProducts] = useState([]);
   const [contracts, setContracts] = useState([]);
   const [items, setItems] = useState([]);
+  // Options avancees repliees par defaut (formulaire minimal et fluide).
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -551,7 +557,21 @@ function InvoiceForm() {
       <form onSubmit={handleSubmit}>
         {isMobile ? (
           <Box>
-            {/* Basic Information Mobile */}
+            {/* Bouton "Plus d'options" : le formulaire reste minimal par defaut
+                (Client -> Articles -> Total). Les details sont replies ici. */}
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={() => setShowAdvanced((v) => !v)}
+              startIcon={<Tune />}
+              endIcon={showAdvanced ? <ExpandLess /> : <ExpandMore />}
+              sx={{ mb: 2, borderRadius: 2, textTransform: 'none', justifyContent: 'space-between', color: 'text.secondary', borderColor: 'divider' }}
+            >
+              {showAdvanced ? 'Masquer les options' : "Plus d'options (titre, dates, taxe, remise…)"}
+            </Button>
+
+            {/* Basic Information Mobile (replie) */}
+            <Collapse in={showAdvanced} unmountOnExit>
             <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
@@ -607,6 +627,7 @@ function InvoiceForm() {
                 </Stack>
               </CardContent>
             </Card>
+            </Collapse>
 
             {/* Client Selection Mobile */}
             <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
@@ -646,6 +667,7 @@ function InvoiceForm() {
                   )}
                 />
 
+                {showAdvanced && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
                     {t('invoices:labels.contract')}
@@ -667,6 +689,7 @@ function InvoiceForm() {
                     )}
                   />
                 </Box>
+                )}
 
                 {formData.client && (
                   <Box sx={{ mt: 1.5, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -751,6 +774,7 @@ function InvoiceForm() {
                     </Box>
                   </Grid>
                 </Grid>
+                <Collapse in={showAdvanced} unmountOnExit>
                 <TextField
                   fullWidth
                   label={t('invoices:labels.vatRateField')}
@@ -800,10 +824,12 @@ function InvoiceForm() {
                     </Box>
                   )}
                 </Box>
+                </Collapse>
               </CardContent>
             </Card>
 
-            {/* Status Mobile */}
+            {/* Status Mobile (replie) */}
+            <Collapse in={showAdvanced} unmountOnExit>
             <Card sx={{ mb: 2, borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <CardContent sx={{ p: 2 }}>
                 <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 1.5 }}>
@@ -847,6 +873,7 @@ function InvoiceForm() {
                 </Stack>
               </CardContent>
             </Card>
+            </Collapse>
           </Box>
         ) : (
           <Grid container spacing={3}>

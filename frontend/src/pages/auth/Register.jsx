@@ -157,11 +157,14 @@ function Register() {
   const onGoogleToken = async (arg) => {
     setLoading(true);
     try {
-      await dispatch(googleLogin(arg)).unwrap();
-      navigate('/dashboard');
+      const payload = await dispatch(googleLogin(arg)).unwrap();
+      // Rediriger selon l'etat d'onboarding. window.location (rechargement
+      // complet) pour que le check onboarding de App.jsx se rejoue — sinon en
+      // SPA on resterait bloque sur le dashboard sans voir l'onboarding.
+      const completed = payload?.user?.preferences?.onboarding_completed === true;
+      window.location.href = completed ? '/dashboard' : '/onboarding';
     } catch (err) {
       setError(err || t('auth:register.messages.error'));
-    } finally {
       setLoading(false);
     }
   };

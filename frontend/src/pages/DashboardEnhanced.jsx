@@ -66,6 +66,7 @@ import { analyticsAPI } from '../services/analyticsAPI';
 import { isNativePlatform } from '../utils/platform';
 import { cacheOne, readOne, isOffline } from '../services/offline';
 import useCurrency from '../hooks/useCurrency';
+import { useModules } from '../contexts/ModuleContext';
 import Mascot from '../components/Mascot';
 import LoadingState from '../components/LoadingState';
 import SubscriptionStatus from '../components/SubscriptionStatus';
@@ -130,6 +131,14 @@ function DashboardEnhanced() {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Modules actives : on masque sur le dashboard ce qui appartient a un module
+  // desactive (le resume financier reste toujours visible).
+  const { hasModule } = useModules();
+  const showInvoices = hasModule('invoices');
+  const showPurchaseOrders = hasModule('purchase-orders');
+  const showClients = hasModule('clients');
+  const showSuppliers = hasModule('suppliers');
 
   const getFallbackWelcome = () => {
     const hour = new Date().getHours();
@@ -286,6 +295,7 @@ function DashboardEnhanced() {
   const productStats = stats.products || {};
 
   const statsCards = [
+    // Resume financier : toujours visible (coeur du tableau de bord).
     {
       title: 'Revenu Total',
       value: formatCurrency(financialStats.revenue || 0),
@@ -307,14 +317,15 @@ function DashboardEnhanced() {
       icon: <TrendingUp />,
       color: '#3B82F6',
     },
-    {
+    // Cartes liees aux modules : masquees si le module est desactive.
+    showInvoices && {
       title: 'Factures Imp.',
       value: (invoiceStats.by_status?.overdue || 0) + (invoiceStats.by_status?.sent || 0),
       total: invoiceStats.total || 0,
       icon: <Receipt />,
       color: '#F59E0B',
     },
-    {
+    showPurchaseOrders && {
       title: 'Commandes BC',
       value: poStats.period?.count || 0,
       total: poStats.total || 0,
@@ -322,37 +333,38 @@ function DashboardEnhanced() {
       icon: <Business />,
       color: '#8B5CF6',
     },
-    {
+    showClients && {
       title: 'Nouv. Clients',
       value: clientStats.new_in_period || 0,
       previous: clientStats.comparison?.previous_new,
       icon: <People />,
       color: '#EC4899',
     },
-  ];
+  ].filter(Boolean);
 
   const prepareLineChartData = () => {
     const trends = stats.daily_trends || { dates: [], invoices: [], purchase_orders: [] };
 
-    return {
-      labels: trends.dates || [],
-      datasets: [
-        {
-          label: 'Factures',
-          data: trends.invoices || [],
-          borderColor: '#10B981',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          tension: 0.4,
-        },
-        {
-          label: 'Bons de commande',
-          data: trends.purchase_orders || [],
-          borderColor: '#3B82F6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4,
-        },
-      ],
-    };
+    const datasets = [];
+    if (showInvoices) {
+      datasets.push({
+        label: 'Factures',
+        data: trends.invoices || [],
+        borderColor: '#10B981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        tension: 0.4,
+      });
+    }
+    if (showPurchaseOrders) {
+      datasets.push({
+        label: 'Bons de commande',
+        data: trends.purchase_orders || [],
+        borderColor: '#3B82F6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+      });
+    }
+    return { labels: trends.dates || [], datasets };
   };
 
   const prepareDonutData = () => {
@@ -440,18 +452,18 @@ function DashboardEnhanced() {
             }}
           >
             {[
-              { label: 'Aperçu', icon: <TrendingUp sx={{ fontSize: 18 }} /> },
-              { label: 'Factures', icon: <Receipt sx={{ fontSize: 18 }} /> },
-              { label: 'Clients', icon: <People sx={{ fontSize: 18 }} /> },
-              { label: 'Alertes', icon: <Warning sx={{ fontSize: 18 }} />, badge: stats.alerts?.length },
-            ].map((s, i) => {
-              const selected = mobileSection === i;
+              { section: 0, label: 'Aperçu', icon: <TrendingUp sx={{ fontSize: 18 }} /> },
+              showInvoices && { section: 1, label: 'Factures', icon: <Receipt sx={{ fontSize: 18 }} /> },
+              showClients && { section: 2, label: 'Clients', icon: <People sx={{ fontSize: 18 }} /> },
+              { section: 3, label: 'Alertes', icon: <Warning sx={{ fontSize: 18 }} />, badge: stats.alerts?.length },
+            ].filter(Boolean).map((s) => {
+              const selected = mobileSection === s.section;
               return (
                 <Box
-                  key={i}
+                  key={s.section}
                   component="button"
                   type="button"
-                  onClick={() => setCurrentTab(i)}
+                  onClick={() => setCurrentTab(s.section)}
                   aria-label={s.label}
                   sx={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -524,7 +536,8 @@ function DashboardEnhanced() {
               ))}
             </Grid>
 
-            {/* Graphique tendances */}
+            {/* Graphique tendances (masque si aucune serie active) */}
+            {lineChartData.datasets.length > 0 && (
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Tendances</Typography>
               <Line data={lineChartData} options={{
@@ -539,8 +552,10 @@ function DashboardEnhanced() {
                 },
               }} />
             </Box>
+            )}
 
-            {/* Top clients mini */}
+            {/* Top clients mini (masque si module Clients desactive) */}
+            {showClients && (
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top clients</Typography>
               {(clientStats.top_clients || []).slice(0, 3).map((c, i, arr) => (
@@ -556,6 +571,7 @@ function DashboardEnhanced() {
                 <Typography variant="caption" color="text.secondary">Aucun client</Typography>
               )}
             </Box>
+            )}
           </Box>
         )}
 
@@ -824,6 +840,7 @@ function DashboardEnhanced() {
               </CardContent>
             </Card>
           </Grid>
+          {showInvoices && (
           <Grid item xs={12} md={4}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', height: '100%' }}>
               <CardContent sx={{ p: 2.5 }}>
@@ -845,9 +862,11 @@ function DashboardEnhanced() {
               </CardContent>
             </Card>
           </Grid>
+          )}
         </Grid>
 
         <Grid container spacing={2}>
+          {showClients && (
           <Grid item xs={12} md={6}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               <CardContent sx={{ p: 2.5 }}>
@@ -868,6 +887,8 @@ function DashboardEnhanced() {
               </CardContent>
             </Card>
           </Grid>
+          )}
+          {showSuppliers && (
           <Grid item xs={12} md={6}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               <CardContent sx={{ p: 2.5 }}>
@@ -888,6 +909,7 @@ function DashboardEnhanced() {
               </CardContent>
             </Card>
           </Grid>
+          )}
         </Grid>
       </TabPanel>
 
