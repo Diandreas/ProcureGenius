@@ -32,6 +32,16 @@ export function patchFetchForNative() {
   window.__procuraFetchPatched = true;
 }
 
+// Masque le splash natif. A appeler une fois l'interface React rendue (sinon
+// on voit un ecran blanc entre le splash et l'app).
+export async function hideSplash() {
+  if (!isNativePlatform()) return;
+  try {
+    const { SplashScreen } = await import('@capacitor/splash-screen');
+    await SplashScreen.hide();
+  } catch { /* ignore */ }
+}
+
 export async function initNativeApp() {
   if (!isNativePlatform()) return;
 
@@ -54,11 +64,7 @@ export async function initNativeApp() {
     await StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
   } catch { /* plugin absent : ignore */ }
 
-  // --- Splash : on le cache une fois l'app prete ---
-  try {
-    const { SplashScreen } = await import('@capacitor/splash-screen');
-    await SplashScreen.hide();
-  } catch { /* ignore */ }
+  // (le splash est masque par hideSplash() une fois React rendu — voir App.jsx)
 
   // --- Bouton retour Android : ne ferme plus l'app brutalement ---
   try {

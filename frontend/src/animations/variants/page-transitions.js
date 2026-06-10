@@ -1,14 +1,14 @@
+// Transition quasi instantanee : fade tres court, sans glissement horizontal
+// (le slide laissait un bref vide blanc et donnait une impression de lenteur).
 export const pageVariants = {
-  initial: { opacity: 0, x: -20 },
+  initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    x: 0,
-    transition: { duration: 0.3, ease: 'easeOut' }
+    transition: { duration: 0.12, ease: 'easeOut' }
   },
   exit: {
     opacity: 0,
-    x: 20,
-    transition: { duration: 0.2 }
+    transition: { duration: 0.08 }
   }
 };
 

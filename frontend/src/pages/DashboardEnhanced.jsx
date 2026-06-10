@@ -175,25 +175,25 @@ function DashboardEnhanced() {
   };
 
   const fetchDashboardData = async () => {
-    const native = isNativePlatform();
-    // Cle de cache par periode (les chiffres different selon la periode choisie).
-    const cacheId = `stats_${period}_${compare}`;
+    // Stale-while-revalidate : on affiche INSTANTANEMENT les derniers chiffres
+    // connus (cache localStorage), puis on rafraichit en arriere-plan. Plus
+    // d'ecran de chargement quand on a deja des donnees a montrer.
+    const cacheKey = `dash_stats_${period}_${compare}`;
+
+    let hadCache = false;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setStats(JSON.parse(cached));
+        hadCache = true;
+      }
+    } catch { /* ignore */ }
+
+    // Loading visible seulement si on n'a rien a afficher.
+    if (!hadCache && !stats) setLoading(true);
 
     try {
-      setLoading(true);
-
-      // Hors-ligne (natif) : on sert directement la derniere version en cache.
-      if (native && isOffline()) {
-        const cached = await readOne('dashboard', cacheId);
-        if (cached) setStats(cached.data ?? cached);
-        return;
-      }
-
-      const params = {
-        period,
-        compare: compare.toString(),
-      };
-
+      const params = { period, compare: compare.toString() };
       if (period === 'custom' && customDates.start_date && customDates.end_date) {
         params.start_date = customDates.start_date;
         params.end_date = customDates.end_date;
@@ -201,15 +201,10 @@ function DashboardEnhanced() {
 
       const response = await analyticsAPI.getStats(params);
       setStats(response.data.data);
-      // Mise en cache pour consultation hors-ligne.
-      if (native) cacheOne('dashboard', { id: cacheId, data: response.data.data });
+      try { localStorage.setItem(cacheKey, JSON.stringify(response.data.data)); } catch { /* quota */ }
     } catch (error) {
-      // En natif, repli silencieux sur le cache (pas d'erreur bloquante offline).
-      if (native) {
-        const cached = await readOne('dashboard', cacheId);
-        if (cached) { setStats(cached.data ?? cached); return; }
-      }
-      console.error('Error fetching dashboard data:', error);
+      // On garde les donnees en cache deja affichees (pas d'erreur bloquante).
+      if (!hadCache) console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -581,7 +576,7 @@ function DashboardEnhanced() {
             {/* Donut */}
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>État des factures</Typography>
-              <Box sx={{ height: 180, display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ height: 180, width: '100%', maxWidth: 220, mx: 'auto', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                 <Doughnut data={donutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, cutout: '68%' }} />
               </Box>
             </Box>

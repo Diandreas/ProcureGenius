@@ -752,6 +752,14 @@ function App() {
     checkOnboardingStatus();
   }, []);
 
+  // Masquer le splash natif APRES le premier paint de l'app (evite l'ecran
+  // blanc entre le logo de demarrage et l'interface).
+  React.useEffect(() => {
+    requestAnimationFrame(() => {
+      import('./services/nativeInit').then((m) => m.hideSplash?.()).catch(() => {});
+    });
+  }, []);
+
   // Fonction pour déterminer si l'onboarding est nécessaire
   const checkIfOnboardingNeeded = (userData) => {
     // Règle principale : si onboarding_completed est explicitement true → pas besoin

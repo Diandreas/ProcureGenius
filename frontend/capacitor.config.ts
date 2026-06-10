@@ -15,6 +15,16 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     // iOS utilise déjà capacitor:// -> on garde le défaut.
   },
+  plugins: {
+    SplashScreen: {
+      // On masque le splash nous-memes (App.jsx hideSplash) une fois React
+      // rendu : evite l'ecran blanc entre le logo et l'interface.
+      launchAutoHide: false,
+      backgroundColor: '#e0e5ec',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+    },
+  },
 };
 
 export default config;
