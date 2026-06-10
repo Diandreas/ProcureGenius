@@ -26,6 +26,12 @@ export default function PublicLayout() {
   const headerBgActive = isDark ? 'rgba(9,9,11,0.95)' : 'rgba(248,250,252,0.95)';
   const isLanding = location.pathname === '/landing' || location.pathname === '/';
   const hasScrollStyle = !isLanding || scrollY > 50;
+  // Au sommet (non scrollé) : pas de barre pleine, mais un léger dégradé pour
+  // garantir la lisibilité du texte de la nav (sinon invisible sur certains
+  // fonds, notamment les halos clairs du hero en mode sombre).
+  const headerScrim = isDark
+    ? 'linear-gradient(to bottom, rgba(9,9,11,0.92), rgba(9,9,11,0))'
+    : 'linear-gradient(to bottom, rgba(248,250,252,0.92), rgba(248,250,252,0))';
 
   return (
     <Box sx={{
@@ -46,7 +52,7 @@ export default function PublicLayout() {
       >
         <Box
           sx={{
-            background: hasScrollStyle ? headerBgActive : 'transparent',
+            background: hasScrollStyle ? headerBgActive : headerScrim,
             borderBottom: hasScrollStyle ? `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` : '1px solid transparent',
             transition: 'all 0.3s',
             backdropFilter: hasScrollStyle ? 'blur(10px)' : 'none',
