@@ -118,19 +118,20 @@ const pageVariants = {
 };
 
 function PageTransition({ locationKey, children }) {
+  // Pas d'AnimatePresence "mode=wait" (qui faisait disparaitre l'ancienne page
+  // AVANT d'afficher la nouvelle -> vide blanc + clignotement + latence).
+  // Ici : la nouvelle page remplace immediatement l'ancienne et apparait avec
+  // un fondu tres court. Switch quasi instantane, sans gap.
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={locationKey}
-        variants={pageVariants}
-        initial="initial"
-        animate="enter"
-        exit="exit"
-        style={{ width: '100%' }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={locationKey}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.1, ease: 'easeOut' }}
+      style={{ width: '100%' }}
+    >
+      {children}
+    </motion.div>
   );
 }
 

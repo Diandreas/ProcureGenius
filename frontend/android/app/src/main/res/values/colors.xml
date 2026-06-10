@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fond de l'app (theme neumorphique clair) : utilise comme fond de
+         fenetre pour eviter le flash blanc du WebView au demarrage. -->
+    <color name="appBackground">#e0e5ec</color>
+</resources>
