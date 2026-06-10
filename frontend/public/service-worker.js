@@ -1,6 +1,8 @@
 // Service Worker pour PWA
-const CACHE_NAME = 'gestion-app-v1';
-const API_CACHE_NAME = 'gestion-app-api-v1';
+// NB: incrementer la version a chaque deploiement important pour forcer la
+// mise a jour du cache chez les utilisateurs (sinon ils gardent l'ancienne app).
+const CACHE_NAME = 'gestion-app-v2';
+const API_CACHE_NAME = 'gestion-app-api-v2';
 const DEBUG = false; // Mettre à true pour activer les logs de debug
 
 // URLs à mettre en cache lors de l'installation
