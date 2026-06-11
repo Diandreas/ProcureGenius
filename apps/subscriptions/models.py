@@ -108,6 +108,19 @@ class SubscriptionPlan(models.Model):
         verbose_name=_("Requêtes IA max/mois")
     )
 
+    # Sièges utilisateurs
+    included_users = models.IntegerField(
+        default=1,
+        verbose_name=_("Utilisateurs inclus")
+    )
+
+    extra_user_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=5,
+        verbose_name=_("Prix par utilisateur supplémentaire")
+    )
+
     # Fonctionnalités
     has_ads = models.BooleanField(
         default=False,
@@ -219,6 +232,12 @@ class Subscription(models.Model):
         on_delete=models.PROTECT,
         related_name='subscriptions',
         verbose_name=_("Plan")
+    )
+
+    # Sièges supplémentaires achetés (au-delà des included_users du plan).
+    extra_seats = models.IntegerField(
+        default=0,
+        verbose_name=_("Sièges supplémentaires payés")
     )
 
     # Statut
@@ -358,6 +377,12 @@ class Subscription(models.Model):
     def is_trial(self):
         """Vérifie si en période d'essai"""
         return self.status == 'trial' and self.trial_ends_at and self.trial_ends_at > timezone.now()
+
+    @property
+    def seat_limit(self):
+        """Nombre total d'utilisateurs autorisés = inclus dans le plan + sièges achetés."""
+        included = self.plan.included_users if self.plan else 1
+        return (included or 1) + (self.extra_seats or 0)
 
     @property
     def trial_days_remaining(self):

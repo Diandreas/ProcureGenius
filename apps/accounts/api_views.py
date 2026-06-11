@@ -192,7 +192,29 @@ def api_organization_users(request):
         # Créer un nouvel utilisateur
         try:
             data = request.data
-            
+
+            # --- Limite de sièges selon le plan (+ sièges achetés) ---
+            org = request.user.organization
+            if org is not None:
+                seat_limit = 1
+                try:
+                    sub = getattr(org, 'subscription', None)
+                    if sub is not None:
+                        seat_limit = sub.seat_limit
+                except Exception:
+                    seat_limit = 1
+                active_users = CustomUser.objects.filter(organization=org, is_active=True).count()
+                if active_users >= seat_limit:
+                    return Response({
+                        'error': (
+                            f"Votre formule autorise {seat_limit} utilisateur(s). "
+                            f"Passez à un plan supérieur ou ajoutez des sièges (5€/utilisateur) pour en inviter davantage."
+                        ),
+                        'code': 'seat_limit_reached',
+                        'seat_limit': seat_limit,
+                        'active_users': active_users,
+                    }, status=status.HTTP_402_PAYMENT_REQUIRED)
+
             with transaction.atomic():
                 # Générer un mot de passe temporaire sécurisé
                 temp_password = _generate_temp_password()
