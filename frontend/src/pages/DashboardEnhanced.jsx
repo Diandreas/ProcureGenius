@@ -157,22 +157,9 @@ function DashboardEnhanced() {
 
   useEffect(() => {
     fetchDashboardData();
-    fetchAiGreeting();
+    // Le message d'accueil reste LOCAL (welcome) : pas d'appel LLM/serveur
+    // (l'endpoint ai-greeting renvoyait 500 en boucle et gaspillait des tokens).
   }, [period, compare]);
-
-  const fetchAiGreeting = async () => {
-    // Hors-ligne : on garde le message d'accueil local (fallback), pas d'appel.
-    if (isNativePlatform() && isOffline()) return;
-    try {
-      // On utilise api.get car analyticsAPI n'a peut-être pas encore cette méthode
-      const response = await analyticsAPI.getAiGreeting();
-      if (response.data && response.data.success) {
-        setAiGreeting(response.data);
-      }
-    } catch (error) {
-      // Silencieux : le fallback local (welcome) est deja affiche.
-    }
-  };
 
   const fetchDashboardData = async () => {
     // Stale-while-revalidate : on affiche INSTANTANEMENT les derniers chiffres

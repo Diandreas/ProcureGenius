@@ -17,11 +17,15 @@ import {
 } from '@mui/icons-material';
 import { isNativePlatform, savePdfToDevice, sharePdf } from '../../services/pdfNative';
 
-// Worker pdf.js servi par le bundle (Vite resout l'URL du worker du package).
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+// Worker pdf.js.
+// - Natif (Capacitor) : worker local du bundle (servi correctement par la
+//   webview, fonctionne hors-ligne).
+// - Web : worker depuis un CDN. Le worker local .mjs est servi par Nginx en
+//   "application/octet-stream" -> rejete par le navigateur (MIME strict). Le
+//   CDN le sert avec le bon type JS.
+pdfjs.GlobalWorkerOptions.workerSrc = isNativePlatform()
+  ? new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
+  : `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const BG = '#1e222d';
 

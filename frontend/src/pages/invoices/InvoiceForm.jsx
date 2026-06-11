@@ -87,7 +87,7 @@ function InvoiceForm() {
     contract: null,
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
-    tax_rate: 20,
+    tax_rate: 0, // taxe 0 par defaut (ajustable)
     discount_type: 'percent',
     discount_value: 0,
     status: 'paid',
@@ -187,7 +187,7 @@ function InvoiceForm() {
         contract: invoice.contract,
         issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
         due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
-        tax_rate: invoice.tax_rate || 20,
+        tax_rate: invoice.tax_rate ?? 0,
         discount_type: invoice.discount_type || 'percent',
         discount_value: invoice.discount_value || 0,
         status: invoice.status || 'paid',

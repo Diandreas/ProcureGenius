@@ -44,13 +44,32 @@ const QuickCreateDialog = ({
     setSimilarEntities([]);
   };
 
+  // Nettoie le payload : les champs numeriques vides (cost_price, stock...) ne
+  // doivent PAS partir comme chaine vide/espaces -> sinon le backend renvoie
+  // "doit etre un nombre decimal" (500). On les convertit en nombre ou on les omet.
+  const buildPayload = (extra = {}) => {
+    const out = {};
+    fields.forEach((f) => {
+      const raw = formData[f.name];
+      const isEmpty = raw === undefined || raw === null || String(raw).trim() === '';
+      if (f.type === 'number') {
+        if (isEmpty) return; // on omet -> le backend applique son defaut (0/null)
+        const n = Number(String(raw).replace(',', '.'));
+        out[f.name] = Number.isFinite(n) ? n : undefined;
+      } else if (!isEmpty) {
+        out[f.name] = raw;
+      }
+    });
+    return { ...out, ...extra };
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
     setSimilarEntities([]);
 
     try {
-      const dataToSend = { ...formData, ...contextData };
+      const dataToSend = buildPayload(contextData);
       const response = await createFunction(dataToSend);
 
       if (onSuccess) {
@@ -82,7 +101,7 @@ const QuickCreateDialog = ({
   const handleForceCreate = async () => {
     setLoading(true);
     try {
-      const dataToSend = { ...formData, ...contextData, force_create: true };
+      const dataToSend = buildPayload({ ...contextData, force_create: true });
       const response = await createFunction(dataToSend);
       if (onSuccess) {
         onSuccess(response.data);

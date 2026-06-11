@@ -5,35 +5,35 @@
 export const clientFields = [
   {
     name: 'name',
-    label: 'clients:fields.name',
+    label: 'Nom du client *',
     type: 'text',
     required: true,
     fullWidth: true
   },
   {
     name: 'contact_person',
-    label: 'clients:fields.contactPerson',
+    label: 'Personne de contact',
     type: 'text',
     required: false,
     fullWidth: false
   },
   {
     name: 'email',
-    label: 'clients:fields.email',
+    label: 'Email',
     type: 'email',
     required: false,
     fullWidth: false
   },
   {
     name: 'phone',
-    label: 'clients:fields.phone',
+    label: 'Téléphone',
     type: 'tel',
     required: false,
     fullWidth: false
   },
   {
     name: 'address',
-    label: 'clients:fields.address',
+    label: 'Adresse',
     type: 'text',
     required: false,
     fullWidth: true,
