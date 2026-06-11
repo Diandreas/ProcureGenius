@@ -44,6 +44,7 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Mascot from '../../components/Mascot';
+import subscriptionAPI from '../../services/subscriptionAPI';
 
 function UserManagement() {
     const { enqueueSnackbar } = useSnackbar();
@@ -116,6 +117,7 @@ function UserManagement() {
         },
     };
     const [users, setUsers] = useState([]);
+    const [seatInfo, setSeatInfo] = useState({ seat_limit: null, active_users: 0 });
     const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -140,7 +142,20 @@ function UserManagement() {
 
     useEffect(() => {
         fetchUsers();
+        fetchSeatInfo();
     }, []);
+
+    const fetchSeatInfo = async () => {
+        try {
+            const res = await subscriptionAPI.getStatus();
+            const d = res?.data || res || {};
+            setSeatInfo({ seat_limit: d.seat_limit ?? null, active_users: d.active_users ?? 0 });
+        } catch { /* silencieux : le compteur reste masque */ }
+    };
+
+    // Nombre d'actifs derive de la liste (s'actualise apres invitation/suppression).
+    const activeUsers = users.filter(u => u.is_active).length;
+    const seatFull = seatInfo.seat_limit != null && activeUsers >= seatInfo.seat_limit;
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -308,13 +323,30 @@ function UserManagement() {
                         {t('settings:subtitle')}
                     </Typography>
                 </Box>
-                <Button
-                    variant="contained"
-                    startIcon={<PersonAdd />}
-                    onClick={() => setInviteDialogOpen(true)}
-                >
-                    {t('settings:userManagement.inviteUser')}
-                </Button>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    {seatInfo.seat_limit != null && (
+                        <Chip
+                            icon={<PersonAdd sx={{ fontSize: 16 }} />}
+                            label={`${activeUsers} / ${seatInfo.seat_limit} sièges`}
+                            color={seatFull ? 'warning' : 'default'}
+                            variant={seatFull ? 'filled' : 'outlined'}
+                            sx={{ fontWeight: 700 }}
+                        />
+                    )}
+                    {seatFull ? (
+                        <Button variant="contained" color="warning" onClick={() => navigate('/subscription/plans')}>
+                            Ajouter des sièges
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="contained"
+                            startIcon={<PersonAdd />}
+                            onClick={() => setInviteDialogOpen(true)}
+                        >
+                            {t('settings:userManagement.inviteUser')}
+                        </Button>
+                    )}
+                </Box>
             </Box>
 
             {/* Statistiques */}
@@ -369,81 +401,69 @@ function UserManagement() {
                 </Grid>
             </Grid>
 
-            {/* Table des utilisateurs */}
-            <Card>
-                <TableContainer>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>{t('settings:userManagement.table.user')}</TableCell>
-                                <TableCell>{t('settings:userManagement.table.email')}</TableCell>
-                                <TableCell>{t('settings:userManagement.table.role')}</TableCell>
-                                <TableCell>{t('settings:userManagement.table.modules')}</TableCell>
-                                <TableCell>{t('settings:userManagement.table.status')}</TableCell>
-                                <TableCell align="right">{t('settings:userManagement.table.actions')}</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {users.map((user) => (
-                                <TableRow key={user.id}>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                            <Avatar>
+            {/* Cartes utilisateurs */}
+            {users.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 6 }}>
+                    <Mascot pose="thinking" animation="float" size={80} />
+                    <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+                        {t('settings:userManagement.noUsers')}
+                    </Typography>
+                </Box>
+            ) : (
+                <Grid container spacing={2}>
+                    {users.map((user) => {
+                        const roleColor = getRoleChipColor(user.role);
+                        return (
+                            <Grid item xs={12} sm={6} md={4} key={user.id}>
+                                <Card sx={{
+                                    borderRadius: 3, height: '100%', position: 'relative',
+                                    border: '1px solid', borderColor: 'divider',
+                                    transition: 'transform 0.18s, box-shadow 0.18s',
+                                    '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 12px 28px -14px rgba(15,23,42,0.3)' },
+                                    opacity: user.is_active ? 1 : 0.7,
+                                }}>
+                                    <CardContent sx={{ p: 2.25 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                                            <Avatar sx={{ width: 46, height: 46, bgcolor: `${roleColor}.main`, fontWeight: 700 }}>
                                                 {user.first_name?.charAt(0) || user.username?.charAt(0) || '?'}
                                             </Avatar>
-                                            <Box>
-                                                <Typography variant="subtitle2">
+                                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                                                <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                     {user.first_name} {user.last_name}
                                                 </Typography>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    @{user.username}
+                                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {user.email}
                                                 </Typography>
                                             </Box>
+                                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, user)} sx={{ mt: -0.5, mr: -0.5 }}>
+                                                <MoreVert fontSize="small" />
+                                            </IconButton>
                                         </Box>
-                                    </TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={ROLES_CONFIG[user.role]?.label || user.role}
-                                            size="small"
-                                            color={getRoleChipColor(user.role)}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {user.enabled_modules?.length || 0} {t('settings:userManagement.table.modulesCount')}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        {user.is_active ? (
-                                            <Chip label={t('settings:userManagement.status.active')} size="small" color="success" icon={<CheckCircle />} />
-                                        ) : (
-                                            <Chip label={t('settings:userManagement.status.inactive')} size="small" color="default" icon={<Cancel />} />
-                                        )}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <IconButton
-                                            size="small"
-                                            onClick={(e) => handleMenuOpen(e, user)}
-                                        >
-                                            <MoreVert />
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
 
-                {users.length === 0 && (
-                    <Box sx={{ textAlign: 'center', py: 6 }}>
-                        <Mascot pose="thinking" animation="float" size={80} />
-                        <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
-                            {t('settings:userManagement.noUsers')}
-                        </Typography>
-                    </Box>
-                )}
-            </Card>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.75, flexWrap: 'wrap' }}>
+                                            <Chip
+                                                label={ROLES_CONFIG[user.role]?.label || user.role}
+                                                size="small"
+                                                color={roleColor}
+                                                sx={{ fontWeight: 600 }}
+                                            />
+                                            {user.is_active ? (
+                                                <Chip label={t('settings:userManagement.status.active')} size="small" color="success" variant="outlined" icon={<CheckCircle sx={{ fontSize: 14 }} />} />
+                                            ) : (
+                                                <Chip label={t('settings:userManagement.status.inactive')} size="small" variant="outlined" icon={<Cancel sx={{ fontSize: 14 }} />} />
+                                            )}
+                                        </Box>
+
+                                        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 1.25 }}>
+                                            {user.enabled_modules?.length || 0} {t('settings:userManagement.table.modulesCount', 'module(s)')}
+                                        </Typography>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        );
+                    })}
+                </Grid>
+            )}
 
             {/* Menu contextuel */}
             <Menu

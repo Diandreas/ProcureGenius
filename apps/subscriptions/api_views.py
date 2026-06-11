@@ -37,6 +37,17 @@ def list_plans(request):
     })
 
 
+def _count_active_users(organization):
+    """Nombre d'utilisateurs actifs dans l'organisation (pour le compteur de sièges)."""
+    if not organization:
+        return 0
+    try:
+        from apps.accounts.models import CustomUser
+        return CustomUser.objects.filter(organization=organization, is_active=True).count()
+    except Exception:
+        return 0
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_subscription_status(request):
@@ -75,6 +86,8 @@ def get_subscription_status(request):
             'plan_code': 'free',
             'quotas': {},
             'features': free_features,
+            'seat_limit': 1,
+            'active_users': _count_active_users(organization),
         })
 
     # Get quota status
@@ -96,6 +109,8 @@ def get_subscription_status(request):
         'subscription': SubscriptionSerializer(subscription).data,
         'quotas': quota_status,
         'features': features,
+        'seat_limit': subscription.seat_limit,
+        'active_users': _count_active_users(organization),
     }
 
     if warnings:
