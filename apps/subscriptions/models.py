@@ -185,6 +185,13 @@ class SubscriptionPlan(models.Model):
     stripe_price_id_yearly = models.CharField(
         max_length=255, blank=True, verbose_name=_("Stripe Price ID annuel")
     )
+    # Prix Stripe par siège supplémentaire (facturation par quantité, +X€/siège)
+    stripe_seat_price_id_monthly = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Stripe Price ID siège mensuel")
+    )
+    stripe_seat_price_id_yearly = models.CharField(
+        max_length=255, blank=True, verbose_name=_("Stripe Price ID siège annuel")
+    )
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

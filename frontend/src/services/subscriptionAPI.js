@@ -89,14 +89,24 @@ const subscriptionAPI = {
    * @param {string} planCode - Plan code (pro, business)
    * @param {string} billingPeriod - 'monthly' | 'yearly'
    */
-  createStripeCheckout: async (planCode, billingPeriod = 'monthly') => {
+  createStripeCheckout: async (planCode, billingPeriod = 'monthly', extraSeats = 0) => {
     const response = await api.post('/subscriptions/stripe/create-checkout/', {
       plan_code: planCode,
       billing_period: billingPeriod,
+      extra_seats: extraSeats,
     });
     if (response.data.checkout_url) {
       window.location.href = response.data.checkout_url;
     }
+    return response.data;
+  },
+
+  /**
+   * Ajuste le nombre de sièges supplémentaires (au-delà des inclus) sur
+   * l'abonnement payant existant (proratisé via Stripe).
+   */
+  manageSeats: async (extraSeats) => {
+    const response = await api.post('/subscriptions/manage-seats/', { extra_seats: extraSeats });
     return response.data;
   },
 

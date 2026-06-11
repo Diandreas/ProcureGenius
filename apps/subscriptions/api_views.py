@@ -87,6 +87,8 @@ def get_subscription_status(request):
             'quotas': {},
             'features': free_features,
             'seat_limit': 1,
+            'included_users': 1,
+            'extra_seats': 0,
             'active_users': _count_active_users(organization),
         })
 
@@ -110,6 +112,8 @@ def get_subscription_status(request):
         'quotas': quota_status,
         'features': features,
         'seat_limit': subscription.seat_limit,
+        'included_users': subscription.plan.included_users if subscription.plan else 1,
+        'extra_seats': subscription.extra_seats or 0,
         'active_users': _count_active_users(organization),
     }
 
@@ -476,6 +480,10 @@ def stripe_create_checkout(request):
 
     plan_code = request.data.get('plan_code')
     billing_period = request.data.get('billing_period', 'monthly')
+    try:
+        extra_seats = max(0, int(request.data.get('extra_seats', 0) or 0))
+    except (TypeError, ValueError):
+        extra_seats = 0
 
     if not plan_code:
         return Response({'error': _('plan_code is required')}, status=status.HTTP_400_BAD_REQUEST)
@@ -497,8 +505,41 @@ def stripe_create_checkout(request):
             billing_period=billing_period,
             success_url=success_url,
             cancel_url=cancel_url,
+            extra_seats=extra_seats,
         )
         return Response({'checkout_url': session.url, 'session_id': session.id})
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': _('Stripe error: ') + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def stripe_manage_seats(request):
+    """
+    Ajuste le nombre de sièges supplémentaires (au-delà des inclus) sur
+    l'abonnement payant existant, proratisé.
+    POST /api/v1/subscriptions/manage-seats/   Body: { extra_seats: int }
+    """
+    from .stripe_service import StripeService
+
+    organization = request.user.organization
+    if not organization:
+        return Response({'error': _('No organization found')}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        extra_seats = max(0, int(request.data.get('extra_seats', 0) or 0))
+    except (TypeError, ValueError):
+        return Response({'error': _('extra_seats invalide')}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        sub = StripeService.set_seats(organization, extra_seats)
+        return Response({
+            'success': True,
+            'extra_seats': sub.extra_seats,
+            'seat_limit': sub.seat_limit,
+        })
     except ValueError as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:

@@ -28,6 +28,7 @@ urlpatterns = [
 
     # Stripe
     path('stripe/create-checkout/', api_views.stripe_create_checkout, name='stripe_create_checkout'),
+    path('manage-seats/', api_views.stripe_manage_seats, name='stripe_manage_seats'),
     path('stripe/confirm-session/', api_views.stripe_confirm_session, name='stripe_confirm_session'),
     path('stripe/webhook/', api_views.stripe_webhook, name='stripe_webhook'),
     path('stripe/portal/', api_views.stripe_portal, name='stripe_portal'),

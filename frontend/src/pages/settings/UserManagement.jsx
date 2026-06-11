@@ -45,6 +45,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Mascot from '../../components/Mascot';
 import subscriptionAPI from '../../services/subscriptionAPI';
+import SeatManagerDialog from '../../components/subscription/SeatManagerDialog';
 
 function UserManagement() {
     const { enqueueSnackbar } = useSnackbar();
@@ -118,6 +119,7 @@ function UserManagement() {
     };
     const [users, setUsers] = useState([]);
     const [seatInfo, setSeatInfo] = useState({ seat_limit: null, active_users: 0 });
+    const [seatDialogOpen, setSeatDialogOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -149,7 +151,7 @@ function UserManagement() {
         try {
             const res = await subscriptionAPI.getStatus();
             const d = res?.data || res || {};
-            setSeatInfo({ seat_limit: d.seat_limit ?? null, active_users: d.active_users ?? 0 });
+            setSeatInfo(d); // statut complet (seat_limit, included_users, extra_seats, plan_code...)
         } catch { /* silencieux : le compteur reste masque */ }
     };
 
@@ -330,11 +332,12 @@ function UserManagement() {
                             label={`${activeUsers} / ${seatInfo.seat_limit} sièges`}
                             color={seatFull ? 'warning' : 'default'}
                             variant={seatFull ? 'filled' : 'outlined'}
-                            sx={{ fontWeight: 700 }}
+                            onClick={() => setSeatDialogOpen(true)}
+                            sx={{ fontWeight: 700, cursor: 'pointer' }}
                         />
                     )}
                     {seatFull ? (
-                        <Button variant="contained" color="warning" onClick={() => navigate('/subscription/plans')}>
+                        <Button variant="contained" color="warning" onClick={() => setSeatDialogOpen(true)}>
                             Ajouter des sièges
                         </Button>
                     ) : (
@@ -674,6 +677,14 @@ function UserManagement() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Gestion des sièges (achat de sièges supplémentaires, proratisé) */}
+            <SeatManagerDialog
+                open={seatDialogOpen}
+                status={seatInfo}
+                onClose={() => setSeatDialogOpen(false)}
+                onUpdated={() => fetchSeatInfo()}
+            />
         </Box>
     );
 }

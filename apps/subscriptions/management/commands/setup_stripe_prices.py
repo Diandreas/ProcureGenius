@@ -15,8 +15,9 @@ from apps.subscriptions.models import SubscriptionPlan
 
 
 # Plans payants à configurer dans Stripe (les autres : free=gratuit,
-# enterprise=sur devis, n'ont pas de prix Stripe).
-PAID_PLAN_CODES = ['pro', 'business']
+# enterprise=sur devis, n'ont pas de prix Stripe). On inclut les codes legacy
+# (standard/premium) tant qu'ils sont encore proposés/actifs.
+PAID_PLAN_CODES = ['pro', 'business', 'standard', 'premium']
 
 
 class Command(BaseCommand):
@@ -44,45 +45,62 @@ class Command(BaseCommand):
         plans = SubscriptionPlan.objects.filter(code__in=PAID_PLAN_CODES)
 
         for plan in plans:
-            if plan.stripe_price_id_monthly and plan.stripe_price_id_yearly and not force:
-                self.stdout.write(
-                    f'[SKIP] {plan.name} déjà lié '
-                    f'(m={plan.stripe_price_id_monthly}, y={plan.stripe_price_id_yearly})'
-                )
+            currency = (plan.currency or 'EUR').lower()
+            update_fields = []
+            seat_unit = float(plan.extra_user_price or 0)
+
+            need_plan = force or not (plan.stripe_price_id_monthly and plan.stripe_price_id_yearly)
+            need_seat = seat_unit > 0 and (force or not (plan.stripe_seat_price_id_monthly and plan.stripe_seat_price_id_yearly))
+
+            if not need_plan and not need_seat:
+                self.stdout.write(f'[SKIP] {plan.name} déjà lié (plan + sièges).')
                 continue
 
-            currency = (plan.currency or 'EUR').lower()
+            # Prix du plan (mensuel/annuel).
+            if need_plan:
+                product = stripe.Product.create(
+                    name=f'Procura {plan.name}',
+                    description=plan.description[:300] if plan.description else None,
+                    metadata={'plan_code': plan.code},
+                )
+                price_monthly = stripe.Price.create(
+                    product=product.id, unit_amount=int(plan.price_monthly * 100),
+                    currency=currency, recurring={'interval': 'month'},
+                    metadata={'plan_code': plan.code, 'period': 'monthly'},
+                )
+                price_yearly = stripe.Price.create(
+                    product=product.id, unit_amount=int(plan.price_yearly * 100),
+                    currency=currency, recurring={'interval': 'year'},
+                    metadata={'plan_code': plan.code, 'period': 'yearly'},
+                )
+                plan.stripe_price_id_monthly = price_monthly.id
+                plan.stripe_price_id_yearly = price_yearly.id
+                update_fields += ['stripe_price_id_monthly', 'stripe_price_id_yearly']
 
-            # Produit Stripe (réutilisé via metadata plan_code).
-            product = stripe.Product.create(
-                name=f'Procura {plan.name}',
-                description=plan.description[:300] if plan.description else None,
-                metadata={'plan_code': plan.code},
-            )
+            # Prix par siège supplémentaire (récurrent, quantité variable).
+            if need_seat:
+                seat_product = stripe.Product.create(
+                    name=f'Procura {plan.name} — siège supplémentaire',
+                    metadata={'plan_code': plan.code, 'kind': 'seat'},
+                )
+                seat_monthly = stripe.Price.create(
+                    product=seat_product.id, unit_amount=int(seat_unit * 100),
+                    currency=currency, recurring={'interval': 'month'},
+                    metadata={'plan_code': plan.code, 'kind': 'seat', 'period': 'monthly'},
+                )
+                seat_yearly = stripe.Price.create(
+                    product=seat_product.id, unit_amount=int(seat_unit * 12 * 100),
+                    currency=currency, recurring={'interval': 'year'},
+                    metadata={'plan_code': plan.code, 'kind': 'seat', 'period': 'yearly'},
+                )
+                plan.stripe_seat_price_id_monthly = seat_monthly.id
+                plan.stripe_seat_price_id_yearly = seat_yearly.id
+                update_fields += ['stripe_seat_price_id_monthly', 'stripe_seat_price_id_yearly']
 
-            price_monthly = stripe.Price.create(
-                product=product.id,
-                unit_amount=int(plan.price_monthly * 100),
-                currency=currency,
-                recurring={'interval': 'month'},
-                metadata={'plan_code': plan.code, 'period': 'monthly'},
-            )
-            price_yearly = stripe.Price.create(
-                product=product.id,
-                unit_amount=int(plan.price_yearly * 100),
-                currency=currency,
-                recurring={'interval': 'year'},
-                metadata={'plan_code': plan.code, 'period': 'yearly'},
-            )
-
-            plan.stripe_price_id_monthly = price_monthly.id
-            plan.stripe_price_id_yearly = price_yearly.id
-            plan.save(update_fields=['stripe_price_id_monthly', 'stripe_price_id_yearly'])
-
+            plan.save(update_fields=update_fields)
             self.stdout.write(self.style.SUCCESS(
-                f'[OK] {plan.name}: produit {product.id} | '
-                f'mensuel {price_monthly.id} ({plan.price_monthly}{currency.upper()}) | '
-                f'annuel {price_yearly.id} ({plan.price_yearly}{currency.upper()})'
+                f'[OK] {plan.name}: plan(m={plan.stripe_price_id_monthly}, '
+                f'y={plan.stripe_price_id_yearly}) | siège m={plan.stripe_seat_price_id_monthly or "—"}'
             ))
 
         self.stdout.write(self.style.SUCCESS('\n[SUCCESS] Prix Stripe configurés.'))

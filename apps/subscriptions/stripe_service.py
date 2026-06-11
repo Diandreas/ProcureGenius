@@ -53,8 +53,8 @@ class StripeService:
         return customer.id
 
     @staticmethod
-    def create_checkout_session(organization, user, plan, billing_period, success_url, cancel_url):
-        """Create a Stripe Checkout Session for the given plan."""
+    def create_checkout_session(organization, user, plan, billing_period, success_url, cancel_url, extra_seats=0):
+        """Create a Stripe Checkout Session for the given plan (+ optional seats)."""
         StripeService._ensure_configured()
         price_id = (
             plan.stripe_price_id_yearly
@@ -66,10 +66,22 @@ class StripeService:
 
         customer_id = StripeService.get_or_create_customer(organization, user)
 
+        line_items = [{'price': price_id, 'quantity': 1}]
+
+        # Sièges supplémentaires (facturés à la quantité).
+        extra_seats = int(extra_seats or 0)
+        seat_price_id = (
+            plan.stripe_seat_price_id_yearly
+            if billing_period == 'yearly'
+            else plan.stripe_seat_price_id_monthly
+        )
+        if extra_seats > 0 and seat_price_id:
+            line_items.append({'price': seat_price_id, 'quantity': extra_seats})
+
         session = stripe.checkout.Session.create(
             customer=customer_id,
             payment_method_types=['card'],
-            line_items=[{'price': price_id, 'quantity': 1}],
+            line_items=line_items,
             mode='subscription',
             success_url=success_url + '?session_id={CHECKOUT_SESSION_ID}',
             cancel_url=cancel_url,
@@ -77,16 +89,68 @@ class StripeService:
                 'organization_id': str(organization.id),
                 'plan_code': plan.code,
                 'billing_period': billing_period,
+                'extra_seats': str(extra_seats),
             },
             subscription_data={
                 'metadata': {
                     'organization_id': str(organization.id),
                     'plan_code': plan.code,
+                    'extra_seats': str(extra_seats),
                 }
             },
             allow_promotion_codes=True,
         )
         return session
+
+    @staticmethod
+    def set_seats(organization, total_extra_seats):
+        """Met à jour le nombre de sièges supplémentaires sur l'abonnement Stripe
+        existant (proratisé), et synchronise Subscription.extra_seats.
+
+        total_extra_seats = nombre de sièges AU-DELÀ de ceux inclus dans le plan.
+        """
+        StripeService._ensure_configured()
+        try:
+            sub = organization.subscription
+        except Exception:
+            sub = None
+        if not sub or not sub.stripe_subscription_id:
+            raise ValueError("Aucun abonnement payant actif : passez à un plan payant pour ajouter des sièges.")
+
+        plan = sub.plan
+        seat_price_id = (
+            plan.stripe_seat_price_id_yearly
+            if sub.billing_period == 'yearly'
+            else plan.stripe_seat_price_id_monthly
+        )
+        if not seat_price_id:
+            raise ValueError("Sièges supplémentaires indisponibles pour ce plan.")
+
+        total_extra_seats = max(0, int(total_extra_seats or 0))
+        stripe_sub = stripe.Subscription.retrieve(sub.stripe_subscription_id)
+        items = stripe_sub['items']['data']
+        seat_item = next(
+            (i for i in items
+             if i['price']['id'] == seat_price_id or (i['price'].get('metadata') or {}).get('kind') == 'seat'),
+            None,
+        )
+
+        if total_extra_seats == 0:
+            if seat_item:
+                stripe.SubscriptionItem.delete(seat_item['id'], proration_behavior='create_prorations')
+        elif seat_item:
+            stripe.SubscriptionItem.modify(seat_item['id'], quantity=total_extra_seats, proration_behavior='create_prorations')
+        else:
+            stripe.SubscriptionItem.create(
+                subscription=sub.stripe_subscription_id,
+                price=seat_price_id,
+                quantity=total_extra_seats,
+                proration_behavior='create_prorations',
+            )
+
+        sub.extra_seats = total_extra_seats
+        sub.save(update_fields=['extra_seats'])
+        return sub
 
     @staticmethod
     def create_portal_session(organization, return_url):
@@ -196,6 +260,11 @@ class StripeService:
         sub.stripe_customer_id = customer_id
         sub.stripe_subscription_id = stripe_sub_id
         sub.stripe_price_id = session.get('metadata', {}).get('price_id', '')
+        # Sièges supplémentaires payés (depuis la metadata du checkout).
+        try:
+            sub.extra_seats = int(session.get('metadata', {}).get('extra_seats', 0) or 0)
+        except (TypeError, ValueError):
+            sub.extra_seats = 0
         sub.current_period_start = period_start
         sub.current_period_end = period_end
         sub.save()
@@ -263,6 +332,28 @@ class StripeService:
                 'trialing': 'trial',
             }
             sub.status = status_map.get(stripe_status, sub.status)
+
+            # Synchronise les sièges payés depuis la quantité de la ligne "siège"
+            # (ex. si l'utilisateur ajuste la quantité via le portail Stripe).
+            try:
+                plan = sub.plan
+                seat_price_ids = {
+                    plan.stripe_seat_price_id_monthly,
+                    plan.stripe_seat_price_id_yearly,
+                } if plan else set()
+                seat_price_ids.discard('')
+                items = (stripe_sub.get('items') or {}).get('data') or []
+                seat_qty = 0
+                for it in items:
+                    price = it.get('price') or {}
+                    is_seat = price.get('id') in seat_price_ids or (price.get('metadata') or {}).get('kind') == 'seat'
+                    if is_seat:
+                        seat_qty += int(it.get('quantity') or 0)
+                if items:  # on ne touche extra_seats que si on a bien la liste des lignes
+                    sub.extra_seats = seat_qty
+            except Exception as e:
+                logger.warning(f"Seat sync failed for {stripe_sub_id}: {e}")
+
             sub.save()
         except Subscription.DoesNotExist:
             pass
