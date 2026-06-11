@@ -242,32 +242,60 @@ function OnboardingSetup() {
   const progressPercent = Math.round(((activeStep + 1) / steps.length) * 100);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 4, sm: 6 } }}>
+    <Box sx={{
+      minHeight: '100vh', py: { xs: 4, sm: 6 },
+      background: (theme) => theme.palette.mode === 'dark'
+        ? 'radial-gradient(1200px 600px at 50% -10%, rgba(37,99,235,0.18), transparent), #111827'
+        : 'radial-gradient(1200px 600px at 50% -10%, rgba(37,99,235,0.10), transparent), #eef1f6',
+    }}>
       <Container maxWidth="md">
         {/* Header */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+          <Box sx={{
+            width: 72, height: 72, mx: 'auto', mb: 1.5, borderRadius: '50%',
+            overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            bgcolor: '#fff',
+            boxShadow: '0 10px 30px -8px rgba(37,99,235,0.45)',
+          }}>
+            <Box component="img" src="/icon-512.png" alt="Procura"
+              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => { e.target.style.display = 'none'; }} />
+          </Box>
+          <Typography variant="h4" sx={{
+            fontWeight: 800, mb: 0.5,
+            background: 'linear-gradient(90deg, #2563eb, #7c3aed)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
             Bienvenue sur Procura
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Deux étapes rapides pour démarrer
+            Quelques étapes rapides pour configurer votre espace
           </Typography>
         </Box>
 
         {/* Progress */}
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
               Étape {activeStep + 1} sur {steps.length} — {steps[activeStep]}
             </Typography>
-            <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
+            <Typography variant="body2" color="primary" sx={{ fontWeight: 700 }}>
               {progressPercent}%
             </Typography>
           </Box>
-          <LinearProgress variant="determinate" value={progressPercent} sx={{ borderRadius: 4, height: 6 }} />
+          <LinearProgress variant="determinate" value={progressPercent}
+            sx={{
+              borderRadius: 4, height: 8,
+              bgcolor: 'rgba(37,99,235,0.10)',
+              '& .MuiLinearProgress-bar': { borderRadius: 4, background: 'linear-gradient(90deg, #2563eb, #7c3aed)' },
+            }} />
         </Box>
 
-        <Card variant="outlined" sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+        <Card sx={{
+          borderRadius: 4, border: 'none',
+          boxShadow: '0 18px 50px -20px rgba(15,23,42,0.25)',
+          overflow: 'hidden',
+        }}>
           <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
             {/* ── Étape 1 : Entreprise ── */}
             {activeStep === 0 && (

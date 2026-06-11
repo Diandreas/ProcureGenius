@@ -132,11 +132,9 @@ function Register() {
         }
         if (response.data.user) localStorage.setItem('user', JSON.stringify(response.data.user));
         dispatch(setAuthenticated({ token: response.data.token, user: response.data.user }));
-        if (response.data.requires_onboarding) {
-          window.location.replace('/onboarding');
-        } else {
-          window.location.replace('/dashboard');
-        }
+        // Nouveau compte : on va DIRECTEMENT a l'onboarding (pas de rebond par
+        // le dashboard qui re-verifie ensuite l'etat d'onboarding).
+        window.location.replace('/onboarding');
       } else {
         setSuccess(true);
         setTimeout(() => navigate('/login?registered=true'), 2000);
