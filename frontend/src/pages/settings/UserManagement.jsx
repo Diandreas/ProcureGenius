@@ -42,11 +42,13 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import Mascot from '../../components/Mascot';
 
 function UserManagement() {
     const { enqueueSnackbar } = useSnackbar();
     const { t } = useTranslation(['settings', 'common']);
+    const navigate = useNavigate();
 
     // Modules disponibles
     const AVAILABLE_MODULES = [
@@ -192,6 +194,15 @@ function UserManagement() {
                 setInviteDialogOpen(false);
                 setInviteForm({ email: '', first_name: '', last_name: '', role: 'buyer' });
                 fetchUsers();
+            } else if (response.status === 402) {
+                // Limite de sièges atteinte : message clair + invitation à upgrader.
+                const errData = await response.json().catch(() => ({}));
+                setInviteDialogOpen(false);
+                enqueueSnackbar(
+                    errData.error || "Limite de sièges atteinte. Passez à un plan supérieur pour ajouter des utilisateurs.",
+                    { variant: 'warning', persist: false, action: null }
+                );
+                navigate('/subscription/plans');
             } else {
                 const errData = await response.json().catch(() => ({}));
                 throw new Error(errData.error || 'Failed to invite user');
@@ -501,6 +512,37 @@ function UserManagement() {
                                     ))}
                                 </Select>
                             </FormControl>
+                        </Grid>
+
+                        {/* Apercu clair de ce que le role permet */}
+                        <Grid item xs={12}>
+                            <Box sx={{ p: 1.75, borderRadius: 2, bgcolor: 'action.hover' }}>
+                                <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary' }}>
+                                    Ce rôle peut :
+                                </Typography>
+                                <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                                    {(() => {
+                                        const p = ROLES_CONFIG[inviteForm.role]?.permissions || {};
+                                        const caps = [
+                                            [p.can_manage_users, 'Gérer les utilisateurs'],
+                                            [p.can_manage_settings, 'Gérer les paramètres'],
+                                            [p.can_view_analytics, 'Voir les analyses'],
+                                            [p.can_approve_purchases, 'Approuver les achats'],
+                                        ];
+                                        const active = caps.filter(([on]) => on);
+                                        if (active.length === 0) return (
+                                            <Typography variant="body2" color="text.secondary">Consultation uniquement.</Typography>
+                                        );
+                                        return active.map(([, label], i) => (
+                                            <Chip key={i} size="small" icon={<CheckCircle sx={{ fontSize: 14 }} />} label={label}
+                                                sx={{ bgcolor: 'success.50', color: 'success.dark', fontWeight: 600, fontSize: '0.72rem' }} />
+                                        ));
+                                    })()}
+                                </Box>
+                                <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 1 }}>
+                                    Accès : {(ROLES_CONFIG[inviteForm.role]?.modules || []).length} module(s). Personnalisable après création.
+                                </Typography>
+                            </Box>
                         </Grid>
                     </Grid>
 

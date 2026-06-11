@@ -137,6 +137,22 @@ function Invoices() {
       // Actions pour le desktop à droite
       actions: (
         <Stack direction="row" spacing={1.5} alignItems="center">
+          {/* Importer une facture (scan/IA) puis personnaliser dans le formulaire */}
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<CloudUpload />}
+            onClick={() => navigate('/ai-chat?action=scan&type=invoice')}
+            sx={{
+              borderRadius: 2.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              px: { xs: 1.5, sm: 2.5 },
+              display: { xs: 'none', sm: 'inline-flex' },
+            }}
+          >
+            Importer
+          </Button>
           <Button
             variant="contained"
             color="primary"
