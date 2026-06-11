@@ -11,7 +11,7 @@ export const PLANS = [
     badge: null,
     tagline: 'Pour démarrer et découvrir Procura, sans engagement.',
     cta: 'Commencer',
-    features: ['30 factures / mois', '20 clients', '50 produits', 'Tableau de bord', 'Export PDF'],
+    features: ['1 utilisateur', '30 factures / mois', '20 clients', '50 produits', 'Tableau de bord', 'Export PDF'],
     missing: ['Bons de commande', 'Fournisseurs', 'Comptabilité', 'Contrats', 'Assistant IA'],
   },
   {
@@ -23,6 +23,7 @@ export const PLANS = [
     tagline: 'Pour les PME qui veulent travailler vite et bien.',
     cta: 'Choisir Pro',
     features: [
+      "Jusqu'à 5 utilisateurs",
       'Factures, clients & produits illimités',
       'Bons de commande illimités',
       'Fournisseurs illimités',
@@ -42,6 +43,7 @@ export const PLANS = [
     tagline: 'Pour les équipes qui veulent tout, sans aucune limite.',
     cta: 'Choisir Business',
     features: [
+      'Utilisateurs illimités',
       'Tout le plan Pro, sans limites',
       'Assistant IA illimité',
       'E-Sourcing & appels d’offres',

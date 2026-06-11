@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Container, Typography, Button, Grid, Chip,
   Stack, Divider, CircularProgress, ToggleButtonGroup, ToggleButton, Alert,
+  Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
-import { Check, Close, ArrowForward, OpenInNew, Bolt } from '@mui/icons-material';
+import { Check, Close, ArrowForward, OpenInNew, Bolt, WarningAmber } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
 import subscriptionAPI from '../../services/subscriptionAPI';
@@ -21,6 +22,11 @@ export default function InternalPricing() {
   const [billing, setBilling] = useState('monthly');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
+  const [confirmPlan, setConfirmPlan] = useState(null); // downgrade a confirmer
+
+  // Rang des plans pour detecter un downgrade.
+  const RANK = { free: 0, pro: 1, business: 2, enterprise: 3 };
+  const isDowngrade = (target) => (RANK[target] ?? 0) < (RANK[current] ?? 0);
 
   useEffect(() => {
     (async () => {
@@ -33,8 +39,8 @@ export default function InternalPricing() {
     })();
   }, []);
 
-  const handleCTA = async (plan) => {
-    if (plan.code === current) return;
+  // Execute reellement le changement de plan (apres confirmation si downgrade).
+  const doChangePlan = async (plan) => {
     if (plan.code === 'free') {
       setBusy('free');
       try { await subscriptionAPI.startTrial('free'); enqueueSnackbar('Plan gratuit activé.', { variant: 'success' }); setCurrent('free'); }
@@ -54,6 +60,16 @@ export default function InternalPricing() {
       enqueueSnackbar(detail || 'Impossible de lancer le paiement. Réessayez.', { variant: 'error' });
       setBusy(null);
     }
+  };
+
+  const handleCTA = (plan) => {
+    if (plan.code === current) return;
+    // Downgrade : on previent l'utilisateur des privileges perdus avant d'agir.
+    if (isDowngrade(plan.code)) {
+      setConfirmPlan(plan);
+      return;
+    }
+    doChangePlan(plan);
   };
 
   const priceOf = (plan) => billing === 'yearly' ? plan.priceYearly : plan.priceMonthly;
@@ -165,6 +181,43 @@ export default function InternalPricing() {
       <Alert severity="info" sx={{ mt: 4, borderRadius: 2 }}>
         Paiement sécurisé par Stripe. Après le paiement, votre compte est activé automatiquement et vous êtes redirigé vers votre tableau de bord.
       </Alert>
+
+      {/* Confirmation de downgrade : on liste les privileges perdus. */}
+      <Dialog open={Boolean(confirmPlan)} onClose={() => setConfirmPlan(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+          <WarningAmber sx={{ color: GOLD }} /> Confirmer le changement
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            En passant au plan <strong>{confirmPlan?.name}</strong>, vous perdez l'accès à :
+          </Typography>
+          <Stack spacing={0.75}>
+            {(confirmPlan?.missing || []).map((f, i) => (
+              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Close sx={{ fontSize: 16, color: 'error.main' }} />
+                <Typography variant="body2">{f}</Typography>
+              </Box>
+            ))}
+            {(!confirmPlan?.missing || confirmPlan.missing.length === 0) && (
+              <Typography variant="body2" color="text.secondary">
+                Vos quotas (factures, clients, utilisateurs…) seront réduits selon le plan {confirmPlan?.name}.
+              </Typography>
+            )}
+          </Stack>
+          <Alert severity="warning" sx={{ mt: 2, borderRadius: 2 }}>
+            Vos données sont conservées, mais ces fonctionnalités deviennent inaccessibles tant que vous n'êtes pas sur un plan supérieur.
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmPlan(null)}>Annuler</Button>
+          <Button
+            variant="contained" color="warning"
+            onClick={() => { const p = confirmPlan; setConfirmPlan(null); doChangePlan(p); }}
+          >
+            Confirmer le passage à {confirmPlan?.name}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

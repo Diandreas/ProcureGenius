@@ -221,7 +221,8 @@ function MainLayout() {
     { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'ai-assistant', isCore: true },
 
     { divider: true },
-    { text: 'Comptabilité', iconSrc: '/icon/analysis.png', path: '/accounting', moduleId: 'accounting', isCore: true, matchPrefix: '/accounting' },
+    // Comptabilite : depend du module 'accounting' (Pro/Business), pas core.
+    { text: 'Comptabilité', iconSrc: '/icon/analysis.png', path: '/accounting', moduleId: 'accounting', isCore: false, matchPrefix: '/accounting' },
   ];
 
   const [userPermissions, setUserPermissions] = useState(null);

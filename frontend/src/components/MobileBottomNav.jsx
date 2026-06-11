@@ -75,7 +75,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     { label: t('navigation:mobile.suppliers', 'Fournisseurs'), value: '/suppliers', icon: '/icon/supplier.png', moduleId: 'suppliers', isCore: false },
     { label: t('navigation:mobile.orders', 'Commandes'), value: '/purchase-orders', icon: '/icon/purchase-order.png', moduleId: 'purchase-orders', isCore: false },
     { label: 'Contrats', value: '/contracts', icon: '/icon/contract.png', moduleId: 'contracts', isCore: false },
-    { label: 'Comptabilité', value: '/accounting', icon: '/icon/analysis.png', moduleId: 'dashboard', isCore: true },
+    { label: 'Comptabilité', value: '/accounting', icon: '/icon/analysis.png', moduleId: 'accounting', isCore: false },
   ];
 
   const navigationItems = allNavigationItems.filter(item => {
