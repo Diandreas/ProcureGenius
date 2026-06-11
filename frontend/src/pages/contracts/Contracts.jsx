@@ -9,7 +9,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import {
   Search, FilterList, Description, AttachMoney, CheckCircle, Schedule,
-  Gavel, TrendingUp, Warning, Edit, FactCheck,
+  Gavel, TrendingUp, Warning, Edit, FactCheck, CalendarToday,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { contractsAPI } from '../../services/api';
@@ -273,6 +273,107 @@ function Contracts() {
     );
   };
 
+  // Vignette contrat (carte) — affichage en grille, cohérent avec les autres modules.
+  const ContractCard = ({ contract, index }) => {
+    const statusColor = STATUS_COLOR_MAP[contract.status] || '#94a3b8';
+    const displayTitle = contract.title || contract.contract_type || '—';
+    const expSoon = (() => {
+      if (!contract.end_date) return false;
+      const diff = (new Date(contract.end_date) - new Date()) / (1000 * 60 * 60 * 24);
+      return diff > 0 && diff <= 30;
+    })();
+    return (
+      <Grid item xs={12} sm={6} md={4} lg={3}>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, delay: Math.min(index * 0.03, 0.3) }}
+          style={{ height: '100%' }}
+        >
+          <Card
+            onClick={() => navigate(`/contracts/${contract.id}`)}
+            sx={{
+              height: '100%', borderRadius: 3, cursor: 'pointer', position: 'relative',
+              border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+              borderTop: `3px solid ${statusColor}`,
+              boxShadow: theme.palette.mode === 'light'
+                ? '6px 6px 16px #d6dce8, -6px -6px 16px #ffffff'
+                : '6px 6px 16px #14191f, -6px -6px 16px #283041',
+              transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+              '&:hover': {
+                transform: 'translateY(-3px)',
+                boxShadow: `0 14px 30px -12px ${alpha(statusColor, 0.5)}`,
+                '& .contract-edit': { opacity: 1 },
+              },
+            }}
+          >
+            <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+              {/* Statut + édition */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.25 }}>
+                <Chip
+                  label={getStatusLabel(contract.status)}
+                  size="small"
+                  sx={{ height: 22, fontSize: '0.68rem', fontWeight: 700, bgcolor: alpha(statusColor, 0.12), color: statusColor, border: 'none' }}
+                />
+                <IconButton
+                  className="contract-edit"
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${contract.id}/edit`); }}
+                  sx={{ opacity: { xs: 1, md: 0 }, transition: 'opacity 0.15s', width: 28, height: 28, bgcolor: alpha(theme.palette.primary.main, 0.08), color: 'primary.main' }}
+                >
+                  <Edit sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Box>
+
+              {/* Titre */}
+              <Typography sx={{
+                fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.3, mb: 0.5,
+                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>
+                {displayTitle}
+              </Typography>
+
+              {/* Numéro */}
+              <Typography variant="caption" sx={{ color: 'text.disabled', fontFamily: 'monospace', fontSize: '0.72rem' }}>
+                {contract.contract_number || '—'}
+              </Typography>
+
+              {/* Fournisseur */}
+              {contract.supplier_name && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1 }}>
+                  <Avatar sx={{ width: 22, height: 22, fontSize: '0.7rem', bgcolor: alpha(theme.palette.primary.main, 0.12), color: 'primary.main' }}>
+                    {contract.supplier_name.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {contract.supplier_name}
+                  </Typography>
+                </Box>
+              )}
+
+              <Box sx={{ flex: 1 }} />
+              <Divider sx={{ my: 1.5 }} />
+
+              {/* Pied : dates + montant */}
+              <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: expSoon ? '#f97316' : 'text.disabled' }}>
+                  <CalendarToday sx={{ fontSize: 13 }} />
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', fontWeight: expSoon ? 700 : 400 }}>
+                    {contract.end_date ? formatDate(contract.end_date) : '—'}
+                  </Typography>
+                </Box>
+                {contract.total_value > 0 && (
+                  <Typography sx={{ fontWeight: 800, fontSize: '0.95rem' }}>
+                    {formatCurrency(contract.total_value)}
+                  </Typography>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </Grid>
+    );
+  };
+
   if (loading) {
     return <LoadingState message={t('contracts:messages.loading', 'Chargement des contrats...')} />;
   }
@@ -388,62 +489,25 @@ function Contracts() {
               </Box>
             )}
 
-            {filteredContracts.length === 0 ? (
-              <Box sx={{ p: 4 }}>
-                <EmptyState
-                  title={t('contracts:labels.noContracts', 'Aucun contrat')}
-                  description={t('contracts:labels.noContractsDescription', 'Créez votre premier contrat')}
-                  actionLabel={t('contracts:newContract', 'Nouveau contrat')}
-                  onAction={() => navigate('/contracts/new')}
-                />
-              </Box>
-            ) : (
-              <>
-                {/* Header desktop */}
-                {!isMobile && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', px: 2.5, py: 1, bgcolor: alpha(theme.palette.action.selected, 0.04), borderBottom: `1px solid ${alpha(theme.palette.divider, 0.4)}` }}>
-                    <Box sx={{ width: 3, flexShrink: 0 }} />{/* spacer for borderLeft */}
-                    <Box sx={{ width: 140, flexShrink: 0, pl: 1.5 }}>
-                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
-                        Numéro
-                      </Typography>
-                    </Box>
-                    <Box sx={{ flex: 1, pr: 2 }}>
-                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
-                        Titre / Fournisseur
-                      </Typography>
-                    </Box>
-                    <Box sx={{ width: 120, textAlign: 'right', pr: 2 }}>
-                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
-                        Montant
-                      </Typography>
-                    </Box>
-                    <Box sx={{ width: 120, pr: 2 }}>
-                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
-                        Statut
-                      </Typography>
-                    </Box>
-                    <Box sx={{ width: 100, pr: 2 }}>
-                      <Typography variant="caption" color="text.disabled" fontWeight={600} sx={{ textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: 0.6 }}>
-                        Fin
-                      </Typography>
-                    </Box>
-                    <Box sx={{ width: 40 }} />
-                  </Box>
-                )}
-                <AnimatePresence>
-                  {filteredContracts.map((contract, index) => (
-                    <ContractRow
-                      key={contract.id}
-                      contract={contract}
-                      index={index}
-                      isLast={index === filteredContracts.length - 1}
-                    />
-                  ))}
-                </AnimatePresence>
-              </>
-            )}
           </Card>
+
+          {/* Liste en vignettes (cartes) */}
+          {filteredContracts.length === 0 ? (
+            <Box sx={{ mt: 2 }}>
+              <EmptyState
+                title={t('contracts:labels.noContracts', 'Aucun contrat')}
+                description={t('contracts:labels.noContractsDescription', 'Créez votre premier contrat')}
+                actionLabel={t('contracts:newContract', 'Nouveau contrat')}
+                onAction={() => navigate('/contracts/new')}
+              />
+            </Box>
+          ) : (
+            <Grid container spacing={isMobile ? 1.5 : 2} sx={{ mt: 0.5 }}>
+              {filteredContracts.map((contract, index) => (
+                <ContractCard key={contract.id} contract={contract} index={index} />
+              ))}
+            </Grid>
+          )}
         </Box>
       )}
 
