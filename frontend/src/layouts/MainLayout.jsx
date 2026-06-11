@@ -50,6 +50,8 @@ import TrialChip from '../components/TrialChip';
 // Clic sur le logo : web -> landing marketing ; app mobile -> dashboard.
 const LOGO_TARGET = isNativePlatform() ? '/dashboard' : '/landing';
 import { useModules } from '../contexts/ModuleContext';
+import UpgradeLockDialog from '../components/common/UpgradeLockDialog';
+import { Lock as LockIcon } from '@mui/icons-material';
 import { useColorMode } from '../App';
 import { useHeader } from '../contexts/HeaderContext';
 import MobileBottomNav from '../components/MobileBottomNav';
@@ -160,7 +162,8 @@ function MainLayout() {
   const { headerConfig } = useHeader();
   const isAIChatPage = location.pathname === '/ai-chat' || location.pathname.startsWith('/ai-chat/');
 
-  const { modules: enabledModules, hasModule, loading: modulesLoading } = useModules();
+  const { modules: enabledModules, hasModule, isLocked, planModules, loading: modulesLoading } = useModules();
+  const [lockedModuleName, setLockedModuleName] = useState(null); // module verrouille clique
 
   // Activer les raccourcis clavier
   useKeyboardShortcuts();
@@ -497,7 +500,7 @@ function MainLayout() {
       {/* Navigation */}
       <Box sx={{ flexGrow: 1, overflow: 'auto', py: 2, px: collapsed ? 1 : 2 }}>
         <List disablePadding>
-          {menuItems.filter(item => item.divider || item.isCore || hasModule(item.moduleId)).map((item, idx) => {
+          {menuItems.filter(item => item.divider || item.isCore || hasModule(item.moduleId) || isLocked(item.moduleId)).map((item, idx) => {
             if (item.divider) {
               return (
                 <Box key={`divider-${idx}`} sx={{ px: 1, pt: 2, pb: 0.5 }}>
@@ -514,12 +517,15 @@ function MainLayout() {
             const isSelected = location.pathname === item.path ||
               (item.matchPrefix ? location.pathname.startsWith(item.matchPrefix) : (item.path !== '/dashboard' && location.pathname.startsWith(item.path)));
 
+            // Module verrouille (non inclus au plan) : grise + cadenas + upsell.
+            const locked = !item.isCore && !hasModule(item.moduleId) && isLocked(item.moduleId);
+
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
-                <Tooltip title={collapsed ? item.text : ''} placement="right" arrow>
+                <Tooltip title={collapsed ? item.text : (locked ? 'Inclus dans Pro' : '')} placement="right" arrow>
                 <ListItemButton
-                  selected={isSelected}
-                  onClick={() => handleModuleClick(item)}
+                  selected={isSelected && !locked}
+                  onClick={() => locked ? setLockedModuleName(item.text) : handleModuleClick(item)}
                   data-tutorial={`menu-${item.moduleId}`}
                   sx={{
                     minHeight: 44,
@@ -530,6 +536,7 @@ function MainLayout() {
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     position: 'relative',
                     overflow: 'hidden',
+                    opacity: locked ? 0.55 : 1,
                     '&:hover': {
                       bgcolor: alpha(theme.palette.primary.main, 0.07),
                     },
@@ -573,6 +580,9 @@ function MainLayout() {
                       }}
                     />
                   )}
+                  {!collapsed && locked && (
+                    <LockIcon sx={{ fontSize: 15, color: 'text.disabled', ml: 0.5 }} />
+                  )}
                 </ListItemButton>
                 </Tooltip>
               </ListItem>
@@ -583,7 +593,8 @@ function MainLayout() {
 
       {/* Bottom Section */}
       <Box sx={{ px: collapsed ? 1 : 2, pb: 3 }}>
-        {userPermissions?.can_manage_users && (
+        {/* Utilisateurs : masque en plan Gratuit (1 siege, rien a gerer). */}
+        {userPermissions?.can_manage_users && !(planModules.length > 0 && !planModules.includes('accounting')) && (
           <ListItem disablePadding sx={{ mb: 1 }}>
             <Tooltip title={collapsed ? t('navigation:menu.users') : ''} placement="right" arrow>
             <ListItemButton
@@ -1297,6 +1308,13 @@ function MainLayout() {
           moduleId={selectedModule}
           onClose={() => setModuleActivationDialogOpen(false)}
           onActivate={handleActivateModule}
+        />
+
+        {/* Upsell : clic sur un module verrouille (non inclus au plan) */}
+        <UpgradeLockDialog
+          open={Boolean(lockedModuleName)}
+          moduleName={lockedModuleName}
+          onClose={() => setLockedModuleName(null)}
         />
 
         {/* Tutorial System */}

@@ -229,8 +229,8 @@ function ProductSelectionDialog({
                     renderOption={renderProductOption}
                   />
                   <IconButton
-                    onClick={onCreateProduct}
-                    title="Nouveau produit"
+                    onClick={() => (tabValue === 1 ? onCreateService : onCreateProduct)?.()}
+                    title={tabValue === 1 ? 'Nouveau service' : 'Nouveau produit'}
                     sx={{
                       bgcolor: 'primary.main',
                       color: 'white',
@@ -239,17 +239,6 @@ function ProductSelectionDialog({
                   >
                     <Add />
                   </IconButton>
-                  {onCreateService && (
-                    <Button
-                      onClick={onCreateService}
-                      variant="outlined"
-                      size="small"
-                      startIcon={<Add />}
-                      sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                    >
-                      Service
-                    </Button>
-                  )}
                 </Box>
               </Grid>
 
@@ -394,8 +383,8 @@ function ProductSelectionDialog({
                     renderOption={renderProductOption}
                   />
                   <IconButton
-                    onClick={onCreateProduct}
-                    title="Nouveau produit"
+                    onClick={() => (tabValue === 1 ? onCreateService : onCreateProduct)?.()}
+                    title={tabValue === 1 ? 'Nouveau service' : 'Nouveau produit'}
                     sx={{
                       bgcolor: 'primary.main',
                       color: 'white',
@@ -404,17 +393,6 @@ function ProductSelectionDialog({
                   >
                     <Add />
                   </IconButton>
-                  {onCreateService && (
-                    <Button
-                      onClick={onCreateService}
-                      variant="outlined"
-                      size="small"
-                      startIcon={<Add />}
-                      sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                    >
-                      Service
-                    </Button>
-                  )}
                 </Box>
               </Grid>
 

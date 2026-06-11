@@ -14,6 +14,7 @@ export const useModules = () => {
 export const ModuleProvider = ({ children }) => {
     const [modules, setModules] = useState([]);
     const [moduleMetadata, setModuleMetadata] = useState([]);
+    const [planModules, setPlanModules] = useState([]); // modules disponibles selon le plan
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -33,6 +34,7 @@ export const ModuleProvider = ({ children }) => {
                 const cached = JSON.parse(raw);
                 setModules(cached.module_codes || []);
                 setModuleMetadata(cached.modules || []);
+                if (cached.plan_modules) setPlanModules(cached.plan_modules);
                 return true;
             }
         } catch { /* ignore */ }
@@ -54,12 +56,14 @@ export const ModuleProvider = ({ children }) => {
             const data = response.data;
             const codes = data.module_codes || [];
             const meta = data.modules || [];
+            const planMods = data.plan_modules || codes;
             setModules(codes);
             setModuleMetadata(meta);
+            setPlanModules(planMods);
             setError(null);
             // Mise en cache pour les prochains demarrages / le mode hors-ligne.
             try {
-                localStorage.setItem(MODULES_CACHE_KEY, JSON.stringify({ module_codes: codes, modules: meta }));
+                localStorage.setItem(MODULES_CACHE_KEY, JSON.stringify({ module_codes: codes, modules: meta, plan_modules: planMods }));
             } catch { /* quota : ignore */ }
         } catch (err) {
             // Hors-ligne / erreur reseau : on garde les modules en cache (deja
@@ -74,8 +78,21 @@ export const ModuleProvider = ({ children }) => {
         }
     };
 
+    // Module REELLEMENT actif = active par l'utilisateur ET disponible dans le
+    // plan. (Corrige le cas d'un module herite—ex. contracts en Gratuit—qui ne
+    // doit pas etre traite comme actif.)
     const hasModule = (moduleCode) => {
-        return modules.includes(moduleCode);
+        const enabled = modules.includes(moduleCode);
+        if (!planModules || planModules.length === 0) return enabled; // fallback offline
+        return enabled && planModules.includes(moduleCode);
+    };
+
+    // Module verrouille = pas disponible dans le plan actif (a griser + cadenas
+    // pour inciter a l'upgrade). 'dashboard' n'est jamais verrouille.
+    const isLocked = (moduleCode) => {
+        if (!planModules || planModules.length === 0) return false;
+        if (moduleCode === 'dashboard') return false;
+        return !planModules.includes(moduleCode);
     };
 
     const hasAnyModule = (...moduleCodes) => {
@@ -98,9 +115,11 @@ export const ModuleProvider = ({ children }) => {
     const value = {
         modules,
         moduleMetadata,
+        planModules,
         loading,
         error,
         hasModule,
+        isLocked,
         hasAnyModule,
         hasAllModules,
         getModuleMetadata,

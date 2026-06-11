@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
+import { useModules } from '../../contexts/ModuleContext';
 
 const AVAILABLE_MODULES = [
   { code: 'dashboard', name: 'Tableau de bord', always_enabled: true, IconComponent: AppsIcon },
@@ -38,6 +39,11 @@ const AVAILABLE_MODULES = [
 
 const ModulesManager = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { planModules } = useModules();
+  // On ne propose que les modules disponibles dans le plan actif (+ dashboard).
+  const visibleModules = (planModules && planModules.length > 0)
+    ? AVAILABLE_MODULES.filter(m => m.always_enabled || planModules.includes(m.code))
+    : AVAILABLE_MODULES;
   const [enabledModules, setEnabledModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -116,7 +122,7 @@ const ModulesManager = () => {
       <Divider sx={{ mb: 2 }} />
 
       <Grid container spacing={1}>
-        {AVAILABLE_MODULES.map((module) => {
+        {visibleModules.map((module) => {
           const isEnabled = enabledModules.includes(module.code);
           const isAlwaysEnabled = module.always_enabled;
 

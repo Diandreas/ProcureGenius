@@ -88,6 +88,7 @@ const TUTORIAL_STEPS = [
     description: 'Voyez en un coup d\'œil combien vous avez dépensé, ce que vous avez gagné, et si votre activité est rentable.',
     target: '[data-tutorial="menu-accounting"]',
     route: '/dashboard',
+    module: 'accounting',
     icon: '',
   },
   {
@@ -96,6 +97,7 @@ const TUTORIAL_STEPS = [
     description: 'Posez-lui une question en français simple — "Montre-moi mes factures du mois" ou "Qui est mon meilleur fournisseur ?" — il répond tout de suite.',
     target: '[data-tutorial="menu-ai-assistant"]',
     route: '/dashboard',
+    module: 'ai-assistant',
     icon: '',
   },
   {
