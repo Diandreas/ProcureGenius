@@ -11,12 +11,22 @@ import { useSelector } from 'react-redux';
 import {
   Box, Container, Button, Typography, TextField, Card, CardContent, Grid,
   FormControl, InputLabel, Select, MenuItem, Paper, LinearProgress,
+  Accordion, AccordionSummary, AccordionDetails,
 } from '@mui/material';
-import { CloudUpload, LocationOn, CheckCircle, Receipt, ShoppingCart, Inventory, Business, People } from '@mui/icons-material';
+import { CloudUpload, LocationOn, CheckCircle, Receipt, ShoppingCart, Inventory, Business, People, ExpandMore, Tune } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 
 const steps = ['Votre entreprise', 'Votre activité', 'Votre formule'];
+
+const TAX_REGIONS = [
+  { value: 'international', label: 'International' },
+  { value: 'cameroon', label: 'Cameroun (OHADA)' },
+  { value: 'ohada', label: 'Zone OHADA' },
+  { value: 'eu', label: 'Union Européenne' },
+  { value: 'usa', label: 'États-Unis' },
+  { value: 'canada', label: 'Canada' },
+];
 
 // Cas d'usage métier : on demande ce que l'utilisateur veut FAIRE (langage
 // simple) et on en déduit les modules techniques. Evite d'exposer 11 modules.
@@ -126,6 +136,15 @@ function OnboardingSetup() {
     address: '',
     logo: null,
     defaultCurrency: 'XAF',
+    // Champs optionnels (section repliee) — non bloquants.
+    email: '',
+    phone: '',
+    website: '',
+    brandColor: '#2563eb',
+    taxRegion: 'international',
+    taxNumber: '',
+    bankName: '',
+    bankAccount: '',
   });
 
   const handleChange = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
@@ -166,6 +185,13 @@ function OnboardingSetup() {
       settings.append('company_name', formData.companyName);
       settings.append('default_currency', formData.defaultCurrency);
       if (formData.logo) settings.append('company_logo', formData.logo);
+      // Champs optionnels (section repliee) : envoyes seulement si renseignes.
+      if (formData.address) settings.append('company_address', formData.address);
+      if (formData.email) settings.append('company_email', formData.email);
+      if (formData.phone) settings.append('company_phone', formData.phone);
+      if (formData.website) settings.append('company_website', formData.website);
+      if (formData.taxRegion) settings.append('tax_region', formData.taxRegion);
+      if (formData.taxNumber) settings.append('company_tax_number', formData.taxNumber);
       await api.post('/accounts/organization/settings/', settings, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -299,6 +325,61 @@ function OnboardingSetup() {
                     </FormControl>
                   </Grid>
                 </Grid>
+
+                {/* Plus d'informations — repliees, non envahissantes. Tout est
+                    optionnel et modifiable plus tard dans les Parametres. */}
+                <Accordion
+                  disableGutters
+                  elevation={0}
+                  sx={{
+                    mt: 2.5, border: '1px solid', borderColor: 'divider',
+                    borderRadius: 2, '&:before': { display: 'none' },
+                    bgcolor: 'transparent',
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMore />} sx={{ px: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Tune sx={{ fontSize: 18, color: 'text.secondary' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        Plus d'informations <Typography component="span" variant="caption" color="text.secondary">(optionnel)</Typography>
+                      </Typography>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ px: 2, pb: 2 }}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField fullWidth size="small" label="Email" type="email"
+                          value={formData.email} onChange={(e) => handleChange('email', e.target.value)}
+                          placeholder="contact@entreprise.com" />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField fullWidth size="small" label="Téléphone"
+                          value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)}
+                          placeholder="+237 6XX XX XX XX" />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField fullWidth size="small" label="Site web"
+                          value={formData.website} onChange={(e) => handleChange('website', e.target.value)}
+                          placeholder="https://..." />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Région fiscale</InputLabel>
+                          <Select value={formData.taxRegion} label="Région fiscale" onChange={(e) => handleChange('taxRegion', e.target.value)}>
+                            {TAX_REGIONS.map((r) => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField fullWidth size="small" label="Numéro fiscal (TIN)"
+                          value={formData.taxNumber} onChange={(e) => handleChange('taxNumber', e.target.value)} />
+                      </Grid>
+                    </Grid>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
+                      Tout ceci est modifiable à tout moment dans les Paramètres.
+                    </Typography>
+                  </AccordionDetails>
+                </Accordion>
               </Box>
             )}
 
