@@ -132,6 +132,10 @@ html {
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
   font-size: 16px;
+  /* Fond du theme aussi sur html : sinon le canvas (noir par defaut sur
+     certains navigateurs/WebView) apparait aux bords, ex. derriere la sidebar
+     flottante. */
+  background-color: var(--color-bg);
 }
 
 body {
@@ -142,6 +146,12 @@ body {
   background-color: var(--color-bg);
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Conteneur React : couvre toute la hauteur avec le fond du theme. */
+#root {
+  min-height: 100vh;
+  background-color: var(--color-bg);
 }
 
 /* ===================================

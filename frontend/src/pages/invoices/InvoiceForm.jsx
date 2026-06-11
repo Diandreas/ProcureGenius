@@ -57,7 +57,7 @@ import { invoicesAPI, clientsAPI, productsAPI, contractsAPI } from '../../servic
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
-import { clientFields, getProductFields } from '../../config/quickCreateFields';
+import { clientFields, getProductFields, serviceFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
 
 function InvoiceForm() {
@@ -109,6 +109,7 @@ function InvoiceForm() {
   // Quick Create states
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -357,6 +358,21 @@ function InvoiceForm() {
         const res = await invoicesAPI.create(payload);
         targetId = res?.data?.id || null;
         enqueueSnackbar(t('invoices:messages.invoiceCreatedSuccess'), { variant: 'success' });
+
+        // Facture creee en "Payee" -> on enregistre automatiquement le paiement
+        // du montant total (encaissement au comptant), sauf si deja paye cote serveur.
+        if (targetId && formData.status === 'paid' && (totalAmount || 0) > 0) {
+          try {
+            await invoicesAPI.addPayment(targetId, {
+              amount: totalAmount,
+              payment_date: new Date().toISOString().split('T')[0],
+              payment_method: formData.payment_method || 'cash',
+            });
+          } catch (payErr) {
+            console.warn('paiement auto:', payErr?.response?.data || payErr?.message);
+          }
+        }
+
         // Rétention phase 1 : déclencher la demande push après la 1ère facture
         if (!localStorage.getItem('first_invoice_created')) {
           localStorage.setItem('first_invoice_created', 'true');
@@ -1292,6 +1308,7 @@ function InvoiceForm() {
         setNewItem={setNewItem}
         onAddItem={handleAddItem}
         onCreateProduct={() => setProductDialogOpen(true)}
+        onCreateService={() => setServiceDialogOpen(true)}
         editingItemIndex={editingItemIndex}
       />
 
@@ -1314,6 +1331,18 @@ function InvoiceForm() {
         fields={getProductFields([], null)}
         createFunction={productsAPI.quickCreate}
         title={t('invoices:dialogs.quickCreateProduct')}
+      />
+
+      {/* Modal dedie SERVICE (sans stock ni fournisseur) */}
+      <QuickCreateDialog
+        open={serviceDialogOpen}
+        onClose={() => setServiceDialogOpen(false)}
+        onSuccess={handleProductCreated}
+        entityType="product"
+        fields={serviceFields}
+        createFunction={productsAPI.quickCreate}
+        contextData={{ product_type: 'service', source_type: 'manufactured' }}
+        title="Nouveau service"
       />
       </Box>
     </Box>

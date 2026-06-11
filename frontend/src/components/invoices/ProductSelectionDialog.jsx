@@ -51,6 +51,7 @@ function ProductSelectionDialog({
   setNewItem,
   onAddItem,
   onCreateProduct,
+  onCreateService,
   editingItemIndex,
   supplierId,
 }) {
@@ -229,6 +230,7 @@ function ProductSelectionDialog({
                   />
                   <IconButton
                     onClick={onCreateProduct}
+                    title="Nouveau produit"
                     sx={{
                       bgcolor: 'primary.main',
                       color: 'white',
@@ -237,6 +239,17 @@ function ProductSelectionDialog({
                   >
                     <Add />
                   </IconButton>
+                  {onCreateService && (
+                    <Button
+                      onClick={onCreateService}
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Add />}
+                      sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                    >
+                      Service
+                    </Button>
+                  )}
                 </Box>
               </Grid>
 
@@ -382,6 +395,7 @@ function ProductSelectionDialog({
                   />
                   <IconButton
                     onClick={onCreateProduct}
+                    title="Nouveau produit"
                     sx={{
                       bgcolor: 'primary.main',
                       color: 'white',
@@ -390,6 +404,17 @@ function ProductSelectionDialog({
                   >
                     <Add />
                   </IconButton>
+                  {onCreateService && (
+                    <Button
+                      onClick={onCreateService}
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Add />}
+                      sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                    >
+                      Service
+                    </Button>
+                  )}
                 </Box>
               </Grid>
 

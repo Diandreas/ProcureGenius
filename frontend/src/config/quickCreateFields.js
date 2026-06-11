@@ -89,6 +89,41 @@ export const supplierFields = [
   }
 ];
 
+// Création rapide d'un SERVICE : pas de stock, pas de fournisseur/source.
+// product_type='service' et source_type sont fournis via contextData.
+export const serviceFields = [
+  {
+    name: 'name',
+    label: 'Nom du service *',
+    type: 'text',
+    required: true,
+    fullWidth: true
+  },
+  {
+    name: 'price',
+    label: 'Tarif *',
+    type: 'number',
+    required: true,
+    fullWidth: false
+  },
+  {
+    name: 'cost_price',
+    label: 'Coût (optionnel)',
+    type: 'number',
+    required: false,
+    fullWidth: false
+  },
+  {
+    name: 'description',
+    label: 'Description',
+    type: 'text',
+    required: false,
+    fullWidth: true,
+    multiline: true,
+    rows: 3
+  }
+];
+
 export const getProductFields = (suppliers = [], selectedSupplier = null) => [
   {
     name: 'name',
