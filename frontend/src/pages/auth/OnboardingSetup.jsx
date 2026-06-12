@@ -16,6 +16,7 @@ import {
 import { CloudUpload, LocationOn, CheckCircle, Receipt, ShoppingCart, Inventory, Business, People, ExpandMore, Tune } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
+import i18n from '../../i18n/config';
 
 const steps = ['Votre entreprise', 'Votre activité', 'Votre formule'];
 
@@ -136,6 +137,7 @@ function OnboardingSetup() {
     address: '',
     logo: null,
     defaultCurrency: 'XAF',
+    language: (i18n.language || 'fr').startsWith('en') ? 'en' : 'fr',
     // Champs optionnels (section repliee) — non bloquants.
     email: '',
     phone: '',
@@ -199,9 +201,13 @@ function OnboardingSetup() {
       // Modules déduits des cas d'usage choisis.
       const enabledModules = modulesFromUseCases(selectedUseCases);
 
+      // Langue choisie : appliquée tout de suite + enregistrée comme préférence.
+      try { i18n.changeLanguage(formData.language); } catch { /* ignore */ }
+
       // 2. Onboarding terminé + modules choisis.
       await api.put('/accounts/preferences/', {
         enabled_modules: enabledModules,
+        preferred_language: formData.language,
         onboarding_completed: true,
         onboarding_data: {
           completed_at: new Date().toISOString(),
@@ -350,6 +356,22 @@ function OnboardingSetup() {
                         <MenuItem value="USD">USD — Dollar américain</MenuItem>
                         <MenuItem value="CAD">CAD — Dollar canadien</MenuItem>
                       </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Langue</InputLabel>
+                      <Select
+                        value={formData.language}
+                        label="Langue"
+                        onChange={(e) => { handleChange('language', e.target.value); i18n.changeLanguage(e.target.value); }}
+                      >
+                        <MenuItem value="fr">Français</MenuItem>
+                        <MenuItem value="en">English</MenuItem>
+                      </Select>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.5 }}>
+                        Langue de l'application et de vos documents.
+                      </Typography>
                     </FormControl>
                   </Grid>
                 </Grid>

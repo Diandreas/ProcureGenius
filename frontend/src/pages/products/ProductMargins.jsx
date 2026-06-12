@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, Table, TableHead, TableBody,
   TableRow, TableCell, TableContainer, Paper, CircularProgress, Alert,
-  ToggleButtonGroup, ToggleButton, Chip, LinearProgress, Tooltip,
+  ToggleButtonGroup, ToggleButton, Chip, LinearProgress, Tooltip, Button,
 } from '@mui/material';
 import {
   TrendingUp, ShoppingCart, AccountBalanceWallet, Percent, Info, WarningAmber,
@@ -113,7 +113,14 @@ export default function ProductMargins() {
           </Grid>
 
           {summary.products_without_cost > 0 && (
-            <Alert severity="warning" icon={<WarningAmber />} sx={{ mb: 2 }}>
+            <Alert
+              severity="warning" icon={<WarningAmber />} sx={{ mb: 2 }}
+              action={
+                <Button color="inherit" size="small" onClick={() => navigate('/products')} sx={{ whiteSpace: 'nowrap', fontWeight: 700 }}>
+                  Renseigner les prix d'achat →
+                </Button>
+              }
+            >
               {summary.products_without_cost} produit(s) n'ont pas de prix d'achat renseigné :
               leur bénéfice brut est surévalué. Renseignez le prix d'achat dans la fiche produit
               pour un calcul fiable.
@@ -135,8 +142,17 @@ export default function ProductMargins() {
               <TableBody>
                 {data.products.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                      Aucune vente de produit sur cette période.
+                    <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                      <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                        Pas encore de marges à afficher
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Les marges se calculent à partir de vos ventes et du <strong>prix d'achat</strong> de
+                        vos produits. Renseignez le prix d'achat sur vos fiches produit pour commencer.
+                      </Typography>
+                      <Button variant="contained" size="small" onClick={() => navigate('/products')}>
+                        Aller à mes produits
+                      </Button>
                     </TableCell>
                   </TableRow>
                 )}

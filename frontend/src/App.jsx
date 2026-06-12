@@ -752,6 +752,20 @@ function App() {
     checkOnboardingStatus();
   }, []);
 
+  // Applique la langue préférée de l'utilisateur au démarrage (l'app/les
+  // documents suivent la langue choisie à l'onboarding). Le login fait un
+  // rechargement complet, donc cet effet couvre aussi la connexion.
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        const lng = u?.preferences?.language || u?.preferences?.preferred_language;
+        if (lng && i18n.language !== lng) i18n.changeLanguage(lng);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
   // Masquer le splash natif APRES le premier paint de l'app (evite l'ecran
   // blanc entre le logo de demarrage et l'interface).
   React.useEffect(() => {

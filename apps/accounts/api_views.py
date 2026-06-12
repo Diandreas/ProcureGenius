@@ -113,12 +113,13 @@ def api_user_preferences(request):
             'onboarding_data': preferences.onboarding_data,
             'dashboard_layout': preferences.dashboard_layout,
             'notification_settings': preferences.notification_settings,
+            'preferred_language': preferences.preferred_language,
         })
-    
+
     elif request.method == 'PUT':
         try:
             data = request.data
-            
+
             # Mettre à jour les champs si fournis
             if 'enabled_modules' in data:
                 preferences.enabled_modules = data['enabled_modules']
@@ -130,6 +131,8 @@ def api_user_preferences(request):
                 preferences.dashboard_layout = data['dashboard_layout']
             if 'notification_settings' in data:
                 preferences.notification_settings = data['notification_settings']
+            if 'preferred_language' in data:
+                preferences.preferred_language = data['preferred_language']
             
             preferences.save()
             
