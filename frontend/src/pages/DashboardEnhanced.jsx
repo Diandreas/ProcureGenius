@@ -131,6 +131,24 @@ function DashboardEnhanced() {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
+
+  // Neumorphisme thème-aware : en clair, ombres froides + highlight blanc ; en
+  // sombre, ombres profondes + highlight bleuté (sinon le blanc casse le dark).
+  const neuBg = isDark ? '#1e2530' : '#e0e5ec';
+  const neuSelectedBg = isDark ? '#252f3e' : '#e0e5ec';
+  const neuShadow = isDark
+    ? '5px 5px 12px #11151c, -5px -5px 12px #2a3340'
+    : '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff';
+  const neuShadowSm = isDark
+    ? '4px 4px 9px #11151c, -4px -4px 9px #2a3340'
+    : '4px 4px 9px #b8bec7, -4px -4px 9px #ffffff';
+  const neuInset = isDark
+    ? 'inset 3px 3px 7px #11151c, inset -3px -3px 7px #2a3340'
+    : 'inset 3px 3px 7px #b8bec7, inset -3px -3px 7px #ffffff';
+  const neuInsetSm = isDark
+    ? 'inset 2px 2px 4px rgba(0,0,0,0.4), inset -2px -2px 4px rgba(255,255,255,0.04)'
+    : 'inset 2px 2px 4px rgba(0,0,0,0.06), inset -2px -2px 4px rgba(255,255,255,0.7)';
 
   // Modules actives : on masque sur le dashboard ce qui appartient a un module
   // desactive (le resume financier reste toujours visible).
@@ -388,7 +406,7 @@ function DashboardEnhanced() {
         <Box sx={{
           bgcolor: 'background.paper',
           borderRadius: 3,
-          boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff',
+          boxShadow: neuShadow,
           mx: 1.5, mt: 1.5,
           px: 2, py: 1.25,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -428,8 +446,8 @@ function DashboardEnhanced() {
               gap: 0.5,
               p: 0.5,
               borderRadius: 3,
-              bgcolor: '#e0e5ec',
-              boxShadow: 'inset 3px 3px 7px #b8bec7, inset -3px -3px 7px #ffffff',
+              bgcolor: neuBg,
+              boxShadow: neuInset,
               width: '100%',
             }}
           >
@@ -459,10 +477,8 @@ function DashboardEnhanced() {
                     border: 'none', fontFamily: 'inherit',
                     fontWeight: selected ? 700 : 500, fontSize: '0.8rem',
                     color: selected ? 'primary.main' : 'text.secondary',
-                    bgcolor: selected ? '#e0e5ec' : 'transparent',
-                    boxShadow: selected
-                      ? '4px 4px 9px #b8bec7, -4px -4px 9px #ffffff'
-                      : 'none',
+                    bgcolor: selected ? neuSelectedBg : 'transparent',
+                    boxShadow: selected ? neuShadowSm : 'none',
                     transition: 'all 0.22s ease',
                     position: 'relative',
                   }}
@@ -495,14 +511,14 @@ function DashboardEnhanced() {
                     bgcolor: 'background.paper',
                     borderRadius: 3,
                     // Relief neumorphique + fin liseré d'accent à gauche.
-                    boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff',
+                    boxShadow: neuShadow,
                     borderLeft: `3px solid ${stat.color}`,
                     p: 1.4,
                   }}>
                     <Box sx={{
                       width: 30, height: 30, borderRadius: 2,
                       bgcolor: `${stat.color}18`,
-                      boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.06), inset -2px -2px 4px rgba(255,255,255,0.7)',
+                      boxShadow: neuInsetSm,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.85,
                     }}>
                       {React.cloneElement(stat.icon, { sx: { fontSize: '0.95rem', color: stat.color } })}
@@ -520,7 +536,7 @@ function DashboardEnhanced() {
 
             {/* Graphique tendances (masque si aucune serie active) */}
             {lineChartData.datasets.length > 0 && (
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5, mb: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Tendances</Typography>
               <Line data={lineChartData} options={{
                 responsive: true,
@@ -538,7 +554,7 @@ function DashboardEnhanced() {
 
             {/* Top clients mini (masque si module Clients desactive) */}
             {showClients && (
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top clients</Typography>
               {(clientStats.top_clients || []).slice(0, 3).map((c, i, arr) => (
                 <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.75, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
@@ -561,14 +577,14 @@ function DashboardEnhanced() {
         {mobileSection === 1 && (
           <Box sx={{ px: 1.5 }}>
             {/* Donut */}
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5, mb: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>État des factures</Typography>
               <Box sx={{ height: 180, width: '100%', maxWidth: 220, mx: 'auto', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                 <Doughnut data={donutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, cutout: '68%' }} />
               </Box>
             </Box>
             {/* Résumé */}
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Résumé</Typography>
               {[
                 { label: 'Factures émises', value: invoiceStats.period?.count || 0, color: 'text.primary' },
@@ -588,7 +604,7 @@ function DashboardEnhanced() {
         {/* ── Mobile Section 2: Clients ── */}
         {mobileSection === 2 && (
           <Box sx={{ px: 1.5 }}>
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5, mb: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top clients</Typography>
               {(clientStats.top_clients || []).length === 0
                 ? <Typography variant="caption" color="text.secondary">Aucun client pour la période</Typography>
@@ -606,7 +622,7 @@ function DashboardEnhanced() {
                 ))
               }
             </Box>
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top fournisseurs</Typography>
               {(stats.suppliers?.top_suppliers || []).length === 0
                 ? <Typography variant="caption" color="text.secondary">Aucun fournisseur pour la période</Typography>
@@ -630,7 +646,7 @@ function DashboardEnhanced() {
         {/* ── Mobile Section 3: Alertes ── */}
         {mobileSection === 3 && (
           <Box sx={{ px: 1.5 }}>
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5, mb: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5, mb: 1.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                 <ErrorOutline color="error" sx={{ fontSize: 18 }} />
                 <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Alertes ({stats.alerts?.length || 0})</Typography>
@@ -648,7 +664,7 @@ function DashboardEnhanced() {
                 ))
               }
             </Box>
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: '5px 5px 12px #c5cad3, -5px -5px 12px #ffffff', p: 1.5 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                 <Inventory2 color="info" sx={{ fontSize: 18 }} />
                 <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Stock</Typography>
