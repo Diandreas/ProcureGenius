@@ -92,7 +92,7 @@ const PLANS = [
     tagColor: 'success.main',
     popular: true,
     seats: '2 utilisateurs inclus (+5€/user)',
-    features: ['Tout le Gratuit', 'Fournisseurs & bons de commande', 'Comptabilité, IA & analytics'],
+    features: ['Tout le Gratuit', 'Fournisseurs & bons de commande', 'Compta de base, IA & contrats'],
     cta: "Démarrer l'essai Pro",
   },
   {
@@ -100,8 +100,8 @@ const PLANS = [
     name: 'Business',
     tag: '30 jours offerts',
     tagColor: 'success.main',
-    seats: '5 utilisateurs inclus (+5€/user)',
-    features: ['Tout le Pro', "E-Sourcing (appels d'offres)", 'Support prioritaire'],
+    seats: '10 utilisateurs inclus (+5€/user)',
+    features: ['Compta complète + marges & réappro', "E-Sourcing (appels d'offres)", 'Support prioritaire'],
     cta: "Démarrer l'essai Business",
   },
 ];

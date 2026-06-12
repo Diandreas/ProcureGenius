@@ -109,6 +109,7 @@ const SIG                 = React.lazy(() => import('./pages/accounting/SIG'));
 import PrivateRoute from './components/guards/PrivateRoute';
 import GuestRoute from './components/guards/GuestRoute';
 import ModuleRoute from './components/guards/ModuleRoute';
+import FeatureGate from './components/common/FeatureGate';
 
 import PublicLayout from './layouts/PublicLayout';
 
@@ -909,8 +910,8 @@ function App() {
                             {/* Products */}
                             <Route path="/products" element={<ModuleRoute module="products"><Products /></ModuleRoute>} />
                             <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
-                            <Route path="/products/margins" element={<ModuleRoute module="products"><ProductMargins /></ModuleRoute>} />
-                            <Route path="/products/restock" element={<ModuleRoute module="products"><RestockForecast /></ModuleRoute>} />
+                            <Route path="/products/margins" element={<ModuleRoute module="products"><FeatureGate feature="analytics_margins" title="Analyse des marges" description="L'analyse des marges et du bénéfice brut est incluse dans le plan Business. Passez à Business pour la débloquer."><ProductMargins /></FeatureGate></ModuleRoute>} />
+                            <Route path="/products/restock" element={<ModuleRoute module="products"><FeatureGate feature="analytics_restock" title="Prévision de réapprovisionnement" description="La prévision de réapprovisionnement est incluse dans le plan Business. Passez à Business pour la débloquer."><RestockForecast /></FeatureGate></ModuleRoute>} />
                             <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
                             <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
 
@@ -943,9 +944,9 @@ function App() {
                             <Route path="/accounting/entries/:id" element={<JournalEntryDetail />} />
                             <Route path="/accounting/reports/trial-balance" element={<TrialBalance />} />
                             <Route path="/accounting/reports/general-ledger" element={<GeneralLedger />} />
-                            <Route path="/accounting/reports/income-statement" element={<IncomeStatement />} />
-                            <Route path="/accounting/reports/balance-sheet" element={<BalanceSheet />} />
-                            <Route path="/accounting/reports/sig" element={<SIG />} />
+                            <Route path="/accounting/reports/income-statement" element={<FeatureGate feature="accounting_statements" title="Comptabilité avancée"><IncomeStatement /></FeatureGate>} />
+                            <Route path="/accounting/reports/balance-sheet" element={<FeatureGate feature="accounting_statements" title="Comptabilité avancée"><BalanceSheet /></FeatureGate>} />
+                            <Route path="/accounting/reports/sig" element={<FeatureGate feature="accounting_statements" title="Comptabilité avancée"><SIG /></FeatureGate>} />
 
                             {/* Data Migration */}
                             <Route path="/migration/jobs" element={<MigrationJobs />} />

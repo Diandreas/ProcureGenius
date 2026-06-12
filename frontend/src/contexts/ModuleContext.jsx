@@ -15,6 +15,7 @@ export const ModuleProvider = ({ children }) => {
     const [modules, setModules] = useState([]);
     const [moduleMetadata, setModuleMetadata] = useState([]);
     const [planModules, setPlanModules] = useState([]); // modules disponibles selon le plan
+    const [planFeatures, setPlanFeatures] = useState([]); // fonctionnalites avancees du plan
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -35,6 +36,7 @@ export const ModuleProvider = ({ children }) => {
                 setModules(cached.module_codes || []);
                 setModuleMetadata(cached.modules || []);
                 if (cached.plan_modules) setPlanModules(cached.plan_modules);
+                if (cached.plan_features) setPlanFeatures(cached.plan_features);
                 return true;
             }
         } catch { /* ignore */ }
@@ -57,13 +59,15 @@ export const ModuleProvider = ({ children }) => {
             const codes = data.module_codes || [];
             const meta = data.modules || [];
             const planMods = data.plan_modules || codes;
+            const planFeats = data.plan_features || [];
             setModules(codes);
             setModuleMetadata(meta);
             setPlanModules(planMods);
+            setPlanFeatures(planFeats);
             setError(null);
             // Mise en cache pour les prochains demarrages / le mode hors-ligne.
             try {
-                localStorage.setItem(MODULES_CACHE_KEY, JSON.stringify({ module_codes: codes, modules: meta, plan_modules: planMods }));
+                localStorage.setItem(MODULES_CACHE_KEY, JSON.stringify({ module_codes: codes, modules: meta, plan_modules: planMods, plan_features: planFeats }));
             } catch { /* quota : ignore */ }
         } catch (err) {
             // Hors-ligne / erreur reseau : on garde les modules en cache (deja
@@ -95,6 +99,11 @@ export const ModuleProvider = ({ children }) => {
         return !planModules.includes(moduleCode);
     };
 
+    // Fonctionnalité avancée disponible dans le plan (ex. compta avancée, marges).
+    const hasFeature = (featureKey) => planFeatures.includes(featureKey);
+    // Fonctionnalité verrouillée = connue mais absente du plan -> upsell Business.
+    const isFeatureLocked = (featureKey) => !planFeatures.includes(featureKey);
+
     const hasAnyModule = (...moduleCodes) => {
         return moduleCodes.some(code => modules.includes(code));
     };
@@ -116,10 +125,13 @@ export const ModuleProvider = ({ children }) => {
         modules,
         moduleMetadata,
         planModules,
+        planFeatures,
         loading,
         error,
         hasModule,
         isLocked,
+        hasFeature,
+        isFeatureLocked,
         hasAnyModule,
         hasAllModules,
         getModuleMetadata,

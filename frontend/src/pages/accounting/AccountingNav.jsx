@@ -13,10 +13,12 @@ import {
   AccountBalance as BilanIcon,
   Insights as SIGIcon,
   HelpOutline as HelpIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
 import BackButton from '../../components/navigation/BackButton';
 import { useHeader } from '../../contexts/HeaderContext';
 import { useAccountingHelp } from '../../contexts/AccountingHelpContext';
+import { useModules } from '../../contexts/ModuleContext';
 
 const PATH_TO_CONTEXT = {
   '/accounting/entries/new': 'journal_entry',
@@ -32,14 +34,16 @@ const NAV_ITEMS = [
   { label: 'Écritures', path: '/accounting/entries', icon: <EntriesIcon /> },
   { label: 'Balance', path: '/accounting/reports/trial-balance', icon: <BalanceIcon /> },
   { label: 'Grand livre', path: '/accounting/reports/general-ledger', icon: <LedgerIcon /> },
-  { label: 'Résultat', path: '/accounting/reports/income-statement', icon: <ResultIcon /> },
-  { label: 'Bilan', path: '/accounting/reports/balance-sheet', icon: <BilanIcon /> },
-  { label: 'SIG', path: '/accounting/reports/sig', icon: <SIGIcon /> },
+  { label: 'Résultat', path: '/accounting/reports/income-statement', icon: <ResultIcon />, feature: 'accounting_statements' },
+  { label: 'Bilan', path: '/accounting/reports/balance-sheet', icon: <BilanIcon />, feature: 'accounting_statements' },
+  { label: 'SIG', path: '/accounting/reports/sig', icon: <SIGIcon />, feature: 'accounting_statements' },
 ];
 
 export default function AccountingNav({ title, subtitle, action }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { isFeatureLocked } = useModules();
+  const lockedItem = (item) => item.feature && isFeatureLocked(item.feature);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -131,7 +135,9 @@ export default function AccountingNav({ title, subtitle, action }) {
           {NAV_ITEMS.map((item, idx) => (
             <Tab
               key={item.path}
-              label={item.label}
+              label={lockedItem(item)
+                ? <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.4, opacity: 0.6 }}>{item.label}<LockIcon sx={{ fontSize: 13 }} /></Box>
+                : item.label}
               icon={React.cloneElement(item.icon, { fontSize: 'small' })}
               iconPosition="start"
               onClick={() => navigate(item.path)}
