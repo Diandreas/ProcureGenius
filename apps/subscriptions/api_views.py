@@ -382,9 +382,19 @@ def cancel_subscription(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     data = serializer.validated_data
+    immediately = data.get('immediately', False)
 
-    # Cancel subscription
-    subscription.cancel(immediately=data.get('immediately', False))
+    # Annulation côté Stripe (cancel_at_period_end ou suppression immédiate).
+    try:
+        from .stripe_service import StripeService
+        StripeService.cancel_subscription(organization, immediately=immediately)
+    except Exception as e:
+        # On n'échoue pas l'annulation locale si Stripe est indisponible.
+        import logging
+        logging.getLogger(__name__).warning(f"Stripe cancel error: {e}")
+
+    # Cancel subscription (statut local)
+    subscription.cancel(immediately=immediately)
 
     # Save cancellation reason in notes
     if data.get('reason'):

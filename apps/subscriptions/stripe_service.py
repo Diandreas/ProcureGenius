@@ -153,6 +153,31 @@ class StripeService:
         return sub
 
     @staticmethod
+    def cancel_subscription(organization, immediately=False):
+        """Annule l'abonnement côté Stripe.
+
+        - immediately=False : `cancel_at_period_end=True` (reste actif jusqu'à la
+          fin de période, puis se termine — comportement attendu in-app).
+        - immediately=True : suppression immédiate.
+        No-op si pas d'abonnement Stripe (essai/gratuit géré côté local).
+        """
+        StripeService._ensure_configured()
+        try:
+            sub = organization.subscription
+        except Exception:
+            sub = None
+        if not sub or not sub.stripe_subscription_id:
+            return sub
+        try:
+            if immediately:
+                stripe.Subscription.delete(sub.stripe_subscription_id)
+            else:
+                stripe.Subscription.modify(sub.stripe_subscription_id, cancel_at_period_end=True)
+        except Exception as e:
+            logger.warning(f"Stripe cancel failed for {sub.stripe_subscription_id}: {e}")
+        return sub
+
+    @staticmethod
     def create_portal_session(organization, return_url):
         """Create a Stripe customer portal session.
 

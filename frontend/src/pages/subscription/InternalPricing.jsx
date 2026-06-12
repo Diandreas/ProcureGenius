@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Container, Typography, Button, Grid, Chip,
   Stack, Divider, CircularProgress, ToggleButtonGroup, ToggleButton, Alert,
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
 } from '@mui/material';
 import { Check, Close, ArrowForward, OpenInNew, Bolt, WarningAmber } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
@@ -23,21 +23,46 @@ export default function InternalPricing() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
   const [confirmPlan, setConfirmPlan] = useState(null); // downgrade a confirmer
+  const [subStatus, setSubStatus] = useState(null);     // statut complet (annulation, dates)
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
 
   // Rang des plans pour detecter un downgrade.
   const RANK = { free: 0, pro: 1, business: 2, enterprise: 3 };
   const isDowngrade = (target) => (RANK[target] ?? 0) < (RANK[current] ?? 0);
 
+  const loadStatus = async () => {
+    const status = await subscriptionAPI.getStatus().catch(() => null);
+    setSubStatus(status);
+    setCurrent(status?.subscription?.plan?.code || status?.plan_code || 'free');
+  };
+
   useEffect(() => {
     (async () => {
-      try {
-        const status = await subscriptionAPI.getStatus().catch(() => null);
-        setCurrent(status?.subscription?.plan?.code || status?.plan_code || 'free');
-      } finally {
-        setLoading(false);
-      }
+      try { await loadStatus(); } finally { setLoading(false); }
     })();
   }, []);
+
+  const sub = subStatus?.subscription || null;
+  const isPaidPlan = current === 'pro' || current === 'business';
+  const cancelScheduled = Boolean(sub?.cancelled_at) && sub?.status !== 'cancelled';
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+
+  const confirmCancel = async () => {
+    setCancelling(true);
+    try {
+      const res = await subscriptionAPI.cancel({ immediately: false, reason: cancelReason });
+      enqueueSnackbar(`Abonnement annulé. Actif jusqu'au ${fmtDate(res?.ends_at)}.`, { variant: 'success' });
+      setCancelOpen(false);
+      setCancelReason('');
+      await loadStatus();
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.error || "Impossible d'annuler l'abonnement.", { variant: 'error' });
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   // Execute reellement le changement de plan (apres confirmation si downgrade).
   const doChangePlan = async (plan) => {
@@ -81,6 +106,37 @@ export default function InternalPricing() {
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 1, md: 3 } }}>
+      {/* Mon abonnement (plan courant + annulation in-app) */}
+      {isPaidPlan && sub && (
+        <Box sx={{
+          mb: 4, p: { xs: 2, sm: 2.5 }, borderRadius: 3, bgcolor: 'background.paper',
+          boxShadow: 'var(--shadow-md)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2,
+        }}>
+          <Box>
+            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Mon abonnement
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              <Typography sx={{ fontWeight: 800, fontSize: '1.2rem' }}>{sub.plan?.name || current}</Typography>
+              {sub.is_trial && <Chip size="small" color="success" label={`Essai — ${sub.trial_days_remaining} j`} />}
+              {cancelScheduled && <Chip size="small" color="warning" label="Annulation programmée" />}
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+              {cancelScheduled
+                ? `Actif jusqu'au ${fmtDate(sub.current_period_end)} — non renouvelé.`
+                : `Prochain renouvellement le ${fmtDate(sub.current_period_end)}.`}
+            </Typography>
+          </Box>
+          {!cancelScheduled && (
+            <Button variant="outlined" color="inherit" onClick={() => setCancelOpen(true)}
+              sx={{ textTransform: 'none', fontWeight: 600, color: 'text.secondary', borderColor: 'divider' }}>
+              Annuler l'abonnement
+            </Button>
+          )}
+        </Box>
+      )}
+
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>Votre abonnement</Typography>
         <Typography color="text.secondary" sx={{ mb: 3 }}>
@@ -215,6 +271,33 @@ export default function InternalPricing() {
             onClick={() => { const p = confirmPlan; setConfirmPlan(null); doChangePlan(p); }}
           >
             Confirmer le passage à {confirmPlan?.name}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Annulation in-app (retention + raison) */}
+      <Dialog open={cancelOpen} onClose={cancelling ? undefined : () => setCancelOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Annuler votre abonnement ?</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ borderRadius: 2, mb: 2 }}>
+            Votre abonnement restera <strong>actif jusqu'au {fmtDate(sub?.current_period_end)}</strong>.
+            Ensuite, vous repasserez en Gratuit et perdrez l'accès aux fonctionnalités payantes
+            (vos données sont conservées).
+          </Alert>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Une raison ? (facultatif — ça nous aide à nous améliorer)
+          </Typography>
+          <TextField
+            fullWidth multiline minRows={2} size="small" placeholder="Trop cher, je n'utilise pas assez…"
+            value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCancelOpen(false)} disabled={cancelling} variant="contained" sx={{ textTransform: 'none' }}>
+            Garder mon abonnement
+          </Button>
+          <Button onClick={confirmCancel} disabled={cancelling} color="error" sx={{ textTransform: 'none' }}>
+            {cancelling ? 'Annulation…' : "Confirmer l'annulation"}
           </Button>
         </DialogActions>
       </Dialog>
