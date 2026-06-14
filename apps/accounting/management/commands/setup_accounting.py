@@ -1,15 +1,21 @@
 """
 Commande Django : setup_accounting
-Crée le plan comptable de base et les journaux pour un centre de santé.
+Crée le plan comptable de base et les journaux pour une entreprise (générique,
+adapté à tout secteur d'activité — négoce, services, artisanat, etc.).
 
 Usage:
     python manage.py setup_accounting
     python manage.py setup_accounting --org-id <uuid>  (pour une org spécifique)
+    python manage.py setup_accounting --reset          (renomme les comptes existants)
 """
 from django.core.management.base import BaseCommand
 from apps.accounts.models import Organization
 
 
+# Plan comptable générique, valable pour toute entreprise. Les CODES sont stables
+# (référencés par les écritures automatiques : 4100 clients, 4010 fournisseurs,
+# 5100 caisse, 5200 banque, 6900 charges, 7500 ventes) — on ne change que les
+# intitulés pour rester neutres quel que soit le métier.
 DEFAULT_ACCOUNTS = [
     # (code, name, account_type)
     # ── Classe 1 : Capitaux ──
@@ -17,36 +23,38 @@ DEFAULT_ACCOUNTS = [
     ('1200', 'Réserves',                          'equity'),
     ('1300', 'Résultat de l\'exercice',           'equity'),
     # ── Classe 2 : Immobilisations ──
-    ('2100', 'Équipements médicaux',              'asset'),
+    ('2100', 'Matériel et outillage',             'asset'),
     ('2200', 'Mobilier et matériel de bureau',    'asset'),
+    ('2300', 'Matériel informatique',             'asset'),
+    ('2400', 'Matériel de transport',             'asset'),
     ('2800', 'Amortissements (-)' ,               'asset'),
     # ── Classe 4 : Comptes de tiers ──
     ('4010', 'Fournisseurs',                      'liability'),
-    ('4100', 'Clients / Patients',                'asset'),
+    ('4100', 'Clients',                           'asset'),
     ('4300', 'Personnel — Salaires à payer',      'liability'),
-    ('4400', 'État — Taxes à payer',              'liability'),
+    ('4400', 'État — TVA et taxes à payer',       'liability'),
     # ── Classe 5 : Trésorerie ──
-    ('5100', 'Caisse principale',                 'asset'),
+    ('5100', 'Caisse',                            'asset'),
     ('5110', 'Caisse secondaire',                 'asset'),
     ('5200', 'Banque',                            'asset'),
     ('5210', 'Mobile Money',                      'asset'),
     # ── Classe 6 : Charges ──
-    ('6100', 'Achats médicaments',                'expense'),
-    ('6200', 'Achats réactifs laboratoire',       'expense'),
-    ('6300', 'Achats fournitures médicales',      'expense'),
+    ('6100', 'Achats de marchandises',            'expense'),
+    ('6200', 'Achats de matières et fournitures', 'expense'),
+    ('6300', 'Fournitures de bureau',             'expense'),
     ('6400', 'Salaires et charges sociales',      'expense'),
     ('6500', 'Loyer et charges locatives',        'expense'),
     ('6600', 'Électricité / Eau / Internet',      'expense'),
     ('6700', 'Entretien et réparations',          'expense'),
-    ('6800', 'Frais administratifs',              'expense'),
+    ('6800', 'Frais administratifs et bancaires', 'expense'),
     ('6900', 'Autres charges',                    'expense'),
     # ── Classe 7 : Produits / Recettes ──
-    ('7100', 'Recettes — Consultations',          'revenue'),
-    ('7200', 'Recettes — Laboratoire',            'revenue'),
-    ('7300', 'Recettes — Pharmacie',              'revenue'),
-    ('7400', 'Recettes — Soins / Chirurgie',      'revenue'),
-    ('7500', 'Recettes — Ventes comptoir',        'revenue'),
-    ('7600', 'Recettes — Autres services',        'revenue'),
+    ('7100', 'Prestations de services',           'revenue'),
+    ('7200', 'Ventes de marchandises',            'revenue'),
+    ('7300', 'Ventes de produits finis',          'revenue'),
+    ('7400', 'Travaux et autres prestations',     'revenue'),
+    ('7500', 'Ventes et prestations',             'revenue'),
+    ('7600', 'Autres produits d\'exploitation',   'revenue'),
     ('7900', 'Produits divers',                   'revenue'),
 ]
 
@@ -61,7 +69,7 @@ DEFAULT_JOURNALS = [
 
 
 class Command(BaseCommand):
-    help = 'Crée le plan comptable de base et les journaux pour un centre de santé'
+    help = 'Crée le plan comptable de base et les journaux pour une entreprise (générique)'
 
     def add_arguments(self, parser):
         parser.add_argument(
