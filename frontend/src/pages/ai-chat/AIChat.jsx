@@ -36,6 +36,7 @@ import { buttonPress } from '../../animations/variants/micro-interactions';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import {
   Send,
+  Stop,
   SmartToy,
   Person,
   AttachFile,
@@ -76,6 +77,7 @@ import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../../services/api';
 import { formatDateTime } from '../../utils/formatters';
 import MessageContent from '../../components/ai-chat/MessageContent';
+import AgentTimeline from '../../components/ai-chat/AgentTimeline';
 import Mascot from '../../components/Mascot';
 import VoiceRecorder from '../../components/VoiceRecorder';
 import ProactiveConversationCard from '../../components/AI/ProactiveConversationCard';
@@ -613,6 +615,7 @@ function AIChat() {
   const { chatId } = useParams();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const abortControllerRef = useRef(null);   // pour interrompre le streaming (bouton stop)
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { setPageHeader } = useHeader();
@@ -842,6 +845,124 @@ function AIChat() {
     navigate('/ai-chat');
   };
 
+  // Met à jour le message assistant en cours de streaming (le dernier de la liste).
+  const updateStreamingMessage = (updater) => {
+    setMessages(prev => {
+      const idx = prev.length - 1;
+      if (idx < 0 || prev[idx].role !== 'assistant' || !prev[idx].streaming) return prev;
+      const next = [...prev];
+      next[idx] = updater(next[idx]);
+      return next;
+    });
+  };
+
+  // Événements SSE de la boucle agentique -> état du message en cours.
+  const handleStreamEvent = (event) => {
+    switch (event.type) {
+      case 'status':
+        updateStreamingMessage(m => ({ ...m, status_label: event.message }));
+        break;
+      case 'text_delta':
+        updateStreamingMessage(m => ({ ...m, content: (m.content || '') + event.content }));
+        break;
+      case 'thought':
+        // Le texte streamé jusqu'ici était une narration : on le déplace dans la timeline.
+        updateStreamingMessage(m => ({
+          ...m,
+          content: '',
+          agent_steps: [...(m.agent_steps || []), { kind: 'thought', content: event.content }],
+        }));
+        break;
+      case 'tool_start':
+        updateStreamingMessage(m => ({
+          ...m,
+          status_label: null,
+          agent_steps: [
+            ...(m.agent_steps || []),
+            { kind: 'tool', id: event.id, name: event.name, label: event.label, status: 'running' },
+          ],
+        }));
+        break;
+      case 'tool_result':
+        updateStreamingMessage(m => ({
+          ...m,
+          agent_steps: (m.agent_steps || []).map(s =>
+            s.kind === 'tool' && s.id === event.id
+              ? { ...s, status: event.success ? 'done' : 'error', success: event.success, summary: event.summary }
+              : s
+          ),
+        }));
+        break;
+      default:
+        // 'chart' arrive aussi dans le payload final (action_results) : rien à faire ici.
+        break;
+    }
+  };
+
+  // Finalise le message assistant à partir du payload unifié
+  // (réponse de /ai/chat/ ou événement 'done' de /ai/chat/stream/).
+  const finalizeAssistantMessage = (payload) => {
+    const aiMessage = {
+      ...payload.message,
+      action_results: payload.action_results || [],
+      action_buttons: payload.action_buttons || null,
+      needs_confirmation: payload.needs_confirmation || null,
+      agent_steps: payload.agent_steps || [],
+    };
+
+    setMessages(prev => {
+      const last = prev[prev.length - 1];
+      const base = last?.role === 'assistant' && last.streaming ? prev.slice(0, -1) : prev;
+      return [...base, aiMessage];
+    });
+
+    if (!currentConversation) {
+      setCurrentConversation({ id: payload.conversation_id });
+      fetchConversations();
+      navigate(`/ai-chat/${payload.conversation_id}`, { replace: true });
+    }
+
+    // Refresh stats after AI interaction
+    fetchUsageStats();
+
+    (payload.action_results || []).forEach(result => {
+      if (result.result?.success) {
+        enqueueSnackbar(result.result.message || t('aiChat:messages.actionExecutedSuccess'), {
+          variant: 'success',
+          autoHideDuration: 3000,
+        });
+        window.dispatchEvent(new CustomEvent('mascot-success'));
+      } else if (result.result?.success === false) {
+        window.dispatchEvent(new CustomEvent('mascot-error'));
+      }
+    });
+  };
+
+  const handleSendError = (error, fallbackMessage = null) => {
+    console.error('Error sending message:', error);
+    console.error('Error response:', error.response?.data);
+
+    const errorMessage = fallbackMessage
+      || error.response?.data?.error
+      || error.response?.data?.detail
+      || error.payload?.message
+      || error.message
+      || t('aiChat:messages.sendMessageError');
+
+    if (error.response?.status === 500 || error.status === 500) {
+      enqueueSnackbar('Erreur serveur (500). Vérifiez les logs Django pour plus de détails.', {
+        variant: 'error',
+        autoHideDuration: 5000,
+      });
+    } else {
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+    }
+
+    // Retirer le message utilisateur optimiste pour permettre une nouvelle tentative
+    setMessages(prev => prev.slice(0, -1));
+    window.dispatchEvent(new CustomEvent('mascot-error'));
+  };
+
   const handleSendMessage = async (messageText = null, confirmationData = null) => {
     const textToSend = messageText || message;
     if (!textToSend.trim() && !confirmationData) return;
@@ -855,96 +976,121 @@ function AIChat() {
     setMessages(prev => [...prev, userMessage]);
     setMessage('');
     setLoading(true);
-    setTypingIndicator(true);
+
+    const requestData = {
+      message: confirmationData ? textToSend : userMessage.content,
+    };
+
+    // Ajouter les données de confirmation si présentes
+    if (confirmationData) {
+      // Nouveau format structuré : {token, choice} transmis tel quel.
+      // Ancien format (compat) : on force la création.
+      if (confirmationData.token && confirmationData.choice) {
+        requestData.confirmation_data = confirmationData;
+      } else {
+        requestData.confirmation_data = {
+          ...confirmationData,
+          force_create: true,
+        };
+      }
+    }
+
+    // Only include conversation_id if it exists and is valid
+    if (currentConversation?.id) {
+      requestData.conversation_id = currentConversation.id;
+    }
+
+    let receivedEvent = false;       // au moins un événement SSE reçu
+    let streamErrorMessage = null;   // événement 'error' émis par le backend
+
+    // Contrôleur d'interruption : permet au bouton stop de couper le flux.
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
-      const requestData = {
-        message: confirmationData ? textToSend : userMessage.content,
-      };
+      // Bulle assistant en cours de streaming (timeline + texte au fil de l'eau)
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: '',
+        agent_steps: [],
+        streaming: true,
+        created_at: new Date().toISOString(),
+      }]);
 
-      // Ajouter les données de confirmation si présentes
-      if (confirmationData) {
-        // Nouveau format structuré : {token, choice} transmis tel quel.
-        // Ancien format (compat) : on force la création.
-        if (confirmationData.token && confirmationData.choice) {
-          requestData.confirmation_data = confirmationData;
-        } else {
-          requestData.confirmation_data = {
-            ...confirmationData,
-            force_create: true,
-          };
-        }
-      }
-
-      // Only include conversation_id if it exists and is valid
-      if (currentConversation?.id) {
-        requestData.conversation_id = currentConversation.id;
-      }
-
-      const response = await aiChatAPI.sendMessage(requestData);
-
-      setTypingIndicator(false);
-
-      const aiMessage = {
-        ...response.data.message,
-        action_results: response.data.action_results || [],
-        action_buttons: response.data.action_buttons || null,
-        needs_confirmation: response.data.needs_confirmation || null,
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-      if (!currentConversation) {
-        setCurrentConversation({ id: response.data.conversation_id });
-        fetchConversations();
-        navigate(`/ai-chat/${response.data.conversation_id}`, { replace: true });
-      }
-
-      // Refresh stats after AI interaction
-      fetchUsageStats();
-
-      if (response.data.action_results) {
-        response.data.action_results.forEach(result => {
-          if (result.result?.success) {
-            enqueueSnackbar(result.result.message || t('aiChat:messages.actionExecutedSuccess'), {
-              variant: 'success',
-              autoHideDuration: 3000,
-            });
-            window.dispatchEvent(new CustomEvent('mascot-success'));
-          } else if (result.result?.success === false) {
-            window.dispatchEvent(new CustomEvent('mascot-error'));
+      const doneEvent = await aiChatAPI.streamMessage(requestData, {
+        signal: controller.signal,
+        onEvent: (event) => {
+          receivedEvent = true;
+          if (event.type === 'error') {
+            streamErrorMessage = event.message;
+            return;
           }
-        });
-      }
+          handleStreamEvent(event);
+        },
+      });
+
+      finalizeAssistantMessage(doneEvent);
     } catch (error) {
-      setTypingIndicator(false);
-      console.error('Error sending message:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      console.error('Full error:', error);
-
-      // Show more detailed error message if available
-      const errorMessage = error.response?.data?.error || error.response?.data?.detail || error.message || t('aiChat:messages.sendMessageError');
-
-      // For 500 errors, provide more helpful message
-      if (error.response?.status === 500) {
-        console.error('Server Error 500 - Check Django server logs for details');
-        enqueueSnackbar(
-          'Erreur serveur (500). Vérifiez les logs Django pour plus de détails.',
-          {
-            variant: 'error',
-            autoHideDuration: 5000
-          }
-        );
-      } else {
-        enqueueSnackbar(errorMessage, { variant: 'error' });
+      // Interruption volontaire (bouton stop) : on fige la bulle en l'état,
+      // sans erreur ni perte du message utilisateur.
+      if (error.name === 'AbortError' || controller.signal.aborted) {
+        freezeStreamingMessage();
+        return;
       }
 
-      setMessages(prev => prev.slice(0, -1));
-      window.dispatchEvent(new CustomEvent('mascot-error'));
+      // Retirer la bulle de streaming incomplète
+      setMessages(prev => prev.filter(m => !(m.role === 'assistant' && m.streaming)));
+
+      if (!receivedEvent) {
+        // Transport streaming indisponible (proxy, navigateur, réseau) :
+        // repli transparent sur l'endpoint classique non-streamé.
+        try {
+          setTypingIndicator(true);
+          const response = await aiChatAPI.sendMessage(requestData);
+          setTypingIndicator(false);
+          finalizeAssistantMessage(response.data);
+        } catch (classicError) {
+          handleSendError(classicError);
+        }
+      } else {
+        handleSendError(error, streamErrorMessage);
+      }
     } finally {
+      abortControllerRef.current = null;
+      setTypingIndicator(false);
       setLoading(false);
     }
+  };
+
+  // Interrompt la génération en cours (bouton stop).
+  const handleStopGeneration = () => {
+    abortControllerRef.current?.abort();
+  };
+
+  // Fige la bulle assistant interrompue : on garde le texte + les étapes déjà
+  // reçus et on marque l'étape outil éventuellement en cours comme arrêtée.
+  const freezeStreamingMessage = () => {
+    setMessages(prev => {
+      const idx = prev.length - 1;
+      if (idx < 0 || prev[idx].role !== 'assistant' || !prev[idx].streaming) return prev;
+      const m = prev[idx];
+      const next = [...prev];
+      next[idx] = {
+        ...m,
+        streaming: false,
+        status_label: null,
+        stopped: true,
+        agent_steps: (m.agent_steps || []).map(s =>
+          s.kind === 'tool' && s.status === 'running'
+            ? { ...s, status: 'error', summary: 'interrompu' }
+            : s
+        ),
+        content: m.content
+          ? `${m.content}\n\n_Génération interrompue._`
+          : '_Génération interrompue._',
+      };
+      return next;
+    });
   };
 
   const handleQuickAction = (action) => {
@@ -1410,8 +1556,16 @@ function AIChat() {
                             }),
                           }}
                         >
+                          {/* Timeline de la boucle agentique (live ou persistée) */}
+                          {!isUser && (msg.streaming || msg.agent_steps?.length > 0 || msg.metadata?.agent_steps?.length > 0) && (
+                            <AgentTimeline
+                              steps={msg.agent_steps?.length ? msg.agent_steps : (msg.metadata?.agent_steps || [])}
+                              working={!!msg.streaming}
+                              statusLabel={msg.status_label}
+                            />
+                          )}
                           <MessageContent
-                            content={msg.content}
+                            content={msg.streaming && msg.content ? `${msg.content} ▍` : msg.content}
                             actionResults={msg.action_results}
                             actionButtons={msg.action_buttons}
                             onButtonClick={(buttonIndex, confirmationData) => {
@@ -1658,42 +1812,49 @@ function AIChat() {
               }}
             />
 
-            {/* Bouton envoyer - Design Premium avec gradient */}
+            {/* Bouton envoyer / stop - Design Premium avec gradient.
+                Pendant la génération, il devient un bouton stop (carré) qui
+                interrompt le streaming. */}
             <motion.div
               variants={buttonPress}
               initial="rest"
-              whileHover={message.trim() ? "hover" : "rest"}
-              whileTap={message.trim() ? "tap" : "rest"}
+              whileHover={(loading || message.trim()) ? "hover" : "rest"}
+              whileTap={(loading || message.trim()) ? "tap" : "rest"}
             >
-              <IconButton
-                onClick={() => handleSendMessage()}
-                disabled={loading || !message.trim()}
-                sx={{
-                  mb: 0.5,
-                  background: message.trim()
-                    ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
-                    : theme.palette.background.paper,
-                  color: message.trim() ? 'white' : 'text.disabled',
-                  width: { xs: 38, sm: 42 },
-                  height: { xs: 38, sm: 42 },
-                  borderRadius: '14px',
-                  boxShadow: message.trim()
-                    ? `0 4px 16px ${alpha('#6366f1', 0.4)}`
-                    : getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  '&.Mui-disabled': {
-                    background: theme.palette.background.paper,
-                    color: 'text.disabled',
-                    boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
-                  },
-                }}
-              >
-                {loading ? (
-                  <CircularProgress size={18} sx={{ color: 'inherit' }} />
-                ) : (
-                  <Send sx={{ fontSize: { xs: 18, sm: 20 }, ml: 0.25 }} />
-                )}
-              </IconButton>
+              <Tooltip title={loading ? t('aiChat:input.stop', 'Arrêter') : t('aiChat:input.send', 'Envoyer')}>
+                <span>
+                  <IconButton
+                    onClick={() => (loading ? handleStopGeneration() : handleSendMessage())}
+                    disabled={!loading && !message.trim()}
+                    aria-label={loading ? 'stop' : 'send'}
+                    sx={{
+                      mb: 0.5,
+                      background: (loading || message.trim())
+                        ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                        : theme.palette.background.paper,
+                      color: (loading || message.trim()) ? 'white' : 'text.disabled',
+                      width: { xs: 38, sm: 42 },
+                      height: { xs: 38, sm: 42 },
+                      borderRadius: '14px',
+                      boxShadow: (loading || message.trim())
+                        ? `0 4px 16px ${alpha('#6366f1', 0.4)}`
+                        : getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&.Mui-disabled': {
+                        background: theme.palette.background.paper,
+                        color: 'text.disabled',
+                        boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+                      },
+                    }}
+                  >
+                    {loading ? (
+                      <Stop sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                    ) : (
+                      <Send sx={{ fontSize: { xs: 18, sm: 20 }, ml: 0.25 }} />
+                    )}
+                  </IconButton>
+                </span>
+              </Tooltip>
             </motion.div>
           </Paper>
         </Box>

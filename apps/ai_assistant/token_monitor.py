@@ -14,11 +14,20 @@ logger = logging.getLogger(__name__)
 
 
 class TokenMonitor:
-    """Surveille l'utilisation des tokens et génère des alertes"""
+    """Surveille l'utilisation des tokens et génère des alertes.
 
-    # Budgets par défaut (tokens)
-    DAILY_BUDGET = 100000  # 100K tokens/jour
-    HOURLY_BUDGET = 10000  # 10K tokens/heure
+    IMPORTANT — cohérence avec la boucle agentique :
+    Une requête agentique peut consommer jusqu'à ~AI_MAX_REQUEST_TOKENS (~40K,
+    voir orchestrator._agent_max_request_tokens). Le budget HORAIRE doit donc
+    rester nettement supérieur à ce plafond, sinon une seule demande complexe
+    (ex : graphique commenté) épuiserait le budget et bloquerait l'IA pour
+    l'heure entière. On garde l'invariant : hourly_budget >> per_request_cap.
+    Tous ces budgets sont surchargeables via settings / variables d'env.
+    """
+
+    # Budgets par défaut (tokens) — dimensionnés pour le flux agentique multi-appels.
+    DAILY_BUDGET = 1500000  # 1.5M tokens/jour/org (~30-150 requêtes selon complexité)
+    HOURLY_BUDGET = 200000  # 200K tokens/heure/org (>= 4 requêtes lourdes ou ~25 normales)
     CRITICAL_THRESHOLD = 0.90  # 90% du budget
     WARNING_THRESHOLD = 0.75  # 75% du budget
 

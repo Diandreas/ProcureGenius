@@ -250,6 +250,65 @@ export const getPriceHistory = (params) => api.get('/purchase-orders/items/price
 
 export const aiChatAPI = {
   sendMessage: (data) => api.post('/ai/chat/', data),
+  // Chat streaming (SSE sur POST) : la boucle agentique émet des événements
+  // JSON (status / text_delta / thought / tool_start / tool_result / chart /
+  // done / error) consommés au fil de l'eau via fetch + ReadableStream
+  // (EventSource ne supporte ni POST ni le header Authorization).
+  // Résout avec l'événement 'done' ; rejette si le flux échoue avant.
+  streamMessage: async (data, { onEvent, signal } = {}) => {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${API_BASE_URL}/ai/chat/stream/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Token ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
+      signal,
+    });
+
+    if (!response.ok) {
+      let payload = null;
+      try { payload = await response.json(); } catch { /* flux non-JSON */ }
+      const error = new Error(payload?.message || `HTTP ${response.status}`);
+      error.status = response.status;
+      error.payload = payload;
+      throw error;
+    }
+    if (!response.body) throw new Error('Streaming non supporté par ce navigateur');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let doneEvent = null;
+
+    const dispatch = (rawBlock) => {
+      const dataLines = rawBlock
+        .split('\n')
+        .filter((l) => l.startsWith('data: '))
+        .map((l) => l.slice(6));
+      if (!dataLines.length) return;
+      try {
+        const event = JSON.parse(dataLines.join('\n'));
+        if (event.type === 'done') doneEvent = event;
+        onEvent?.(event);
+      } catch { /* bloc partiel/corrompu : ignoré */ }
+    };
+
+    // Les événements SSE sont séparés par une ligne vide (\n\n).
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split('\n\n');
+      buffer = blocks.pop();
+      blocks.forEach(dispatch);
+    }
+    if (buffer.trim()) dispatch(buffer);
+
+    if (!doneEvent) throw new Error('Flux interrompu avant la fin de la réponse');
+    return doneEvent;
+  },
   generateText: (prompt, maxTokens = 4000) => api.post('/ai/generate/', { prompt, max_tokens: maxTokens }),
   getHistory: () => api.get('/ai/conversations/'),
   getConversation: (id) => api.get(`/ai/conversations/${id}/`),

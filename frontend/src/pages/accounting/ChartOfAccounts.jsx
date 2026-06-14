@@ -4,10 +4,12 @@ import {
   InputLabel, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, Paper, Chip, IconButton, Tooltip, Dialog,
   DialogTitle, DialogContent, DialogActions, CircularProgress, Alert,
+  Card, CardContent, Stack, useMediaQuery, useTheme,
 } from '@mui/material';
 import { Add, Edit, Delete, AutoFixHigh } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import accountingAPI from '../../services/accountingAPI';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 const TYPE_COLORS = {
@@ -15,6 +17,12 @@ const TYPE_COLORS = {
 };
 const TYPE_LABELS = {
   asset: 'Actif', liability: 'Passif', equity: 'Capitaux Propres', revenue: 'Produit', expense: 'Charge',
+};
+// Ordre d'affichage des classes de comptes (présentation standard d'un plan comptable)
+const TYPE_ORDER = ['asset', 'liability', 'equity', 'revenue', 'expense'];
+const TYPE_SECTION_LABELS = {
+  asset: 'Actif', liability: 'Passif', equity: 'Capitaux propres',
+  revenue: 'Produits', expense: 'Charges',
 };
 const EMPTY_FORM = { code: '', name: '', account_type: 'asset', parent: '', notes: '' };
 
@@ -30,6 +38,10 @@ export default function ChartOfAccounts() {
   const [saving, setSaving] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
 
   const handleInitSetup = async () => {
     setInitializing(true);
@@ -106,23 +118,31 @@ export default function ChartOfAccounts() {
     }
   };
 
+  // Regroupe les comptes filtrés par classe, dans l'ordre comptable standard,
+  // triés par code à l'intérieur de chaque classe.
+  const grouped = TYPE_ORDER
+    .map((t) => [t, filtered
+      .filter((a) => a.account_type === t)
+      .sort((a, b) => String(a.code).localeCompare(String(b.code)))])
+    .filter(([, list]) => list.length > 0);
+
   return (
-    <Box p={3}>
+    <Box p={{ xs: 2, sm: 3 }}>
       <AccountingNav
         title="Plan Comptable"
         subtitle={`${accounts.length} comptes enregistrés`}
         action={
-          <Button variant="contained" startIcon={<Add />} onClick={openAdd}>
-            Nouveau compte
+          <Button variant="contained" startIcon={<Add />} size={isMobile ? 'small' : 'medium'} onClick={openAdd}>
+            {isMobile ? 'Nouveau' : 'Nouveau compte'}
           </Button>
         }
       />
 
       {/* Filtres */}
-      <Box display="flex" gap={2} mb={2} flexWrap="wrap">
+      <Box display="flex" gap={1.5} mb={2} flexWrap="wrap">
         <TextField size="small" placeholder="Rechercher code ou intitulé..." value={search}
-          onChange={(e) => setSearch(e.target.value)} sx={{ minWidth: 240 }} />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
+          onChange={(e) => setSearch(e.target.value)} sx={{ flex: '1 1 200px' }} />
+        <FormControl size="small" sx={{ flex: '1 1 160px' }}>
           <InputLabel>Type de compte</InputLabel>
           <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} label="Type de compte">
             <MenuItem value="">Tous</MenuItem>
@@ -157,60 +177,118 @@ export default function ChartOfAccounts() {
       )}
 
       {!loading && !error && (
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'action.hover' }}>
-                <TableCell><strong>Code</strong></TableCell>
-                <TableCell><strong>Intitulé</strong></TableCell>
-                <TableCell><strong>Type</strong></TableCell>
-                <TableCell><strong>Compte parent</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filtered.map((acc) => (
-                <TableRow key={acc.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontFamily="monospace" fontWeight={600}>{acc.code}</Typography>
-                  </TableCell>
-                  <TableCell>{acc.name}</TableCell>
-                  <TableCell>
-                    <Chip label={TYPE_LABELS[acc.account_type]} size="small" color={TYPE_COLORS[acc.account_type] || 'default'} />
-                  </TableCell>
-                  <TableCell>
-                    {acc.parent
-                      ? accounts.find((a) => a.id === acc.parent)?.code || '—'
-                      : <Typography variant="caption" color="text.secondary">Racine</Typography>}
-                  </TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Modifier">
-                      <IconButton size="small" onClick={() => openEdit(acc)}><Edit fontSize="small" /></IconButton>
-                    </Tooltip>
-                    {acc.has_transactions ? (
-                      <Tooltip title="Impossible de supprimer : ce compte a des transactions associées">
-                        <span>
-                          <IconButton size="small" color="error" disabled><Delete fontSize="small" /></IconButton>
-                        </span>
-                      </Tooltip>
-                    ) : (
-                      <Tooltip title="Supprimer">
-                        <IconButton size="small" color="error" onClick={() => handleDelete(acc)}><Delete fontSize="small" /></IconButton>
-                      </Tooltip>
-                    )}
-                  </TableCell>
+        filtered.length === 0 ? (
+          <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
+            Aucun compte trouvé
+          </Typography>
+        ) : isMobile ? (
+          /* ── Vue mobile : cartes groupées par classe ── */
+          <Stack spacing={2.5}>
+            {grouped.map(([type, list]) => (
+              <Box key={type}>
+                <Box display="flex" alignItems="center" gap={1} mb={1} px={0.5}>
+                  <Typography variant="overline" fontWeight={700} color="text.secondary">
+                    {TYPE_SECTION_LABELS[type]}
+                  </Typography>
+                  <Chip label={list.length} size="small" sx={{ height: 18, fontSize: '0.65rem' }} />
+                </Box>
+                <Stack spacing={1.25}>
+                  {list.map((acc) => (
+                    <Card key={acc.id} elevation={0} sx={{ border: 'none', borderRadius: 2.5, bgcolor: 'background.paper', boxShadow: neu }}>
+                      <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
+                          <Box minWidth={0} flex={1}>
+                            <Box display="flex" alignItems="center" gap={1} mb={0.5} flexWrap="wrap">
+                              <Typography variant="body2" fontFamily="monospace" fontWeight={700}>{acc.code}</Typography>
+                              <Chip label={TYPE_LABELS[acc.account_type]} size="small" color={TYPE_COLORS[acc.account_type] || 'default'} />
+                            </Box>
+                            <Typography variant="body2" fontWeight={600}>{acc.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {acc.parent
+                                ? `Parent : ${accounts.find((a) => a.id === acc.parent)?.code || '—'}`
+                                : 'Compte racine'}
+                            </Typography>
+                          </Box>
+                          <Box flexShrink={0}>
+                            <IconButton size="small" onClick={() => openEdit(acc)}><Edit fontSize="small" /></IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              disabled={acc.has_transactions}
+                              onClick={() => handleDelete(acc)}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        ) : (
+          /* ── Vue desktop : tableau groupé par classe ── */
+          <TableContainer component={Paper} elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflowX: 'auto' }}>
+            <Table size="small" sx={{ minWidth: 600 }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'action.hover' }}>
+                  <TableCell><strong>Code</strong></TableCell>
+                  <TableCell><strong>Intitulé</strong></TableCell>
+                  <TableCell><strong>Type</strong></TableCell>
+                  <TableCell><strong>Compte parent</strong></TableCell>
+                  <TableCell align="center"><strong>Actions</strong></TableCell>
                 </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    <Typography variant="body2" color="text.secondary" py={3}>Aucun compte trouvé</Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {grouped.map(([type, list]) => (
+                  <React.Fragment key={type}>
+                    <TableRow>
+                      <TableCell colSpan={5} sx={{ bgcolor: 'action.hover', py: 0.75 }}>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase" letterSpacing={0.5}>
+                          {TYPE_SECTION_LABELS[type]} · {list.length}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                    {list.map((acc) => (
+                      <TableRow key={acc.id} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontFamily="monospace" fontWeight={600}>{acc.code}</Typography>
+                        </TableCell>
+                        <TableCell>{acc.name}</TableCell>
+                        <TableCell>
+                          <Chip label={TYPE_LABELS[acc.account_type]} size="small" color={TYPE_COLORS[acc.account_type] || 'default'} />
+                        </TableCell>
+                        <TableCell>
+                          {acc.parent
+                            ? accounts.find((a) => a.id === acc.parent)?.code || '—'
+                            : <Typography variant="caption" color="text.secondary">Racine</Typography>}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Tooltip title="Modifier">
+                            <IconButton size="small" onClick={() => openEdit(acc)}><Edit fontSize="small" /></IconButton>
+                          </Tooltip>
+                          {acc.has_transactions ? (
+                            <Tooltip title="Impossible de supprimer : ce compte a des transactions associées">
+                              <span>
+                                <IconButton size="small" color="error" disabled><Delete fontSize="small" /></IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip title="Supprimer">
+                              <IconButton size="small" color="error" onClick={() => handleDelete(acc)}><Delete fontSize="small" /></IconButton>
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )
       )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>

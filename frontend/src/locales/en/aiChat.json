@@ -40,7 +40,8 @@
     "placeholder": "Type your message...",
     "attach": "Attach",
     "voiceMessage": "Voice message (real-time)",
-    "send": "Send"
+    "send": "Send",
+    "stop": "Stop"
   },
   "quickActions": {
     "title": "Quick Actions",

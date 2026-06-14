@@ -213,7 +213,7 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Internationalization
 LANGUAGE_CODE = 'fr'
-TIME_ZONE = 'America/Toronto'
+TIME_ZONE = 'Africa/Douala'
 USE_I18N = True
 USE_TZ = True
 

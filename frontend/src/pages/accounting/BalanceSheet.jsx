@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, Table, TableHead, TableBody, TableRow, TableCell,
-  TableContainer, Paper, CircularProgress, Alert, Button, Card, CardContent,
+  TableContainer, Paper, CircularProgress, Alert, Button, Card, CardContent, useTheme,
 } from '@mui/material';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 export default function BalanceSheet() {
@@ -14,6 +15,9 @@ export default function BalanceSheet() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
 
   const load = () => {
     setLoading(true);
@@ -26,8 +30,8 @@ export default function BalanceSheet() {
   useEffect(() => { load(); }, []);
 
   const SectionTable = ({ title, lines, total, color }) => (
-    <Paper elevation={0} sx={{ border: '1px solid', borderColor: `${color}.light`, mb: 2 }}>
-      <Box sx={{ bgcolor: `${color}.main`, color: 'white', px: 2, py: 1, borderRadius: '4px 4px 0 0' }}>
+    <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden', mb: 2 }}>
+      <Box sx={{ bgcolor: `${color}.main`, color: 'white', px: 2, py: 1 }}>
         <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
       </Box>
       <Table size="small">
@@ -68,7 +72,7 @@ export default function BalanceSheet() {
   );
 
   return (
-    <Box p={3} maxWidth={800}>
+    <Box p={{ xs: 2, sm: 3 }} maxWidth={900}>
       <AccountingNav title="Bilan Comptable" subtitle="Actif / Passif / Capitaux propres" />
 
       <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
@@ -93,9 +97,9 @@ export default function BalanceSheet() {
             </Alert>
           )}
 
-          <Box display="flex" gap={3} flexWrap="wrap">
+          <Box display="flex" gap={{ xs: 2, md: 3 }} flexWrap="wrap">
             {/* Colonne Actif */}
-            <Box flex={1} minWidth={320}>
+            <Box flex={1} minWidth={{ xs: '100%', sm: 320 }}>
               <Typography variant="h6" fontWeight={700} mb={1} color="primary.main">ACTIF</Typography>
               <SectionTable
                 title="Actif"
@@ -103,7 +107,7 @@ export default function BalanceSheet() {
                 total={data.assets.total}
                 color="primary"
               />
-              <Card elevation={0} sx={{ border: 2, borderColor: 'primary.main' }}>
+              <Card elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, borderTop: 3, borderTopColor: 'primary.main' }}>
                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="subtitle1" fontWeight={700}>TOTAL ACTIF</Typography>
@@ -116,7 +120,7 @@ export default function BalanceSheet() {
             </Box>
 
             {/* Colonne Passif */}
-            <Box flex={1} minWidth={320}>
+            <Box flex={1} minWidth={{ xs: '100%', sm: 320 }}>
               <Typography variant="h6" fontWeight={700} mb={1} color="warning.main">PASSIF</Typography>
               <SectionTable
                 title="Dettes & Passif"
@@ -132,7 +136,7 @@ export default function BalanceSheet() {
               />
 
               {/* Résultat net de l'exercice */}
-              <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mb: 2 }}>
+              <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden', mb: 2 }}>
                 <Box sx={{ bgcolor: 'action.hover', px: 2, py: 1 }}>
                   <Typography variant="subtitle2" fontWeight={700}>Résultat de l'exercice</Typography>
                 </Box>
@@ -148,7 +152,7 @@ export default function BalanceSheet() {
                 </Box>
               </Paper>
 
-              <Card elevation={0} sx={{ border: 2, borderColor: 'warning.main' }}>
+              <Card elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, borderTop: 3, borderTopColor: 'warning.main' }}>
                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="subtitle1" fontWeight={700}>TOTAL PASSIF</Typography>

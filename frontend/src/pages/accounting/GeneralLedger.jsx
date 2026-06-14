@@ -11,6 +11,7 @@ import { alpha } from '@mui/material/styles';
 import accountingAPI from '../../services/accountingAPI';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 export default function GeneralLedger() {
@@ -42,6 +43,8 @@ export default function GeneralLedger() {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
   const [showFilters, setShowFilters] = useState(false);
 
   return (
@@ -74,8 +77,8 @@ export default function GeneralLedger() {
             flexDirection: isMobile ? 'column' : 'row',
             p: isMobile ? 2 : 0,
             bgcolor: isMobile ? 'background.paper' : 'transparent',
-            borderRadius: isMobile ? 2 : 0,
-            boxShadow: isMobile ? 1 : 0
+            borderRadius: isMobile ? 3 : 0,
+            boxShadow: isMobile ? neu : 0
           }}
         >
           <TextField size="small" type="date" label="Du" InputLabelProps={{ shrink: true }}
@@ -104,14 +107,15 @@ export default function GeneralLedger() {
         <Accordion 
           key={acc.account_id} 
           defaultExpanded={data.accounts.length === 1}
-          elevation={0} 
-          sx={{ 
-            border: '1px solid', 
-            borderColor: 'divider', 
-            mb: 1.5, 
-            borderRadius: '12px !important',
+          elevation={0}
+          sx={{
+            border: 'none',
+            boxShadow: neu,
+            bgcolor: 'background.paper',
+            mb: 1.5,
+            borderRadius: '14px !important',
             overflow: 'hidden',
-            '&:before': { display: 'none' } 
+            '&:before': { display: 'none' }
           }}
         >
           <AccordionSummary 

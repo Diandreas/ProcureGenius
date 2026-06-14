@@ -43,7 +43,8 @@
     "placeholder": "Tapez votre message...",
     "attach": "Joindre",
     "voiceMessage": "Message vocal (en temps réel)",
-    "send": "Envoyer"
+    "send": "Envoyer",
+    "stop": "Arrêter"
   },
   "quickActions": {
     "title": "Actions rapides",

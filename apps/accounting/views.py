@@ -253,7 +253,7 @@ class JournalEntryCancelView(APIView):
                 organization=entry.organization,
                 journal=entry.journal,
                 entry_number=JournalEntry.generate_entry_number(entry.organization, entry.journal),
-                date=date.today(),
+                date=timezone.localdate(),
                 description=f"Contrepassation : {entry.description}",
                 reference=entry.entry_number,
                 status='posted',
@@ -284,7 +284,7 @@ class JournalEntryCancelView(APIView):
 
 def _parse_date_range(request, default_days=30):
     """Helper pour parser start_date / end_date depuis la requête"""
-    today = date.today()
+    today = timezone.localdate()
     start_str = request.GET.get('start_date')
     end_str = request.GET.get('end_date')
     try:
@@ -420,6 +420,9 @@ class IncomeStatementView(APIView):
 
     def get(self, request):
         org = request.user.organization
+        from apps.core.modules import organization_has_feature, Features
+        if not organization_has_feature(org, Features.ACCOUNTING_STATEMENTS):
+            return Response({'error': 'Comptabilité avancée réservée au plan Business.', 'feature': 'accounting_statements'}, status=403)
         start, end = _parse_date_range(request)
 
         def get_totals(account_type):
@@ -485,7 +488,7 @@ class AccountingDashboardView(APIView):
 
     def get(self, request):
         org = request.user.organization
-        today = date.today()
+        today = timezone.localdate()
 
         # Période courante : mois en cours
         start_month = today.replace(day=1)
@@ -558,6 +561,9 @@ class SIGView(APIView):
 
     def get(self, request):
         org = request.user.organization
+        from apps.core.modules import organization_has_feature, Features
+        if not organization_has_feature(org, Features.ACCOUNTING_STATEMENTS):
+            return Response({'error': 'Comptabilité avancée réservée au plan Business.', 'feature': 'accounting_statements'}, status=403)
         start, end = _parse_date_range(request, default_days=365)
 
         def net_by_codes(prefixes_revenue=None, prefixes_expense=None):
@@ -715,7 +721,10 @@ class BalanceSheetView(APIView):
 
     def get(self, request):
         org = request.user.organization
-        today = date.today()
+        from apps.core.modules import organization_has_feature, Features
+        if not organization_has_feature(org, Features.ACCOUNTING_STATEMENTS):
+            return Response({'error': 'Comptabilité avancée réservée au plan Business.', 'feature': 'accounting_statements'}, status=403)
+        today = timezone.localdate()
         end_str = request.GET.get('end_date')
         try:
             as_of = date.fromisoformat(end_str) if end_str else today

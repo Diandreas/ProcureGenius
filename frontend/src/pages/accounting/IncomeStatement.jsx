@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, Table, TableHead, TableBody, TableRow, TableCell,
-  TableContainer, Paper, CircularProgress, Alert, Button, Card, CardContent,
+  TableContainer, Paper, CircularProgress, Alert, Button, Card, CardContent, useTheme,
 } from '@mui/material';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 export default function IncomeStatement() {
@@ -16,6 +17,9 @@ export default function IncomeStatement() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
 
   const load = () => {
     setLoading(true);
@@ -30,7 +34,7 @@ export default function IncomeStatement() {
   const isProfit = data && parseFloat(data.net_result) >= 0;
 
   return (
-    <Box p={3} maxWidth={720}>
+    <Box p={{ xs: 2, sm: 3 }} maxWidth={720}>
       <AccountingNav title="Compte de Résultat" subtitle="Produits vs Charges" />
 
       <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
@@ -48,8 +52,8 @@ export default function IncomeStatement() {
       {data && (
         <>
           {/* Produits */}
-          <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'success.light', mb: 2 }}>
-            <Box sx={{ bgcolor: 'success.main', color: 'white', px: 2, py: 1, borderRadius: '4px 4px 0 0' }}>
+          <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden', mb: 2 }}>
+            <Box sx={{ bgcolor: 'success.main', color: 'white', px: 2, py: 1 }}>
               <Typography variant="subtitle1" fontWeight={700}>Produits (Recettes)</Typography>
             </Box>
             <Table size="small">
@@ -89,8 +93,8 @@ export default function IncomeStatement() {
           </Paper>
 
           {/* Charges */}
-          <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'error.light', mb: 3 }}>
-            <Box sx={{ bgcolor: 'error.main', color: 'white', px: 2, py: 1, borderRadius: '4px 4px 0 0' }}>
+          <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden', mb: 3 }}>
+            <Box sx={{ bgcolor: 'error.main', color: 'white', px: 2, py: 1 }}>
               <Typography variant="subtitle1" fontWeight={700}>Charges</Typography>
             </Box>
             <Table size="small">
@@ -130,10 +134,10 @@ export default function IncomeStatement() {
           </Paper>
 
           {/* Résultat net */}
-          <Card elevation={0} sx={{ border: 2, borderColor: isProfit ? 'success.main' : 'error.main' }}>
+          <Card elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, borderTop: 4, borderTopColor: isProfit ? 'success.main' : 'error.main' }}>
             <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center" gap={1} flexWrap="wrap">
+                <Box minWidth={0}>
                   <Typography variant="h6" fontWeight={700}>
                     {isProfit ? 'Bénéfice net' : 'Déficit net'}
                   </Typography>
@@ -141,7 +145,7 @@ export default function IncomeStatement() {
                     {data.start_date} → {data.end_date}
                   </Typography>
                 </Box>
-                <Typography variant="h4" fontWeight={800} color={isProfit ? 'success.main' : 'error.main'}>
+                <Typography variant="h4" fontWeight={800} color={isProfit ? 'success.main' : 'error.main'} sx={{ fontSize: { xs: '1.6rem', sm: '2.125rem' } }}>
                   {isProfit ? '+' : '-'}{format(Math.abs(parseFloat(data.net_result)))}
                 </Typography>
               </Box>

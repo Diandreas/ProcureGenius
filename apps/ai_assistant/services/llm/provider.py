@@ -102,6 +102,125 @@ class MistralProvider:
 
         return self._normalize(response)
 
+    def stream(
+        self,
+        messages: List[Dict[str, Any]],
+        tools: Optional[List[Dict[str, Any]]] = None,
+        tool_choice: str = "auto",
+        temperature: float = 0.7,
+        max_tokens: int = 2500,
+    ):
+        """Un appel LLM en streaming. Générateur d'événements normalisés.
+
+        Yields :
+            {'type': 'delta', 'content': str}   # fragment de texte, au fil de l'eau
+            {'type': 'final', ...}              # TOUJOURS émis en dernier ; même
+                                                # forme que le retour de complete(),
+                                                # + 'arguments_json' (string brute)
+                                                # dans chaque tool_call pour pouvoir
+                                                # renvoyer le message assistant tel
+                                                # quel à l'API.
+        """
+        from apps.ai_assistant.resilience import (
+            _check_circuit_breaker, _record_failure, _record_success,
+        )
+
+        if not _check_circuit_breaker():
+            yield {"type": "final", **self._empty_result(success=True, circuit_open=True)}
+            return
+
+        stream_fn = getattr(self.client.chat, "stream", None)
+        if stream_fn is None:
+            # SDK ancien sans streaming : on dégrade en un appel bloquant.
+            result = self.complete(messages, tools=tools, tool_choice=tool_choice,
+                                   temperature=temperature, max_tokens=max_tokens)
+            if result.get("content"):
+                yield {"type": "delta", "content": result["content"]}
+            yield {"type": "final", **result}
+            return
+
+        kwargs = dict(model=self.model, messages=messages,
+                      temperature=temperature, max_tokens=max_tokens)
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = tool_choice
+
+        content_parts: List[str] = []
+        raw_tool_calls: Dict[int, Dict[str, Any]] = {}
+        usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+        finish_reason = None
+
+        try:
+            for event in stream_fn(**kwargs):
+                chunk = getattr(event, "data", event)
+                choices = getattr(chunk, "choices", None)
+                if choices:
+                    delta = choices[0].delta
+                    text = getattr(delta, "content", None)
+                    if text:
+                        content_parts.append(text)
+                        yield {"type": "delta", "content": text}
+                    for tc in (getattr(delta, "tool_calls", None) or []):
+                        idx = getattr(tc, "index", None)
+                        if idx is None:
+                            idx = len(raw_tool_calls)
+                        slot = raw_tool_calls.setdefault(idx, {"id": None, "name": "", "arguments": ""})
+                        if getattr(tc, "id", None):
+                            slot["id"] = tc.id
+                        fn = getattr(tc, "function", None)
+                        if fn is not None:
+                            if getattr(fn, "name", None):
+                                slot["name"] = fn.name
+                            args = getattr(fn, "arguments", None)
+                            if args:
+                                slot["arguments"] += args if isinstance(args, str) else json.dumps(args)
+                    if choices[0].finish_reason:
+                        finish_reason = choices[0].finish_reason
+                if getattr(chunk, "usage", None):
+                    usage = {
+                        "prompt_tokens": getattr(chunk.usage, "prompt_tokens", 0) or 0,
+                        "completion_tokens": getattr(chunk.usage, "completion_tokens", 0) or 0,
+                        "total_tokens": getattr(chunk.usage, "total_tokens", 0) or 0,
+                    }
+            _record_success()
+        except Exception as exc:  # pragma: no cover - robustesse runtime
+            _record_failure()
+            logger.error("Erreur LLM Mistral (stream) : %s", exc)
+            yield {
+                "type": "final", "success": False, "content": "".join(content_parts),
+                "tool_calls": None, "finish_reason": None, "usage": usage,
+                "circuit_open": False, "error": str(exc),
+            }
+            return
+
+        tool_calls = None
+        if raw_tool_calls:
+            tool_calls = []
+            for idx in sorted(raw_tool_calls):
+                slot = raw_tool_calls[idx]
+                if not slot["name"]:
+                    continue
+                arguments: Dict[str, Any] = {}
+                if slot["arguments"]:
+                    try:
+                        parsed = json.loads(slot["arguments"])
+                        arguments = parsed if isinstance(parsed, dict) else {}
+                    except json.JSONDecodeError as exc:
+                        logger.warning("Arguments tool_call (stream) non parsables : %s", exc)
+                tool_calls.append({
+                    "id": slot["id"],
+                    "function": slot["name"],
+                    "arguments": arguments,
+                    "arguments_json": slot["arguments"] or "{}",
+                })
+            tool_calls = tool_calls or None
+
+        yield {
+            "type": "final", "success": True, "content": "".join(content_parts),
+            "tool_calls": tool_calls, "finish_reason": finish_reason, "usage": usage,
+            "circuit_open": False, "error": None,
+        }
+
     # ----------------------------------------------------------------- helpers
     @staticmethod
     def _empty_result(success: bool, circuit_open: bool = False, error: Optional[str] = None) -> Dict[str, Any]:

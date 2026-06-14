@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 const TYPE_LABELS = {
@@ -26,6 +27,8 @@ export default function TrialBalance() {
   const { format } = useCurrency();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
 
   const load = () => {
     setLoading(true);
@@ -76,7 +79,7 @@ export default function TrialBalance() {
             /* ── Vue mobile : cartes ── */
             <Stack spacing={1.5}>
               {data.rows.map((row) => (
-                <Card key={row.account_id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                <Card key={row.account_id} elevation={0} sx={{ border: 'none', borderRadius: 2.5, bgcolor: 'background.paper', boxShadow: neu }}>
                   <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                     <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                       <Box>
@@ -125,7 +128,7 @@ export default function TrialBalance() {
                 </Card>
               ))}
               {/* Total */}
-              <Card elevation={0} sx={{ border: '1px solid', borderColor: 'primary.main', bgcolor: 'action.hover' }}>
+              <Card elevation={0} sx={{ border: 'none', borderRadius: 2.5, boxShadow: neu, borderTop: 3, borderTopColor: 'primary.main', bgcolor: 'action.hover' }}>
                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                   <Typography variant="body2" fontWeight={700} mb={1}>TOTAL</Typography>
                   <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1}>
@@ -146,7 +149,7 @@ export default function TrialBalance() {
             <TableContainer
               component={Paper}
               elevation={0}
-              sx={{ border: '1px solid', borderColor: 'divider', overflowX: 'auto' }}
+              sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflowX: 'auto' }}
             >
               <Table size="small" sx={{ minWidth: 650 }}>
                 <TableHead>

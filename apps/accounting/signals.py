@@ -8,11 +8,15 @@ Flux couverts :
   3. Facture annulée                     → extourne de l'écriture de vente
   4. BC reçu                             → écriture charge achat (6900 / 4010)
 """
+import logging
 from decimal import Decimal
 from datetime import date as date_type
 
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 from apps.invoicing.models import Invoice, Payment
 from apps.purchase_orders.models import PurchaseOrder
@@ -102,10 +106,6 @@ def create_invoice_entry(invoice, user=None):
     if not org:
         return None
 
-    # Éviter les doublons
-    if JournalEntry.objects.filter(source_invoice=invoice, source='invoice').exists():
-        return None
-
     invoice_type = getattr(invoice, 'invoice_type', 'standard')
     revenue_code = INVOICE_TYPE_TO_ACCOUNT.get(invoice_type, '7500')
     client_account = _get_account(org, '4100')
@@ -118,6 +118,25 @@ def create_invoice_entry(invoice, user=None):
     amount = invoice.total_amount or Decimal('0')
     if amount <= 0:
         return None
+
+    # Écriture déjà présente : on RESYNCHRONISE son montant au lieu de l'ignorer.
+    # Indispensable car le signal peut se déclencher une première fois alors que
+    # la facture n'a pas encore toutes ses lignes (total partiel) ; sans cette
+    # resynchro l'écriture reste figée sur un montant incomplet (ex : produit
+    # seul, sans le service ajouté ensuite).
+    existing = JournalEntry.objects.filter(source_invoice=invoice, source='invoice').first()
+    if existing:
+        if existing.status != 'cancelled':
+            current = sum((l.credit or Decimal('0')) for l in existing.lines.all())
+            if current != amount:
+                for line in existing.lines.all():
+                    if line.debit and line.debit > 0:        # ligne client (débit)
+                        line.debit = amount
+                        line.save(update_fields=['debit'])
+                    elif line.credit and line.credit > 0:    # ligne produit (crédit)
+                        line.credit = amount
+                        line.save(update_fields=['credit'])
+        return existing
 
     entry = JournalEntry.objects.create(
         organization=org,
@@ -313,17 +332,19 @@ def on_invoice_save(sender, instance, **kwargs):
             if prev in ('sent', 'paid', 'overdue'):
                 create_invoice_reversal(instance)
     except Exception:
-        pass
+        logger.exception("Échec écriture comptable pour facture %s", getattr(instance, 'pk', None))
 
 
 @receiver(post_save, sender=Payment)
 def on_payment_save(sender, instance, created, **kwargs):
     """Génère l'écriture de paiement quand un paiement est créé"""
     try:
-        if created and instance.status == 'success':
+        # Le statut par défaut des paiements est 'completed' (et non 'success') :
+        # on accepte les deux pour ne pas rater l'écriture de trésorerie.
+        if created and instance.status in ('completed', 'success', 'paid'):
             create_payment_entry(instance)
     except Exception:
-        pass
+        logger.exception("Échec création écriture de paiement %s", getattr(instance, 'pk', None))
 
 
 @receiver(post_save, sender=PurchaseOrder)

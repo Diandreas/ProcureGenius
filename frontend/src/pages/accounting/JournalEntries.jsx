@@ -11,6 +11,7 @@ import { useSnackbar } from 'notistack';
 import accountingAPI from '../../services/accountingAPI';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 const STATUS_COLORS = { draft: 'default', posted: 'success', cancelled: 'error' };
@@ -55,6 +56,8 @@ export default function JournalEntries() {
   const { format } = useCurrency();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
 
   const load = (f = filters) => {
     setLoading(true);
@@ -164,7 +167,7 @@ export default function JournalEntries() {
                 Aucune écriture trouvée
               </Typography>
             ) : entries.map((e) => (
-              <Card key={e.id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+              <Card key={e.id} elevation={0} sx={{ border: 'none', borderRadius: 2.5, bgcolor: 'background.paper', boxShadow: neu }}>
                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                     <Box minWidth={0} flex={1}>
@@ -234,7 +237,7 @@ export default function JournalEntries() {
           </Stack>
         ) : (
           /* ── Vue desktop : tableau ── */
-          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', overflowX: 'auto' }}>
+          <TableContainer component={Paper} elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflowX: 'auto' }}>
             <Table size="small" sx={{ minWidth: 700 }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>

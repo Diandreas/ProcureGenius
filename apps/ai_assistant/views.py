@@ -21,6 +21,123 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _get_or_create_conversation(user, conversation_id, first_message):
+    """Récupère ou crée la conversation (isolation multi-tenant)."""
+    user_org = getattr(user, 'organization', None)
+    if conversation_id:
+        conv_filter = {'id': conversation_id, 'user': user}
+        if user_org:
+            conv_filter['organization'] = user_org
+        return Conversation.objects.get(**conv_filter)
+    title = first_message[:50] + "..." if len(first_message) > 50 else first_message
+    return Conversation.objects.create(user=user, organization=user_org, title=title)
+
+
+def _run_legacy_confirmation(orchestrator, confirmation_data, user_ctx):
+    """Compat : exécute directement une création confirmée (ancien format front).
+
+    Détecte l'action à partir de `entity_type` puis exécute via le registry.
+    Partagé entre ChatView et ChatStreamView.
+    """
+    from .services import OrchestratorResult
+    entity_type = confirmation_data.get('entity_type')
+    action_name = f'create_{entity_type}' if entity_type else None
+    if not action_name:
+        return OrchestratorResult(
+            reply="Je n'ai pas pu déterminer le type d'élément à créer. Veuillez préciser.",
+            success=False,
+        )
+    result = async_to_sync(orchestrator.registry.call)(action_name, confirmation_data, user_ctx)
+    if result.get('success'):
+        reply = result.get('message', 'Création réussie.')
+    else:
+        reply = f"Erreur : {result.get('error', 'inconnue')}"
+    return OrchestratorResult(
+        reply=reply,
+        tool_results=[{'function': action_name, 'result': result}],
+        success=result.get('success', False),
+    )
+
+
+def _record_ai_usage(org, user, tokens):
+    """Comptabilise les tokens consommés pour le suivi de budget.
+
+    Indispensable : `token_monitor.check_budget` (vérifié AVANT chaque requête)
+    lit des compteurs que SEUL `track_usage` incrémente. Sans cet appel, la limite
+    de budget tokens ne se déclencherait jamais pour le flux orchestrateur.
+    """
+    if not org or not tokens:
+        return
+    try:
+        token_monitor.track_usage(
+            tokens_used=int(tokens),
+            user_id=getattr(user, 'id', None),
+            organization_id=org.id,
+        )
+    except Exception:  # le suivi ne doit jamais casser la réponse
+        logger.warning("token_monitor.track_usage a échoué", exc_info=True)
+
+
+def _persist_ai_message(conversation, *, reply, tool_results=None, charts=None,
+                        pending_action=None, tokens=0, agent_steps=None):
+    """Persiste le message assistant et construit le contrat de réponse UNIFIÉ.
+
+    Partagé entre ChatView (réponse JSON classique) et ChatStreamView (événement
+    SSE 'done'). `reply` est TOUJOURS une string non vide. `agent_steps` est la
+    trace de la boucle agentique (timeline), persistée dans metadata pour rester
+    visible au rechargement de la conversation.
+    """
+    from apps.core.text_utils import strip_emojis
+    reply = strip_emojis((reply or "").strip()) or "Je n'ai pas de réponse à fournir pour le moment."
+
+    # action_results au format attendu par MessageContent.jsx (charts inclus)
+    action_results = tool_results or None
+
+    # action_buttons : extraits des success_actions éventuels présents dans les résultats
+    action_buttons = None
+    if action_results:
+        for ar in action_results:
+            res = ar.get('result', {}) if isinstance(ar, dict) else {}
+            if isinstance(res, dict) and res.get('success_actions'):
+                action_buttons = res['success_actions']
+                break
+
+    metadata = {}
+    if action_results:
+        metadata['action_results'] = action_results
+    if pending_action:
+        metadata['pending_action'] = pending_action
+    if agent_steps:
+        metadata['agent_steps'] = agent_steps
+
+    ai_msg = Message.objects.create(
+        conversation=conversation,
+        role='assistant',
+        content=reply,
+        metadata=metadata or None,
+    )
+
+    conversation.last_message_at = timezone.now()
+    conversation.save()
+
+    # chart top-level = miroir du premier graphique (confort front)
+    chart = charts[0] if charts else None
+
+    return {
+        'status': 'success',
+        'conversation_id': str(conversation.id),
+        'reply': reply,                       # source de vérité
+        'ai_response': reply,                 # compat
+        'message': MessageSerializer(ai_msg).data,
+        'action_results': action_results,
+        'action_buttons': action_buttons,
+        'chart': chart,
+        'needs_confirmation': pending_action,
+        'tokens_used': tokens,
+        'agent_steps': agent_steps or [],
+    }
+
+
 class ChatView(APIView):
     """Endpoint principal pour le chat avec l'IA"""
     permission_classes = [IsAuthenticated]
@@ -107,7 +224,8 @@ class ChatView(APIView):
 
             response_data = self._persist_and_build_response(conversation, result)
 
-            # Incrémenter le quota IA après succès
+            # Comptabiliser les tokens consommés (alimente check_budget) + quota IA.
+            _record_ai_usage(org, request.user, result.tokens)
             if org:
                 try:
                     from apps.subscriptions.quota_service import QuotaService
@@ -131,91 +249,179 @@ class ChatView(APIView):
 
     # ------------------------------------------------------------------ helpers
     def _get_or_create_conversation(self, user, conversation_id, first_message):
-        user_org = getattr(user, 'organization', None)
-        if conversation_id:
-            conv_filter = {'id': conversation_id, 'user': user}
-            if user_org:
-                conv_filter['organization'] = user_org
-            return Conversation.objects.get(**conv_filter)
-        title = first_message[:50] + "..." if len(first_message) > 50 else first_message
-        return Conversation.objects.create(user=user, organization=user_org, title=title)
+        return _get_or_create_conversation(user, conversation_id, first_message)
 
     def _run_legacy_confirmation(self, orchestrator, confirmation_data, user_ctx):
-        """Compat : exécute directement une création confirmée (ancien front).
-
-        Détecte l'action à partir de `entity_type` puis exécute via le registry.
-        """
-        from .services import OrchestratorResult
-        entity_type = confirmation_data.get('entity_type')
-        action_name = f'create_{entity_type}' if entity_type else None
-        if not action_name:
-            return OrchestratorResult(
-                reply="Je n'ai pas pu déterminer le type d'élément à créer. Veuillez préciser.",
-                success=False,
-            )
-        result = async_to_sync(orchestrator.registry.call)(action_name, confirmation_data, user_ctx)
-        if result.get('success'):
-            reply = result.get('message', 'Création réussie.')
-        else:
-            reply = f"Erreur : {result.get('error', 'inconnue')}"
-        return OrchestratorResult(
-            reply=reply,
-            tool_results=[{'function': action_name, 'result': result}],
-            success=result.get('success', False),
-        )
+        """Compat ancien format de confirmation (voir _run_legacy_confirmation module)."""
+        return _run_legacy_confirmation(orchestrator, confirmation_data, user_ctx)
 
     def _persist_and_build_response(self, conversation, result):
-        """Persiste la réponse IA et construit le contrat unifié.
-
-        `reply` est TOUJOURS une string non vide (corrige le bug du panneau
-        contextuel qui affichait « Réponse reçue. »).
-        """
-        from apps.core.text_utils import strip_emojis
-        reply = strip_emojis((result.reply or "").strip()) or "Je n'ai pas de réponse à fournir pour le moment."
-
-        # action_results au format attendu par MessageContent.jsx (charts inclus)
-        action_results = result.tool_results or None
-
-        # action_buttons : extraits des success_actions éventuels présents dans les résultats
-        action_buttons = None
-        if action_results:
-            for ar in action_results:
-                res = ar.get('result', {}) if isinstance(ar, dict) else {}
-                if isinstance(res, dict) and res.get('success_actions'):
-                    action_buttons = res['success_actions']
-                    break
-
-        metadata = {}
-        if action_results:
-            metadata['action_results'] = action_results
-        if result.pending_action:
-            metadata['pending_action'] = result.pending_action
-
-        ai_msg = Message.objects.create(
-            conversation=conversation,
-            role='assistant',
-            content=reply,
-            metadata=metadata or None,
+        """Persiste la réponse IA et construit le contrat unifié (voir _persist_ai_message)."""
+        return _persist_ai_message(
+            conversation,
+            reply=result.reply,
+            tool_results=result.tool_results,
+            charts=result.charts,
+            pending_action=result.pending_action,
+            tokens=result.tokens,
         )
 
-        conversation.last_message_at = timezone.now()
-        conversation.save()
 
-        # chart top-level = miroir du premier graphique (confort front)
-        chart = result.charts[0] if result.charts else None
+class ChatStreamView(APIView):
+    """Chat IA en streaming (SSE) — boucle agentique avec étapes visibles.
 
-        return {
-            'status': 'success',
-            'conversation_id': str(conversation.id),
-            'reply': reply,                       # NOUVEAU — source de vérité
-            'ai_response': reply,                 # compat
-            'message': MessageSerializer(ai_msg).data,
-            'action_results': action_results,
-            'action_buttons': action_buttons,
-            'chart': chart,                       # NOUVEAU miroir
-            'needs_confirmation': result.pending_action,  # NOUVEAU
-            'tokens_used': result.tokens,
-        }
+    POST /ai/chat/stream/ : même contrat d'entrée que ChatView. La réponse est
+    un flux `text/event-stream` d'événements JSON (`data: {...}\\n\\n`) :
+
+        status / text_delta / thought / tool_start / tool_result / chart
+        done   -> payload identique à la réponse JSON de ChatView (+ agent_steps)
+        error  -> message d'erreur affichable
+
+    Le frontend (AIChat.jsx) consomme ce flux via fetch + ReadableStream et
+    affiche la timeline des étapes au fur et à mesure. Les confirmations
+    (token + choice) passent aussi par cet endpoint : elles n'émettent qu'un
+    événement 'done' (pas d'étapes intermédiaires).
+    """
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [AIUserRateThrottle, AIOrgRateThrottle, AIBurstRateThrottle]
+
+    def post(self, request):
+        import json as json_mod
+        from django.http import StreamingHttpResponse
+        from .services import get_orchestrator, AsyncSafeUserContext
+
+        serializer = ChatRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_message = serializer.validated_data['message']
+        conversation_id = serializer.validated_data.get('conversation_id')
+        confirmation_data = serializer.validated_data.get('confirmation_data') or {}
+        page = serializer.validated_data.get('page')
+
+        detect_injection_attempt(serializer.validated_data['message'])
+        user_message = sanitize_user_input(user_message)
+
+        # Quota / budget IA : refus AVANT d'ouvrir le flux (réponses JSON classiques)
+        org = getattr(request.user, 'organization', None)
+        if org:
+            try:
+                from apps.subscriptions.quota_service import QuotaService
+                quota = QuotaService.check_quota(org, 'ai_requests', raise_exception=False)
+                if not quota['can_proceed']:
+                    return Response({
+                        'error': 'quota_exceeded',
+                        'message': "Quota de requetes IA atteint pour ce mois. Passez au plan superieur.",
+                    }, status=status.HTTP_402_PAYMENT_REQUIRED)
+            except Exception:
+                pass
+
+            budget_status = token_monitor.check_budget(org.id)
+            if not budget_status['allowed']:
+                return Response({
+                    'error': 'budget_exceeded',
+                    'message': budget_status['reason'],
+                }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        try:
+            conversation = _get_or_create_conversation(request.user, conversation_id, user_message)
+        except Conversation.DoesNotExist:
+            return Response(
+                {'error': 'conversation_not_found', 'message': 'Conversation introuvable.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        Message.objects.create(conversation=conversation, role='user', content=user_message)
+
+        orchestrator = get_orchestrator()
+        user_ctx = AsyncSafeUserContext.from_user(request.user)
+        user = request.user
+
+        def sse(payload):
+            return f"data: {json_mod.dumps(payload, ensure_ascii=False, default=str)}\n\n"
+
+        def event_stream():
+            tokens_this_request = 0
+            try:
+                token = confirmation_data.get('token')
+                choice = confirmation_data.get('choice')
+                if token and choice:
+                    # Confirmation : exécution directe, un seul événement 'done'.
+                    yield sse({'type': 'status', 'message': "Exécution de l'action confirmée"})
+                    result = async_to_sync(orchestrator.run_confirmation)(
+                        token=token, choice=choice, user_ctx=user_ctx,
+                    )
+                    tokens_this_request = result.tokens
+                    payload = _persist_ai_message(
+                        conversation,
+                        reply=result.reply,
+                        tool_results=result.tool_results,
+                        charts=result.charts,
+                        pending_action=result.pending_action,
+                        tokens=result.tokens,
+                    )
+                    yield sse({'type': 'done', **payload})
+                elif confirmation_data.get('force_create'):
+                    # Compat : ancien format de confirmation (création forcée directe).
+                    yield sse({'type': 'status', 'message': "Exécution de l'action confirmée"})
+                    result = _run_legacy_confirmation(orchestrator, confirmation_data, user_ctx)
+                    tokens_this_request = result.tokens
+                    payload = _persist_ai_message(
+                        conversation,
+                        reply=result.reply,
+                        tool_results=result.tool_results,
+                        charts=result.charts,
+                        tokens=result.tokens,
+                    )
+                    yield sse({'type': 'done', **payload})
+                else:
+                    history = list(
+                        Message.objects.filter(conversation=conversation)
+                        .order_by('created_at')
+                        .values('role', 'content')
+                    )[:-1]
+                    for event in orchestrator.run_stream(
+                        message=user_message,
+                        user_ctx=user_ctx,
+                        conversation_history=history,
+                        page=page,
+                        user=user,
+                    ):
+                        if event['type'] == 'final':
+                            # Terminal : persistance + contrat unifié (jamais relayé brut).
+                            tokens_this_request = event['tokens']
+                            payload = _persist_ai_message(
+                                conversation,
+                                reply=event['reply'],
+                                tool_results=event['tool_results'],
+                                charts=event['charts'],
+                                pending_action=event['pending_action'],
+                                tokens=event['tokens'],
+                                agent_steps=event['steps'],
+                            )
+                            yield sse({'type': 'done', **payload})
+                        else:
+                            yield sse(event)
+
+                # Comptabiliser les tokens (alimente check_budget) + quota IA.
+                # Toujours exécuté même si le client coupe la connexion (le
+                # générateur poursuit jusqu'à épuisement côté serveur).
+                _record_ai_usage(org, user, tokens_this_request)
+                if org:
+                    try:
+                        from apps.subscriptions.quota_service import QuotaService
+                        QuotaService.increment_usage(org, 'ai_requests')
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.error(f"Chat stream error: {e}", exc_info=True)
+                yield sse({'type': 'error',
+                           'message': "Une erreur est survenue. Veuillez reessayer."})
+
+        response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'  # désactive le buffering Nginx
+        return response
 
 
 class ConversationListView(APIView):

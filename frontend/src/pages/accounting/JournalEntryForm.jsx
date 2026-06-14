@@ -3,6 +3,7 @@ import {
   Box, Typography, Button, TextField, MenuItem, Select, FormControl,
   InputLabel, Table, TableHead, TableBody, TableRow, TableCell,
   Paper, IconButton, Alert, CircularProgress, Card, CardContent, Divider, Chip,
+  Stack, useMediaQuery, useTheme,
 } from '@mui/material';
 import { Add, Delete, Save, CheckCircle } from '@mui/icons-material';
 import AccountingTooltip from '../../components/accounting/AccountingTooltip';
@@ -10,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 const EMPTY_LINE = { account: '', description: '', debit: '', credit: '' };
@@ -28,6 +30,10 @@ export default function JournalEntryForm() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { format } = useCurrency();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
 
   useEffect(() => {
     Promise.all([accountingAPI.getJournals(), accountingAPI.getAccounts({ active: 'true' })])
@@ -91,14 +97,14 @@ export default function JournalEntryForm() {
   };
 
   return (
-    <Box p={3} maxWidth={960}>
+    <Box p={{ xs: 2, sm: 3 }} maxWidth={960}>
       <AccountingNav title="Nouvelle Écriture Comptable" subtitle="Saisie en partie double" />
 
       {/* En-tête */}
-      <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mb: 3 }}>
+      <Card elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, mb: 3 }}>
         <CardContent>
           <Box display="flex" gap={2} flexWrap="wrap">
-            <FormControl required sx={{ minWidth: 200 }}>
+            <FormControl required sx={{ flex: '1 1 200px' }}>
               <InputLabel>Journal *</InputLabel>
               <Select value={form.journal} onChange={(e) => setForm((f) => ({ ...f, journal: e.target.value }))} label="Journal *">
                 {journals.map((j) => <MenuItem key={j.id} value={j.id}>{j.code} — {j.name}</MenuItem>)}
@@ -106,74 +112,112 @@ export default function JournalEntryForm() {
             </FormControl>
             <TextField label="Date *" type="date" value={form.date}
               onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-              InputLabelProps={{ shrink: true }} sx={{ width: 170 }} />
+              InputLabelProps={{ shrink: true }} sx={{ flex: '1 1 150px' }} />
             <TextField label="Libellé *" value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              sx={{ flex: 1, minWidth: 240 }} />
+              sx={{ flex: '1 1 100%' }} />
             <TextField label="Référence" value={form.reference}
               onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))}
-              sx={{ width: 180 }} />
+              sx={{ flex: '1 1 180px' }} />
           </Box>
         </CardContent>
       </Card>
 
       {/* Lignes */}
       <Typography variant="subtitle1" fontWeight={600} mb={1}>Lignes d'écriture</Typography>
-      <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mb: 2 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'action.hover' }}>
-              <TableCell sx={{ minWidth: 240 }}><strong>Compte</strong></TableCell>
-              <TableCell><strong>Libellé</strong></TableCell>
-              <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="debit">Débit</AccountingTooltip></strong></TableCell>
-              <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="credit">Crédit</AccountingTooltip></strong></TableCell>
-              <TableCell sx={{ width: 48 }} />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {lines.map((line, i) => (
-              <TableRow key={i}>
-                <TableCell>
+      {isMobile ? (
+        /* ── Vue mobile : éditeur en cartes ── */
+        <Stack spacing={1.5} mb={2}>
+          {lines.map((line, i) => (
+            <Card key={i} elevation={0} sx={{ border: 'none', borderRadius: 2.5, bgcolor: 'background.paper', boxShadow: neu }}>
+              <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>Ligne {i + 1}</Typography>
+                  {lines.length > 2 && (
+                    <IconButton size="small" color="error" onClick={() => removeLine(i)}><Delete fontSize="small" /></IconButton>
+                  )}
+                </Box>
+                <FormControl fullWidth size="small" sx={{ mb: 1.25 }}>
                   <Select value={line.account} onChange={(e) => setLine(i, 'account', e.target.value)}
-                    displayEmpty size="small" fullWidth
+                    displayEmpty
                     renderValue={(v) => {
-                      if (!v) return <Typography color="text.secondary" variant="body2">Sélectionner...</Typography>;
+                      if (!v) return <Typography color="text.secondary" variant="body2">Sélectionner un compte...</Typography>;
                       const acc = accounts.find((a) => a.id === v);
                       return acc ? `${acc.code} — ${acc.name}` : v;
                     }}>
                     {accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.code} — {a.name}</MenuItem>)}
                   </Select>
-                </TableCell>
-                <TableCell>
-                  <TextField value={line.description} onChange={(e) => setLine(i, 'description', e.target.value)}
-                    size="small" fullWidth placeholder="Libellé ligne" />
-                </TableCell>
-                <TableCell>
-                  <TextField value={line.debit} onChange={(e) => setLine(i, 'debit', e.target.value)}
-                    size="small" type="number" inputProps={{ min: 0, step: '0.01', style: { textAlign: 'right' } }}
-                    placeholder="0.00" />
-                </TableCell>
-                <TableCell>
-                  <TextField value={line.credit} onChange={(e) => setLine(i, 'credit', e.target.value)}
-                    size="small" type="number" inputProps={{ min: 0, step: '0.01', style: { textAlign: 'right' } }}
-                    placeholder="0.00" />
-                </TableCell>
-                <TableCell>
-                  {lines.length > 2 && (
-                    <IconButton size="small" color="error" onClick={() => removeLine(i)}><Delete fontSize="small" /></IconButton>
-                  )}
-                </TableCell>
+                </FormControl>
+                <TextField value={line.description} onChange={(e) => setLine(i, 'description', e.target.value)}
+                  size="small" fullWidth placeholder="Libellé de la ligne" sx={{ mb: 1.25 }} />
+                <Box display="flex" gap={1.5}>
+                  <TextField label="Débit" value={line.debit} onChange={(e) => setLine(i, 'debit', e.target.value)}
+                    size="small" type="number" fullWidth inputProps={{ min: 0, step: '0.01' }} placeholder="0.00" />
+                  <TextField label="Crédit" value={line.credit} onChange={(e) => setLine(i, 'credit', e.target.value)}
+                    size="small" type="number" fullWidth inputProps={{ min: 0, step: '0.01' }} placeholder="0.00" />
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      ) : (
+        /* ── Vue desktop : tableau ── */
+        <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, mb: 2, overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 680 }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                <TableCell sx={{ minWidth: 240 }}><strong>Compte</strong></TableCell>
+                <TableCell><strong>Libellé</strong></TableCell>
+                <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="debit">Débit</AccountingTooltip></strong></TableCell>
+                <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="credit">Crédit</AccountingTooltip></strong></TableCell>
+                <TableCell sx={{ width: 48 }} />
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
+            </TableHead>
+            <TableBody>
+              {lines.map((line, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Select value={line.account} onChange={(e) => setLine(i, 'account', e.target.value)}
+                      displayEmpty size="small" fullWidth
+                      renderValue={(v) => {
+                        if (!v) return <Typography color="text.secondary" variant="body2">Sélectionner...</Typography>;
+                        const acc = accounts.find((a) => a.id === v);
+                        return acc ? `${acc.code} — ${acc.name}` : v;
+                      }}>
+                      {accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.code} — {a.name}</MenuItem>)}
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <TextField value={line.description} onChange={(e) => setLine(i, 'description', e.target.value)}
+                      size="small" fullWidth placeholder="Libellé ligne" />
+                  </TableCell>
+                  <TableCell>
+                    <TextField value={line.debit} onChange={(e) => setLine(i, 'debit', e.target.value)}
+                      size="small" type="number" inputProps={{ min: 0, step: '0.01', style: { textAlign: 'right' } }}
+                      placeholder="0.00" />
+                  </TableCell>
+                  <TableCell>
+                    <TextField value={line.credit} onChange={(e) => setLine(i, 'credit', e.target.value)}
+                      size="small" type="number" inputProps={{ min: 0, step: '0.01', style: { textAlign: 'right' } }}
+                      placeholder="0.00" />
+                  </TableCell>
+                  <TableCell>
+                    {lines.length > 2 && (
+                      <IconButton size="small" color="error" onClick={() => removeLine(i)}><Delete fontSize="small" /></IconButton>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Paper>
+      )}
 
       <Button startIcon={<Add />} onClick={addLine} size="small" sx={{ mb: 3 }}>Ajouter une ligne</Button>
 
       {/* Totaux */}
-      <Box display="flex" justifyContent="flex-end" mb={3}>
-        <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2, minWidth: 260 }}>
+      <Box display="flex" justifyContent={{ xs: 'stretch', sm: 'flex-end' }} mb={3}>
+        <Box sx={{ borderRadius: 3, boxShadow: neu, bgcolor: 'background.paper', p: 2, width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 260 } }}>
           <Box display="flex" justifyContent="space-between" mb={0.5}>
             <Typography variant="body2">Total Débit</Typography>
             <Typography variant="body2" fontWeight={600} color="primary.main">{format(totalDebit)}</Typography>
@@ -200,14 +244,14 @@ export default function JournalEntryForm() {
         </Alert>
       )}
 
-      <Box display="flex" gap={2}>
+      <Box display="flex" gap={1.5} flexWrap="wrap">
         <Button variant="outlined" onClick={() => navigate('/accounting/entries')}>Annuler</Button>
         <Button variant="outlined" startIcon={<Save />} onClick={() => handleSave(false)} disabled={saving}>
-          Sauvegarder (brouillon)
+          {isMobile ? 'Brouillon' : 'Sauvegarder (brouillon)'}
         </Button>
         <Button variant="contained" color="success" startIcon={<CheckCircle />}
           onClick={() => handleSave(true)} disabled={saving || !isBalanced}>
-          {saving ? <CircularProgress size={20} /> : 'Sauvegarder & Valider'}
+          {saving ? <CircularProgress size={20} /> : (isMobile ? 'Valider' : 'Sauvegarder & Valider')}
         </Button>
       </Box>
     </Box>

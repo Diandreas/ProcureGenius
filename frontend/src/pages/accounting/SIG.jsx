@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, CircularProgress, Alert, Button,
-  Paper, Collapse, IconButton, Chip,
+  Paper, Collapse, IconButton, Chip, useTheme,
 } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 function SoldeRow({ solde, format }) {
@@ -69,7 +70,7 @@ function SoldeRow({ solde, format }) {
                 ? 'success.main'
                 : 'error.main'
             }
-            minWidth={120}
+            minWidth={{ xs: 90, sm: 120 }}
             textAlign="right"
           >
             {isPositive && !solde.final ? '+' : ''}{format(Math.abs(montant))}
@@ -115,6 +116,9 @@ export default function SIG() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
 
   const load = () => {
     setLoading(true);
@@ -127,7 +131,7 @@ export default function SIG() {
   useEffect(() => { load(); }, []);
 
   return (
-    <Box p={3} maxWidth={860}>
+    <Box p={{ xs: 2, sm: 3 }} maxWidth={860}>
       <AccountingNav title="SIG" subtitle="Soldes Intermédiaires de Gestion" />
 
       <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
@@ -149,7 +153,7 @@ export default function SIG() {
           <Alert severity="info" sx={{ mb: 2 }}>
             Les soldes sont calculés automatiquement selon les préfixes de comptes (60→achats, 61-62→services, 63-64→personnel, 65→autres charges, 66→financier, 67→exceptionnel, 68→amortissements, 70-75→CA, 76→produits fin., 77→produits excep.)
           </Alert>
-          <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
+          <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden' }}>
             {data.soldes.map((solde, i) => (
               <SoldeRow key={i} solde={solde} format={format} />
             ))}

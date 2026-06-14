@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Grid, Card, CardContent, Typography, CircularProgress,
-  Alert, Divider,
+  Alert, Divider, useTheme,
 } from '@mui/material';
 import {
   TrendingUp, TrendingDown, AccountBalance, PendingActions,
@@ -12,24 +12,36 @@ import {
 } from 'recharts';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
+import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
-const KpiCard = ({ label, value, icon, color, subtitle }) => (
-  <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderTop: 3, borderTopColor: color, height: '100%' }}>
-    <CardContent>
+const KpiCard = ({ label, value, icon, color, subtitle, neu }) => (
+  <Card
+    elevation={0}
+    sx={{
+      border: 'none',
+      borderTop: 3,
+      borderTopColor: color,
+      borderRadius: 3,
+      height: '100%',
+      bgcolor: 'background.paper',
+      boxShadow: neu,
+    }}
+  >
+    <CardContent sx={{ p: { xs: 1.75, sm: 2.5 } }}>
       <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-        <Box>
+        <Box minWidth={0}>
           <Typography variant="caption" color="text.secondary" textTransform="uppercase" letterSpacing={0.5}>
             {label}
           </Typography>
-          <Typography variant="h5" fontWeight={700} mt={0.5} color={color}>
+          <Typography variant="h5" fontWeight={700} mt={0.5} color={color} sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
             {value}
           </Typography>
           {subtitle && (
             <Typography variant="caption" color="text.secondary">{subtitle}</Typography>
           )}
         </Box>
-        <Box sx={{ p: 1, borderRadius: 2, bgcolor: `${color}18`, color }}>
+        <Box sx={{ p: 1, borderRadius: 2, bgcolor: `${color}18`, color, flexShrink: 0 }}>
           {icon}
         </Box>
       </Box>
@@ -40,7 +52,7 @@ const KpiCard = ({ label, value, icon, color, subtitle }) => (
 const CustomTooltip = ({ active, payload, label, fmt }) => {
   if (!active || !payload?.length) return null;
   return (
-    <Card elevation={3} sx={{ p: 1.5, minWidth: 180 }}>
+    <Card elevation={3} sx={{ p: 1.5, minWidth: 180, bgcolor: 'background.paper' }}>
       <Typography variant="caption" color="text.secondary">{label}</Typography>
       {payload.map((p) => (
         <Box key={p.dataKey} display="flex" justifyContent="space-between" gap={2} mt={0.5}>
@@ -57,6 +69,10 @@ export default function AccountingDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
+  const gridStroke = isDark ? 'rgba(255,255,255,0.08)' : '#f0f0f0';
 
   useEffect(() => {
     accountingAPI.getDashboard()
@@ -66,14 +82,14 @@ export default function AccountingDashboard() {
   }, []);
 
   if (loading) return (
-    <Box p={3}>
+    <Box p={{ xs: 2, sm: 3 }}>
       <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
       <Box display="flex" justifyContent="center" p={6}><CircularProgress /></Box>
     </Box>
   );
 
   if (error) return (
-    <Box p={3}>
+    <Box p={{ xs: 2, sm: 3 }}>
       <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
       <Alert severity="error">{error}</Alert>
     </Box>
@@ -90,11 +106,23 @@ export default function AccountingDashboard() {
     Résultat: parseFloat(row.result),
   }));
 
+  const YearCard = ({ label, value, color, suffix }) => (
+    <Box sx={{ p: { xs: 1.75, sm: 2 }, borderRadius: 3, bgcolor: 'background.paper', boxShadow: neu }}>
+      <Typography variant="caption" color="text.secondary">{label}</Typography>
+      <Typography variant="h6" fontWeight={700} color={color}>
+        {value}
+        {suffix && (
+          <Typography component="span" variant="caption" ml={1} color="text.secondary">{suffix}</Typography>
+        )}
+      </Typography>
+    </Box>
+  );
+
   return (
-    <Box p={3}>
+    <Box p={{ xs: 2, sm: 3 }}>
       <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
 
-      <Alert severity="info" sx={{ mb: 3 }}>
+      <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
         Vos ventes (factures) et vos achats (bons de commande) sont enregistrés
         <strong> automatiquement</strong>. Il vous suffit d'ajouter vos autres charges
         (loyer, salaires, abonnements…) pour connaître votre <strong>bénéfice net</strong>.
@@ -102,24 +130,25 @@ export default function AccountingDashboard() {
 
       {/* KPIs mois courant */}
       <Typography variant="overline" color="text.secondary">Mois en cours</Typography>
-      <Grid container spacing={2} mt={0.5} mb={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard label="Recettes" value={format(parseFloat(m.revenue))} icon={<TrendingUp />} color="#10b981" />
+      <Grid container spacing={{ xs: 1.5, sm: 2 }} mt={0.5} mb={3}>
+        <Grid item xs={6} md={3}>
+          <KpiCard label="Recettes" value={format(parseFloat(m.revenue))} icon={<TrendingUp />} color="#10b981" neu={neu} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard label="Charges" value={format(parseFloat(m.expenses))} icon={<TrendingDown />} color="#ef4444" />
+        <Grid item xs={6} md={3}>
+          <KpiCard label="Charges" value={format(parseFloat(m.expenses))} icon={<TrendingDown />} color="#ef4444" neu={neu} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} md={3}>
           <KpiCard
             label="Résultat net"
             value={format(Math.abs(parseFloat(m.result)))}
             icon={<AccountBalance />}
             color={isProfit ? '#10b981' : '#ef4444'}
             subtitle={isProfit ? 'Bénéfice' : 'Déficit'}
+            neu={neu}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <KpiCard label="Écritures en attente" value={data.pending_entries} icon={<PendingActions />} color="#f59e0b" subtitle="Brouillons à valider" />
+        <Grid item xs={6} md={3}>
+          <KpiCard label="En attente" value={data.pending_entries} icon={<PendingActions />} color="#f59e0b" subtitle="Brouillons à valider" neu={neu} />
         </Grid>
       </Grid>
 
@@ -127,34 +156,25 @@ export default function AccountingDashboard() {
 
       {/* KPIs année */}
       <Typography variant="overline" color="text.secondary">Année en cours</Typography>
-      <Grid container spacing={2} mt={0.5} mb={3}>
+      <Grid container spacing={{ xs: 1.5, sm: 2 }} mt={0.5} mb={3}>
         <Grid item xs={12} sm={4}>
-          <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-            <Typography variant="caption" color="text.secondary">Total Recettes</Typography>
-            <Typography variant="h6" color="success.main" fontWeight={700}>{format(parseFloat(y.revenue))}</Typography>
-          </Box>
+          <YearCard label="Total Recettes" value={format(parseFloat(y.revenue))} color="success.main" />
         </Grid>
         <Grid item xs={12} sm={4}>
-          <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-            <Typography variant="caption" color="text.secondary">Total Charges</Typography>
-            <Typography variant="h6" color="error.main" fontWeight={700}>{format(parseFloat(y.expenses))}</Typography>
-          </Box>
+          <YearCard label="Total Charges" value={format(parseFloat(y.expenses))} color="error.main" />
         </Grid>
         <Grid item xs={12} sm={4}>
-          <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-            <Typography variant="caption" color="text.secondary">Résultat Annuel</Typography>
-            <Typography variant="h6" fontWeight={700} color={parseFloat(y.result) >= 0 ? 'success.main' : 'error.main'}>
-              {format(Math.abs(parseFloat(y.result)))}
-              <Typography component="span" variant="caption" ml={1} color="text.secondary">
-                {parseFloat(y.result) >= 0 ? 'bénéfice' : 'déficit'}
-              </Typography>
-            </Typography>
-          </Box>
+          <YearCard
+            label="Résultat Annuel"
+            value={format(Math.abs(parseFloat(y.result)))}
+            color={parseFloat(y.result) >= 0 ? 'success.main' : 'error.main'}
+            suffix={parseFloat(y.result) >= 0 ? 'bénéfice' : 'déficit'}
+          />
         </Grid>
       </Grid>
 
       {/* Graphe mensuel */}
-      <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', p: 2 }}>
+      <Card elevation={0} sx={{ border: 'none', borderRadius: 3, bgcolor: 'background.paper', boxShadow: neu, p: { xs: 1.5, sm: 2 } }}>
         <Typography variant="subtitle1" fontWeight={600} mb={2}>Évolution mensuelle — 12 derniers mois</Typography>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={chartData}>
@@ -168,9 +188,9 @@ export default function AccountingDashboard() {
                 <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => format(v)} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+            <XAxis dataKey="month" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
+            <YAxis tick={{ fontSize: 11, fill: theme.palette.text.secondary }} tickFormatter={(v) => format(v)} width={70} />
             <Tooltip content={<CustomTooltip fmt={format} />} />
             <Legend />
             <Area type="monotone" dataKey="Recettes" stroke="#10b981" fill="url(#gradRev)" strokeWidth={2} />
