@@ -45,9 +45,12 @@ const PublicSupport    = React.lazy(() => import('./pages/public/Support'));
 const Documentation    = React.lazy(() => import('./pages/public/Documentation'));
 const PrivacyPolicy    = React.lazy(() => import('./pages/public/PrivacyPolicy'));
 const TermsOfService   = React.lazy(() => import('./pages/public/TermsOfService'));
+const Blog             = React.lazy(() => import('./pages/public/Blog'));
+const BlogPost         = React.lazy(() => import('./pages/public/BlogPost'));
 const PublicBidSubmission = React.lazy(() => import('./pages/e-sourcing/PublicBidSubmission'));
 
 const DashboardEnhanced = React.lazy(() => import('./pages/DashboardEnhanced'));
+const AdminStats = React.lazy(() => import('./pages/AdminStats'));
 
 const Suppliers      = React.lazy(() => import('./pages/suppliers/Suppliers'));
 const SupplierDetail = React.lazy(() => import('./pages/suppliers/SupplierDetail'));
@@ -863,6 +866,8 @@ function App() {
                           <Route path="/support" element={<PublicSupport />} />
                           <Route path="/documentation" element={<Documentation />} />
                           <Route path="/docs" element={<Documentation />} />
+                          <Route path="/blog" element={<Blog />} />
+                          <Route path="/blog/:slug" element={<BlogPost />} />
                           <Route path="/privacy" element={<PrivacyPolicy />} />
                           <Route path="/help" element={<Help />} />
                           <Route path="/help/:articleId" element={<Help />} />
@@ -887,6 +892,7 @@ function App() {
                         <Route element={<PrivateRoute />}>
                           <Route element={<MainLayout />}>
                             <Route path="/dashboard" element={<DashboardEnhanced />} />
+                            <Route path="/admin/stats" element={<AdminStats />} />
                             <Route path="/subscription/plans" element={<InternalPricing />} />
 
                             {/* Suppliers */}

@@ -16,6 +16,7 @@ from .widget_views import (
 )
 from .margins_view import ProductMarginsView
 from .restock_view import RestockForecastView
+from .admin_stats_view import AdminProductStatsView
 
 app_name = 'analytics_api'
 
@@ -46,6 +47,9 @@ urlpatterns = [
 
     # Restockage prédictif (Premium)
     path('restock-forecast/', RestockForecastView.as_view(), name='restock_forecast'),
+
+    # Statistiques produit (admin/fondateur) — acquisition, activation, usage, MRR, churn
+    path('admin-stats/', AdminProductStatsView.as_view(), name='admin_product_stats'),
 
     # Widgets
     path('widgets/', WidgetListView.as_view(), name='widgets_list'),

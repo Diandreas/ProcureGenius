@@ -7,6 +7,7 @@ from . import views_settings
 from . import views_onboarding
 from apps.accounts import api_views as accounts_api_views
 from apps.accounts import auth_api_views
+from apps.analytics import tracking as analytics_tracking
 
 app_name = 'api'
 
@@ -90,6 +91,9 @@ urlpatterns = [
 
     # Analytics - Dashboard amélioré
     path('analytics/', include('apps.analytics.api_urls')),
+
+    # Tracking visiteurs anonymes (public, sans auth) — ping JS depuis la landing
+    path('track/', analytics_tracking.track_visit, name='track_visit'),
 
     # Subscriptions - Plans, quotas, billing
     path('subscriptions/', include('apps.subscriptions.urls')),

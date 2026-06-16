@@ -367,6 +367,89 @@ class ActivityLog(models.Model):
         return f"{self.get_action_type_display()} {self.get_entity_type_display()} - {self.user.username if self.user else 'System'} - {self.created_at}"
 
 
+class Visit(models.Model):
+    """
+    Visite anonyme du site public (landing, pricing, etc.) AVANT inscription.
+    Alimenté par le middleware VisitTrackingMiddleware + un ping JS sur la landing.
+    Permet de mesurer : qui arrive, d'où (referrer/UTM), sur quel device, et
+    qui finit par créer un compte (conversion) vs qui repart (bounce).
+
+    RGPD : pas de cookie tiers, IP tronquée/hashée, pas de données nominatives.
+    """
+    DEVICE_CHOICES = [
+        ('desktop', _('Ordinateur')),
+        ('mobile', _('Mobile')),
+        ('tablet', _('Tablette')),
+        ('bot', _('Robot')),
+        ('unknown', _('Inconnu')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Identifiant de session anonyme (généré côté client, stocké en localStorage).
+    # Permet de regrouper les pages vues d'un même visiteur sans cookie de tracking.
+    anon_id = models.CharField(
+        max_length=64,
+        db_index=True,
+        verbose_name=_("ID visiteur anonyme")
+    )
+
+    # Page consultée
+    path = models.CharField(max_length=500, verbose_name=_("Chemin"))
+
+    # Provenance
+    referrer = models.CharField(
+        max_length=500, blank=True, verbose_name=_("Référent")
+    )
+    referrer_domain = models.CharField(
+        max_length=255, blank=True, db_index=True,
+        verbose_name=_("Domaine référent")
+    )
+
+    # Campagne (UTM)
+    utm_source = models.CharField(max_length=100, blank=True, db_index=True)
+    utm_medium = models.CharField(max_length=100, blank=True)
+    utm_campaign = models.CharField(max_length=100, blank=True, db_index=True)
+
+    # Contexte technique (anonymisé)
+    device_type = models.CharField(
+        max_length=10, choices=DEVICE_CHOICES, default='unknown',
+        db_index=True, verbose_name=_("Type d'appareil")
+    )
+    country = models.CharField(
+        max_length=2, blank=True, db_index=True, verbose_name=_("Pays (ISO)")
+    )
+    # IP hashée (jamais l'IP en clair) — pour dédoublonnage approximatif uniquement
+    ip_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    user_agent = models.CharField(max_length=300, blank=True)
+    language = models.CharField(max_length=20, blank=True)
+
+    # Conversion : renseigné si ce visiteur a fini par créer un compte
+    converted_user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='origin_visits', verbose_name=_("Compte créé")
+    )
+    converted_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, db_index=True, verbose_name=_("Date")
+    )
+
+    class Meta:
+        verbose_name = _("Visite")
+        verbose_name_plural = _("Visites")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['anon_id', '-created_at']),
+            models.Index(fields=['referrer_domain', '-created_at']),
+            models.Index(fields=['utm_source', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.anon_id[:8]} · {self.path} · {self.created_at:%Y-%m-%d %H:%M}"
+
+
 class Budget(models.Model):
     """
     Budget pour le suivi des dépenses

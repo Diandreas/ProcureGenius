@@ -114,6 +114,17 @@ def api_register(request):
             # UserPreferences and UserPermissions are created automatically by signals
             # DO NOT mark onboarding as completed - user will go through setup wizard
 
+            # Tracking conversion : relier les visites anonymes de ce visiteur au compte créé
+            try:
+                from apps.analytics.tracking import mark_conversion
+                mark_conversion(
+                    user,
+                    anon_id=request.data.get('anon_id'),
+                    request=request,
+                )
+            except Exception:
+                pass  # Le tracking ne doit jamais bloquer l'inscription
+
             # Generate auth token
             token, created = Token.objects.get_or_create(user=user)
 

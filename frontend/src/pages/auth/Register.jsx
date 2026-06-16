@@ -7,6 +7,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
 import { isNativePlatform } from '../../utils/platform';
 import { signInWithGoogleNative } from '../../services/mobileGoogleAuth';
+import { getAnonId } from '../../services/tracking';
 
 // Sur mobile natif, Google passe par le navigateur systeme (page pont + deep link).
 const IS_NATIVE = isNativePlatform();
@@ -124,6 +125,7 @@ function Register() {
         first_name: formData.firstName,
         last_name: formData.lastName,
         organization_name: formData.organizationName,
+        anon_id: getAnonId(), // relie la visite anonyme au compte (conversion)
       });
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token);

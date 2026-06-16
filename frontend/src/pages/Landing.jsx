@@ -42,6 +42,7 @@ import {
   SupportAgent,
 } from '@mui/icons-material';
 import { useColorMode } from '../App';
+import { trackVisit } from '../services/tracking';
 
 // Enregistrer les plugins GSAP une seule fois (côté client).
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -416,6 +417,11 @@ export default function Landing() {
     fontFamily: '"Fraunces", Georgia, serif', fontWeight: 500,
     letterSpacing: '-0.02em', lineHeight: 1.08, color: '#0f172a',
   };
+
+  // Tracking visiteur anonyme : une vue de page à l'arrivée sur la landing.
+  useEffect(() => {
+    trackVisit('/');
+  }, []);
 
   // Handle hash scroll
   useEffect(() => {
