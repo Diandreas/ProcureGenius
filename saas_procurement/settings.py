@@ -124,17 +124,30 @@ WSGI_APPLICATION = 'saas_procurement.wsgi.application'
 ASGI_APPLICATION = 'saas_procurement.asgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        # timeout : évite les « database is locked » sous accès concurrent
-        # (notamment les handlers IA asynchrones qui écrivent via sync_to_async).
-        'OPTIONS': {
-            'timeout': 30,
-        },
+# Si DATABASE_URL est défini (ex. PostgreSQL en production), on l'utilise.
+# Sinon on retombe sur SQLite (dev/local) — rétro-compatible.
+DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
+if DATABASE_URL:
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            # timeout : évite les « database is locked » sous accès concurrent
+            # (notamment les handlers IA asynchrones qui écrivent via sync_to_async).
+            'OPTIONS': {
+                'timeout': 30,
+            },
+        }
+    }
 
 # Tenant configuration
 TENANT_MODEL = "accounts.Tenant"

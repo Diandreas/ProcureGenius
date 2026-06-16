@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     """Actions à exécuter lors de la création d'un utilisateur"""
-    if created:
+    # Ne pas exécuter pendant un loaddata/fixture (raw=True).
+    if created and not kwargs.get('raw', False):
         logger.info(f"[OK] Nouvel utilisateur cree: {instance.username} (email: {instance.email})")
         logger.info(f"  - Organisation: {instance.organization.name if instance.organization else 'Aucune'}")
         logger.info(f"  - Rôle: {instance.role}")

@@ -355,7 +355,9 @@ class UserPermissions(models.Model):
 @receiver(post_save, sender=CustomUser)
 def create_user_preferences_and_permissions(sender, instance, created, **kwargs):
     """Créer automatiquement les préférences et permissions lors de la création d'un utilisateur"""
-    if created:
+    # `raw=True` lors d'un loaddata/fixture : les UserPreferences/Permissions sont
+    # déjà présentes dans le dump, ne pas les recréer (évite les conflits d'unicité).
+    if created and not kwargs.get('raw', False):
         # Créer les préférences avec modules par défaut selon le rôle
         default_modules = _get_default_modules_for_role(instance.role, instance.organization)
         UserPreferences.objects.get_or_create(
