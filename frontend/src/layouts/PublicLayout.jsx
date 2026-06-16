@@ -115,21 +115,37 @@ export default function PublicLayout() {
                 >
                   {t('landing:nav.pricing', 'Pricing')}
                 </Button>
-                <Button 
+                <Button
                   component="a"
                   href="/help"
-                  sx={{ 
-                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
-                    textTransform: 'none', 
-                    fontWeight: 600, 
-                    fontSize: '0.95rem', 
-                    '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }, 
-                    borderRadius: 2, 
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                    borderRadius: 2,
                     px: 1,
                     display: { xs: 'none', md: 'block' }
                   }}
                 >
                   Documentation
+                </Button>
+                <Button
+                  component="a"
+                  href="/blog"
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+                    borderRadius: 2,
+                    px: 1,
+                    display: { xs: 'none', md: 'block' }
+                  }}
+                >
+                  Blog
                 </Button>
                 {isAuthenticated ? (
                   <Button
@@ -208,6 +224,29 @@ export default function PublicLayout() {
               <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.5)', fontSize: '0.85rem', maxWidth: 300 }}>
                 {t('footer.subtitle', 'Automatisez, analysez et maîtrisez vos flux d\'achats')}
               </Typography>
+
+              {/* Réseaux sociaux */}
+              <Box sx={{ display: 'flex', gap: 1.5, mt: 2.5 }}>
+                <Box
+                  component="a"
+                  href="https://www.tiktok.com/@procura.mirlab.cloud"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TikTok Procura"
+                  sx={{
+                    width: 38, height: 38, borderRadius: 2,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    color: isDark ? '#fff' : '#0f172a',
+                    transition: 'all 0.2s',
+                    '&:hover': { bgcolor: '#2563eb', color: '#fff', transform: 'translateY(-2px)' },
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5 2.59 2.59 0 0 1-2.59-2.59 2.59 2.59 0 0 1 3.43-2.45V9.4a5.66 5.66 0 0 0-.84-.06A5.69 5.69 0 0 0 4.18 15a5.69 5.69 0 0 0 9.71 4.02 5.66 5.66 0 0 0 1.67-4.02V8.83a7.33 7.33 0 0 0 4.27 1.36V7.1a4.28 4.28 0 0 1-3.23-1.28z"/>
+                  </svg>
+                </Box>
+              </Box>
             </Box>
             
             <Box sx={{ display: 'flex', gap: { xs: 4, sm: 8 } }}>
@@ -220,6 +259,7 @@ export default function PublicLayout() {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>Ressources</Typography>
+                <Typography component="a" href="/blog" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>Blog</Typography>
                 <Typography component="a" href="/help" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>Documentation</Typography>
                 <Typography component="a" href="/help/faq" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>FAQ</Typography>
                 <Typography component="a" href="/support" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>Support & Contact</Typography>

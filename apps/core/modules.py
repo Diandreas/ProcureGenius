@@ -232,6 +232,67 @@ def get_modules_for_plan(plan_code):
     return list(PLAN_MODULES.get(plan_code, PLAN_MODULES['free']))
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# FONCTIONNALITÉS AVANCÉES par plan (plus fin que les modules) : permet de
+# différencier Pro et Business à l'intérieur des mêmes modules (ex. compta
+# avancée, marges, réappro réservées à Business).
+# ─────────────────────────────────────────────────────────────────────────────
+class Features:
+    ACCOUNTING_STATEMENTS = 'accounting_statements'   # SIG, bilan, compte de résultat
+    ANALYTICS_MARGINS = 'analytics_margins'           # marges & bénéfice brut
+    ANALYTICS_RESTOCK = 'analytics_restock'           # prévision de réapprovisionnement
+    ESOURCING = 'esourcing'                           # appels d'offres
+    AI_UNLIMITED = 'ai_unlimited'                     # assistant IA illimité
+    ADVANCED_EXPORTS = 'advanced_exports'             # exports avancés
+    MULTI_ESTABLISHMENT = 'multi_establishment'       # multi-établissements
+    PRIORITY_SUPPORT = 'priority_support'             # support prioritaire
+
+
+# Ensemble des fonctionnalités avancées (exclusives Business/Enterprise).
+BUSINESS_FEATURES = {
+    Features.ACCOUNTING_STATEMENTS,
+    Features.ANALYTICS_MARGINS,
+    Features.ANALYTICS_RESTOCK,
+    Features.ESOURCING,
+    Features.AI_UNLIMITED,
+    Features.ADVANCED_EXPORTS,
+    Features.MULTI_ESTABLISHMENT,
+    Features.PRIORITY_SUPPORT,
+}
+
+PLAN_FEATURES = {
+    'free': set(),
+    'pro': set(),               # Pro = compta base + analytics base (aucune avancée)
+    'business': set(BUSINESS_FEATURES),
+    'enterprise': set(BUSINESS_FEATURES),
+}
+
+
+def get_features_for_plan(plan_code):
+    """Liste (triée) des fonctionnalités avancées débloquées par un plan."""
+    return sorted(PLAN_FEATURES.get(plan_code, set()))
+
+
+def plan_has_feature(plan_code, feature):
+    """True si le plan donne accès à la fonctionnalité avancée."""
+    return feature in PLAN_FEATURES.get(plan_code, set())
+
+
+def organization_has_feature(organization, feature):
+    """True si le plan actif de l'organisation inclut la fonctionnalité avancée.
+
+    Sécurité par défaut : retombe sur 'free' (donc False) si pas d'abonnement.
+    """
+    code = 'free'
+    try:
+        sub = getattr(organization, 'subscription', None)
+        if sub and getattr(sub, 'plan', None):
+            code = sub.plan.code
+    except Exception:
+        code = 'free'
+    return plan_has_feature(code, feature)
+
+
 # Profile Metadata
 PROFILE_METADATA = {
     ProfileTypes.FREE: {

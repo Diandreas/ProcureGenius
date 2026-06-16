@@ -120,10 +120,16 @@ export default function PublicSupport() {
                 <Typography color="text.secondary" sx={{ mb: 4, minHeight: 48, fontSize: '1rem', lineHeight: 1.6 }}>
                   {t('public:support.whatsapp.desc')}
                 </Typography>
-                <Button href="https://wa.me/237693427913" target="_blank" variant="contained" fullWidth size="large"
-                  sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, bgcolor: '#10b981', color: '#fff', '&:hover': { bgcolor: '#059669' }, boxShadow: '0 8px 16px rgba(16,185,129,0.2)' }}>
-                  Discuter: +237 693 427 913
-                </Button>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  <Button href="https://wa.me/237693427913" target="_blank" rel="noopener" variant="contained" fullWidth size="large"
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, bgcolor: '#10b981', color: '#fff', '&:hover': { bgcolor: '#059669' }, boxShadow: '0 8px 16px rgba(16,185,129,0.2)' }}>
+                    🇨🇲 +237 693 42 79 13
+                  </Button>
+                  <Button href="https://wa.me/447575894429" target="_blank" rel="noopener" variant="outlined" fullWidth size="large"
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, borderColor: '#10b981', color: '#10b981', '&:hover': { borderColor: '#059669', bgcolor: alpha('#10b981', 0.05) } }}>
+                    🇬🇧 +44 7575 894429
+                  </Button>
+                </Box>
               </Paper>
             </motion.div>
           </Grid>

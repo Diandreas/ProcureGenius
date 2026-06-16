@@ -90,7 +90,7 @@ PLANS = [
             'has_contracts': True,
             'has_analytics': True,
             'has_accounting': True,
-            'included_users': 5,
+            'included_users': 10,
             'extra_user_price': 5,
             'trial_days': 30,  # 1 mois d'essai gratuit (sans carte)
             'is_active': True,

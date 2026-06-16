@@ -239,5 +239,8 @@ temp/
 # Notes de travail internes de l'assistant (ne pas committer)
 memory/
 
+# Dossier vidéo Remotion (présentation produit — non versionné)
+/video/
+
 # Config MCP locale (contient des tokens API — ne pas committer)
 .mcp.json

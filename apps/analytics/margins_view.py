@@ -64,10 +64,18 @@ class ProductMarginsView(APIView):
 
     def get(self, request):
         from apps.invoicing.models import InvoiceItem
+        from apps.core.modules import organization_has_feature, Features
 
         org = getattr(request.user, 'organization', None)
         if not org:
             return Response({'error': 'Aucune organisation associée'}, status=400)
+
+        # Fonctionnalité réservée au plan Business (analyse des marges).
+        if not organization_has_feature(org, Features.ANALYTICS_MARGINS):
+            return Response(
+                {'error': 'Fonctionnalité réservée au plan Business.', 'feature': 'analytics_margins'},
+                status=403,
+            )
 
         start, end = _parse_period(request)
 

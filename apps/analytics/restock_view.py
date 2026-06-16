@@ -37,20 +37,15 @@ class RestockForecastView(APIView):
         if not org:
             return Response({'error': 'Aucune organisation associée'}, status=400)
 
-        # ── Verrou Premium ────────────────────────────────────────────────
-        # Le restockage prédictif est réservé aux plans payants (has_analytics).
-        is_pro = False
-        try:
-            is_pro = QuotaService.check_feature_access(org, 'analytics')
-        except Exception:
-            is_pro = False
-
-        if not is_pro:
+        # ── Verrou Business ───────────────────────────────────────────────
+        # La prévision de réapprovisionnement est réservée au plan Business.
+        from apps.core.modules import organization_has_feature, Features
+        if not organization_has_feature(org, Features.ANALYTICS_RESTOCK):
             return Response({
                 'locked': True,
-                'feature': 'restock_forecast',
-                'message': "Le restockage prédictif est disponible avec le plan Pro.",
-            })
+                'feature': 'analytics_restock',
+                'message': "La prévision de réapprovisionnement est incluse dans le plan Business.",
+            }, status=403)
 
         window = int(request.query_params.get('days', 30))
         horizon = int(request.query_params.get('horizon', 30))

@@ -378,12 +378,14 @@ def api_user_modules(request):
     # Modules disponibles selon le plan d'abonnement actif (permet au front de
     # distinguer "verrouillé / pas dans le plan" de "désélectionné / dans le plan").
     plan_modules = list(accessible_modules)
+    plan_features = []
     try:
-        from apps.core.modules import get_modules_for_plan
+        from apps.core.modules import get_modules_for_plan, get_features_for_plan
         org = getattr(user, 'organization', None)
         sub = getattr(org, 'subscription', None) if org else None
         plan_code = sub.plan.code if (sub and getattr(sub, 'plan', None)) else 'free'
         plan_modules = list(get_modules_for_plan(plan_code))
+        plan_features = list(get_features_for_plan(plan_code))
     except Exception:
         pass
 
@@ -391,6 +393,7 @@ def api_user_modules(request):
         'modules': modules_with_metadata,
         'module_codes': accessible_modules,
         'plan_modules': plan_modules,
+        'plan_features': plan_features,
     })
 
 
