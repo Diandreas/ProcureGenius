@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Card, CardContent, Grid, Table, TableHead, TableBody,
   TableRow, TableCell, TableContainer, Paper, Alert, Chip, LinearProgress, Button,
+  ToggleButtonGroup, ToggleButton,
 } from '@mui/material';
 import {
   Inventory2, WarningAmber, LocalShipping, Lock, TrendingUp,
@@ -36,14 +37,23 @@ export default function RestockForecast() {
   const { format } = useCurrency();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  // Fenêtre d'analyse des ventes (jours). Filtre demandé : jour/semaine/mois...
+  const [windowDays, setWindowDays] = useState(30);
+
+  const PERIODS = [
+    { value: 1, label: t('products:restock.periodDay', 'Aujourd\'hui') },
+    { value: 7, label: t('products:restock.periodWeek', '7 jours') },
+    { value: 30, label: t('products:restock.periodMonth', '30 jours') },
+    { value: 90, label: t('products:restock.periodQuarter', '90 jours') },
+  ];
 
   const load = useCallback(() => {
     setLoading(true);
-    analyticsAPI.getRestockForecast({ days: 30, horizon: 30 })
+    analyticsAPI.getRestockForecast({ days: windowDays, horizon: 30 })
       .then((r) => setData(r.data))
       .catch(() => setData({ locked: false, products: [], summary: {} }))
       .finally(() => setLoading(false));
-  }, []);
+  }, [windowDays]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -114,9 +124,28 @@ export default function RestockForecast() {
         <LocalShipping color="primary" />
         <Typography variant="h5" fontWeight={800}>{t('products:restock.title', 'Restockage prédictif')}</Typography>
       </Box>
-      <Typography variant="body2" color="text.secondary" mb={3}>
+      <Typography variant="body2" color="text.secondary" mb={2}>
         {t('products:restock.subtitle', 'Quoi recommander et en quelle quantité, selon vos ventes récentes.')}
       </Typography>
+
+      {/* Filtre de période d'analyse des ventes */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+          {t('products:restock.periodLabel', 'Période d\'analyse des ventes')}
+        </Typography>
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={windowDays}
+          onChange={(e, v) => { if (v != null) setWindowDays(v); }}
+        >
+          {PERIODS.map((p) => (
+            <ToggleButton key={p.value} value={p.value} sx={{ textTransform: 'none', px: 1.5 }}>
+              {p.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
 
       {data?.hint && <Alert severity="info" sx={{ mb: 3 }}>{data.hint}</Alert>}
       {loading && <LinearProgress sx={{ mb: 2 }} />}
@@ -144,6 +173,7 @@ export default function RestockForecast() {
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
                   <TableCell><strong>{t('products:restock.product', 'Produit')}</strong></TableCell>
                   <TableCell align="right"><strong>{t('products:restock.stock', 'Stock')}</strong></TableCell>
+                  <TableCell align="right"><strong>{t('products:restock.sold', 'Qté vendue')}</strong></TableCell>
                   <TableCell align="right"><strong>{t('products:restock.velocity', 'Ventes/jour')}</strong></TableCell>
                   <TableCell align="right"><strong>{t('products:restock.daysLeft', 'Jours restants')}</strong></TableCell>
                   <TableCell align="right"><strong>{t('products:restock.recommended', 'À commander')}</strong></TableCell>
@@ -152,7 +182,7 @@ export default function RestockForecast() {
               </TableHead>
               <TableBody>
                 {(data.products || []).length === 0 && (
-                  <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                     {t('products:restock.empty', 'Aucun produit physique à analyser.')}
                   </TableCell></TableRow>
                 )}
@@ -163,6 +193,7 @@ export default function RestockForecast() {
                       <Typography variant="caption" color="text.secondary" display="block">{p.reference}</Typography>
                     </TableCell>
                     <TableCell align="right">{p.stock}</TableCell>
+                    <TableCell align="right">{p.units_sold ?? 0}</TableCell>
                     <TableCell align="right">{p.daily_velocity}</TableCell>
                     <TableCell align="right">{p.days_left ?? '—'}</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700, color: p.recommended_qty > 0 ? 'primary.main' : 'text.secondary' }}>

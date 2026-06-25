@@ -14,7 +14,11 @@
 | 5 | Import de documents (#4, #5) | ☑️ fait (causes trouvées dans les logs prod) |
 | 6 | Dashboard & totaux mobiles (#14, #23) | ☑️ fait |
 | 7 | UX / mobile (#16, #17, #21, #22, #24, #25, #26, #27) | ☑️ fait |
-| 8 | Améliorations (P3) | ⬜ à faire (suggestions, non bloquant) |
+| 8 | Améliorations (P3) | ☑️ fait |
+
+### Lot 8 — Améliorations (P3)
+- **Fournisseurs** : onglets Commandes et Produits affichent désormais la liste détaillée (BC cliquables avec numéro/date/statut/montant ; produits avec qté commandée/nb commandes/valeur) au lieu du seul total — sur le modèle du module Clients (`SupplierDetail.jsx` ; backend `recent` 5→50).
+- **Restockage** : colonne « Qté vendue » ajoutée + filtre de période d'analyse (jour / 7j / 30j / 90j) (`RestockForecast.jsx`). Colonnes désormais : Produit, Stock, Qté vendue, Ventes/jour, Jours restants, À commander, État.
 
 ### Lot 7 — UX / mobile (commit final)
 - **#16** Champs numériques mobiles : quantité/prix effaçables (chaîne vide tolérée, conversion à l'ajout) (`ProductSelectionDialog.jsx`, `InvoiceForm.jsx`).

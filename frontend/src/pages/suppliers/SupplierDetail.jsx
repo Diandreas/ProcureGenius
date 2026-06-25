@@ -607,11 +607,39 @@ function SupplierDetail() {
               </Typography>
             </Box>
             {statistics?.purchase_orders?.recent && statistics.purchase_orders.recent.length > 0 ? (
-              <Box sx={{ p: 1.5, borderRadius: 2, boxShadow: th => neuShadows.shadowInset(th) }}>
-                <Typography variant="body2" color="text.secondary">
+              <>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                   {t('suppliers:labels.totalOrders', { count: statistics.purchase_orders.total_count })}
                 </Typography>
-              </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {statistics.purchase_orders.recent.map((po) => (
+                    <Box
+                      key={po.id}
+                      onClick={() => navigate(`/purchase-orders/${po.id}`)}
+                      sx={{
+                        p: 1.5, borderRadius: 2, cursor: 'pointer',
+                        boxShadow: th => neuShadows.shadowRaisedSm(th),
+                        display: 'flex', alignItems: 'center', gap: 1.5,
+                        transition: 'transform 0.15s',
+                        '&:hover': { transform: 'translateY(-2px)' },
+                      }}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {po.po_number} — {po.title || t('suppliers:labels.purchaseOrders')}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDate(po.created_at)}
+                        </Typography>
+                      </Box>
+                      <Chip label={getStatusLabel(po.status)} color={getStatusColor(po.status)} size="small" sx={{ height: 22, fontSize: '0.68rem', fontWeight: 600 }} />
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                        {formatCurrency(po.total_amount || 0)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </>
             ) : (
               <Alert severity="info" sx={{ borderRadius: 2 }}>{t('suppliers:labels.noOrders')}</Alert>
             )}
@@ -630,11 +658,36 @@ function SupplierDetail() {
               </Typography>
             </Box>
             {statistics?.top_products && statistics.top_products.length > 0 ? (
-              <Box sx={{ p: 1.5, borderRadius: 2, boxShadow: th => neuShadows.shadowInset(th) }}>
-                <Typography variant="body2" color="text.secondary">
+              <>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                   {t('suppliers:labels.totalProducts', { count: statistics.top_products.length })}
                 </Typography>
-              </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {statistics.top_products.map((p, i) => (
+                    <Box
+                      key={p.product_reference || i}
+                      sx={{
+                        p: 1.5, borderRadius: 2,
+                        boxShadow: th => neuShadows.shadowRaisedSm(th),
+                        display: 'flex', alignItems: 'center', gap: 1.5,
+                      }}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.description || p.product_reference || '—'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {t('suppliers:labels.quantityOrdered', 'Qté commandée')}: {p.total_quantity || 0}
+                          {p.order_count ? ` • ${p.order_count} ${t('suppliers:labels.orders')}` : ''}
+                        </Typography>
+                      </Box>
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                        {formatCurrency(p.total_value || 0)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </>
             ) : (
               <Alert severity="info" sx={{ borderRadius: 2 }}>{t('suppliers:labels.noProducts')}</Alert>
             )}

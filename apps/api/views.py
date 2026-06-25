@@ -126,7 +126,7 @@ class SupplierViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 'average_order_value': float(total_spent / purchase_orders.count()) if purchase_orders.count() > 0 else 0,
             },
             'purchase_orders': {
-                'recent': list(purchase_orders.order_by('-created_at')[:5].values(
+                'recent': list(purchase_orders.order_by('-created_at')[:50].values(
                     'id', 'po_number', 'title', 'status', 'total_amount', 'created_at'
                 )),
                 'by_status': list(po_stats),
