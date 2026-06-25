@@ -123,9 +123,29 @@ class PixtralService:
 
         except Exception as e:
             logger.error(f"Pixtral analysis error: {e}", exc_info=True)
+            # Catégoriser l'erreur pour renvoyer un message clair à l'utilisateur
+            # (et non le blob technique Mistral, ex. rate-limit 429).
+            err_text = str(e)
+            lowered = err_text.lower()
+            if '429' in err_text or 'rate limit' in lowered or 'rate_limited' in lowered:
+                friendly = ("Le service d'analyse est momentanément saturé "
+                            "(trop de demandes). Réessayez dans quelques instants.")
+                code = 'rate_limited'
+            elif '401' in err_text or 'unauthorized' in lowered or 'api key' in lowered:
+                friendly = "Le service d'analyse de documents est indisponible (configuration). Contactez le support."
+                code = 'service_unavailable'
+            elif 'json' in lowered and 'decode' in lowered:
+                friendly = ("Le document n'a pas pu être interprété. Vérifiez qu'il "
+                            "s'agit bien d'un document lisible (facture, bon de commande...).")
+                code = 'unreadable_document'
+            else:
+                friendly = "L'analyse du document a échoué. Réessayez ou utilisez une image plus nette."
+                code = 'analysis_failed'
             return {
                 'success': False,
-                'error': str(e),
+                'error': friendly,
+                'error_code': code,
+                'error_detail': err_text,  # détail technique pour les logs/debug
                 'document_type': document_type,
                 'method': 'pixtral_vision'
             }

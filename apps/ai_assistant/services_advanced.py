@@ -463,8 +463,10 @@ class AdvancedAIActions:
             return None
 
         except Exception as e:
+            # Ne JAMAIS exposer le détail technique (ex. erreurs de validation
+            # Pydantic de l'outil web) à l'utilisateur final : message générique.
             logger.warning(f"Web search prix échouée: {e}")
-            return f"_Recherche web non disponible ({e})_"
+            return "_Recherche web indisponible pour le moment._"
 
     # ──────────────────────────────────────────────
     # 3. CASH FLOW PRÉDICTIF

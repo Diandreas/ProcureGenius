@@ -1,3 +1,4 @@
+from decimal import Decimal
 from rest_framework import serializers
 from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
@@ -7,6 +8,22 @@ from apps.core.serializer_mixins import ModuleAwareSerializerMixin
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+
+def _sanitize_decimal_fields(instance, field_names):
+    """Remplace par 0 les décimaux corrompus (NaN/Infinity) avant sérialisation.
+
+    PostgreSQL accepte 'NaN' dans une colonne numeric, mais DRF lève alors
+    `decimal.InvalidOperation` au moment du quantize, ce qui fait planter toute
+    la liste (ex. liste produits inaccessible). On neutralise ces valeurs.
+    """
+    for field in field_names:
+        try:
+            value = getattr(instance, field, None)
+            if isinstance(value, Decimal) and not value.is_finite():
+                setattr(instance, field, Decimal('0'))
+        except Exception:
+            continue
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -237,6 +254,9 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     
     def to_representation(self, instance):
         """Surcharger pour gérer price_editable de manière sécurisée"""
+        # Neutraliser d'éventuels décimaux corrompus (NaN/Infinity) qui feraient
+        # planter la sérialisation de toute la liste de produits.
+        _sanitize_decimal_fields(instance, ['price', 'cost_price'])
         representation = super().to_representation(instance)
         # S'assurer que price_editable est toujours présent même si le champ n'existe pas
         if 'price_editable' not in representation:

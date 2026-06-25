@@ -567,9 +567,20 @@ class DocumentAnalysisView(APIView):
                 )
 
                 if not ai_result['success']:
+                    # Un rate-limit n'est pas une erreur de la requête utilisateur :
+                    # renvoyer 429 + message clair (au lieu d'un 400 vague).
+                    err_code = ai_result.get('error_code')
+                    http_status = (
+                        status.HTTP_429_TOO_MANY_REQUESTS
+                        if err_code == 'rate_limited'
+                        else status.HTTP_400_BAD_REQUEST
+                    )
                     return Response(
-                        {'error': ai_result.get('error', 'Analyse Pixtral échouée')},
-                        status=status.HTTP_400_BAD_REQUEST
+                        {
+                            'error': ai_result.get('error', 'Analyse du document échouée'),
+                            'error_code': err_code,
+                        },
+                        status=http_status
                     )
 
                 # Résultat final avec données Pixtral
@@ -741,13 +752,20 @@ class DocumentAnalysisView(APIView):
                     logger.info(f"Auto-selected existing client: {client.name} (similarity: {similar_clients[0][1]*100:.0f}%)")
                 else:
                     # Créer seulement si aucun similaire trouvé
-                    client = Client.objects.create(name=client_name, email=client_email)
+                    client = Client.objects.create(
+                        name=client_name,
+                        email=client_email or '',
+                        organization=getattr(user, 'organization', None),
+                    )
                     logger.info(f"Auto-created new client: {client_name}")
-                
-                # Créer la facture
+
+                # Créer la facture (subtotal/total_amount NOT NULL sans défaut)
                 invoice = Invoice.objects.create(
                     title=f"Facture {data.get('invoice_number', '')}",
                     client=client,
+                    subtotal=0,
+                    total_amount=0,
+                    organization=getattr(user, 'organization', None),
                     created_by=user
                 )
                 
@@ -770,7 +788,8 @@ class DocumentAnalysisView(APIView):
                 }
                 
             elif document_type == 'purchase_order':
-                from apps.purchase_orders.models import PurchaseOrder, Supplier
+                from apps.purchase_orders.models import PurchaseOrder
+                from apps.suppliers.models import Supplier
                 from .entity_matcher import entity_matcher
                 import logging
                 logger = logging.getLogger(__name__)
@@ -792,17 +811,24 @@ class DocumentAnalysisView(APIView):
                     supplier = similar_suppliers[0][0]
                     logger.info(f"Auto-selected existing supplier: {supplier.name} (similarity: {similar_suppliers[0][1]*100:.0f}%)")
                 else:
-                    # Créer seulement si aucun similaire trouvé
+                    # Créer seulement si aucun similaire trouvé.
+                    # email est requis (NOT NULL) -> chaîne vide si absent ;
+                    # organization rattachée pour la visibilité multi-tenant.
                     supplier = Supplier.objects.create(
                         name=supplier_name,
-                        email=supplier_email,
-                        phone=supplier_phone
+                        email=supplier_email or '',
+                        phone=supplier_phone or '',
+                        organization=getattr(user, 'organization', None),
                     )
                     logger.info(f"Auto-created new supplier: {supplier_name}")
-                
+
+                # subtotal / total_amount sont NOT NULL sans défaut -> les fixer
+                # explicitement (les lignes détaillées sont créées ensuite).
                 po = PurchaseOrder.objects.create(
                     title=f"BC {data.get('po_number', '')}",
                     supplier=supplier,
+                    subtotal=0,
+                    total_amount=0,
                     created_by=user
                 )
                 
@@ -1758,11 +1784,20 @@ class ImportReviewApproveView(APIView):
                 if similar_clients:
                     client = similar_clients[0][0]
                 else:
-                    client = Client.objects.create(name=client_name, email=client_email)
+                    client = Client.objects.create(
+                        name=client_name,
+                        email=client_email or '',
+                        organization=getattr(user, 'organization', None),
+                    )
 
+                # subtotal / total_amount sont NOT NULL sans défaut ; recalculés
+                # ensuite via recalculate_totals(). organization rattachée.
                 invoice = Invoice.objects.create(
                     title=f"Facture {data.get('invoice_number', '')}",
                     client=client,
+                    subtotal=0,
+                    total_amount=0,
+                    organization=getattr(user, 'organization', None),
                     created_by=user
                 )
 
@@ -1783,7 +1818,8 @@ class ImportReviewApproveView(APIView):
                 }
 
             elif entity_type == 'purchase_order':
-                from apps.purchase_orders.models import PurchaseOrder, Supplier
+                from apps.purchase_orders.models import PurchaseOrder
+                from apps.suppliers.models import Supplier
                 from .entity_matcher import entity_matcher
 
                 supplier_name = data.get('supplier_name', 'Fournisseur inconnu')
@@ -1799,15 +1835,21 @@ class ImportReviewApproveView(APIView):
                 if similar_suppliers:
                     supplier = similar_suppliers[0][0]
                 else:
+                    # email requis (NOT NULL) -> chaîne vide si absent ;
+                    # organization rattachée pour la visibilité multi-tenant.
                     supplier = Supplier.objects.create(
                         name=supplier_name,
-                        email=supplier_email,
-                        phone=supplier_phone
+                        email=supplier_email or '',
+                        phone=supplier_phone or '',
+                        organization=getattr(user, 'organization', None),
                     )
 
+                # subtotal / total_amount sont NOT NULL sans défaut.
                 po = PurchaseOrder.objects.create(
                     title=f"BC {data.get('po_number', '')}",
                     supplier=supplier,
+                    subtotal=0,
+                    total_amount=0,
                     created_by=user
                 )
 

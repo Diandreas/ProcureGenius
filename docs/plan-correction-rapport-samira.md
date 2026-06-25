@@ -11,9 +11,9 @@
 | 2 | Droits d'accès & guards (#13, #20) | ☑️ fait |
 | 3 | Contrats (#9, #10, #11) | ☑️ fait |
 | 4 | Utilisateurs (#7, #8) | ☑️ fait |
-| 5 | Import de documents (#4, #5, #18, #19) | ⬜ à faire (repro serveur requise) |
+| 5 | Import de documents (#4, #5) | ☑️ fait (causes trouvées dans les logs prod) |
 | 6 | Dashboard & totaux mobiles (#14, #23) | ☑️ fait |
-| 7 | UX / mobile (#16, #17, #21, #22, #24, #25, #26, #27) | ⬜ à faire |
+| 7 | UX / mobile (#16, #21, #22, #24, #25, #26, #27) ; #17 à voir | ⬜ partiel (#21 fait) |
 | 8 | Améliorations (P3) | ⬜ à faire |
 
 ### Détail des correctifs appliqués (commit en cours)
@@ -30,6 +30,13 @@
 - **#8** Utilisateurs : bouton Réactiver conditionnel + endpoint PUT is_active (+ contrôle sièges) (`UserManagement.jsx`, `apps/accounts/api_views.py`).
 - **#14** Dashboard : correction code module `purchase-orders` (tiret) + carte affiche le total (`dashboard_service.py`, `DashboardEnhanced.jsx`).
 - **#23** Mobile : la tuile total affiche son sous-titre (nombre de BC) sur mobile (`NeumorphicList.jsx`).
+
+### Lot 5 — Import de documents (causes trouvées dans les logs prod, commit suivant)
+Logs prod (`pm2 logs procura-backend-error`) ont révélé les causes exactes :
+- **#5** `cannot import name 'Supplier' from 'apps.purchase_orders.models'` : import Python cassé dans les 2 fonctions de création depuis review. Corrigé (`Supplier` importé depuis `apps.suppliers.models`). Durcissement : `email` requis -> chaîne vide ; `organization` rattachée ; `subtotal`/`total_amount` NOT NULL fixés à 0 pour PO et factures (sinon IntegrityError à l'approbation).
+- **#2 (complément)** `decimal.InvalidOperation` au quantize DRF (NaN/Infinity en base) faisait planter la liste produits : garde `_sanitize_decimal_fields` dans `ProductSerializer.to_representation` (`apps/api/serializers.py`).
+- **#4** `analyze-document` : Mistral 429 (rate limit) renvoyait un 400 vague. Catégorisation des erreurs Pixtral + HTTP 429 + message clair (`pixtral_service.py`, `views.py`).
+- **#21** IA Achats : la recherche web injectait l'exception brute (validation Pydantic) dans la réponse markdown -> message générique (`services_advanced.py`).
 
 ---
 
