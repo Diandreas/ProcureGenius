@@ -128,14 +128,28 @@ def restore_django_email_settings(original_settings):
         logger.error(f"Error restoring Django email settings: {e}")
 
 
-def send_user_invitation_email(invited_user, temp_password, invited_by_user, organization):
+def send_user_invitation_email(invited_user, temp_password, invited_by_user, organization, set_password_token=None):
     """
     Envoie un email d'invitation à un nouvel utilisateur ajouté à l'organisation.
+
+    Si `set_password_token` est fourni, l'email contient un lien permettant à
+    l'invité de définir lui-même son mot de passe (page set-password), ce qui
+    corrige l'activation de compte impossible. Le mot de passe temporaire reste
+    indiqué en repli.
     """
     try:
         app_url = settings.FRONTEND_URL
         from_email = settings.DEFAULT_FROM_EMAIL
         org_name = organization.name if organization else 'Procura'
+
+        # Lien d'activation : la page reset-password gère aussi la première
+        # définition du mot de passe (token Django standard).
+        if set_password_token:
+            activation_url = f"{app_url}/reset-password?token={set_password_token}&email={invited_user.email}"
+            cta_label = "Définir mon mot de passe"
+        else:
+            activation_url = f"{app_url}/login"
+            cta_label = "Se connecter maintenant"
 
         subject = f"Invitation à rejoindre {org_name} sur Procura"
 
@@ -143,13 +157,12 @@ def send_user_invitation_email(invited_user, temp_password, invited_by_user, org
 
 {invited_by_user.get_full_name() or invited_by_user.email} vous a invité(e) à rejoindre l'espace de travail "{org_name}" sur Procura.
 
-Vos identifiants de connexion temporaires :
+Pour activer votre compte, définissez votre mot de passe ici :
+{activation_url}
+
+Vos identifiants :
   Email : {invited_user.email}
-  Mot de passe temporaire : {temp_password}
-
-Connectez-vous ici : {app_url}/login
-
-Veuillez changer votre mot de passe dès votre première connexion.
+  Mot de passe temporaire (si besoin) : {temp_password}
 
 Cordialement,
 L'équipe Procura
@@ -176,12 +189,12 @@ L'équipe Procura
       </div>
 
       <p style="text-align:center;margin:32px 0;">
-        <a href="{app_url}/login" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
-          Se connecter maintenant
+        <a href="{activation_url}" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
+          {cta_label}
         </a>
       </p>
 
-      <p style="color:#888;font-size:13px;">⚠️ Pour votre sécurité, changez votre mot de passe dès la première connexion.</p>
+      <p style="color:#888;font-size:13px;">⚠️ Pour votre sécurité, définissez votre mot de passe via le bouton ci-dessus dès réception de cette invitation.</p>
     </div>
     <div style="background:#f5f5f5;padding:16px;text-align:center;">
       <p style="color:#aaa;font-size:12px;margin:0;">Procura — Gestion des achats intelligente</p>

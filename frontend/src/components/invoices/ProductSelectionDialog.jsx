@@ -47,6 +47,7 @@ function ProductSelectionDialog({
   open,
   onClose,
   products,
+  productsLoadError = false,
   newItem,
   setNewItem,
   onAddItem,
@@ -59,6 +60,12 @@ function ProductSelectionDialog({
   const { format: formatCurrency } = useCurrency();
   const [tabValue, setTabValue] = useState(0);
   const [stockError, setStockError] = useState('');
+
+  // Message affiché quand la liste est vide : distinguer une vraie absence de
+  // produit d'une erreur de chargement (ex. liste produits inaccessible).
+  const noOptionsText = productsLoadError
+    ? t('invoices:messages.loadProductsError', 'Impossible de charger les produits. Réessayez ou rechargez la page.')
+    : t('common:noOptions', 'Aucun produit. Créez-en un avec le bouton +.');
 
   // Séparer les produits par type
   const physicalProducts = useMemo(
@@ -210,6 +217,7 @@ function ProductSelectionDialog({
                     value={newItem.product}
                     onChange={(event, newValue) => handleProductSelect(newValue)}
                     fullWidth
+                    noOptionsText={noOptionsText}
                     getOptionDisabled={(option) =>
                       !canAddProductToInvoice(option, newItem.quantity || 1).canAdd
                     }
@@ -367,6 +375,7 @@ function ProductSelectionDialog({
                     value={newItem.product}
                     onChange={(event, newValue) => handleProductSelect(newValue)}
                     fullWidth
+                    noOptionsText={noOptionsText}
                     renderInput={(params) => (
                       <TextField
                         {...params}

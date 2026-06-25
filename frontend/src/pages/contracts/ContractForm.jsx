@@ -820,6 +820,11 @@ function ContractForm() {
       setActiveStep(1);
       return;
     }
+    // Cohérence des dates : la fin ne peut pas précéder le début.
+    if (formData.start_date && formData.end_date && formData.end_date < formData.start_date) {
+      enqueueSnackbar('La date de fin doit être postérieure ou égale à la date de début.', { variant: 'error' });
+      return;
+    }
     setSubmitting(true);
     try {
       const raw = {

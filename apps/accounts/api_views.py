@@ -235,6 +235,11 @@ def api_organization_users(request):
 
                 # Les préférences et permissions seront créées automatiquement par le signal
 
+                # Jeton pour permettre à l'invité de définir lui-même son mot de
+                # passe (lien set-password fonctionnel, cf. bug d'activation).
+                from django.contrib.auth.tokens import default_token_generator
+                set_password_token = default_token_generator.make_token(user)
+
                 # Envoyer l'email d'invitation
                 try:
                     from apps.core.email_utils import send_user_invitation_email
@@ -243,6 +248,7 @@ def api_organization_users(request):
                         temp_password=temp_password,
                         invited_by_user=request.user,
                         organization=request.user.organization,
+                        set_password_token=set_password_token,
                     )
                     email_sent = True
                 except Exception as email_err:
@@ -287,10 +293,34 @@ def api_organization_user_detail(request, user_id):
             if 'role' in data:
                 user.role = data['role']
             if 'is_active' in data:
+                # Réactivation (inactif -> actif) : respecter la limite de sièges
+                # comme à l'invitation, pour préserver la cohérence facturation.
+                reactivating = bool(data['is_active']) and not user.is_active
+                if reactivating:
+                    org = request.user.organization
+                    if org is not None:
+                        seat_limit = 1
+                        try:
+                            sub = getattr(org, 'subscription', None)
+                            if sub is not None:
+                                seat_limit = sub.seat_limit
+                        except Exception:
+                            seat_limit = 1
+                        active_users = CustomUser.objects.filter(organization=org, is_active=True).count()
+                        if active_users >= seat_limit:
+                            return Response({
+                                'error': (
+                                    f"Votre formule autorise {seat_limit} utilisateur(s) actif(s). "
+                                    f"Passez à un plan supérieur ou ajoutez des sièges pour réactiver cet utilisateur."
+                                ),
+                                'code': 'seat_limit_reached',
+                                'seat_limit': seat_limit,
+                                'active_users': active_users,
+                            }, status=status.HTTP_402_PAYMENT_REQUIRED)
                 user.is_active = data['is_active']
-            
+
             user.save()
-            
+
             return Response({
                 'success': True,
                 'message': 'Utilisateur mis à jour'

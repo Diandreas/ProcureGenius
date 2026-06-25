@@ -99,7 +99,7 @@ def update_supplier_rating_on_invoice(sender, instance, created, **kwargs):
 
 
 @receiver([post_save, post_delete], sender=ProductBatch)
-def sync_product_stock_on_batch_change(sender, instance, **kwargs):
+def sync_product_stock_on_batch_change(sender, instance, created=False, **kwargs):
     """Synchronise la quantité en stock du produit avec la somme de ses lots"""
     try:
         product = instance.product
@@ -109,12 +109,15 @@ def sync_product_stock_on_batch_change(sender, instance, **kwargs):
             # Mettre à jour le produit
             product.stock_quantity = total_stock
             product.save(update_fields=['stock_quantity', 'updated_at'])
-            
-            # Déclencher les alertes si nécessaire
-            try:
-                from .stock_alerts import check_stock_after_movement
-                check_stock_after_movement(product)
-            except Exception:
-                pass
+
+            # Déclencher les alertes seulement lors d'une modification/suppression de lot
+            # (baisse possible du stock). La création d'un lot est une entrée de stock :
+            # elle ne doit jamais générer une alerte de rupture / stock bas.
+            if not created:
+                try:
+                    from .stock_alerts import check_stock_after_movement
+                    check_stock_after_movement(product)
+                except Exception:
+                    pass
     except Exception:
         pass

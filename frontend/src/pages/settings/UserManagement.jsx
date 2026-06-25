@@ -295,6 +295,37 @@ function UserManagement() {
         handleMenuClose();
     };
 
+    const handleReactivateUser = async () => {
+        if (!selectedUser) return;
+        try {
+            const response = await fetch(`/api/v1/accounts/organization/users/${selectedUser.id}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
+                },
+                body: JSON.stringify({ is_active: true }),
+            });
+
+            if (response.ok) {
+                enqueueSnackbar(t('settings:userManagement.menu.reactivateSuccess', 'Utilisateur réactivé'), { variant: 'success' });
+                fetchUsers();
+            } else if (response.status === 402) {
+                const errData = await response.json().catch(() => ({}));
+                enqueueSnackbar(
+                    errData.error || "Limite de sièges atteinte. Passez à un plan supérieur pour réactiver cet utilisateur.",
+                    { variant: 'warning' }
+                );
+            } else {
+                throw new Error('Failed to reactivate user');
+            }
+        } catch (error) {
+            console.error('Error reactivating user:', error);
+            enqueueSnackbar(t('settings:userManagement.menu.reactivateError', 'Erreur lors de la réactivation'), { variant: 'error' });
+        }
+        handleMenuClose();
+    };
+
     const getRoleChipColor = (role) => {
         const colors = {
             admin: 'error',
@@ -478,16 +509,26 @@ function UserManagement() {
                     <Edit fontSize="small" sx={{ mr: 1 }} />
                     {t('settings:userManagement.menu.editPermissions')}
                 </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        setDeleteDialogOpen(true);
-                        handleMenuClose();
-                    }}
-                    sx={{ color: 'error.main' }}
-                >
-                    <Delete fontSize="small" sx={{ mr: 1 }} />
-                    {t('settings:userManagement.menu.deactivate')}
-                </MenuItem>
+                {selectedUser?.is_active ? (
+                    <MenuItem
+                        onClick={() => {
+                            setDeleteDialogOpen(true);
+                            handleMenuClose();
+                        }}
+                        sx={{ color: 'error.main' }}
+                    >
+                        <Delete fontSize="small" sx={{ mr: 1 }} />
+                        {t('settings:userManagement.menu.deactivate')}
+                    </MenuItem>
+                ) : (
+                    <MenuItem
+                        onClick={handleReactivateUser}
+                        sx={{ color: 'success.main' }}
+                    >
+                        <CheckCircle fontSize="small" sx={{ mr: 1 }} />
+                        {t('settings:userManagement.menu.reactivate', 'Réactiver')}
+                    </MenuItem>
+                )}
             </Menu>
 
             {/* Dialog d'invitation */}

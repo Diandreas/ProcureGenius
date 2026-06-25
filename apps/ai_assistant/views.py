@@ -21,6 +21,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _ai_quota_block_payload(quota):
+    """Construit une réponse claire quand l'IA est bloquée par le plan/quota.
+
+    On distingue deux cas pour ne pas afficher un message technique
+    (« quota_exceeded ») trompeur à un utilisateur en plan gratuit :
+      - limite = 0 -> l'IA n'est pas incluse dans le plan (gratuit) ;
+      - limite > 0 et atteinte -> quota mensuel épuisé (plan payant).
+    """
+    limit = quota.get('limit') if isinstance(quota, dict) else None
+    if not limit:  # 0 ou None -> non inclus dans le plan
+        return {
+            'error': 'feature_not_in_plan',
+            'message': "L'Assistant IA est réservé aux plans Business et Pro. "
+                       "Passez à un abonnement supérieur pour en profiter — essai 30 jours offert.",
+            'upgrade': True,
+        }
+    return {
+        'error': 'quota_exceeded',
+        'message': "Vous avez atteint votre quota de requêtes IA pour ce mois. "
+                   "Il sera réinitialisé le mois prochain, ou passez à un plan supérieur.",
+        'upgrade': True,
+    }
+
+
 def _get_or_create_conversation(user, conversation_id, first_message):
     """Récupère ou crée la conversation (isolation multi-tenant)."""
     user_org = getattr(user, 'organization', None)
@@ -173,10 +197,10 @@ class ChatView(APIView):
                 from apps.subscriptions.quota_service import QuotaService
                 quota = QuotaService.check_quota(org, 'ai_requests', raise_exception=False)
                 if not quota['can_proceed']:
-                    return Response({
-                        'error': 'quota_exceeded',
-                        'message': "Quota de requetes IA atteint pour ce mois. Passez au plan superieur.",
-                    }, status=status.HTTP_402_PAYMENT_REQUIRED)
+                    return Response(
+                        _ai_quota_block_payload(quota),
+                        status=status.HTTP_402_PAYMENT_REQUIRED,
+                    )
             except Exception:
                 pass
 
@@ -309,10 +333,10 @@ class ChatStreamView(APIView):
                 from apps.subscriptions.quota_service import QuotaService
                 quota = QuotaService.check_quota(org, 'ai_requests', raise_exception=False)
                 if not quota['can_proceed']:
-                    return Response({
-                        'error': 'quota_exceeded',
-                        'message': "Quota de requetes IA atteint pour ce mois. Passez au plan superieur.",
-                    }, status=status.HTTP_402_PAYMENT_REQUIRED)
+                    return Response(
+                        _ai_quota_block_payload(quota),
+                        status=status.HTTP_402_PAYMENT_REQUIRED,
+                    )
             except Exception:
                 pass
 

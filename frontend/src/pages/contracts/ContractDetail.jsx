@@ -66,6 +66,7 @@ import {
   approveContract,
   activateContract,
   terminateContract,
+  renewContract,
   extractClauses,
   verifyClause,
 } from '../../store/slices/contractsSlice';
@@ -157,6 +158,27 @@ function ContractDetail() {
     }
   };
 
+  const handleRenew = async () => {
+    try {
+      const result = await dispatch(renewContract({ id, data: {} })).unwrap();
+      const newId = result?.new_contract?.id || result?.id;
+      enqueueSnackbar(
+        result?.message || t('contracts:messages.renewSuccess', 'Contrat renouvelé avec succès.'),
+        { variant: 'success' }
+      );
+      if (newId && newId !== id) {
+        navigate(`/contracts/${newId}`);
+      } else {
+        dispatch(fetchContract(id));
+      }
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || t('contracts:messages.renewError', 'Erreur lors du renouvellement du contrat.'),
+        { variant: 'error' }
+      );
+    }
+  };
+
   const handleGenerateInvoice = async () => {
     try {
       const response = await contractsAPI.generateInvoice(id);
@@ -184,13 +206,28 @@ function ContractDetail() {
 
     setExtracting(true);
     try {
-      await dispatch(extractClauses({ id, contractText, language: 'fr' })).unwrap();
-      enqueueSnackbar(t('contracts:messages.extractSuccess'), { variant: 'success' });
-      setExtractDialogOpen(false);
-      setContractText('');
-      dispatch(fetchContract(id));
+      const result = await dispatch(extractClauses({ id, contractText, language: 'fr' })).unwrap();
+      const count = result?.clauses_count ?? result?.data?.clauses?.length ?? 0;
+      if (count > 0) {
+        enqueueSnackbar(
+          result?.message || t('contracts:messages.extractSuccess'),
+          { variant: 'success' }
+        );
+        setExtractDialogOpen(false);
+        setContractText('');
+        dispatch(fetchContract(id));
+      } else {
+        // Pas de faux succès : aucune clause détectée -> on garde le dialogue ouvert.
+        enqueueSnackbar(
+          result?.message || t('contracts:messages.extractEmpty', "Aucune clause n'a pu être extraite. Vérifiez le texte du contrat."),
+          { variant: 'warning' }
+        );
+      }
     } catch (error) {
-      enqueueSnackbar(t('contracts:messages.extractError'), { variant: 'error' });
+      enqueueSnackbar(
+        error?.response?.data?.message || t('contracts:messages.extractError'),
+        { variant: 'error' }
+      );
     } finally {
       setExtracting(false);
     }
@@ -560,7 +597,7 @@ function ContractDetail() {
                       variant="outlined"
                       size="small"
                       startIcon={<Autorenew />}
-                      onClick={() => navigate(`/contracts/${id}/renew`)}
+                      onClick={handleRenew}
                       sx={{ borderRadius: 2, textTransform: 'none' }}
                     >
                       {t('contracts:detail.actions.renew')}

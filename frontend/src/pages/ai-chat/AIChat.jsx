@@ -942,10 +942,14 @@ function AIChat() {
     console.error('Error sending message:', error);
     console.error('Error response:', error.response?.data);
 
+    // Préférer le message lisible renvoyé par le backend (`message`) plutôt que
+    // le code technique (`error`, ex. « quota_exceeded ») qui ne parle pas à
+    // l'utilisateur.
     const errorMessage = fallbackMessage
-      || error.response?.data?.error
-      || error.response?.data?.detail
+      || error.response?.data?.message
       || error.payload?.message
+      || error.response?.data?.detail
+      || error.response?.data?.error
       || error.message
       || t('aiChat:messages.sendMessageError');
 

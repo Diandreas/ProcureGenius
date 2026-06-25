@@ -121,10 +121,24 @@ class ContractViewSet(viewsets.ModelViewSet):
             'data': ContractDetailSerializer(contract).data
         })
 
+    @staticmethod
+    def _dates_invalid(contract):
+        """True si la date de fin précède la date de début (incohérence)."""
+        return bool(
+            contract.start_date and contract.end_date
+            and contract.end_date < contract.start_date
+        )
+
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """Approuve le contrat"""
         contract = self.get_object()
+        if self._dates_invalid(contract):
+            return Response({
+                'status': 'error',
+                'message': "Dates incohérentes : la date de fin précède la date de début. "
+                           "Corrigez le contrat avant de l'approuver."
+            }, status=status.HTTP_400_BAD_REQUEST)
         serializer = ContractApprovalSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -150,6 +164,12 @@ class ContractViewSet(viewsets.ModelViewSet):
     def activate(self, request, pk=None):
         """Active le contrat"""
         contract = self.get_object()
+        if self._dates_invalid(contract):
+            return Response({
+                'status': 'error',
+                'message': "Dates incohérentes : la date de fin précède la date de début. "
+                           "Corrigez le contrat avant de l'activer."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         if contract.activate():
             return Response({
@@ -206,6 +226,19 @@ class ContractViewSet(viewsets.ModelViewSet):
         serializer = ContractRenewalSerializer(data=request.data)
 
         if serializer.is_valid():
+            # Date de fin du renouvellement : fournie, ou par défaut la même
+            # durée que le contrat d'origine (à défaut +1 an). Permet le
+            # renouvellement en un clic depuis la fiche contrat.
+            new_start_date = contract.end_date
+            new_end_date = serializer.validated_data.get('new_end_date')
+            if not new_end_date:
+                if contract.start_date and contract.end_date:
+                    duration = contract.end_date - contract.start_date
+                    new_end_date = new_start_date + duration
+                else:
+                    from dateutil.relativedelta import relativedelta
+                    new_end_date = new_start_date + relativedelta(years=1)
+
             # Crée un nouveau contrat basé sur l'ancien
             new_contract = Contract.objects.create(
                 title=f"{contract.title} (Renouvellement {contract.renewal_count + 1})",
@@ -215,8 +248,8 @@ class ContractViewSet(viewsets.ModelViewSet):
                 description=contract.description,
                 terms_and_conditions=contract.terms_and_conditions,
                 payment_terms=contract.payment_terms,
-                start_date=contract.end_date,
-                end_date=serializer.validated_data['new_end_date'],
+                start_date=new_start_date,
+                end_date=new_end_date,
                 total_value=serializer.validated_data.get('new_total_value', contract.total_value),
                 currency=contract.currency,
                 auto_renewal=contract.auto_renewal,
@@ -335,9 +368,21 @@ class ContractViewSet(viewsets.ModelViewSet):
                     'recommendations': result.get('recommendations', [])
                 }
 
+                clauses_count = len(created_clauses)
+                if clauses_count == 0:
+                    # Aucune clause détectée : ne pas afficher un faux succès.
+                    return Response({
+                        'status': 'empty',
+                        'clauses_count': 0,
+                        'message': "Aucune clause n'a pu être extraite de ce document. "
+                                   "Vérifiez que le texte du contrat est complet et lisible.",
+                        'data': response_data
+                    })
+
                 return Response({
                     'status': 'success',
-                    'message': f'{len(created_clauses)} clauses extraites avec succès',
+                    'clauses_count': clauses_count,
+                    'message': f'{clauses_count} clause(s) extraite(s) avec succès',
                     'data': response_data
                 })
 

@@ -76,6 +76,7 @@ function InvoiceForm() {
   const [loading, setLoading] = useState(false);
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
+  const [productsLoadError, setProductsLoadError] = useState(false);
   const [contracts, setContracts] = useState([]);
   const [items, setItems] = useState([]);
   // Options avancees repliees par defaut (formulaire minimal et fluide).
@@ -161,8 +162,12 @@ function InvoiceForm() {
   const fetchProducts = async () => {
     try {
       const response = await productsAPI.list();
-      setProducts(response.data.results || []);
+      // Supporter réponse paginée (results) ou tableau direct
+      const data = response.data;
+      setProducts(Array.isArray(data) ? data : (data.results || []));
+      setProductsLoadError(false);
     } catch (error) {
+      setProductsLoadError(true);
       enqueueSnackbar(t('invoices:messages.loadProductsError'), { variant: 'error' });
     }
   };
@@ -1304,6 +1309,7 @@ function InvoiceForm() {
         open={itemDialogOpen}
         onClose={() => setItemDialogOpen(false)}
         products={products}
+        productsLoadError={productsLoadError}
         newItem={newItem}
         setNewItem={setNewItem}
         onAddItem={handleAddItem}

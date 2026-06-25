@@ -175,28 +175,50 @@ class Product(models.Model):
         if self.reference == '':
             self.reference = None
 
-        if not self.reference:
-            # Générer une référence automatique selon le type
-            if self.product_type == 'physical':
-                prefix = 'PRD'
-            elif self.product_type == 'digital':
-                prefix = 'DIG'
-            else:
-                prefix = 'SVC'
+        # Normaliser les champs liés au type AVANT toute génération/validation
+        # (les services/digitaux ne gèrent pas de stock)
+        if self.product_type in ['service', 'digital']:
+            self.stock_quantity = 0
+            self.low_stock_threshold = 0
+            self.warehouse = None
+            self.price_editable = True
 
-            last_product = Product.objects.filter(reference__startswith=prefix).order_by('-reference').first()
-            if last_product and last_product.reference:
-                try:
-                    last_number = int(last_product.reference[3:])
-                    self.reference = f"{prefix}{last_number + 1:04d}"
-                except:
-                    self.reference = f"{prefix}0001"
-            else:
-                self.reference = f"{prefix}0001"
-        
-        # Validation avant sauvegarde
-        self.full_clean()
+        if not self.reference:
+            self.reference = self._generate_unique_reference()
+
         super().save(*args, **kwargs)
+
+    def _generate_unique_reference(self):
+        """Génère une référence unique en évitant les collisions.
+
+        `reference` est unique globalement : on incrémente jusqu'à trouver
+        une valeur libre plutôt que de se baser sur le dernier numéro
+        (qui peut entrer en collision en concurrence ou multi-organisation).
+        """
+        if self.product_type == 'physical':
+            prefix = 'PRD'
+        elif self.product_type == 'digital':
+            prefix = 'DIG'
+        else:
+            prefix = 'SVC'
+
+        # Point de départ : dernier numéro connu pour ce préfixe
+        last_product = Product.objects.filter(
+            reference__startswith=prefix
+        ).order_by('-reference').first()
+        next_number = 1
+        if last_product and last_product.reference:
+            try:
+                next_number = int(last_product.reference[len(prefix):]) + 1
+            except (ValueError, TypeError):
+                next_number = 1
+
+        # Avancer jusqu'à une référence réellement libre
+        candidate = f"{prefix}{next_number:04d}"
+        while Product.objects.filter(reference=candidate).exists():
+            next_number += 1
+            candidate = f"{prefix}{next_number:04d}"
+        return candidate
     
     @property
     def is_low_stock(self):

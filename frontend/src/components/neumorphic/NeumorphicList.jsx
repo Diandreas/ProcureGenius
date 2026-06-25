@@ -53,7 +53,10 @@ export function NeumorphicKpis({ kpis, activeKey, onSelect }) {
                 {kpi.value}
               </Typography>
               {kpi.sub && (
-                <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontSize: '0.68rem', color: 'text.disabled', mt: 0.5 }}>{kpi.sub}</Typography>
+                // La tuile "total" affiche son sous-titre (ex. nombre total de
+                // commandes) y compris sur mobile ; les petites tuiles de statut
+                // le masquent en xs pour rester compactes.
+                <Typography sx={{ display: { xs: isTotal ? 'block' : 'none', sm: 'block' }, fontSize: { xs: '0.62rem', sm: '0.68rem' }, color: 'text.disabled', mt: 0.5 }}>{kpi.sub}</Typography>
               )}
             </Box>
           </Grid>

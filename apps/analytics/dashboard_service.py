@@ -69,7 +69,9 @@ class DashboardStatsService:
         if 'suppliers' in enabled_modules:
             stats['suppliers'] = self.get_supplier_stats()
 
-        if 'purchase_orders' in enabled_modules:
+        # Le code du module est 'purchase-orders' (avec tiret) ; on accepte les
+        # deux orthographes par robustesse.
+        if 'purchase-orders' in enabled_modules or 'purchase_orders' in enabled_modules:
             stats['purchase_orders'] = self.get_purchase_order_stats()
 
         if 'invoices' in enabled_modules:
@@ -82,7 +84,9 @@ class DashboardStatsService:
             stats['products'] = self.get_product_stats()
 
         # Stats financières globales
-        if 'invoices' in enabled_modules or 'purchase_orders' in enabled_modules:
+        if ('invoices' in enabled_modules
+                or 'purchase-orders' in enabled_modules
+                or 'purchase_orders' in enabled_modules):
             stats['financial'] = self.get_financial_stats()
 
         # Performance globale

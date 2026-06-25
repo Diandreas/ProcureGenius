@@ -61,6 +61,15 @@ class RestockForecastView(APIView):
                 .aggregate(q=Sum('quantity'))['q'] or 0
             )
             units_sold = abs(sold)  # les ventes sont stockées en négatif
+
+            # Quantité totale réellement facturée (toute période confondue).
+            # Sert à distinguer « jamais vendu » d'une simple absence de vente
+            # récente : un produit déjà facturé ne doit pas être marqué « Sans
+            # vente », même si aucun StockMovement de type 'sale' n'a été tracé.
+            total_invoiced = (
+                p.invoice_items.aggregate(q=Sum('quantity'))['q'] or 0
+            )
+
             velocity = units_sold / window if window else 0  # unités / jour
             stock = p.stock_quantity or 0
 
@@ -68,8 +77,10 @@ class RestockForecastView(APIView):
             recommended = max(0, round(velocity * horizon) - stock) if velocity > 0 else 0
 
             # Urgence : rupture imminente vs marge confortable
-            if velocity <= 0:
-                urgency = 'idle'        # pas de vente sur la période
+            if total_invoiced <= 0:
+                urgency = 'idle'        # jamais vendu
+            elif velocity <= 0:
+                urgency = 'ok'          # déjà vendu mais pas sur la période récente
             elif days_left is not None and days_left <= 7:
                 urgency = 'critical'
             elif days_left is not None and days_left <= horizon:
@@ -83,6 +94,7 @@ class RestockForecastView(APIView):
                 'reference': p.reference,
                 'stock': stock,
                 'units_sold': units_sold,
+                'total_invoiced': int(total_invoiced),
                 'daily_velocity': round(velocity, 2),
                 'days_left': days_left,
                 'recommended_qty': recommended,

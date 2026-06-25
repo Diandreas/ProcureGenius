@@ -326,9 +326,11 @@ function DashboardEnhanced() {
       color: '#F59E0B',
     },
     showPurchaseOrders && {
-      title: 'Commandes BC',
-      value: poStats.period?.count || 0,
-      total: poStats.total || 0,
+      // Afficher le nombre TOTAL de bons de commande (et non seulement ceux de
+      // la période) : un BC créé hors période ne doit pas faire afficher 0.
+      title: 'Bons de commande',
+      value: poStats.total || 0,
+      subtitle: poStats.period?.count ? `dont ${poStats.period.count} sur la période` : null,
       previous: poStats.comparison?.previous_count,
       icon: <Business />,
       color: '#8B5CF6',

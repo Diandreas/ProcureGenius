@@ -176,6 +176,16 @@ class ContractCreateSerializer(serializers.ModelSerializer):
             'sections_data',
         ]
 
+    def validate(self, attrs):
+        """Cohérence des dates : la date de fin ne peut pas précéder le début."""
+        start_date = attrs.get('start_date', getattr(self.instance, 'start_date', None))
+        end_date = attrs.get('end_date', getattr(self.instance, 'end_date', None))
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError({
+                'end_date': "La date de fin doit être postérieure ou égale à la date de début."
+            })
+        return attrs
+
     def create(self, validated_data):
         sections_data = validated_data.pop('sections_data', [])
         contract = super().create(validated_data)
@@ -261,9 +271,14 @@ class ContractApprovalSerializer(serializers.Serializer):
 
 
 class ContractRenewalSerializer(serializers.Serializer):
-    """Serializer pour renouveler un contrat"""
+    """Serializer pour renouveler un contrat.
 
-    new_end_date = serializers.DateField(required=True)
+    `new_end_date` est optionnel : s'il n'est pas fourni, la vue applique une
+    durée par défaut (même durée que le contrat d'origine, ou +1 an), ce qui
+    permet un renouvellement en un clic depuis la fiche contrat.
+    """
+
+    new_end_date = serializers.DateField(required=False, allow_null=True)
     new_total_value = serializers.DecimalField(max_digits=14, decimal_places=2, required=False)
     notes = serializers.CharField(required=False, allow_blank=True)
 
