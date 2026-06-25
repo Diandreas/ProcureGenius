@@ -1,17 +1,18 @@
 // Service Worker pour PWA
 // NB: incrementer la version a chaque deploiement important pour forcer la
 // mise a jour du cache chez les utilisateurs (sinon ils gardent l'ancienne app).
-const CACHE_NAME = 'gestion-app-v2';
-const API_CACHE_NAME = 'gestion-app-api-v2';
+const CACHE_NAME = 'gestion-app-v3';
+const API_CACHE_NAME = 'gestion-app-api-v3';
 const DEBUG = false; // Mettre à true pour activer les logs de debug
 
-// URLs à mettre en cache lors de l'installation
+// URLs à mettre en cache lors de l'installation.
+// NB: ne PAS lister d'assets hashés (Vite -> /assets/*.js) ici : ils sont
+// mis en cache à la volée (cacheFirst). Les anciennes entrées /static/js/main.js
+// faisaient échouer addAll() (404) et avortaient toute l'installation du SW.
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/static/css/main.css',
-  '/static/js/main.js',
 ];
 
 // Installation du Service Worker
@@ -20,7 +21,8 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         if (DEBUG) console.log('Cache ouvert');
-        return cache.addAll(urlsToCache);
+        // addAll échoue en bloc si une URL 404 -> on tolère les absences.
+        return Promise.allSettled(urlsToCache.map((u) => cache.add(u)));
       })
       .then(() => self.skipWaiting())
   );
@@ -83,9 +85,36 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stratégie pour les pages HTML
+  // Stratégie pour les pages HTML / navigations SPA
+  // Comme l'app est routée côté client, toutes les routes (/products, /invoices…)
+  // sont servies par index.html. Hors-ligne, on retombe sur le shell index.html
+  // mis en cache (sinon seules / et /index.html marchaient hors-ligne).
+  if (request.mode === 'navigate') {
+    event.respondWith(navigationStrategy(request));
+    return;
+  }
+
   event.respondWith(networkFirstStrategy(request));
 });
+
+// Stratégie pour les navigations (SPA) : réseau d'abord, repli sur le shell.
+async function navigationStrategy(request) {
+  const cache = await caches.open(CACHE_NAME);
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      // Mettre à jour le shell pour les prochains démarrages hors-ligne.
+      cache.put('/index.html', networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    // Hors-ligne : servir le shell SPA (le routeur React affichera la page).
+    const shell = await cache.match('/index.html') || await cache.match('/');
+    if (shell) return shell;
+    const offlineResponse = await cache.match('/offline.html');
+    return offlineResponse || new Response('Offline', { status: 503 });
+  }
+}
 
 // Stratégie Cache First (pour les assets statiques)
 async function cacheFirstStrategy(request) {

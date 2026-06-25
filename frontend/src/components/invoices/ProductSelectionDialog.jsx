@@ -305,9 +305,12 @@ function ProductSelectionDialog({
                   type="number"
                   required
                   value={newItem.quantity}
-                  onChange={(e) =>
-                    handleQuantityChange(parseInt(e.target.value) || 1)
-                  }
+                  onChange={(e) => {
+                    // Permettre d'effacer le champ (chaîne vide) pendant la
+                    // saisie au lieu de le forcer à 1 ; conversion à l'ajout.
+                    const v = e.target.value;
+                    handleQuantityChange(v === '' ? '' : parseInt(v, 10));
+                  }}
                   inputProps={{ min: 1 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
@@ -331,9 +334,11 @@ function ProductSelectionDialog({
                   type="number"
                   required
                   value={newItem.unit_price}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })
-                  }
+                  onChange={(e) => {
+                    // Permettre d'effacer le champ pendant la saisie.
+                    const v = e.target.value;
+                    setNewItem({ ...newItem, unit_price: v === '' ? '' : parseFloat(v) });
+                  }}
                   disabled={newItem.product !== null && !newItem.product?.price_editable}
                   helperText={
                     newItem.product
@@ -423,9 +428,12 @@ function ProductSelectionDialog({
                   type="number"
                   required
                   value={newItem.quantity}
-                  onChange={(e) =>
-                    handleQuantityChange(parseInt(e.target.value) || 1)
-                  }
+                  onChange={(e) => {
+                    // Permettre d'effacer le champ (chaîne vide) pendant la
+                    // saisie au lieu de le forcer à 1 ; conversion à l'ajout.
+                    const v = e.target.value;
+                    handleQuantityChange(v === '' ? '' : parseInt(v, 10));
+                  }}
                   inputProps={{ min: 1 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
@@ -449,9 +457,11 @@ function ProductSelectionDialog({
                   type="number"
                   required
                   value={newItem.unit_price}
-                  onChange={(e) =>
-                    setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })
-                  }
+                  onChange={(e) => {
+                    // Permettre d'effacer le champ pendant la saisie.
+                    const v = e.target.value;
+                    setNewItem({ ...newItem, unit_price: v === '' ? '' : parseFloat(v) });
+                  }}
                   helperText={t('invoices:messages.servicePriceOnQuote')}
                   inputProps={{ min: 0, step: 0.01 }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}

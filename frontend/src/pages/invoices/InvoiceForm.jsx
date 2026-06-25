@@ -263,14 +263,19 @@ function InvoiceForm() {
   };
 
   const handleAddItem = () => {
-    if (!newItem.description || newItem.quantity <= 0 || newItem.unit_price <= 0) {
+    // Coercition : les champs peuvent être vides ('') pendant la saisie mobile.
+    const qty = parseFloat(newItem.quantity);
+    const unitPrice = parseFloat(newItem.unit_price);
+    if (!newItem.description || !(qty > 0) || !(unitPrice > 0)) {
       enqueueSnackbar(t('invoices:messages.fillAllRequiredFields'), { variant: 'error' });
       return;
     }
 
     const item = {
       ...newItem,
-      total_price: newItem.quantity * newItem.unit_price,
+      quantity: qty,
+      unit_price: unitPrice,
+      total_price: qty * unitPrice,
     };
 
     if (editingItemIndex >= 0) {

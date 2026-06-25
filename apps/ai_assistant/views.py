@@ -743,7 +743,8 @@ class DocumentAnalysisView(APIView):
                     first_name=client_name,
                     last_name='',
                     email=client_email if client_email else None,
-                    company=client_name
+                    company=client_name,
+                    organization=getattr(user, 'organization', None)
                 )
 
                 if similar_clients:
@@ -803,7 +804,8 @@ class DocumentAnalysisView(APIView):
                 similar_suppliers = entity_matcher.find_similar_suppliers(
                     name=supplier_name,
                     email=supplier_email if supplier_email else None,
-                    phone=supplier_phone if supplier_phone else None
+                    phone=supplier_phone if supplier_phone else None,
+                    organization=getattr(user, 'organization', None)
                 )
 
                 if similar_suppliers:
@@ -1778,7 +1780,8 @@ class ImportReviewApproveView(APIView):
                     first_name=client_name,
                     last_name='',
                     email=client_email if client_email else None,
-                    company=client_name
+                    company=client_name,
+                    organization=getattr(user, 'organization', None)
                 )
 
                 if similar_clients:
@@ -1829,7 +1832,8 @@ class ImportReviewApproveView(APIView):
                 similar_suppliers = entity_matcher.find_similar_suppliers(
                     name=supplier_name,
                     email=supplier_email if supplier_email else None,
-                    phone=supplier_phone if supplier_phone else None
+                    phone=supplier_phone if supplier_phone else None,
+                    organization=getattr(user, 'organization', None)
                 )
 
                 if similar_suppliers:

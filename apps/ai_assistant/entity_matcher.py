@@ -221,10 +221,12 @@ class EnhancedEntityMatcher:
         company: str = None,
         phone: str = None,
         exclude_id: str = None,
-        min_score: float = None
+        min_score: float = None,
+        organization=None
     ) -> List[Tuple[Any, float, Dict]]:
         """
         Recherche avancée de clients similaires avec matching multi-algorithme.
+        `organization` restreint la recherche à l'organisation (multi-tenant).
 
         Returns:
             Liste de (client, score, match_details) triée par score décroissant
@@ -235,6 +237,8 @@ class EnhancedEntityMatcher:
             min_score = self.threshold
 
         candidates = Client.objects.all()
+        if organization is not None:
+            candidates = candidates.filter(organization=organization)
         if exclude_id:
             candidates = candidates.exclude(id=exclude_id)
 
@@ -328,10 +332,12 @@ class EnhancedEntityMatcher:
         email: str = None,
         phone: str = None,
         exclude_id: str = None,
-        min_score: float = None
+        min_score: float = None,
+        organization=None
     ) -> List[Tuple[Any, float, Dict]]:
         """
         Recherche avancée de fournisseurs similaires avec matching multi-algorithme.
+        `organization` restreint la recherche à l'organisation (multi-tenant).
         """
         from apps.suppliers.models import Supplier
 
@@ -339,6 +345,8 @@ class EnhancedEntityMatcher:
             min_score = self.threshold
 
         candidates = Supplier.objects.all()
+        if organization is not None:
+            candidates = candidates.filter(organization=organization)
         if exclude_id:
             candidates = candidates.exclude(id=exclude_id)
 
@@ -416,11 +424,17 @@ class EnhancedEntityMatcher:
         barcode: str = None,
         description: str = None,
         exclude_id: str = None,
-        min_score: float = None
+        min_score: float = None,
+        organization=None
     ) -> List[Tuple[Any, float, Dict]]:
         """
         Recherche avancée de produits similaires avec matching multi-algorithme.
         Cherche dans: nom, référence, code-barre ET description.
+
+        `organization` : restreint la recherche à l'organisation (isolation
+        multi-tenant). Sans ce filtre, on comparait à TOUS les produits de
+        toutes les entreprises -> faux "100% similaire" sur des produits
+        invisibles + fuite inter-tenant.
         """
         from apps.invoicing.models import Product
 
@@ -428,6 +442,8 @@ class EnhancedEntityMatcher:
             min_score = self.threshold
 
         candidates = Product.objects.all()
+        if organization is not None:
+            candidates = candidates.filter(organization=organization)
         if exclude_id:
             candidates = candidates.exclude(id=exclude_id)
 

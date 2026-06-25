@@ -47,7 +47,8 @@ def quick_create_client(request):
         similar_clients = entity_matcher.find_similar_clients(
             first_name=name,  # Utiliser name comme first_name pour la recherche
             email=data.get('email'),
-            phone=data.get('phone')
+            phone=data.get('phone'),
+            organization=getattr(request.user, 'organization', None)
         )
 
         if similar_clients:
@@ -129,7 +130,8 @@ def quick_create_supplier(request):
         similar_suppliers = entity_matcher.find_similar_suppliers(
             name=name,
             email=data.get('email'),
-            phone=data.get('phone')
+            phone=data.get('phone'),
+            organization=getattr(request.user, 'organization', None)
         )
 
         if similar_suppliers:
@@ -209,7 +211,8 @@ def quick_create_product(request):
         similar_products = entity_matcher.find_similar_products(
             name=name,
             reference=data.get('reference'),
-            barcode=data.get('barcode')
+            barcode=data.get('barcode'),
+            organization=getattr(request.user, 'organization', None)
         )
 
         if similar_products:

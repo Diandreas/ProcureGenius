@@ -273,12 +273,10 @@ export default function OnboardingChecklist() {
   };
 
   const handleAction = (task) => {
+    // On navigue seulement : l'étape "Essayer l'IA" n'est validée que lorsque
+    // l'utilisateur envoie réellement un message (flag posé par AIChat), et non
+    // au simple clic. La validation est relue via checkTasks (focus/retour).
     navigate(task.path);
-    // Mark AI task as done when navigated to
-    if (task.id === 'explore_ai') {
-      localStorage.setItem(task.checkKey, 'true');
-      setCompletedIds(prev => ({ ...prev, [task.id]: true }));
-    }
   };
 
   const doneCount = tasks.filter(t => completedIds[t.id]).length;

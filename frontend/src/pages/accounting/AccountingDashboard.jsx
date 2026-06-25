@@ -74,12 +74,25 @@ export default function AccountingDashboard() {
   const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
   const gridStroke = isDark ? 'rgba(255,255,255,0.08)' : '#f0f0f0';
 
-  useEffect(() => {
-    accountingAPI.getDashboard()
-      .then((r) => setData(r.data))
+  const loadDashboard = React.useCallback(() => {
+    return accountingAPI.getDashboard()
+      .then((r) => { setData(r.data); setError(null); })
       .catch(() => setError('Erreur chargement du tableau de bord'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  // Rafraîchir quand l'utilisateur revient sur l'onglet : le graphique
+  // d'évolution reflète alors les charges ajoutées entre-temps (sinon il
+  // restait figé sur l'état précédent).
+  useEffect(() => {
+    const handler = () => loadDashboard();
+    window.addEventListener('focus', handler);
+    return () => window.removeEventListener('focus', handler);
+  }, [loadDashboard]);
 
   if (loading) return (
     <Box p={{ xs: 2, sm: 3 }}>

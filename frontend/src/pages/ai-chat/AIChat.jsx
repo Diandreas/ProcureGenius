@@ -981,6 +981,10 @@ function AIChat() {
     setMessage('');
     setLoading(true);
 
+    // Valider l'étape d'onboarding "Essayer l'IA" seulement maintenant : quand
+    // l'utilisateur envoie réellement un message (et non au simple clic).
+    try { localStorage.setItem('onboarding_ai_done', 'true'); } catch { /* quota */ }
+
     const requestData = {
       message: confirmationData ? textToSend : userMessage.content,
     };

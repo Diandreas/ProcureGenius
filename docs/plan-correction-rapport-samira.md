@@ -13,8 +13,17 @@
 | 4 | Utilisateurs (#7, #8) | ☑️ fait |
 | 5 | Import de documents (#4, #5) | ☑️ fait (causes trouvées dans les logs prod) |
 | 6 | Dashboard & totaux mobiles (#14, #23) | ☑️ fait |
-| 7 | UX / mobile (#16, #21, #22, #24, #25, #26, #27) ; #17 à voir | ⬜ partiel (#21 fait) |
-| 8 | Améliorations (P3) | ⬜ à faire |
+| 7 | UX / mobile (#16, #17, #21, #22, #24, #25, #26, #27) | ☑️ fait |
+| 8 | Améliorations (P3) | ⬜ à faire (suggestions, non bloquant) |
+
+### Lot 7 — UX / mobile (commit final)
+- **#16** Champs numériques mobiles : quantité/prix effaçables (chaîne vide tolérée, conversion à l'ajout) (`ProductSelectionDialog.jsx`, `InvoiceForm.jsx`).
+- **#17** Matcher « 100% similaire » : `find_similar_{products,clients,suppliers}` désormais scopés à l'organisation (corrige le faux match + fuite multi-tenant) (`entity_matcher.py` + appelants).
+- **#22** Graphique compta : refetch au retour sur l'onglet (focus) -> reflète les écritures postées (`AccountingDashboard.jsx`).
+- **#24** Hors-ligne : navigations SPA retombent sur le shell `index.html` en cache (toutes les routes marchent hors-ligne, plus seulement l'accueil) + precache robuste + cache v3 (`service-worker.js`).
+- **#25** Mode nuit mobile : la landing est cohérente (toujours claire, plus de blocs sombres isolés) (`Landing.jsx`).
+- **#26** Tutoriel : le spotlight cible l'élément réellement visible (barre mobile) -> mise en évidence fonctionne sur mobile (`SimpleTutorial.jsx`).
+- **#27** Onboarding « Essayer l'IA » : validé seulement quand un message est réellement envoyé, plus au simple clic (`OnboardingChecklist.jsx`, `AIChat.jsx`).
 
 ### Détail des correctifs appliqués (commit en cours)
 - **#1/#2** `Product.save()` : génération de référence unique anti-collision + suppression du `full_clean()` systématique ; nettoyage `get_queryset` produits (`apps/invoicing/models.py`, `apps/api/views.py`).

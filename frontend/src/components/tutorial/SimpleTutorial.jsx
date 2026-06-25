@@ -274,7 +274,12 @@ const SimpleTutorial = () => {
       return;
     }
 
-    const el = document.querySelector(step.target);
+    // Plusieurs éléments peuvent partager le même data-tutorial (menu latéral
+    // caché sur mobile + barre de navigation mobile visible) : on choisit le
+    // premier élément RÉELLEMENT visible, sinon le spotlight ne s'affiche pas
+    // sur mobile (offsetParent du drawer caché === null).
+    const candidates = Array.from(document.querySelectorAll(step.target));
+    const el = candidates.find(c => c.offsetParent !== null && c.getBoundingClientRect().width > 0) || candidates[0];
     if (!el || el.offsetParent === null) {
       if (retries < 5) setTimeout(() => computePositions(step, retries + 1), 400 * (retries + 1));
       else {

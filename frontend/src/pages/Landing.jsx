@@ -95,7 +95,10 @@ const AIChatDemo = () => {
   }, []);
 
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
+  // La landing est volontairement toujours claire (charte marketing) : on ne
+  // suit pas le thème sombre de l'app, sinon seuls certains blocs basculaient
+  // en sombre (header/cartes) alors que le fond restait blanc -> incohérence.
+  const isDark = false;
 
   return (
     <Box
@@ -199,7 +202,10 @@ const AIChatDemo = () => {
 // ─── Feature Card ─────────────────────────────────────────────────
 const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
+  // La landing est volontairement toujours claire (charte marketing) : on ne
+  // suit pas le thème sombre de l'app, sinon seuls certains blocs basculaient
+  // en sombre (header/cartes) alors que le fond restait blanc -> incohérence.
+  const isDark = false;
 
   return (
     <Box className="gsap-reveal" sx={{ height: '100%' }}>
@@ -237,7 +243,10 @@ const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
 // ─── Pricing Card ─────────────────────────────────────────────────
 const PricingCard = ({ t, title, price, originalPrice, period, features, isPopular, isFree, ctaText, onCta, delay }) => {
   const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
+  // La landing est volontairement toujours claire (charte marketing) : on ne
+  // suit pas le thème sombre de l'app, sinon seuls certains blocs basculaient
+  // en sombre (header/cartes) alors que le fond restait blanc -> incohérence.
+  const isDark = false;
 
   return (
     <Box className="gsap-reveal" sx={{ height: '100%' }}>
