@@ -155,10 +155,15 @@ class ExamTypesByPeriodView(APIView):
                 'revenue': float(t['revenue']) if t['revenue'] else 0
             })
 
+        total_items = queryset.count()
+        total_orders = queryset.values('lab_order').distinct().count()
+
         return Response({
             'period': period,
             'start_date': start_date,
             'end_date': end_date,
+            'total_items': total_items,
+            'total_orders': total_orders,
             'by_test_type': [{
                 'test_name': item['lab_test__name'],
                 'test_code': item['lab_test__test_code'] or 'N/A',
@@ -1690,17 +1695,15 @@ class SubcontractorStatsView(APIView):
         total_orders = orders.count()
         total_patients = orders.values('patient').distinct().count()
 
-        # Les factures sous-traitance sont des factures batch liées au client B2B du sous-traitant
-        # On les retrouve via invoice_type='healthcare_laboratory' et les noms des sous-traitants
-        sub_names = list(orders.values_list('subcontractor__name', flat=True).distinct())
-        batch_invoices = Invoice.objects.filter(
-            organization=organization,
-            invoice_type='healthcare_laboratory',
-            client__name__in=sub_names,
-            client__client_type='b2b',
-            created_at__date__gte=start_date,
-            created_at__date__lte=end_date,
+        # CA sous-traitance : utiliser le FK lab_invoice (posé lors de la création du batch)
+        # plutôt qu'une recherche par nom de client (fragile).
+        # On agrège par invoice unique pour éviter de compter plusieurs fois la même facture batch.
+        invoice_ids = list(
+            orders.exclude(lab_invoice__isnull=True)
+            .values_list('lab_invoice_id', flat=True)
+            .distinct()
         )
+        batch_invoices = Invoice.objects.filter(id__in=invoice_ids)
         paid_revenue = float(
             batch_invoices.filter(status='paid')
             .aggregate(total=Sum('total_amount'))['total'] or 0
@@ -1724,14 +1727,12 @@ class SubcontractorStatsView(APIView):
             sub_count = sub_orders.count()
             if sub_count == 0:
                 continue
-            sub_invoices = Invoice.objects.filter(
-                organization=organization,
-                invoice_type='healthcare_laboratory',
-                client__name=sub.name,
-                client__client_type='b2b',
-                created_at__date__gte=start_date,
-                created_at__date__lte=end_date,
+            sub_invoice_ids = list(
+                sub_orders.exclude(lab_invoice__isnull=True)
+                .values_list('lab_invoice_id', flat=True)
+                .distinct()
             )
+            sub_invoices = Invoice.objects.filter(id__in=sub_invoice_ids)
             sub_revenue = float(
                 sub_invoices.filter(status='paid')
                 .aggregate(total=Sum('total_amount'))['total'] or 0
