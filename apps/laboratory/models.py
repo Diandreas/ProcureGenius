@@ -692,6 +692,18 @@ class LabOrder(models.Model):
                             notes=f"Labo - {self.order_number} - {lab_test.test_code} ({consumable.product.name})",
                             user=collected_by
                         )
+                        # Défalquer aussi du lot actif (FIFO par date péremption)
+                        remaining = consumable.quantity_per_test
+                        for batch in consumable.product.batches.filter(
+                            quantity_remaining__gt=0, status__in=['available', 'opened']
+                        ).order_by('expiry_date'):
+                            if remaining <= 0:
+                                break
+                            deduct = min(batch.quantity_remaining, remaining)
+                            batch.quantity_remaining -= deduct
+                            batch.save(update_fields=['quantity_remaining'])
+                            batch.update_status()
+                            remaining -= deduct
                 # Fallback: legacy linked_product FK (si pas encore migré)
                 elif lab_test.linked_product:
                     lab_test.linked_product.adjust_stock(
@@ -702,6 +714,17 @@ class LabOrder(models.Model):
                         notes=f"Labo - {self.order_number} - {lab_test.test_code}",
                         user=collected_by
                     )
+                    remaining = 1
+                    for batch in lab_test.linked_product.batches.filter(
+                        quantity_remaining__gt=0, status__in=['available', 'opened']
+                    ).order_by('expiry_date'):
+                        if remaining <= 0:
+                            break
+                        deduct = min(batch.quantity_remaining, remaining)
+                        batch.quantity_remaining -= deduct
+                        batch.save(update_fields=['quantity_remaining'])
+                        batch.update_status()
+                        remaining -= deduct
         except Exception as e:
             # Log error but don't block flow
             print(f"Error deducting stock for LabOrder {self.order_number}: {e}")
