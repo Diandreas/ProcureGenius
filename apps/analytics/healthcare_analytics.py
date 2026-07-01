@@ -978,7 +978,7 @@ class EnhancedRevenueAnalyticsView(APIView):
         if end_date:
             sub_qs = sub_qs.filter(order_date__date__lte=end_date)
         sub_inv_ids = sub_qs.exclude(lab_invoice__isnull=True).values_list('lab_invoice_id', flat=True).distinct()
-        subcontract_rev = float(InvoiceModel.objects.filter(id__in=sub_inv_ids).aggregate(t=Sum('total_amount'))['t'] or 0)
+        subcontract_rev = float(Invoice.objects.filter(id__in=sub_inv_ids).aggregate(t=Sum('total_amount'))['t'] or 0)
         subcontract_cnt = sub_qs.count()
 
         by_activity = sorted(
