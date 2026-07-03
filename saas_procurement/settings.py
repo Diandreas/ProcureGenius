@@ -12,13 +12,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables
 load_dotenv()
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-your-secret-key-here')
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+# Défaut sûr : False. En dev, mettre DEBUG=True dans le .env.
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']  # À configurer pour production
+# SECURITY WARNING: keep the secret key used in production secret!
+# En production (DEBUG=False), la clé DOIT venir de l'environnement — pas de
+# fallback en dur (qui rendrait signatures de session/tokens prévisibles).
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-only-change-me'
+    else:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured(
+            "SECRET_KEY manquant : définissez-le dans le .env pour la production."
+        )
+
+# ALLOWED_HOSTS depuis l'environnement (liste séparée par des virgules).
+# Défaut prod restreint au domaine + accès local (health checks internes).
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h.strip()] or (
+    ['localhost', '127.0.0.1'] if DEBUG
+    else ['procura.mirlab.cloud', '127.0.0.1', 'localhost']
+)
 
 # Mistral AI Configuration
 MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY', '')
@@ -408,6 +424,15 @@ LOGGING = {
     },
 }
 
+# Limites d'upload (garde-fou anti-DoS ; nginx a aussi client_max_body_size).
+# 10 Mo en mémoire avant écriture disque ; les gros PDF/imports passent par du
+# streaming côté handlers. Ajuster si des imports légitimes dépassent.
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024))
+FILE_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('FILE_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024))
+
+# Borne les envois SMTP synchrones (évite de bloquer un worker sur un SMTP lent).
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', 10))
+
 # Security settings for production
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -418,6 +443,17 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+    # Cookies transmis uniquement en HTTPS (le front utilise TokenAuth, mais
+    # l'admin Django et les sessions allauth reposent sur ces cookies).
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    # Origines de confiance pour le CSRF (admin/allauth via HTTPS).
+    CSRF_TRUSTED_ORIGINS = [
+        o.strip() for o in os.getenv(
+            'CSRF_TRUSTED_ORIGINS', 'https://procura.mirlab.cloud'
+        ).split(',') if o.strip()
+    ]
 
 # ============================================================
 # DJANGO-ALLAUTH CONFIGURATION

@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Les scripts shell DOIVENT rester en LF (un CR casse le shebang sur Linux/VPS)
+*.sh text eol=lf

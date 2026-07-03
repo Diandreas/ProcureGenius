@@ -80,18 +80,11 @@ if [ "$use_docker" = "o" ] || [ "$use_docker" = "O" ]; then
     echo "📊 Application des migrations..."
     docker-compose exec web python manage.py migrate
     
-    # Créer le superutilisateur
-    echo "👤 Création du superutilisateur..."
-    docker-compose exec web python manage.py shell -c "
-from django.contrib.auth import get_user_model
-User = get_user_model()
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@procuregenius.com', 'admin123')
-    print('Superutilisateur créé: admin / admin123')
-else:
-    print('Superutilisateur existe déjà')
-"
-    
+    # Superutilisateur : NE JAMAIS créer de compte avec un mot de passe en dur.
+    # Créez-le manuellement, avec un mot de passe fort, après le déploiement :
+    echo "👤 Superutilisateur : créez-le manuellement après le déploiement :"
+    echo "   docker-compose exec web python manage.py createsuperuser"
+
     # Charger les données de test
     echo "📦 Chargement des données de test..."
     docker-compose exec web python manage.py loaddata fixtures/initial_data.json 2>/dev/null || echo "Pas de fixtures trouvées"
@@ -100,7 +93,6 @@ else:
     echo "✅ Déploiement Docker terminé !"
     echo "🌐 Application disponible sur: http://localhost:8000"
     echo "🔧 Admin disponible sur: http://localhost:8000/admin"
-    echo "👤 Identifiants admin: admin / admin123"
     
 else
     # Déploiement manuel
@@ -139,18 +131,10 @@ else
     echo "🌍 Compilation des traductions..."
     python manage.py compilemessages
     
-    # Créer le superutilisateur
-    echo "👤 Création du superutilisateur..."
-    python manage.py shell -c "
-from django.contrib.auth import get_user_model
-User = get_user_model()
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@procuregenius.com', 'admin123')
-    print('Superutilisateur créé: admin / admin123')
-else:
-    print('Superutilisateur existe déjà')
-"
-    
+    # Superutilisateur : NE JAMAIS créer de compte avec un mot de passe en dur.
+    echo "👤 Superutilisateur : créez-le manuellement après le déploiement :"
+    echo "   python manage.py createsuperuser"
+
     echo ""
     echo "✅ Déploiement manuel terminé !"
     echo "🚀 Pour démarrer l'application:"
@@ -158,7 +142,6 @@ else:
     echo ""
     echo "🌐 Application sera disponible sur: http://localhost:8000"
     echo "🔧 Admin sera disponible sur: http://localhost:8000/admin"
-    echo "👤 Identifiants admin: admin / admin123"
 fi
 
 echo ""

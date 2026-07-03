@@ -63,7 +63,29 @@ mkdir -p "$APP_DIR/media"
 mkdir -p "$APP_DIR/logs"
 echo "      Répertoires créés."
 
-# ---- 7. MIGRATIONS BASE DE DONNÉES ----
+# ---- 7. BACKUP PRÉ-MIGRATION (filet de sécurité avant tout migrate) ----
+echo "[7/9] Sauvegarde pré-migration de la base..."
+PRE_DEPLOY_DIR="/home/mirlab-procura/backups/pre_deploy"
+mkdir -p "$PRE_DEPLOY_DIR"
+DATABASE_URL="$(grep -E '^DATABASE_URL=' "$APP_DIR/.env" 2>/dev/null | head -n1 | cut -d= -f2- || true)"
+if [ -n "$DATABASE_URL" ]; then
+    PRE_DUMP="$PRE_DEPLOY_DIR/pre_$(date +%F_%H%M).dump"
+    if pg_dump --format=custom --no-owner --dbname="$DATABASE_URL" --file="$PRE_DUMP"; then
+        echo "      Sauvegarde pré-migration OK : $PRE_DUMP"
+        # Ne conserver que les 5 dumps pré-migration les plus récents.
+        ls -t "$PRE_DEPLOY_DIR"/*.dump 2>/dev/null | tail -n +6 | xargs -r rm -f
+    else
+        echo "      ATTENTION: sauvegarde pré-migration échouée."
+        read -p "      Continuer SANS backup ? (o/N): " CONTINUE_NO_BACKUP
+        [ "$CONTINUE_NO_BACKUP" = "o" ] || [ "$CONTINUE_NO_BACKUP" = "O" ] || exit 1
+    fi
+else
+    echo "      ATTENTION: DATABASE_URL introuvable dans .env — pas de backup pré-migration."
+    read -p "      Continuer SANS backup ? (o/N): " CONTINUE_NO_BACKUP
+    [ "$CONTINUE_NO_BACKUP" = "o" ] || [ "$CONTINUE_NO_BACKUP" = "O" ] || exit 1
+fi
+
+# ---- 7b. MIGRATIONS BASE DE DONNÉES ----
 echo "[7/9] Application des migrations..."
 $MANAGE migrate --settings=$SETTINGS --noinput
 echo "      Migrations appliquées."
