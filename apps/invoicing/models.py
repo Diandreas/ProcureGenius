@@ -528,6 +528,10 @@ class Invoice(models.Model):
     last_reminder_sent_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière relance envoyée"))
     reminder_count = models.PositiveIntegerField(default=0, verbose_name=_("Nombre de relances envoyées"))
     next_reminder_date = models.DateField(null=True, blank=True, verbose_name=_("Prochaine relance prévue"))
+    reminders_disabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Relances automatiques désactivées pour cette facture")
+    )
 
     class Meta:
         verbose_name = _("Facture")
@@ -740,11 +744,16 @@ class Invoice(models.Model):
             bool: True si le statut a été modifié, False sinon
         """
         from django.utils import timezone
-        
-        # Ne pas modifier si déjà payée, annulée ou en brouillon
-        if self.status in ['paid', 'cancelled', 'draft']:
+
+        # Ne pas modifier si déjà payée, annulée, brouillon ou devis (un devis
+        # n'est jamais "en retard" au sens facture — il a son propre cycle de
+        # vie via `valid_until`/acceptation, cf. convert_quote_to_draft).
+        if self.status in ['paid', 'cancelled', 'draft', 'quote']:
             return False
-        
+
+        if not self.due_date:
+            return False
+
         # Vérifier si la date d'échéance est dépassée
         if self.due_date < timezone.now().date():
             if self.status != 'overdue':
@@ -952,6 +961,52 @@ class Invoice(models.Model):
     def can_be_edited(self):
         """Vérifie si la facture peut être modifiée"""
         return self.status in ['draft', 'sent']
+
+
+class InvoiceReminderLog(models.Model):
+    """Historique des relances (manuelles ou automatiques) envoyées pour une facture.
+
+    Nommé volontairement différemment de l'ancien `InvoiceReminder` (référencé
+    par du code mort et jamais défini dans ce fichier, cf. forms.py) pour
+    éviter toute collision avec ce nom.
+    """
+    TRIGGER_CHOICES = [
+        ('auto', _('Automatique')),
+        ('manual', _('Manuelle')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    invoice = models.ForeignKey(
+        Invoice, on_delete=models.CASCADE, related_name='reminder_logs',
+        verbose_name=_("Facture")
+    )
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='invoice_reminder_logs', null=True, blank=True,
+        verbose_name=_("Organisation")
+    )
+    level = models.PositiveSmallIntegerField(verbose_name=_("Niveau de relance (1, 2, 3...)"))
+    sent_to = models.EmailField(blank=True, verbose_name=_("Envoyé à"))
+    triggered_by = models.CharField(
+        max_length=10, choices=TRIGGER_CHOICES, default='auto',
+        verbose_name=_("Déclenchée par")
+    )
+    success = models.BooleanField(default=True, verbose_name=_("Succès"))
+    error_message = models.TextField(blank=True, verbose_name=_("Message d'erreur"))
+    sent_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Relance de facture")
+        verbose_name_plural = _("Relances de factures")
+        ordering = ['-sent_at']
+        indexes = [
+            models.Index(fields=['invoice', '-sent_at']),
+            models.Index(fields=['organization', '-sent_at']),
+        ]
+
+    def __str__(self):
+        status = 'OK' if self.success else 'échec'
+        return f"Relance N{self.level} - {self.invoice.invoice_number} ({status})"
 
 
 class InvoiceItem(models.Model):

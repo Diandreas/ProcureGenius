@@ -257,6 +257,31 @@ class OrganizationSettings(models.Model):
         default=True,
         verbose_name=_("Rappels de factures")
     )
+
+    # Relances automatiques d'impayés (dunning). Opt-in explicite et distinct
+    # de `invoice_reminders` (qui n'a aujourd'hui aucun effet backend) : une
+    # organisation existante ne doit JAMAIS se mettre à envoyer des emails
+    # automatiques à ses clients sans action explicite.
+    auto_reminders_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Relances automatiques d'impayés activées")
+    )
+    reminder_delay_1 = models.PositiveSmallIntegerField(
+        default=3,
+        verbose_name=_("Délai avant 1ère relance (jours après échéance)")
+    )
+    reminder_delay_2 = models.PositiveSmallIntegerField(
+        default=10,
+        verbose_name=_("Délai avant 2ème relance (jours après échéance)")
+    )
+    reminder_delay_3 = models.PositiveSmallIntegerField(
+        default=30,
+        verbose_name=_("Délai avant 3ème relance (jours après échéance)")
+    )
+    reminder_max_count = models.PositiveSmallIntegerField(
+        default=3,
+        verbose_name=_("Nombre maximum de relances automatiques")
+    )
     low_stock_alerts = models.BooleanField(
         default=True,
         verbose_name=_("Alertes stock bas")

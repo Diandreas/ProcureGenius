@@ -56,6 +56,12 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'invoice_reminders',
             'low_stock_alerts',
             'order_status_updates',
+            # Relances automatiques d'impayés (dunning)
+            'auto_reminders_enabled',
+            'reminder_delay_1',
+            'reminder_delay_2',
+            'reminder_delay_3',
+            'reminder_max_count',
             # Apparence
             'theme',
             'language',

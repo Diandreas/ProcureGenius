@@ -18,6 +18,12 @@
 # Expiration des essais gratuits (retour au plan gratuit) - Quotidiennement à 1h du matin
 0 1 * * * cd /chemin/vers/ProcureGenius && python manage.py expire_trials >> /var/log/procuregenius/expire_trials.log 2>&1
 
+# --- Facturation ---
+
+# Relances automatiques des factures impayées (dunning, opt-in par organisation
+# via auto_reminders_enabled) - Quotidiennement à 8h15
+15 8 * * * cd /chemin/vers/ProcureGenius && python manage.py send_invoice_reminders >> /var/log/procuregenius/invoice_reminders.log 2>&1
+
 # Instructions pour Windows (Task Scheduler):
 # 1. Ouvrir le Planificateur de tâches Windows
 # 2. Créer une tâche de base
