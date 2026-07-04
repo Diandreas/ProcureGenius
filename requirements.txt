@@ -73,9 +73,6 @@ django-debug-toolbar==4.2.0
 # Logging et monitoring
 sentry-sdk==1.38.0
 
-# Tâches asynchrones supplémentaires
-django-background-tasks==1.2.5
-
 # Validation
 jsonschema==4.19.2
 
