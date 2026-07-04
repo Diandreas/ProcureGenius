@@ -47,12 +47,13 @@ jobs:
           python-version: '3.12'
           cache: pip
 
-      - name: Dépendances système (WeasyPrint / cairo / pango)
+      - name: Dépendances système (WeasyPrint / cairo / pango / reportlab)
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 \
-            libcairo2 libffi-dev gettext
+            libcairo2 libcairo2-dev libffi-dev gettext \
+            python3-dev libfreetype6-dev libjpeg-dev zlib1g-dev pkg-config
 
       - name: Installer les dépendances Python
         run: |
@@ -66,7 +67,7 @@ jobs:
             echo "::endgroup::"
             # Emet les dernieres lignes comme annotations : visibles via
             # l'API publique meme sans acces aux logs bruts (diagnostic).
-            tail -n 25 /tmp/pip_out.log | while IFS= read -r line; do
+            tail -n 60 /tmp/pip_out.log | while IFS= read -r line; do
               esc=$(printf '%s' "$line" | sed 's/%/%25/g' | tr -d '\r')
               echo "::error::$esc"
             done
