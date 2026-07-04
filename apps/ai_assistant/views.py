@@ -53,7 +53,9 @@ def _get_or_create_conversation(user, conversation_id, first_message):
         if user_org:
             conv_filter['organization'] = user_org
         return Conversation.objects.get(**conv_filter)
-    title = first_message[:50] + "..." if len(first_message) > 50 else first_message
+    # Titre auto : première ligne du premier message, tronquée proprement.
+    first_line = (first_message or "").strip().split("\n", 1)[0]
+    title = first_line[:50] + "..." if len(first_line) > 50 else (first_line or "Nouvelle conversation")
     return Conversation.objects.create(user=user, organization=user_org, title=title)
 
 
@@ -366,6 +368,21 @@ class ChatStreamView(APIView):
 
         def event_stream():
             tokens_this_request = 0
+
+            def settle_usage():
+                """Comptabilise tokens + quota IA. Appelé dans le finally pour
+                être exécuté MÊME si le client coupe la connexion en plein flux
+                (GeneratorExit n'est pas un Exception : sans finally, une
+                déconnexion sautait la compta alors que les tokens étaient
+                consommés côté Mistral)."""
+                _record_ai_usage(org, user, tokens_this_request)
+                if org:
+                    try:
+                        from apps.subscriptions.quota_service import QuotaService
+                        QuotaService.increment_usage(org, 'ai_requests')
+                    except Exception:
+                        pass
+
             try:
                 token = confirmation_data.get('token')
                 choice = confirmation_data.get('choice')
@@ -427,20 +444,12 @@ class ChatStreamView(APIView):
                         else:
                             yield sse(event)
 
-                # Comptabiliser les tokens (alimente check_budget) + quota IA.
-                # Toujours exécuté même si le client coupe la connexion (le
-                # générateur poursuit jusqu'à épuisement côté serveur).
-                _record_ai_usage(org, user, tokens_this_request)
-                if org:
-                    try:
-                        from apps.subscriptions.quota_service import QuotaService
-                        QuotaService.increment_usage(org, 'ai_requests')
-                    except Exception:
-                        pass
             except Exception as e:
                 logger.error(f"Chat stream error: {e}", exc_info=True)
                 yield sse({'type': 'error',
                            'message': "Une erreur est survenue. Veuillez reessayer."})
+            finally:
+                settle_usage()
 
         response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
         response['Cache-Control'] = 'no-cache'
@@ -517,6 +526,68 @@ class ConversationDetailView(APIView):
                 {'error': 'Conversation not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class MessageFeedbackView(APIView):
+    """Feedback utilisateur (pouce haut/bas + commentaire) sur une réponse IA.
+
+    POST   /ai/messages/<message_id>/feedback/  { rating: 1 | -1, comment?: str }
+    DELETE /ai/messages/<message_id>/feedback/  retire le feedback
+
+    Un seul feedback par (message, utilisateur) : un nouveau POST le remplace.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _get_message(self, request, message_id):
+        from .models import MessageFeedback  # noqa: F401 (import du modèle lié)
+        return Message.objects.get(
+            id=message_id,
+            conversation__user=request.user,
+        )
+
+    def post(self, request, message_id):
+        from .models import MessageFeedback
+
+        try:
+            message = self._get_message(request, message_id)
+        except Message.DoesNotExist:
+            return Response({'error': 'Message introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if message.role != 'assistant':
+            return Response(
+                {'error': 'Le feedback ne concerne que les réponses de l\'assistant.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            rating = int(request.data.get('rating'))
+        except (TypeError, ValueError):
+            rating = None
+        if rating not in (1, -1):
+            return Response({'error': 'rating doit valoir 1 ou -1'}, status=status.HTTP_400_BAD_REQUEST)
+
+        comment = (request.data.get('comment') or '')[:2000]
+
+        feedback, _created = MessageFeedback.objects.update_or_create(
+            message=message,
+            user=request.user,
+            defaults={'rating': rating, 'comment': comment},
+        )
+        return Response({
+            'status': 'success',
+            'feedback': {'rating': feedback.rating, 'comment': feedback.comment},
+        })
+
+    def delete(self, request, message_id):
+        from .models import MessageFeedback
+
+        try:
+            message = self._get_message(request, message_id)
+        except Message.DoesNotExist:
+            return Response({'error': 'Message introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        MessageFeedback.objects.filter(message=message, user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class DocumentAnalysisView(APIView):

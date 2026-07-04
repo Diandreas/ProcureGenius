@@ -13,7 +13,10 @@
     "actionExecutedSuccess": "Action executed successfully",
     "sendMessageError": "Error sending message",
     "scanInDevelopment": "Scan feature is currently in development",
-    "assistantThinking": "The assistant is thinking..."
+    "assistantThinking": "The assistant is thinking...",
+    "feedbackThanks": "Thank you, your feedback helps us improve the assistant.",
+    "feedbackUp": "Helpful answer",
+    "feedbackDown": "Not helpful"
   },
   "message": {
     "thinking": "AI is thinking...",

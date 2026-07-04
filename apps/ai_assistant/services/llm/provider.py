@@ -23,6 +23,15 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "mistral-large-latest"
+# Modèle de repli si le modèle principal est indisponible (surcharge de l'API,
+# erreur non-retriable...). Moins capable mais garde le service debout.
+DEFAULT_FALLBACK_MODEL = "mistral-small-latest"
+
+
+def _fallback_model() -> Optional[str]:
+    from django.conf import settings
+    model = getattr(settings, "MISTRAL_FALLBACK_MODEL", DEFAULT_FALLBACK_MODEL)
+    return model or None
 
 
 def _build_client(api_key: str):
@@ -76,9 +85,9 @@ class MistralProvider:
         from apps.ai_assistant.resilience import retry_with_backoff
 
         @retry_with_backoff(max_retries=3)
-        def _call():
+        def _call(model):
             kwargs = dict(
-                model=self.model,
+                model=model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
@@ -89,12 +98,25 @@ class MistralProvider:
             return self.client.chat.complete(**kwargs)
 
         try:
-            response = _call()
+            response = _call(self.model)
         except Exception as exc:  # pragma: no cover - robustesse runtime
             import traceback
             logger.error("Erreur LLM Mistral : %s", exc)
             logger.error(traceback.format_exc())
-            return self._empty_result(success=False, error=str(exc))
+            # Dernier recours : un essai unique sur le modèle de repli avant de
+            # renvoyer une erreur (dégradation gracieuse plutôt que panne).
+            fallback = _fallback_model()
+            if fallback and fallback != self.model:
+                logger.warning("Bascule sur le modèle de repli %s", fallback)
+                try:
+                    response = _call(fallback)
+                except Exception as fb_exc:
+                    logger.error("Modèle de repli %s également en échec : %s", fallback, fb_exc)
+                    return self._empty_result(success=False, error=str(exc))
+                if response is None:
+                    return self._empty_result(success=True, circuit_open=True)
+            else:
+                return self._empty_result(success=False, error=str(exc))
 
         # Circuit breaker ouvert -> le décorateur renvoie None
         if response is None:
@@ -186,6 +208,19 @@ class MistralProvider:
         except Exception as exc:  # pragma: no cover - robustesse runtime
             _record_failure()
             logger.error("Erreur LLM Mistral (stream) : %s", exc)
+            # Rien n'a encore été émis : on peut dégrader en un appel bloquant
+            # (complete() bascule lui-même sur le modèle de repli si besoin).
+            if not content_parts and not raw_tool_calls:
+                logger.warning("Stream en échec avant le premier fragment : repli en mode bloquant.")
+                result = self.complete(messages, tools=tools, tool_choice=tool_choice,
+                                       temperature=temperature, max_tokens=max_tokens)
+                if result.get("success") and result.get("content"):
+                    yield {"type": "delta", "content": result["content"]}
+                if result.get("tool_calls"):
+                    for tc in result["tool_calls"]:
+                        tc.setdefault("arguments_json", json.dumps(tc.get("arguments", {})))
+                yield {"type": "final", **result}
+                return
             yield {
                 "type": "final", "success": False, "content": "".join(content_parts),
                 "tool_calls": None, "finish_reason": None, "usage": usage,

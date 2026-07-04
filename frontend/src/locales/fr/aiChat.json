@@ -16,7 +16,10 @@
     "actionExecutedSuccess": "Action exécutée avec succès",
     "sendMessageError": "Erreur lors de l'envoi du message",
     "scanInDevelopment": "Fonctionnalité de scan en cours de développement",
-    "assistantThinking": "L'assistant réfléchit..."
+    "assistantThinking": "L'assistant réfléchit...",
+    "feedbackThanks": "Merci, votre retour nous aide à améliorer l'assistant.",
+    "feedbackUp": "Réponse utile",
+    "feedbackDown": "Réponse pas utile"
   },
   "message": {
     "thinking": "L'IA réfléchit...",

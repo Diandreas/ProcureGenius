@@ -9,6 +9,7 @@ urlpatterns = [
     path('chat/stream/', views.ChatStreamView.as_view(), name='chat_stream'),
     path('conversations/', views.ConversationListView.as_view(), name='conversations'),
     path('conversations/<uuid:conversation_id>/', views.ConversationDetailView.as_view(), name='conversation_detail'),
+    path('messages/<uuid:message_id>/feedback/', views.MessageFeedbackView.as_view(), name='message_feedback'),
 
     # Analyse de documents
     path('analyze-document/', views.DocumentAnalysisView.as_view(), name='analyze_document'),

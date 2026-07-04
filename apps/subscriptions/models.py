@@ -359,7 +359,12 @@ class Subscription(models.Model):
         explicitement par l'appelant (cf. `start_for_new_organization`), afin de
         garder une seule source de vérité pour la logique d'essai.
         """
-        if not self.pk and self.current_period_start is None:
+        # NB : `self._state.adding` et non `not self.pk` — la PK UUID étant
+        # générée par défaut à l'instanciation, `self.pk` est TOUJOURS rempli
+        # avant le premier save() et l'auto-remplissage ne s'exécutait jamais
+        # (IntegrityError sur current_period_start pour tout appelant qui ne
+        # fournissait pas les dates explicitement).
+        if self._state.adding and self.current_period_start is None:
             # Création sans dates explicites : on déduit du plan.
             self.current_period_start = timezone.now()
             if self.plan.trial_days > 0:
@@ -453,15 +458,27 @@ class Subscription(models.Model):
         return can_proceed, used, limit
 
     def increment_usage(self, quota_type):
-        """Incrémente le compteur d'utilisation et alerte si proche de la limite"""
-        if quota_type == 'invoices':
-            self.invoices_this_month += 1
-        elif quota_type == 'purchase_orders':
-            self.purchase_orders_this_month += 1
-        elif quota_type == 'ai_requests':
-            self.ai_requests_this_month += 1
+        """Incrémente le compteur d'utilisation et alerte si proche de la limite.
 
-        self.save(update_fields=[f'{quota_type}_this_month', 'updated_at'])
+        Incrément atomique en base (F()) : deux requêtes simultanées ne peuvent
+        plus s'écraser mutuellement (le `+= 1` en mémoire perdait des comptages
+        sous concurrence).
+        """
+        from django.db.models import F
+
+        field_map = {
+            'invoices': 'invoices_this_month',
+            'purchase_orders': 'purchase_orders_this_month',
+            'ai_requests': 'ai_requests_this_month',
+        }
+        field = field_map.get(quota_type)
+        if not field:
+            return
+
+        type(self).objects.filter(pk=self.pk).update(
+            **{field: F(field) + 1}, updated_at=timezone.now()
+        )
+        self.refresh_from_db(fields=[field])
 
         # Déclencher alerte quota si > 90%
         try:
@@ -536,20 +553,29 @@ class Subscription(models.Model):
             return None
 
     def downgrade_to_free(self):
-        """Ramène l'abonnement au plan gratuit (essai expiré, sans paiement)."""
+        """Ramène l'abonnement au plan gratuit (essai expiré, sans paiement).
+
+        `trial_ends_at` est volontairement CONSERVÉ : c'est la trace qu'un essai
+        a déjà été consommé (anti-abus : sans cela, un utilisateur pouvait
+        relancer un essai gratuit à l'infini via /start-trial/).
+        """
         free_plan = self._safe_get_plan('free')
         if not free_plan:
             return False
         self.plan = free_plan
         self.status = 'active'
-        self.trial_ends_at = None
         self.current_period_start = timezone.now()
         self.current_period_end = timezone.now() + timedelta(days=365 * 10)
         self.save(update_fields=[
-            'plan', 'status', 'trial_ends_at',
+            'plan', 'status',
             'current_period_start', 'current_period_end', 'updated_at',
         ])
         return True
+
+    @property
+    def has_used_trial(self):
+        """Un essai gratuit a-t-il déjà été entamé pour cette organisation ?"""
+        return self.trial_ends_at is not None
 
     def renew_period(self):
         """Renouvelle la période d'abonnement"""

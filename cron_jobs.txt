@@ -10,6 +10,14 @@
 # Nettoyage des suggestions anciennes - Hebdomadaire (dimanche à 2h du matin)
 0 2 * * 0 cd /chemin/vers/ProcureGenius && python manage.py generate_async_suggestions --cleanup --cleanup-days 30 >> /var/log/procuregenius/cleanup_suggestions.log 2>&1
 
+# --- Abonnements ---
+
+# Réinitialisation des quotas mensuels (factures, BC, requêtes IA) - le 1er du mois à minuit
+0 0 1 * * cd /chemin/vers/ProcureGenius && python manage.py reset_monthly_quotas >> /var/log/procuregenius/reset_quotas.log 2>&1
+
+# Expiration des essais gratuits (retour au plan gratuit) - Quotidiennement à 1h du matin
+0 1 * * * cd /chemin/vers/ProcureGenius && python manage.py expire_trials >> /var/log/procuregenius/expire_trials.log 2>&1
+
 # Instructions pour Windows (Task Scheduler):
 # 1. Ouvrir le Planificateur de tâches Windows
 # 2. Créer une tâche de base

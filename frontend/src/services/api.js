@@ -313,6 +313,9 @@ export const aiChatAPI = {
   getHistory: () => api.get('/ai/conversations/'),
   getConversation: (id) => api.get(`/ai/conversations/${id}/`),
   deleteConversation: (id) => api.delete(`/ai/conversations/${id}/`),
+  sendMessageFeedback: (messageId, rating, comment = '') =>
+    api.post(`/ai/messages/${messageId}/feedback/`, { rating, comment }),
+  removeMessageFeedback: (messageId) => api.delete(`/ai/messages/${messageId}/feedback/`),
   analyzeDocument: (data) => api.post('/ai/analyze-document/', data),
   getQuickActions: (category = null) => {
     const params = category ? { category } : {};

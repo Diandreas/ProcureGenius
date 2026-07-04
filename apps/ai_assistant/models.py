@@ -65,6 +65,44 @@ class Message(models.Model):
         return f"{self.get_role_display()}: {self.content[:50]}..."
 
 
+class MessageFeedback(models.Model):
+    """Feedback utilisateur (pouce haut/bas + commentaire) sur une réponse IA.
+
+    Boucle qualité indispensable : mesure la satisfaction réelle, identifie les
+    réponses défaillantes (outils mal appelés, hallucinations) et alimente
+    l'amélioration continue des prompts/outils.
+    """
+    RATING_CHOICES = [
+        (1, _('Utile')),
+        (-1, _('Pas utile')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    message = models.ForeignKey(
+        Message, on_delete=models.CASCADE,
+        related_name='feedbacks', verbose_name=_("Message")
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ai_message_feedbacks')
+    rating = models.SmallIntegerField(choices=RATING_CHOICES, verbose_name=_("Évaluation"))
+    comment = models.TextField(blank=True, verbose_name=_("Commentaire"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Feedback message IA")
+        verbose_name_plural = _("Feedbacks messages IA")
+        # Un seul feedback par utilisateur et par message (modifiable).
+        unique_together = ['message', 'user']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['rating', '-created_at']),
+        ]
+
+    def __str__(self):
+        label = 'positif' if self.rating > 0 else 'négatif'
+        return f"Feedback {label} de {self.user.username} sur {self.message_id}"
+
+
 class DocumentScan(models.Model):
     """Document scanné et analysé par l'IA"""
     DOCUMENT_TYPES = [

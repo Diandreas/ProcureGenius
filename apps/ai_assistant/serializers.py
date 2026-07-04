@@ -5,10 +5,11 @@ from .models import Conversation, Message, DocumentScan, AIUsageLog
 class MessageSerializer(serializers.ModelSerializer):
     """Serializer pour les messages"""
     action_results = serializers.SerializerMethodField()
+    feedback = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
-        fields = ['id', 'role', 'content', 'created_at', 'metadata', 'tool_calls', 'action_results']
+        fields = ['id', 'role', 'content', 'created_at', 'metadata', 'tool_calls', 'action_results', 'feedback']
         read_only_fields = ['id', 'created_at']
 
     def get_action_results(self, obj):
@@ -16,6 +17,13 @@ class MessageSerializer(serializers.ModelSerializer):
         if obj.metadata and isinstance(obj.metadata, dict):
             return obj.metadata.get('action_results', [])
         return []
+
+    def get_feedback(self, obj):
+        """Feedback existant sur ce message (les conversations sont mono-utilisateur)."""
+        fb = obj.feedbacks.first()
+        if fb is None:
+            return None
+        return {'rating': fb.rating, 'comment': fb.comment}
 
 
 class ConversationSerializer(serializers.ModelSerializer):

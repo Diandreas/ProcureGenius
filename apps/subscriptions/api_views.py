@@ -191,6 +191,18 @@ def subscribe(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    # Verrou monétisation : un plan payant ne peut pas être auto-attribué sans
+    # paiement. Seul le staff peut créer un abonnement payant « manuel »
+    # (geste commercial). Le parcours normal passe par le checkout Stripe.
+    if plan.price_monthly and plan.price_monthly > 0 and not request.user.is_staff:
+        return Response(
+            {
+                'error': _('Ce plan est payant : utilisez le paiement sécurisé.'),
+                'checkout_required': True,
+            },
+            status=status.HTTP_402_PAYMENT_REQUIRED,
+        )
+
     # Create subscription
     subscription = Subscription.objects.create(
         organization=organization,
@@ -220,6 +232,12 @@ def start_trial(request):
     - free : reste/repasse en plan gratuit
     - pro/business : essai de TRIAL_PERIOD_DAYS jours (status=trial), sans carte
     Refuse de toucher un abonnement déjà payant/actif via Stripe.
+
+    Anti-abus : UN SEUL essai gratuit par organisation. Pendant l'essai en
+    cours, on peut changer de palier (pro <-> business) mais la date de fin
+    d'essai N'EST PAS repoussée. Une fois l'essai consommé (expiré ou passé au
+    plan gratuit), tout nouvel essai est refusé — le passage à un plan payant
+    se fait via Stripe.
     """
     from django.conf import settings as dj_settings
     from datetime import timedelta
@@ -244,7 +262,18 @@ def start_trial(request):
 
     if plan_code == 'free':
         new_status, ends = 'active', now + timedelta(days=365 * 10)
-        trial_ends = None
+        trial_ends = sub.trial_ends_at if sub else None  # trace conservée (anti-abus)
+    elif sub and sub.status == 'trial' and sub.trial_ends_at and sub.trial_ends_at > now:
+        # Essai en cours : changement de palier autorisé, échéance inchangée.
+        new_status, ends = 'trial', sub.trial_ends_at
+        trial_ends = sub.trial_ends_at
+    elif sub and sub.has_used_trial:
+        # Essai déjà consommé : pas de second essai gratuit.
+        return Response({
+            'error': _("Votre organisation a déjà bénéficié d'un essai gratuit. "
+                       "Souscrivez à un abonnement pour retrouver les fonctionnalités payantes."),
+            'trial_already_used': True,
+        }, status=status.HTTP_403_FORBIDDEN)
     else:
         new_status, ends = 'trial', now + timedelta(days=trial_days)
         trial_ends = ends
@@ -320,24 +349,61 @@ def change_plan(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Update subscription
     old_plan_name = subscription.plan.name
-    subscription.plan = new_plan
+    is_paid_target = bool(new_plan.price_monthly and new_plan.price_monthly > 0)
 
-    if data.get('billing_period'):
-        subscription.billing_period = data['billing_period']
+    # ── Abonnement payé via Stripe : le changement DOIT être répercuté sur
+    # Stripe (sinon l'app affiche le nouveau plan mais Stripe facture l'ancien).
+    if subscription.stripe_subscription_id:
+        from .stripe_service import StripeService
+        try:
+            if is_paid_target:
+                subscription = StripeService.change_plan(
+                    organization, new_plan, billing_period=data.get('billing_period'),
+                )
+            else:
+                # Retour au gratuit = annulation en fin de période côté Stripe ;
+                # le plan local basculera à la fin de période (webhook deleted).
+                StripeService.cancel_subscription(organization, immediately=False)
+                subscription.cancelled_at = timezone.now()
+                subscription.save(update_fields=['cancelled_at', 'updated_at'])
+                return Response({
+                    'message': _('Votre abonnement prendra fin à la fin de la période en cours, '
+                                 'puis votre compte passera au plan gratuit.'),
+                    'subscription': SubscriptionSerializer(subscription).data,
+                })
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Stripe change_plan error: {e}")
+            return Response(
+                {'error': _('Le changement de plan a échoué côté paiement. Réessayez ou passez par le portail de facturation.')},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+    else:
+        # ── Pas d'abonnement Stripe (essai / gratuit / manuel) : un plan payant
+        # ne peut pas être attribué sans paiement (verrou monétisation).
+        if is_paid_target and not request.user.is_staff:
+            return Response(
+                {
+                    'error': _('Ce plan est payant : utilisez le paiement sécurisé.'),
+                    'checkout_required': True,
+                },
+                status=status.HTTP_402_PAYMENT_REQUIRED,
+            )
 
-    if data.get('immediately', False):
-        # Change immediately
-        subscription.current_period_start = timezone.now()
-        if subscription.billing_period == 'monthly':
+        subscription.plan = new_plan
+        if data.get('billing_period'):
+            subscription.billing_period = data['billing_period']
+
+        if data.get('immediately', False):
             from datetime import timedelta
-            subscription.current_period_end = timezone.now() + timedelta(days=30)
-        else:
-            from datetime import timedelta
-            subscription.current_period_end = timezone.now() + timedelta(days=365)
+            subscription.current_period_start = timezone.now()
+            days = 30 if subscription.billing_period == 'monthly' else 365
+            subscription.current_period_end = timezone.now() + timedelta(days=days)
 
-    subscription.save()
+        subscription.save()
 
     return Response({
         'message': _(f'Plan changed from {old_plan_name} to {new_plan.name}'),

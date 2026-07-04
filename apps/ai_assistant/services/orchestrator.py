@@ -620,11 +620,46 @@ def _page_hint(page: Optional[str]) -> str:
     return ""
 
 
-def _compress_history(history: List[Dict[str, Any]], max_recent: int = 8) -> List[Dict[str, Any]]:
-    """Garde les messages récents (réutilise l'esprit de _compress_conversation_history)."""
+def _compress_history(history: List[Dict[str, Any]], max_recent: int = 8,
+                      digest_chars_per_msg: int = 160, digest_max_chars: int = 2000) -> List[Dict[str, Any]]:
+    """Garde les messages récents en entier + un digest des messages plus anciens.
+
+    Avant : les conversations longues perdaient tout le contexte au-delà des
+    8 derniers messages (« le client dont je te parlais » ne fonctionnait plus).
+    Maintenant : les anciens échanges sont condensés en un message system compact
+    (déterministe, zéro appel LLM) qui préserve les faits — noms, montants,
+    décisions — sans faire exploser le budget tokens.
+    """
     if len(history) <= max_recent:
         return history
-    return history[-max_recent:]
+
+    older, recent = history[:-max_recent], history[-max_recent:]
+
+    lines: List[str] = []
+    total = 0
+    # On privilégie les plus récents des anciens messages si le digest déborde.
+    for m in reversed(older):
+        content = (m.get("content") or "").strip().replace("\n", " ")
+        if not content:
+            continue
+        role = "Utilisateur" if m.get("role") == "user" else "Assistant"
+        line = f"- {role} : {content[:digest_chars_per_msg]}"
+        if total + len(line) > digest_max_chars:
+            break
+        lines.append(line)
+        total += len(line)
+    if not lines:
+        return recent
+    lines.reverse()
+
+    digest = {
+        "role": "system",
+        "content": (
+            "RAPPEL DU DÉBUT DE LA CONVERSATION (résumé automatique des messages "
+            "plus anciens, du plus ancien au plus récent) :\n" + "\n".join(lines)
+        ),
+    }
+    return [digest] + recent
 
 
 def _extract_chart(result: Dict[str, Any]) -> List[Dict[str, Any]]:
