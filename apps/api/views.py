@@ -2128,17 +2128,20 @@ class ProductCategoryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        # Filtre par organization de l'utilisateur
-        if self.request.user.is_authenticated and hasattr(self.request.user, 'organization') and self.request.user.organization:
-            queryset = queryset.filter(organization=self.request.user.organization)
-
-        return queryset
+        # Isolation tenant : filtrer par organisation. SANS organisation, on ne
+        # renvoie RIEN (défaut sûr identique à OrganizationFilterMixin) — sinon
+        # un utilisateur sans org voyait les catégories de TOUS les tenants.
+        org = getattr(self.request.user, 'organization', None)
+        if not org:
+            return queryset.none()
+        return queryset.filter(organization=org)
 
     def perform_create(self, serializer):
-        if hasattr(self.request.user, 'organization') and self.request.user.organization:
-            serializer.save(organization=self.request.user.organization)
-        else:
-            serializer.save()
+        org = getattr(self.request.user, 'organization', None)
+        if not org:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Aucune organisation associée à votre compte.")
+        serializer.save(organization=org)
 
 
 class WarehouseViewSet(viewsets.ModelViewSet):
@@ -2155,16 +2158,19 @@ class WarehouseViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        # Filtre par organization de l'utilisateur
-        if self.request.user.is_authenticated and hasattr(self.request.user, 'organization') and self.request.user.organization:
-            queryset = queryset.filter(organization=self.request.user.organization)
-        return queryset
+        # Isolation tenant : SANS organisation on ne renvoie rien (défaut sûr),
+        # au lieu d'exposer les entrepôts de tous les tenants.
+        org = getattr(self.request.user, 'organization', None)
+        if not org:
+            return queryset.none()
+        return queryset.filter(organization=org)
 
     def perform_create(self, serializer):
-        if hasattr(self.request.user, 'organization') and self.request.user.organization:
-            serializer.save(organization=self.request.user.organization)
-        else:
-            serializer.save()
+        org = getattr(self.request.user, 'organization', None)
+        if not org:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Aucune organisation associée à votre compte.")
+        serializer.save(organization=org)
 
 
 class PriceHistoryView(APIView):
