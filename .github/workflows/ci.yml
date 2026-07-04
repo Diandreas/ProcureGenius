@@ -41,6 +41,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Créer les répertoires attendus par l'app (logs/, media/)
+        # logs/ est gitignoré (à raison) mais le FileHandler de Django
+        # (settings.py LOGGING) ne crée pas le dossier lui-même et plante
+        # sur un checkout frais si le répertoire n'existe pas.
+        run: mkdir -p logs media staticfiles
+
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:

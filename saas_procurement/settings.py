@@ -420,6 +420,11 @@ TRIAL_PERIOD_DAYS = int(os.getenv('TRIAL_PERIOD_DAYS', '30'))
 TRIAL_PLAN_CODE = os.getenv('TRIAL_PLAN_CODE', 'pro')
 
 # Logging
+# FileHandler ne crée pas son dossier parent : sur un checkout frais (logs/
+# est gitignoré), la config plantait avec "Unable to configure handler
+# 'file'". On le crée si besoin avant que LOGGING ne soit appliqué.
+(BASE_DIR / 'logs').mkdir(parents=True, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
