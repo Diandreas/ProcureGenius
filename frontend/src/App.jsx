@@ -12,6 +12,7 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n/config';
 import { isNativePlatform } from './utils/platform';
 import OfflineBanner from './components/mobile/OfflineBanner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Sur l'app mobile native, on demarre sur /login (puis /dashboard si connecte)
 // au lieu de la page marketing /landing, et /landing est bloque -> /login.
@@ -846,6 +847,7 @@ function App() {
                       {onboardingChecked && (
                         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                       <OfflineBanner />
+                      <ErrorBoundary>
                       <React.Suspense fallback={<PageSkeleton />}>
                       <Routes>
                         {/* Public Routes */}
@@ -975,6 +977,7 @@ function App() {
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
                       </React.Suspense>
+                      </ErrorBoundary>
                       <PWAInstallPrompt />
                     </Router>
                       )}
