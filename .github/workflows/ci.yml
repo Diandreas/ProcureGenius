@@ -67,7 +67,8 @@ jobs:
             echo "::endgroup::"
             # Emet les dernieres lignes comme annotations : visibles via
             # l'API publique meme sans acces aux logs bruts (diagnostic).
-            tail -n 60 /tmp/pip_out.log | while IFS= read -r line; do
+            # GitHub ne garde que les 10 premieres annotations par job.
+            tail -n 10 /tmp/pip_out.log | while IFS= read -r line; do
               esc=$(printf '%s' "$line" | sed 's/%/%25/g' | tr -d '\r')
               echo "::error::$esc"
             done
@@ -83,7 +84,10 @@ jobs:
           STATUS=$?
           cat /tmp/pytest_out.log
           if [ $STATUS -ne 0 ]; then
-            tail -n 60 /tmp/pytest_out.log | while IFS= read -r line; do
+            # GitHub ne garde que les 10 premieres annotations ::error:: par
+            # job : on n'emet donc QUE les dernieres lignes (l'exception
+            # reelle est en fin de traceback), pas le debut.
+            tail -n 10 /tmp/pytest_out.log | while IFS= read -r line; do
               esc=$(printf '%s' "$line" | sed 's/%/%25/g' | tr -d '\r')
               echo "::error::$esc"
             done
