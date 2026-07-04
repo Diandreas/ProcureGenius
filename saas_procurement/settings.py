@@ -172,6 +172,20 @@ TENANT_DOMAIN_MODEL = "accounts.Domain"
 # Redis configuration for Channels and Celery
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
 
+# Cache partagé Redis (indispensable au throttling DRF : sinon chaque worker
+# gunicorn a son propre compteur LocMem et la limite est multipliée par le
+# nombre de workers). Sert aussi au circuit breaker IA et à l'idempotence des
+# webhooks Stripe. En dev sans Redis, on retombe sur LocMem.
+if os.getenv('DISABLE_REDIS_CACHE', '').lower() == 'true':
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+        }
+    }
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -287,7 +301,17 @@ REST_FRAMEWORK = {
         'ai_user': '100/hour',
         'ai_org': '500/hour',
         'ai_burst': '10/minute',
+        # Anti brute-force sur les endpoints d'authentification publics.
+        'auth_login': '10/minute',
+        'auth_register': '10/hour',
+        'auth_password': '5/hour',
+        'contact': '5/hour',
     },
+    # Derrière nginx, REMOTE_ADDR = 127.0.0.1 pour toutes les requêtes : sans
+    # cela, AnonRateThrottle regrouperait TOUS les utilisateurs sur un seul
+    # compteur. NUM_PROXIES=1 fait utiliser à DRF le dernier X-Forwarded-For
+    # (posé par nginx) comme identité du client.
+    'NUM_PROXIES': 1,
 }
 
 # CORS settings
@@ -513,3 +537,33 @@ SOCIALACCOUNT_PROVIDERS = {
 # Adapter personnalisé pour gérer la création de UserPreferences et Organization
 SOCIALACCOUNT_ADAPTER = 'apps.accounts.adapters.CustomSocialAccountAdapter'
 ACCOUNT_ADAPTER = 'apps.accounts.adapters.CustomAccountAdapter'
+
+# ============================================================
+# VERSION (SHA git, écrit par le script de déploiement) — sert au healthcheck
+# ============================================================
+try:
+    with open(BASE_DIR / 'version.txt', encoding='utf-8') as _vf:
+        GIT_SHA = _vf.read().strip()
+except OSError:
+    GIT_SHA = ''
+
+# ============================================================
+# SENTRY (monitoring d'erreurs) — activé UNIQUEMENT si SENTRY_DSN est défini.
+# Zéro effet en dev/tests (pas de DSN) ; free tier suffisant pour un solo dev.
+# ============================================================
+SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration()],
+            environment=os.getenv('SENTRY_ENVIRONMENT', 'production'),
+            release=GIT_SHA or None,
+            traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.05')),
+            send_default_pii=False,
+        )
+    except Exception as _exc:  # ne jamais casser le démarrage à cause du monitoring
+        import logging
+        logging.getLogger(__name__).warning("Sentry non initialisé : %s", _exc)

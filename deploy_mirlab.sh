@@ -24,6 +24,9 @@ echo "============================================================"
 cd "$APP_DIR"
 echo "[1/9] Répertoire: $APP_DIR"
 
+# SHA git courant -> version.txt (lu par le healthcheck /api/v1/health/)
+git rev-parse --short HEAD > "$APP_DIR/version.txt" 2>/dev/null || echo "unknown" > "$APP_DIR/version.txt"
+
 # ---- 2. CRÉER LE VIRTUALENV SI INEXISTANT ----
 if [ ! -d "$VENV_DIR" ]; then
     echo "[2/9] Création du virtualenv..."

@@ -3,15 +3,30 @@ Authentication API Views
 Handles user registration, login, and OAuth integration
 """
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext as _
 from django.db import transaction
 
+from rest_framework.authtoken.views import ObtainAuthToken
+
 from .models import CustomUser, Organization, UserPreferences
+from .throttles import (
+    LoginRateThrottle, RegisterRateThrottle,
+    PasswordResetRateThrottle, ContactRateThrottle,
+)
+
+
+class ThrottledObtainAuthToken(ObtainAuthToken):
+    """`/auth/token/` throttlé (endpoint de login réellement utilisé par le
+    front React). Sans cela, le brute-force restait possible via ce chemin même
+    si `api_login` était protégé."""
+    throttle_classes = [LoginRateThrottle]
 from apps.subscriptions.models import Subscription
 import requests
 import secrets
@@ -21,6 +36,7 @@ from datetime import timedelta
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([RegisterRateThrottle])
 def api_register(request):
     """
     Register a new user with email/password
@@ -52,8 +68,15 @@ def api_register(request):
 
     if not password:
         errors['password'] = ['Mot de passe est requis']
-    elif len(password) < 8:
-        errors['password'] = ['Le mot de passe doit contenir au moins 8 caractères']
+    else:
+        # Politique de mot de passe Django (longueur, trop courant, trop
+        # numérique, similaire aux infos perso) — plus robuste que len>=8.
+        try:
+            validate_password(password, user=CustomUser(
+                email=email, first_name=first_name, last_name=last_name,
+            ))
+        except DjangoValidationError as exc:
+            errors['password'] = list(exc.messages)
 
     if not first_name:
         errors['first_name'] = ['Prénom est requis']
@@ -186,6 +209,7 @@ def api_register(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([LoginRateThrottle])
 def api_login(request):
     """
     Login with email/password
@@ -268,6 +292,7 @@ def api_logout(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetRateThrottle])
 def api_verify_email(request):
     """
     Verify email with verification token
@@ -321,6 +346,7 @@ def api_verify_email(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetRateThrottle])
 def api_forgot_password(request):
     """
     Request password reset
@@ -359,6 +385,7 @@ def api_forgot_password(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetRateThrottle])
 def api_reset_password(request):
     """
     Reset password with token
@@ -388,9 +415,11 @@ def api_reset_password(request):
     if not default_token_generator.check_token(user, token):
         return Response({'error': 'Lien invalide ou expiré'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Changer le mot de passe
-    if len(new_password) < 8:
-        return Response({'error': 'Le mot de passe doit contenir au moins 8 caractères'}, status=status.HTTP_400_BAD_REQUEST)
+    # Politique de mot de passe Django (robustesse)
+    try:
+        validate_password(new_password, user=user)
+    except DjangoValidationError as exc:
+        return Response({'error': ' '.join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
     user.set_password(new_password)
     user.save()
@@ -417,6 +446,7 @@ def api_reset_password(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([LoginRateThrottle])
 def api_google_login(request):
     """
     Login with Google Access Token
@@ -576,8 +606,10 @@ def api_change_password(request):
         if not user.check_password(current_password):
             return Response({'error': 'Mot de passe actuel incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if len(new_password) < 8:
-        return Response({'error': 'Le nouveau mot de passe doit contenir au moins 8 caractères.'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        validate_password(new_password, user=user)
+    except DjangoValidationError as exc:
+        return Response({'error': ' '.join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
     user.set_password(new_password)
     user.save()
@@ -590,6 +622,7 @@ def api_change_password(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([ContactRateThrottle])
 def api_contact(request):
     """
     Contact form with reCAPTCHA v2 verification and email sending.

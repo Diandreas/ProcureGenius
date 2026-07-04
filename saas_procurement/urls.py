@@ -7,7 +7,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 
+from apps.core.views_health import health_check
+
 urlpatterns = [
+    # Healthcheck (non authentifié, hors i18n, hors router) — monitoring externe
+    path('api/v1/health/', health_check, name='health_check'),
+
     # Admin
     path('admin/', admin.site.urls),
 

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken.views import obtain_auth_token
+from apps.accounts.auth_api_views import ThrottledObtainAuthToken
 from . import views
 from . import quick_create_views
 from . import views_settings
@@ -35,7 +35,7 @@ urlpatterns = [
     path('purchase-orders/items/price-history/', views.PriceHistoryView.as_view(), name='price-history'),
 
     # Authentication - Enhanced
-    path('auth/token/', obtain_auth_token, name='api_token_auth'),
+    path('auth/token/', ThrottledObtainAuthToken.as_view(), name='api_token_auth'),
     path('auth/register/', auth_api_views.api_register, name='api_register'),
     path('auth/login/', auth_api_views.api_login, name='api_login'),
     path('auth/logout/', auth_api_views.api_logout, name='api_logout'),
