@@ -30,7 +30,7 @@ import ConfirmationModal from './ConfirmationModal';
 import PreviewCard from './PreviewCard';
 import PremiumModal from '../ui/PremiumModal';
 
-const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, onAddArtifact }) => {
+const MessageContent = ({ content, streaming = false, actionResults, actionButtons, onButtonClick, onAddArtifact }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -915,9 +915,23 @@ const MessageContent = ({ content, actionResults, actionButtons, onButtonClick, 
 
   return (
     <Box>
-      <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
-        {content}
-      </ReactMarkdown>
+      {streaming ? (
+        // Pendant le streaming, on affiche du texte brut (pas de parsing
+        // markdown) : re-parser tout le texte à chaque fragment reçu provoque
+        // des saccades visibles sur les réponses longues. Le rendu markdown
+        // complet arrive une fois la réponse finalisée (streaming=false).
+        <Typography
+          component="div"
+          variant="body2"
+          sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+        >
+          {content}
+        </Typography>
+      ) : (
+        <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
+          {content}
+        </ReactMarkdown>
+      )}
       {renderActionResults()}
       {renderActionButtons()}
 

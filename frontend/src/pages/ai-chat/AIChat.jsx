@@ -71,6 +71,10 @@ import {
   MoreVert,
   CalendarToday,
   AccessTime,
+  ThumbUpAlt,
+  ThumbUpOffAlt,
+  ThumbDownAlt,
+  ThumbDownOffAlt,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
@@ -938,6 +942,31 @@ function AIChat() {
     });
   };
 
+  // Feedback pouce haut/bas sur une réponse IA (re-cliquer retire le feedback).
+  const handleMessageFeedback = async (msg, rating) => {
+    if (!msg.id) return;
+    const current = msg.feedback?.rating;
+    try {
+      if (current === rating) {
+        await aiChatAPI.removeMessageFeedback(msg.id);
+        setMessages(prev => prev.map(m => (m.id === msg.id ? { ...m, feedback: null } : m)));
+      } else {
+        await aiChatAPI.sendMessageFeedback(msg.id, rating);
+        setMessages(prev => prev.map(m => (m.id === msg.id ? { ...m, feedback: { rating } } : m)));
+        if (rating === 1) {
+          window.dispatchEvent(new CustomEvent('mascot-success'));
+        } else {
+          enqueueSnackbar(t('aiChat:messages.feedbackThanks', 'Merci, votre retour nous aide à améliorer l\'assistant.'), {
+            variant: 'info',
+            autoHideDuration: 3000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Feedback error:', error);
+    }
+  };
+
   const handleSendError = (error, fallbackMessage = null) => {
     console.error('Error sending message:', error);
     console.error('Error response:', error.response?.data);
@@ -1574,6 +1603,7 @@ function AIChat() {
                           )}
                           <MessageContent
                             content={msg.streaming && msg.content ? `${msg.content} ▍` : msg.content}
+                            streaming={!!msg.streaming}
                             actionResults={msg.action_results}
                             actionButtons={msg.action_buttons}
                             onButtonClick={(buttonIndex, confirmationData) => {
@@ -1608,19 +1638,59 @@ function AIChat() {
                               ))}
                             </Stack>
                           )}
-                          <Typography
-                            variant="caption"
+                          <Box
                             sx={{
                               mt: 0.5,
-                              display: 'block',
-                              fontSize: '0.58rem',
-                              opacity: 0.4,
-                              color: isUser ? '#fff' : 'text.secondary',
-                              textAlign: isUser ? 'right' : 'left',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: isUser ? 'flex-end' : 'space-between',
+                              gap: 1,
                             }}
                           >
-                            {formatDateTime(msg.created_at)}
-                          </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: '0.58rem',
+                                opacity: 0.4,
+                                color: isUser ? '#fff' : 'text.secondary',
+                              }}
+                            >
+                              {formatDateTime(msg.created_at)}
+                            </Typography>
+                            {/* Feedback pouce haut/bas sur les réponses IA finalisées */}
+                            {!isUser && msg.id && !msg.streaming && (
+                              <Stack direction="row" spacing={0}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleMessageFeedback(msg, 1)}
+                                  title={t('aiChat:messages.feedbackUp', 'Réponse utile')}
+                                  sx={{
+                                    p: 0.25,
+                                    color: msg.feedback?.rating === 1 ? 'success.main' : 'text.disabled',
+                                    '&:hover': { color: 'success.main' },
+                                  }}
+                                >
+                                  {msg.feedback?.rating === 1
+                                    ? <ThumbUpAlt sx={{ fontSize: 14 }} />
+                                    : <ThumbUpOffAlt sx={{ fontSize: 14 }} />}
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleMessageFeedback(msg, -1)}
+                                  title={t('aiChat:messages.feedbackDown', 'Réponse pas utile')}
+                                  sx={{
+                                    p: 0.25,
+                                    color: msg.feedback?.rating === -1 ? 'error.main' : 'text.disabled',
+                                    '&:hover': { color: 'error.main' },
+                                  }}
+                                >
+                                  {msg.feedback?.rating === -1
+                                    ? <ThumbDownAlt sx={{ fontSize: 14 }} />
+                                    : <ThumbDownOffAlt sx={{ fontSize: 14 }} />}
+                                </IconButton>
+                              </Stack>
+                            )}
+                          </Box>
                         </Box>
                       </Box>
                     </motion.div>

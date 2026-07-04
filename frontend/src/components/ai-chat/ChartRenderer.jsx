@@ -16,14 +16,26 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
 
 /**
  * Composant universel pour afficher des graphiques Recharts
  * Supporte: line, bar, pie, area
+ *
+ * Sensible au thème (dark/light) : avant, fonds/axes/grille étaient codés en
+ * dur en blanc/gris clair, ce qui produisait une carte blanche criarde en
+ * thème sombre — le défaut visuel le plus visible de l'interface IA.
  */
 const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
-  // Tooltip personnalisé avec style Material-UI
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const axisColor = theme.palette.text.secondary;
+  const gridColor = theme.palette.divider;
+  const paperBg = theme.palette.background.paper;
+  const borderColor = theme.palette.divider;
+
+  // Tooltip personnalisé avec style Material-UI (adapté au thème courant)
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -31,13 +43,13 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
           elevation={3}
           sx={{
             p: 1.5,
-            backgroundColor: 'white',
+            backgroundColor: paperBg,
             border: '1px solid',
-            borderColor: 'grey.300',
+            borderColor,
           }}
         >
           {label && (
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5, color: 'text.primary' }}>
               {label}
             </Typography>
           )}
@@ -87,7 +99,7 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
   };
 
   // Formateur pour les axes
-  const formatAxisTick = (value, dataKey) => {
+  const formatAxisTick = (value) => {
     if (typeof value === 'number' && value > 1000) {
       return new Intl.NumberFormat('fr-FR', {
         notation: 'compact',
@@ -103,20 +115,20 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
 
     return (
       <LineChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
         <XAxis
           dataKey={xAxis}
-          tick={{ fontSize: 12 }}
-          stroke="#666"
+          tick={{ fontSize: 12, fill: axisColor }}
+          stroke={axisColor}
         />
         <YAxis
-          tick={{ fontSize: 12 }}
-          stroke="#666"
+          tick={{ fontSize: 12, fill: axisColor }}
+          stroke={axisColor}
           tickFormatter={formatAxisTick}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend
-          wrapperStyle={{ fontSize: '12px' }}
+          wrapperStyle={{ fontSize: '12px', color: theme.palette.text.primary }}
           iconType="line"
         />
         {lines.map((lineConfig, index) => (
@@ -141,20 +153,20 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
 
     return (
       <BarChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
         <XAxis
           dataKey={xAxis}
-          tick={{ fontSize: 12 }}
-          stroke="#666"
+          tick={{ fontSize: 12, fill: axisColor }}
+          stroke={axisColor}
         />
         <YAxis
-          tick={{ fontSize: 12 }}
-          stroke="#666"
+          tick={{ fontSize: 12, fill: axisColor }}
+          stroke={axisColor}
           tickFormatter={formatAxisTick}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend
-          wrapperStyle={{ fontSize: '12px' }}
+          wrapperStyle={{ fontSize: '12px', color: theme.palette.text.primary }}
           iconType="square"
         />
         {bars.map((barConfig, index) => (
@@ -183,15 +195,15 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
             elevation={3}
             sx={{
               p: 1.5,
-              backgroundColor: 'white',
+              backgroundColor: paperBg,
               border: '1px solid',
-              borderColor: 'grey.300',
+              borderColor,
             }}
           >
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5, color: 'text.primary' }}>
               {data.name}
             </Typography>
-            <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+            <Typography variant="caption" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
               {formatValue(data.value, 'total')}
             </Typography>
           </Paper>
@@ -200,6 +212,9 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
       return null;
     };
 
+    // Sur mobile, les labels externes (nom + valeur à côté de chaque part)
+    // débordent et se chevauchent sur un écran étroit. On les retire au
+    // profit d'une légende classique sous le graphique.
     return (
       <PieChart>
         <Pie
@@ -208,15 +223,21 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
           nameKey={nameKey}
           cx="50%"
           cy="50%"
-          outerRadius={100}
-          label={(entry) => `${entry[nameKey]}: ${formatValue(entry[dataKey], 'total')}`}
-          labelLine={{ stroke: '#666', strokeWidth: 1 }}
+          outerRadius={isMobile ? 80 : 100}
+          label={isMobile ? false : (entry) => `${entry[nameKey]}: ${formatValue(entry[dataKey], 'total')}`}
+          labelLine={isMobile ? false : { stroke: axisColor, strokeWidth: 1 }}
         >
           {chartData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
         <Tooltip content={<PieTooltip />} />
+        {isMobile && (
+          <Legend
+            verticalAlign="bottom"
+            wrapperStyle={{ fontSize: '12px', color: theme.palette.text.primary }}
+          />
+        )}
       </PieChart>
     );
   };
@@ -227,20 +248,20 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
 
     return (
       <AreaChart data={chartData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
         <XAxis
           dataKey={xAxis}
-          tick={{ fontSize: 12 }}
-          stroke="#666"
+          tick={{ fontSize: 12, fill: axisColor }}
+          stroke={axisColor}
         />
         <YAxis
-          tick={{ fontSize: 12 }}
-          stroke="#666"
+          tick={{ fontSize: 12, fill: axisColor }}
+          stroke={axisColor}
           tickFormatter={formatAxisTick}
         />
         <Tooltip content={<CustomTooltip />} />
         <Legend
-          wrapperStyle={{ fontSize: '12px' }}
+          wrapperStyle={{ fontSize: '12px', color: theme.palette.text.primary }}
           iconType="square"
         />
         {areas.map((areaConfig, index) => (
@@ -302,16 +323,19 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
           </Box>
         );
     }
-  }, [chartType, chartData, chartConfig]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartType, chartData, chartConfig, theme.palette.mode, isMobile]);
 
   return (
     <Box
       sx={{
-        backgroundColor: 'white',
+        backgroundColor: 'background.paper',
         p: 2,
         borderRadius: 1.5,
         mb: 2,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: theme.palette.mode === 'dark'
+          ? '0 1px 4px rgba(0,0,0,0.4)'
+          : '0 1px 3px rgba(0,0,0,0.1)',
       }}
     >
       {chartTitle && (
