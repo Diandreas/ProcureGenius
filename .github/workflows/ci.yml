@@ -56,8 +56,22 @@ jobs:
 
       - name: Installer les dépendances Python
         run: |
+          set +e
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt > /tmp/pip_out.log 2>&1
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "::group::pip install - sortie complete"
+            cat /tmp/pip_out.log
+            echo "::endgroup::"
+            # Emet les dernieres lignes comme annotations : visibles via
+            # l'API publique meme sans acces aux logs bruts (diagnostic).
+            tail -n 25 /tmp/pip_out.log | while IFS= read -r line; do
+              esc=$(printf '%s' "$line" | sed 's/%/%25/g' | tr -d '\r')
+              echo "::error::$esc"
+            done
+            exit 1
+          fi
           pip install pytest pytest-django pytest-asyncio
 
       - name: Lancer les tests (hors intégration + pixtral)
