@@ -7,6 +7,7 @@ import {
 import { alpha, useTheme } from '@mui/material/styles';
 import {
   People, TrendingUp, Bolt, Paid, Visibility, AutoGraph,
+  ThumbUpAlt, ThumbDownAlt, SmartToy,
 } from '@mui/icons-material';
 import api from '../services/api';
 
@@ -129,6 +130,7 @@ export default function AdminStats() {
   const feat = data?.feature_usage || {};
   const sub = data?.subscriptions || {};
   const vol = feat.volumes || {};
+  const fb = data?.ai_feedback || {};
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1280, mx: 'auto' }}>
@@ -321,6 +323,82 @@ export default function AdminStats() {
               </Card>
             </Grid>
           </Grid>
+
+          {/* Feedback IA (pouces haut/bas) */}
+          {fb.available && (
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Card sx={{ height: '100%', borderRadius: 3 }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
+                      <SmartToy fontSize="small" color="action" />
+                      <Typography variant="subtitle2" fontWeight={700}>
+                        Satisfaction assistant IA ({days} j)
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h3" fontWeight={800} sx={{ letterSpacing: '-0.02em' }}>
+                      {pct(fb.satisfaction_pct)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block" mb={2}>
+                      {fmt(fb.total)} retour{fb.total > 1 ? 's' : ''} au total
+                    </Typography>
+                    <Stack direction="row" spacing={3}>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <ThumbUpAlt fontSize="small" sx={{ color: theme.palette.success.main }} />
+                        <Typography variant="body2" fontWeight={700}>{fmt(fb.positive)}</Typography>
+                      </Stack>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <ThumbDownAlt fontSize="small" sx={{ color: theme.palette.error.main }} />
+                        <Typography variant="body2" fontWeight={700}>{fmt(fb.negative)}</Typography>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={8}>
+                <Card sx={{ height: '100%', borderRadius: 3 }}>
+                  <CardContent>
+                    <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
+                      Retours négatifs récents
+                    </Typography>
+                    {fb.recent_negative && fb.recent_negative.length ? (
+                      <Stack spacing={1.5} sx={{ maxHeight: 320, overflowY: 'auto' }}>
+                        {fb.recent_negative.map((r) => (
+                          <Box key={r.id} sx={{
+                            p: 1.5, borderRadius: 2,
+                            bgcolor: alpha(theme.palette.error.main, 0.05),
+                            border: `1px solid ${alpha(theme.palette.error.main, 0.15)}`,
+                          }}>
+                            <Stack direction="row" justifyContent="space-between" mb={0.5}>
+                              <Typography variant="caption" fontWeight={700} color="text.secondary">
+                                {r.user || 'Utilisateur'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {new Date(r.created_at).toLocaleDateString('fr-FR')}
+                              </Typography>
+                            </Stack>
+                            <Typography variant="body2" sx={{ fontStyle: 'italic', mb: r.comment ? 0.5 : 0 }} noWrap>
+                              « {r.message_excerpt} »
+                            </Typography>
+                            {r.comment && (
+                              <Typography variant="body2" fontWeight={600}>
+                                {r.comment}
+                              </Typography>
+                            )}
+                          </Box>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        Aucun retour négatif sur cette période.
+                      </Typography>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          )}
 
           <Typography variant="caption" color="text.secondary" textAlign="center">
             Généré le {data.generated_at ? new Date(data.generated_at).toLocaleString('fr-FR') : ''}

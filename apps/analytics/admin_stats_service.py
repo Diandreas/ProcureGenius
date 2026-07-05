@@ -280,4 +280,50 @@ def get_admin_stats(days=30):
         subscriptions = {'error': str(e)}
     stats['subscriptions'] = subscriptions
 
+    # ----------------------------------------------------------------
+    # 7. FEEDBACK IA (pouces haut/bas sur les réponses de l'assistant)
+    # ----------------------------------------------------------------
+    ai_feedback = {'available': False}
+    try:
+        from apps.ai_assistant.models import MessageFeedback
+
+        period_fb = MessageFeedback.objects.filter(created_at__gte=since)
+        total = period_fb.count()
+        positive = period_fb.filter(rating=1).count()
+        negative = total - positive
+
+        recent_negative = list(
+            period_fb.filter(rating=-1)
+            .select_related('message', 'user')
+            .order_by('-created_at')[:20]
+            .values(
+                'id', 'comment', 'created_at',
+                'user__email', 'user__username',
+                'message__content', 'message__conversation_id',
+            )
+        )
+
+        ai_feedback = {
+            'available': True,
+            'total': total,
+            'positive': positive,
+            'negative': negative,
+            'satisfaction_pct': round(100 * positive / total, 1) if total else None,
+            'daily': _daily_series(MessageFeedback.objects.all(), 'created_at', days, now),
+            'recent_negative': [
+                {
+                    'id': str(r['id']),
+                    'comment': r['comment'],
+                    'created_at': r['created_at'].isoformat(),
+                    'user': r['user__email'] or r['user__username'],
+                    'message_excerpt': (r['message__content'] or '')[:200],
+                    'conversation_id': str(r['message__conversation_id']),
+                }
+                for r in recent_negative
+            ],
+        }
+    except Exception as e:
+        ai_feedback = {'available': False, 'error': str(e)}
+    stats['ai_feedback'] = ai_feedback
+
     return stats
