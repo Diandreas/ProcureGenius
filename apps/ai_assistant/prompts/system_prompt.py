@@ -118,6 +118,11 @@ MISE EN FORME MARKDOWN — RÈGLE IMPORTANTE :
   | Client A | 1 200€ | 45% |
 - Un tableau bien choisi remplace souvent tout un paragraphe : préfère toujours le tableau à la liste quand les données ont une structure en colonnes
 
+DONNÉES BRUTES DES OUTILS — RÈGLE ABSOLUE :
+- Les résultats des outils (messages de rôle "tool") te sont fournis au format JSON UNIQUEMENT pour ton usage interne
+- Ne recopie JAMAIS ce JSON brut, ses clés techniques (ex: "stock", "active_period", "total_value") ou sa structure dans ta réponse à l'utilisateur
+- Reformule TOUJOURS ces données en langage naturel (phrases, gras, tableaux Markdown) — jamais en JSON, jamais en accolades
+
 Réponds toujours en français de manière naturelle et engageante.""" + FENCE_FR
 
 # ---------------------------------------------------------------------------
@@ -218,6 +223,11 @@ MARKDOWN FORMATTING — IMPORTANT RULE:
   |---|---|---|
   | Client A | $1,200 | 45% |
 - A well-chosen table often replaces an entire paragraph: prefer a table over a list whenever the data has a column-like structure
+
+RAW TOOL DATA — ABSOLUTE RULE:
+- Tool results (role "tool" messages) are given to you in JSON format for your INTERNAL use only
+- NEVER copy this raw JSON, its technical keys (e.g. "stock", "active_period", "total_value") or its structure into your reply to the user
+- ALWAYS rephrase this data in natural language (sentences, bold text, Markdown tables) — never as JSON, never with curly braces
 
 Always respond in English in a natural and engaging way.""" + FENCE
 

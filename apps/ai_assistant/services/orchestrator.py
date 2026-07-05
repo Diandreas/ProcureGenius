@@ -676,15 +676,24 @@ class Orchestrator:
         synthesis_messages.append({
             "role": "user",
             "content": (
-                "Voici les données récupérées via les outils. Réponds à ma demande "
-                "précédente en te basant UNIQUEMENT sur ces données, de façon claire "
-                "et concise :\n\n" + results_blob
+                "Voici les données brutes (JSON) récupérées via les outils, "
+                "UNIQUEMENT pour ton usage interne. Réponds à ma demande précédente "
+                "en langage naturel, de façon claire et concise, avec un tableau "
+                "Markdown si les données s'y prêtent. Ne recopie JAMAIS ce JSON brut "
+                "ni ses clés techniques dans ta réponse :\n\n" + results_blob
             ),
         })
 
         second = await _acomplete(self.provider, synthesis_messages, tools=None)
-        if second.get("circuit_open") or not second.get("success") or not second.get("content"):
-            # Fallback déterministe : la réponse reste correcte sans le 2e LLM.
+        if (
+            second.get("circuit_open")
+            or not second.get("success")
+            or not second.get("content")
+            or _looks_like_raw_json(second.get("content"))
+        ):
+            # Fallback déterministe : la réponse reste correcte sans le 2e LLM
+            # (couvre aussi le cas où le modèle recopie le JSON brut au lieu
+            # de le reformuler, notamment sur le modèle de repli en rate-limit).
             return _deterministic_summary(tool_results), second.get("usage", {}).get("total_tokens", 0)
 
         return second["content"], second["usage"]["total_tokens"]
@@ -818,6 +827,25 @@ def _truncate_data(data, max_items: int = 20):
     if isinstance(data, list):
         return data[:max_items]
     return data
+
+
+def _looks_like_raw_json(content: Optional[str]) -> bool:
+    """Détecte une réponse qui n'est qu'un JSON brut recopié (pas de reformulation).
+
+    Arrive surtout avec le modèle de repli (rate-limit) qui suit moins bien
+    l'instruction de synthèse et recopie le blob de données au lieu de répondre.
+    """
+    if not content:
+        return False
+    stripped = content.strip()
+    if not (stripped.startswith("{") and stripped.endswith("}")):
+        return False
+    try:
+        import json
+        json.loads(stripped)
+        return True
+    except (ValueError, TypeError):
+        return False
 
 
 def _deterministic_summary(tool_results: List[Dict[str, Any]]) -> str:

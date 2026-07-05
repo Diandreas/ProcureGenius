@@ -713,24 +713,10 @@ function AIChat() {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Imports">
-            <IconButton size="small" onClick={() => navigate('/ai-chat/import-reviews')} sx={{ color: 'text.secondary' }}>
-              <Assignment sx={{ fontSize: 20 }} />
-            </IconButton>
-          </Tooltip>
-
           <Tooltip title="Notifications">
             <IconButton size="small" onClick={() => openNotificationsCenter()} sx={{ color: unreadCount > 0 ? 'warning.main' : 'text.secondary' }}>
               <Badge badgeContent={unreadCount} color="warning" variant="dot">
                 <Notifications sx={{ fontSize: 20 }} />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Suggestions">
-            <IconButton size="small" onClick={() => setSuggestionsPanelOpen(true)} sx={{ color: usageStats?.suggestions_count > 0 ? 'secondary.main' : 'text.secondary' }}>
-              <Badge badgeContent={usageStats?.suggestions_count || 0} color="secondary" variant="dot">
-                <Lightbulb sx={{ fontSize: 20 }} />
               </Badge>
             </IconButton>
           </Tooltip>
