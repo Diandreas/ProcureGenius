@@ -43,6 +43,7 @@ import {
 } from '@mui/icons-material';
 import { useColorMode } from '../App';
 import { trackVisit } from '../services/tracking';
+import usePageMeta from '../hooks/usePageMeta';
 
 // Enregistrer les plugins GSAP une seule fois (côté client).
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -123,7 +124,8 @@ const AIChatDemo = () => {
         </Avatar>
         <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 600, fontSize: '0.85rem' }}>Procura IA</Typography>
         <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5, alignItems: 'center' }}>
-          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#10b981',
+          <Box sx={{
+            width: 8, height: 8, borderRadius: '50%', bgcolor: '#10b981',
             animation: 'pulse 2s infinite',
             '@keyframes pulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.4 } }
           }} />
@@ -132,56 +134,56 @@ const AIChatDemo = () => {
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: 220 }}>
-          {messages.slice(0, visibleMessages).map((msg, i) => (
-            <Box
-              key={i}
-              sx={{
-                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                maxWidth: '85%',
-                animation: 'msgIn 0.35s cubic-bezier(0.16,1,0.3,1) both',
-                '@keyframes msgIn': {
-                  from: { opacity: 0, transform: 'scale(0.92) translateY(16px)' },
-                  to: { opacity: 1, transform: 'scale(1) translateY(0)' },
-                },
-              }}
-            >
-              <Box sx={{
-                p: 1.5,
-                borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                bgcolor: msg.role === 'user' ? '#2563eb' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
-                border: msg.role === 'ai' ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}` : 'none',
-              }}>
-                <Typography sx={{ color: msg.role === 'user' ? '#fff' : (isDark ? '#fff' : '#0f172a'), fontSize: '0.85rem', lineHeight: 1.5 }}>
-                  {msg.text}
+        {messages.slice(0, visibleMessages).map((msg, i) => (
+          <Box
+            key={i}
+            sx={{
+              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              maxWidth: '85%',
+              animation: 'msgIn 0.35s cubic-bezier(0.16,1,0.3,1) both',
+              '@keyframes msgIn': {
+                from: { opacity: 0, transform: 'scale(0.92) translateY(16px)' },
+                to: { opacity: 1, transform: 'scale(1) translateY(0)' },
+              },
+            }}
+          >
+            <Box sx={{
+              p: 1.5,
+              borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+              bgcolor: msg.role === 'user' ? '#2563eb' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+              border: msg.role === 'ai' ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}` : 'none',
+            }}>
+              <Typography sx={{ color: msg.role === 'user' ? '#fff' : (isDark ? '#fff' : '#0f172a'), fontSize: '0.85rem', lineHeight: 1.5 }}>
+                {msg.text}
+              </Typography>
+              {msg.detail && (
+                <Typography sx={{
+                  color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)',
+                  fontSize: '0.75rem',
+                  mt: 1.5,
+                  whiteSpace: 'pre-line',
+                  fontFamily: 'monospace',
+                  bgcolor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
+                  p: 1.5,
+                  borderRadius: 1,
+                  borderLeft: '2px solid #f59e0b'
+                }}>
+                  {msg.detail}
                 </Typography>
-                {msg.detail && (
-                  <Typography sx={{
-                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)',
-                    fontSize: '0.75rem',
-                    mt: 1.5,
-                    whiteSpace: 'pre-line',
-                    fontFamily: 'monospace',
-                    bgcolor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
-                    p: 1.5,
-                    borderRadius: 1,
-                    borderLeft: '2px solid #f59e0b'
-                  }}>
-                    {msg.detail}
-                  </Typography>
-                )}
-                {msg.action && (
-                  <Button size="small" variant="contained" sx={{
-                    mt: 1.5, bgcolor: '#f59e0b', color: '#0f172a',
-                    textTransform: 'none', fontSize: '0.75rem', borderRadius: 2,
-                    fontWeight: 700, boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
-                    '&:hover': { bgcolor: '#d97706' }
-                  }}>
-                    {msg.action}
-                  </Button>
-                )}
-              </Box>
+              )}
+              {msg.action && (
+                <Button size="small" variant="contained" sx={{
+                  mt: 1.5, bgcolor: '#f59e0b', color: '#0f172a',
+                  textTransform: 'none', fontSize: '0.75rem', borderRadius: 2,
+                  fontWeight: 700, boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
+                  '&:hover': { bgcolor: '#d97706' }
+                }}>
+                  {msg.action}
+                </Button>
+              )}
             </Box>
-          ))}
+          </Box>
+        ))}
         {visibleMessages < messages.length && (
           <Box sx={{ display: 'flex', gap: '4px', pl: 1, animation: 'fadeIn 0.3s ease both', '@keyframes fadeIn': { from: { opacity: 0 }, to: { opacity: 1 } } }}>
             {[0, 1, 2].map((i) => (
@@ -390,7 +392,7 @@ const usePricingCurrency = () => {
         setCurrency(detected);
         sessionStorage.setItem('pricingCurrency', detected);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   const convertPrice = (eurAmount) => {
     if (currency === 'EUR') return null;
@@ -404,7 +406,7 @@ const usePricingCurrency = () => {
 // MAIN LANDING COMPONENT
 // ═════════════════════════════════════════════════════════════════
 export default function Landing() {
-  const { t, i18n } = useTranslation('landing');
+  const { t } = useTranslation('landing');
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -465,17 +467,16 @@ export default function Landing() {
     return () => clearTimeout(timer);
   }, [text, isDeleting, wordIndex, words, typingSpeed]);
 
-  useEffect(() => {
-    const defaultWord = words[0] || 'entreprise';
-    document.title = `${t('hero.titleStart')} ${defaultWord} | Procura`;
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.name = 'description';
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.content = t('hero.subtitle');
-  }, [t, i18n.language, words]);
+  // SEO : titre + meta description/OG/Twitter, alignés sur la langue active.
+  // Les balises statiques d'index.html sont toujours en français ; sans ça,
+  // un visiteur anglophone voyait un titre d'onglet traduit mais des balises
+  // OG/Twitter de partage encore en français.
+  const defaultWord = words[0] || 'entreprise';
+  usePageMeta({
+    title: `${t('hero.titleStart')} ${defaultWord}`,
+    description: t('hero.subtitle'),
+    path: '/landing',
+  });
 
   // ─── Animations GSAP (hero choréographié + parallaxe/profondeur) ───
   const pageRef = useRef(null);
