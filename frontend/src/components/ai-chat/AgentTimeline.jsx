@@ -110,7 +110,7 @@ const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
     },
   };
 
-  const accent = '#6366f1';
+  const accent = '#2563eb';
 
   return (
     <Box

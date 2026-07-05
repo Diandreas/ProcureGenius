@@ -89,8 +89,21 @@ import ArtifactsPanel from '../../components/ai-chat/ArtifactsPanel';
 import { useHeader } from '../../contexts/HeaderContext';
 import { useAINotifications } from '../../components/AI/AINotificationProvider';
 
-// Composant Header compact avec navigation IA - Design Premium Mobile-First
-// SuggestionsPanel and other sub-components remain...
+// ─────────────────────────────────────────────────────────────────────────
+// Design tokens locaux — alignés sur la charte Procura (bleu #2563eb).
+// Centralisés ici pour éviter les valeurs en dur dispersées dans le module.
+// ─────────────────────────────────────────────────────────────────────────
+const AI = {
+  // Accent principal = primaire de l'app (cohérence avec le reste de Procura)
+  accent: '#2563eb',
+  accentDark: '#1d4ed8',
+  accentLight: '#3b82f6',
+  // Dégradé signature réservé à la mascotte / bouton envoyer
+  gradient: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+  // Statut « en ligne »
+  online: '#10b981',
+  radius: { bubble: 18, input: 16, chip: 10, card: 16 },
+};
 
 // Composant Panel Latéral Suggestions
 const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
@@ -482,8 +495,8 @@ const QUICK_ACTIONS_CATEGORIES = [
   {
     id: 'chat',
     label: 'Conversation IA',
-    icon: <Box sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}><Mascot pose="happy" animation="none" size={20} /></Box>,
-    color: '#6366f1',
+    icon: <Lightbulb />,
+    color: '#2563eb',
     actions: [
       {
         id: 'help_me',
@@ -1252,7 +1265,14 @@ function AIChat() {
     <Box
       sx={{
         display: 'flex',
-        height: 'calc(100vh - 80px)',
+        // Hauteur robuste : `dvh` évite le clipping dû à la barre d'URL mobile.
+        // On retranche le spacer haut du layout + les paddings pour ne pas
+        // dépasser (et donc masquer la zone de saisie sous l'écran).
+        height: {
+          xs: 'calc(100dvh - 72px - env(safe-area-inset-top, 0px) - 96px)',
+          sm: 'calc(100vh - 80px)',
+        },
+        minHeight: { xs: 420, sm: 480 },
         bgcolor: 'background.default',
         borderRadius: 2,
         overflow: 'hidden',
@@ -1307,63 +1327,70 @@ function AIChat() {
 
           {messages.length === 0 ? (
             <Fade in timeout={500}>
-              <Box sx={{ mt: { xs: 2, sm: 4 }, maxWidth: 680, mx: 'auto', px: { xs: 2, sm: 0 } }}>
+              <Box sx={{ mt: { xs: 1, sm: 3 }, maxWidth: 760, mx: 'auto', px: { xs: 0.5, sm: 0 } }}>
 
-                {/* Header section — épuré, axé sur le texte */}
+                {/* Hero — mascotte + accueil + badge en ligne */}
                 <Box sx={{ mb: { xs: 3, sm: 4 } }}>
-                  {/* Indicateur IA minimal */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  {/* Badge « en ligne » façon pilule */}
+                  <Box sx={{
+                    display: 'inline-flex', alignItems: 'center', gap: 0.75, mb: 2.5,
+                    px: 1.25, py: 0.5, borderRadius: 999,
+                    bgcolor: alpha(AI.online, isDark ? 0.16 : 0.1),
+                  }}>
                     <Box sx={{
-                      width: 8, height: 8, borderRadius: '50%', bgcolor: '#10b981',
-                      boxShadow: '0 0 0 3px rgba(16,185,129,0.2)',
+                      width: 7, height: 7, borderRadius: '50%', bgcolor: AI.online,
+                      boxShadow: `0 0 0 3px ${alpha(AI.online, 0.2)}`,
                       animation: 'aiPulse 2.5s ease-in-out infinite',
                       '@keyframes aiPulse': {
-                        '0%, 100%': { boxShadow: '0 0 0 3px rgba(16,185,129,0.2)' },
-                        '50%': { boxShadow: '0 0 0 6px rgba(16,185,129,0.08)' },
+                        '0%, 100%': { boxShadow: `0 0 0 3px ${alpha(AI.online, 0.25)}` },
+                        '50%': { boxShadow: `0 0 0 6px ${alpha(AI.online, 0.06)}` },
                       }
                     }} />
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#10b981', letterSpacing: '0.05em', fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: AI.online, letterSpacing: '0.04em', fontSize: '0.66rem', textTransform: 'uppercase' }}>
                       Procura IA · En ligne
                     </Typography>
                   </Box>
 
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      fontWeight: 400,
-                      fontStyle: 'italic',
-                      fontFamily: '"Georgia", "Times New Roman", serif',
-                      color: 'text.primary',
-                      lineHeight: 1.25,
-                      mb: 1,
-                      fontSize: { xs: '1.5rem', sm: '1.9rem' },
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
-                    {t('aiChat:welcome.greeting')}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: { xs: '0.85rem', sm: '0.9rem' },
-                      lineHeight: 1.6,
-                      maxWidth: 460,
-                    }}
-                  >
-                    {t('aiChat:welcome.description')}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 } }}>
+                    <Box sx={{ flexShrink: 0, display: { xs: 'none', sm: 'flex' } }}>
+                      <Mascot pose="happy" animation="float" size={52} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontWeight: 700,
+                          color: 'text.primary',
+                          lineHeight: 1.15,
+                          mb: 0.5,
+                          fontSize: { xs: '1.5rem', sm: '1.85rem' },
+                          letterSpacing: '-0.03em',
+                        }}
+                      >
+                        {t('aiChat:welcome.greeting')}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: { xs: '0.875rem', sm: '0.95rem' },
+                          lineHeight: 1.55,
+                          maxWidth: 480,
+                        }}
+                      >
+                        {t('aiChat:welcome.description')}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Box>
 
-                {/* Quick Actions — rangées de chips compacts */}
-                <Box sx={{ mb: { xs: 2.5, sm: 3 } }}>
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.disabled', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem', mb: 1.5, display: 'block' }}>
-                    Actions rapides
+                {/* Quick Actions — cartes groupées par catégorie, grille responsive */}
+                <Box sx={{ mb: { xs: 2, sm: 2.5 } }}>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.disabled', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.64rem', mb: 1.5, display: 'block' }}>
+                    Que puis-je faire pour vous ?
                   </Typography>
                   <Box sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 1,
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                    gap: { xs: 1, sm: 1.25 },
                   }}>
                     {QUICK_ACTIONS_CATEGORIES.flatMap(category =>
                       category.actions.map(action => (
@@ -1373,30 +1400,43 @@ function AIChat() {
                           sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 0.75,
-                            px: 1.5,
-                            py: 0.875,
-                            borderRadius: '10px',
-                            border: theme => `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+                            gap: 1.25,
+                            p: 1.25,
+                            borderRadius: `${AI.radius.card}px`,
+                            border: theme => `1px solid ${alpha(theme.palette.divider, 0.6)}`,
                             bgcolor: 'background.paper',
                             cursor: 'pointer',
                             transition: 'all 0.18s ease',
                             '&:hover': {
-                              borderColor: category.color,
-                              bgcolor: alpha(category.color, 0.05),
-                              transform: 'translateY(-1px)',
-                              boxShadow: `0 4px 12px ${alpha(category.color, 0.12)}`,
-                              '& .action-icon': { color: category.color },
-                              '& .action-label': { color: 'text.primary' },
+                              borderColor: alpha(category.color, 0.5),
+                              transform: 'translateY(-2px)',
+                              boxShadow: `0 6px 18px ${alpha(category.color, 0.14)}`,
+                              '& .action-tile': { bgcolor: category.color, color: '#fff', transform: 'scale(1.05)' },
                             },
                           }}
                         >
-                          <Box className="action-icon" sx={{ color: 'text.disabled', display: 'flex', transition: 'color 0.18s', '& svg': { fontSize: 15 } }}>
+                          <Box
+                            className="action-tile"
+                            sx={{
+                              width: 38, height: 38, flexShrink: 0,
+                              borderRadius: '11px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              bgcolor: alpha(category.color, isDark ? 0.18 : 0.1),
+                              color: category.color,
+                              transition: 'all 0.18s ease',
+                              '& svg': { fontSize: 19 },
+                            }}
+                          >
                             {action.icon}
                           </Box>
-                          <Typography className="action-label" variant="caption" sx={{ fontWeight: 500, color: 'text.secondary', fontSize: '0.775rem', whiteSpace: 'nowrap', transition: 'color 0.18s', lineHeight: 1 }}>
-                            {action.title}
-                          </Typography>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.83rem', lineHeight: 1.3 }}>
+                              {action.title}
+                            </Typography>
+                            <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {action.description}
+                            </Typography>
+                          </Box>
                         </Box>
                       ))
                     )}
@@ -1405,36 +1445,33 @@ function AIChat() {
 
                 {/* Navigation rapide — import docs */}
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Box
-                    onClick={() => navigate('/ai-chat/document-import')}
-                    sx={{
-                      display: 'inline-flex', alignItems: 'center', gap: 0.75,
-                      px: 1.5, py: 0.75,
-                      borderRadius: '8px',
-                      border: theme => `1px dashed ${alpha(theme.palette.divider, 0.5)}`,
-                      cursor: 'pointer',
-                      transition: 'all 0.18s',
-                      '&:hover': { borderColor: 'primary.main', bgcolor: theme => alpha(theme.palette.primary.main, 0.04) },
-                    }}
-                  >
-                    <DocumentScanner sx={{ fontSize: 14, color: 'text.disabled' }} />
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>Importer un document</Typography>
-                  </Box>
-                  <Box
-                    onClick={() => navigate('/ai-chat/import-reviews')}
-                    sx={{
-                      display: 'inline-flex', alignItems: 'center', gap: 0.75,
-                      px: 1.5, py: 0.75,
-                      borderRadius: '8px',
-                      border: theme => `1px dashed ${alpha(theme.palette.divider, 0.5)}`,
-                      cursor: 'pointer',
-                      transition: 'all 0.18s',
-                      '&:hover': { borderColor: 'primary.main', bgcolor: theme => alpha(theme.palette.primary.main, 0.04) },
-                    }}
-                  >
-                    <Assignment sx={{ fontSize: 14, color: 'text.disabled' }} />
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>Imports en attente</Typography>
-                  </Box>
+                  {[
+                    { icon: <DocumentScanner sx={{ fontSize: 15 }} />, label: 'Importer un document', to: '/ai-chat/document-import' },
+                    { icon: <Assignment sx={{ fontSize: 15 }} />, label: 'Imports en attente', to: '/ai-chat/import-reviews' },
+                  ].map((item) => (
+                    <Box
+                      key={item.to}
+                      onClick={() => navigate(item.to)}
+                      sx={{
+                        display: 'inline-flex', alignItems: 'center', gap: 0.75,
+                        px: 1.5, py: 0.875,
+                        borderRadius: `${AI.radius.chip}px`,
+                        border: theme => `1px dashed ${alpha(theme.palette.divider, 0.7)}`,
+                        color: 'text.secondary',
+                        cursor: 'pointer',
+                        transition: 'all 0.18s',
+                        '&:hover': {
+                          borderStyle: 'solid',
+                          borderColor: AI.accent,
+                          color: AI.accent,
+                          bgcolor: alpha(AI.accent, 0.04),
+                        },
+                      }}
+                    >
+                      {item.icon}
+                      <Typography variant="caption" sx={{ fontSize: '0.76rem', fontWeight: 600 }}>{item.label}</Typography>
+                    </Box>
+                  ))}
                 </Box>
 
                 {/* Conversations Proactives */}
@@ -1483,18 +1520,18 @@ function AIChat() {
                         }}
                       >
                         {/* Avatar — only shown on first in a group */}
-                        <Box sx={{ width: 26, flexShrink: 0, mb: 0.25 }}>
+                        <Box sx={{ width: 28, flexShrink: 0, mb: 0.25 }}>
                           {!isConsecutive && (
                             isUser ? (
                               <Box sx={{
-                                width: 26, height: 26, borderRadius: '50%',
-                                bgcolor: isDark ? alpha('#6366f1', 0.25) : alpha('#6366f1', 0.1),
+                                width: 28, height: 28, borderRadius: '50%',
+                                bgcolor: isDark ? alpha(AI.accent, 0.28) : alpha(AI.accent, 0.1),
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                               }}>
-                                <Person sx={{ fontSize: 14, color: '#6366f1' }} />
+                                <Person sx={{ fontSize: 15, color: AI.accent }} />
                               </Box>
                             ) : (
-                              <Mascot pose="happy" animation="none" size={26} />
+                              <Mascot pose="happy" animation="none" size={28} />
                             )
                           )}
                         </Box>
@@ -1502,26 +1539,25 @@ function AIChat() {
                         {/* Bubble */}
                         <Box
                           sx={{
-                            maxWidth: isUser ? { xs: '88%', sm: '78%' } : { xs: '100%', sm: '95%' },
+                            maxWidth: isUser ? { xs: '86%', sm: '76%' } : { xs: '100%', sm: '94%' },
                             ...(isUser ? {
-                              bgcolor: isDark ? '#4f46e5' : '#6366f1',
+                              background: AI.gradient,
                               color: '#fff',
-                              borderRadius: '16px 16px 4px 16px',
+                              borderRadius: `${AI.radius.bubble}px ${AI.radius.bubble}px 5px ${AI.radius.bubble}px`,
                               px: 2,
                               py: 1.25,
-                              boxShadow: isDark
-                                ? '0 2px 12px rgba(99,102,241,0.3)'
-                                : '0 2px 10px rgba(99,102,241,0.2)',
+                              boxShadow: `0 3px 14px ${alpha(AI.accent, isDark ? 0.4 : 0.28)}`,
                             } : {
                               bgcolor: isDark
-                                ? alpha(theme.palette.common.white, 0.05)
+                                ? alpha(theme.palette.common.white, 0.04)
                                 : theme.palette.background.paper,
-                              borderRadius: '4px 16px 16px 16px',
+                              border: `1px solid ${isDark ? alpha('#fff', 0.06) : alpha('#000', 0.05)}`,
+                              borderRadius: `5px ${AI.radius.bubble}px ${AI.radius.bubble}px ${AI.radius.bubble}px`,
                               px: 2,
                               py: 1.25,
                               boxShadow: isDark
                                 ? '0 1px 6px rgba(0,0,0,0.2)'
-                                : '0 1px 4px rgba(0,0,0,0.06)',
+                                : '0 1px 3px rgba(0,0,0,0.04)',
                             }),
                           }}
                         >
@@ -1582,7 +1618,7 @@ function AIChat() {
                                   sx={{
                                     textTransform: 'none', borderRadius: 4, fontSize: '0.78rem',
                                     py: 0.4, px: 1.5, borderColor: 'divider', color: 'text.secondary',
-                                    '&:hover': { borderColor: '#6366f1', color: '#6366f1', bgcolor: alpha('#6366f1', 0.04) },
+                                    '&:hover': { borderColor: AI.accent, color: AI.accent, bgcolor: alpha(AI.accent, 0.04) },
                                   }}
                                 >
                                   {question}
@@ -1602,9 +1638,9 @@ function AIChat() {
                             <Typography
                               variant="caption"
                               sx={{
-                                fontSize: '0.58rem',
-                                opacity: 0.4,
-                                color: isUser ? '#fff' : 'text.secondary',
+                                fontSize: '0.65rem',
+                                opacity: isUser ? 0.7 : 0.55,
+                                color: isUser ? '#fff' : 'text.disabled',
                               }}
                             >
                               {formatDateTime(msg.created_at)}
@@ -1695,29 +1731,33 @@ function AIChat() {
           <Box sx={{ maxWidth: { xs: '100%', md: 900, lg: 1080 }, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
             <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' } }}>
               {[
-                { label: ' Devis', prompt: 'Je veux créer un devis pour un client' },
-                { label: ' Vérifier prix', prompt: 'Vérifie le prix du marché pour un produit' },
-                { label: ' Relancer client', prompt: 'Génère une relance pour une facture impayée' },
-                { label: ' Cash Flow', prompt: 'Fais une analyse prédictive de ma trésorerie 60 jours' },
+                { label: 'Devis', icon: <Description sx={{ fontSize: 13 }} />, prompt: 'Je veux créer un devis pour un client' },
+                { label: 'Vérifier prix', icon: <TrendingUp sx={{ fontSize: 13 }} />, prompt: 'Vérifie le prix du marché pour un produit' },
+                { label: 'Relancer client', icon: <Notifications sx={{ fontSize: 13 }} />, prompt: 'Génère une relance pour une facture impayée' },
+                { label: 'Cash Flow', icon: <BarChart sx={{ fontSize: 13 }} />, prompt: 'Fais une analyse prédictive de ma trésorerie 60 jours' },
               ].map((chip, idx) => (
                 <Box
                   key={idx}
                   onClick={() => setMessage(chip.prompt)}
                   sx={{
+                    display: 'inline-flex', alignItems: 'center', gap: 0.5,
                     px: 1.25, py: 0.5,
-                    borderRadius: '8px',
-                    border: theme => `1px solid ${alpha(theme.palette.divider, 0.45)}`,
+                    borderRadius: 999,
+                    border: theme => `1px solid ${alpha(theme.palette.divider, 0.55)}`,
                     bgcolor: 'background.paper',
+                    color: 'text.secondary',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     transition: 'all 0.15s ease',
                     '&:hover': {
-                      borderColor: '#6366f1',
-                      bgcolor: alpha('#6366f1', 0.05),
+                      borderColor: AI.accent,
+                      color: AI.accent,
+                      bgcolor: alpha(AI.accent, 0.05),
                     },
                   }}
                 >
-                  <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 500, color: 'text.secondary' }}>
+                  {chip.icon}
+                  <Typography variant="caption" sx={{ fontSize: '0.72rem', fontWeight: 600, color: 'inherit' }}>
                     {chip.label}
                   </Typography>
                 </Box>
@@ -1731,7 +1771,7 @@ function AIChat() {
           sx={{
             p: { xs: 1.5, sm: 3 },
             pt: { xs: 0.5, sm: 1 },
-            pb: { xs: 2, sm: 3 },
+            pb: { xs: 'calc(12px + env(safe-area-inset-bottom, 0px))', sm: 3 },
             width: '100%',
           }}
         >
@@ -1752,8 +1792,8 @@ function AIChat() {
                 : '0 2px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03)',
               transition: 'border-color 0.2s, box-shadow 0.2s',
               '&:focus-within': {
-                borderColor: alpha('#6366f1', 0.5),
-                boxShadow: `0 0 0 3px ${alpha('#6366f1', 0.1)}, 0 2px 16px rgba(0,0,0,0.08)`,
+                borderColor: alpha(AI.accent, 0.5),
+                boxShadow: `0 0 0 3px ${alpha(AI.accent, 0.1)}, 0 2px 16px rgba(0,0,0,0.08)`,
               }
             }}
           >
@@ -1859,16 +1899,18 @@ function AIChat() {
                     aria-label={loading ? 'stop' : 'send'}
                     sx={{
                       mb: 0.5,
-                      background: (loading || message.trim())
-                        ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
-                        : theme.palette.background.paper,
+                      background: loading
+                        ? 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)'
+                        : (message.trim() ? AI.gradient : theme.palette.background.paper),
                       color: (loading || message.trim()) ? 'white' : 'text.disabled',
                       width: { xs: 38, sm: 42 },
                       height: { xs: 38, sm: 42 },
                       borderRadius: '14px',
-                      boxShadow: (loading || message.trim())
-                        ? `0 4px 16px ${alpha('#6366f1', 0.4)}`
-                        : getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+                      boxShadow: loading
+                        ? `0 4px 16px ${alpha('#ef4444', 0.4)}`
+                        : (message.trim()
+                          ? `0 4px 16px ${alpha(AI.accent, 0.4)}`
+                          : getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft')),
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&.Mui-disabled': {
                         background: theme.palette.background.paper,

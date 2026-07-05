@@ -266,7 +266,8 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
             sx={{
               fontSize: '0.75rem',
               fontFamily: 'monospace',
-              backgroundColor: 'grey.100',
+              backgroundColor: (theme) => theme.palette.mode === 'dark' ? alpha('#fff', 0.08) : 'grey.100',
+              color: 'text.primary',
               height: 'auto',
               py: 0.25,
               px: 0.5,
@@ -317,7 +318,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
           pl: 1.5,
           py: 0.5,
           my: 1,
-          backgroundColor: 'grey.50',
+          backgroundColor: (theme) => theme.palette.mode === 'dark' ? alpha('#fff', 0.04) : 'grey.50',
         }}
       >
         {children}
@@ -762,7 +763,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                     {isSuccess && data.name && !items.length && (
                       <Box
                         sx={{
-                          backgroundColor: 'white',
+                          backgroundColor: (theme) => theme.palette.mode === 'dark' ? alpha('#fff', 0.06) : 'white',
                           p: 1,
                           borderRadius: 1,
                           mb: 1,
