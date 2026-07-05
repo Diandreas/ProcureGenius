@@ -1,7 +1,7 @@
 {
-  "short_name": "ProcureGenius",
-  "name": "ProcureGenius - Gestion d'entreprise avec IA",
-  "description": "Application de gestion d'entreprise avec assistant IA intégré",
+  "short_name": "Procura",
+  "name": "Procura - Gestion intelligente pour entreprises",
+  "description": "Factures, devis, stocks, trésorerie, comptabilité : assistant IA intégré pour piloter toute ta gestion.",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -20,7 +20,7 @@
   "background_color": "#F9FAFB",
   "display": "standalone",
   "scope": "/",
-  "theme_color": "#4F46E5",
+  "theme_color": "#2563eb",
   "orientation": "any",
   "categories": [
     "business",

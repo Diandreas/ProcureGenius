@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /ai-chat
+Disallow: /invoices
+Disallow: /purchase-orders
+Disallow: /suppliers
+Disallow: /clients
+Disallow: /products
+Disallow: /contracts
+Disallow: /accounting
+Disallow: /e-sourcing
+Disallow: /settings
+Disallow: /admin-panel
+Disallow: /subscription/success
+Disallow: /subscription/cancel
+Disallow: /sourcing/public/
+
+Sitemap: https://procura.mirlab.cloud/sitemap.xml
