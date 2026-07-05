@@ -275,6 +275,15 @@ class Subscription(models.Model):
         verbose_name=_("Fin de la période d'essai")
     )
 
+    # Suivi des relances d'essai par email (évite les doublons si le cron
+    # tourne plusieurs fois le même jour ou est relancé).
+    trial_reminder_7d_sent = models.BooleanField(
+        default=False, verbose_name=_("Relance essai J-7 envoyée")
+    )
+    trial_reminder_1d_sent = models.BooleanField(
+        default=False, verbose_name=_("Relance essai J-1 envoyée")
+    )
+
     current_period_start = models.DateTimeField(
         verbose_name=_("Début période actuelle")
     )

@@ -18,6 +18,11 @@
 # Expiration des essais gratuits (retour au plan gratuit) - Quotidiennement à 1h du matin
 0 1 * * * cd /chemin/vers/ProcureGenius && python manage.py expire_trials >> /var/log/procuregenius/expire_trials.log 2>&1
 
+# Relances email avant fin d'essai gratuit (J-7 et J-1) - Quotidiennement à 9h
+# (avant expire_trials qui, lui, tourne a 1h : les relances precedent toujours
+# la coupure reelle de plusieurs heures a plusieurs jours)
+0 9 * * * cd /chemin/vers/ProcureGenius && python manage.py send_trial_reminders >> /var/log/procuregenius/trial_reminders.log 2>&1
+
 # --- Facturation ---
 
 # Relances automatiques des factures impayées (dunning, opt-in par organisation

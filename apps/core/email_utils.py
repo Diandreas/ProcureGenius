@@ -277,6 +277,129 @@ def send_welcome_registration_email(user, organization):
         return False
 
 
+def send_trial_ending_email(user, organization, plan_name, days_remaining):
+    """
+    Envoie un email de relance avant la fin de l'essai gratuit (J-7 ou J-1).
+    Sans carte enregistrée, l'essai bascule silencieusement vers le plan
+    gratuit à l'échéance (cf. expire_trials) — cet email est la seule
+    occasion de convertir avant la perte des fonctionnalités payantes.
+    """
+    try:
+        app_url = settings.FRONTEND_URL
+        from_email = settings.DEFAULT_FROM_EMAIL
+
+        if days_remaining <= 1:
+            subject = "Votre essai Procura se termine demain"
+            urgency = "se termine <strong>demain</strong>"
+        else:
+            subject = f"Votre essai Procura se termine dans {days_remaining} jours"
+            urgency = f"se termine dans <strong>{days_remaining} jours</strong>"
+
+        html_body = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; background:#f5f5f5; padding: 20px;">
+  <div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <div style="background:#1976d2;padding:24px;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:24px;">Procura</h1>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="color:#333;">Votre essai {plan_name} {urgency.replace('<strong>', '').replace('</strong>', '')}</h2>
+      <p style="color:#555;">Bonjour {user.first_name or user.email},</p>
+      <p style="color:#555;">Votre période d'essai du plan <strong>{plan_name}</strong> pour "{organization.name}" {urgency}.</p>
+      <p style="color:#555;">Sans abonnement actif à cette date, votre compte repassera automatiquement au plan gratuit et vous perdrez l'accès aux fonctionnalités payantes (assistant IA, bons de commande, fournisseurs, etc.). Vos données restent intactes.</p>
+      <p style="text-align:center;margin:32px 0;">
+        <a href="{app_url}/pricing" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
+          Choisir un abonnement
+        </a>
+      </p>
+    </div>
+    <div style="background:#f5f5f5;padding:16px;text-align:center;">
+      <p style="color:#aaa;font-size:12px;margin:0;">Procura — Gestion des achats intelligente</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=f"Votre essai {plan_name} {urgency.replace(chr(60)+'strong'+chr(62), '').replace(chr(60)+'/strong'+chr(62), '')}. Choisissez un abonnement : {app_url}/pricing",
+            from_email=from_email,
+            to=[user.email],
+        )
+        email.attach_alternative(html_body, "text/html")
+        email.send(fail_silently=False)
+
+        logger.info(f"Trial ending email (J-{days_remaining}) sent to {user.email}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send trial ending email to {user.email}: {e}", exc_info=True)
+        return False
+
+
+def send_subscription_receipt_email(user, organization, plan_name, amount, currency='EUR'):
+    """
+    Envoie un reçu par email après un paiement d'abonnement réussi.
+    Déclenché depuis StripeService._handle_payment_succeeded (webhook
+    invoice.payment_succeeded), avec la même idempotence que l'écriture de
+    paiement associée (pas de doublon en cas de rejeu du webhook).
+    """
+    try:
+        app_url = settings.FRONTEND_URL
+        from_email = settings.DEFAULT_FROM_EMAIL
+        subject = f"Reçu de paiement — Procura {plan_name}"
+
+        html_body = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; background:#f5f5f5; padding: 20px;">
+  <div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+    <div style="background:#1976d2;padding:24px;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:24px;">Procura</h1>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="color:#333;">Merci pour votre paiement</h2>
+      <p style="color:#555;">Bonjour {user.first_name or user.email},</p>
+      <p style="color:#555;">Nous avons bien reçu votre paiement pour l'abonnement <strong>{plan_name}</strong> de "{organization.name}".</p>
+      <table style="width:100%;border-collapse:collapse;margin:24px 0;">
+        <tr><td style="padding:8px 0;color:#888;">Plan</td><td style="padding:8px 0;text-align:right;color:#333;font-weight:bold;">{plan_name}</td></tr>
+        <tr style="border-top:1px solid #eee;"><td style="padding:8px 0;color:#888;">Montant</td><td style="padding:8px 0;text-align:right;color:#333;font-weight:bold;">{amount} {currency}</td></tr>
+      </table>
+      <p style="text-align:center;margin:32px 0;">
+        <a href="{app_url}/settings" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
+          Gérer mon abonnement
+        </a>
+      </p>
+    </div>
+    <div style="background:#f5f5f5;padding:16px;text-align:center;">
+      <p style="color:#aaa;font-size:12px;margin:0;">Procura — Gestion des achats intelligente</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=f"Paiement recu : {plan_name} - {amount} {currency}. Gerer : {app_url}/settings",
+            from_email=from_email,
+            to=[user.email],
+        )
+        email.attach_alternative(html_body, "text/html")
+        email.send(fail_silently=False)
+
+        logger.info(f"Subscription receipt email sent to {user.email} ({amount} {currency})")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send subscription receipt email to {user.email}: {e}", exc_info=True)
+        return False
+
+
 def send_password_reset_email(user, token):
     """
     Envoie un email de réinitialisation de mot de passe.

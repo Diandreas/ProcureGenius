@@ -382,12 +382,20 @@ class StripeService:
             payment_method='stripe',
             stripe_payment_intent_id=session.get('payment_intent') or '',
         )
+        created = True
         if txn_id:
-            SubscriptionPayment.objects.get_or_create(
+            _, created = SubscriptionPayment.objects.get_or_create(
                 subscription=sub, transaction_id=txn_id, defaults=payment_defaults,
             )
         else:
             SubscriptionPayment.objects.create(subscription=sub, **payment_defaults)
+
+        # Reçu par email — seulement pour un NOUVEAU paiement (dedup txn_id :
+        # confirm-session ET le webhook appellent tous deux ce chemin pour le
+        # premier règlement, un seul des deux doit envoyer le reçu).
+        if created:
+            StripeService._send_receipt_email(sub, amount, 'EUR')
+
         logger.info(f"Subscription activated: org={org_id} plan={plan_code}")
 
     @staticmethod
@@ -414,14 +422,32 @@ class StripeService:
                 payment_method='stripe',
                 stripe_payment_intent_id=invoice.get('payment_intent') or '',
             )
+            created = True
             if txn_id:
-                SubscriptionPayment.objects.get_or_create(
+                payment, created = SubscriptionPayment.objects.get_or_create(
                     subscription=sub, transaction_id=txn_id, defaults=payment_defaults,
                 )
             else:
                 SubscriptionPayment.objects.create(subscription=sub, **payment_defaults)
+
+            # Reçu par email — seulement pour un NOUVEAU paiement (created=True),
+            # jamais sur un rejeu du webhook (même txn_id déjà traité).
+            if created:
+                StripeService._send_receipt_email(sub, payment_defaults['amount'], payment_defaults['currency'])
         except Subscription.DoesNotExist:
             logger.warning(f"No subscription found for stripe_sub_id={stripe_sub_id}")
+
+    @staticmethod
+    def _send_receipt_email(sub, amount, currency):
+        """Envoie le reçu de paiement à l'admin de l'organisation (best-effort,
+        ne doit jamais faire échouer le traitement du webhook)."""
+        try:
+            from apps.core.email_utils import send_subscription_receipt_email
+            admin = sub.organization.users.filter(role='admin', is_active=True).first()
+            if admin and admin.email:
+                send_subscription_receipt_email(admin, sub.organization, sub.plan.name, amount, currency)
+        except Exception as e:
+            logger.warning(f"Receipt email failed for subscription {sub.id}: {e}")
 
     @staticmethod
     def _handle_payment_failed(invoice):
