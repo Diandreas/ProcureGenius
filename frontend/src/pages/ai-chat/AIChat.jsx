@@ -685,15 +685,6 @@ function AIChat() {
     fetchSuggestions();
     fetchProactiveConversations();
 
-    // Écouter les événements depuis MainLayout
-    const handleOpenNotifications = () => openNotificationsCenter();
-    const handleOpenSuggestions = () => setSuggestionsPanelOpen(true);
-    const handleOpenConversations = () => setDrawerOpen(true);
-
-    window.addEventListener('ai-chat-open-notifications', handleOpenNotifications);
-    window.addEventListener('ai-chat-open-suggestions', handleOpenSuggestions);
-    window.addEventListener('ai-chat-open-conversations', handleOpenConversations);
-
     if (location.state?.voiceMessage) {
       setMessage(location.state.voiceMessage);
       enqueueSnackbar(t('aiChat:messages.voiceTranscribed'), { variant: 'success' });
@@ -704,22 +695,58 @@ function AIChat() {
     window.addEventListener('ai-chat-new-conversation', handleNewConversation);
 
     return () => {
-      window.removeEventListener('ai-chat-open-notifications', handleOpenNotifications);
-      window.removeEventListener('ai-chat-open-suggestions', handleOpenSuggestions);
-      window.removeEventListener('ai-chat-open-conversations', handleOpenConversations);
       window.removeEventListener('ai-chat-new-conversation', handleNewConversation);
     };
   }, []); // Run only on mount
 
-  // Mettre à jour le header global
+  // Mettre à jour le header global (actions unifiées : plus de barre d'outils interne dupliquée)
   useEffect(() => {
     const artifactsCount = artifacts.filter(a => !a.archived).length;
-    const conversationsCount = conversations.length;
 
     setPageHeader({
       title: t('aiChat:title', 'Assistant IA'),
       actions: (
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <Tooltip title={t('aiChat:sidebar.history', 'Historique')}>
+            <IconButton size="small" onClick={() => setDrawerOpen(true)} sx={{ color: 'text.secondary' }}>
+              <History sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Imports">
+            <IconButton size="small" onClick={() => navigate('/ai-chat/import-reviews')} sx={{ color: 'text.secondary' }}>
+              <Assignment sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Notifications">
+            <IconButton size="small" onClick={() => openNotificationsCenter()} sx={{ color: unreadCount > 0 ? 'warning.main' : 'text.secondary' }}>
+              <Badge badgeContent={unreadCount} color="warning" variant="dot">
+                <Notifications sx={{ fontSize: 20 }} />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Suggestions">
+            <IconButton size="small" onClick={() => setSuggestionsPanelOpen(true)} sx={{ color: usageStats?.suggestions_count > 0 ? 'secondary.main' : 'text.secondary' }}>
+              <Badge badgeContent={usageStats?.suggestions_count || 0} color="secondary" variant="dot">
+                <Lightbulb sx={{ fontSize: 20 }} />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+
+          {artifactsCount > 0 && (
+            <Tooltip title="Visualisations">
+              <IconButton size="small" onClick={() => setArtifactsPanelOpen(true)} sx={{ color: 'primary.main' }}>
+                <Badge badgeContent={artifactsCount} color="primary">
+                  <Analytics sx={{ fontSize: 20 }} />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+          )}
+
+          <Divider orientation="vertical" flexItem sx={{ height: 20, my: 'auto', mx: 0.5 }} />
+
           <Button
             size="small"
             startIcon={<Add sx={{ fontSize: 18 }} />}
@@ -741,7 +768,7 @@ function AIChat() {
         </Stack>
       )
     });
-  }, [t, theme, navigate, setPageHeader]);
+  }, [t, theme, navigate, setPageHeader, artifacts, unreadCount, usageStats?.suggestions_count]);
 
   // Effet pour changer automatiquement les widgets
   useEffect(() => {
@@ -774,10 +801,6 @@ function AIChat() {
     try {
       const response = await aiChatAPI.getUsageSummary();
       setUsageStats(response.data);
-      // Notifier MainLayout des stats mises à jour
-      window.dispatchEvent(new CustomEvent('ai-chat-stats-update', {
-        detail: { stats: response.data }
-      }));
     } catch (error) {
       console.error('Error fetching usage stats:', error);
     }
@@ -932,10 +955,6 @@ function AIChat() {
 
     (payload.action_results || []).forEach(result => {
       if (result.result?.success) {
-        enqueueSnackbar(result.result.message || t('aiChat:messages.actionExecutedSuccess'), {
-          variant: 'success',
-          autoHideDuration: 3000,
-        });
         window.dispatchEvent(new CustomEvent('mascot-success'));
       } else if (result.result?.success === false) {
         window.dispatchEvent(new CustomEvent('mascot-error'));
@@ -1296,80 +1315,6 @@ function AIChat() {
         width: '100%',
         bgcolor: 'background.default',
       }}>
-        {/* Barre d'outils interne */}
-        <Box sx={{
-          px: 2,
-          py: 0.75,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: theme => `1px solid ${alpha(theme.palette.divider, 0.35)}`,
-          bgcolor: 'background.paper',
-        }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Button
-              size="small"
-              startIcon={<History sx={{ fontSize: 16 }} />}
-              onClick={() => setDrawerOpen(true)}
-              sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '0.75rem',
-                color: 'text.secondary',
-                '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.05), color: 'primary.main' }
-              }}
-            >
-              {t('aiChat:sidebar.history', 'Historique')}
-            </Button>
-            <Divider orientation="vertical" flexItem sx={{ height: 16, my: 'auto' }} />
-            <IconButton size="small" onClick={() => navigate('/ai-chat/import-reviews')} title="Imports">
-              <Assignment sx={{ fontSize: 18, color: 'text.secondary' }} />
-            </IconButton>
-          </Stack>
-
-          <Stack direction="row" spacing={1} alignItems="center">
-            {/* Notifications */}
-            <IconButton size="small" onClick={() => openNotificationsCenter()} sx={{ color: unreadCount > 0 ? 'warning.main' : 'text.secondary' }}>
-              <Badge badgeContent={unreadCount} color="warning" variant="dot">
-                <Notifications sx={{ fontSize: 18 }} />
-              </Badge>
-            </IconButton>
-
-            {/* Suggestions */}
-            <IconButton size="small" onClick={() => setSuggestionsPanelOpen(true)} sx={{ color: usageStats?.suggestions_count > 0 ? 'secondary.main' : 'text.secondary' }}>
-              <Badge badgeContent={usageStats?.suggestions_count || 0} color="secondary" variant="dot">
-                <Lightbulb sx={{ fontSize: 18 }} />
-              </Badge>
-            </IconButton>
-
-            {/* Visualisations - Toujours conditionnel */}
-            {artifacts.filter(a => !a.archived).length > 0 && (
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<Analytics sx={{ fontSize: 16 }} />}
-                onClick={() => setArtifactsPanelOpen(true)}
-                sx={{
-                  borderRadius: '8px',
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  color: 'primary.main',
-                  borderColor: alpha(theme.palette.primary.main, 0.3),
-                  bgcolor: alpha(theme.palette.primary.main, 0.05),
-                  '&:hover': {
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    borderColor: 'primary.main',
-                  }
-                }}
-              >
-                Visualisations ({artifacts.filter(a => !a.archived).length})
-              </Button>
-            )}
-          </Stack>
-        </Box>
-
         {/* Messages */}
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
           {/* Zone de conversation */}
@@ -1528,7 +1473,7 @@ function AIChat() {
               </Box>
             </Fade>
           ) : (
-            <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 1, sm: 2 } }}>
+            <Box sx={{ maxWidth: { xs: '100%', md: 900, lg: 1080 }, mx: 'auto', px: { xs: 1, sm: 2 } }}>
               <AnimatePresence mode="popLayout">
                 {messages.map((msg, index) => {
                   const isUser = msg.role === 'user';
@@ -1571,7 +1516,7 @@ function AIChat() {
                         {/* Bubble */}
                         <Box
                           sx={{
-                            maxWidth: { xs: '88%', sm: '78%' },
+                            maxWidth: isUser ? { xs: '88%', sm: '78%' } : { xs: '100%', sm: '95%' },
                             ...(isUser ? {
                               bgcolor: isDark ? '#4f46e5' : '#6366f1',
                               color: '#fff',
@@ -1761,7 +1706,7 @@ function AIChat() {
 
         {/* Suggestion chips */}
         {messages.length > 0 && (
-          <Box sx={{ maxWidth: 720, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
+          <Box sx={{ maxWidth: { xs: '100%', md: 900, lg: 1080 }, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
             <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' } }}>
               {[
                 { label: ' Devis', prompt: 'Je veux créer un devis pour un client' },
@@ -1807,7 +1752,7 @@ function AIChat() {
           <Paper
             elevation={0}
             sx={{
-              maxWidth: 720,
+              maxWidth: { xs: '100%', md: 900, lg: 1080 },
               mx: 'auto',
               display: 'flex',
               gap: { xs: 0.75, sm: 1 },

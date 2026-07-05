@@ -1,6 +1,67 @@
 import React, { useState } from 'react';
 import { Box, Typography, Collapse, CircularProgress, alpha, useTheme } from '@mui/material';
 import { CheckCircle, ErrorOutline, ExpandMore, AutoAwesome } from '@mui/icons-material';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+// Composants markdown compacts pour le raisonnement (taille caption, dans le fil de l'étape)
+const timelineMarkdownComponents = {
+  p: ({ children }) => (
+    <Typography component="span" variant="caption" sx={{ display: 'block', fontSize: 'inherit', lineHeight: 'inherit' }}>
+      {children}
+    </Typography>
+  ),
+  strong: ({ children }) => (
+    <Typography component="strong" sx={{ fontWeight: 700, fontSize: 'inherit' }}>
+      {children}
+    </Typography>
+  ),
+  em: ({ children }) => (
+    <Typography component="em" sx={{ fontStyle: 'italic', fontSize: 'inherit' }}>
+      {children}
+    </Typography>
+  ),
+  ul: ({ children }) => (
+    <Box component="ul" sx={{ pl: 2, my: 0.25, '& li': { mb: 0 } }}>
+      {children}
+    </Box>
+  ),
+  ol: ({ children }) => (
+    <Box component="ol" sx={{ pl: 2, my: 0.25, '& li': { mb: 0 } }}>
+      {children}
+    </Box>
+  ),
+  li: ({ children }) => (
+    <Typography component="li" variant="caption" sx={{ fontSize: 'inherit' }}>
+      {children}
+    </Typography>
+  ),
+  table: ({ children }) => (
+    <Box sx={{ overflowX: 'auto', my: 0.5 }}>
+      <Box
+        component="table"
+        sx={{
+          borderCollapse: 'collapse',
+          width: '100%',
+          fontSize: '0.7rem',
+          '& th, & td': { border: 1, borderColor: 'divider', px: 0.75, py: 0.25, textAlign: 'left' },
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  ),
+  thead: ({ children }) => (
+    <Box component="thead" sx={{ bgcolor: 'action.hover' }}>
+      {children}
+    </Box>
+  ),
+  th: ({ children }) => (
+    <Box component="th" sx={{ fontWeight: 600 }}>
+      {children}
+    </Box>
+  ),
+};
 
 /**
  * Timeline des étapes de la boucle agentique IA (façon Claude.ai).
@@ -150,18 +211,18 @@ const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
                 {/* Contenu de l'étape */}
                 <Box sx={{ pb: isLast ? 0 : 1, minWidth: 0 }}>
                   {step.kind === 'thought' ? (
-                    <Typography
-                      variant="caption"
+                    <Box
                       sx={{
-                        display: 'block',
                         fontSize: '0.75rem',
                         fontStyle: 'italic',
                         color: 'text.secondary',
                         lineHeight: 1.45,
                       }}
                     >
-                      {step.content}
-                    </Typography>
+                      <ReactMarkdown components={timelineMarkdownComponents} remarkPlugins={[remarkGfm]}>
+                        {step.content}
+                      </ReactMarkdown>
+                    </Box>
                   ) : (
                     <>
                       <Typography
@@ -178,17 +239,17 @@ const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
                         {step.label || step.name}
                       </Typography>
                       {step.summary && status !== 'running' && (
-                        <Typography
-                          variant="caption"
+                        <Box
                           sx={{
-                            display: 'block',
                             fontSize: '0.7rem',
                             color: 'text.disabled',
                             lineHeight: 1.4,
                           }}
                         >
-                          {step.summary}
-                        </Typography>
+                          <ReactMarkdown components={timelineMarkdownComponents} remarkPlugins={[remarkGfm]}>
+                            {step.summary}
+                          </ReactMarkdown>
+                        </Box>
                       )}
                     </>
                   )}

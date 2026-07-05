@@ -333,6 +333,37 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
         {children}
       </Typography>
     ),
+    table: ({ children }) => (
+      <Box sx={{ overflowX: 'auto', my: 1 }}>
+        <Box
+          component="table"
+          sx={{
+            borderCollapse: 'collapse',
+            width: '100%',
+            fontSize: '0.8rem',
+            '& th, & td': {
+              border: 1,
+              borderColor: 'divider',
+              px: 1,
+              py: 0.5,
+              textAlign: 'left',
+            },
+          }}
+        >
+          {children}
+        </Box>
+      </Box>
+    ),
+    thead: ({ children }) => (
+      <Box component="thead" sx={{ bgcolor: 'action.hover' }}>
+        {children}
+      </Box>
+    ),
+    th: ({ children }) => (
+      <Box component="th" sx={{ fontWeight: 600 }}>
+        {children}
+      </Box>
+    ),
   };
 
   // Ouvrir le modal avec les données
@@ -386,27 +417,16 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
 
   // Rendu compact des résultats d'actions
   const renderActionResults = () => {
-    if (!actionResults || actionResults.length === 0) return null;
+    const visibleResults = (actionResults || []).filter(result => !result.result?.internal);
+    if (visibleResults.length === 0) return null;
 
     return (
       <Box sx={{ mt: 1.5 }}>
-        {actionResults.map((result, index) => {
+        {visibleResults.map((result, index) => {
           const isSuccess = result.result?.success;
           const data = result.result?.data || {};
           const entityType = data.entity_type;
           const items = data.items || []; // Liste d'éléments si présente
-
-          // DEBUG: Log pour comprendre la structure des données
-          console.log(' DEBUG actionResult:', {
-            index,
-            isSuccess,
-            entityType,
-            hasId: !!data.id,
-            hasItems: items.length > 0,
-            itemsCount: items.length,
-            fullResult: result,
-            fullData: data
-          });
 
           const getEntityUrl = () => {
             if (!data.id) return null; // Pas d'URL si c'est une liste

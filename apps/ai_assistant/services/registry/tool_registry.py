@@ -298,6 +298,7 @@ class ToolRegistry:
         if resolved is None:
             return {
                 "success": False,
+                "internal": True,
                 "error": f"Action '{name}' non reconnue. "
                          f"Actions disponibles: {', '.join(self.names())}",
             }

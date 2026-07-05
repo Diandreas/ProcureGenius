@@ -35,11 +35,9 @@ import {
   LightMode,
   PictureAsPdf,
   Notifications,
-  Lightbulb,
   Menu as MenuIcon,
   ChevronLeft,
   ChevronRight,
-  Assignment,
   ArrowBack,
   PowerSettingsNew,
 } from '@mui/icons-material';
@@ -154,7 +152,6 @@ function MainLayout() {
   });
   const [anchorEl, setAnchorEl] = useState(null);
   const [dashboardPeriod, setDashboardPeriod] = useState('last_30_days');
-  const [aiChatStats, setAiChatStats] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   // Largeur effective de la sidebar (rétractable sur desktop)
@@ -181,37 +178,12 @@ function MainLayout() {
     return () => window.removeEventListener('dashboard-period-change', handlePeriodChange);
   }, []);
 
-  // Écouter les mises à jour des stats AI Chat
   useEffect(() => {
-    const handleAIStatsUpdate = (event) => {
-      if (event.detail?.stats) {
-        setAiChatStats(event.detail.stats);
-      }
-    };
-    window.addEventListener('ai-chat-stats-update', handleAIStatsUpdate);
     window.addEventListener('toggle-mobile-drawer', () => setMobileOpen(prev => !prev));
     return () => {
-      window.removeEventListener('ai-chat-stats-update', handleAIStatsUpdate);
       window.removeEventListener('toggle-mobile-drawer', () => setMobileOpen(prev => !prev));
     };
   }, []);
-
-  // Handlers pour les boutons AI Chat
-  const handleAIChatNotificationsClick = () => {
-    window.dispatchEvent(new CustomEvent('ai-chat-open-notifications'));
-  };
-
-  const handleAIChatSuggestionsClick = () => {
-    window.dispatchEvent(new CustomEvent('ai-chat-open-suggestions'));
-  };
-
-  const handleAIChatConversationsClick = () => {
-    window.dispatchEvent(new CustomEvent('ai-chat-open-conversations'));
-  };
-
-  const handleAIChatImportReviewsClick = () => {
-    navigate('/ai-chat/import-reviews');
-  };
 
   const menuItems = [
     { text: t('navigation:menu.dashboard'), iconSrc: '/icon/dashboard.png', path: '/dashboard', moduleId: 'dashboard', isCore: true },
@@ -874,60 +846,6 @@ function MainLayout() {
             <Box sx={{ mr: { xs: 0.5, sm: 1 }, display: 'flex', alignItems: 'center' }}>
               <TrialChip />
             </Box>
-
-            {/* Actions AI Chat - Masquer sur mobile pour éviter redondance avec les boutons dans l'interface AI */}
-            {isAIChatPage && (
-              <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 0.5, mr: 2 }}>
-                <Tooltip title="Imports">
-                  <IconButton
-                    size="small"
-                    onClick={handleAIChatImportReviewsClick}
-                    sx={{
-                      p: 1,
-                      borderRadius: 2,
-                      color: 'text.secondary',
-                      '&:hover': { bgcolor: alpha(theme.palette.success.main, 0.08), color: 'success.main' }
-                    }}
-                  >
-                    <Assignment sx={{ fontSize: 20 }} />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title="Notifications">
-                  <IconButton
-                    size="small"
-                    onClick={handleAIChatNotificationsClick}
-                    sx={{
-                      p: 1,
-                      borderRadius: 2,
-                      color: aiChatStats?.notifications_count > 0 ? 'warning.main' : 'text.secondary',
-                      '&:hover': { bgcolor: alpha(theme.palette.warning.main, 0.08) }
-                    }}
-                  >
-                    <Badge badgeContent={aiChatStats?.notifications_count || 0} color="warning" variant="dot">
-                      <Notifications sx={{ fontSize: 20 }} />
-                    </Badge>
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title="Suggestions">
-                  <IconButton
-                    size="small"
-                    onClick={handleAIChatSuggestionsClick}
-                    sx={{
-                      p: 1,
-                      borderRadius: 2,
-                      color: aiChatStats?.suggestions_count > 0 ? 'secondary.main' : 'text.secondary',
-                      '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.08) }
-                    }}
-                  >
-                    <Badge badgeContent={aiChatStats?.suggestions_count || 0} color="secondary" variant="dot">
-                      <Lightbulb sx={{ fontSize: 20 }} />
-                    </Badge>
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            )}
 
             {/* Period Selector - Global Dashboard Control (optimisé mobile) */}
             {contextualActions?.periodControls && (
