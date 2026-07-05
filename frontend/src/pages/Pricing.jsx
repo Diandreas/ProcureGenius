@@ -10,6 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import subscriptionAPI from '../services/subscriptionAPI';
 import { PLANS } from '../data/pricingPlans';
+import usePageMeta from '../hooks/usePageMeta';
 
 // ── Direction artistique : éditorial premium, dans la charte Procura ──────────
 // Charte : bleu #2563eb (primaire) + doré #f59e0b (accent) + ardoise.
@@ -55,6 +56,12 @@ const Pricing = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [billing, setBilling] = useState('monthly');
   const [loading, setLoading] = useState(null);
+
+  usePageMeta({
+    title: 'Tarifs',
+    description: "Des plans clairs, sans surprise : commencez gratuitement, passez au plan supérieur quand votre activité grandit. Essai 30 jours sans carte.",
+    path: '/pricing',
+  });
 
   const getPrice = (plan) => {
     if (plan.priceMonthly === null) return null;

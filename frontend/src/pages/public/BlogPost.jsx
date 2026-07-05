@@ -6,6 +6,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { getPostBySlug, BLOG_POSTS } from '../../data/blogPosts';
+import usePageMeta from '../../hooks/usePageMeta';
 
 export default function BlogPost() {
   const { slug } = useParams();
@@ -14,8 +15,14 @@ export default function BlogPost() {
   const isDark = theme.palette.mode === 'dark';
   const post = getPostBySlug(slug);
 
+  usePageMeta(post ? {
+    title: post.title,
+    description: post.excerpt,
+    image: post.cover ? `https://procura.mirlab.cloud${post.cover}` : undefined,
+    path: `/blog/${post.slug}`,
+  } : {});
+
   useEffect(() => {
-    document.title = post ? `${post.title} | Procura` : 'Article | Procura';
     window.scrollTo(0, 0);
   }, [post]);
 

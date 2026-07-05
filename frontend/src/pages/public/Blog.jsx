@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import ArticleIcon from '@mui/icons-material/Article';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { BLOG_POSTS, AUDIENCES } from '../../data/blogPosts';
+import usePageMeta from '../../hooks/usePageMeta';
 
 export default function Blog() {
   const theme = useTheme();
@@ -12,8 +13,13 @@ export default function Blog() {
   const navigate = useNavigate();
   const [audience, setAudience] = useState('all');
 
+  usePageMeta({
+    title: 'Blog',
+    description: "Conseils, retours d'expérience et astuces pour piloter facturation, stock et trésorerie sans y passer vos soirées.",
+    path: '/blog',
+  });
+
   useEffect(() => {
-    document.title = 'Blog | Procura';
     window.scrollTo(0, 0);
   }, []);
 
