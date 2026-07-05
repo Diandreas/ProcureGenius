@@ -46,6 +46,7 @@ import {
 import { logout } from '../store/slices/authSlice';
 import { isNativePlatform } from '../utils/platform';
 import TrialChip from '../components/TrialChip';
+import PastDueBanner from '../components/PastDueBanner';
 
 // Clic sur le logo : web -> landing marketing ; app mobile -> dashboard.
 const LOGO_TARGET = isNativePlatform() ? '/dashboard' : '/landing';
@@ -1290,6 +1291,7 @@ function MainLayout() {
               sm: 80,
             },
           }} />
+          <PastDueBanner />
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             <LayoutGroup>
               <PageTransition locationKey={location.pathname}>
