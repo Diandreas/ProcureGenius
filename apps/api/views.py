@@ -21,7 +21,7 @@ from .serializers import (
     InvoiceSerializer, InvoiceItemSerializer,
     ProductSerializer, ClientSerializer, ProductBatchSerializer,
     ProductCategorySerializer, WarehouseSerializer,
-    DashboardStatsSerializer, PaymentSerializer
+    DashboardStatsSerializer, PaymentSerializer, CreditNoteSerializer
 )
 
 
@@ -1602,6 +1602,67 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             'message': 'Devis converti en facture brouillon.',
             'invoice': serializer.data,
         })
+
+    @action(detail=True, methods=['get', 'post'], url_path='credit-notes')
+    def credit_notes(self, request, pk=None):
+        """Liste et émission d'avoirs (notes de crédit) sur une facture."""
+        invoice = self.get_object()
+
+        if request.method == 'GET':
+            notes = invoice.credit_notes.select_related('created_by').order_by('-created_at')
+            return Response({
+                'credit_notes': CreditNoteSerializer(notes, many=True).data,
+                'total_amount': float(invoice.total_amount),
+                'total_credited': float(invoice.total_credited()),
+                'remaining_creditable': float(
+                    invoice.total_amount - invoice.total_credited()
+                ),
+            })
+
+        # POST — émettre un avoir
+        amount = request.data.get('amount')
+        reason = request.data.get('reason', '')
+        try:
+            credit_note = invoice.issue_credit_note(amount=amount, reason=reason, user=request.user)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        invoice.refresh_from_db()
+        return Response({
+            'credit_note': CreditNoteSerializer(credit_note).data,
+            'invoice_status': invoice.status,
+            'remaining_creditable': float(invoice.total_amount - invoice.total_credited()),
+        }, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'], url_path='credit-notes/(?P<credit_note_id>[^/.]+)/pdf')
+    def credit_note_pdf(self, request, pk=None, credit_note_id=None):
+        """Télécharge le PDF d'un avoir donné."""
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        from weasyprint import HTML
+        from apps.invoicing.models import CreditNote
+        from apps.core.models import OrganizationSettings
+
+        invoice = self.get_object()
+        try:
+            credit_note = invoice.credit_notes.get(id=credit_note_id)
+        except CreditNote.DoesNotExist:
+            return Response({'error': 'Avoir introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        org_settings = None
+        if invoice.organization:
+            org_settings = OrganizationSettings.objects.filter(organization=invoice.organization).first()
+
+        html_content = render_to_string('invoicing/credit_note_pdf.html', {
+            'credit_note': credit_note,
+            'invoice': invoice,
+            'org_settings': org_settings,
+        }, request=request)
+
+        pdf_content = HTML(string=html_content, base_url=request.build_absolute_uri()).write_pdf()
+        response = HttpResponse(pdf_content, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="avoir_{credit_note.credit_note_number}.pdf"'
+        return response
 
     @action(detail=True, methods=['get', 'post'], url_path='payments')
     def payments(self, request, pk=None):

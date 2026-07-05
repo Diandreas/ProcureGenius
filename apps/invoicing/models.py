@@ -702,6 +702,90 @@ class Invoice(models.Model):
         total_payments = sum(Decimal(str(p.amount)) for p in self.payments.all())
         return Decimal(str(self.total_amount)) - total_payments
 
+    def total_credited(self):
+        """Somme des avoirs déjà émis sur cette facture (annulés exclus)."""
+        from decimal import Decimal
+        return sum(
+            (cn.amount for cn in self.credit_notes.exclude(status='cancelled')),
+            Decimal('0'),
+        )
+
+    def issue_credit_note(self, amount=None, reason='', user=None):
+        """Émet un avoir (note de crédit) sur cette facture.
+
+        Un avoir est un DOCUMENT légal distinct, numéroté et traçable — à la
+        différence d'un simple passage au statut 'cancelled' qui ne laisse
+        aucune trace remise au client. Réutilise l'extourne comptable et la
+        restauration de stock déjà automatiques (signaux post_save) quand
+        l'avoir couvre le solde total restant : on se contente de passer la
+        facture en 'cancelled' et le reste suit tout seul.
+
+        Args:
+            amount: montant à créditer (défaut : solde restant creditable,
+                    c-à-d total_amount - avoirs déjà émis).
+            reason: motif (conservé sur l'avoir, apparaît sur le PDF).
+            user: utilisateur à l'origine de l'émission.
+
+        Returns:
+            CreditNote créé.
+
+        Raises:
+            ValueError: statut non éligible, montant invalide ou dépassant
+                        le solde creditable restant.
+        """
+        from decimal import Decimal
+
+        if self.status not in ('sent', 'paid', 'overdue'):
+            raise ValueError(
+                "Seule une facture envoyée, payée ou en retard peut faire l'objet d'un avoir "
+                f"(statut actuel : {self.get_status_display()})."
+            )
+
+        remaining = Decimal(str(self.total_amount)) - self.total_credited()
+        if amount is None:
+            amount = remaining
+        else:
+            amount = Decimal(str(amount))
+
+        if amount <= 0:
+            raise ValueError("Le montant de l'avoir doit être positif.")
+        if amount > remaining:
+            raise ValueError(
+                f"Le montant de l'avoir ({amount}) dépasse le solde creditable restant ({remaining})."
+            )
+
+        credit_note = CreditNote.objects.create(
+            organization=self.organization,
+            invoice=self,
+            credit_note_number=CreditNote.generate_number(self.organization),
+            amount=amount,
+            reason=reason,
+            created_by=user,
+        )
+
+        # Ce nouvel avoir, combiné aux précédents, couvre-t-il la facture entière ?
+        is_full_credit = self.total_credited() >= Decimal(str(self.total_amount))
+
+        if is_full_credit and self.status != 'cancelled':
+            # Bascule 'cancelled' -> déclenche automatiquement (signaux
+            # existants) l'extourne comptable ET la restauration de stock.
+            self.status = 'cancelled'
+            self.save(update_fields=['status', 'updated_at'])
+        elif not is_full_credit:
+            # Avoir partiel : la facture reste active (sent/paid/overdue),
+            # mais nécessite sa PROPRE écriture comptable (le signal existant
+            # ne se déclenche que sur passage à 'cancelled').
+            try:
+                from apps.accounting.signals import create_credit_note_entry
+                create_credit_note_entry(credit_note, user=user)
+            except Exception:
+                import logging
+                logging.getLogger(__name__).exception(
+                    "Échec écriture comptable pour avoir %s", credit_note.credit_note_number
+                )
+
+        return credit_note
+
     def get_payment_status(self):
         """Retourne le statut de paiement: unpaid, partial, paid"""
         from decimal import Decimal
@@ -1007,6 +1091,82 @@ class InvoiceReminderLog(models.Model):
     def __str__(self):
         status = 'OK' if self.success else 'échec'
         return f"Relance N{self.level} - {self.invoice.invoice_number} ({status})"
+
+
+class CreditNote(models.Model):
+    """Avoir (note de crédit) émis sur une facture.
+
+    Document légal distinct de la facture d'origine : numéroté, traçable,
+    imprimable, contrairement à un simple passage au statut 'cancelled' qui ne
+    laissait auparavant aucune trace remise au client. Émis via
+    `Invoice.issue_credit_note()` — voir ce point d'entrée pour la logique
+    métier (comptabilité, stock, montants).
+
+    Numérotation SÉQUENTIELLE PAR ORGANISATION (contrairement à la
+    numérotation globale historique des factures FAC/DEV) : c'est du code
+    neuf, autant le faire correctement dès le départ.
+    """
+    STATUS_CHOICES = [
+        ('issued', _('Émis')),
+        ('cancelled', _('Annulé')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Unique PAR ORGANISATION (pas globalement) : la séquence redémarre à
+    # 0001 pour chaque organisation, donc deux organisations peuvent
+    # légitimement générer le même numéro "AV-2026-0001".
+    credit_note_number = models.CharField(max_length=50, verbose_name=_("Numéro d'avoir"))
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='credit_notes', null=True, blank=True,
+        verbose_name=_("Organisation")
+    )
+    invoice = models.ForeignKey(
+        Invoice, on_delete=models.PROTECT, related_name='credit_notes',
+        verbose_name=_("Facture d'origine")
+    )
+    amount = models.DecimalField(max_digits=14, decimal_places=2, verbose_name=_("Montant crédité"))
+    reason = models.TextField(blank=True, verbose_name=_("Motif"))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='issued', verbose_name=_("Statut"))
+    created_by = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name='credit_notes_created',
+        null=True, blank=True, verbose_name=_("Émis par")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Avoir")
+        verbose_name_plural = _("Avoirs")
+        ordering = ['-created_at']
+        unique_together = [['organization', 'credit_note_number']]
+        indexes = [
+            models.Index(fields=['invoice', '-created_at']),
+            models.Index(fields=['organization', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.credit_note_number} — {self.invoice.invoice_number} ({self.amount})"
+
+    @classmethod
+    def generate_number(cls, organization):
+        """AV-{année}-{séquence sur 4 chiffres}, séquentiel PAR ORGANISATION."""
+        from datetime import datetime
+        year = datetime.now().year
+        prefix = f"AV-{year}-"
+
+        last = (
+            cls.objects.filter(organization=organization, credit_note_number__startswith=prefix)
+            .order_by('-credit_note_number')
+            .first()
+        )
+        if last:
+            try:
+                next_number = int(last.credit_note_number[len(prefix):]) + 1
+            except ValueError:
+                next_number = 1
+        else:
+            next_number = 1
+        return f"{prefix}{next_number:04d}"
 
 
 class InvoiceItem(models.Model):

@@ -107,6 +107,7 @@ class JournalEntry(models.Model):
         ('manual',            _('Saisie manuelle')),
         ('invoice',           _('Facture')),
         ('invoice_reversal',  _('Extourne facture')),
+        ('credit_note',       _('Avoir')),
         ('payment',           _('Paiement')),
         ('purchase_order',    _('Bon de commande')),
     ]

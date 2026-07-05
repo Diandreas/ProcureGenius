@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Product, Invoice, InvoiceItem, Payment, PrintTemplate, PrintConfiguration, PrintHistory, Warehouse, ProductCategory, ProductBatch
+from .models import Product, Invoice, InvoiceItem, Payment, PrintTemplate, PrintConfiguration, PrintHistory, Warehouse, ProductCategory, ProductBatch, CreditNote, InvoiceReminderLog
 
 
 @admin.register(Warehouse)
@@ -243,6 +243,33 @@ class PaymentAdmin(admin.ModelAdmin):
         if not change:  # Création
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(CreditNote)
+class CreditNoteAdmin(admin.ModelAdmin):
+    """Administration des avoirs (notes de crédit) — lecture seule, émis via l'API."""
+    list_display = ['credit_note_number', 'invoice', 'amount', 'status', 'created_by', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['credit_note_number', 'invoice__invoice_number']
+    readonly_fields = ['credit_note_number', 'organization', 'invoice', 'amount', 'reason', 'created_by', 'created_at']
+    date_hierarchy = 'created_at'
+
+    def has_add_permission(self, request):
+        # Les avoirs se créent uniquement via Invoice.issue_credit_note()
+        # (calcule le solde creditable, la numérotation, l'impact comptable).
+        return False
+
+
+@admin.register(InvoiceReminderLog)
+class InvoiceReminderLogAdmin(admin.ModelAdmin):
+    """Historique des relances de factures (lecture seule)."""
+    list_display = ['invoice', 'level', 'triggered_by', 'success', 'sent_at']
+    list_filter = ['triggered_by', 'success', 'sent_at']
+    search_fields = ['invoice__invoice_number', 'sent_to']
+    readonly_fields = [f.name for f in InvoiceReminderLog._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(PrintTemplate)

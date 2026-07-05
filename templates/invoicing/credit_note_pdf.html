@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Avoir {{ credit_note.credit_note_number }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @page { size: A4 portrait; margin: 20mm; }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            color: #333;
+            line-height: 1.5;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #6366f1;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .company-name { font-size: 16pt; font-weight: bold; color: #1e293b; }
+        .company-details { font-size: 9pt; color: #64748b; margin-top: 4px; }
+        .document-title {
+            text-align: right;
+        }
+        .document-title h1 {
+            font-size: 22pt;
+            color: #6366f1;
+            letter-spacing: 1px;
+        }
+        .document-title .number { font-size: 11pt; color: #475569; margin-top: 4px; }
+        .meta-table {
+            width: 100%;
+            margin-bottom: 24px;
+            border-collapse: collapse;
+        }
+        .meta-table td { padding: 6px 0; vertical-align: top; }
+        .meta-table .label { color: #64748b; width: 180px; }
+        .meta-table .value { font-weight: 600; color: #1e293b; }
+        .amount-box {
+            background: #f1f5f9;
+            border-left: 4px solid #6366f1;
+            padding: 16px 20px;
+            margin: 24px 0;
+        }
+        .amount-box .amount-label { font-size: 9pt; color: #64748b; text-transform: uppercase; }
+        .amount-box .amount-value { font-size: 20pt; font-weight: bold; color: #1e293b; margin-top: 4px; }
+        .reason-box {
+            margin-top: 16px;
+        }
+        .reason-box .label { font-size: 9pt; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+        .footer {
+            margin-top: 60px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 8pt;
+            color: #94a3b8;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <div class="company-name">{{ org_settings.company_name|default:"" }}</div>
+            <div class="company-details">
+                {% if org_settings.company_address %}{{ org_settings.company_address }}<br>{% endif %}
+                {% if org_settings.company_email %}{{ org_settings.company_email }}{% endif %}
+                {% if org_settings.company_phone %} — {{ org_settings.company_phone }}{% endif %}
+            </div>
+        </div>
+        <div class="document-title">
+            <h1>AVOIR</h1>
+            <div class="number">{{ credit_note.credit_note_number }}</div>
+        </div>
+    </div>
+
+    <table class="meta-table">
+        <tr>
+            <td class="label">Date d'émission</td>
+            <td class="value">{{ credit_note.created_at|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Facture d'origine</td>
+            <td class="value">{{ invoice.invoice_number }}</td>
+        </tr>
+        <tr>
+            <td class="label">Client</td>
+            <td class="value">{{ invoice.client.name|default:"" }}</td>
+        </tr>
+        {% if invoice.client.email %}
+        <tr>
+            <td class="label">Email</td>
+            <td class="value">{{ invoice.client.email }}</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <div class="amount-box">
+        <div class="amount-label">Montant crédité</div>
+        <div class="amount-value">{{ credit_note.amount }} {{ invoice.currency }}</div>
+    </div>
+
+    {% if credit_note.reason %}
+    <div class="reason-box">
+        <div class="label">Motif</div>
+        <div>{{ credit_note.reason }}</div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        Avoir {{ credit_note.credit_note_number }} émis en référence à la facture {{ invoice.invoice_number }}.
+    </div>
+</body>
+</html>

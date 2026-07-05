@@ -253,6 +253,55 @@ def create_invoice_reversal(invoice):
     return reversal
 
 
+def create_credit_note_entry(credit_note, user=None):
+    """
+    Crée l'écriture comptable pour un avoir PARTIEL (la facture reste active).
+    Débit 7xxx (Produit) / Crédit 4100 (Clients) — réduit le CA et la créance
+    client à hauteur du montant crédité, sans toucher à l'écriture de vente
+    d'origine (contrairement à `create_invoice_reversal`, réservée à
+    l'annulation totale de la facture).
+    """
+    from .models import JournalEntry, JournalEntryLine
+
+    invoice = credit_note.invoice
+    org = credit_note.organization or (getattr(invoice.created_by, 'organization', None) if invoice.created_by else None)
+    if not org:
+        return None
+
+    if JournalEntry.objects.filter(reference=credit_note.credit_note_number, source='credit_note').exists():
+        return None
+
+    invoice_type = getattr(invoice, 'invoice_type', 'standard')
+    revenue_code = INVOICE_TYPE_TO_ACCOUNT.get(invoice_type, '7500')
+    client_account = _get_account(org, '4100')
+    revenue_account = _get_account(org, revenue_code)
+    if not client_account or not revenue_account:
+        return None
+
+    amount = credit_note.amount or Decimal('0')
+    if amount <= 0:
+        return None
+
+    journal = _get_or_create_sales_journal(org)
+    entry = JournalEntry.objects.create(
+        organization=org,
+        journal=journal,
+        entry_number=JournalEntry.generate_entry_number(org, journal),
+        date=date_type.today(),
+        description=f"Avoir — {credit_note.credit_note_number} ({invoice.invoice_number})",
+        reference=credit_note.credit_note_number,
+        status='posted',
+        source='credit_note',
+        source_invoice=invoice,
+        created_by=user,
+    )
+    JournalEntryLine.objects.create(entry=entry, account=revenue_account,
+                                    description=credit_note.credit_note_number, debit=amount, credit=Decimal('0'))
+    JournalEntryLine.objects.create(entry=entry, account=client_account,
+                                    description=credit_note.credit_note_number, debit=Decimal('0'), credit=amount)
+    return entry
+
+
 def create_purchase_order_entry(po, user=None):
     """
     Crée l'écriture comptable quand un BC est reçu.

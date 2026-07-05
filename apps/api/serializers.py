@@ -603,6 +603,23 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class CreditNoteSerializer(serializers.ModelSerializer):
+    """Serializer pour les avoirs (notes de crédit)"""
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+
+    class Meta:
+        from apps.invoicing.models import CreditNote
+        model = CreditNote
+        fields = [
+            'id', 'credit_note_number', 'invoice', 'amount', 'reason',
+            'status', 'created_by', 'created_by_name', 'created_at',
+        ]
+        read_only_fields = [
+            'id', 'credit_note_number', 'invoice', 'status',
+            'created_by', 'created_by_name', 'created_at',
+        ]
+
+
 class PaymentSerializer(serializers.ModelSerializer):
     """Serializer pour les paiements de factures"""
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
