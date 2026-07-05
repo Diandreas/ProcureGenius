@@ -460,7 +460,10 @@ class Invoice(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    invoice_number = models.CharField(max_length=50, unique=True, verbose_name=_("Numéro de facture"))
+    # Unique PAR ORGANISATION (pas globalement, cf. Meta.unique_together) :
+    # la séquence est désormais scopée par organisation, deux organisations
+    # peuvent légitimement générer le même numéro sous le nouveau schéma.
+    invoice_number = models.CharField(max_length=50, verbose_name=_("Numéro de facture"))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name=_("Statut"))
     
     # Informations générales
@@ -537,6 +540,11 @@ class Invoice(models.Model):
         verbose_name = _("Facture")
         verbose_name_plural = _("Factures")
         ordering = ['-created_at']
+        # Passage d'une unicité globale à une unicité PAR ORGANISATION
+        # (numérotation désormais scopée par organisation) : migration sûre
+        # rétroactivement, une contrainte globale unique implique trivialement
+        # l'unicité par organisation pour les données déjà existantes.
+        unique_together = [['organization', 'invoice_number']]
 
     def __str__(self):
         return f"{self.invoice_number} - {self.title}"
@@ -546,10 +554,19 @@ class Invoice(models.Model):
         self._old_status = self.status
 
     def save(self, *args, **kwargs):
-        # Auto-populate organization from client if not set
-        if not self.organization and self.client and self.client.organization_id:
-            self.organization = self.client.organization
-        
+        # Auto-populate organization : essaie le client, puis se rabat sur
+        # l'organisation du créateur (created_by). Champ CRITIQUE : utilisé
+        # par l'isolation multi-tenant, les relances automatiques, les avoirs
+        # et la numérotation légale — une facture sans organization devient
+        # invisible à toutes ces fonctionnalités. Découvert en prod : 134/147
+        # factures historiques avaient organization=NULL (client sans org
+        # renseignée) alors que created_by.organization était disponible.
+        if not self.organization:
+            if self.client and self.client.organization_id:
+                self.organization = self.client.organization
+            elif self.created_by_id:
+                self.organization = self.created_by.organization
+
         if not self.invoice_number:
             self.invoice_number = self.generate_invoice_number()
 
@@ -662,27 +679,65 @@ class Invoice(models.Model):
         return base64.b64encode(buffer.getvalue()).decode()
 
     def generate_invoice_number(self):
-        """Génère un numéro de facture ou devis unique"""
+        """Génère un numéro de facture ou devis unique.
+
+        Séquentiel PAR ORGANISATION, SANS rupture ni remise à zéro mensuelle
+        (continu sur l'année civile) : conforme à l'exigence légale
+        (France/OHADA) de numérotation continue et sans trou par entité et
+        par exercice. L'ancien schéma (FAC{année}{mois}{séq:4}) était une
+        séquence GLOBALE partagée entre toutes les organisations et remise à
+        zéro chaque mois — non conforme.
+
+        Ne s'applique QU'AUX NOUVELLES factures : les numéros déjà attribués
+        restent inchangés (enregistrements historiques immuables — un numéro
+        déjà émis/envoyé à un client ne doit jamais être modifié). Le nouveau
+        format (tirets, séquence sur 5 chiffres) est volontairement distinct
+        visuellement de l'ancien, ce qui rend la transition auditable.
+        """
         from datetime import datetime
         year = datetime.now().year
-        month = datetime.now().month
-
         prefix = "DEV" if self.status == 'quote' else "FAC"
 
-        last_doc = Invoice.objects.filter(
-            invoice_number__startswith=f"{prefix}{year}{month:02d}"
-        ).order_by('-invoice_number').first()
+        # self.created_by_id (colonne brute) plutôt que self.created_by : ce
+        # dernier lève RelatedObjectDoesNotExist s'il est accédé sans requête
+        # possible (FK non-nullable jamais renseignée), au lieu de simplement
+        # renvoyer None comme on l'attendrait d'un attribut optionnel.
+        organization = self.organization or (
+            self.created_by.organization if self.created_by_id else None
+        )
 
+        if organization:
+            number_prefix = f"{prefix}-{year}-"
+            last_doc = Invoice.objects.filter(
+                organization=organization,
+                invoice_number__startswith=number_prefix,
+            ).order_by('-invoice_number').first()
+
+            if last_doc:
+                try:
+                    next_number = int(last_doc.invoice_number[len(number_prefix):]) + 1
+                except ValueError:
+                    next_number = 1
+            else:
+                next_number = 1
+            return f"{number_prefix}{next_number:05d}"
+
+        # Repli : organisation indéterminable (ne devrait plus arriver en
+        # pratique, `save()` la renseigne juste avant cet appel). Reprend
+        # l'ancien schéma global par sécurité, plutôt que de planter.
+        month = datetime.now().month
+        old_prefix = f"{prefix}{year}{month:02d}"
+        last_doc = Invoice.objects.filter(
+            invoice_number__startswith=old_prefix
+        ).order_by('-invoice_number').first()
         if last_doc:
             try:
-                last_number = int(last_doc.invoice_number[-4:])
-                next_number = last_number + 1
+                next_number = int(last_doc.invoice_number[-4:]) + 1
             except ValueError:
                 next_number = 1
         else:
             next_number = 1
-
-        return f"{prefix}{year}{month:02d}{next_number:04d}"
+        return f"{old_prefix}{next_number:04d}"
 
     def convert_quote_to_draft(self):
         """Convertit un devis accepté en facture brouillon"""
