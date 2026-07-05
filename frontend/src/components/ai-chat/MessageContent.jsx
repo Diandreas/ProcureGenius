@@ -29,6 +29,7 @@ import ChartRenderer from './ChartRenderer';
 import ConfirmationModal from './ConfirmationModal';
 import PreviewCard from './PreviewCard';
 import PremiumModal from '../ui/PremiumModal';
+import { normalizeMarkdown } from './markdownUtils';
 
 const MessageContent = ({ content, streaming = false, actionResults, actionButtons, onButtonClick, onAddArtifact }) => {
   const navigate = useNavigate();
@@ -537,7 +538,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                     {!REDUNDANT_MESSAGE_ENTITY_TYPES.includes(entityType) && (
                       <Box sx={{ mb: 1 }}>
                         <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
-                          {result.result?.message || result.result?.error || 'Action exécutée'}
+                          {normalizeMarkdown(result.result?.message || result.result?.error || 'Action exécutée')}
                         </ReactMarkdown>
                       </Box>
                     )}
@@ -942,7 +943,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
         </Typography>
       ) : (
         <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
-          {content}
+          {normalizeMarkdown(content)}
         </ReactMarkdown>
       )}
       {renderActionResults()}

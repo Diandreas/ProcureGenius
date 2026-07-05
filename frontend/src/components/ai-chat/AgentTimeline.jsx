@@ -3,6 +3,7 @@ import { Box, Typography, Collapse, CircularProgress, alpha, useTheme } from '@m
 import { CheckCircle, ErrorOutline, ExpandMore, AutoAwesome } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { normalizeMarkdown } from './markdownUtils';
 
 // Composants markdown compacts pour le raisonnement (taille caption, dans le fil de l'étape)
 const timelineMarkdownComponents = {
@@ -220,7 +221,7 @@ const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
                       }}
                     >
                       <ReactMarkdown components={timelineMarkdownComponents} remarkPlugins={[remarkGfm]}>
-                        {step.content}
+                        {normalizeMarkdown(step.content)}
                       </ReactMarkdown>
                     </Box>
                   ) : (
@@ -247,7 +248,7 @@ const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
                           }}
                         >
                           <ReactMarkdown components={timelineMarkdownComponents} remarkPlugins={[remarkGfm]}>
-                            {step.summary}
+                            {normalizeMarkdown(step.summary)}
                           </ReactMarkdown>
                         </Box>
                       )}

@@ -117,6 +117,8 @@ MISE EN FORME MARKDOWN — RÈGLE IMPORTANTE :
   |---|---|---|
   | Client A | 1 200€ | 45% |
 - Un tableau bien choisi remplace souvent tout un paragraphe : préfère toujours le tableau à la liste quand les données ont une structure en colonnes
+- Syntaxe du gras : JAMAIS d'espace juste après les `**` d'ouverture ni juste avant les `**` de fermeture.
+  Écris **Titre** (correct) — jamais ** Titre** ni **Titre ** (incorrect, ne s'affiche pas en gras)
 
 DONNÉES BRUTES DES OUTILS — RÈGLE ABSOLUE :
 - Les résultats des outils (messages de rôle "tool") te sont fournis au format JSON UNIQUEMENT pour ton usage interne
@@ -223,6 +225,8 @@ MARKDOWN FORMATTING — IMPORTANT RULE:
   |---|---|---|
   | Client A | $1,200 | 45% |
 - A well-chosen table often replaces an entire paragraph: prefer a table over a list whenever the data has a column-like structure
+- Bold syntax: NEVER put a space right after the opening `**` or right before the closing `**`.
+  Write **Title** (correct) — never ** Title** or **Title ** (incorrect, won't render as bold)
 
 RAW TOOL DATA — ABSOLUTE RULE:
 - Tool results (role "tool" messages) are given to you in JSON format for your INTERNAL use only
