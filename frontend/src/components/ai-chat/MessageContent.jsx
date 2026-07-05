@@ -415,6 +415,11 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
     setPreviewData(null);
   };
 
+  // Types d'entités dont le message texte fait doublon avec la synthèse déjà
+  // produite par l'IA dans sa réponse principale (analyse/stats) — on n'affiche
+  // alors que le badge de statut + les graphiques, pas le message canned.
+  const REDUNDANT_MESSAGE_ENTITY_TYPES = ['statistics', 'business_analysis'];
+
   // Rendu compact des résultats d'actions
   const renderActionResults = () => {
     const visibleResults = (actionResults || []).filter(result => !result.result?.internal);
@@ -520,11 +525,13 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                       {isSuccess ? 'Succès' : 'Échec'}
                     </Typography>
 
-                    <Box sx={{ mb: 1 }}>
-                      <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
-                        {result.result?.message || result.result?.error || 'Action exécutée'}
-                      </ReactMarkdown>
-                    </Box>
+                    {!REDUNDANT_MESSAGE_ENTITY_TYPES.includes(entityType) && (
+                      <Box sx={{ mb: 1 }}>
+                        <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
+                          {result.result?.message || result.result?.error || 'Action exécutée'}
+                        </ReactMarkdown>
+                      </Box>
+                    )}
 
 
                     {/* Confirmation d'entité - Preview Card + Modal */}
@@ -719,34 +726,11 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                       </>
                     )}
 
-                    {/* Statistiques (stats + charts optionnels) */}
+                    {/* Statistiques (charts optionnels) — le detail chiffre est deja
+                        syntetise en langage naturel par la reponse de l'IA juste au-dessus,
+                        on n'affiche donc plus les stats brutes ici pour eviter la redondance. */}
                     {isSuccess && data.entity_type === 'statistics' && (
                       <>
-                        {/* Afficher les stats textuelles */}
-                        {data.stats && (
-                          <Box
-                            sx={{
-                              backgroundColor: '#f9fafb',
-                              p: 1.5,
-                              borderRadius: 1,
-                              mb: 2,
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              component="pre"
-                              sx={{
-                                fontFamily: 'monospace',
-                                fontSize: '0.75rem',
-                                whiteSpace: 'pre-wrap',
-                                margin: 0,
-                              }}
-                            >
-                              {JSON.stringify(data.stats, null, 2)}
-                            </Typography>
-                          </Box>
-                        )}
-
                         {/* Afficher les graphiques - Style Claude.ai */}
                         {data.charts && data.charts.length > 0 && (
                           <Box>

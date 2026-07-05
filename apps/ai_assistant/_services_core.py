@@ -4117,7 +4117,7 @@ Donne un conseil professionnel pour optimiser cette relation fournisseur. Sois s
     async def get_client_stats(self, params: Dict, user_context: Dict) -> Dict:
         """Récupère les statistiques des clients (actifs/inactifs, top clients par CA, clients à risque)"""
         from apps.accounts.models import Client
-        from apps.invoices.models import Invoice
+        from apps.invoicing.models import Invoice
         from asgiref.sync import sync_to_async
         from django.db.models import Sum, Count, Q
         from django.utils import timezone
