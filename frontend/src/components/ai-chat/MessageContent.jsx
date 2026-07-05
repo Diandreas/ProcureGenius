@@ -451,6 +451,15 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
 
           const entityUrl = getEntityUrl();
 
+          // Ces types de résultats sont déjà synthétisés en langage naturel par
+          // l'IA dans sa réponse principale : si succès et aucun graphique à
+          // afficher, la carte n'apporterait rien (juste un badge vide) — on la
+          // saute entièrement plutôt que de laisser une coquille "Succès" sans texte.
+          const hasCharts = Array.isArray(data.charts) && data.charts.length > 0;
+          if (isSuccess && REDUNDANT_MESSAGE_ENTITY_TYPES.includes(entityType) && !hasCharts) {
+            return null;
+          }
+
           // Déterminer le titre du modal selon le type
           const getModalTitle = () => {
             switch (entityType) {
