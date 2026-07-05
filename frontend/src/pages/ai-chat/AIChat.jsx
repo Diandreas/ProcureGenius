@@ -912,6 +912,7 @@ function AIChat() {
       action_buttons: payload.action_buttons || null,
       needs_confirmation: payload.needs_confirmation || null,
       agent_steps: payload.agent_steps || [],
+      suggested_followups: payload.suggested_followups || [],
     };
 
     setMessages(prev => {
@@ -1634,6 +1635,26 @@ function AIChat() {
                                   sx={{ textTransform: 'none', borderRadius: 2 }}
                                 >
                                   {opt.label}
+                                </Button>
+                              ))}
+                            </Stack>
+                          )}
+                          {/* Questions de suivi suggérées (déterministes, pas de confirmation en attente) */}
+                          {!isUser && !msg.streaming && !msg.needs_confirmation && msg.suggested_followups?.length > 0 && (
+                            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.25, gap: 0.75 }}>
+                              {msg.suggested_followups.map((question, qi) => (
+                                <Button
+                                  key={qi}
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={() => handleSendMessage(question)}
+                                  sx={{
+                                    textTransform: 'none', borderRadius: 4, fontSize: '0.78rem',
+                                    py: 0.4, px: 1.5, borderColor: 'divider', color: 'text.secondary',
+                                    '&:hover': { borderColor: '#6366f1', color: '#6366f1', bgcolor: alpha('#6366f1', 0.04) },
+                                  }}
+                                >
+                                  {question}
                                 </Button>
                               ))}
                             </Stack>

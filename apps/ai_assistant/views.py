@@ -105,13 +105,16 @@ def _record_ai_usage(org, user, tokens):
 
 
 def _persist_ai_message(conversation, *, reply, tool_results=None, charts=None,
-                        pending_action=None, tokens=0, agent_steps=None):
+                        pending_action=None, tokens=0, agent_steps=None,
+                        suggested_followups=None):
     """Persiste le message assistant et construit le contrat de réponse UNIFIÉ.
 
     Partagé entre ChatView (réponse JSON classique) et ChatStreamView (événement
     SSE 'done'). `reply` est TOUJOURS une string non vide. `agent_steps` est la
     trace de la boucle agentique (timeline), persistée dans metadata pour rester
-    visible au rechargement de la conversation.
+    visible au rechargement de la conversation. `suggested_followups` : questions
+    de suivi déterministes (cf. orchestrator._suggested_followups), également
+    persistées pour rester visibles au rechargement.
     """
     from apps.core.text_utils import strip_emojis
     reply = strip_emojis((reply or "").strip()) or "Je n'ai pas de réponse à fournir pour le moment."
@@ -135,6 +138,8 @@ def _persist_ai_message(conversation, *, reply, tool_results=None, charts=None,
         metadata['pending_action'] = pending_action
     if agent_steps:
         metadata['agent_steps'] = agent_steps
+    if suggested_followups:
+        metadata['suggested_followups'] = suggested_followups
 
     ai_msg = Message.objects.create(
         conversation=conversation,
@@ -161,6 +166,7 @@ def _persist_ai_message(conversation, *, reply, tool_results=None, charts=None,
         'needs_confirmation': pending_action,
         'tokens_used': tokens,
         'agent_steps': agent_steps or [],
+        'suggested_followups': suggested_followups or [],
     }
 
 
@@ -290,6 +296,7 @@ class ChatView(APIView):
             charts=result.charts,
             pending_action=result.pending_action,
             tokens=result.tokens,
+            suggested_followups=result.suggested_followups,
         )
 
 
@@ -400,6 +407,7 @@ class ChatStreamView(APIView):
                         charts=result.charts,
                         pending_action=result.pending_action,
                         tokens=result.tokens,
+                        suggested_followups=result.suggested_followups,
                     )
                     yield sse({'type': 'done', **payload})
                 elif confirmation_data.get('force_create'):
@@ -413,6 +421,7 @@ class ChatStreamView(APIView):
                         tool_results=result.tool_results,
                         charts=result.charts,
                         tokens=result.tokens,
+                        suggested_followups=result.suggested_followups,
                     )
                     yield sse({'type': 'done', **payload})
                 else:
@@ -439,6 +448,7 @@ class ChatStreamView(APIView):
                                 pending_action=event['pending_action'],
                                 tokens=event['tokens'],
                                 agent_steps=event['steps'],
+                                suggested_followups=event.get('suggested_followups'),
                             )
                             yield sse({'type': 'done', **payload})
                         else:

@@ -86,6 +86,81 @@ _ACTION_LABELS = {
     "send_purchase_order": "bon de commande envoyé",
 }
 
+# Questions de suivi suggérées, déterministes selon les outils appelés dans la
+# réponse — zéro appel LLM supplémentaire. Standard chez les concurrents
+# (Claude.ai, ChatGPT) : après une réponse, proposer 2-3 prolongements
+# naturels au lieu de laisser l'utilisateur deviner quoi demander ensuite.
+_FOLLOWUP_SUGGESTIONS = {
+    # Statistiques / analytics
+    "get_statistics": ["Comparer avec le mois précédent ?", "Générer un graphique ?"],
+    "get_stats": ["Comparer avec le mois précédent ?", "Générer un graphique ?"],
+    "get_invoice_stats": ["Voir le détail par client ?", "Quelles factures sont en retard ?"],
+    "get_client_stats": ["Voir l'historique de facturation de ce client ?"],
+    "get_supplier_stats": ["Voir les derniers bons de commande de ce fournisseur ?"],
+    "get_product_stats": ["Voir l'évolution du stock de ce produit ?"],
+    "get_stock_stats": ["Quels produits sont bientôt en rupture ?"],
+    "analyze_business": ["Générer un graphique de cette analyse ?"],
+    "predict_cashflow": ["Voir le détail des factures à venir ?"],
+    "generate_visualization": ["Comparer sur une autre période ?"],
+
+    # Factures / devis
+    "create_invoice": ["Envoyer la facture par email ?", "Ajouter un article ?"],
+    "create_quote": ["Envoyer le devis par email ?"],
+    "get_latest_invoice": ["Envoyer un rappel de paiement ?", "Voir le PDF ?"],
+    "search_invoice": ["Envoyer une relance sur ces factures ?"],
+    "add_invoice_items": ["Envoyer la facture au client ?"],
+    "convert_quote_to_invoice": ["Envoyer la facture au client ?"],
+    "smart_reminder": ["Voir l'historique des relances de ce client ?"],
+
+    # Fournisseurs
+    "create_supplier": ["Créer un bon de commande pour ce fournisseur ?"],
+    "search_supplier": ["Voir les statistiques de ce fournisseur ?"],
+    "list_suppliers": ["Voir les statistiques d'un fournisseur en particulier ?"],
+
+    # Clients
+    "create_client": ["Créer une facture pour ce client ?"],
+    "search_client": ["Voir l'historique de facturation de ce client ?"],
+    "list_clients": ["Voir les statistiques d'un client en particulier ?"],
+
+    # Bons de commande
+    "create_purchase_order": ["Envoyer le bon de commande au fournisseur ?"],
+    "add_po_items": ["Envoyer le bon de commande ?"],
+    "three_way_match": ["Voir le détail des écarts ?"],
+
+    # Stock / produits
+    "adjust_stock": ["Voir les autres produits en stock bas ?"],
+    "get_stock_alerts": ["Créer un bon de commande de réapprovisionnement ?"],
+    "create_product": ["Ajuster le stock initial de ce produit ?"],
+    "search_product": ["Voir les statistiques de ce produit ?"],
+    "verify_price": ["Mettre à jour le prix ?"],
+
+    # Comptabilité
+    "create_journal_entry": ["Voir le plan comptable ?"],
+    "get_account_list": ["Créer une nouvelle écriture ?"],
+
+    # Rapports
+    "generate_report": ["Télécharger ce rapport ?"],
+    "search_report": ["Générer un nouveau rapport ?"],
+}
+
+
+def _suggested_followups(tool_results: List[Dict[str, Any]], max_count: int = 3) -> List[str]:
+    """Suggestions de suivi déterministes à partir des outils réellement
+    utilisés dans la réponse. Préserve l'ordre d'appel, déduplique, plafonne
+    à `max_count`. Retourne une liste vide si aucun outil pertinent."""
+    seen = set()
+    suggestions: List[str] = []
+    for tr in tool_results:
+        name = tr.get("function", "")
+        for suggestion in _FOLLOWUP_SUGGESTIONS.get(name, []):
+            if suggestion not in seen:
+                seen.add(suggestion)
+                suggestions.append(suggestion)
+            if len(suggestions) >= max_count:
+                return suggestions
+    return suggestions
+
+
 # Nombre maximum d'itérations LLM de la boucle agentique (garde-fou tokens).
 AGENT_MAX_STEPS = 6
 
@@ -196,6 +271,7 @@ class OrchestratorResult:
     tokens: int = 0
     success: bool = True
     used_tool_calls: List[Dict[str, Any]] = field(default_factory=list)
+    suggested_followups: List[str] = field(default_factory=list)
 
 
 class Orchestrator:
@@ -304,6 +380,7 @@ class Orchestrator:
             tokens=total_tokens,
             success=True,
             used_tool_calls=tool_calls,
+            suggested_followups=_suggested_followups(tool_results),
         )
 
     # ------------------------------------------------------------ run_stream
@@ -339,6 +416,9 @@ class Orchestrator:
                 "pending_action": pending_action,
                 "tokens": total_tokens,
                 "success": success,
+                # Pas de suggestions si une confirmation est en attente (l'utilisateur
+                # doit d'abord répondre oui/non, pas poser une nouvelle question).
+                "suggested_followups": [] if pending_action else _suggested_followups(all_tool_results),
             }
 
         yield {"type": "status", "message": "Analyse de votre demande"}
