@@ -1272,7 +1272,7 @@ class Prescriber(models.Model):
 
     @property
     def full_name(self):
-        return f"Dr {self.last_name} {self.first_name}"
+        return f"{self.last_name} {self.first_name}"
 
 
 class SubcontractorLab(models.Model):
