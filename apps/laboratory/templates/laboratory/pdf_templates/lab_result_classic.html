@@ -230,7 +230,13 @@
         </div>
         <div class="info-column">
             <div class="info-label">Médecin Prescripteur</div>
+            {% if order.prescriber %}
+            <div class="info-value">{{ order.prescriber.full_name }}</div>
+            {% elif order.ordered_by %}
+            <div class="info-value">{{ order.ordered_by.get_full_name|default:order.ordered_by.username }}</div>
+            {% else %}
             <div style="margin-top: 4px; border-bottom: 1px solid #9ca3af; width: 160px; height: 16px;"></div>
+            {% endif %}
             {% if order.clinical_notes %}
             <div class="sm-text" style="color: #1e40af; background: #eff6ff; padding: 4px; border-radius: 2px; margin-top: 4px;">
                 <strong>Renseignements :</strong> {{ order.clinical_notes|truncatechars:150 }}

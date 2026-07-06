@@ -101,14 +101,24 @@
 <div class="doc-title text-center" style="margin-bottom: 5px;">RÉSULTATS DE LABORATOIRE</div>
 
 <div class="info-grid" style="padding: 6px; margin-bottom: 10px;">
-    <div class="info-col" style="width: 50%;">
+    <div class="info-col" style="width: 34%;">
         <div class="info-label">Patient</div>
         <div class="info-value">
             <span style="font-size: 10pt;">{{ patient.name }}</span><br>
             <span style="font-weight: 400; font-size: 8pt;">{{ patient.gender|default:"" }} | {% if patient.date_of_birth %}{{ patient.get_age }} ans{% endif %} | ID: {{ patient.patient_number|default:"-" }}</span>
         </div>
     </div>
-    <div class="info-col" style="width: 50%; text-align: right;">
+    <div class="info-col" style="width: 33%;">
+        <div class="info-label">Médecin Prescripteur</div>
+        <div class="info-value">
+            <span style="font-size: 9pt;">
+                {% if lab_order.prescriber %}{{ lab_order.prescriber.full_name }}
+                {% elif lab_order.ordered_by %}{{ lab_order.ordered_by.get_full_name|default:lab_order.ordered_by.username }}
+                {% else %}-{% endif %}
+            </span>
+        </div>
+    </div>
+    <div class="info-col" style="width: 33%; text-align: right;">
         <div class="info-label">Détails Commande</div>
         <div class="info-value">
             N°: {{ lab_order.order_number }}<br>
