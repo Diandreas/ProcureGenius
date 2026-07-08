@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { aiChatAPI } from '../services/api';
 import IconImage from './IconImage';
-import { Plus, LayoutGrid, Settings, ChevronRight } from 'lucide-react';
+import { Plus, LayoutGrid, Settings, ChevronRight, Lock } from 'lucide-react';
 import { Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider as MuiDivider } from '@mui/material';
 
-function MobileBottomNav({ enabledModules = ['dashboard'] }) {
+function MobileBottomNav({ enabledModules = ['dashboard'], isAiLocked = false, onAiLockedClick }) {
   const { t } = useTranslation(['navigation']);
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,8 +44,8 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   // IMPORTANT: Tous les hooks DOIVENT être appelés AVANT tout return conditionnel
   // Récupérer le count de notifications au chargement et toutes les 30 secondes
   useEffect(() => {
-    // Ne pas fetch si on va cacher le composant
-    if (shouldHideTabBar()) return;
+    // Ne pas fetch si on va cacher le composant, ni si l'IA est verrouillee (plan Gratuit)
+    if (shouldHideTabBar() || isAiLocked) return;
 
     const fetchNotificationsCount = async () => {
       try {
@@ -60,7 +60,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     const interval = setInterval(fetchNotificationsCount, 30000); // Poll toutes les 30s
 
     return () => clearInterval(interval);
-  }, [location.pathname]);
+  }, [location.pathname, isAiLocked]);
 
   // Ne pas rendre le composant si on doit le cacher (APRÈS les hooks)
   if (shouldHideTabBar()) {
@@ -243,11 +243,11 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:active': { transform: 'scale(0.92)' },
           }}
-          onClick={() => navigate(aiItem.value)}
+          onClick={() => isAiLocked ? onAiLockedClick?.() : navigate(aiItem.value)}
           data-tutorial="ai-button"
         >
           <Badge
-            badgeContent={notificationsCount}
+            badgeContent={isAiLocked ? undefined : notificationsCount}
             color="error"
             max={9}
             overlap="circular"
@@ -264,12 +264,14 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
           >
             <Box
               sx={{
+                position: 'relative',
                 width: 52,
                 height: 52,
                 borderRadius: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                opacity: isAiLocked ? 0.55 : 1,
                 bgcolor: isAIActive
                   ? 'primary.main'
                   : (isDark ? bgColor : theme.palette.background.paper),
@@ -303,6 +305,25 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
                   transition: 'filter 0.3s ease',
                 }}
               />
+              {isAiLocked && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: -4,
+                    right: -4,
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: theme.palette.grey[isDark ? 700 : 300],
+                    border: `2px solid ${isDark ? bgColor : theme.palette.background.paper}`,
+                  }}
+                >
+                  <Lock size={10} color={theme.palette.text.secondary} strokeWidth={2.5} />
+                </Box>
+              )}
             </Box>
           </Badge>
           <Box

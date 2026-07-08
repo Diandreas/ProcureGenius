@@ -961,10 +961,10 @@ function App() {
                             <Route path="/migration/wizard" element={<MigrationWizard />} />
 
                             {/* AI Chat */}
-                            <Route path="/ai-chat" element={<AIChat />} />
-                            <Route path="/ai-chat/:chatId" element={<AIChat />} />
-                            <Route path="/ai-chat/import-reviews" element={<ImportReviews />} />
-                            <Route path="/ai-chat/document-import" element={<DocumentImport />} />
+                            <Route path="/ai-chat" element={<ModuleRoute module="ai-assistant"><AIChat /></ModuleRoute>} />
+                            <Route path="/ai-chat/:chatId" element={<ModuleRoute module="ai-assistant"><AIChat /></ModuleRoute>} />
+                            <Route path="/ai-chat/import-reviews" element={<ModuleRoute module="ai-assistant"><ImportReviews /></ModuleRoute>} />
+                            <Route path="/ai-chat/document-import" element={<ModuleRoute module="ai-assistant"><DocumentImport /></ModuleRoute>} />
 
                             {/* Settings */}
                             <Route path="/settings" element={<Settings />} />

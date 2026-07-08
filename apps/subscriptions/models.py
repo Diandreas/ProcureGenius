@@ -689,6 +689,18 @@ class SubscriptionPayment(models.Model):
         verbose_name=_("Notes")
     )
 
+    invoice_pdf_url = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name=_("Lien facture PDF (Stripe)")
+    )
+
+    invoice_hosted_url = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name=_("Lien page facture (Stripe)")
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

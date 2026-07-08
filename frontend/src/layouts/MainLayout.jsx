@@ -194,7 +194,7 @@ function MainLayout() {
     { text: t('navigation:menu.clients'), iconSrc: '/icon/user.png', path: '/clients', moduleId: 'clients', isCore: false },
     // { text: t('navigation:menu.eSourcing'), iconSrc: '/icon/market.png', path: '/e-sourcing/events', moduleId: 'e-sourcing', isCore: false },
     { text: t('navigation:menu.contracts'), iconSrc: '/icon/contract.png', path: '/contracts', moduleId: 'contracts', isCore: false },
-    { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'ai-assistant', isCore: true },
+    { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'ai-assistant', isCore: false },
 
     { divider: true },
     // Comptabilite : depend du module 'accounting' (Pro/Business), pas core.
@@ -1220,7 +1220,11 @@ function MainLayout() {
         </Box>
 
         {/* Mobile Bottom Navigation */}
-        <MobileBottomNav enabledModules={enabledModules} />
+        <MobileBottomNav
+          enabledModules={enabledModules}
+          isAiLocked={!hasModule('ai-assistant') && isLocked('ai-assistant')}
+          onAiLockedClick={() => setLockedModuleName(t('navigation:menu.aiAssistant'))}
+        />
 
         {/* Module Activation Dialog */}
         <ModuleActivationDialog

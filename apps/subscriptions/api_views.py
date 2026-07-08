@@ -569,7 +569,7 @@ def stripe_create_checkout(request):
     except SubscriptionPlan.DoesNotExist:
         return Response({'error': _('Plan not found')}, status=status.HTTP_404_NOT_FOUND)
 
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
     success_url = f"{frontend_url}/subscription/success"
     cancel_url = f"{frontend_url}/pricing"
 
@@ -703,7 +703,7 @@ def stripe_portal(request):
     if not organization:
         return Response({'error': _('No organization found')}, status=status.HTTP_400_BAD_REQUEST)
 
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
     return_url = f"{frontend_url}/settings"
 
     try:

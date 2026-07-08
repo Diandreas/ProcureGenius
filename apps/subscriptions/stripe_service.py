@@ -371,16 +371,30 @@ class StripeService:
         sub.current_period_end = period_end
         sub.save()
 
+        # Récupère le lien de la facture PDF Stripe (nécessite un appel API : le
+        # checkout.session ne porte que l'id de la facture, pas ses liens).
+        invoice_pdf_url, invoice_hosted_url = '', ''
+        invoice_id = session.get('invoice')
+        if invoice_id:
+            try:
+                stripe_invoice = stripe.Invoice.retrieve(invoice_id)
+                invoice_pdf_url = stripe_invoice.get('invoice_pdf') or ''
+                invoice_hosted_url = stripe_invoice.get('hosted_invoice_url') or ''
+            except Exception as e:
+                logger.warning(f"Could not fetch Stripe invoice {invoice_id}: {e}")
+
         # Historique de paiement, dédupliqué sur la facture Stripe : l'événement
         # invoice.payment_succeeded porte la MÊME facture — sans clé commune, le
         # premier règlement était compté deux fois (webhook + confirm-session).
-        txn_id = session.get('invoice') or session.get('id') or ''
+        txn_id = invoice_id or session.get('id') or ''
         payment_defaults = dict(
             amount=amount,
             currency='EUR',
             status='completed',
             payment_method='stripe',
             stripe_payment_intent_id=session.get('payment_intent') or '',
+            invoice_pdf_url=invoice_pdf_url,
+            invoice_hosted_url=invoice_hosted_url,
         )
         created = True
         if txn_id:
@@ -394,7 +408,7 @@ class StripeService:
         # confirm-session ET le webhook appellent tous deux ce chemin pour le
         # premier règlement, un seul des deux doit envoyer le reçu).
         if created:
-            StripeService._send_receipt_email(sub, amount, 'EUR')
+            StripeService._send_receipt_email(sub, amount, 'EUR', invoice_pdf_url, invoice_hosted_url)
 
         logger.info(f"Subscription activated: org={org_id} plan={plan_code}")
 
@@ -415,12 +429,16 @@ class StripeService:
             # Dédupliqué sur l'id de facture Stripe (retries webhook + recouvrement
             # avec checkout.session.completed pour le premier règlement).
             txn_id = invoice.get('id') or ''
+            invoice_pdf_url = invoice.get('invoice_pdf') or ''
+            invoice_hosted_url = invoice.get('hosted_invoice_url') or ''
             payment_defaults = dict(
                 amount=invoice.get('amount_paid', 0) / 100,
                 currency=invoice.get('currency', 'eur').upper(),
                 status='completed',
                 payment_method='stripe',
                 stripe_payment_intent_id=invoice.get('payment_intent') or '',
+                invoice_pdf_url=invoice_pdf_url,
+                invoice_hosted_url=invoice_hosted_url,
             )
             created = True
             if txn_id:
@@ -433,19 +451,25 @@ class StripeService:
             # Reçu par email — seulement pour un NOUVEAU paiement (created=True),
             # jamais sur un rejeu du webhook (même txn_id déjà traité).
             if created:
-                StripeService._send_receipt_email(sub, payment_defaults['amount'], payment_defaults['currency'])
+                StripeService._send_receipt_email(
+                    sub, payment_defaults['amount'], payment_defaults['currency'],
+                    invoice_pdf_url, invoice_hosted_url,
+                )
         except Subscription.DoesNotExist:
             logger.warning(f"No subscription found for stripe_sub_id={stripe_sub_id}")
 
     @staticmethod
-    def _send_receipt_email(sub, amount, currency):
+    def _send_receipt_email(sub, amount, currency, invoice_pdf_url='', invoice_hosted_url=''):
         """Envoie le reçu de paiement à l'admin de l'organisation (best-effort,
         ne doit jamais faire échouer le traitement du webhook)."""
         try:
             from apps.core.email_utils import send_subscription_receipt_email
             admin = sub.organization.users.filter(role='admin', is_active=True).first()
             if admin and admin.email:
-                send_subscription_receipt_email(admin, sub.organization, sub.plan.name, amount, currency)
+                send_subscription_receipt_email(
+                    admin, sub.organization, sub.plan.name, amount, currency,
+                    invoice_pdf_url=invoice_pdf_url, invoice_hosted_url=invoice_hosted_url,
+                )
         except Exception as e:
             logger.warning(f"Receipt email failed for subscription {sub.id}: {e}")
 

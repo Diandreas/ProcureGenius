@@ -15,7 +15,7 @@ export default function UpgradeLockDialog({ open, moduleName, onClose }) {
       PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}>
       <Box sx={{
         p: 3, textAlign: 'center',
-        background: 'linear-gradient(135deg, #2563eb, #7c3aed)', color: '#fff',
+        bgcolor: '#2563eb', color: '#fff',
       }}>
         <Box sx={{
           width: 56, height: 56, mx: 'auto', mb: 1.5, borderRadius: '50%',

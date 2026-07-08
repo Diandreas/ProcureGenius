@@ -340,17 +340,32 @@ def send_trial_ending_email(user, organization, plan_name, days_remaining):
         return False
 
 
-def send_subscription_receipt_email(user, organization, plan_name, amount, currency='EUR'):
+def send_subscription_receipt_email(user, organization, plan_name, amount, currency='EUR',
+                                     invoice_pdf_url='', invoice_hosted_url=''):
     """
     Envoie un reçu par email après un paiement d'abonnement réussi.
     Déclenché depuis StripeService._handle_payment_succeeded (webhook
     invoice.payment_succeeded), avec la même idempotence que l'écriture de
     paiement associée (pas de doublon en cas de rejeu du webhook).
+
+    invoice_pdf_url / invoice_hosted_url : liens fournis par Stripe vers la
+    facture officielle (PDF téléchargeable / page hébergée). Stripe génère
+    toujours une facture pour un paiement d'abonnement, mais ne l'envoie par
+    email que si "Email customers about successful payments" est activé côté
+    Dashboard Stripe — on l'inclut donc nous-mêmes ici pour ne pas en dépendre.
     """
     try:
         app_url = settings.FRONTEND_URL
         from_email = settings.DEFAULT_FROM_EMAIL
         subject = f"Reçu de paiement — Procura {plan_name}"
+
+        invoice_button = f"""
+      <p style="text-align:center;margin:16px 0 0;">
+        <a href="{invoice_pdf_url}" style="background:#fff;color:#1976d2;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #1976d2;">
+          Télécharger la facture (PDF)
+        </a>
+      </p>
+""" if invoice_pdf_url else ""
 
         html_body = f"""
 <!DOCTYPE html>
@@ -369,11 +384,12 @@ def send_subscription_receipt_email(user, organization, plan_name, amount, curre
         <tr><td style="padding:8px 0;color:#888;">Plan</td><td style="padding:8px 0;text-align:right;color:#333;font-weight:bold;">{plan_name}</td></tr>
         <tr style="border-top:1px solid #eee;"><td style="padding:8px 0;color:#888;">Montant</td><td style="padding:8px 0;text-align:right;color:#333;font-weight:bold;">{amount} {currency}</td></tr>
       </table>
-      <p style="text-align:center;margin:32px 0;">
+      <p style="text-align:center;margin:32px 0 0;">
         <a href="{app_url}/settings" style="background:#1976d2;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px;">
           Gérer mon abonnement
         </a>
       </p>
+      {invoice_button}
     </div>
     <div style="background:#f5f5f5;padding:16px;text-align:center;">
       <p style="color:#aaa;font-size:12px;margin:0;">Procura — Gestion des achats intelligente</p>
@@ -383,9 +399,13 @@ def send_subscription_receipt_email(user, organization, plan_name, amount, curre
 </html>
 """
 
+        text_body = f"Paiement recu : {plan_name} - {amount} {currency}. Gerer : {app_url}/settings"
+        if invoice_pdf_url:
+            text_body += f"\nFacture PDF : {invoice_pdf_url}"
+
         email = EmailMultiAlternatives(
             subject=subject,
-            body=f"Paiement recu : {plan_name} - {amount} {currency}. Gerer : {app_url}/settings",
+            body=text_body,
             from_email=from_email,
             to=[user.email],
         )
