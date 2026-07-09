@@ -17,7 +17,9 @@ import {
   Chip,
   Stack,
   useTheme,
-  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -29,17 +31,17 @@ import {
   DocumentScanner,
   Psychology,
   Speed,
-  CheckCircle,
   ArrowForward,
   PlayArrow,
-  Star,
   NotificationsActive,
   SmartToy,
-  CheckCircleOutline,
   Lock,
   CreditCardOff,
   Gavel,
   SupportAgent,
+  WifiOff,
+  Payments,
+  ExpandMore,
 } from '@mui/icons-material';
 import { useColorMode } from '../App';
 import { trackVisit } from '../services/tracking';
@@ -47,37 +49,6 @@ import usePageMeta from '../hooks/usePageMeta';
 
 // Enregistrer les plugins GSAP une seule fois (côté client).
 gsap.registerPlugin(ScrollTrigger, useGSAP);
-
-// ─── Animated counter ────────────────────────────────────────────
-const AnimatedCounter = ({ end, suffix = '', duration = 2000 }) => {
-  const [count, setCount] = useState(0);
-  const ref = useRef(null);
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting && !started) setStarted(true); },
-      { threshold: 0.5 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [started]);
-
-  useEffect(() => {
-    if (!started) return;
-    let startTime;
-    const step = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(easeOut * end));
-      if (progress < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [started, end, duration]);
-
-  return <span ref={ref}>{count}{suffix}</span>;
-};
 
 // ─── AI Chat Demo ────────────────────────────────────────────────
 const AIChatDemo = () => {
@@ -96,16 +67,14 @@ const AIChatDemo = () => {
   }, []);
 
   const theme = useTheme();
-  // La landing est volontairement toujours claire (charte marketing) : on ne
-  // suit pas le thème sombre de l'app, sinon seuls certains blocs basculaient
-  // en sombre (header/cartes) alors que le fond restait blanc -> incohérence.
-  const isDark = false;
+  // Suit le thème de l'app, comme le reste de la landing.
+  const isDark = theme.palette.mode === 'dark';
 
   return (
     <Box
       className="gsap-reveal"
       sx={{
-        bgcolor: isDark ? '#111827' : '#ffffff',
+        bgcolor: isDark ? '#16223b' : '#ffffff',
         borderRadius: 4,
         p: 2.5,
         maxWidth: 480,
@@ -204,15 +173,13 @@ const AIChatDemo = () => {
 // ─── Feature Card ─────────────────────────────────────────────────
 const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
   const theme = useTheme();
-  // La landing est volontairement toujours claire (charte marketing) : on ne
-  // suit pas le thème sombre de l'app, sinon seuls certains blocs basculaient
-  // en sombre (header/cartes) alors que le fond restait blanc -> incohérence.
-  const isDark = false;
+  // Suit le thème de l'app, comme le reste de la landing.
+  const isDark = theme.palette.mode === 'dark';
 
   return (
     <Box className="gsap-reveal" sx={{ height: '100%' }}>
       <Card sx={{
-        bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+        bgcolor: isDark ? '#16223b' : '#ffffff',
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
         borderRadius: 4,
         height: '100%',
@@ -236,112 +203,6 @@ const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
           <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', fontSize: '0.875rem', lineHeight: 1.65 }}>
             {description}
           </Typography>
-        </CardContent>
-      </Card>
-    </Box>
-  );
-};
-
-// ─── Pricing Card ─────────────────────────────────────────────────
-const PricingCard = ({ t, title, price, originalPrice, period, features, isPopular, isFree, ctaText, onCta, delay }) => {
-  const theme = useTheme();
-  // La landing est volontairement toujours claire (charte marketing) : on ne
-  // suit pas le thème sombre de l'app, sinon seuls certains blocs basculaient
-  // en sombre (header/cartes) alors que le fond restait blanc -> incohérence.
-  const isDark = false;
-
-  return (
-    <Box className="gsap-reveal" sx={{ height: '100%' }}>
-      <Card sx={{
-        bgcolor: isPopular
-          ? (isDark ? 'rgba(37,99,235,0.1)' : '#eff6ff')
-          : (isDark ? 'rgba(255,255,255,0.02)' : '#ffffff'),
-        border: `1px solid ${isPopular ? alpha('#2563eb', 0.4) : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)')}`,
-        borderRadius: 5,
-        position: 'relative',
-        overflow: 'visible',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'transform 0.25s ease',
-        '&:hover': { transform: 'translateY(-6px)' },
-        boxShadow: isPopular
-          ? `0 20px 60px ${alpha('#2563eb', 0.12)}`
-          : (isDark ? '0 8px 24px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.04)'),
-      }}>
-        {isPopular && (
-          <Box sx={{
-            position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-            bgcolor: '#f59e0b', color: '#0f172a', fontWeight: 800, fontSize: '0.72rem',
-            px: 2, py: 0.5, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 0.5,
-            boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
-            whiteSpace: 'nowrap',
-          }}>
-            <AutoAwesome sx={{ fontSize: 13 }} /> {t('pricing.plans.business.popular', 'LE PLUS CHOISI')}
-          </Box>
-        )}
-        <CardContent sx={{ p: 4, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Typography sx={{
-            color: isPopular ? '#2563eb' : (isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)'),
-            fontWeight: 700, fontSize: '0.8rem', mb: 2,
-            textTransform: 'uppercase', letterSpacing: 1.5, textAlign: 'center'
-          }}>
-            {title}
-          </Typography>
-
-          <Box sx={{ mb: 3, textAlign: 'center' }}>
-            {originalPrice && (
-              <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', textDecoration: 'line-through', fontSize: '1.1rem', fontWeight: 500 }}>
-                {originalPrice}
-              </Typography>
-            )}
-            <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 900, fontSize: '3.2rem', lineHeight: 1 }}>
-              {price}
-            </Typography>
-            <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)', fontSize: '0.875rem', mt: 0.75 }}>
-              {period}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', my: 2.5 }} />
-
-          <Stack spacing={1.75} sx={{ mb: 4, flex: 1 }}>
-            {features.map((f, i) => (
-              <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                <CheckCircleOutline sx={{ fontSize: 19, color: isPopular ? '#2563eb' : '#10b981', mt: 0.15, flexShrink: 0 }} />
-                <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', fontSize: '0.9rem', lineHeight: 1.4 }}>
-                  {f}
-                </Typography>
-              </Box>
-            ))}
-          </Stack>
-
-          <Button
-            fullWidth
-            variant={isPopular ? 'contained' : 'outlined'}
-            onClick={onCta}
-            disableElevation
-            sx={{
-              py: 1.6, borderRadius: 3, fontWeight: 700, textTransform: 'none', fontSize: '0.95rem',
-              ...(isPopular ? {
-                bgcolor: '#2563eb', color: '#fff',
-                boxShadow: `0 8px 24px ${alpha('#2563eb', 0.3)}`,
-                '&:hover': { bgcolor: '#1d4ed8', boxShadow: `0 12px 32px ${alpha('#2563eb', 0.4)}` }
-              } : {
-                borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
-                color: isDark ? '#fff' : '#0f172a',
-                '&:hover': { borderColor: '#2563eb', bgcolor: isDark ? 'rgba(37,99,235,0.08)' : 'rgba(37,99,235,0.04)' }
-              }),
-            }}
-          >
-            {ctaText}
-          </Button>
-
-          {isFree && (
-            <Typography sx={{ color: '#10b981', fontSize: '0.75rem', textAlign: 'center', mt: 1.5, fontWeight: 600 }}>
-              {t('pricing.freeUntil')}
-            </Typography>
-          )}
         </CardContent>
       </Card>
     </Box>
@@ -415,9 +276,30 @@ export default function Landing() {
 
   // Direction « clair éditorial premium » : landing toujours en clair lumineux
   // (charte bleu #2563eb + doré #f59e0b), indépendamment du thème de l'app.
-  const isDark = false; // landing toujours claire
-  const bgColor = '#ffffff';       // fond blanc pur
-  const bgSection = '#f6f8fc';     // section légèrement teintée bleu très clair
+  // La landing suit le thème de l'app (le header public le suit déjà : une
+  // page forcée en clair sous un header sombre était incohérente). Toutes les
+  // couleurs passent par cette petite palette de jetons — une seule décision
+  // par rôle, déclinée clair/sombre, au lieu de couleurs éparpillées.
+  const isDark = theme.palette.mode === 'dark';
+  const pal = isDark ? {
+    bg: '#0f172a',                      // ardoise bleutée, accordée au bleu Procura
+    bgSection: '#131d33',               // sections alternées
+    card: '#16223b',                    // cartes / chips flottants
+    title: '#f1f5f9',
+    body: 'rgba(241,245,249,0.65)',
+    faint: 'rgba(241,245,249,0.45)',
+    border: 'rgba(255,255,255,0.08)',
+  } : {
+    bg: '#ffffff',
+    bgSection: '#f6f8fc',
+    card: '#ffffff',
+    title: '#0f172a',
+    body: 'rgba(0,0,0,0.6)',
+    faint: 'rgba(0,0,0,0.45)',
+    border: 'rgba(0,0,0,0.06)',
+  };
+  const bgColor = pal.bg;
+  const bgSection = pal.bgSection;
 
   // Styles éditoriaux partagés (premium, aéré)
   const eyebrow = {
@@ -426,7 +308,7 @@ export default function Landing() {
   };
   const serifTitle = {
     fontFamily: '"Fraunces", Georgia, serif', fontWeight: 500,
-    letterSpacing: '-0.02em', lineHeight: 1.08, color: '#0f172a',
+    letterSpacing: '-0.02em', lineHeight: 1.08, color: pal.title,
   };
 
   // Tracking visiteur anonyme : une vue de page à l'arrivée sur la landing.
@@ -530,7 +412,7 @@ export default function Landing() {
   }, { scope: pageRef });
 
   return (
-    <Box ref={pageRef} sx={{ bgcolor: bgColor, color: '#0f172a', minHeight: '100vh', overflowX: 'hidden' }}>
+    <Box ref={pageRef} sx={{ bgcolor: bgColor, color: pal.title, minHeight: '100vh', overflowX: 'hidden' }}>
       {/* Police serif éditoriale pour les titres */}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" />
 
@@ -590,7 +472,7 @@ export default function Landing() {
                   lineHeight: 1.04,
                   mb: 0.5,
                   letterSpacing: '-0.02em',
-                  color: '#0f172a',
+                  color: pal.title,
                 }}>
                   {t('hero.titleStart')}
                 </Typography>
@@ -674,9 +556,9 @@ export default function Landing() {
                 {/* Réassurance honnête (pas de faux chiffres) */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}>
                   {[
-                    { icon: <CreditCardOff sx={{ fontSize: 18 }} />, text: '1 mois offert, sans carte' },
-                    { icon: <Lock sx={{ fontSize: 18 }} />, text: 'Données sécurisées' },
-                    { icon: <Gavel sx={{ fontSize: 18 }} />, text: 'Conforme OHADA' },
+                    { icon: <CreditCardOff sx={{ fontSize: 18 }} />, text: t('hero.trust1') },
+                    { icon: <Lock sx={{ fontSize: 18 }} />, text: t('hero.trust2') },
+                    { icon: <Gavel sx={{ fontSize: 18 }} />, text: t('hero.trust3') },
                   ].map((it, i) => (
                     <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.6)' }}>
                       <Box sx={{ color: '#2563eb', display: 'flex' }}>{it.icon}</Box>
@@ -723,8 +605,8 @@ export default function Landing() {
                 {/* Carte flottante "preuve" — chiffre clé */}
                 <Box className="hero-chip" sx={{
                   position: 'absolute', top: 28, right: -18, zIndex: 3,
-                  bgcolor: '#fff', borderRadius: 3, px: 2, py: 1.25,
-                  border: '1px solid rgba(0,0,0,0.06)',
+                  bgcolor: pal.card, borderRadius: 3, px: 2, py: 1.25,
+                  border: `1px solid ${pal.border}`,
                   boxShadow: '0 16px 40px -12px rgba(15,23,42,0.2)',
                   display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1.25,
                 }}>
@@ -732,8 +614,8 @@ export default function Landing() {
                     <TrendingUp sx={{ fontSize: 20 }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 600, fontSize: '1.1rem', lineHeight: 1, color: '#0f172a' }}>−30%</Typography>
-                    <Typography sx={{ fontSize: '0.68rem', color: 'rgba(0,0,0,0.5)', fontWeight: 600 }}>de temps admin</Typography>
+                    <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 600, fontSize: '1.1rem', lineHeight: 1, color: pal.title }}>{t('hero.statChipValue')}</Typography>
+                    <Typography sx={{ fontSize: '0.68rem', color: pal.faint, fontWeight: 600 }}>{t('hero.statChipLabel')}</Typography>
                   </Box>
                 </Box>
               </Box>
@@ -751,11 +633,13 @@ export default function Landing() {
       }}>
         <Container maxWidth="lg">
           <Grid container spacing={4} textAlign="center">
+            {/* Différenciateurs terrain — le hero porte déjà la réassurance
+                d'inscription (essai, sécurité, OHADA) : pas de doublon ici. */}
             {[
-              { icon: <Lock />, title: 'Données sécurisées', desc: 'Chiffrées et sauvegardées. Elles restent les vôtres.', color: '#2563eb' },
-              { icon: <CreditCardOff />, title: '1 mois offert', desc: "Essai gratuit, sans carte bancaire ni engagement.", color: '#10b981' },
-              { icon: <Gavel />, title: 'Conforme OHADA', desc: 'TVA Cameroun, Sénégal, Côte d’Ivoire. Facturation en FCFA.', color: '#f59e0b' },
-              { icon: <SupportAgent />, title: 'Support humain', desc: 'Une équipe joignable sur WhatsApp, réponse sous 2 h.', color: '#8b5cf6' },
+              { icon: <WifiOff />, title: t('trust.offline.title'), desc: t('trust.offline.desc'), color: '#2563eb' },
+              { icon: <Payments />, title: t('trust.currency.title'), desc: t('trust.currency.desc'), color: '#10b981' },
+              { icon: <Gavel />, title: t('trust.ohada.title'), desc: t('trust.ohada.desc'), color: '#f59e0b' },
+              { icon: <SupportAgent />, title: t('trust.support.title'), desc: t('trust.support.desc'), color: '#8b5cf6' },
             ].map((s, i) => (
               <Grid item xs={6} sm={3} key={i}>
                 <div className="gsap-reveal">
@@ -780,19 +664,19 @@ export default function Landing() {
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: { xs: 7, sm: 10 } }}>
             <div className="gsap-reveal">
-              <Typography sx={{ ...eyebrow }}>En 3 étapes</Typography>
+              <Typography sx={{ ...eyebrow }}>{t('howItWorks.eyebrow')}</Typography>
               <Typography variant="h2" sx={{ ...serifTitle, fontSize: { xs: '2rem', sm: '3rem' } }}>
-                De la question à l'action,<br />
-                <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>sans effort</Box>.
+                {t('howItWorks.titleStart')}<br />
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>{t('howItWorks.titleHighlight')}</Box>.
               </Typography>
             </div>
           </Box>
 
           <Grid container spacing={{ xs: 5, md: 6 }} alignItems="flex-start">
             {[
-              { img: '/mascote/Procura_thinking.png', step: '01', title: 'Vous demandez', desc: 'Posez une question en langage naturel : « Quels produits sont bientôt en rupture ? »' },
-              { img: '/mascote/Procura_reading.png', step: '02', title: 'Procura analyse', desc: 'L\'IA parcourt vos stocks, ventes et marges, puis détecte ce qui compte vraiment.' },
-              { img: '/mascote/Procura_thumbup.png', step: '03', title: 'Vous validez', desc: 'Un bon de commande, une facture, une relance — généré et prêt en un clic.' },
+              { img: '/mascote/Procura_thinking.png', step: '01', title: t('howItWorks.step1.title'), desc: t('howItWorks.step1.desc') },
+              { img: '/mascote/Procura_reading.png', step: '02', title: t('howItWorks.step2.title'), desc: t('howItWorks.step2.desc') },
+              { img: '/mascote/Procura_thumbup.png', step: '03', title: t('howItWorks.step3.title'), desc: t('howItWorks.step3.desc') },
             ].map((s, i) => (
               <Grid item xs={12} md={4} key={i}>
                 <Box className="gsap-reveal" sx={{ textAlign: 'center', px: { xs: 2, md: 1 } }}>
@@ -809,10 +693,10 @@ export default function Landing() {
                       color: 'rgba(37,99,235,0.22)',
                     }}>{s.step}</Box>
                   </Box>
-                  <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 600, fontSize: '1.35rem', color: '#0f172a', mb: 1 }}>
+                  <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 600, fontSize: '1.35rem', color: pal.title, mb: 1 }}>
                     {s.title}
                   </Typography>
-                  <Typography sx={{ color: 'rgba(0,0,0,0.55)', fontSize: '0.98rem', lineHeight: 1.6, maxWidth: 320, mx: 'auto' }}>
+                  <Typography sx={{ color: pal.body, fontSize: '0.98rem', lineHeight: 1.6, maxWidth: 320, mx: 'auto' }}>
                     {s.desc}
                   </Typography>
                 </Box>
@@ -836,7 +720,7 @@ export default function Landing() {
                 {t('platform.titleEnd')}
               </Typography>
               <Typography sx={{
-                color: 'rgba(0,0,0,0.55)',
+                color: pal.body,
                 maxWidth: 560, mx: 'auto', fontSize: '1.05rem', lineHeight: 1.65,
               }}>
                 {t('platform.subtitle')}
@@ -913,7 +797,7 @@ export default function Landing() {
                     '&:hover': { borderColor: '#2563eb', bgcolor: isDark ? 'rgba(37,99,235,0.08)' : 'rgba(37,99,235,0.04)' }
                   }}
                 >
-                  Découvrir l'interface
+                  {t('interfaceCta')}
                 </Button>
               </div>
             </Grid>
@@ -932,7 +816,7 @@ export default function Landing() {
               <div className="gsap-reveal">
                 <Chip
                   icon={<Psychology sx={{ fontSize: '1rem !important' }} />}
-                  label="L'Avantage IA"
+                  label={t('aiShowcase.badge')}
                   sx={{
                     mb: 3,
                     bgcolor: isDark ? 'rgba(245,158,11,0.1)' : 'rgba(245,158,11,0.08)',
@@ -944,21 +828,21 @@ export default function Landing() {
                   fontWeight: 900, fontSize: { xs: '1.8rem', sm: '2.2rem' }, mb: 2.5,
                   color: isDark ? '#fff' : '#0f172a',
                 }}>
-                  Votre analyste privé{' '}
-                  <Box component="span" sx={{ color: '#f59e0b' }}>travaillant H24</Box>
+                  {t('aiShowcase.titleStart')}{' '}
+                  <Box component="span" sx={{ color: '#f59e0b' }}>{t('aiShowcase.titleHighlight')}</Box>
                 </Typography>
                 <Typography sx={{
                   color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
                   fontSize: '1.05rem', mb: 5, lineHeight: 1.65,
                 }}>
-                  L'IA intégrée de Procura n'est pas un simple gadget. Elle analyse en continu vos transactions pour vous offrir des recommandations business concrètes.
+                  {t('aiShowcase.subtitle')}
                 </Typography>
 
                 <Stack spacing={3.5}>
                   {[
                     { icon: <Psychology />, title: t('platform.features.ai.title'), desc: t('platform.features.ai.desc'), color: '#2563eb' },
-                    { icon: <Speed />, title: 'Actions en un clic', desc: "Transformez une alerte de stock en bon de commande via l'interface conversationnelle.", color: '#f59e0b' },
-                    { icon: <NotificationsActive />, title: 'Alertes intelligentes', desc: "Soyez notifié quand les marges d'un produit baissent en dessous du seuil.", color: '#10b981' },
+                    { icon: <Speed />, title: t('aiShowcase.oneClick.title'), desc: t('aiShowcase.oneClick.desc'), color: '#f59e0b' },
+                    { icon: <NotificationsActive />, title: t('aiShowcase.alerts.title'), desc: t('aiShowcase.alerts.desc'), color: '#10b981' },
                   ].map((item, i) => (
                     <Box key={i} sx={{ display: 'flex', gap: 2, transition: 'transform 0.2s ease', '&:hover': { transform: 'scale(1.02)' } }}>
                       <Box sx={{
@@ -998,25 +882,33 @@ export default function Landing() {
         <Container maxWidth="md">
           <Box sx={{ textAlign: 'center' }}>
             <div className="gsap-reveal">
-              <Chip label="Tarifs transparents" sx={{
+              <Chip label={t('pricingTeaser.badge')} sx={{
                 mb: 3, bgcolor: isDark ? 'rgba(37,99,235,0.12)' : 'rgba(37,99,235,0.08)',
                 border: `1px solid ${alpha('#2563eb', 0.25)}`, color: '#2563eb', fontWeight: 700, px: 1, py: 2.5, borderRadius: 2,
               }} />
               <Typography variant="h3" sx={{ fontWeight: 900, fontSize: { xs: '1.9rem', sm: '2.6rem' }, mb: 2, color: isDark ? '#fff' : '#0f172a' }}>
-                Commencez gratuitement,{' '}
-                <Box component="span" sx={{ color: '#2563eb' }}>évoluez à votre rythme</Box>
+                {t('pricingTeaser.titleStart')}{' '}
+                <Box component="span" sx={{ color: '#2563eb' }}>{t('pricingTeaser.titleHighlight')}</Box>
               </Typography>
               <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', maxWidth: 560, mx: 'auto', fontSize: '1.08rem', lineHeight: 1.65 }}>
-                Un plan gratuit pour démarrer, le plan Pro à 9&euro;/mois avec un mois d&apos;essai offert (sans carte), et tout illimité dès le plan Business.
+                {/* Prix Pro affiché dans la devise détectée du visiteur (FCFA…) */}
+                {t('pricingTeaser.subtitle', {
+                  price: convertPrice(9) !== null ? formatPriceCurrency(convertPrice(9), currency) : '9 €',
+                })}
               </Typography>
+              {currency !== 'EUR' && (
+                <Typography sx={{ mt: 1.5, color: pal.faint, fontSize: '0.82rem' }}>
+                  {t('pricingTeaser.currencyNote', { currency })}
+                </Typography>
+              )}
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', mt: 4 }}>
                 <Button variant="contained" size="large" onClick={() => navigate('/pricing')}
                   sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, px: 4, py: 1.5, borderRadius: 2, textTransform: 'none', fontWeight: 700, fontSize: '1rem' }}>
-                  Voir les tarifs
+                  {t('pricingTeaser.viewPricing')}
                 </Button>
                 <Button variant="outlined" size="large" onClick={() => navigate('/register')}
                   sx={{ px: 4, py: 1.5, borderRadius: 2, textTransform: 'none', fontWeight: 700, fontSize: '1rem', borderColor: alpha('#2563eb', 0.4), color: '#2563eb', '&:hover': { borderColor: '#2563eb', bgcolor: alpha('#2563eb', 0.04) } }}>
-                  Essayer gratuitement
+                  {t('pricingTeaser.tryFree')}
                 </Button>
               </Box>
             </div>
@@ -1024,84 +916,62 @@ export default function Landing() {
         </Container>
       </Box>
 
-      {/* Ancienne grille de prix retirée (infos obsolètes) — source unique : page /pricing */}
-      <Box sx={{ display: 'none' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
+      {/* ─── FAQ — lève les objections avant l'inscription ────── */}
+      <Box sx={{ py: { xs: 10, sm: 14 }, bgcolor: bgColor }} id="faq-section">
+        <Container maxWidth="md">
+          <Box sx={{ textAlign: 'center', mb: { xs: 5, sm: 7 } }}>
             <div className="gsap-reveal">
-              <Chip label={t('pricing.badge')} sx={{
-                mb: 3,
-                bgcolor: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.08)',
-                border: `1px solid ${alpha('#10b981', 0.25)}`,
-                color: '#10b981', fontWeight: 700, px: 1, py: 2.5, borderRadius: 2,
-              }} />
-              <Typography variant="h3" sx={{
-                fontWeight: 900, fontSize: { xs: '1.8rem', sm: '2.6rem' }, mb: 2.5,
-                color: isDark ? '#fff' : '#0f172a',
-              }}>
-                Un investissement{' '}
-                <Box component="span" sx={{ color: '#10b981' }}>rentable</Box>
+              <Typography sx={{ ...eyebrow }}>{t('faq.eyebrow')}</Typography>
+              <Typography variant="h2" sx={{ ...serifTitle, fontSize: { xs: '2rem', sm: '2.8rem' } }}>
+                {t('faq.titleStart')}{' '}
+                <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>{t('faq.titleHighlight')}</Box>
               </Typography>
-              <Typography sx={{
-                color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.55)',
-                maxWidth: 560, mx: 'auto', fontSize: '1.05rem', lineHeight: 1.65,
-              }}>
-                {t('pricing.subtitle')}
-              </Typography>
-              {currency !== 'EUR' && (
-                <Typography sx={{ mt: 2, color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)', fontSize: '0.82rem' }}>
-                  Prix indicatifs en {CURRENCY_SYMBOLS_SIMPLE[currency] || currency} ({currency}) · Facturation en EUR
-                </Typography>
-              )}
             </div>
           </Box>
-
-          <Grid container spacing={3} justifyContent="center" alignItems="stretch">
-            <Grid item xs={12} sm={6} md={4}>
-              <PricingCard
-                t={t}
-                title={t('pricing.plans.essential.name')}
-                price={convertPrice(10) !== null ? formatPriceCurrency(convertPrice(10), currency) : t('pricing.plans.essential.price')}
-                period="par mois, à vie"
-                features={[t('pricing.plans.essential.f1'), t('pricing.plans.essential.f2'), t('pricing.plans.essential.f3'), t('pricing.plans.essential.f4')]}
-                ctaText={t('pricing.cta')}
-                onCta={() => navigate('/register')}
-                delay={0}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <PricingCard
-                t={t}
-                title={t('pricing.plans.business.name')}
-                price={convertPrice(45) !== null ? formatPriceCurrency(convertPrice(45), currency) : t('pricing.plans.business.price')}
-                originalPrice={convertPrice(99) !== null ? formatPriceCurrency(convertPrice(99), currency) + '/mois' : '99€/mois'}
-                period="par mois"
-                isPopular isFree
-                features={[t('pricing.plans.business.f1'), t('pricing.plans.business.f2'), t('pricing.plans.business.f3'), t('pricing.plans.business.f4'), t('pricing.plans.business.f5'), t('pricing.plans.business.f6')]}
-                ctaText={t('pricing.cta')}
-                onCta={() => navigate('/register')}
-                delay={0.1}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <PricingCard
-                t={t}
-                title={t('pricing.plans.enterprise.name')}
-                price={t('pricing.plans.enterprise.price')}
-                period="paiement annuel"
-                features={[t('pricing.plans.enterprise.f1'), t('pricing.plans.enterprise.f2'), t('pricing.plans.enterprise.f3'), t('pricing.plans.enterprise.f4'), t('pricing.plans.enterprise.f5')]}
-                ctaText={t('pricing.ctaContact')}
-                onCta={() => navigate('/register')}
-                delay={0.2}
-              />
-            </Grid>
-          </Grid>
+          <div className="gsap-reveal">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Accordion
+                key={n}
+                disableGutters
+                elevation={0}
+                sx={{
+                  bgcolor: 'transparent',
+                  border: `1px solid ${pal.border}`,
+                  borderRadius: '12px !important',
+                  mb: 1.5,
+                  '&:before': { display: 'none' },
+                  '&.Mui-expanded': { borderColor: alpha('#2563eb', 0.35) },
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMore sx={{ color: '#2563eb' }} />} sx={{ px: 3, py: 0.5 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: pal.title }}>
+                    {t(`faq.q${n}`)}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ px: 3, pt: 0, pb: 2.5 }}>
+                  <Typography sx={{ color: pal.body, fontSize: '0.95rem', lineHeight: 1.65 }}>
+                    {t(`faq.a${n}`)}
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+            <Box sx={{ textAlign: 'center', mt: 3 }}>
+              <Button
+                variant="text"
+                endIcon={<ArrowForward />}
+                onClick={() => navigate('/faq')}
+                sx={{ textTransform: 'none', fontWeight: 600, color: '#2563eb' }}
+              >
+                {t('faq.seeAll')}
+              </Button>
+            </Box>
+          </div>
         </Container>
       </Box>
 
       {/* ─── Final CTA ────────────────────────────────────────── */}
       <Box sx={{
-        py: { xs: 10, sm: 14 }, bgcolor: bgColor, textAlign: 'center',
+        py: { xs: 10, sm: 14 }, bgcolor: bgSection, textAlign: 'center',
         borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
         position: 'relative', overflow: 'hidden',
       }}>
@@ -1123,14 +993,14 @@ export default function Landing() {
               sx={{ width: { xs: 110, sm: 138 }, mb: 2, filter: 'drop-shadow(0 16px 28px rgba(15,23,42,0.16))' }}
             />
             <Typography variant="h2" sx={{ ...serifTitle, fontSize: { xs: '2.1rem', sm: '3rem' }, mb: 2.5 }}>
-              Prêt à gagner{' '}
-              <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>du temps</Box> ?
+              {t('finalCta.titleStart')}{' '}
+              <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>{t('finalCta.titleHighlight')}</Box> ?
             </Typography>
             <Typography sx={{
-              color: 'rgba(0,0,0,0.55)',
+              color: pal.body,
               fontSize: '1.08rem', lineHeight: 1.65, mb: 5, maxWidth: 460, mx: 'auto',
             }}>
-              Créez votre compte en 2 minutes. Un mois offert, sans carte.
+              {t('finalCta.subtitle')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
@@ -1147,7 +1017,7 @@ export default function Landing() {
                   transition: 'all 0.25s',
                 }}
               >
-                Commencer gratuitement
+                {t('finalCta.start')}
               </Button>
               <Button
                 variant="outlined"
@@ -1161,7 +1031,7 @@ export default function Landing() {
                   '&:hover': { borderColor: '#2563eb', bgcolor: alpha('#2563eb', 0.04) }
                 }}
               >
-                Se connecter
+                {t('finalCta.login')}
               </Button>
             </Box>
           </div>

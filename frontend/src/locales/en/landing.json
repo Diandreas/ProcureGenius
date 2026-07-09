@@ -7,11 +7,21 @@
   "hero": {
     "badge": "Artificial Intelligence at your service",
     "titleStart": "Artificial Intelligence powering your ",
-    "words": ["business", "enterprise", "startup", "growth"],
+    "words": [
+      "business",
+      "enterprise",
+      "startup",
+      "growth"
+    ],
     "subtitle": "Centralize your purchases, invoices, and inventory. Let Procura's AI automate repetitive tasks and provide you with proactive strategic insights.",
     "ctaPrimary": "Start Trial",
     "ctaSecondary": "See AI in action",
-    "socialProof": "Trusted by +500 professionals"
+    "socialProof": "Trusted by +500 professionals",
+    "trust1": "1 month free, no card",
+    "trust2": "Secure data",
+    "trust3": "OHADA compliant",
+    "statChipValue": "-30%",
+    "statChipLabel": "admin time"
   },
   "stats": {
     "companies": "Active companies",
@@ -115,5 +125,87 @@
     "subtitle": "Join hundreds of companies that have already taken the leap.",
     "cta": "Start your trial",
     "rights": "© 2026 Procura. All rights reserved."
+  },
+  "trust": {
+    "offline": {
+      "title": "Works offline",
+      "desc": "Internet down? The mobile app keeps working and syncs everything once you're back online."
+    },
+    "currency": {
+      "title": "FCFA and multi-currency",
+      "desc": "Invoice in FCFA, EUR, USD… with local VAT calculated automatically."
+    },
+    "ohada": {
+      "title": "OHADA compliant",
+      "desc": "VAT for Cameroon, Senegal, Ivory Coast. Double-entry accounting included."
+    },
+    "support": {
+      "title": "Human support",
+      "desc": "A real team on WhatsApp, replies within 2 hours."
+    }
+  },
+  "howItWorks": {
+    "eyebrow": "3 simple steps",
+    "titleStart": "From question to action,",
+    "titleHighlight": "effortlessly",
+    "step1": {
+      "title": "You ask",
+      "desc": "Ask a question in plain language: “Which products are about to run out?”"
+    },
+    "step2": {
+      "title": "Procura analyzes",
+      "desc": "The AI scans your stock, sales and margins, and surfaces what really matters."
+    },
+    "step3": {
+      "title": "You approve",
+      "desc": "A purchase order, an invoice, a reminder — generated and ready in one click."
+    }
+  },
+  "aiShowcase": {
+    "badge": "The AI advantage",
+    "titleStart": "Your private analyst,",
+    "titleHighlight": "available 24/7",
+    "subtitle": "Procura's AI is not a gimmick: it continuously analyzes your sales, stock and margins to suggest concrete actions.",
+    "oneClick": {
+      "title": "One-click actions",
+      "desc": "Turn a stock alert into a purchase order right inside the conversation."
+    },
+    "alerts": {
+      "title": "Smart alerts",
+      "desc": "Get notified when a margin drops below your threshold or an invoice stays unpaid."
+    }
+  },
+  "pricingTeaser": {
+    "badge": "Transparent pricing",
+    "titleStart": "Start for free,",
+    "titleHighlight": "grow at your own pace",
+    "subtitle": "A free plan to get started, the Pro plan at {{price}}/month with one free month (no card), and everything unlimited from the Business plan.",
+    "currencyNote": "Indicative price converted to {{currency}} · Billed in EUR",
+    "viewPricing": "See pricing",
+    "tryFree": "Try it free"
+  },
+  "interfaceCta": "Try it free",
+  "faq": {
+    "eyebrow": "Frequently asked questions",
+    "titleStart": "Honest answers,",
+    "titleHighlight": "no fine print",
+    "seeAll": "See all questions",
+    "q1": "How much does it cost?",
+    "a1": "There is a free plan with no time limit. The Pro plan costs €9/month with one free month, no credit card required. Full details are on the Pricing page.",
+    "q2": "Does it work without an internet connection?",
+    "a2": "Yes. The mobile app works offline: your clients, products and invoices stay available, and everything syncs automatically once you're back online.",
+    "q3": "Can I invoice in FCFA?",
+    "a3": "Yes, along with EUR, USD, MAD and other currencies. Local VAT (Cameroon, Senegal, Ivory Coast…) is applied automatically.",
+    "q4": "Is my data safe?",
+    "a4": "Your data is encrypted, backed up, and remains yours. You can export it at any time.",
+    "q5": "Do I need accounting knowledge?",
+    "a5": "No. You create invoices and purchase orders as usual; the accounting entries are generated automatically in the background."
+  },
+  "finalCta": {
+    "titleStart": "Ready to save",
+    "titleHighlight": "time",
+    "subtitle": "Create your account in 2 minutes. One month free, no card.",
+    "start": "Start for free",
+    "login": "Log in"
   }
 }

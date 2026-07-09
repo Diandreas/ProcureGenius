@@ -7,11 +7,21 @@
   "hero": {
     "badge": "L'Intelligence Artificielle à votre service",
     "titleStart": "L'Intelligence Artificielle qui propulse votre ",
-    "words": ["commerce", "entreprise", "startup", "croissance"],
+    "words": [
+      "commerce",
+      "entreprise",
+      "startup",
+      "croissance"
+    ],
     "subtitle": "Centralisez vos achats, factures et stocks. Laissez l'IA de Procura automatiser les tâches répétitives et vous fournir des analyses stratégiques proactifs.",
     "ctaPrimary": "Démarrer l'essai",
     "ctaSecondary": "Voir l'IA en action",
-    "socialProof": "Approuvé par +500 professionnels"
+    "socialProof": "Approuvé par +500 professionnels",
+    "trust1": "1 mois offert, sans carte",
+    "trust2": "Données sécurisées",
+    "trust3": "Conforme OHADA",
+    "statChipValue": "-30%",
+    "statChipLabel": "de temps admin"
   },
   "stats": {
     "companies": "Entreprises actives",
@@ -115,5 +125,87 @@
     "subtitle": "Rejoignez les centaines d'entreprises qui ont déjà franchi le pas.",
     "cta": "Démarrer l'essai",
     "rights": "© 2026 Procura. Tous droits réservés."
+  },
+  "trust": {
+    "offline": {
+      "title": "Fonctionne hors-ligne",
+      "desc": "Coupure internet ? L'app mobile continue, tout se synchronise au retour du réseau."
+    },
+    "currency": {
+      "title": "FCFA et multi-devises",
+      "desc": "Facturez en FCFA, EUR, USD… avec la TVA locale calculée automatiquement."
+    },
+    "ohada": {
+      "title": "Conforme OHADA",
+      "desc": "TVA Cameroun, Sénégal, Côte d'Ivoire. Comptabilité en partie double incluse."
+    },
+    "support": {
+      "title": "Support humain",
+      "desc": "Une équipe joignable sur WhatsApp, réponse sous 2 h."
+    }
+  },
+  "howItWorks": {
+    "eyebrow": "En 3 étapes",
+    "titleStart": "De la question à l'action,",
+    "titleHighlight": "sans effort",
+    "step1": {
+      "title": "Vous demandez",
+      "desc": "Posez une question en langage naturel : « Quels produits sont bientôt en rupture ? »"
+    },
+    "step2": {
+      "title": "Procura analyse",
+      "desc": "L'IA parcourt vos stocks, ventes et marges, puis détecte ce qui compte vraiment."
+    },
+    "step3": {
+      "title": "Vous validez",
+      "desc": "Un bon de commande, une facture, une relance — généré et prêt en un clic."
+    }
+  },
+  "aiShowcase": {
+    "badge": "L'avantage IA",
+    "titleStart": "Votre analyste privé",
+    "titleHighlight": "disponible 24 h/24",
+    "subtitle": "L'IA de Procura n'est pas un gadget : elle analyse en continu vos ventes, stocks et marges pour vous proposer des actions concrètes.",
+    "oneClick": {
+      "title": "Actions en un clic",
+      "desc": "Transformez une alerte de stock en bon de commande directement dans la conversation."
+    },
+    "alerts": {
+      "title": "Alertes intelligentes",
+      "desc": "Soyez prévenu quand une marge passe sous votre seuil ou qu'un impayé traîne."
+    }
+  },
+  "pricingTeaser": {
+    "badge": "Tarifs transparents",
+    "titleStart": "Commencez gratuitement,",
+    "titleHighlight": "évoluez à votre rythme",
+    "subtitle": "Un plan gratuit pour démarrer, le plan Pro à {{price}}/mois avec un mois d'essai offert (sans carte), et tout illimité dès le plan Business.",
+    "currencyNote": "Prix indicatif converti en {{currency}} · Facturation en EUR",
+    "viewPricing": "Voir les tarifs",
+    "tryFree": "Essayer gratuitement"
+  },
+  "interfaceCta": "Essayer gratuitement",
+  "faq": {
+    "eyebrow": "Questions fréquentes",
+    "titleStart": "On vous répond,",
+    "titleHighlight": "franchement",
+    "seeAll": "Voir toutes les questions",
+    "q1": "Combien ça coûte ?",
+    "a1": "Il y a un plan gratuit sans limite de durée. Le plan Pro coûte 9 €/mois avec un mois d'essai offert, sans carte bancaire. Les tarifs détaillés sont sur la page Tarifs.",
+    "q2": "Est-ce que ça fonctionne sans connexion internet ?",
+    "a2": "Oui. L'application mobile fonctionne hors-ligne : vos clients, produits et factures restent accessibles, et tout se synchronise automatiquement au retour du réseau.",
+    "q3": "Puis-je facturer en FCFA ?",
+    "a3": "Oui, ainsi qu'en EUR, USD, MAD et d'autres devises. La TVA locale (Cameroun, Sénégal, Côte d'Ivoire…) est appliquée automatiquement.",
+    "q4": "Mes données sont-elles en sécurité ?",
+    "a4": "Vos données sont chiffrées, sauvegardées et restent votre propriété. Vous pouvez les exporter à tout moment.",
+    "q5": "Ai-je besoin de connaissances en comptabilité ?",
+    "a5": "Non. Vous créez vos factures et bons de commande normalement ; les écritures comptables sont générées automatiquement en arrière-plan."
+  },
+  "finalCta": {
+    "titleStart": "Prêt à gagner",
+    "titleHighlight": "du temps",
+    "subtitle": "Créez votre compte en 2 minutes. Un mois offert, sans carte.",
+    "start": "Commencer gratuitement",
+    "login": "Se connecter"
   }
 }
