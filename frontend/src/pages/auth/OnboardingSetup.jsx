@@ -269,8 +269,7 @@ function OnboardingSetup() {
           </Box>
           <Typography variant="h4" sx={{
             fontWeight: 800, mb: 0.5,
-            background: 'linear-gradient(90deg, #2563eb, #7c3aed)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            color: '#2563eb',
           }}>
             Bienvenue sur Procura
           </Typography>
@@ -293,7 +292,7 @@ function OnboardingSetup() {
             sx={{
               borderRadius: 4, height: 8,
               bgcolor: 'rgba(37,99,235,0.10)',
-              '& .MuiLinearProgress-bar': { borderRadius: 4, background: 'linear-gradient(90deg, #2563eb, #7c3aed)' },
+              '& .MuiLinearProgress-bar': { borderRadius: 4, background: '#2563eb' },
             }} />
         </Box>
 

@@ -193,8 +193,8 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
           sx={{
             p: 2,
             background: isListening
-              ? 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)'
-              : 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+              ? '#dc2626'
+              : '#2563eb',
             color: 'white',
             display: 'flex',
             alignItems: 'center',

@@ -68,7 +68,7 @@ const PremiumModal = ({
             left: 0,
             right: 0,
             height: '6px',
-            background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            background: theme.palette.primary.main,
             zIndex: 1,
           }}
         />

@@ -804,7 +804,7 @@ function DashboardEnhanced() {
           onClick={() => navigate('/products/margins')}
           sx={{
             borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3, cursor: 'pointer',
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.06), rgba(99,102,241,0.06))',
+            background: 'rgba(16,185,129,0.06)',
             transition: 'box-shadow 0.2s', '&:hover': { boxShadow: '0 4px 20px rgba(16,185,129,0.18)' },
           }}
         >

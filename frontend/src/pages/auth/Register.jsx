@@ -338,11 +338,11 @@ function Register() {
           {/* Divider */}
           <motion.div {...fadeUp(0.2)}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #c8cfd9)' }} />
+              <Box sx={{ flex: 1, height: '1px', background: '#c8cfd9' }} />
               <Typography sx={{ px: 2, color: '#9aa3bb', fontSize: '0.75rem', fontWeight: 600 }}>
                 {t('auth:login.or')}
               </Typography>
-              <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #c8cfd9)' }} />
+              <Box sx={{ flex: 1, height: '1px', background: '#c8cfd9' }} />
             </Box>
           </motion.div>
 

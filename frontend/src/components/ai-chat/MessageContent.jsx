@@ -556,7 +556,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                               textTransform: 'none',
                               fontSize: '0.875rem',
                               borderRadius: 2,
-                              background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                              background: (theme) => theme.palette.primary.main,
                               boxShadow: (theme) => `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
                               '&:hover': {
                                 transform: 'translateY(-1px)',

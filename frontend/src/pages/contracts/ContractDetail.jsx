@@ -512,7 +512,7 @@ function ContractDetail() {
                 position: 'absolute',
                 top: 0, left: 0, right: 0,
                 height: 4,
-                background: `linear-gradient(90deg, ${statusColor}, ${alpha(statusColor, 0.4)})`,
+                background: statusColor,
               },
             }}
           >

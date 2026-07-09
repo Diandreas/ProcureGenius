@@ -404,7 +404,7 @@ function Contracts() {
                     sx={{
                       borderRadius: 2,
                       border: `1px solid ${alpha(kpi.color, 0.2)}`,
-                      background: `linear-gradient(135deg, ${alpha(kpi.color, 0.06)} 0%, transparent 100%)`,
+                      background: alpha(kpi.color, 0.05),
                       boxShadow: `0 2px 12px ${alpha(kpi.color, 0.08)}`,
                     }}
                   >

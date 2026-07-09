@@ -219,7 +219,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
               className="stat-card"
               onClick={() => onMetricClick && onMetricClick({ metric, generateDetailedData })}
               style={{
-                background: `linear-gradient(135deg, ${metric.color}08 0%, ${metric.color}02 100%)`,
+                background: `${metric.color}08`,
                 border: `1px solid ${metric.color}20`,
                 borderRadius: '8px',
                 padding: '12px',

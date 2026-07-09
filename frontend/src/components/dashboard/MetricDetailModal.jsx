@@ -88,7 +88,7 @@ const MetricDetailModal = ({ metric, onClose, generateDetailedData }) => {
 
         {/* Valeur actuelle */}
         <div style={{
-          background: `linear-gradient(135deg, ${metric.color}18 0%, ${metric.color}08 100%)`,
+          background: `${metric.color}12`,
           padding: '20px',
           borderRadius: '12px',
           marginBottom: '24px',

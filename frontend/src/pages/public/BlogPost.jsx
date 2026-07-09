@@ -102,7 +102,7 @@ export default function BlogPost() {
         );
       case 'cta':
         return (
-          <Box key={i} sx={{ my: 5, p: { xs: 3, md: 4 }, borderRadius: 4, textAlign: 'center', background: `linear-gradient(135deg, ${accent}, #8b5cf6)` }}>
+          <Box key={i} sx={{ my: 5, p: { xs: 3, md: 4 }, borderRadius: 4, textAlign: 'center', background: accent }}>
             <Typography sx={{ color: '#fff', fontSize: '1.3rem', fontWeight: 800, mb: 2 }}>
               Prêt à reprendre le contrôle ?
             </Typography>

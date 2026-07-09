@@ -277,7 +277,7 @@ const EntityCard = ({ entityKey, config, selected, onClick }) => {
                         justifyContent: 'center',
                         mx: 'auto',
                         mb: 2,
-                        background: `linear-gradient(135deg, ${config.color}, ${alpha(config.color, 0.7)})`,
+                        background: config.color,
                         boxShadow: `0 4px 12px ${alpha(config.color, 0.4)}`,
                     }}
                 >

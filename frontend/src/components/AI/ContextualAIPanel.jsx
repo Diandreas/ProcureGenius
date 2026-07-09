@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { normalizeMarkdown } from '../ai-chat/markdownUtils';
 import {
   Box,
   Drawer,
@@ -28,7 +31,7 @@ import { aiChatAPI } from '../../services/api';
 const PAGE_CONTEXTS = {
   '/dashboard': {
     label: 'Tableau de bord',
-    color: '#6366f1',
+    color: '#2563eb',
     greeting: 'Voici un aperçu de votre activité. Je peux analyser vos indicateurs ou faire une prévision de trésorerie.',
     actions: [
       { label: 'Analyser la période', prompt: 'Analyse mes indicateurs financiers du tableau de bord et donne-moi les points clés.' },
@@ -100,7 +103,7 @@ const PAGE_CONTEXTS = {
 
 const DEFAULT_CONTEXT = {
   label: 'Procura',
-  color: '#6366f1',
+  color: '#2563eb',
   greeting: 'Bonjour ! Je suis votre assistant Procura. Posez-moi n\'importe quelle question sur votre activité.',
   actions: [
     { label: 'Créer une facture', prompt: 'Guide-moi pour créer une facture professionnelle.' },
@@ -168,7 +171,13 @@ export default function ContextualAIPanel() {
       if (data.conversation_id) setConversationId(data.conversation_id);
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', text: reply, chart: data.chart || null },
+        {
+          role: 'assistant',
+          text: reply,
+          chart: data.chart || null,
+          // Questions de suivi suggerees (meme contrat que le chat complet).
+          followups: Array.isArray(data.suggested_followups) ? data.suggested_followups : [],
+        },
       ]);
       // Confirmation structurée par token (création/suppression sensible).
       if (data.needs_confirmation) {
@@ -309,9 +318,36 @@ export default function ContextualAIPanel() {
                   color: msg.role === 'user' ? 'white' : 'text.primary',
                 }}
               >
-                <Typography variant="body2" sx={{ fontSize: '0.82rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                  {msg.text}
-                </Typography>
+                {msg.role === 'assistant' ? (
+                  // Rendu Markdown compact, aligne sur le chat complet (gras,
+                  // listes, tableaux) au lieu du texte brut avec ** visibles.
+                  <Box
+                    sx={{
+                      fontSize: '0.82rem',
+                      lineHeight: 1.55,
+                      '& p': { m: 0, mb: 0.75 },
+                      '& p:last-child': { mb: 0 },
+                      '& ul, & ol': { m: 0, mb: 0.75, pl: 2.25 },
+                      '& li': { mb: 0.25 },
+                      '& strong': { fontWeight: 700 },
+                      '& h1, & h2, & h3, & h4': { fontSize: '0.9rem', fontWeight: 700, m: 0, mb: 0.5 },
+                      '& code': {
+                        px: 0.5, borderRadius: 0.5, fontSize: '0.78rem',
+                        bgcolor: alpha(theme.palette.text.primary, 0.08),
+                      },
+                      '& table': { borderCollapse: 'collapse', fontSize: '0.78rem', mb: 0.75 },
+                      '& th, & td': { border: '1px solid', borderColor: 'divider', px: 0.75, py: 0.25 },
+                    }}
+                  >
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {normalizeMarkdown(msg.text)}
+                    </ReactMarkdown>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" sx={{ fontSize: '0.82rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                    {msg.text}
+                  </Typography>
+                )}
                 {msg.chart && (
                   <Typography
                     variant="caption"
@@ -324,6 +360,31 @@ export default function ContextualAIPanel() {
               </Box>
             </Box>
           ))}
+
+          {/* Questions de suivi suggérées (même comportement que le chat complet) */}
+          {!loading && !pendingConfirmation && messages.length > 0 && (() => {
+            const last = messages[messages.length - 1];
+            if (last.role !== 'assistant' || !last.followups?.length) return null;
+            return (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, pl: 4.5 }}>
+                {last.followups.map((question, qi) => (
+                  <Box
+                    key={qi}
+                    onClick={() => sendMessage(question)}
+                    sx={{
+                      px: 1.25, py: 0.5, borderRadius: 4, cursor: 'pointer',
+                      fontSize: '0.75rem', fontWeight: 500,
+                      border: '1px solid', borderColor: 'divider', color: 'text.secondary',
+                      '&:hover': { borderColor: ctx.color, color: ctx.color, bgcolor: alpha(ctx.color, 0.04) },
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {question}
+                  </Box>
+                ))}
+              </Box>
+            );
+          })()}
 
           {/* Confirmation structurée (création/suppression sensible) */}
           {pendingConfirmation && !loading && (

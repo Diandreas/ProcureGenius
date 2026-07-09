@@ -343,7 +343,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
             <Card
                 sx={{
                     mb: 3,
-                    background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.light, 0.05)} 100%)`,
+                    background: alpha(theme.palette.success.main, 0.08),
                     border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
                 }}
             >
@@ -379,7 +379,7 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
         <Card
             sx={{
                 mb: 3,
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.02)} 100%)`,
+                background: alpha(theme.palette.primary.main, 0.04),
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                 overflow: 'visible',
             }}
@@ -448,9 +448,9 @@ const GettingStartedWidget = ({ onDismiss, onStartTutorial }) => {
                             startIcon={<PlayArrow />}
                             onClick={handleStartTutorial}
                             sx={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: '#2563eb',
                                 '&:hover': {
-                                    background: 'linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)',
+                                    background: '#1d4ed8',
                                 },
                             }}
                         >

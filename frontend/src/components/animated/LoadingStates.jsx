@@ -68,7 +68,7 @@ export const NeumorphicProgress = ({ value = 0 }) => {
         transition={{ duration: 0.5, ease: 'easeOut' }}
         style={{
           height: '100%',
-          background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+          background: '#3b82f6',
           borderRadius: '8px',
         }}
       />

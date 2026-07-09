@@ -112,7 +112,7 @@ function Login() {
           {/* Badge supérieur */}
           <Box sx={{
             position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-            background: `linear-gradient(135deg, ${ACCENT}, #7c5cbf)`,
+            background: ACCENT,
             borderRadius: '20px',
             px: 3, py: 0.6,
             boxShadow: `0 4px 16px ${ACCENT}40`,
@@ -242,12 +242,12 @@ function Login() {
                   fontWeight: 700,
                   fontSize: '0.95rem',
                   textTransform: 'none',
-                  background: `linear-gradient(135deg, ${ACCENT} 0%, #7c5cbf 100%)`,
+                  background: ACCENT,
                   boxShadow: `6px 6px 16px #b8bec7, -4px -4px 12px #ffffff, 0 4px 20px ${ACCENT}35`,
                   border: 'none',
                   color: 'white',
                   '&:hover': {
-                    background: `linear-gradient(135deg, #3d5ce0 0%, #6a4baa 100%)`,
+                    background: '#1d4ed8',
                     boxShadow: `8px 8px 20px #b0b7c3, -4px -4px 12px #ffffff, 0 6px 24px ${ACCENT}45`,
                     transform: 'translateY(-2px)',
                   },
@@ -265,9 +265,9 @@ function Login() {
             {/* Divider neumorphique */}
             <motion.div {...fadeUp(0.5)}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
-                <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #c8cfd9)' }} />
+                <Box sx={{ flex: 1, height: '1px', background: '#c8cfd9' }} />
                 <Typography sx={{ px: 2, color: '#9aa3bb', fontSize: '0.75rem', fontWeight: 600 }}>OU</Typography>
-                <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #c8cfd9)' }} />
+                <Box sx={{ flex: 1, height: '1px', background: '#c8cfd9' }} />
               </Box>
             </motion.div>
 

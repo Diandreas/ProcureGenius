@@ -21,8 +21,8 @@ export default function FeatureGate({ feature, title, description, children }) {
       <Box sx={{
         width: 72, height: 72, mx: 'auto', mb: 2, borderRadius: '50%',
         display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-        background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
-        boxShadow: '0 12px 30px -10px rgba(124,58,237,0.5)',
+        background: '#2563eb',
+        boxShadow: '0 12px 30px -10px rgba(37,99,235,0.5)',
       }}>
         <Lock sx={{ fontSize: 32 }} />
       </Box>

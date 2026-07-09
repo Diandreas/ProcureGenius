@@ -9,25 +9,28 @@ export async function cacheList(entity, items) {
   if (!Array.isArray(items)) return;
   const db = await getDb();
   if (!db) return;
+  // ATTENTION : pas de BEGIN/COMMIT manuels ici. run()/execute() du plugin
+  // ouvrent deja leur propre transaction par defaut -> "cannot start a
+  // transaction within a transaction". executeSet() fait le lot atomique.
+  const set = [
+    { statement: 'DELETE FROM cache WHERE entity = ?;', values: [entity] },
+  ];
+  for (const it of items) {
+    const id = String(it?.id ?? it?.pk ?? '');
+    if (!id) continue;
+    set.push({
+      statement: 'INSERT OR REPLACE INTO cache (entity, id, payload, updated_at) VALUES (?, ?, ?, ?);',
+      values: [entity, id, JSON.stringify(it), it?.updated_at || null],
+    });
+  }
+  set.push({
+    statement: 'INSERT OR REPLACE INTO sync_meta (entity, last_sync_at) VALUES (?, ?);',
+    values: [entity, new Date().toISOString()],
+  });
   try {
-    await db.execute('BEGIN TRANSACTION;');
-    await db.run('DELETE FROM cache WHERE entity = ?;', [entity]);
-    for (const it of items) {
-      const id = String(it?.id ?? it?.pk ?? '');
-      if (!id) continue;
-      await db.run(
-        'INSERT OR REPLACE INTO cache (entity, id, payload, updated_at) VALUES (?, ?, ?, ?);',
-        [entity, id, JSON.stringify(it), it?.updated_at || null]
-      );
-    }
-    await db.run(
-      'INSERT OR REPLACE INTO sync_meta (entity, last_sync_at) VALUES (?, ?);',
-      [entity, new Date().toISOString()]
-    );
-    await db.execute('COMMIT;');
+    await db.executeSet(set);
     console.log(`[offline] cacheList OK ${entity}: ${items.length} ecrits`);
   } catch (e) {
-    try { await db.execute('ROLLBACK;'); } catch { /* ignore */ }
     console.warn('[offline] cacheList ERREUR', entity, e?.message || e);
   }
 }

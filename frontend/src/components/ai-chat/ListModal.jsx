@@ -361,8 +361,8 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
       {/* Header Premium */}
       <Box sx={{
         background: isDark 
-          ? `linear-gradient(135deg, ${alpha(entityColor, 0.15)} 0%, ${alpha('#000', 0.2)} 100%)`
-          : `linear-gradient(135deg, ${alpha(entityColor, 0.08)} 0%, ${alpha(entityColor, 0.02)} 100%)`,
+          ? alpha(entityColor, 0.15)
+          : alpha(entityColor, 0.06),
         position: 'relative',
         pt: 4,
         pb: 3,

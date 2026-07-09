@@ -102,7 +102,7 @@ function ModuleQuickActionsPanel({ currentModule, onActionClick }) {
             sx={{
                 p: 2,
                 mb: 3,
-                background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+                background: '#2563eb12',
                 border: '1px solid',
                 borderColor: 'primary.light',
             }}

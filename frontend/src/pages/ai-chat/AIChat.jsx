@@ -742,10 +742,10 @@ function AIChat() {
               textTransform: 'none',
               fontWeight: 600,
               px: { xs: 1.5, sm: 2 },
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              background: theme.palette.primary.main,
               color: 'white',
               '&:hover': {
-                background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+                background: theme.palette.primary.dark,
               }
             }}
           >
@@ -1860,7 +1860,7 @@ function AIChat() {
                     sx={{
                       mb: 0.5,
                       background: (loading || message.trim())
-                        ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                        ? '#2563eb'
                         : theme.palette.background.paper,
                       color: (loading || message.trim()) ? 'white' : 'text.disabled',
                       width: { xs: 38, sm: 42 },

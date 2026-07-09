@@ -115,10 +115,7 @@ const Help = () => {
           fontWeight={700}
           gutterBottom
           sx={{
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: theme.palette.primary.main,
           }}
         >
           {t('help:title', 'Centre d\'aide ProcureGenius')}
@@ -207,10 +204,7 @@ const Help = () => {
                   border: 1,
                   borderColor: alpha(category.color, 0.2),
                   borderRadius: 1.5,
-                  background: `linear-gradient(135deg, ${alpha(
-                    category.color,
-                    0.05
-                  )} 0%, ${alpha(category.color, 0.02)} 100%)`,
+                  background: alpha(category.color, 0.04),
                   cursor: selectedCategory ? 'default' : 'pointer',
                   transition: 'all 0.3s',
                   '&:hover': selectedCategory

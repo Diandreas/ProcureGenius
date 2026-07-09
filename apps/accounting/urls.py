@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .fec_export import FECExportView
 
 urlpatterns = [
     # Plan Comptable
@@ -21,6 +22,9 @@ urlpatterns = [
     path('reports/income-statement/', views.IncomeStatementView.as_view(), name='income-statement'),
     path('reports/balance-sheet/', views.BalanceSheetView.as_view(), name='balance-sheet'),
     path('reports/sig/', views.SIGView.as_view(), name='sig'),
+
+    # Exports (plan max : advanced_exports)
+    path('exports/fec/', FECExportView.as_view(), name='fec-export'),
 
     # Dashboard
     path('dashboard/', views.AccountingDashboardView.as_view(), name='accounting-dashboard'),

@@ -30,6 +30,9 @@ const accountingAPI = {
   getBalanceSheet: (params = {}) => api.get(`${BASE}/reports/balance-sheet/`, { params }),
   getSIG: (params = {}) => api.get(`${BASE}/reports/sig/`, { params }),
 
+  // ── Exports (plan max) ──────────────────────────────────────────
+  exportFEC: (params = {}) => api.get(`${BASE}/exports/fec/`, { params, responseType: 'blob' }),
+
   // ── Dashboard ───────────────────────────────────────────────────
   getDashboard: () => api.get(`${BASE}/dashboard/`),
 

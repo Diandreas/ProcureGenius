@@ -422,10 +422,7 @@ const FAQ = () => {
           mt: 6,
           p: 4,
           textAlign: 'center',
-          background: `linear-gradient(135deg, ${alpha(
-            theme.palette.primary.main,
-            0.05
-          )} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
+          background: alpha(theme.palette.primary.main, 0.05),
           borderRadius: 2,
           border: 1,
           borderColor: 'divider',

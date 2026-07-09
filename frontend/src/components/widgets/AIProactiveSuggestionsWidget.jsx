@@ -152,7 +152,7 @@ const AIProactiveSuggestionsWidget = ({ period = 'last_30_days' }) => {
       <Card
         sx={{
           height: '100%',
-          background: `linear-gradient(135deg, ${getColorByType(suggestion.type)}15 0%, ${getColorByType(suggestion.type)}05 100%)`,
+          background: `${getColorByType(suggestion.type)}10`,
           border: `2px solid ${getColorByType(suggestion.type)}40`,
           position: 'relative',
           overflow: 'visible'

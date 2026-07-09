@@ -128,9 +128,9 @@ function ContextualMascot({
                         maxWidth: 320,
                         p: 2,
                         borderRadius: 3,
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: '#2563eb',
                         color: 'white',
-                        boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)',
+                        boxShadow: '0 8px 32px rgba(37, 99, 235, 0.4)',
                     }}
                 >
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>

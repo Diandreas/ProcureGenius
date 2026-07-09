@@ -5,10 +5,11 @@ import {
   TableContainer, Paper, Chip, IconButton, Tooltip, CircularProgress, Alert,
   Card, CardContent, Stack, useMediaQuery, useTheme,
 } from '@mui/material';
-import { Add, Visibility, CheckCircle, Cancel, OpenInNew } from '@mui/icons-material';
+import { Add, Visibility, CheckCircle, Cancel, OpenInNew, FileDownload } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import accountingAPI from '../../services/accountingAPI';
+import { useModules } from '../../contexts/ModuleContext';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
@@ -51,8 +52,10 @@ export default function JournalEntries() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ journal: '', status: '', start_date: '', end_date: '', search: '' });
+  const [exporting, setExporting] = useState(false);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { hasFeature } = useModules();
   const { format } = useCurrency();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -105,20 +108,62 @@ export default function JournalEntries() {
     }
   };
 
+  // Export FEC (écritures validées). Reprend la période des filtres si posée,
+  // sinon l'année civile en cours (défaut backend).
+  const handleExportFEC = async () => {
+    setExporting(true);
+    try {
+      const params = {};
+      if (filters.start_date) params.start = filters.start_date;
+      if (filters.end_date) params.end = filters.end_date;
+      const res = await accountingAPI.exportFEC(params);
+      const disposition = res.headers?.['content-disposition'] || '';
+      const match = disposition.match(/filename="?([^";]+)"?/);
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = match ? match[1] : 'export_fec.txt';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      enqueueSnackbar('Export FEC téléchargé', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.error || 'Erreur export FEC', { variant: 'error' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Box p={{ xs: 2, sm: 3 }}>
       <AccountingNav
         title="Écritures Comptables"
         subtitle={`${entries.length} écriture(s)`}
         action={
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            size={isMobile ? 'small' : 'medium'}
-            onClick={() => navigate('/accounting/entries/new')}
-          >
-            {isMobile ? 'Nouvelle' : 'Nouvelle écriture'}
-          </Button>
+          <Box display="flex" gap={1}>
+            {hasFeature('advanced_exports') && (
+              <Tooltip title="Fichier des Écritures Comptables (écritures validées de la période filtrée)">
+                <Button
+                  variant="outlined"
+                  startIcon={<FileDownload />}
+                  size={isMobile ? 'small' : 'medium'}
+                  onClick={handleExportFEC}
+                  disabled={exporting}
+                >
+                  {exporting ? 'Export…' : 'Export FEC'}
+                </Button>
+              </Tooltip>
+            )}
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              size={isMobile ? 'small' : 'medium'}
+              onClick={() => navigate('/accounting/entries/new')}
+            >
+              {isMobile ? 'Nouvelle' : 'Nouvelle écriture'}
+            </Button>
+          </Box>
         }
       />
 

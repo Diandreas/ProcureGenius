@@ -3,7 +3,7 @@
 import { isNativePlatform } from '../../utils/platform';
 import { cacheList, readList, cacheOne, readOne, getLastSync } from './cache';
 import { initOfflineDb, getDb } from './db';
-import { enqueueMutation, newUuid, pendingCount } from './mutationQueue';
+import { enqueueMutation, newUuid, pendingCount, cancelPendingCreate } from './mutationQueue';
 import { getOffline } from './connectivity';
 
 export { initOfflineDb, cacheList, readList, cacheOne, readOne, getLastSync };
@@ -179,7 +179,12 @@ export async function updateWithQueue(entity, id, data, apiCall) {
  */
 async function queueDelete(entity, id) {
   await removeFromCache(entity, id);
-  await enqueueMutation({ entity, op: 'delete', recordId: id, payload: null });
+  // Enregistrement cree hors-ligne et jamais synchronise : annuler sa creation
+  // en file suffit, le serveur n'en a jamais entendu parler.
+  const localOnly = await cancelPendingCreate(entity, id);
+  if (!localOnly) {
+    await enqueueMutation({ entity, op: 'delete', recordId: id, payload: null });
+  }
   return id;
 }
 

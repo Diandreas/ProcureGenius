@@ -86,7 +86,7 @@ const ENTITY_CONFIGS = {
         label: 'Fournisseurs',
         icon: LocalShipping,
         color: '#2563eb',
-        gradient: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+        gradient: '#2563eb',
         description: 'Importez votre liste de fournisseurs avec leurs coordonnées',
         fields: {
             required: ['name'],
@@ -117,7 +117,7 @@ const ENTITY_CONFIGS = {
         label: 'Produits',
         icon: Inventory,
         color: '#059669',
-        gradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+        gradient: '#059669',
         description: 'Importez votre catalogue de produits avec prix et stocks',
         fields: {
             required: ['name'],
@@ -150,7 +150,7 @@ const ENTITY_CONFIGS = {
         label: 'Clients',
         icon: People,
         color: '#7c3aed',
-        gradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+        gradient: '#7c3aed',
         description: 'Importez votre base de clients avec leurs informations',
         fields: {
             required: ['name'],

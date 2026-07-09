@@ -1163,10 +1163,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
               <Typography variant="h6" gutterBottom sx={{
                 fontWeight: 700,
                 mb: isMobile ? 2 : 3,
-                background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
+                color: 'primary.main'
               }}>
                 {t('purchaseOrders:labels.financialSummary')}
               </Typography>
@@ -1176,14 +1173,14 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     textAlign: 'center',
                     p: isMobile ? 2 : 3,
                     borderRadius: 3,
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+                    background: theme => alpha(theme.palette.primary.main, 0.08),
                     border: '1px solid',
                     borderColor: theme => alpha(theme.palette.primary.main, 0.2),
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: theme => `0 12px 28px ${alpha(theme.palette.primary.main, 0.3)}`,
-                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.primary.main, 0.1)} 100%)`
+                      background: theme => alpha(theme.palette.primary.main, 0.12)
                     },
                     position: 'relative',
                     overflow: 'hidden',
@@ -1194,7 +1191,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                       left: 0,
                       right: 0,
                       height: 3,
-                      background: theme => `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.light, 0.8)})`,
+                      background: theme => theme.palette.primary.main,
                       borderRadius: '3px 3px 0 0'
                     }
                   }}>
@@ -1207,10 +1204,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
                       fontWeight: 700,
                       mb: 1,
-                      background: theme => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent'
+                      color: 'primary.main'
                     }}>
                       {formatCurrency(purchaseOrder.subtotal || 0)}
                     </Typography>
@@ -1224,14 +1218,14 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     textAlign: 'center',
                     p: isMobile ? 2 : 3,
                     borderRadius: 3,
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                    background: theme => alpha(theme.palette.warning.main, 0.08),
                     border: '1px solid',
                     borderColor: theme => alpha(theme.palette.warning.main, 0.2),
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: theme => `0 12px 28px ${alpha(theme.palette.warning.main, 0.3)}`,
-                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.15)} 0%, ${alpha(theme.palette.warning.main, 0.1)} 100%)`
+                      background: theme => alpha(theme.palette.warning.main, 0.12)
                     },
                     position: 'relative',
                     overflow: 'hidden',
@@ -1242,7 +1236,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                       left: 0,
                       right: 0,
                       height: 3,
-                      background: theme => `linear-gradient(90deg, ${theme.palette.warning.main}, ${alpha(theme.palette.warning.light, 0.8)})`,
+                      background: theme => theme.palette.warning.main,
                       borderRadius: '3px 3px 0 0'
                     }
                   }}>
@@ -1255,10 +1249,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
                       fontWeight: 700,
                       mb: 1,
-                      background: theme => `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent'
+                      color: 'warning.main'
                     }}>
                       {formatCurrency(purchaseOrder.tax_amount || 0)}
                     </Typography>
@@ -1272,14 +1263,14 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     textAlign: 'center',
                     p: isMobile ? 2 : 3,
                     borderRadius: 3,
-                    background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.main, 0.05)} 100%)`,
+                    background: theme => alpha(theme.palette.success.main, 0.08),
                     border: '1px solid',
                     borderColor: theme => alpha(theme.palette.success.main, 0.2),
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: 'translateY(-4px)',
                       boxShadow: theme => `0 12px 28px ${alpha(theme.palette.success.main, 0.3)}`,
-                      background: theme => `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.15)} 0%, ${alpha(theme.palette.success.main, 0.1)} 100%)`
+                      background: theme => alpha(theme.palette.success.main, 0.12)
                     },
                     position: 'relative',
                     overflow: 'hidden',
@@ -1290,7 +1281,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                       left: 0,
                       right: 0,
                       height: 3,
-                      background: theme => `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.light, 0.8)})`,
+                      background: theme => theme.palette.success.main,
                       borderRadius: '3px 3px 0 0'
                     }
                   }}>
@@ -1303,10 +1294,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     <Typography variant={isMobile ? 'h5' : 'h4'} sx={{
                       fontWeight: 700,
                       mb: 1,
-                      background: theme => `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent'
+                      color: 'success.main'
                     }}>
                       {formatCurrency(purchaseOrder.total_amount || 0)}
                     </Typography>

@@ -421,7 +421,7 @@ function MainLayout() {
             width: 36,
             height: 36,
             borderRadius: 2,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+            background: theme.palette.primary.main,
             display: 'none',
             alignItems: 'center',
             justifyContent: 'center',
@@ -439,9 +439,7 @@ function MainLayout() {
             sx={{
               fontWeight: 800,
               fontSize: '1.25rem',
-              background: `linear-gradient(to right, ${theme.palette.text.primary}, ${theme.palette.text.secondary})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: theme.palette.text.primary,
               letterSpacing: '-0.02em',
               whiteSpace: 'nowrap',
             }}
@@ -765,7 +763,7 @@ function MainLayout() {
                         py: 0.75,
                         fontSize: '0.75rem',
                         mr: { xs: 0, sm: 1 },
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                        background: theme.palette.primary.main,
                         color: 'white',
                         textTransform: 'none',
                         boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`,
@@ -773,7 +771,7 @@ function MainLayout() {
                         '&:hover': {
                           transform: 'translateY(-1px)',
                           boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
-                          background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+                          background: theme.palette.primary.dark,
                         },
                         '& .MuiButton-startIcon': {
                           marginRight: 0.5,
@@ -812,7 +810,7 @@ function MainLayout() {
                       width: 4,
                       height: 24,
                       borderRadius: 2,
-                      background: `linear-gradient(180deg, ${theme.palette.primary.main} 0%, ${alpha(theme.palette.primary.main, 0.4)} 100%)`,
+                      background: theme.palette.primary.main,
                       boxShadow: `0 0 12px ${alpha(theme.palette.primary.main, 0.4)}`,
                       display: { xs: 'none', md: 'block' },
                     }}
@@ -826,11 +824,7 @@ function MainLayout() {
                       fontWeight: 700,
                       fontSize: { xs: '0.9rem', sm: '1.15rem' },
                       flex: 1, // Prend l'espace disponible
-                      background: mode === 'dark'
-                        ? `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${alpha(theme.palette.text.primary, 0.7)} 100%)`
-                        : `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.text.secondary} 100%)`,
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
+                      color: theme.palette.text.primary,
                       letterSpacing: '-0.02em',
                       // Toujours afficher le titre (y compris sur pages principales sur mobile)
                       display: 'block',
@@ -972,29 +966,17 @@ function MainLayout() {
                     xs: isMainPage ? 'none' : 'flex',
                     md: 'flex' 
                   },
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  background: theme.palette.primary.main,
                   color: 'white',
                   textTransform: 'none',
                   position: 'relative',
                   overflow: 'hidden',
                   boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.35)}`,
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  // Effet shimmer
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '50%',
-                    background: `linear-gradient(180deg, ${alpha('#ffffff', 0.2)} 0%, transparent 100%)`,
-                    borderRadius: '12px 12px 0 0',
-                    pointerEvents: 'none',
-                  },
                   '&:hover': {
                     transform: 'translateY(-1px)',
                     boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.45)}`,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`,
+                    background: theme.palette.primary.dark,
                   },
                   '&:active': {
                     transform: 'translateY(0)',

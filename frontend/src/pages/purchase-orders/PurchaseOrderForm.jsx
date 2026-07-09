@@ -363,9 +363,7 @@ function PurchaseOrderForm() {
             <ArrowBack />
           </IconButton>
           <Typography variant="h4" fontWeight="800" sx={{
-            background: theme => `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: 'primary.main',
           }}>
             {isEdit ? t('purchaseOrders:editPO') : t('purchaseOrders:newPO')}
           </Typography>

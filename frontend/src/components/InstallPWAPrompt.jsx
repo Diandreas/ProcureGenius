@@ -138,7 +138,7 @@ const InstallPWAPrompt = () => {
               width: 56,
               height: 56,
               borderRadius: 2,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              background: theme.palette.primary.main,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -194,7 +194,7 @@ const InstallPWAPrompt = () => {
                   borderRadius: 2,
                   py: 1.2,
                   fontWeight: 600,
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  background: theme.palette.primary.main,
                   boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`,
                   textTransform: 'none',
                   '&:hover': {
