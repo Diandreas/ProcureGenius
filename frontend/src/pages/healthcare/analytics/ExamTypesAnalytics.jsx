@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Paper, Typography, Container, ToggleButtonGroup, ToggleButton, Chip } from '@mui/material';
+import dayjs from 'dayjs';
+import { Box, Grid, Paper, Typography, Container, ToggleButtonGroup, ToggleButton, Chip, Alert } from '@mui/material';
 import { TrendingUp as TrendingUpIcon } from '@mui/icons-material';
 import FilterPanel from '../../../components/analytics/FilterPanel';
 import TimeRangeSelector from '../../../components/analytics/TimeRangeSelector';
@@ -16,8 +17,8 @@ const ExamTypesAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('week');
   const [filters, setFilters] = useState({
-    start_date: null,
-    end_date: null,
+    start_date: dayjs().startOf('month'),
+    end_date: dayjs(),
     patient_id: null
   });
   const [examFilter, setExamFilter] = useState('all');
@@ -84,7 +85,12 @@ const ExamTypesAnalytics = () => {
               Types d'Examens par Période
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Analyse temporelle des examens effectués
+              {filters.start_date && filters.end_date
+                ? `Du ${filters.start_date.format ? filters.start_date.format('DD/MM/YYYY') : filters.start_date} au ${filters.end_date.format ? filters.end_date.format('DD/MM/YYYY') : filters.end_date}`
+                : filters.start_date
+                  ? `Depuis le ${filters.start_date.format ? filters.start_date.format('DD/MM/YYYY') : filters.start_date}`
+                  : 'Toutes les données'}
+              {data && ` — ${data.total_items ?? 0} tests · ${data.total_orders ?? 0} commandes`}
             </Typography>
           </Box>
         </Box>
@@ -126,6 +132,13 @@ const ExamTypesAnalytics = () => {
           onChange={setFilters}
           showDateRange={true}
         />
+
+        {data && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            <strong>{data.total_items ?? 0} tests effectués</strong> sur <strong>{data.total_orders ?? 0} commandes distinctes</strong>.
+            {' '}Les bilans (packs) sont comptés test par test — un «Pack Tranquillité» prescrit 4 fois = 16 tests individuels dans les statistiques.
+          </Alert>
+        )}
 
         {loading ? (
           <LoadingState />

@@ -52,7 +52,7 @@ class ProductFilter(django_filters.FilterSet):
         # Si le queryset a déjà _effective_stock annoté (depuis get_queryset), on l'utilise.
         # Sinon on l'annote ici pour éviter de dupliquer le travail.
         if not hasattr(queryset.query, 'annotations') or '_effective_stock' not in queryset.query.annotations:
-            queryset = queryset.filter(product_type='physical').annotate(
+            queryset = queryset.filter(product_type='physical', is_active=True).annotate(
                 _batch_stock=Coalesce(
                     Sum(
                         'batches__quantity_remaining',
@@ -63,10 +63,10 @@ class ProductFilter(django_filters.FilterSet):
                 _effective_stock=Greatest(F('stock_quantity'), F('_batch_stock'))
             )
         else:
-            queryset = queryset.filter(product_type='physical')
+            queryset = queryset.filter(product_type='physical', is_active=True)
 
         if value == 'out_of_stock':
-            return queryset.filter(_effective_stock=0)
+            return queryset.filter(_effective_stock__lte=0)
         elif value == 'low_stock':
             return queryset.filter(_effective_stock__gt=0, _effective_stock__lte=F('low_stock_threshold'))
         elif value == 'ok':
@@ -75,73 +75,49 @@ class ProductFilter(django_filters.FilterSet):
 
     def filter_expiration_status(self, queryset, name, value):
         """
-        Filtre par péremption en tenant compte des lots (batches) ET de la date
-        directe du produit. Un produit est considéré comme "expirant bientôt" si :
-        - son expiration_date directe est dans la fenêtre, OU
-        - il a au moins un lot actif dont l'expiry_date est dans la fenêtre
+        Filtre par péremption. Utilise une sous-requête séparée pour éviter
+        les JOINs complexes sur un queryset déjà annoté (cause de timeout 503).
         """
+        if value not in ('expired', 'expiring_soon', 'expiring_90days', 'expiring_1year', 'ok'):
+            return queryset
+
         today = timezone.now().date()
         thirty_days = today + datetime.timedelta(days=30)
+        active_q = Q(batches__status__in=ACTIVE_BATCH_STATUSES, batches__quantity_remaining__gt=0)
 
-        active_batches_filter = Q(batches__status__in=ACTIVE_BATCH_STATUSES, batches__quantity_remaining__gt=0)
+        base = Product.objects.filter(product_type='physical')
 
         if value == 'expired':
-            return queryset.filter(
-                product_type='physical'
-            ).filter(
+            ids = base.filter(
                 Q(expiration_date__lt=today) |
-                Q(active_batches_filter, batches__expiry_date__lt=today)
-            ).distinct()
+                Q(active_q, batches__expiry_date__lt=today)
+            ).values_list('id', flat=True).distinct()
 
         elif value == 'expiring_soon':
-            return queryset.filter(
-                product_type='physical'
-            ).filter(
+            ids = base.filter(
                 Q(expiration_date__gte=today, expiration_date__lte=thirty_days) |
-                Q(
-                    active_batches_filter,
-                    batches__expiry_date__gte=today,
-                    batches__expiry_date__lte=thirty_days
-                )
-            ).distinct()
+                Q(active_q, batches__expiry_date__gte=today, batches__expiry_date__lte=thirty_days)
+            ).values_list('id', flat=True).distinct()
 
         elif value == 'expiring_90days':
             ninety_days = today + datetime.timedelta(days=90)
-            return queryset.filter(
-                product_type='physical'
-            ).filter(
+            ids = base.filter(
                 Q(expiration_date__gte=today, expiration_date__lte=ninety_days) |
-                Q(
-                    active_batches_filter,
-                    batches__expiry_date__gte=today,
-                    batches__expiry_date__lte=ninety_days
-                )
-            ).distinct()
+                Q(active_q, batches__expiry_date__gte=today, batches__expiry_date__lte=ninety_days)
+            ).values_list('id', flat=True).distinct()
 
         elif value == 'expiring_1year':
             one_year = today + datetime.timedelta(days=365)
-            return queryset.filter(
-                product_type='physical'
-            ).filter(
+            ids = base.filter(
                 Q(expiration_date__gte=today, expiration_date__lte=one_year) |
-                Q(
-                    active_batches_filter,
-                    batches__expiry_date__gte=today,
-                    batches__expiry_date__lte=one_year
-                )
-            ).distinct()
+                Q(active_q, batches__expiry_date__gte=today, batches__expiry_date__lte=one_year)
+            ).values_list('id', flat=True).distinct()
 
         elif value == 'ok':
-            # Produits physiques dont ni le produit ni aucun lot n'est périmé/expirant
-            expired_or_soon_ids = Product.objects.filter(
-                product_type='physical'
-            ).filter(
+            exclude_ids = base.filter(
                 Q(expiration_date__lte=thirty_days) |
-                Q(
-                    active_batches_filter,
-                    batches__expiry_date__lte=thirty_days
-                )
-            ).values_list('id', flat=True)
-            return queryset.filter(product_type='physical').exclude(id__in=expired_or_soon_ids)
+                Q(active_q, batches__expiry_date__lte=thirty_days)
+            ).values_list('id', flat=True).distinct()
+            return queryset.filter(product_type='physical').exclude(id__in=list(exclude_ids))
 
-        return queryset
+        return queryset.filter(id__in=list(ids))

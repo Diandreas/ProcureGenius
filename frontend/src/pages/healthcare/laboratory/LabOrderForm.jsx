@@ -244,6 +244,17 @@ const LabOrderForm = () => {
             return;
         }
 
+        // Les commandes sous-traitées doivent passer par le formulaire batch dédié
+        // (qui crée automatiquement la facture de sous-traitance)
+        if (formData.subcontractor?.id) {
+            enqueueSnackbar(
+                'Pour une commande sous-traitée, utilisez la page "Dépôt sous-traitance" afin que la facture soit générée automatiquement.',
+                { variant: 'warning', autoHideDuration: 6000 }
+            );
+            navigate('/healthcare/laboratory/subcontractors/batch-order');
+            return;
+        }
+
         setLoading(true);
         try {
             const payload = {

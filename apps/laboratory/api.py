@@ -1565,7 +1565,7 @@ class SubcontractorBatchOrderView(APIView):
 
         rows = request.data.get('rows', [])
         payment_method = request.data.get('payment_method', 'cash')
-        payment_mode = request.data.get('payment_mode', 'immediate')  # 'immediate' | 'deferred'
+        payment_mode = request.data.get('payment_mode', 'deferred')  # 'immediate' | 'deferred'
 
         if not rows:
             return Response({'error': 'Aucune ligne fournie'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1678,7 +1678,11 @@ class SubcontractorBatchOrderView(APIView):
                 errors.append({'patient': sub_patient.full_name, 'error': str(e)})
 
         # Créer ONE batch invoice pour le sous-traitant
+        import logging
+        logger = logging.getLogger(__name__)
+
         batch_invoice_id = None
+        invoice_error = None
         if invoice_items_data:
             try:
                 with transaction.atomic():
@@ -1728,13 +1732,18 @@ class SubcontractorBatchOrderView(APIView):
 
                     batch_invoice_id = str(batch_invoice.id)
             except Exception as e:
-                pass  # Invoice failure doesn't block orders
+                logger.error(
+                    f"SubcontractorBatchOrder: échec création facture pour {subcontractor.name}: {e}",
+                    exc_info=True,
+                )
+                invoice_error = str(e)
 
         return Response({
             'success': success,
             'errors': errors,
             'batch_invoice_id': batch_invoice_id,
             'batch_total': float(batch_total),
+            'invoice_error': invoice_error,
         })
 
 

@@ -266,7 +266,7 @@ const SubcontractorOrderBatch = () => {
     const [patients, setPatients] = useState([]);
     const [rows, setRows] = useState([emptyRow(), emptyRow(), emptyRow()]);
     const [paymentMethod, setPaymentMethod] = useState('cash');
-    const [paymentMode, setPaymentMode] = useState('immediate'); // 'immediate' | 'deferred'
+    const [paymentMode, setPaymentMode] = useState('deferred'); // 'immediate' | 'deferred'
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [results, setResults] = useState(null);
@@ -396,6 +396,19 @@ const SubcontractorOrderBatch = () => {
                         >
                             Voir la facture
                         </Button>
+                    </Paper>
+                )}
+
+                {/* Erreur création facture */}
+                {results.invoice_error && (
+                    <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'error.light', borderRadius: 2, mb: 2 }}>
+                        <Typography fontWeight="700" color="error.main">⚠ Facture non générée</Typography>
+                        <Typography variant="body2" color="text.secondary" mt={0.5}>
+                            Les commandes ont été créées mais la facture n'a pas pu être générée. Contactez un administrateur.
+                        </Typography>
+                        <Typography variant="caption" color="error" sx={{ fontFamily: 'monospace', mt: 0.5, display: 'block' }}>
+                            {results.invoice_error}
+                        </Typography>
                     </Paper>
                 )}
 
