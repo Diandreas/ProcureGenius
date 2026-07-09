@@ -4,7 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import { SnackbarProvider } from 'notistack';
-import { Provider, useDispatch } from 'react-redux';
+import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from './store/store';
 import { ModuleProvider } from './contexts/ModuleContext';
 import { SharedElementProvider } from './contexts/SharedElementContext';
@@ -602,6 +602,14 @@ const getDesignTokens = (mode) => ({
   },
 });
 
+// Route "/" : un utilisateur deja connecte doit atterrir sur son dashboard,
+// pas sur la page marketing (ex. de retour d'un paiement Stripe, ou en
+// rouvrant l'app). Sinon, comportement habituel (landing web / login natif).
+function RootRedirect() {
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  return <Navigate to={isAuthenticated ? '/dashboard' : ROOT_REDIRECT} replace />;
+}
+
 // App Initializer component
 function AppInitializer({ children }) {
   const dispatch = useDispatch();
@@ -852,7 +860,7 @@ function App() {
                       <Routes>
                         {/* Public Routes */}
                         <Route element={<PublicLayout />}>
-                          <Route path="/" element={<Navigate to={ROOT_REDIRECT} replace />} />
+                          <Route path="/" element={<RootRedirect />} />
                           {/* Sur l'app mobile, pas de landing marketing : on renvoie vers /login. */}
                           <Route
                             path="/landing"
