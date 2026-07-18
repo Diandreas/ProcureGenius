@@ -33,9 +33,11 @@ class ExamStatusByPatientView(APIView):
         status = request.GET.get('status')
 
         if start_date:
-            queryset = queryset.filter(order_date__gte=start_date)
+            queryset = queryset.filter(order_date__date__gte=start_date)
         if end_date:
-            queryset = queryset.filter(order_date__lte=end_date)
+            # order_date est un DateTimeField : __date__lte évite de couper à minuit
+            # et d'exclure toute la dernière journée de la période.
+            queryset = queryset.filter(order_date__date__lte=end_date)
         if patient_id:
             queryset = queryset.filter(patient_id=patient_id)
         if status:
@@ -106,9 +108,11 @@ class ExamTypesByPeriodView(APIView):
         exam_filter = request.GET.get('exam_filter')  # 'exam', 'panel', 'all'
 
         if start_date:
-            queryset = queryset.filter(lab_order__order_date__gte=start_date)
+            queryset = queryset.filter(lab_order__order_date__date__gte=start_date)
         if end_date:
-            queryset = queryset.filter(lab_order__order_date__lte=end_date)
+            # __date__lte (pas juste __lte) : order_date est un DateTimeField, un lte nu
+            # sur une simple date coupe à minuit et exclut toute la dernière journée.
+            queryset = queryset.filter(lab_order__order_date__date__lte=end_date)
         if patient_id:
             queryset = queryset.filter(lab_order__patient_id=patient_id)
         if exam_filter == 'panel':
@@ -341,9 +345,9 @@ class RevenueAnalyticsView(APIView):
         # Laboratory module stats
         lab_queryset = LabOrder.objects.filter(organization=organization)
         if start_date:
-            lab_queryset = lab_queryset.filter(order_date__gte=start_date)
+            lab_queryset = lab_queryset.filter(order_date__date__gte=start_date)
         if end_date:
-            lab_queryset = lab_queryset.filter(order_date__lte=end_date)
+            lab_queryset = lab_queryset.filter(order_date__date__lte=end_date)
 
         lab_stats = lab_queryset.aggregate(
             count=Count('id'),
@@ -358,9 +362,9 @@ class RevenueAnalyticsView(APIView):
             consultation_invoice__status='paid'
         )
         if start_date:
-            consultation_queryset = consultation_queryset.filter(consultation_date__gte=start_date)
+            consultation_queryset = consultation_queryset.filter(consultation_date__date__gte=start_date)
         if end_date:
-            consultation_queryset = consultation_queryset.filter(consultation_date__lte=end_date)
+            consultation_queryset = consultation_queryset.filter(consultation_date__date__lte=end_date)
 
         consultation_stats = consultation_queryset.aggregate(
             count=Count('id'),
@@ -371,9 +375,9 @@ class RevenueAnalyticsView(APIView):
         # By service (lab categories)
         item_queryset = LabOrderItem.objects.filter(lab_order__organization=organization)
         if start_date:
-            item_queryset = item_queryset.filter(lab_order__order_date__gte=start_date)
+            item_queryset = item_queryset.filter(lab_order__order_date__date__gte=start_date)
         if end_date:
-            item_queryset = item_queryset.filter(lab_order__order_date__lte=end_date)
+            item_queryset = item_queryset.filter(lab_order__order_date__date__lte=end_date)
 
         by_service = item_queryset.values('lab_test__category__name').annotate(
             count=Count('id'),

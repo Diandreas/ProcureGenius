@@ -352,9 +352,11 @@ class MovementAnalysisView(APIView):
         product_id = request.GET.get('product_id')
 
         if start_date:
-            queryset = queryset.filter(created_at__gte=start_date)
+            queryset = queryset.filter(created_at__date__gte=start_date)
         if end_date:
-            queryset = queryset.filter(created_at__lte=end_date)
+            # created_at est un DateTimeField : __date__lte évite de couper à minuit
+            # et d'exclure tous les mouvements de la dernière journée de la période.
+            queryset = queryset.filter(created_at__date__lte=end_date)
         if movement_type:
             queryset = queryset.filter(movement_type=movement_type)
         if product_id:
@@ -1120,8 +1122,8 @@ class MarginAnalyticsView(APIView):
         # ── B. EXAMENS DE LABORATOIRE ────────────────────────────────────────
         lab_items = LabOrderItem.objects.filter(
             lab_order__organization=org,
-            lab_order__order_date__gte=start_date,
-            lab_order__order_date__lte=end_date,
+            lab_order__order_date__date__gte=start_date,
+            lab_order__order_date__date__lte=end_date,
         ).exclude(lab_order__status='cancelled').select_related('lab_test')
 
         lab_by_test = {}
