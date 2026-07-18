@@ -196,8 +196,20 @@ const Dashboard = () => {
   const servicesRevenue = byActivity.find(a => a.activity_type === 'healthcare_services')?.revenue || 0;
 
   // Soins par catégorie
-  const servicesCategories = (servicesData?.by_category || []).slice(0, 10);
+  const allServicesCategories = servicesData?.by_category || [];
+  const servicesCategories = allServicesCategories.slice(0, 10);
   const servicesTotalRevenue = servicesData?.total_revenue || 0;
+
+  // Répartition Soins / Chirurgie / Hospitalisation à partir des catégories du bucket "healthcare_services"
+  const sumCatMatching = (pattern) => allServicesCategories
+    .filter(c => (c.category_name || '').toLowerCase().includes(pattern))
+    .reduce((s, c) => s + parseFloat(c.revenue || 0), 0);
+  const chirurgieRevenue = sumCatMatching('chirurgie');
+  const hospitalisationRevenue = sumCatMatching('hospitalisation');
+  const soinsRevenue = servicesTotalRevenue - chirurgieRevenue - hospitalisationRevenue;
+
+  const hospitalization = activityData?.hospitalization || {};
+  const pharmacyOnlyRevenue = financial?.pharmacy_only_revenue || 0;
 
   // Revenue timeline for chart
   const revenueTimeline = financial?.revenue_timeline || [];
@@ -468,15 +480,56 @@ const Dashboard = () => {
                   subtitle="Ordonnances + vente comptoir" />
               </Grid>
               <Grid item xs={6} md={3}>
-                <StatCard title="CA Soins / Chirurgie / Hospit."
-                  value={loading ? '...' : formatCurrency(servicesRevenue)}
-                  icon={<MedicalIcon />} color="#8b5cf6" loading={loading} />
+                <StatCard title="CA Pharmacie (patients pharmacie)"
+                  value={loading ? '...' : formatCurrency(pharmacyOnlyRevenue)}
+                  icon={<PharmacyIcon />} color="#059669" loading={loading}
+                  subtitle="Vente comptoir pure, sans autre acte" />
               </Grid>
               <Grid item xs={6} md={3}>
                 <StatCard title="Sous-traitance Labo"
                   value={loading ? '...' : formatCurrency(subcontractingInfo.revenue)}
                   icon={<ShippingIcon />} color="#6366f1" loading={loading}
                   subtitle={`${subcontractingInfo.count ?? 0} examens · inclus dans CA Labo`} />
+              </Grid>
+            </Grid>
+
+            {/* KPI cards — ligne 3 : Soins / Chirurgie / Hospitalisation */}
+            <Grid container spacing={2} mb={1}>
+              <Grid item xs={6} md={4}>
+                <StatCard title="CA Soins"
+                  value={loading ? '...' : formatCurrency(soinsRevenue)}
+                  icon={<SoinsIcon />} color="#8b5cf6" loading={loading} />
+              </Grid>
+              <Grid item xs={6} md={4}>
+                <StatCard title="CA Chirurgie"
+                  value={loading ? '...' : formatCurrency(chirurgieRevenue)}
+                  icon={<MedicalIcon />} color="#ec4899" loading={loading} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <StatCard title="CA Hospitalisation"
+                  value={loading ? '...' : formatCurrency(hospitalisationRevenue)}
+                  icon={<HospitalIcon />} color="#0891b2" loading={loading} />
+              </Grid>
+            </Grid>
+            {/* KPI cards — ligne 3bis : indicateurs Hospitalisation */}
+            <Grid container spacing={2} mb={3}>
+              <Grid item xs={6} md={4}>
+                <StatCard title="Patients Hospitalisés"
+                  value={loading ? '...' : hospitalization?.patients_count ?? 0}
+                  icon={<HospitalIcon />} color="#0891b2" loading={loading}
+                  subtitle="Sur la période sélectionnée" />
+              </Grid>
+              <Grid item xs={6} md={4}>
+                <StatCard title="Durée Moyenne Séjour"
+                  value={loading ? '...' : `${hospitalization?.avg_stay_days ?? 0} j`}
+                  icon={<ClockIcon />} color="#0891b2" loading={loading}
+                  subtitle="Sorties sur la période" />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <StatCard title="Lits Occupés"
+                  value={loading ? '...' : hospitalization?.beds_occupied ?? 0}
+                  icon={<HospitalIcon />} color="#0891b2" loading={loading}
+                  subtitle="Actuellement (temps réel)" />
               </Grid>
             </Grid>
 

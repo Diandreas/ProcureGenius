@@ -99,6 +99,11 @@ export default function HospitalizationList() {
         <Typography variant="body2" color="text.secondary">
           Admission : {formatDate(h.admission_date)}
         </Typography>
+        {h.bed_number && (
+          <Typography variant="body2" color="text.secondary">
+            Lit : {h.bed_number}
+          </Typography>
+        )}
         {h.discharge_date && (
           <Typography variant="body2" color="text.secondary">
             Sortie : {formatDate(h.discharge_date)}
@@ -184,6 +189,7 @@ export default function HospitalizationList() {
                 <TableCell>Médecin</TableCell>
                 <TableCell>Admission</TableCell>
                 <TableCell>Sortie</TableCell>
+                <TableCell>Lit</TableCell>
                 <TableCell>Statut</TableCell>
                 <TableCell>Motif</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -209,6 +215,7 @@ export default function HospitalizationList() {
                   </TableCell>
                   <TableCell>{formatDate(h.admission_date)}</TableCell>
                   <TableCell>{formatDate(h.discharge_date)}</TableCell>
+                  <TableCell>{h.bed_number || '—'}</TableCell>
                   <TableCell>
                     <Chip
                       label={STATUS_CONFIG[h.status]?.label || h.status}

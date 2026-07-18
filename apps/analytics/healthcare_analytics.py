@@ -742,6 +742,24 @@ class ActivityIndicatorsView(APIView):
             invoice_type='healthcare_pharmacy'
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
+        # CA Pharmacie "pur" : factures payées ne contenant QUE des articles pharmacie
+        # (aucun acte de consultation/labo/soins sur la même facture ce jour-là).
+        PHARMACY_CATS = ['medicaments', 'consommables laboratoire', 'materiel medical']
+        pharmacy_cat_q = Q()
+        for cat in PHARMACY_CATS:
+            pharmacy_cat_q |= Q(product__category__name__icontains=cat)
+
+        standard_paid = paid_invoices.filter(invoice_type='standard')
+        standard_with_items = InvoiceItem.objects.filter(invoice__in=standard_paid).values_list('invoice_id', flat=True)
+        standard_with_non_pharmacy_item = InvoiceItem.objects.filter(
+            invoice__in=standard_paid
+        ).exclude(pharmacy_cat_q).values_list('invoice_id', flat=True)
+        pure_pharmacy_standard_revenue = float(standard_paid.filter(
+            id__in=standard_with_items
+        ).exclude(id__in=standard_with_non_pharmacy_item).aggregate(total=Sum('total_amount'))['total'] or 0)
+
+        pharmacy_only_revenue = pharmacy_revenue + pure_pharmacy_standard_revenue
+
         other_revenue = float(paid_invoices.filter(
             invoice_type__in=['standard', 'healthcare_services']
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
@@ -851,6 +869,28 @@ class ActivityIndicatorsView(APIView):
             for item in patients_timeline_qs
         ]
 
+        # ── Hospitalisation ──
+        from apps.hospitalizations.models import Hospitalization
+
+        hosp_period_qs = Hospitalization.objects.filter(
+            organization=organization,
+            admission_date__date__gte=start_date,
+            admission_date__date__lte=end_date,
+        )
+        hospitalized_patients_count = hosp_period_qs.values('patient_id').distinct().count()
+
+        stay_days = [
+            (discharge - admit).total_seconds() / 86400
+            for admit, discharge in hosp_period_qs.filter(
+                discharge_date__isnull=False
+            ).values_list('admission_date', 'discharge_date')
+        ]
+        avg_stay_days = round(sum(stay_days) / len(stay_days), 1) if stay_days else 0
+
+        # Lits occupés = snapshot actuel (indépendant de la période sélectionnée)
+        beds_occupied = Hospitalization.objects.filter(
+            organization=organization, status='admitted'
+        ).exclude(bed_number='').values('bed_number').distinct().count()
 
         return Response({
             'period': period,
@@ -900,6 +940,7 @@ class ActivityIndicatorsView(APIView):
                 'subcontract_count': subcontract_count,
                 'subcontract_by_lab': per_subcontractor,
                 'pharmacy_revenue': round(pharmacy_revenue, 2),
+                'pharmacy_only_revenue': round(pharmacy_only_revenue, 2),
                 'other_revenue': round(other_revenue, 2),
                 'avg_consultation_cost': round(avg_consultation_cost, 2),
                 'avg_lab_cost': round(avg_lab_cost, 2),
@@ -912,6 +953,12 @@ class ActivityIndicatorsView(APIView):
                 'total': total_patients,
                 'recurring': recurring_patients,
                 'timeline': patients_timeline,
+            },
+
+            'hospitalization': {
+                'patients_count': hospitalized_patients_count,
+                'avg_stay_days': avg_stay_days,
+                'beds_occupied': beds_occupied,
             }
         })
 

@@ -31,6 +31,7 @@ const emptyForm = {
   patient: '',
   admission_date: dayjs(),
   discharge_date: null,
+  bed_number: '',
   admission_reason: '',
   diagnosis: '',
   treatment_during_stay: '',
@@ -70,6 +71,7 @@ export default function HospitalizationForm() {
         patient: data.patient,
         admission_date: data.admission_date ? dayjs(data.admission_date) : dayjs(),
         discharge_date: data.discharge_date ? dayjs(data.discharge_date) : null,
+        bed_number: data.bed_number || '',
         admission_reason: data.admission_reason || '',
         diagnosis: data.diagnosis || '',
         treatment_during_stay: data.treatment_during_stay || '',
@@ -117,6 +119,7 @@ export default function HospitalizationForm() {
     patient: formData.patient,
     admission_date: formData.admission_date?.toISOString(),
     discharge_date: formData.discharge_date?.toISOString() || null,
+    bed_number: formData.bed_number,
     admission_reason: formData.admission_reason,
     diagnosis: formData.diagnosis,
     treatment_during_stay: formData.treatment_during_stay,
@@ -285,6 +288,15 @@ export default function HospitalizationForm() {
                 value={formData.discharge_date}
                 onChange={(v) => handleChange('discharge_date', v)}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Numéro de lit"
+                value={formData.bed_number}
+                onChange={(e) => handleChange('bed_number', e.target.value)}
+                fullWidth size="small"
+                placeholder="ex: L12"
               />
             </Grid>
           </Grid>
