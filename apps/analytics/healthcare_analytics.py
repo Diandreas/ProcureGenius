@@ -192,12 +192,17 @@ class ExamTypesByPeriodView(APIView):
                 revenue_by_period[period_key(i.lab_order.order_date)] += item_revenue
 
         # Format timeline data
+        # period_date vient d'un Trunc*() Django sur un DateTimeField (USE_TZ=True) :
+        # c'est un datetime aware, pas un date — il faut le normaliser en date pour
+        # matcher les clés de revenue_by_period (calculées via period_key() en Python).
         timeline_data = []
         for t in timeline_count:
+            pd = t['period_date']
+            pd_key = pd.date() if hasattr(pd, 'date') else pd
             timeline_data.append({
-                'date': t['period_date'].strftime('%Y-%m-%d') if t['period_date'] else None,
+                'date': pd.strftime('%Y-%m-%d') if pd else None,
                 'count': t['count'],
-                'revenue': round(revenue_by_period.get(t['period_date'], 0), 2)
+                'revenue': round(revenue_by_period.get(pd_key, 0), 2)
             })
 
         total_items = queryset.count()
