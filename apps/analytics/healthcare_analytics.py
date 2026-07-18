@@ -89,6 +89,7 @@ class ExamTypesByPeriodView(APIView):
 
     def get(self, request):
         from django.db.models.functions import Coalesce
+        from collections import defaultdict
         organization = request.user.organization
         period = request.GET.get('period', 'week')
 
@@ -115,36 +116,15 @@ class ExamTypesByPeriodView(APIView):
         elif exam_filter == 'exam':
             queryset = queryset.filter(panel__isnull=True)
 
-        # Revenu effectif = panel_price si défini (forfait bilan, porté uniquement par le
-        # 1er item du panel — les autres items du même panel ont price=0), sinon prix unitaire.
-        effective_price = Coalesce(
-            'panel_price',
-            'price',
-            output_field=DecimalField(max_digits=12, decimal_places=2),
-        )
         # Le "count" reste sur TOUS les examens (volume réel, y compris non facturés).
-        # Le "revenue" ne compte que les examens dont la facture est payée, pour rester
-        # cohérent avec le CA Laboratoire affiché ailleurs (source unique = factures payées).
-        paid_filter = Q(lab_order__lab_invoice__status='paid')
+        by_test_count = queryset.values(
+            'lab_test__name', 'lab_test__test_code'
+        ).annotate(count=Count('id')).order_by('-count')
 
-        # By test type — on compte tous les items, on ne somme le CA que sur le payé
-        by_test = queryset.values(
-            'lab_test__name',
-            'lab_test__test_code'
-        ).annotate(
-            count=Count('id'),
-            revenue=Sum(effective_price, filter=paid_filter)
-        ).order_by('-count')
-
-        # By category
-        by_category = queryset.values(
+        by_category_count = queryset.values(
             'lab_test__category__name'
-        ).annotate(
-            count=Count('id'),
-            revenue=Sum(effective_price, filter=paid_filter)
-        ).order_by('-count')
+        ).annotate(count=Count('id')).order_by('-count')
 
-        # Timeline aggregation
         trunc_func = {
             'day': TruncDate,
             'week': TruncWeek,
@@ -152,20 +132,68 @@ class ExamTypesByPeriodView(APIView):
             'year': TruncYear
         }.get(period, TruncWeek)
 
-        timeline = queryset.annotate(
+        timeline_count = queryset.annotate(
             period_date=trunc_func('lab_order__order_date')
-        ).values('period_date').annotate(
-            count=Count('id'),
-            revenue=Sum(effective_price, filter=paid_filter)
-        ).order_by('period_date')
+        ).values('period_date').annotate(count=Count('id')).order_by('period_date')
+
+        # Le "revenue" ne compte que les examens dont la facture est payée, pour rester
+        # cohérent avec le CA Laboratoire affiché ailleurs (source unique = factures payées).
+        # LabOrderItem.price/panel_price est un prix catalogue : une remise ou un tarif
+        # négocié appliqué sur la facture n'y est pas répercuté. On répartit donc le
+        # montant RÉELLEMENT facturé (Invoice.total_amount) sur ses examens au prorata
+        # de leur prix catalogue, pour que la somme du tableau retombe exactement sur
+        # le CA Laboratoire (paiements réels), pas sur la somme des prix catalogue.
+        effective_price = Coalesce(
+            'panel_price',
+            'price',
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+        paid_items = list(
+            queryset.filter(lab_order__lab_invoice__status='paid')
+            .annotate(_eff=effective_price)
+            .select_related('lab_test', 'lab_test__category', 'lab_order')
+        )
+
+        items_by_invoice = defaultdict(list)
+        for item in paid_items:
+            items_by_invoice[item.lab_order.lab_invoice_id].append(item)
+
+        invoice_totals = dict(
+            Invoice.objects.filter(id__in=items_by_invoice.keys()).values_list('id', 'total_amount')
+        )
+
+        def period_key(order_date):
+            d = order_date.date() if hasattr(order_date, 'date') else order_date
+            if period == 'day':
+                return d
+            if period == 'month':
+                return d.replace(day=1)
+            if period == 'year':
+                return d.replace(month=1, day=1)
+            return d - timedelta(days=d.weekday())  # week (lundi)
+
+        revenue_by_test = defaultdict(float)
+        revenue_by_category = defaultdict(float)
+        revenue_by_period = defaultdict(float)
+
+        for inv_id, items in items_by_invoice.items():
+            list_sum = sum(float(i._eff or 0) for i in items)
+            inv_total = float(invoice_totals.get(inv_id) or 0)
+            factor = (inv_total / list_sum) if list_sum > 0 else 0
+            for i in items:
+                item_revenue = float(i._eff or 0) * factor
+                revenue_by_test[(i.lab_test.name, i.lab_test.test_code or 'N/A')] += item_revenue
+                cat_name = i.lab_test.category.name if i.lab_test.category else 'Non Catégorisé'
+                revenue_by_category[cat_name] += item_revenue
+                revenue_by_period[period_key(i.lab_order.order_date)] += item_revenue
 
         # Format timeline data
         timeline_data = []
-        for t in timeline:
+        for t in timeline_count:
             timeline_data.append({
                 'date': t['period_date'].strftime('%Y-%m-%d') if t['period_date'] else None,
                 'count': t['count'],
-                'revenue': float(t['revenue']) if t['revenue'] else 0
+                'revenue': round(revenue_by_period.get(t['period_date'], 0), 2)
             })
 
         total_items = queryset.count()
@@ -181,13 +209,13 @@ class ExamTypesByPeriodView(APIView):
                 'test_name': item['lab_test__name'],
                 'test_code': item['lab_test__test_code'] or 'N/A',
                 'count': item['count'],
-                'revenue': float(item['revenue']) if item['revenue'] else 0
-            } for item in by_test],
+                'revenue': round(revenue_by_test.get((item['lab_test__name'], item['lab_test__test_code'] or 'N/A'), 0), 2)
+            } for item in by_test_count],
             'by_category': [{
                 'category': item['lab_test__category__name'] or 'Non Catégorisé',
                 'count': item['count'],
-                'revenue': float(item['revenue']) if item['revenue'] else 0
-            } for item in by_category],
+                'revenue': round(revenue_by_category.get(item['lab_test__category__name'] or 'Non Catégorisé', 0), 2)
+            } for item in by_category_count],
             'timeline': timeline_data
         })
 
