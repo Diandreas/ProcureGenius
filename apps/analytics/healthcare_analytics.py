@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Count, Sum, Avg, Q, Max, Min, Case, When, Value, CharField, IntegerField, DecimalField, F, ExpressionWrapper, DurationField
 from django.db.models.functions import ExtractYear, TruncDate, TruncWeek, TruncMonth, TruncYear
 from django.utils import timezone
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta, datetime, time
 from apps.laboratory.models import LabOrder, LabOrderItem, Prescriber, SubcontractorLab
 from apps.consultations.models import Consultation
 from apps.accounts.models import Client
@@ -670,6 +670,23 @@ class ActivityIndicatorsView(APIView):
         total_revenue_agg = paid_invoices.aggregate(total=Sum('total_amount'))
         total_revenue = float(total_revenue_agg['total'] or 0)
 
+        # CA Jour (Permanence 08h01-17h00) / CA Nuit (Garde 17h01-08h00)
+        # basé sur l'heure locale (fuseau de l'organisation) de création de la facture payée.
+        DAY_START, DAY_END = time(8, 1), time(17, 0)
+        day_revenue = 0.0
+        night_revenue = 0.0
+        day_invoices_count = 0
+        night_invoices_count = 0
+        for inv in paid_invoices.values('created_at', 'total_amount'):
+            local_time = timezone.localtime(inv['created_at']).time()
+            amount = float(inv['total_amount'] or 0)
+            if DAY_START <= local_time <= DAY_END:
+                day_revenue += amount
+                day_invoices_count += 1
+            else:
+                night_revenue += amount
+                night_invoices_count += 1
+
         # CA consultation = items "Consultation Médecin" dans toutes les factures payées
         consultation_revenue = float(InvoiceItem.objects.filter(
             invoice__in=paid_invoices
@@ -871,6 +888,10 @@ class ActivityIndicatorsView(APIView):
 
             'financial': {
                 'total_revenue': round(total_revenue, 2),
+                'day_revenue': round(day_revenue, 2),
+                'night_revenue': round(night_revenue, 2),
+                'day_invoices_count': day_invoices_count,
+                'night_invoices_count': night_invoices_count,
                 'consultation_revenue': round(consultation_revenue, 2),
                 'lab_revenue': round(lab_revenue, 2),
                 'lab_exams_revenue': round(exams_revenue, 2),

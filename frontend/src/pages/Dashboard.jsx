@@ -434,6 +434,26 @@ const Dashboard = () => {
                   icon={<MedicalIcon />} color="#8b5cf6" loading={loading} />
               </Grid>
             </Grid>
+            {/* KPI cards — ligne 1bis : CA Jour / Nuit */}
+            <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} mb={2}>
+              <Grid item xs={6} md={4}>
+                <StatCard title="CA Jour (Permanence 08h01-17h00)"
+                  value={loading ? '...' : formatCurrency(financial?.day_revenue)}
+                  icon={<ScheduleIcon />} color="#f59e0b" loading={loading}
+                  subtitle={`${financial?.day_invoices_count ?? 0} facture(s)`} />
+              </Grid>
+              <Grid item xs={6} md={4}>
+                <StatCard title="CA Nuit (Garde 17h01-08h00)"
+                  value={loading ? '...' : formatCurrency(financial?.night_revenue)}
+                  icon={<ScheduleIcon />} color="#6366f1" loading={loading}
+                  subtitle={`${financial?.night_invoices_count ?? 0} facture(s)`} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <StatCard title="CA Total (Jour + Nuit)"
+                  value={loading ? '...' : formatCurrency(financial?.total_revenue)}
+                  icon={<MoneyIcon />} color="#2563eb" loading={loading} />
+              </Grid>
+            </Grid>
             {/* KPI cards — ligne 2 : détail par flux */}
             <Grid container spacing={2} mb={3}>
               <Grid item xs={6} md={3}>
