@@ -88,6 +88,7 @@ class ExamTypesByPeriodView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from django.db.models.functions import Coalesce
         organization = request.user.organization
         period = request.GET.get('period', 'week')
 
@@ -114,13 +115,25 @@ class ExamTypesByPeriodView(APIView):
         elif exam_filter == 'exam':
             queryset = queryset.filter(panel__isnull=True)
 
-        # By test type — on compte tous les items et on somme le prix unitaire
+        # Revenu effectif = panel_price si défini (forfait bilan, porté uniquement par le
+        # 1er item du panel — les autres items du même panel ont price=0), sinon prix unitaire.
+        effective_price = Coalesce(
+            'panel_price',
+            'price',
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+        # Le "count" reste sur TOUS les examens (volume réel, y compris non facturés).
+        # Le "revenue" ne compte que les examens dont la facture est payée, pour rester
+        # cohérent avec le CA Laboratoire affiché ailleurs (source unique = factures payées).
+        paid_filter = Q(lab_order__lab_invoice__status='paid')
+
+        # By test type — on compte tous les items, on ne somme le CA que sur le payé
         by_test = queryset.values(
             'lab_test__name',
             'lab_test__test_code'
         ).annotate(
             count=Count('id'),
-            revenue=Sum('price')
+            revenue=Sum(effective_price, filter=paid_filter)
         ).order_by('-count')
 
         # By category
@@ -128,7 +141,7 @@ class ExamTypesByPeriodView(APIView):
             'lab_test__category__name'
         ).annotate(
             count=Count('id'),
-            revenue=Sum('price')
+            revenue=Sum(effective_price, filter=paid_filter)
         ).order_by('-count')
 
         # Timeline aggregation
@@ -143,7 +156,7 @@ class ExamTypesByPeriodView(APIView):
             period_date=trunc_func('lab_order__order_date')
         ).values('period_date').annotate(
             count=Count('id'),
-            revenue=Sum('price')
+            revenue=Sum(effective_price, filter=paid_filter)
         ).order_by('period_date')
 
         # Format timeline data
@@ -1379,9 +1392,13 @@ class LabOrdersStatusWidgetView(APIView):
 
         total_orders = orders.count()
         # CA = uniquement les factures labo PAYÉES (cohérence avec onglet Revenus)
-        revenue = orders.filter(
-            lab_invoice__status='paid'
-        ).aggregate(total=Sum('lab_invoice__total_amount'))['total'] or 0
+        # Une facture peut couvrir plusieurs LabOrder (lab_invoice est un FK côté LabOrder) :
+        # on dé-duplique les factures avant de sommer, sinon un même montant est compté
+        # une fois par commande rattachée à la facture.
+        revenue = Invoice.objects.filter(
+            lab_orders__in=orders,
+            status='paid'
+        ).distinct().aggregate(total=Sum('total_amount'))['total'] or 0
 
         # Critical: items flagged is_critical
         # Build base item filter matching the same date range
