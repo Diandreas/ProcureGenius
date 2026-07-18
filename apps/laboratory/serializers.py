@@ -337,6 +337,8 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
             'is_critical',
             'interpretation',
             'technician_notes',
+            'sample_collected_at',
+            'sample_collected_by',
             'result_entered_at',
             'result_verified_at',
             'verified_by',
@@ -348,6 +350,7 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at',
+            'sample_collected_at', 'sample_collected_by',
             'result_entered_at', 'result_verified_at'
         ]
 

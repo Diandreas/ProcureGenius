@@ -273,6 +273,7 @@ const LabOrderDetail = () => {
     const [loading, setLoading] = useState(true);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [order, setOrder] = useState(null);
+    const [collectingItemId, setCollectingItemId] = useState(null);
     const [results, setResults] = useState({}); // { item_id: { result_value, remarks } }
     const [parameterValues, setParameterValues] = useState({}); // { item_id: { param_id: { result_numeric, result_text } } }
     const [biologistDiagnosis, setBiologistDiagnosis] = useState('');
@@ -588,6 +589,20 @@ const LabOrderDetail = () => {
         } catch (error) {
             console.error('Error updating status:', error);
             enqueueSnackbar('Erreur de mise à jour', { variant: 'error' });
+        }
+    };
+
+    const handleCollectItem = async (itemId) => {
+        setCollectingItemId(itemId);
+        try {
+            await laboratoryAPI.collectItem(itemId);
+            enqueueSnackbar('Test prélevé', { variant: 'success' });
+            fetchOrder();
+        } catch (error) {
+            console.error('Error collecting item:', error);
+            enqueueSnackbar('Erreur lors du prélèvement', { variant: 'error' });
+        } finally {
+            setCollectingItemId(null);
         }
     };
 
@@ -1096,20 +1111,8 @@ const LabOrderDetail = () => {
                         </>
                     )}
 
-                    {/* Workflow Actions */}
-                    {order.status === 'pending' && (
-                        <Button
-                            data-testid="lab-detail-btn-collect"
-                            variant="contained"
-                            color="warning"
-                            startIcon={<ColorizeIcon />}
-                            onClick={() => handleStatusUpdate('collect_sample')}
-                            size={isMobile ? 'small' : 'medium'}
-                        >
-                            Prélèvement
-                        </Button>
-                    )}
-
+                    {/* Workflow Actions — le prélèvement se fait maintenant test par test
+                        (ou "Tout prélever") dans la section dédiée plus bas */}
                     {order.status === 'sample_collected' && (
                         <Button
                             data-testid="lab-detail-btn-analyze"
@@ -1274,10 +1277,62 @@ const LabOrderDetail = () => {
                 </Alert>
             )}
 
+            {/* Prélèvement par test — prélèvement partiel possible */}
+            {order.status === 'pending' && (order.items?.length > 0) && (() => {
+                const collectedCount = order.items.filter(it => it.sample_collected_at).length;
+                const totalCount = order.items.length;
+                return (
+                    <Card sx={{ mb: 2, borderColor: 'warning.main', borderWidth: 1, borderStyle: 'solid' }}>
+                        <CardContent>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                                <Typography variant="subtitle1" fontWeight={700}>
+                                    Prélèvement par test ({collectedCount}/{totalCount})
+                                </Typography>
+                                {collectedCount < totalCount && (
+                                    <Button
+                                        variant="contained" color="warning" size="small"
+                                        startIcon={<ColorizeIcon />}
+                                        onClick={() => handleStatusUpdate('collect_sample')}
+                                    >
+                                        Tout prélever
+                                    </Button>
+                                )}
+                            </Box>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                                {order.items.map(item => (
+                                    <Box key={item.id} sx={{
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                        py: 0.75, px: 1, borderRadius: 1,
+                                        bgcolor: item.sample_collected_at ? 'success.50' : 'action.hover'
+                                    }}>
+                                        <Typography variant="body2" fontWeight={600}>{item.test_name}</Typography>
+                                        {item.sample_collected_at ? (
+                                            <Chip
+                                                size="small" color="success" variant="outlined"
+                                                label={`Prélevé à ${formatTime(item.sample_collected_at)}`}
+                                            />
+                                        ) : (
+                                            <Button
+                                                size="small" variant="outlined" color="warning"
+                                                disabled={collectingItemId === item.id}
+                                                startIcon={collectingItemId === item.id ? <CircularProgress size={14} /> : <ColorizeIcon fontSize="small" />}
+                                                onClick={() => handleCollectItem(item.id)}
+                                            >
+                                                Prélever
+                                            </Button>
+                                        )}
+                                    </Box>
+                                ))}
+                            </Box>
+                        </CardContent>
+                    </Card>
+                );
+            })()}
+
             {/* Workflow guidance message */}
             {order.status === 'pending' && (
                 <Alert severity="warning" sx={{ mb: 2 }}>
-                    <strong>Étape 1 :</strong> Le prélèvement n'a pas encore été effectué. Cliquez sur "Prélèvement" pour confirmer la collecte de l'échantillon.
+                    <strong>Étape 1 :</strong> Prélevez chaque test individuellement ci-dessus, ou utilisez "Tout prélever". Dès que tous les tests sont prélevés, la commande passe à l'étape suivante.
                 </Alert>
             )}
             {order.status === 'sample_collected' && (

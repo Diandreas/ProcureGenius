@@ -117,6 +117,12 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Prélever un test individuellement (prélèvement partiel)
+    collectItem: async (itemId) => {
+        const response = await api.post(`/healthcare/laboratory/items/${itemId}/collect/`);
+        return response.data;
+    },
+
     // --- Test Catalog ---
 
     // Get all lab tests (for selection)

@@ -837,6 +837,31 @@ class LabOrderItemHistoryView(APIView):
             )
 
 
+class LabOrderItemCollectView(APIView):
+    """
+    Prélève un test individuellement (prélèvement partiel) — sans attendre que
+    tous les autres tests de la commande soient prêts à être prélevés en même temps.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, item_id):
+        try:
+            item = LabOrderItem.objects.select_related('lab_order').get(id=item_id)
+        except LabOrderItem.DoesNotExist:
+            return Response({'error': 'Test introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if item.lab_order.organization != request.user.organization:
+            return Response({'error': 'Permission refusée'}, status=status.HTTP_403_FORBIDDEN)
+
+        if item.lab_order.status == 'cancelled':
+            return Response({'error': 'Commande annulée'}, status=status.HTTP_400_BAD_REQUEST)
+
+        item.collect_sample(collected_by=request.user)
+        item.refresh_from_db()
+
+        return Response(LabOrderItemSerializer(item).data)
+
+
 class LabResultPDFView(APIView):
     """Generate PDF for lab results"""
     permission_classes = [IsAuthenticated]

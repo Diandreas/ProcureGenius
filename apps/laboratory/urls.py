@@ -47,6 +47,7 @@ urlpatterns = [
     # Lab order item history (previous results)
     path('items/<uuid:item_id>/history/', api.LabOrderItemHistoryView.as_view(), name='item-history'),
     path('items/<uuid:item_id>/save-as-template/', api.SaveTestTemplateView.as_view(), name='item-save-template'),
+    path('items/<uuid:item_id>/collect/', api.LabOrderItemCollectView.as_view(), name='item-collect'),
 
     # Quick unit update
     path('quick-update-unit/', api.QuickUpdateConfigView.as_view(), name='quick-update-unit'),

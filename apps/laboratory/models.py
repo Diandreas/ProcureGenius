@@ -668,67 +668,26 @@ class LabOrder(models.Model):
     
     # Status transition methods
     def collect_sample(self, collected_by=None):
-        """Mark sample as collected and deduct inventory"""
-        self.status = 'sample_collected'
-        self.sample_collected_at = timezone.now()
-        if collected_by:
-            self.sample_collected_by = collected_by
-        self.save()
+        """
+        Prélève tous les tests de la commande d'un coup (raccourci pratique).
+        Chaque test est prélevé individuellement via LabOrderItem.collect_sample() —
+        même logique que le prélèvement partiel, juste appliquée à tous les tests
+        restants. Idempotent : les tests déjà prélevés sont ignorés.
+        """
+        for item in self.items.filter(sample_collected_at__isnull=True):
+            item.collect_sample(collected_by=collected_by)
+        self.refresh_from_db()
 
-        # Deduct inventory for all linked consumables (new multi-product system)
-        try:
-            for item in self.items.all():
-                lab_test = item.lab_test
+        # Filet de sécurité : commande sans aucun item (cas dégénéré, ne devrait pas
+        # arriver en pratique) — l'agrégation par item ne peut pas déclencher le
+        # changement de statut, on le force ici.
+        if self.status == 'pending' and not self.items.exists():
+            self.status = 'sample_collected'
+            self.sample_collected_at = timezone.now()
+            if collected_by:
+                self.sample_collected_by = collected_by
+            self.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
 
-                # New system: LabTestConsumable (supports multiple products per test)
-                consumables = lab_test.consumables.select_related('product').all()
-                if consumables.exists():
-                    for consumable in consumables:
-                        consumable.product.adjust_stock(
-                            quantity=-(consumable.quantity_per_test),
-                            movement_type='sale',
-                            reference_type='manual',
-                            reference_id=self.id,
-                            notes=f"Labo - {self.order_number} - {lab_test.test_code} ({consumable.product.name})",
-                            user=collected_by
-                        )
-                        # Défalquer aussi du lot actif (FIFO par date péremption)
-                        remaining = consumable.quantity_per_test
-                        for batch in consumable.product.batches.filter(
-                            quantity_remaining__gt=0, status__in=['available', 'opened']
-                        ).order_by('expiry_date'):
-                            if remaining <= 0:
-                                break
-                            deduct = min(batch.quantity_remaining, remaining)
-                            batch.quantity_remaining -= deduct
-                            batch.save(update_fields=['quantity_remaining'])
-                            batch.update_status()
-                            remaining -= deduct
-                # Fallback: legacy linked_product FK (si pas encore migré)
-                elif lab_test.linked_product:
-                    lab_test.linked_product.adjust_stock(
-                        quantity=-1,
-                        movement_type='sale',
-                        reference_type='manual',
-                        reference_id=self.id,
-                        notes=f"Labo - {self.order_number} - {lab_test.test_code}",
-                        user=collected_by
-                    )
-                    remaining = 1
-                    for batch in lab_test.linked_product.batches.filter(
-                        quantity_remaining__gt=0, status__in=['available', 'opened']
-                    ).order_by('expiry_date'):
-                        if remaining <= 0:
-                            break
-                        deduct = min(batch.quantity_remaining, remaining)
-                        batch.quantity_remaining -= deduct
-                        batch.save(update_fields=['quantity_remaining'])
-                        batch.update_status()
-                        remaining -= deduct
-        except Exception as e:
-            # Log error but don't block flow
-            print(f"Error deducting stock for LabOrder {self.order_number}: {e}")
-    
     def start_processing(self):
         """Mark order as in progress"""
         self.status = 'in_progress'
@@ -874,7 +833,23 @@ class LabOrderItem(models.Model):
         verbose_name=_("Notes du technicien"),
         help_text=_("Notes internes")
     )
-    
+
+    # Prélèvement individuel — permet de prélever un test indépendamment des autres
+    # tests de la même commande (prélèvement partiel).
+    sample_collected_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Échantillon prélevé à")
+    )
+    sample_collected_by = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='collected_lab_items',
+        verbose_name=_("Prélevé par")
+    )
+
     # Result tracking
     result_entered_at = models.DateTimeField(
         null=True,
@@ -924,9 +899,85 @@ class LabOrderItem(models.Model):
             self.result_entered_at = timezone.now()
         
         super().save(*args, **kwargs)
-    
+
     def __str__(self):
         return f"{self.lab_order.order_number} - {self.lab_test.name}"
+
+    def deduct_stock_for_collection(self, collected_by=None):
+        """Déduit le(s) consommable(s) liés à ce test (stock + lots FIFO)."""
+        lab_test = self.lab_test
+
+        consumables = lab_test.consumables.select_related('product').all()
+        if consumables.exists():
+            for consumable in consumables:
+                consumable.product.adjust_stock(
+                    quantity=-(consumable.quantity_per_test),
+                    movement_type='sale',
+                    reference_type='manual',
+                    reference_id=self.lab_order_id,
+                    notes=f"Labo - {self.lab_order.order_number} - {lab_test.test_code} ({consumable.product.name})",
+                    user=collected_by
+                )
+                remaining = consumable.quantity_per_test
+                for batch in consumable.product.batches.filter(
+                    quantity_remaining__gt=0, status__in=['available', 'opened']
+                ).order_by('expiry_date'):
+                    if remaining <= 0:
+                        break
+                    deduct = min(batch.quantity_remaining, remaining)
+                    batch.quantity_remaining -= deduct
+                    batch.save(update_fields=['quantity_remaining'])
+                    batch.update_status()
+                    remaining -= deduct
+        # Fallback: legacy linked_product FK (si pas encore migré)
+        elif lab_test.linked_product:
+            lab_test.linked_product.adjust_stock(
+                quantity=-1,
+                movement_type='sale',
+                reference_type='manual',
+                reference_id=self.lab_order_id,
+                notes=f"Labo - {self.lab_order.order_number} - {lab_test.test_code}",
+                user=collected_by
+            )
+            remaining = 1
+            for batch in lab_test.linked_product.batches.filter(
+                quantity_remaining__gt=0, status__in=['available', 'opened']
+            ).order_by('expiry_date'):
+                if remaining <= 0:
+                    break
+                deduct = min(batch.quantity_remaining, remaining)
+                batch.quantity_remaining -= deduct
+                batch.save(update_fields=['quantity_remaining'])
+                batch.update_status()
+                remaining -= deduct
+
+    def collect_sample(self, collected_by=None):
+        """
+        Prélève ce test individuellement (prélèvement partiel) : horodatage,
+        déduction du stock lié, et mise à jour du statut agrégé de la commande
+        si c'était le dernier test restant à prélever.
+        """
+        if self.sample_collected_at:
+            return  # déjà prélevé, idempotent
+
+        self.sample_collected_at = timezone.now()
+        if collected_by:
+            self.sample_collected_by = collected_by
+        self.save(update_fields=['sample_collected_at', 'sample_collected_by'])
+
+        try:
+            self.deduct_stock_for_collection(collected_by)
+        except Exception as e:
+            # Ne bloque pas le prélèvement des autres tests en cas d'erreur de stock
+            print(f"Error deducting stock for LabOrderItem {self.id} ({self.lab_order.order_number}): {e}")
+
+        order = self.lab_order
+        if order.status == 'pending' and not order.items.filter(sample_collected_at__isnull=True).exists():
+            order.status = 'sample_collected'
+            order.sample_collected_at = timezone.now()
+            if collected_by:
+                order.sample_collected_by = collected_by
+            order.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
     
     # price is now a field, property removed
     
