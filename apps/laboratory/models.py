@@ -1349,6 +1349,37 @@ class SubcontractorLab(models.Model):
         return self.name
 
 
+class SubcontractorContact(models.Model):
+    """
+    Personne de contact au sein du laboratoire/structure de santé sous-traitant.
+    Un même sous-traitant peut avoir plusieurs contacts (ex: responsable technique,
+    responsable facturation).
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    subcontractor = models.ForeignKey(
+        SubcontractorLab,
+        on_delete=models.CASCADE,
+        related_name='contacts',
+        verbose_name=_("Sous-traitant")
+    )
+    first_name = models.CharField(max_length=100, verbose_name=_("Prénom"))
+    last_name = models.CharField(max_length=100, verbose_name=_("Nom"))
+    role = models.CharField(max_length=100, blank=True, verbose_name=_("Fonction"))
+    phone = models.CharField(max_length=50, blank=True, verbose_name=_("Téléphone"))
+    email = models.EmailField(blank=True, verbose_name=_("Email"))
+    is_primary = models.BooleanField(default=False, verbose_name=_("Contact principal"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Contact sous-traitance")
+        verbose_name_plural = _("Contacts sous-traitance")
+        ordering = ['-is_primary', 'last_name', 'first_name']
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.subcontractor.name})"
+
+
 class SubcontractorPrice(models.Model):
     """
     Tarif d'un examen chez un laboratoire sous-traitant.

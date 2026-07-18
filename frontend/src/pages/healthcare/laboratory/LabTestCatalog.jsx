@@ -290,19 +290,12 @@ const LabTestCatalog = () => {
                                             sx={{ fontSize: '0.65rem', height: 20 }}
                                         />
                                     </Box>
-                                    {/* Row 3: stock + actions */}
+                                    {/* Row 3: consommable + actions */}
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                         {test.linked_product_name ? (
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
                                                 <InventoryIcon fontSize="small" color="primary" sx={{ opacity: 0.7, fontSize: 14 }} />
                                                 <Typography variant="caption" noWrap sx={{ maxWidth: 120 }}>{test.linked_product_name}</Typography>
-                                                <Chip
-                                                    label={`Stock: ${test.linked_product_stock ?? 0}`}
-                                                    size="small"
-                                                    color={test.linked_product_stock > 0 ? 'success' : 'error'}
-                                                    variant="outlined"
-                                                    sx={{ fontSize: '0.6rem', height: 16 }}
-                                                />
                                             </Box>
                                         ) : (
                                             <Box sx={{ flex: 1 }} />
@@ -341,7 +334,7 @@ const LabTestCatalog = () => {
                                 <TableCell align="center">Jeûne</TableCell>
                                 <TableCell align="center">Statut</TableCell>
                                 <TableCell>Délai</TableCell>
-                                <TableCell>Consommable / Stock</TableCell>
+                                <TableCell>Consommable</TableCell>
                                 <TableCell align="center">Réalisé</TableCell>
                                 <TableCell align="right">Actions</TableCell>
                             </TableRow>
@@ -393,18 +386,9 @@ const LabTestCatalog = () => {
                                             {test.linked_product_name ? (
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                     <InventoryIcon fontSize="small" color="primary" sx={{ opacity: 0.7 }} />
-                                                    <Box>
-                                                        <Typography variant="caption" display="block" noWrap sx={{ maxWidth: 130 }}>
-                                                            {test.linked_product_name}
-                                                        </Typography>
-                                                        <Chip
-                                                            label={`Stock: ${test.linked_product_stock ?? 0}`}
-                                                            size="small"
-                                                            color={test.linked_product_stock > 0 ? 'success' : 'error'}
-                                                            variant="outlined"
-                                                            sx={{ fontSize: '0.6rem', height: 16 }}
-                                                        />
-                                                    </Box>
+                                                    <Typography variant="caption" noWrap sx={{ maxWidth: 130 }}>
+                                                        {test.linked_product_name}
+                                                    </Typography>
                                                 </Box>
                                             ) : (
                                                 <Typography variant="caption" color="text.disabled">—</Typography>

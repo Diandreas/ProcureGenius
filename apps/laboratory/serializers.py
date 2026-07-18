@@ -3,7 +3,7 @@ Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
 from decimal import Decimal, InvalidOperation
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable, LabAuditLog
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorContact, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable, LabAuditLog
 
 
 class LabTestParameterSerializer(serializers.ModelSerializer):
@@ -700,12 +700,20 @@ class SubcontractorPriceSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
+class SubcontractorContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubcontractorContact
+        fields = ['id', 'first_name', 'last_name', 'role', 'phone', 'email', 'is_primary']
+        read_only_fields = ['id']
+
+
 class SubcontractorLabSerializer(serializers.ModelSerializer):
     prices_count = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
     header_image_url = serializers.SerializerMethodField()
     footer_image_url = serializers.SerializerMethodField()
     b2b_client_id = serializers.SerializerMethodField()
+    contacts = SubcontractorContactSerializer(many=True, required=False)
 
     class Meta:
         model = SubcontractorLab
@@ -715,13 +723,45 @@ class SubcontractorLabSerializer(serializers.ModelSerializer):
             'footer_image', 'footer_image_url', 'brand_color', 'header_text',
             'niu', 'rc_number', 'rccm_number', 'tax_number',
             'bank_name', 'bank_account',
-            'is_active', 'prices_count', 'b2b_client_id',
+            'is_active', 'prices_count', 'b2b_client_id', 'contacts',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_prices_count(self, obj):
         return obj.prices.filter(is_active=True).count()
+
+    def to_internal_value(self, data):
+        # Le formulaire envoie en multipart/form-data (upload de logo/entête/pied de
+        # page) : 'contacts' y arrive alors comme une chaîne JSON, pas une liste.
+        contacts_raw = data.get('contacts') if hasattr(data, 'get') else None
+        if isinstance(contacts_raw, str):
+            import json
+            try:
+                parsed = json.loads(contacts_raw)
+            except (ValueError, TypeError):
+                parsed = None
+            if parsed is not None:
+                data = data.copy()
+                data['contacts'] = parsed
+        return super().to_internal_value(data)
+
+    def create(self, validated_data):
+        contacts_data = validated_data.pop('contacts', [])
+        subcontractor = super().create(validated_data)
+        for contact_data in contacts_data:
+            SubcontractorContact.objects.create(subcontractor=subcontractor, **contact_data)
+        return subcontractor
+
+    def update(self, instance, validated_data):
+        contacts_data = validated_data.pop('contacts', None)
+        subcontractor = super().update(instance, validated_data)
+        if contacts_data is not None:
+            # Remplace la liste des contacts (le frontend renvoie l'état complet à jour)
+            subcontractor.contacts.all().delete()
+            for contact_data in contacts_data:
+                SubcontractorContact.objects.create(subcontractor=subcontractor, **contact_data)
+        return subcontractor
 
     def get_b2b_client_id(self, obj):
         from apps.accounts.models import Client
@@ -758,13 +798,24 @@ class SubcontractorLabSerializer(serializers.ModelSerializer):
 class SubcontractorLabListSerializer(serializers.ModelSerializer):
     prices_count = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
+    primary_contact = serializers.SerializerMethodField()
 
     class Meta:
         model = SubcontractorLab
-        fields = ['id', 'name', 'city', 'phone', 'email', 'brand_color', 'is_active', 'prices_count', 'logo_url']
+        fields = ['id', 'name', 'city', 'phone', 'email', 'brand_color', 'is_active', 'prices_count', 'logo_url', 'primary_contact']
 
     def get_prices_count(self, obj):
         return obj.prices.filter(is_active=True).count()
+
+    def get_primary_contact(self, obj):
+        contact = obj.contacts.filter(is_primary=True).first() or obj.contacts.first()
+        if not contact:
+            return None
+        return {
+            'name': f"{contact.first_name} {contact.last_name}".strip(),
+            'role': contact.role,
+            'phone': contact.phone,
+        }
 
     def get_logo_url(self, obj):
         if obj.logo:

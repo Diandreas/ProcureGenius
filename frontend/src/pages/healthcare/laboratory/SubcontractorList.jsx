@@ -4,7 +4,7 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions, TextField,
     Chip, IconButton, Tooltip, Divider, Stack, CircularProgress,
     Switch, FormControlLabel, Accordion, AccordionSummary, AccordionDetails,
-    Avatar,
+    Avatar, Checkbox,
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -14,6 +14,7 @@ import {
     PriceChange as PriceIcon,
     ExpandMore as ExpandMoreIcon,
     People as PeopleIcon,
+    PersonAddAlt as PersonAddIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -29,6 +30,8 @@ const EMPTY_FORM = {
     is_active: true,
 };
 
+const EMPTY_CONTACT = { first_name: '', last_name: '', role: '', phone: '', email: '', is_primary: false };
+
 const SubcontractorList = () => {
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
@@ -38,6 +41,7 @@ const SubcontractorList = () => {
     const [editing, setEditing] = useState(null);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(EMPTY_FORM);
+    const [contacts, setContacts] = useState([]);
     const [logoFile, setLogoFile] = useState(null);
     const [logoPreview, setLogoPreview] = useState(null);
     const [headerFile, setHeaderFile] = useState(null);
@@ -58,9 +62,14 @@ const SubcontractorList = () => {
 
     const f = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
+    const addContact = () => setContacts(prev => [...prev, { ...EMPTY_CONTACT }]);
+    const updateContact = (index, key, value) => setContacts(prev => prev.map((c, i) => i === index ? { ...c, [key]: value } : c));
+    const removeContact = (index) => setContacts(prev => prev.filter((_, i) => i !== index));
+
     const openCreate = () => {
         setEditing(null);
         setForm(EMPTY_FORM);
+        setContacts([]);
         setLogoFile(null); setLogoPreview(null);
         setHeaderFile(null); setHeaderPreview(null);
         setFooterFile(null); setFooterPreview(null);
@@ -88,6 +97,7 @@ const SubcontractorList = () => {
             header_text: detail.header_text || '',
             is_active: detail.is_active,
         });
+        setContacts(detail.contacts || []);
         setLogoFile(null); setLogoPreview(detail.logo_url || null);
         setHeaderFile(null); setHeaderPreview(detail.header_image_url || null);
         setFooterFile(null); setFooterPreview(detail.footer_image_url || null);
@@ -123,6 +133,8 @@ const SubcontractorList = () => {
             Object.entries(form).forEach(([k, v]) => {
                 if (v !== null && v !== undefined) fd.append(k, v);
             });
+            const cleanContacts = contacts.filter(c => c.first_name.trim() || c.last_name.trim());
+            fd.append('contacts', JSON.stringify(cleanContacts));
             if (logoFile) fd.append('logo', logoFile);
             if (headerFile) fd.append('header_image', headerFile);
             if (footerFile) fd.append('footer_image', footerFile);
@@ -206,6 +218,11 @@ const SubcontractorList = () => {
                                     </Box>
                                     {sub.phone && <Typography variant="body2" color="text.secondary" mt={1}>📞 {sub.phone}</Typography>}
                                     {sub.email && <Typography variant="body2" color="text.secondary">✉️ {sub.email}</Typography>}
+                                    {sub.primary_contact && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            👤 {sub.primary_contact.name}{sub.primary_contact.role ? ` (${sub.primary_contact.role})` : ''}
+                                        </Typography>
+                                    )}
                                     <Box mt={1.5} display="flex" gap={1} flexWrap="wrap">
                                         <Chip icon={<PriceIcon />} label={`${sub.prices_count || 0} tarif(s)`} size="small" variant="outlined" color="primary" />
                                     </Box>
@@ -272,6 +289,55 @@ const SubcontractorList = () => {
                                         </Grid>
                                     </Grid>
                                     <TextField label="Site web" value={form.website} onChange={e => f('website', e.target.value)} fullWidth placeholder="https://" />
+                                </Stack>
+                            </AccordionDetails>
+                        </Accordion>
+
+                        {/* Section: Contact(s) */}
+                        <Accordion elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mb: 1 }}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="subtitle2" fontWeight="700">
+                                    Contact(s) {contacts.length > 0 && `(${contacts.length})`}
+                                </Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Stack spacing={2}>
+                                    {contacts.map((c, i) => (
+                                        <Box key={i} sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                                            <Grid container spacing={1.5} alignItems="center">
+                                                <Grid item xs={12} sm={3}>
+                                                    <TextField label="Prénom" size="small" value={c.first_name} onChange={e => updateContact(i, 'first_name', e.target.value)} fullWidth />
+                                                </Grid>
+                                                <Grid item xs={12} sm={3}>
+                                                    <TextField label="Nom" size="small" value={c.last_name} onChange={e => updateContact(i, 'last_name', e.target.value)} fullWidth />
+                                                </Grid>
+                                                <Grid item xs={12} sm={2}>
+                                                    <TextField label="Fonction" size="small" value={c.role} onChange={e => updateContact(i, 'role', e.target.value)} fullWidth />
+                                                </Grid>
+                                                <Grid item xs={12} sm={2}>
+                                                    <TextField label="Téléphone" size="small" value={c.phone} onChange={e => updateContact(i, 'phone', e.target.value)} fullWidth />
+                                                </Grid>
+                                                <Grid item xs={10} sm={1.5}>
+                                                    <TextField label="Email" size="small" type="email" value={c.email} onChange={e => updateContact(i, 'email', e.target.value)} fullWidth />
+                                                </Grid>
+                                                <Grid item xs={2} sm={0.5}>
+                                                    <Tooltip title="Retirer ce contact">
+                                                        <IconButton size="small" color="error" onClick={() => removeContact(i)}>
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Grid>
+                                            </Grid>
+                                            <FormControlLabel
+                                                sx={{ mt: 0.5 }}
+                                                control={<Checkbox size="small" checked={!!c.is_primary} onChange={e => updateContact(i, 'is_primary', e.target.checked)} />}
+                                                label={<Typography variant="caption">Contact principal</Typography>}
+                                            />
+                                        </Box>
+                                    ))}
+                                    <Button size="small" startIcon={<PersonAddIcon />} onClick={addContact} sx={{ alignSelf: 'flex-start' }}>
+                                        Ajouter un contact
+                                    </Button>
                                 </Stack>
                             </AccordionDetails>
                         </Accordion>
