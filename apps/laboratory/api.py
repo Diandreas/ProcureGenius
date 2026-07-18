@@ -487,32 +487,10 @@ class LabOrderStatusUpdateView(APIView):
             pass  # Validation supprimée pour permettre la complétion indépendante
 
         if action == 'collect_sample':
+            # La déduction de stock (consommables + lots FIFO) est déjà gérée
+            # dans LabOrder.collect_sample() — un second déstockage ici double
+            # comptait la sortie (et plantait sur des kwargs StockMovement invalides).
             order.collect_sample(collected_by=request.user)
-            
-            # Auto-deduct stock for linked products
-            try:
-                from apps.invoicing.models import Product, StockMovement
-                for item in order.items.all():
-                    if item.lab_test.linked_product:
-                        product = item.lab_test.linked_product
-                        quantity = 1 # Default 1 unit per test
-                        
-                        # Create movement
-                        StockMovement.objects.create(
-                            organization=request.user.organization,
-                            product=product,
-                            movement_type='out',
-                            quantity=quantity,
-                            reason=f"Lab Order #{order.order_number} - {item.lab_test.test_code}",
-                            performed_by=request.user
-                        )
-                        
-                        # Update stock
-                        product.quantity -= quantity
-                        product.save()
-            except Exception as e:
-                print(f"Error deducting stock for lab order {order.order_number}: {e}")
-                # Don't fail the request, just log
 
         elif action == 'start_processing':
             order.start_processing()
