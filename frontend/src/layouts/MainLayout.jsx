@@ -136,7 +136,6 @@ function MainLayout() {
     { text: 'Statistiques Examens', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/exam-stats', moduleId: 'laboratory', isCore: false },
     { text: 'Journal d\'audit', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/audit-log', moduleId: 'laboratory', isCore: false },
     { text: 'Pharmacie Stock', iconSrc: '/icon/product.png', path: '/products', moduleId: 'pharmacy', isCore: false },
-    { text: 'Dispensation', iconSrc: '/icon/product.png', path: '/healthcare/pharmacy/dispensing', moduleId: 'pharmacy', isCore: false },
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
     { text: 'Hospitalisations', iconSrc: '/icon/contract.png', path: '/healthcare/hospitalizations', moduleId: 'consultations', isCore: false },
     { text: 'Documents Centre', iconSrc: '/icon/bill.png', path: '/admin/documents', moduleId: 'dashboard', isCore: true },
