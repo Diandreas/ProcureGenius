@@ -702,12 +702,24 @@ class LabOrder(models.Model):
         self.save()
     
     def verify_results(self, verified_by=None):
-        """Verify/validate results and mark as ready"""
-        self.status = 'results_ready'
-        self.results_verified_at = timezone.now()
-        if verified_by:
-            self.results_verified_by = verified_by
-        self.save()
+        """
+        Valide tous les tests ayant un résultat saisi ("Tout valider"), puis
+        marque la commande comme prête. Comportement historique conservé : la
+        commande passe à 'results_ready' même si certains tests restent sans
+        résultat (ils ne seront simplement pas marqués comme validés
+        individuellement).
+        """
+        for item in self.items.filter(result_verified_at__isnull=True):
+            if item.has_result:
+                item.verify_result(verified_by=verified_by)
+        self.refresh_from_db()
+
+        if self.status != 'results_ready':
+            self.status = 'results_ready'
+            self.results_verified_at = timezone.now()
+            if verified_by:
+                self.results_verified_by = verified_by
+            self.save(update_fields=['status', 'results_verified_at', 'results_verified_by'])
     
     def mark_delivered(self):
         """Mark results as delivered to patient"""
@@ -970,6 +982,53 @@ class LabOrderItem(models.Model):
         except Exception as e:
             # Ne bloque pas le prélèvement des autres tests en cas d'erreur de stock
             print(f"Error deducting stock for LabOrderItem {self.id} ({self.lab_order.order_number}): {e}")
+
+    @property
+    def has_result(self):
+        """Un résultat (texte, numérique ou paramètres structurés) a été saisi."""
+        return bool(self.result_value) or self.result_numeric is not None or self.parameter_results.exists()
+
+    def verify_result(self, verified_by=None):
+        """
+        Valide le résultat de ce test individuellement (validation partielle) —
+        indépendamment des autres tests de la même commande. La commande passe
+        automatiquement à 'results_ready' dès que TOUS les tests ayant un
+        résultat sont validés.
+        """
+        if not self.has_result:
+            raise ValueError("Impossible de valider un test sans résultat saisi.")
+        if self.result_verified_at:
+            return  # déjà validé, idempotent
+
+        self.result_verified_at = timezone.now()
+        if verified_by:
+            self.verified_by = verified_by
+        self.save(update_fields=['result_verified_at', 'verified_by'])
+
+        order = self.lab_order
+        if order.status in ('in_progress', 'completed'):
+            items = list(order.items.all())
+            if items and all(i.has_result and i.result_verified_at for i in items):
+                order.status = 'results_ready'
+                order.results_verified_at = timezone.now()
+                if verified_by:
+                    order.results_verified_by = verified_by
+                order.save(update_fields=['status', 'results_verified_at', 'results_verified_by'])
+
+    def unverify_result(self):
+        """Annule la validation individuelle de ce test (permet de le corriger)."""
+        if not self.result_verified_at:
+            return
+        self.result_verified_at = None
+        self.verified_by = None
+        self.save(update_fields=['result_verified_at', 'verified_by'])
+
+        order = self.lab_order
+        if order.status == 'results_ready':
+            order.status = 'completed'
+            order.results_verified_at = None
+            order.results_verified_by = None
+            order.save(update_fields=['status', 'results_verified_at', 'results_verified_by'])
 
         order = self.lab_order
         if order.status == 'pending' and not order.items.filter(sample_collected_at__isnull=True).exists():

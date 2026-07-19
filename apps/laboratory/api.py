@@ -501,7 +501,10 @@ class LabOrderStatusUpdateView(APIView):
         elif action == 'deliver':
             order.mark_delivered()
         elif action == 'invalidate':
-            # Revert to results entered (completed), clearing verification
+            # Revert to results entered (completed), clearing verification —
+            # y compris la validation individuelle de chaque test, pour rester
+            # cohérent avec le statut de la commande.
+            order.items.exclude(result_verified_at__isnull=True).update(result_verified_at=None, verified_by=None)
             order.status = 'completed'
             order.results_verified_by = None
             order.results_verified_at = None
@@ -859,6 +862,42 @@ class LabOrderItemCollectView(APIView):
         item.collect_sample(collected_by=request.user)
         item.refresh_from_db()
 
+        return Response(LabOrderItemSerializer(item).data)
+
+
+class LabOrderItemVerifyView(APIView):
+    """
+    Valide (ou dévalide) le résultat d'un test individuellement — la commande
+    passe automatiquement à 'results_ready' dès que tous les tests ayant un
+    résultat sont validés, sans attendre les autres tests non encore résultés.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, item_id):
+        try:
+            item = LabOrderItem.objects.select_related('lab_order').get(id=item_id)
+        except LabOrderItem.DoesNotExist:
+            return Response({'error': 'Test introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if item.lab_order.organization != request.user.organization:
+            return Response({'error': 'Permission refusée'}, status=status.HTTP_403_FORBIDDEN)
+
+        if item.lab_order.status in ('results_delivered', 'cancelled'):
+            return Response(
+                {'error': 'Résultats déjà remis au patient ou commande annulée : validation verrouillée.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        action = request.data.get('action', 'verify')
+        if action == 'unverify':
+            item.unverify_result()
+        else:
+            try:
+                item.verify_result(verified_by=request.user)
+            except ValueError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        item.refresh_from_db()
         return Response(LabOrderItemSerializer(item).data)
 
 

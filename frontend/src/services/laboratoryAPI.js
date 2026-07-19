@@ -123,6 +123,12 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    // Valider (ou dévalider) le résultat d'un test individuellement
+    verifyItem: async (itemId, action = 'verify') => {
+        const response = await api.post(`/healthcare/laboratory/items/${itemId}/verify/`, { action });
+        return response.data;
+    },
+
     // --- Test Catalog ---
 
     // Get all lab tests (for selection)

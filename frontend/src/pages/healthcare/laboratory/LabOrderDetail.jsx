@@ -261,6 +261,57 @@ const QuickConfigSelector = ({ item, parameter, onConfigChanged, canEdit, patien
     );
 };
 
+/**
+ * Bouton de validation individuelle d'un test — indépendant des autres
+ * tests de la commande (validation partielle).
+ */
+const ItemVerifyControl = ({ item, onVerify, verifying, compact = false, locked = false }) => {
+    const hasResult = Boolean(item.result_value) || item.result_numeric !== null && item.result_numeric !== undefined
+        || (item.parameter_results && item.parameter_results.length > 0);
+
+    if (locked) {
+        return item.result_verified_at ? (
+            <Tooltip title="Validé">
+                <VerifyIcon fontSize="small" color="success" />
+            </Tooltip>
+        ) : null;
+    }
+
+    if (item.result_verified_at) {
+        if (compact) {
+            return (
+                <Tooltip title="Validé — cliquer pour annuler">
+                    <IconButton size="small" color="success" onClick={() => onVerify(item)} disabled={verifying}>
+                        {verifying ? <CircularProgress size={16} /> : <VerifyIcon fontSize="small" />}
+                    </IconButton>
+                </Tooltip>
+            );
+        }
+        return (
+            <Tooltip title="Cliquer pour annuler la validation de ce test">
+                <Chip
+                    size="small" color="success" variant="outlined"
+                    icon={<VerifyIcon fontSize="small" />}
+                    label="Validé"
+                    onClick={() => onVerify(item)}
+                    disabled={verifying}
+                    sx={{ cursor: 'pointer' }}
+                />
+            </Tooltip>
+        );
+    }
+
+    if (!hasResult) return null;
+
+    return (
+        <Tooltip title="Valider ce résultat">
+            <IconButton size="small" color="default" onClick={() => onVerify(item)} disabled={verifying}>
+                {verifying ? <CircularProgress size={16} /> : <VerifyIcon fontSize="small" />}
+            </IconButton>
+        </Tooltip>
+    );
+};
+
 const LabOrderDetail = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -274,6 +325,7 @@ const LabOrderDetail = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [order, setOrder] = useState(null);
     const [collectingItemId, setCollectingItemId] = useState(null);
+    const [verifyingItemId, setVerifyingItemId] = useState(null);
     const [results, setResults] = useState({}); // { item_id: { result_value, remarks } }
     const [parameterValues, setParameterValues] = useState({}); // { item_id: { param_id: { result_numeric, result_text } } }
     const [biologistDiagnosis, setBiologistDiagnosis] = useState('');
@@ -603,6 +655,21 @@ const LabOrderDetail = () => {
             enqueueSnackbar('Erreur lors du prélèvement', { variant: 'error' });
         } finally {
             setCollectingItemId(null);
+        }
+    };
+
+    const handleVerifyItem = async (item) => {
+        const action = item.result_verified_at ? 'unverify' : 'verify';
+        setVerifyingItemId(item.id);
+        try {
+            await laboratoryAPI.verifyItem(item.id, action);
+            enqueueSnackbar(action === 'verify' ? 'Résultat validé' : 'Validation annulée', { variant: 'success' });
+            fetchOrder();
+        } catch (error) {
+            console.error('Error verifying item:', error);
+            enqueueSnackbar(error.response?.data?.error || 'Erreur lors de la validation', { variant: 'error' });
+        } finally {
+            setVerifyingItemId(null);
         }
     };
 
@@ -1022,6 +1089,8 @@ const LabOrderDetail = () => {
 
     // canEdit: allow entering/editing results when analysis is in progress or results just entered (not yet validated)
     const canEdit = ['in_progress', 'completed'].includes(order.status);
+    // Validation individuelle verrouillée une fois les résultats remis (ou commande annulée)
+    const verifyLocked = ['results_delivered', 'cancelled'].includes(order.status);
 
     const handleDeleteOrder = async () => {
         try {
@@ -1435,9 +1504,12 @@ const LabOrderDetail = () => {
                                                             </IconButton>
                                                         </Tooltip>
                                                     </Box>
-                                                    <IconButton size="small" onClick={() => handleShowHistory(item)} title="Historique" color="primary">
-                                                        <HistoryIcon fontSize="small" />
-                                                    </IconButton>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                        <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
+                                                        <IconButton size="small" onClick={() => handleShowHistory(item)} title="Historique" color="primary">
+                                                            <HistoryIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Box>
                                                 </Box>
                                                 {Object.entries(groups).map(([groupName, params]) => (
                                                     <Box key={groupName} sx={{ mb: 1 }}>
@@ -1607,6 +1679,7 @@ const LabOrderDetail = () => {
                                                         />
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} />
                                                         <Button
                                                             startIcon={<HistoryIcon />}
                                                             size="small"
@@ -1851,14 +1924,17 @@ const LabOrderDetail = () => {
                                         {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" />}
                                     </TableCell>
                                     <TableCell>
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => handleShowHistory(item)}
-                                            title="Afficher l'historique des valeurs"
-                                            color="primary"
-                                        >
-                                            <HistoryIcon fontSize="small" />
-                                        </IconButton>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                            <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => handleShowHistory(item)}
+                                                title="Afficher l'historique des valeurs"
+                                                color="primary"
+                                            >
+                                                <HistoryIcon fontSize="small" />
+                                            </IconButton>
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             );
