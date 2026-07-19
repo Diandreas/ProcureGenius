@@ -539,10 +539,21 @@ class LabOrderListItemSerializer(serializers.ModelSerializer):
     """Minimal item info for list view"""
     lab_test_name = serializers.CharField(source='lab_test.name', read_only=True)
     sample_type = serializers.CharField(source='lab_test.sample_type', read_only=True)
+    item_status = serializers.SerializerMethodField()
 
     class Meta:
         model = LabOrderItem
-        fields = ['id', 'lab_test_name', 'sample_type']
+        fields = ['id', 'lab_test_name', 'sample_type', 'item_status']
+
+    def get_item_status(self, obj):
+        """État individuel du test : pending / collected / result_entered / verified"""
+        if obj.result_verified_at:
+            return 'verified'
+        if obj.has_result:
+            return 'result_entered'
+        if obj.sample_collected_at:
+            return 'collected'
+        return 'pending'
 
 
 class LabOrderListSerializer(serializers.ModelSerializer):
@@ -555,6 +566,7 @@ class LabOrderListSerializer(serializers.ModelSerializer):
     items = LabOrderListItemSerializer(many=True, read_only=True)
     subcontractor_name = serializers.CharField(source='subcontractor.name', read_only=True, default=None)
     is_subcontracted = serializers.SerializerMethodField()
+    tests_progress = serializers.SerializerMethodField()
 
     def get_tests_count(self, obj):
         """Get count of items"""
@@ -562,6 +574,27 @@ class LabOrderListSerializer(serializers.ModelSerializer):
 
     def get_is_subcontracted(self, obj):
         return obj.subcontractor_id is not None
+
+    def get_tests_progress(self, obj):
+        """
+        Avancement de la commande au niveau de chaque test : combien sont
+        prélevés / ont un résultat / sont validés, et le % de complétion
+        (basé sur les tests validés) pour affichage dans la file d'attente.
+        """
+        items = list(obj.items.all())
+        total = len(items)
+        if total == 0:
+            return {'total': 0, 'collected': 0, 'resulted': 0, 'verified': 0, 'percent': 0}
+        collected = sum(1 for i in items if i.sample_collected_at)
+        resulted = sum(1 for i in items if i.has_result)
+        verified = sum(1 for i in items if i.result_verified_at)
+        return {
+            'total': total,
+            'collected': collected,
+            'resulted': resulted,
+            'verified': verified,
+            'percent': round(verified / total * 100),
+        }
 
     class Meta:
         model = LabOrder
@@ -576,6 +609,7 @@ class LabOrderListSerializer(serializers.ModelSerializer):
             'priority',
             'priority_display',
             'tests_count',
+            'tests_progress',
             'total_price',
             'notification_sent',
             'items',

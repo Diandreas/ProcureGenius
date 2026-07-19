@@ -84,6 +84,14 @@ const statusColors = {
     results_ready: 'success',
 };
 
+// État individuel de chaque test dans une commande (prélèvement / résultat / validation partiels)
+const itemStatusConfig = {
+    pending: { label: 'En attente', color: '#9ca3af', bg: '#f3f4f6' },
+    collected: { label: 'Prélevé', color: '#2563eb', bg: '#eff6ff' },
+    result_entered: { label: 'Résultat saisi', color: '#f59e0b', bg: '#fffbeb' },
+    verified: { label: 'Validé', color: '#10b981', bg: '#ecfdf5' },
+};
+
 // ── Stat Card ──
 
 const StatCard = ({ title, value, icon, color, subtitle }) => (
@@ -235,6 +243,17 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, 
                             <Typography variant="caption" color="text.secondary">{order.order_number}</Typography>
                             <Typography variant="caption" color="text.secondary">·</Typography>
                             <Typography variant="caption" color="text.secondary">{order.tests_count || 0} test(s)</Typography>
+                            {order.tests_progress?.total > 0 && (
+                                <Chip
+                                    label={`${order.tests_progress.verified}/${order.tests_progress.total} validés`}
+                                    size="small"
+                                    sx={{
+                                        height: 18, fontSize: '0.65rem', fontWeight: 700,
+                                        bgcolor: order.tests_progress.percent === 100 ? '#ecfdf5' : '#eff6ff',
+                                        color: order.tests_progress.percent === 100 ? '#10b981' : '#2563eb',
+                                    }}
+                                />
+                            )}
                             {pConfig.icon && (
                                 <Chip icon={pConfig.icon} label={pConfig.label} size="small" color={pConfig.color} sx={{ fontWeight: 600, height: 18, fontSize: '0.65rem' }} />
                             )}
@@ -274,14 +293,42 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, 
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.3 }}>
                                 <Typography variant="caption" color="text.secondary">{order.order_number}</Typography>
                                 <Typography variant="caption" color="text.secondary">{order.tests_count || 0} test(s)</Typography>
-                                {order.items?.slice(0, 3).map(item => (
-                                    <Chip key={item.id} label={item.lab_test_name || item.test_name} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.7rem' }} />
-                                ))}
+                                {order.items?.slice(0, 3).map(item => {
+                                    const cfg = itemStatusConfig[item.item_status] || itemStatusConfig.pending;
+                                    return (
+                                        <Tooltip key={item.id} title={cfg.label}>
+                                            <Chip
+                                                label={item.lab_test_name || item.test_name}
+                                                size="small"
+                                                sx={{ height: 20, fontSize: '0.7rem', fontWeight: 600, bgcolor: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}40` }}
+                                            />
+                                        </Tooltip>
+                                    );
+                                })}
                                 {(order.items?.length || 0) > 3 && (
                                     <Typography variant="caption" color="text.secondary">+{order.items.length - 3}</Typography>
                                 )}
                             </Box>
                         </Box>
+
+                        {/* Avancement : tests validés */}
+                        {order.tests_progress?.total > 0 && (
+                            <Tooltip title={`${order.tests_progress.verified}/${order.tests_progress.total} test(s) validé(s) · ${order.tests_progress.collected} prélevé(s) · ${order.tests_progress.resulted} avec résultat`}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.4, minWidth: 66 }}>
+                                    <Typography variant="caption" fontWeight="700" color="text.secondary">
+                                        {order.tests_progress.verified}/{order.tests_progress.total} validés
+                                    </Typography>
+                                    <LinearProgress
+                                        variant="determinate"
+                                        value={order.tests_progress.percent}
+                                        sx={{
+                                            width: 60, height: 6, borderRadius: 3, bgcolor: '#e5e7eb',
+                                            '& .MuiLinearProgress-bar': { borderRadius: 3, bgcolor: order.tests_progress.percent === 100 ? '#10b981' : '#3b82f6' }
+                                        }}
+                                    />
+                                </Box>
+                            </Tooltip>
+                        )}
 
                         {/* Wait time */}
                         <Tooltip title={`Commande créée: ${order.order_date ? formatDate(order.order_date) + ' ' + formatTime(order.order_date) : '-'}`}>
