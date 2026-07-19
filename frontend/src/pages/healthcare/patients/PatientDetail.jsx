@@ -238,6 +238,14 @@ const PatientDetail = () => {
                         >
                             Suivi
                         </Button>
+                        <Button
+                            variant="outlined"
+                            startIcon={<FileIcon />}
+                            onClick={() => navigate(`/healthcare/medical-documents/new?patientId=${id}`)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Document Médical
+                        </Button>
                     </Box>
                 </CardContent>
             </Card>

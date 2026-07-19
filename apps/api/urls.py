@@ -112,6 +112,9 @@ urlpatterns = [
     # Healthcare - Hospitalizations
     path('healthcare/hospitalizations/', include('apps.hospitalizations.urls')),
 
+    # Healthcare - Medical Documents (référence, repos médical, soins infirmiers, contre-référence)
+    path('healthcare/medical-documents/', include('apps.medical_documents.urls')),
+
     # Document Generator
     path('documents/', include('apps.document_generator.urls')),
 

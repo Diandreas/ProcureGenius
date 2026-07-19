@@ -119,6 +119,8 @@ import ConsultationForm from './pages/healthcare/consultations/ConsultationForm'
 import ConsultationDetail from './pages/healthcare/consultations/ConsultationDetail';
 import HospitalizationList from './pages/healthcare/hospitalizations/HospitalizationList';
 import HospitalizationForm from './pages/healthcare/hospitalizations/HospitalizationForm';
+import MedicalDocumentList from './pages/healthcare/medical-documents/MedicalDocumentList';
+import MedicalDocumentForm from './pages/healthcare/medical-documents/MedicalDocumentForm';
 import DocumentManager from './pages/admin/DocumentManager';
 import CouponManager from './pages/admin/CouponManager';
 
@@ -879,6 +881,11 @@ function App() {
                               <Route path="/healthcare/hospitalizations" element={<HospitalizationList />} />
                               <Route path="/healthcare/hospitalizations/new" element={<HospitalizationForm />} />
                               <Route path="/healthcare/hospitalizations/:id/edit" element={<HospitalizationForm />} />
+
+                              {/* Documents médicaux */}
+                              <Route path="/healthcare/medical-documents" element={<MedicalDocumentList />} />
+                              <Route path="/healthcare/medical-documents/new" element={<MedicalDocumentForm />} />
+                              <Route path="/healthcare/medical-documents/:id/edit" element={<MedicalDocumentForm />} />
 
                               {/* Générateur de documents */}
                               <Route path="/admin/documents" element={<DocumentManager />} />

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche de repos médical</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 11pt; line-height: 1.4; color: #333; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }
+        .logo { max-width: 150px; max-height: 80px; margin-bottom: 10px; }
+        h1 { color: #2c3e50; font-size: 18pt; margin: 0 0 5px 0; text-transform: uppercase; }
+        .org-info { font-size: 9pt; color: #666; margin-bottom: 5px; }
+        .document-title { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 20px; }
+        .document-number { text-align: right; font-size: 9pt; color: #666; margin-bottom: 10px; }
+        .section-title { color: #2c3e50; font-size: 12pt; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-top: 20px; margin-bottom: 10px; font-weight: bold; }
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .info-table td { padding: 5px; vertical-align: top; }
+        .info-label { font-weight: bold; width: 30%; color: #555; }
+        .content-box { border: 1px solid #eee; padding: 10px; background-color: #fafafa; min-height: 40px; margin-bottom: 10px; }
+        .rest-highlight { background-color: #fff8e1; border: 1px solid #f0c040; padding: 15px; text-align: center; margin-bottom: 20px; }
+        .rest-days { font-size: 20pt; font-weight: bold; color: #2c3e50; }
+        .footer-signatures { margin-top: 50px; width: 100%; }
+        .signature-box { width: 45%; display: inline-block; text-align: center; border-top: 1px dashed #999; padding-top: 5px; }
+        .signature-box.right { float: right; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if logo_base64 %}<img src="data:image/png;base64,{{ logo_base64 }}" class="logo" alt="Logo">{% endif %}
+        <h1>{{ organization.name }}</h1>
+        <div class="org-info">
+            {{ organization.address|default:"" }}<br>
+            Tél: {{ organization.phone|default:"" }} | Email: {{ organization.email|default:"" }}
+        </div>
+    </div>
+
+    <div class="document-number">N° {{ document.document_number }}</div>
+    <div class="document-title">FICHE DE REPOS MÉDICAL</div>
+
+    <table class="info-table">
+        <tr>
+            <td class="info-label">Patient(e) :</td>
+            <td><strong>{{ document.patient.name }}</strong></td>
+            <td class="info-label">Âge / Sexe :</td>
+            <td>{{ document.patient.date_of_birth|timesince|default:"N/A" }} / {{ document.patient.get_gender_display|default:"N/A" }}</td>
+        </tr>
+        <tr>
+            <td class="info-label">Date de délivrance :</td>
+            <td colspan="3">{{ document.issue_date|date:"d/m/Y" }}</td>
+        </tr>
+    </table>
+
+    <div class="rest-highlight">
+        Je soussigné, Dr. {{ document.issued_by.get_full_name|default:document.issued_by.email|default:"—" }},
+        certifie que l'état de santé de {{ document.patient.name }} nécessite un repos
+        {% if document.rest_start_date and document.rest_end_date %}
+            du <strong>{{ document.rest_start_date|date:"d/m/Y" }}</strong> au <strong>{{ document.rest_end_date|date:"d/m/Y" }}</strong> inclus,
+        {% endif %}
+        soit
+        <div class="rest-days">{{ document.rest_days|default:"—" }} jour(s)</div>
+    </div>
+
+    <div class="section-title">Motif</div>
+    <div class="content-box">{{ document.rest_reason|default:"Raisons médicales." }}</div>
+
+    {% if document.notes %}
+    <div class="section-title">Notes complémentaires</div>
+    <div class="content-box">{{ document.notes|linebreaksbr }}</div>
+    {% endif %}
+
+    <div class="footer-signatures">
+        <div class="signature-box">Cachet de la structure</div>
+        <div class="signature-box right">
+            Dr. {{ document.issued_by.get_full_name|default:"Médecin" }}<br>
+            Signature & Cachet
+        </div>
+    </div>
+</body>
+</html>

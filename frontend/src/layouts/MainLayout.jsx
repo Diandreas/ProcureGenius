@@ -138,6 +138,7 @@ function MainLayout() {
     { text: 'Pharmacie Stock', iconSrc: '/icon/product.png', path: '/products', moduleId: 'pharmacy', isCore: false },
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
     { text: 'Hospitalisations', iconSrc: '/icon/contract.png', path: '/healthcare/hospitalizations', moduleId: 'consultations', isCore: false },
+    { text: 'Documents Médicaux', iconSrc: '/icon/contract.png', path: '/healthcare/medical-documents', moduleId: 'consultations', isCore: false },
     { text: 'Documents Centre', iconSrc: '/icon/bill.png', path: '/admin/documents', moduleId: 'dashboard', isCore: true },
 
     // Coupons de réduction — réservé à Boris uniquement
