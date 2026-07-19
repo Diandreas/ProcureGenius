@@ -1165,9 +1165,13 @@ const LabOrderDetail = () => {
                             <Typography variant="h6" gutterBottom>Patient</Typography>
                             <Typography variant="body1" fontWeight="bold">{order.patient_name}</Typography>
                             <Typography variant="body2">{order.patient_age != null ? `${order.patient_age} ans` : ''}{order.patient_age != null && order.patient_gender ? ' / ' : ''}{order.patient_gender || ''}</Typography>
-                            <Divider sx={{ my: 1 }} />
-                            <Typography variant="caption" color="text.secondary">Prescripteur</Typography>
-                            <Typography variant="body2">{order.ordered_by_name || '-'}</Typography>
+                            {order.prescriber_name && (
+                                <>
+                                    <Divider sx={{ my: 1 }} />
+                                    <Typography variant="caption" color="text.secondary">Prescripteur</Typography>
+                                    <Typography variant="body2">{order.prescriber_name}</Typography>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
                 </Grid>
