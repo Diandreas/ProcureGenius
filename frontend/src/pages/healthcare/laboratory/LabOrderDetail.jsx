@@ -1474,15 +1474,21 @@ const LabOrderDetail = () => {
                 </Alert>
             )}
 
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, mb: 3 }}>
-                <Table>
+            {isMobile && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, textAlign: 'center' }}>
+                    ← Faites glisser le tableau pour voir toutes les colonnes →
+                </Typography>
+            )}
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 3, mb: 3, overflowX: 'auto' }}>
+                <Table size={isMobile ? 'small' : 'medium'}>
                     <TableHead>
                         <TableRow>
                             <TableCell>EXAMEN / TEST</TableCell>
+                            <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>CATÉGORIE</TableCell>
                             <TableCell width="25%">RÉSULTAT</TableCell>
                             <TableCell>UNITÉS</TableCell>
                             <TableCell>VALEURS DE RÉFÉRENCE</TableCell>
-                            <TableCell>ANTÉRIEUR</TableCell>
+                            <TableCell>NOTES</TableCell>
                             <TableCell>FLAG</TableCell>
                             <TableCell width="80px">ACTIONS</TableCell>
                         </TableRow>
@@ -1533,7 +1539,7 @@ const LabOrderDetail = () => {
 
                                 return (
                                     <TableRow key={item.id} sx={{ verticalAlign: 'top' }}>
-                                        <TableCell colSpan={7} sx={{ p: 0 }}>
+                                        <TableCell colSpan={8} sx={{ p: 0 }}>
                                             <Box sx={{ p: 1.5 }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -1699,7 +1705,7 @@ const LabOrderDetail = () => {
                             if (useLargeLayout) {
                                 return (
                                     <TableRow key={item.id}>
-                                        <TableCell colSpan={7} sx={{ p: 0, borderBottom: '2px solid #3b82f6' }}>
+                                        <TableCell colSpan={8} sx={{ p: 0, borderBottom: '2px solid #3b82f6' }}>
                                             <Box sx={{ 
                                                 p: 3, 
                                                 bgcolor: '#ffffff',
@@ -1861,7 +1867,7 @@ const LabOrderDetail = () => {
                                             </Tooltip>
                                         </Box>
                                     </TableCell>
-                                    <TableCell>{item.category_name}</TableCell>
+                                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{item.category_name}</TableCell>
                                     <TableCell>
                                         {canEdit ? (
                                             <Box>
