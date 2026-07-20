@@ -669,31 +669,24 @@ class LabOrder(models.Model):
     # Status transition methods
     def collect_sample(self, collected_by=None):
         """
-        Prélève ce test individuellement (prélèvement partiel) : horodatage,
-        déduction du stock lié, et mise à jour du statut agrégé de la commande
-        si c'était le dernier test restant à prélever.
+        Prélève tous les tests de la commande d'un coup (raccourci pratique).
+        Chaque test est prélevé individuellement via LabOrderItem.collect_sample() —
+        même logique que le prélèvement partiel, juste appliquée à tous les tests
+        restants. Idempotent : les tests déjà prélevés sont ignorés.
         """
-        if self.sample_collected_at:
-            return  # déjà prélevé, idempotent
+        for item in self.items.filter(sample_collected_at__isnull=True):
+            item.collect_sample(collected_by=collected_by)
+        self.refresh_from_db()
 
-        self.sample_collected_at = timezone.now()
-        if collected_by:
-            self.sample_collected_by = collected_by
-        self.save(update_fields=['sample_collected_at', 'sample_collected_by'])
-
-        try:
-            self.deduct_stock_for_collection(collected_by)
-        except Exception as e:
-            # Ne bloque pas le prélèvement des autres tests en cas d'erreur de stock
-            print(f"Error deducting stock for LabOrderItem {self.id} ({self.lab_order.order_number}): {e}")
-
-        order = self.lab_order
-        if order.status == 'pending' and not order.items.filter(sample_collected_at__isnull=True).exists():
-            order.status = 'sample_collected'
-            order.sample_collected_at = timezone.now()
+        # Filet de sécurité : commande sans aucun item (cas dégénéré, ne devrait pas
+        # arriver en pratique) — l'agrégation par item ne peut pas déclencher le
+        # changement de statut, on le force ici.
+        if self.status == 'pending' and not self.items.exists():
+            self.status = 'sample_collected'
+            self.sample_collected_at = timezone.now()
             if collected_by:
-                order.sample_collected_by = collected_by
-            order.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
+                self.sample_collected_by = collected_by
+            self.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
 
     def start_processing(self):
         """Mark order as in progress"""
@@ -972,23 +965,31 @@ class LabOrderItem(models.Model):
 
     def collect_sample(self, collected_by=None):
         """
-        Prélève ce test individuellement (prélèvement partiel) : horodatage,
-        déduction du stock lié, et mise à jour du statut agrégé de la commande
-        si c'était le dernier test restant à prélever.
-        """
-        if self.sample_collected_at:
-            return  # déjà prélevé, idempotent
-
-        self.sample_collected_at = timezone.now()
-        if collected_by:
-            self.sample_collected_by = collected_by
-        self.save(update_fields=['sample_collected_at', 'sample_collected_by'])
-
-        try:
-            self.deduct_stock_for_collection(collected_by)
-        except Exception as e:
-            # Ne bloque pas le prélèvement des autres tests en cas d'erreur de stock
-            print(f"Error deducting stock for LabOrderItem {self.id} ({self.lab_order.order_number}): {e}")
+            Prélève ce test individuellement (prélèvement partiel) : horodatage,
+            déduction du stock lié, et mise à jour du statut agrégé de la commande
+            si c'était le dernier test restant à prélever.
+            """
+            if self.sample_collected_at:
+                return  # déjà prélevé, idempotent
+    
+            self.sample_collected_at = timezone.now()
+            if collected_by:
+                self.sample_collected_by = collected_by
+            self.save(update_fields=['sample_collected_at', 'sample_collected_by'])
+    
+            try:
+                self.deduct_stock_for_collection(collected_by)
+            except Exception as e:
+                # Ne bloque pas le prélèvement des autres tests en cas d'erreur de stock
+                print(f"Error deducting stock for LabOrderItem {self.id} ({self.lab_order.order_number}): {e}")
+    
+            order = self.lab_order
+            if order.status == 'pending' and not order.items.filter(sample_collected_at__isnull=True).exists():
+                order.status = 'sample_collected'
+                order.sample_collected_at = timezone.now()
+                if collected_by:
+                    order.sample_collected_by = collected_by
+                order.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
 
     @property
     def has_result(self):
