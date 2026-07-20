@@ -56,12 +56,24 @@ class LabOrderReceiptView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasy
 
 class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTemplateResponseMixin, DetailView):
     """
-    Génère le rapport de RÉSULTATS (A4)
+    Génère le rapport de RÉSULTATS (A4).
+    Paramètre optionnel ?item_id=<uuid> : limite le rapport à un seul test
+    de la commande (impression individuelle), au lieu de tous les tests.
     """
     model = LabOrder
     template_name = 'laboratory/pdf_templates/lab_result_report.html'
     pdf_attachment = False
     pdf_filename = 'resultats.pdf'
+
+    def get_pdf_filename(self):
+        lab_order = self.get_object()
+        item_id = self.request.GET.get('item_id')
+        if item_id:
+            item = lab_order.items.filter(id=item_id).select_related('lab_test').first()
+            if item:
+                code = item.lab_test.test_code or item.lab_test.name
+                return f'resultat-{code}-{lab_order.order_number}.pdf'
+        return f'resultats-{lab_order.order_number}.pdf'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -118,9 +130,17 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
         patient_sex = patient.gender if patient else None
 
         # Enrich items with previous results + structured parameter results
-        items = list(lab_order.items.all().select_related(
+        items_qs = lab_order.items.all().select_related(
             'lab_test', 'lab_test__category'
-        ).prefetch_related('parameter_results__parameter'))
+        ).prefetch_related('parameter_results__parameter')
+
+        # Impression individuelle : ne garder que le test demandé
+        item_id = self.request.GET.get('item_id')
+        if item_id:
+            items_qs = items_qs.filter(id=item_id)
+        items = list(items_qs)
+        context['single_item_mode'] = bool(item_id)
+        context['order_total_items'] = lab_order.items.count()
 
         enriched_items = []
         pending_items = []

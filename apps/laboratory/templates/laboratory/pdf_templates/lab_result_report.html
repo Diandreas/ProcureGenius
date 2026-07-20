@@ -98,7 +98,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="doc-title text-center" style="margin-bottom: 5px;">RÉSULTATS DE LABORATOIRE</div>
+<div class="doc-title text-center" style="margin-bottom: 5px;">
+    {% if single_item_mode %}RÉSULTAT DE LABORATOIRE (test individuel){% else %}RÉSULTATS DE LABORATOIRE{% endif %}
+</div>
+{% if single_item_mode and order_total_items > 1 %}
+<div class="text-center" style="background:#fffbeb; border:1px solid #f59e0b; color:#92400e; padding:6px; font-size:8pt; margin-bottom:8px; border-radius:3px;">
+    Résultat partiel — cette commande comporte {{ order_total_items }} test(s) au total. Les autres résultats seront communiqués séparément.
+</div>
+{% endif %}
 
 <div class="info-grid" style="padding: 6px; margin-bottom: 10px;">
     <div class="info-col" style="width: 34%;">

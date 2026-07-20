@@ -312,6 +312,25 @@ const ItemVerifyControl = ({ item, onVerify, verifying, compact = false, locked 
     );
 };
 
+/**
+ * Bouton d'impression du résultat d'un seul test — n'apparaît que si le
+ * test a déjà un résultat saisi.
+ */
+const PrintItemButton = ({ item, onPrint, printing }) => {
+    const hasResult = Boolean(item.result_value) || item.result_numeric !== null && item.result_numeric !== undefined
+        || (item.parameter_results && item.parameter_results.length > 0);
+
+    if (!hasResult) return null;
+
+    return (
+        <Tooltip title="Imprimer ce résultat">
+            <IconButton size="small" color="primary" onClick={() => onPrint(item)} disabled={printing}>
+                {printing ? <CircularProgress size={16} /> : <PrintIcon fontSize="small" />}
+            </IconButton>
+        </Tooltip>
+    );
+};
+
 const LabOrderDetail = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -326,6 +345,7 @@ const LabOrderDetail = () => {
     const [order, setOrder] = useState(null);
     const [collectingItemId, setCollectingItemId] = useState(null);
     const [verifyingItemId, setVerifyingItemId] = useState(null);
+    const [printingItemId, setPrintingItemId] = useState(null);
     const [results, setResults] = useState({}); // { item_id: { result_value, remarks } }
     const [parameterValues, setParameterValues] = useState({}); // { item_id: { param_id: { result_numeric, result_text } } }
     const [biologistDiagnosis, setBiologistDiagnosis] = useState('');
@@ -670,6 +690,26 @@ const LabOrderDetail = () => {
             enqueueSnackbar(error.response?.data?.error || 'Erreur lors de la validation', { variant: 'error' });
         } finally {
             setVerifyingItemId(null);
+        }
+    };
+
+    const handlePrintItem = async (item) => {
+        setPrintingItemId(item.id);
+        try {
+            const blob = await laboratoryAPI.getResultsPDF(id, { item_id: item.id });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `resultat-${item.test_code || item.test_name}-${order.order_number}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error printing item result:', error);
+            enqueueSnackbar('Erreur lors de la génération du PDF', { variant: 'error' });
+        } finally {
+            setPrintingItemId(null);
         }
     };
 
@@ -1506,6 +1546,7 @@ const LabOrderDetail = () => {
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                         <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
+                                                        <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                                         <IconButton size="small" onClick={() => handleShowHistory(item)} title="Historique" color="primary">
                                                             <HistoryIcon fontSize="small" />
                                                         </IconButton>
@@ -1680,6 +1721,7 @@ const LabOrderDetail = () => {
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} />
+                                                        <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                                         <Button
                                                             startIcon={<HistoryIcon />}
                                                             size="small"
@@ -1926,6 +1968,7 @@ const LabOrderDetail = () => {
                                     <TableCell>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                             <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
+                                            <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                             <IconButton
                                                 size="small"
                                                 onClick={() => handleShowHistory(item)}
