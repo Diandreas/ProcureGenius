@@ -965,31 +965,31 @@ class LabOrderItem(models.Model):
 
     def collect_sample(self, collected_by=None):
         """
-            Prélève ce test individuellement (prélèvement partiel) : horodatage,
-            déduction du stock lié, et mise à jour du statut agrégé de la commande
-            si c'était le dernier test restant à prélever.
-            """
-            if self.sample_collected_at:
-                return  # déjà prélevé, idempotent
-    
-            self.sample_collected_at = timezone.now()
+        Prélève ce test individuellement (prélèvement partiel) : horodatage,
+        déduction du stock lié, et mise à jour du statut agrégé de la commande
+        si c'était le dernier test restant à prélever.
+        """
+        if self.sample_collected_at:
+            return  # déjà prélevé, idempotent
+
+        self.sample_collected_at = timezone.now()
+        if collected_by:
+            self.sample_collected_by = collected_by
+        self.save(update_fields=['sample_collected_at', 'sample_collected_by'])
+
+        try:
+            self.deduct_stock_for_collection(collected_by)
+        except Exception as e:
+            # Ne bloque pas le prélèvement des autres tests en cas d'erreur de stock
+            print(f"Error deducting stock for LabOrderItem {self.id} ({self.lab_order.order_number}): {e}")
+
+        order = self.lab_order
+        if order.status == 'pending' and not order.items.filter(sample_collected_at__isnull=True).exists():
+            order.status = 'sample_collected'
+            order.sample_collected_at = timezone.now()
             if collected_by:
-                self.sample_collected_by = collected_by
-            self.save(update_fields=['sample_collected_at', 'sample_collected_by'])
-    
-            try:
-                self.deduct_stock_for_collection(collected_by)
-            except Exception as e:
-                # Ne bloque pas le prélèvement des autres tests en cas d'erreur de stock
-                print(f"Error deducting stock for LabOrderItem {self.id} ({self.lab_order.order_number}): {e}")
-    
-            order = self.lab_order
-            if order.status == 'pending' and not order.items.filter(sample_collected_at__isnull=True).exists():
-                order.status = 'sample_collected'
-                order.sample_collected_at = timezone.now()
-                if collected_by:
-                    order.sample_collected_by = collected_by
-                order.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
+                order.sample_collected_by = collected_by
+            order.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
 
     @property
     def has_result(self):
