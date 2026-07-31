@@ -113,6 +113,7 @@ const healthcareAnalyticsAPI = {
     if (params.service_id) queryParams.append('service_id', params.service_id);
     if (params.category_id) queryParams.append('category_id', params.category_id);
     if (params.invoice_type) queryParams.append('invoice_type', params.invoice_type);
+    if (params.include_standard) queryParams.append('include_standard', 'true');
 
     const response = await api.get(`/analytics/healthcare/service-revenue/?${queryParams.toString()}`);
     return response.data;

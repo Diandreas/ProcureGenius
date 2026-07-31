@@ -700,14 +700,14 @@ class ActivityIndicatorsView(APIView):
         lab_revenue = float(lab_invoices_paid.aggregate(total=Sum('total_amount'))['total'] or 0)
 
         # Décomposition labo : examens vs kits de prélèvement
+        # NOTE : on ne matche que sur "kit" (spécifique aux frais de kit) et non sur
+        # "prélèvement" seul, qui apparaît aussi dans le nom de vrais examens
+        # (ex: "MYCOPLASME (Prélèvement génital)") et les ferait compter à tort ici.
         lab_items_all = InvoiceItem.objects.filter(invoice__in=lab_invoices_paid)
         kit_revenue = float(lab_items_all.filter(
             Q(product__name__icontains='kit') |
             Q(product__category__name__icontains='kit') |
-            Q(description__icontains='kit') |
-            Q(product__name__icontains='prélèvement') |
-            Q(product__category__name__icontains='prélèvement') |
-            Q(description__icontains='prélèvement')
+            Q(description__icontains='kit')
         ).aggregate(total=Sum('total_price'))['total'] or 0)
         exams_revenue = lab_revenue - kit_revenue
 
