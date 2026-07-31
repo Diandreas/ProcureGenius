@@ -240,6 +240,14 @@ const PatientDetail = () => {
                         </Button>
                         <Button
                             variant="outlined"
+                            startIcon={<PdfIcon />}
+                            onClick={() => navigate(`/healthcare/medical-documents/new?patientId=${id}&type=nursing_care`)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Fiche de Soins
+                        </Button>
+                        <Button
+                            variant="outlined"
                             startIcon={<FileIcon />}
                             onClick={() => navigate(`/healthcare/medical-documents/new?patientId=${id}`)}
                             sx={{ borderRadius: 2 }}
