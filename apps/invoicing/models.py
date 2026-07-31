@@ -1584,6 +1584,7 @@ class Payment(models.Model):
         max_length=50,
         choices=[
             ('cash', _('Comptant')),
+            ('mobile_money', _('Mobile Money')),
             ('check', _('Chèque')),
             ('credit_card', _('Carte de crédit')),
             ('bank_transfer', _('Virement bancaire')),
