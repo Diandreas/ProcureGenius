@@ -475,7 +475,19 @@ function Invoices() {
             variant={quickFilter === 'unpaid' ? 'contained' : 'outlined'}
             color="warning"
             startIcon={<Receipt />}
-            onClick={() => handleQuickFilterClick('unpaid')}
+            onClick={() => {
+              if (quickFilter === 'unpaid') {
+                // Désactiver le filtre : revenir à la période du jour
+                setQuickFilter('');
+                const t = getTodayStr();
+                setDateRange(t, t);
+              } else {
+                // Les factures impayées peuvent dater de n'importe quel jour :
+                // on ignore le filtre de date en l'élargissant à toute la période.
+                setQuickFilter('unpaid');
+                setDateRange('2000-01-01', '2099-12-31');
+              }
+            }}
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
             Factures impayées {unpaidCount > 0 ? `(${unpaidCount} — ${formatCurrency(unpaidTotal)})` : ''}
@@ -646,7 +658,13 @@ function Invoices() {
                   quickFilter === 'unpaid' ? 'Impayées' :
                     quickFilter === 'cancelled' ? 'Annulées' : ''
               }
-              onDelete={() => setQuickFilter('')}
+              onDelete={() => {
+                setQuickFilter('');
+                if (quickFilter === 'unpaid') {
+                  const t = getTodayStr();
+                  setDateRange(t, t);
+                }
+              }}
               color={
                 quickFilter === 'paid' ? 'success' :
                   quickFilter === 'unpaid' ? 'warning' :
