@@ -2576,6 +2576,11 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 due_date__lt=timezone.now().date()
             )
 
+        # Filtre pour factures non soldées (impayées ou partiellement payées)
+        unpaid = self.request.query_params.get('unpaid')
+        if unpaid == 'true':
+            queryset = queryset.exclude(status__in=['paid', 'cancelled']).exclude(invoice_type='credit_note')
+
         # Filtre sous-traitance : ?is_subcontractor=true|false
         is_subcontractor_param = self.request.query_params.get('is_subcontractor')
         if is_subcontractor_param is not None:
@@ -2754,26 +2759,43 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             else:
                 payment_date = timezone.now().date()
             
-            # Calculer le montant à payer (solde dû)
-            # Utiliser la même méthode que Payment.clean() pour éviter les problèmes de précision
+            # Calculer le solde dû (utilise la même méthode que Payment.clean() pour éviter les problèmes de précision)
             total_payments = sum(Decimal(str(p.amount)) for p in invoice.payments.all())
             total_amount = Decimal(str(invoice.total_amount))
             balance_due = total_amount - total_payments
-            
+
             # Arrondir à 2 décimales pour éviter les problèmes de précision
             balance_due = balance_due.quantize(Decimal('0.01'))
-            
-            # Vérifier que le montant est valide
+
+            # Vérifier que le solde est valide
             if balance_due <= 0:
                 return Response(
                     {'error': 'Invoice balance is already zero or negative'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
+            # Montant à encaisser : par défaut le solde restant (comportement historique,
+            # paiement total), ou un montant partiel explicite si fourni par le client.
+            requested_amount = request.data.get('amount')
+            if requested_amount is not None:
+                try:
+                    payment_amount = Decimal(str(requested_amount)).quantize(Decimal('0.01'))
+                except Exception:
+                    return Response({'error': 'Montant invalide'}, status=status.HTTP_400_BAD_REQUEST)
+                if payment_amount <= 0:
+                    return Response({'error': 'Le montant doit être positif'}, status=status.HTTP_400_BAD_REQUEST)
+                if payment_amount > balance_due:
+                    return Response(
+                        {'error': f"Le montant ({payment_amount}) dépasse le solde dû ({balance_due})"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                payment_amount = balance_due
+
             # Créer le paiement avec validation explicite
             payment = Payment(
                 invoice=invoice,
-                amount=balance_due,
+                amount=payment_amount,
                 payment_date=payment_date,
                 payment_method=payment_method,
                 reference_number=reference_number,
@@ -2792,9 +2814,9 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 # Si la validation échoue à cause de la précision, essayer avec un montant légèrement inférieur
                 if 'dépasse le solde dû' in str(validation_error):
                     # Réduire légèrement le montant pour tenir compte de la précision
-                    balance_due = balance_due - Decimal('0.01')
-                    if balance_due > 0:
-                        payment.amount = balance_due
+                    adjusted_amount = payment.amount - Decimal('0.01')
+                    if adjusted_amount > 0:
+                        payment.amount = adjusted_amount
                         payment.full_clean()
                     else:
                         return Response(

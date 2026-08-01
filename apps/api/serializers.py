@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.db import models
 from apps.suppliers.models import Supplier, SupplierCategory, SupplierProduct
 from apps.purchase_orders.models import PurchaseOrder, PurchaseOrderItem
-from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement, ProductCategory, Warehouse
+from apps.invoicing.models import Invoice, InvoiceItem, Product, StockMovement, ProductCategory, Warehouse, Payment
 from apps.accounts.models import Client
 from apps.core.serializer_mixins import ModuleAwareSerializerMixin
 from django.contrib.auth import get_user_model
@@ -608,14 +608,28 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class PaymentSerializer(serializers.ModelSerializer):
+    """Serializer pour un paiement enregistré sur une facture (encaissement partiel ou total)"""
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True, default=None)
+
+    class Meta:
+        model = Payment
+        fields = [
+            'id', 'amount', 'payment_date', 'payment_method',
+            'reference_number', 'transaction_id', 'notes', 'status',
+            'created_by', 'created_by_name', 'created_at',
+        ]
+        read_only_fields = ['id', 'created_by', 'created_by_name', 'created_at']
+
+
 class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer):
     """Serializer pour les factures"""
     items = InvoiceItemSerializer(many=True, required=False)
-    
+
     # Nested serializers pour read (affichage complet)
     client_detail = ClientSerializer(source='client', read_only=True)
     created_by_detail = UserSerializer(source='created_by', read_only=True)
-    
+
     # Champs simples pour rétrocompatibilité
     client_name = serializers.CharField(source='client.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
@@ -624,6 +638,17 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     # Champs sous-traitance
     subcontractor_id = serializers.UUIDField(source='subcontractor.id', read_only=True, default=None)
     subcontractor_name = serializers.CharField(source='subcontractor.name', read_only=True, default=None)
+
+    # Paiements partiels : historique + solde restant
+    payments = PaymentSerializer(many=True, read_only=True)
+    balance_due = serializers.SerializerMethodField()
+    payment_status = serializers.SerializerMethodField()
+
+    def get_balance_due(self, obj):
+        return obj.get_balance_due()
+
+    def get_payment_status(self, obj):
+        return obj.get_payment_status()
 
     # Hide fields for disabled modules
     module_dependent_fields = {
@@ -643,6 +668,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'is_subcontractor_invoice', 'subcontractor_id', 'subcontractor_name',
             'global_discount_type', 'global_discount_value', 'global_discount_label',
             'global_discount_amount',
+            'payments', 'balance_due', 'payment_status',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
@@ -651,7 +677,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'purchase_order_number', 'client_name', 'created_by_name',
             'client_detail', 'created_by_detail',
             'is_subcontractor_invoice', 'subcontractor_id', 'subcontractor_name',
-            'global_discount_amount',
+            'global_discount_amount', 'payments', 'balance_due', 'payment_status',
         ]
     
     def to_representation(self, instance):

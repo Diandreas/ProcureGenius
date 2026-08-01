@@ -35,6 +35,7 @@ import {
   InputLabel,
   Select,
   Stack,
+  InputAdornment,
   useMediaQuery,
   useTheme,
   Tooltip,
@@ -128,6 +129,7 @@ function InvoiceDetail() {
   const [encaisserDialogOpen, setEncaisserDialogOpen] = useState(false);
   const [encaisserSaving, setEncaisserSaving] = useState(false);
   const [encaisserPaymentMethod, setEncaisserPaymentMethod] = useState('cash');
+  const [encaisserAmount, setEncaisserAmount] = useState('');
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
@@ -333,13 +335,32 @@ function InvoiceDetail() {
     return new Date(invoice.due_date) < new Date() && invoice.status === 'sent';
   };
 
+  const balanceDue = invoice ? parseFloat(invoice.balance_due ?? invoice.total_amount) || 0 : 0;
+
+  const handleOpenEncaisser = () => {
+    setEncaisserAmount(String(balanceDue));
+    setEncaisserDialogOpen(true);
+  };
+
   const handleEncaisser = async () => {
+    const amount = parseFloat(encaisserAmount);
+    if (!amount || amount <= 0) {
+      enqueueSnackbar('Le montant doit être positif', { variant: 'warning' });
+      return;
+    }
+    if (amount > balanceDue) {
+      enqueueSnackbar(`Le montant dépasse le solde dû (${new Intl.NumberFormat('fr-FR').format(balanceDue)} ${invoice?.currency || 'XAF'})`, { variant: 'warning' });
+      return;
+    }
     setEncaisserSaving(true);
     try {
-      const response = await invoicesAPI.markPaid(id, { payment_method: encaisserPaymentMethod });
+      const response = await invoicesAPI.markPaid(id, { payment_method: encaisserPaymentMethod, amount });
       setInvoice(response.data);
       setEncaisserDialogOpen(false);
-      enqueueSnackbar('Facture encaissée avec succès', { variant: 'success' });
+      enqueueSnackbar(
+        amount < balanceDue ? 'Paiement partiel enregistré' : 'Facture encaissée avec succès',
+        { variant: 'success' }
+      );
     } catch (err) {
       enqueueSnackbar(err?.response?.data?.error || 'Erreur lors de l\'encaissement', { variant: 'error' });
     } finally {
@@ -565,12 +586,12 @@ function InvoiceDetail() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {invoice.is_subcontractor_invoice && invoice.status === 'sent' && (
+          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && balanceDue > 0 && (
             <Button
               variant="contained"
               color="success"
               startIcon={<Payment />}
-              onClick={() => setEncaisserDialogOpen(true)}
+              onClick={handleOpenEncaisser}
               sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
             >
               Encaisser
@@ -1196,7 +1217,7 @@ Cordialement`
                       variant="contained"
                       color="success"
                       startIcon={<Payment />}
-                      onClick={() => setEncaisserDialogOpen(true)}
+                      onClick={handleOpenEncaisser}
                       sx={{ borderRadius: 2, textTransform: 'none', mt: 1 }}
                     >
                       Encaisser maintenant
@@ -1542,18 +1563,38 @@ Cordialement`
         helpText="Choisissez une action pour générer le reçu thermal"
       />
 
-      {/* Dialog Encaisser — facture sous-traitance crédit différé */}
+      {/* Dialog Encaisser — paiement total ou partiel */}
       <Dialog open={encaisserDialogOpen} onClose={() => setEncaisserDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Encaisser la facture sous-traitance</DialogTitle>
+        <DialogTitle>Encaisser la facture</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Cette action enregistre le paiement daté d'aujourd'hui et inscrit ce montant
-            en caisse pour la journée en cours.
+            Cette action enregistre le paiement daté d'aujourd'hui. Le montant peut être
+            partiel — le solde restant reste dû sur la facture.
           </Typography>
-          <Typography variant="h5" fontWeight="700" textAlign="center" mb={2}>
-            {invoice ? new Intl.NumberFormat('fr-FR').format(invoice.total_amount) : ''} {invoice?.currency || 'XAF'}
-          </Typography>
-          <FormControl fullWidth>
+
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="body2" color="text.secondary">Solde dû</Typography>
+            <Typography variant="body2" fontWeight="700">
+              {new Intl.NumberFormat('fr-FR').format(balanceDue)} {invoice?.currency || 'XAF'}
+            </Typography>
+          </Box>
+
+          <TextField
+            fullWidth
+            type="number"
+            label="Montant à encaisser"
+            value={encaisserAmount}
+            onChange={e => setEncaisserAmount(e.target.value)}
+            sx={{ mb: 2 }}
+            InputProps={{ endAdornment: <InputAdornment position="end">{invoice?.currency || 'XAF'}</InputAdornment> }}
+            helperText={
+              parseFloat(encaisserAmount) > 0 && parseFloat(encaisserAmount) < balanceDue
+                ? `Paiement partiel — il restera ${new Intl.NumberFormat('fr-FR').format(balanceDue - parseFloat(encaisserAmount))} ${invoice?.currency || 'XAF'} dû`
+                : ''
+            }
+          />
+
+          <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Mode de paiement</InputLabel>
             <Select
               value={encaisserPaymentMethod}
@@ -1568,6 +1609,23 @@ Cordialement`
               <MenuItem value="other">Autre</MenuItem>
             </Select>
           </FormControl>
+
+          {invoice?.payments?.length > 0 && (
+            <>
+              <Divider sx={{ mb: 1 }} />
+              <Typography variant="subtitle2" gutterBottom>Paiements déjà enregistrés</Typography>
+              <List dense>
+                {invoice.payments.map(p => (
+                  <ListItem key={p.id} disableGutters>
+                    <ListItemText
+                      primary={`${new Intl.NumberFormat('fr-FR').format(p.amount)} ${invoice.currency || 'XAF'} — ${formatDate(p.payment_date)}`}
+                      secondary={p.payment_method}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEncaisserDialogOpen(false)}>Annuler</Button>

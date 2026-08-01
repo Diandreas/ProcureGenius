@@ -218,6 +218,7 @@ function Invoices() {
     const matchesQuick = !quickFilter || (() => {
       if (quickFilter === 'paid') return invoice.status === 'paid';
       if (quickFilter === 'cancelled') return invoice.status === 'cancelled';
+      if (quickFilter === 'unpaid') return invoice.status !== 'paid' && invoice.status !== 'cancelled';
       return true;
     })();
 
@@ -268,6 +269,13 @@ function Invoices() {
   const filteredPaidTotal = filteredInvoices
     .filter(i => i.status === 'paid')
     .reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
+
+  // Factures non soldées (impayées ou partiellement payées), toutes périodes confondues
+  const unpaidInvoices = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled');
+  const unpaidCount = unpaidInvoices.length;
+  const unpaidTotal = unpaidInvoices.reduce(
+    (sum, i) => sum + (parseFloat(i.balance_due ?? i.total_amount) || 0), 0
+  );
 
   const InvoiceCard = ({ invoice, index }) => {
     const statusColor = invoice.status === 'paid' ? '#10b981'
@@ -462,6 +470,17 @@ function Invoices() {
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant={quickFilter === 'unpaid' ? 'contained' : 'outlined'}
+            color="warning"
+            startIcon={<Receipt />}
+            onClick={() => handleQuickFilterClick('unpaid')}
+            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            Factures impayées {unpaidCount > 0 ? `(${unpaidCount} — ${formatCurrency(unpaidTotal)})` : ''}
+          </Button>
+        </Box>
         <Grid container spacing={isMobile ? 1.5 : 2}>
           {/* Encaisse Card */}
           <Grid item xs={12} md={8}>
@@ -617,19 +636,21 @@ function Invoices() {
           </Grid>
         </Grid>
 
-        {/* Filter Indicator for Paid */}
-        {quickFilter === 'paid' && (
+        {/* Filter Indicator */}
+        {quickFilter && (
           <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" color="text.secondary">{t('invoices:filters.activeFilter')}</Typography>
             <Chip
               label={
                 quickFilter === 'paid' ? t('invoices:filters.paid') :
-                  quickFilter === 'cancelled' ? 'Annulées' : ''
+                  quickFilter === 'unpaid' ? 'Impayées' :
+                    quickFilter === 'cancelled' ? 'Annulées' : ''
               }
               onDelete={() => setQuickFilter('')}
               color={
                 quickFilter === 'paid' ? 'success' :
-                  quickFilter === 'cancelled' ? 'error' : 'primary'
+                  quickFilter === 'unpaid' ? 'warning' :
+                    quickFilter === 'cancelled' ? 'error' : 'primary'
               }
               size="small"
             />
