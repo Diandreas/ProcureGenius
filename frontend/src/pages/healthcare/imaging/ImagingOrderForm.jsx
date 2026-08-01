@@ -10,7 +10,7 @@ import { useSnackbar } from 'notistack';
 import imagingAPI from '../../../services/imagingAPI';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
-import QuickClientCreateModal from '../patients/components/QuickClientCreateModal';
+import QuickClientCreateModal from '../laboratory/components/QuickClientCreateModal';
 
 const ImagingOrderForm = () => {
     const navigate = useNavigate();
