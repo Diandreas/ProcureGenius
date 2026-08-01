@@ -2554,11 +2554,12 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     search_fields = ['invoice_number', 'title', 'description']
     ordering_fields = ['created_at', 'total_amount', 'due_date']
     ordering = ['-created_at']
-    
+
     def get_queryset(self):
-        # First apply organization filter
-        queryset = super().get_queryset()
-        
+        # First apply organization filter (+ prefetch items/payments pour eviter le
+        # N+1 maintenant que payments est serialise sur chaque facture de la liste)
+        queryset = super().get_queryset().prefetch_related('items', 'payments')
+
         # Filtre par dates
         date_from = self.request.query_params.get('date_from')
         date_to = self.request.query_params.get('date_to')
@@ -2850,7 +2851,50 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 {'error': f'Error marking invoice as paid: {str(e)}', 'details': error_traceback},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
+    @action(detail=True, methods=['post'])
+    def delete_payment(self, request, pk=None):
+        """
+        Supprime un paiement enregistré sur cette facture.
+        Autorisé uniquement dans les 30 minutes suivant sa création (garde-fou
+        anti-erreur de saisie, au-delà la traçabilité comptable prime).
+        """
+        from apps.invoicing.models import Payment
+        from datetime import timedelta
+
+        invoice = self.get_object()
+        payment_id = request.data.get('payment_id')
+        if not payment_id:
+            return Response({'error': 'payment_id requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            payment = invoice.payments.get(id=payment_id)
+        except Payment.DoesNotExist:
+            return Response({'error': 'Paiement introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        age = timezone.now() - payment.created_at
+        if age > timedelta(minutes=30):
+            return Response(
+                {'error': "Ce paiement a été enregistré il y a plus de 30 minutes et ne peut plus être supprimé."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        payment.delete()
+
+        # update_status_from_payments() ne rétrograde pas explicitement le statut
+        # quand il ne reste plus aucun paiement (payment_status='unpaid') — le
+        # gérer nous-mêmes pour ne pas laisser une facture 'paid' sans paiement.
+        invoice.refresh_from_db()
+        invoice.update_status_from_payments()
+        invoice.refresh_from_db()
+        if invoice.get_payment_status() == 'unpaid' and invoice.status == 'paid':
+            invoice.status = 'sent'
+            invoice.save(update_fields=['status'])
+            invoice.refresh_from_db()
+
+        serializer = self.get_serializer(invoice)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['get'], url_path='pdf')
     def generate_pdf(self, request, pk=None):
         """Générer un PDF de la facture avec WeasyPrint (HTML/CSS)"""

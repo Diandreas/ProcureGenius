@@ -259,16 +259,18 @@ function Invoices() {
   const totalInvoices = invoices.length;
   const totalAmount = invoices.reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
 
-  // Payment method stats (based on filtered invoices)
-  const cashAmount = filteredInvoices
-    .filter(i => i.status === 'paid' && (i.payment_method === 'cash' || !i.payment_method))
-    .reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
-  const mobileAmount = filteredInvoices
-    .filter(i => i.status === 'paid' && i.payment_method === 'mobile_money')
-    .reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
-  const filteredPaidTotal = filteredInvoices
-    .filter(i => i.status === 'paid')
-    .reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
+  // Montants réellement encaissés (basés sur les paiements enregistrés, pas sur le
+  // statut/total de la facture — un paiement partiel doit compter même si la
+  // facture n'est pas encore entièrement soldée).
+  const successfulPayments = filteredInvoices.flatMap(i => i.payments || []).filter(p => p.status === 'success');
+  const cashAmount = successfulPayments
+    .filter(p => p.payment_method === 'cash' || !p.payment_method)
+    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+  const mobileAmount = successfulPayments
+    .filter(p => p.payment_method === 'mobile_money')
+    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+  const filteredPaidTotal = successfulPayments
+    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
 
   // Factures non soldées (impayées ou partiellement payées), toutes périodes confondues
   const unpaidInvoices = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled');

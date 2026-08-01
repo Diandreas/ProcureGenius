@@ -130,6 +130,7 @@ function InvoiceDetail() {
   const [encaisserSaving, setEncaisserSaving] = useState(false);
   const [encaisserPaymentMethod, setEncaisserPaymentMethod] = useState('cash');
   const [encaisserAmount, setEncaisserAmount] = useState('');
+  const [deletingPaymentId, setDeletingPaymentId] = useState(null);
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
@@ -365,6 +366,19 @@ function InvoiceDetail() {
       enqueueSnackbar(err?.response?.data?.error || 'Erreur lors de l\'encaissement', { variant: 'error' });
     } finally {
       setEncaisserSaving(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId) => {
+    setDeletingPaymentId(paymentId);
+    try {
+      const response = await invoicesAPI.deletePayment(id, paymentId);
+      setInvoice(response.data);
+      enqueueSnackbar('Paiement supprimé', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.error || 'Erreur lors de la suppression du paiement', { variant: 'error' });
+    } finally {
+      setDeletingPaymentId(null);
     }
   };
 
@@ -1280,28 +1294,64 @@ Cordialement`
             </Card>
 
             {/* Payment Info */}
-            {invoice.status === 'paid' && (
+            {(invoice.status === 'paid' || invoice.payments?.length > 0) && (
               <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    {t('invoices:labels.paymentInfo')}
-                  </Typography>
-                  <List dense>
-                    <ListItem>
-                      <ListItemText
-                        primary={t('invoices:labels.paymentMethod')}
-                        secondary={invoice.payment_method || t('invoices:labels.notSpecified')}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      {t('invoices:labels.paymentInfo')}
+                    </Typography>
+                    {balanceDue > 0 && (
+                      <Chip
+                        size="small"
+                        color="warning"
+                        label={`Solde dû : ${new Intl.NumberFormat('fr-FR').format(balanceDue)} ${invoice.currency || 'XAF'}`}
                       />
-                    </ListItem>
-                    {invoice.payment_reference && (
+                    )}
+                  </Box>
+
+                  {invoice.payments?.length > 0 ? (
+                    <List dense>
+                      {invoice.payments.map(p => {
+                        const ageMinutes = (Date.now() - new Date(p.created_at).getTime()) / 60000;
+                        const canDelete = ageMinutes <= 30;
+                        return (
+                          <ListItem
+                            key={p.id}
+                            secondaryAction={
+                              <Tooltip title={canDelete ? 'Supprimer ce paiement' : "Ce paiement date de plus de 30 min, il ne peut plus être supprimé"}>
+                                <span>
+                                  <IconButton
+                                    edge="end"
+                                    size="small"
+                                    color="error"
+                                    disabled={!canDelete || deletingPaymentId === p.id}
+                                    onClick={() => handleDeletePayment(p.id)}
+                                  >
+                                    {deletingPaymentId === p.id ? <CircularProgress size={16} /> : <Delete fontSize="small" />}
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                            }
+                          >
+                            <ListItemText
+                              primary={`${new Intl.NumberFormat('fr-FR').format(p.amount)} ${invoice.currency || 'XAF'} — ${formatDate(p.payment_date)}`}
+                              secondary={`${p.payment_method}${p.created_by_name ? ' · ' + p.created_by_name : ''}`}
+                            />
+                          </ListItem>
+                        );
+                      })}
+                    </List>
+                  ) : (
+                    <List dense>
                       <ListItem>
                         <ListItemText
-                          primary={t('invoices:labels.paymentReference')}
-                          secondary={invoice.payment_reference}
+                          primary={t('invoices:labels.paymentMethod')}
+                          secondary={invoice.payment_method || t('invoices:labels.notSpecified')}
                         />
                       </ListItem>
-                    )}
-                  </List>
+                    </List>
+                  )}
                 </CardContent>
               </Card>
             )}
