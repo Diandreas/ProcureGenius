@@ -23,6 +23,7 @@ class Modules:
     PATIENTS = 'patients'
     CONSULTATIONS = 'consultations'
     LABORATORY = 'laboratory'
+    IMAGING = 'imaging'
     PHARMACY = 'pharmacy'
     
     # Always available to admins (not controllable by profiles)
@@ -106,6 +107,12 @@ MODULE_METADATA = {
         'icon': 'science',
         'always_enabled': False,
     },
+    Modules.IMAGING: {
+        'name': _('Imagerie'),
+        'description': _('Radiologie, échographie, scanner, IRM'),
+        'icon': 'medical_information',
+        'always_enabled': False,
+    },
     Modules.PHARMACY: {
         'name': _('Pharmacie'),
         'description': _('Dispensation de médicaments'),
@@ -187,6 +194,7 @@ PROFILE_MODULES = {
         Modules.CLIENTS,  # Nécessaire pour la facturation des patients
         Modules.CONSULTATIONS,
         Modules.LABORATORY,
+        Modules.IMAGING,
         Modules.PHARMACY,
         Modules.PRODUCTS,
         Modules.INVOICES,

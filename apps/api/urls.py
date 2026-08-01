@@ -103,6 +103,9 @@ urlpatterns = [
     # Healthcare - Laboratory (LIMS)
     path('healthcare/laboratory/', include('apps.laboratory.urls')),
 
+    # Healthcare - Imaging (radiologie, échographie, scanner, IRM)
+    path('healthcare/imaging/', include('apps.imaging.urls')),
+
     # Healthcare - Pharmacy
     path('healthcare/pharmacy/', include('apps.pharmacy.urls')),
 

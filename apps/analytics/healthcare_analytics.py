@@ -1024,7 +1024,7 @@ class EnhancedRevenueAnalyticsView(APIView):
             activity_acc[act]['count'] += int(cnt or 0)
 
         # Factures healthcare_* directes (labo, pharmacie, services) → montant total de la facture
-        for inv_type in ['healthcare_laboratory', 'healthcare_pharmacy', 'healthcare_services']:
+        for inv_type in ['healthcare_laboratory', 'healthcare_imaging', 'healthcare_pharmacy', 'healthcare_services']:
             agg = invoices.filter(invoice_type=inv_type).aggregate(
                 rev=Sum('total_amount'), cnt=Count('id')
             )
@@ -1078,12 +1078,12 @@ class EnhancedRevenueAnalyticsView(APIView):
         discountable_inv_total = decomp_inv_total - consult_revenue
         discountable_items_total = sum(
             v['revenue'] for k, v in activity_acc.items()
-            if k not in ('healthcare_laboratory', 'healthcare_consultation')
+            if k not in ('healthcare_laboratory', 'healthcare_imaging', 'healthcare_consultation')
         )
         if discountable_items_total > 0 and abs(discountable_items_total - discountable_inv_total) > 0.01:
             scale = discountable_inv_total / discountable_items_total
             for k in activity_acc:
-                if k not in ('healthcare_laboratory', 'healthcare_consultation'):
+                if k not in ('healthcare_laboratory', 'healthcare_imaging', 'healthcare_consultation'):
                     activity_acc[k]['revenue'] *= scale
 
         # Sous-traitance labo : informationnel uniquement (INCLUSE dans CA Labo healthcare_laboratory)
@@ -1125,6 +1125,7 @@ class EnhancedRevenueAnalyticsView(APIView):
         ACTIVITY_LABELS_FR = {
             'healthcare_consultation': 'Consultation médicale',
             'healthcare_laboratory':   'Laboratoire',
+            'healthcare_imaging':      'Imagerie médicale',
             'healthcare_pharmacy':     'Pharmacie / Médicaments',
             'healthcare_services':     'Soins / Petite chirurgie / Hospitalisation',
             'standard':                'Vente comptoir / Divers',

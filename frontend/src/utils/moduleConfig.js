@@ -18,6 +18,7 @@ export const Modules = {
     PATIENTS: 'patients',
     CONSULTATIONS: 'consultations',
     LABORATORY: 'laboratory',
+    IMAGING: 'imaging',
     PHARMACY: 'pharmacy',
 
     // Always available to admins
@@ -62,6 +63,7 @@ export const ModuleIcons = {
     [Modules.PATIENTS]: 'PersonIcon',
     [Modules.CONSULTATIONS]: 'MedicalServicesIcon',
     [Modules.LABORATORY]: 'ScienceIcon',
+    [Modules.IMAGING]: 'MedicalInformationIcon',
     [Modules.PHARMACY]: 'LocalPharmacyIcon',
 
     // Admin modules

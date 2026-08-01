@@ -46,6 +46,7 @@ TENANT_APPS = [
     # Healthcare apps
     'apps.patients',
     'apps.laboratory',
+    'apps.imaging',
     'apps.pharmacy',
     'apps.consultations',
     'apps.hospitalizations',

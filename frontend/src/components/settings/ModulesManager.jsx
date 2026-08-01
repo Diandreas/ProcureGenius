@@ -28,6 +28,7 @@ import {
   Person as PersonIcon, // Patients
   Support as SupportIcon, // Reception
   Science as ScienceIcon, // Laboratory
+  MedicalInformation as ImagingIcon, // Imaging
   LocalPharmacy as PharmacyIcon, // Pharmacy
   MedicalServices as MedicalServicesIcon, // Consultations
 } from '@mui/icons-material';
@@ -47,6 +48,7 @@ const AVAILABLE_MODULES = [
   { code: 'patients', name: 'Gestion Patients', description: 'Dossiers et admissions', IconComponent: PersonIcon },
   { code: 'visits', name: 'Visites', description: 'Gestion des visites patients', IconComponent: SupportIcon },
   { code: 'laboratory', name: 'Laboratoire', description: 'Analyses et LIMS', IconComponent: ScienceIcon },
+  { code: 'imaging', name: 'Imagerie', description: 'Radiologie, échographie, scanner, IRM', IconComponent: ImagingIcon },
   { code: 'pharmacy', name: 'Pharmacie', description: 'Stocks et délivrance', IconComponent: PharmacyIcon },
   { code: 'consultations', name: 'Consultations', description: 'Dossiers médicaux', IconComponent: MedicalServicesIcon },
 ];

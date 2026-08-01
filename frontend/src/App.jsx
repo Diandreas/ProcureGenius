@@ -111,6 +111,11 @@ import LabTestCatalog from './pages/healthcare/laboratory/LabTestCatalog';
 import LabPanelCatalog from './pages/healthcare/laboratory/LabPanelCatalog';
 import LabQueueDashboard from './pages/healthcare/laboratory/LabQueueDashboard';
 import OpenedReagents from './pages/healthcare/laboratory/OpenedReagents';
+import ImagingOrderList from './pages/healthcare/imaging/ImagingOrderList';
+import ImagingOrderForm from './pages/healthcare/imaging/ImagingOrderForm';
+import ImagingOrderDetail from './pages/healthcare/imaging/ImagingOrderDetail';
+import ImagingExamCatalog from './pages/healthcare/imaging/ImagingExamCatalog';
+import ImagingSubcontractorBatchOrder from './pages/healthcare/imaging/ImagingSubcontractorBatchOrder';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
 import DispensingForm from './pages/healthcare/pharmacy/DispensingForm';
 import DispensingDetail from './pages/healthcare/pharmacy/DispensingDetail';
@@ -865,6 +870,14 @@ function App() {
                               <Route path="/healthcare/laboratory/audit-log" element={<ModuleRoute module="laboratory"><LabAuditLog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/exam-stats" element={<ModuleRoute module="laboratory"><LabExamStats /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
+
+                              {/* Imagerie médicale */}
+                              <Route path="/healthcare/imaging" element={<ModuleRoute module="imaging"><ImagingOrderList /></ModuleRoute>} />
+                              <Route path="/healthcare/imaging/orders" element={<ModuleRoute module="imaging"><ImagingOrderList /></ModuleRoute>} />
+                              <Route path="/healthcare/imaging/new" element={<ModuleRoute module="imaging"><ImagingOrderForm /></ModuleRoute>} />
+                              <Route path="/healthcare/imaging/catalog" element={<ModuleRoute module="imaging"><ImagingExamCatalog /></ModuleRoute>} />
+                              <Route path="/healthcare/imaging/subcontractors/batch-order" element={<ModuleRoute module="imaging"><ImagingSubcontractorBatchOrder /></ModuleRoute>} />
+                              <Route path="/healthcare/imaging/:id" element={<ModuleRoute module="imaging"><ImagingOrderDetail /></ModuleRoute>} />
 
                               {/* Pharmacy */}
                               <Route path="/healthcare/pharmacy/dispensing" element={<ModuleRoute module="pharmacy"><DispensingList /></ModuleRoute>} />

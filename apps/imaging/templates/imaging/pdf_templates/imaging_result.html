@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport d'imagerie</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 11pt; line-height: 1.4; color: #333; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid {{ brand_color|default:"#2c3e50" }}; padding-bottom: 10px; }
+        .logo { max-width: 150px; max-height: 80px; margin-bottom: 10px; }
+        h1 { color: #2c3e50; font-size: 18pt; margin: 0 0 5px 0; text-transform: uppercase; }
+        .org-info { font-size: 9pt; color: #666; margin-bottom: 5px; }
+        .document-title { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 20px; }
+        .document-number { text-align: right; font-size: 9pt; color: #666; margin-bottom: 10px; }
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .info-table td { padding: 5px; vertical-align: top; }
+        .info-label { font-weight: bold; width: 30%; color: #555; }
+        .exam-block { margin-bottom: 25px; page-break-inside: avoid; }
+        .exam-title { color: #2c3e50; font-size: 13pt; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-bottom: 10px; font-weight: bold; }
+        .exam-title .urgent { color: #c0392b; font-size: 9pt; margin-left: 8px; }
+        .content-box { border: 1px solid #eee; padding: 10px; background-color: #fafafa; min-height: 40px; margin-bottom: 10px; white-space: pre-wrap; }
+        .result-image { max-width: 100%; max-height: 300px; margin: 8px 0; border: 1px solid #ddd; }
+        .attachment-note { font-size: 9pt; color: #666; font-style: italic; margin: 4px 0; }
+        .footer-signatures { margin-top: 50px; width: 100%; }
+        .signature-box { width: 45%; display: inline-block; text-align: center; border-top: 1px dashed #999; padding-top: 5px; }
+        .signature-box.right { float: right; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if logo_base64 %}<img src="{{ logo_base64 }}" class="logo" alt="Logo">{% endif %}
+        <h1>{{ organization.name }}</h1>
+        <div class="org-info">
+            {{ organization.address|default:"" }}<br>
+            Tél: {{ organization.phone|default:"" }} | Email: {{ organization.email|default:"" }}
+        </div>
+    </div>
+
+    <div class="document-number">N° {{ order.order_number }}</div>
+    <div class="document-title">RAPPORT D'IMAGERIE MÉDICALE</div>
+
+    <table class="info-table">
+        <tr>
+            <td class="info-label">Patient(e) :</td>
+            <td><strong>{{ patient.name }}</strong></td>
+            <td class="info-label">Âge / Sexe :</td>
+            <td>{{ patient.get_age }} ans / {{ patient.get_gender_display|default:"N/A" }}</td>
+        </tr>
+        <tr>
+            <td class="info-label">Date :</td>
+            <td>{{ order.order_date|date:"d/m/Y" }}</td>
+            <td class="info-label">Prescripteur :</td>
+            <td>{{ order.prescriber|default:"—" }}</td>
+        </tr>
+    </table>
+
+    {% if order.clinical_notes %}
+    <div class="exam-title">Indication clinique</div>
+    <div class="content-box">{{ order.clinical_notes|linebreaksbr }}</div>
+    {% endif %}
+
+    {% for item in items %}
+    <div class="exam-block">
+        <div class="exam-title">
+            {{ item.exam_type.name }}
+            {% if item.is_urgent_finding %}<span class="urgent">⚠ DÉCOUVERTE URGENTE</span>{% endif %}
+        </div>
+        <div class="content-box">{{ item.report_text|default:"Compte-rendu non renseigné"|linebreaksbr }}</div>
+
+        {% for f in item.files_with_preview %}
+            {% if f.preview_base64 %}
+                <img src="{{ f.preview_base64 }}" class="result-image" alt="{{ f.obj.caption }}">
+                {% if f.obj.caption %}<div class="attachment-note">{{ f.obj.caption }}</div>{% endif %}
+            {% else %}
+                <div class="attachment-note">Pièce jointe PDF : {{ f.obj.caption|default:f.obj.file.name }} — voir pièce jointe séparée</div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+
+    <div class="footer-signatures">
+        <div class="signature-box">Cachet de la structure</div>
+        <div class="signature-box right">
+            {{ order.results_entered_by.get_full_name|default:"Radiologue/Technicien" }}<br>
+            Signature
+        </div>
+    </div>
+</body>
+</html>

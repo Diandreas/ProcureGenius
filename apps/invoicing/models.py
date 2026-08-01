@@ -699,6 +699,7 @@ class Invoice(models.Model):
         ('standard', _('Vente de produits')),
         ('healthcare_consultation', _('Consultation médicale')),
         ('healthcare_laboratory', _('Laboratoire')),
+        ('healthcare_imaging', _('Imagerie médicale')),
         ('healthcare_pharmacy', _('Pharmacie / Médicaments')),
         ('healthcare_services', _('Soins / Petite chirurgie / Hospitalisation')),
         ('credit_note', _('Avoir - Note de crédit')),

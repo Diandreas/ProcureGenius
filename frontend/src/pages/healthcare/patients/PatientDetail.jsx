@@ -9,6 +9,7 @@ import {
     PictureAsPdf as PdfIcon,
     MedicalServices as ConsultationIcon,
     Science as LabIcon,
+    MedicalInformation as ImagingIcon,
     LocalPharmacy as PharmacyIcon,
     Receipt as PrescriptionIcon,
     Dashboard as SummaryIcon,
@@ -202,6 +203,15 @@ const PatientDetail = () => {
                             sx={{ borderRadius: 2 }}
                         >
                             Ordonnance Labo
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            startIcon={<ImagingIcon />}
+                            onClick={() => navigate(`/healthcare/imaging/new?patientId=${id}`)}
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Ordonnance Imagerie
                         </Button>
                         <Button
                             variant="contained"
