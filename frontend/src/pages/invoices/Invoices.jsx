@@ -223,6 +223,10 @@ function Invoices() {
     })();
 
     const matchesDate = (() => {
+      // Les factures impayées peuvent dater de n'importe quel jour : la liste les
+      // affiche toutes, indépendamment de la plage de date sélectionnée (qui ne
+      // sert plus qu'aux statistiques du jour dans ce mode).
+      if (quickFilter === 'unpaid') return true;
       const createdAt = invoice.created_at ? invoice.created_at.split('T')[0] : null;
       if (!createdAt) return true;
       if (startDate && createdAt < startDate) return false;
@@ -507,19 +511,7 @@ function Invoices() {
             variant={quickFilter === 'unpaid' ? 'contained' : 'outlined'}
             color="warning"
             startIcon={<Receipt />}
-            onClick={() => {
-              if (quickFilter === 'unpaid') {
-                // Désactiver le filtre : revenir à la période du jour
-                setQuickFilter('');
-                const t = getTodayStr();
-                setDateRange(t, t);
-              } else {
-                // Les factures impayées peuvent dater de n'importe quel jour :
-                // on ignore le filtre de date en l'élargissant à toute la période.
-                setQuickFilter('unpaid');
-                setDateRange('2000-01-01', '2099-12-31');
-              }
-            }}
+            onClick={() => handleQuickFilterClick('unpaid')}
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
             Factures impayées {unpaidCount > 0 ? `(${unpaidCount} — ${formatCurrency(unpaidTotal)})` : ''}
@@ -690,13 +682,7 @@ function Invoices() {
                   quickFilter === 'unpaid' ? 'Impayées' :
                     quickFilter === 'cancelled' ? 'Annulées' : ''
               }
-              onDelete={() => {
-                setQuickFilter('');
-                if (quickFilter === 'unpaid') {
-                  const t = getTodayStr();
-                  setDateRange(t, t);
-                }
-              }}
+              onDelete={() => setQuickFilter('')}
               color={
                 quickFilter === 'paid' ? 'success' :
                   quickFilter === 'unpaid' ? 'warning' :
