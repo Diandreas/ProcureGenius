@@ -259,18 +259,48 @@ function Invoices() {
   const totalInvoices = invoices.length;
   const totalAmount = invoices.reduce((sum, i) => sum + (parseFloat(i.total_amount) || 0), 0);
 
-  // Montants réellement encaissés (basés sur les paiements enregistrés, pas sur le
-  // statut/total de la facture — un paiement partiel doit compter même si la
-  // facture n'est pas encore entièrement soldée).
-  const successfulPayments = filteredInvoices.flatMap(i => i.payments || []).filter(p => p.status === 'success');
-  const cashAmount = successfulPayments
-    .filter(p => p.payment_method === 'cash' || !p.payment_method)
-    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-  const mobileAmount = successfulPayments
-    .filter(p => p.payment_method === 'mobile_money')
-    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-  const filteredPaidTotal = successfulPayments
-    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+  // Montants réellement encaissés, rattachés au JOUR OÙ L'ARGENT A ÉTÉ REÇU
+  // (payment_date d'un Payment), pas au jour de création de la facture — une
+  // facture créée un jour peut être encaissée (en partie ou en totalité) un
+  // autre jour. On combine deux sources :
+  // - les paiements explicites (Payment), datés de leur payment_date ;
+  // - les anciennes factures payées directement à la création (jamais passées
+  //   par un encaissement explicite, donc sans ligne Payment) : leur montant
+  //   total compte comme encaissé le jour de création de la facture.
+  const allCollections = invoices.flatMap(inv => {
+    const realPayments = (inv.payments || []).filter(p => p.status === 'success');
+    if (realPayments.length > 0) {
+      return realPayments.map(p => ({
+        amount: parseFloat(p.amount) || 0,
+        date: p.payment_date,
+        method: p.payment_method,
+      }));
+    }
+    if (inv.status === 'paid') {
+      return [{
+        amount: parseFloat(inv.total_amount) || 0,
+        date: inv.created_at ? inv.created_at.split('T')[0] : null,
+        method: inv.payment_method,
+      }];
+    }
+    return [];
+  });
+
+  const collectionsInRange = allCollections.filter(c => {
+    if (!c.date) return true;
+    if (startDate && c.date < startDate) return false;
+    if (endDate && c.date > endDate) return false;
+    return true;
+  });
+
+  const cashAmount = collectionsInRange
+    .filter(c => c.method === 'cash' || !c.method)
+    .reduce((sum, c) => sum + c.amount, 0);
+  const mobileAmount = collectionsInRange
+    .filter(c => c.method === 'mobile_money')
+    .reduce((sum, c) => sum + c.amount, 0);
+  const filteredPaidTotal = collectionsInRange
+    .reduce((sum, c) => sum + c.amount, 0);
 
   // Factures non soldées (impayées ou partiellement payées), toutes périodes confondues
   const unpaidInvoices = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled');
