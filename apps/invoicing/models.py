@@ -1612,6 +1612,15 @@ class Payment(models.Model):
         blank=True,
         verbose_name=_("Numéro de référence")
     )
+    exclude_from_cash_stats = models.BooleanField(
+        default=False,
+        verbose_name=_("Exclu des stats de caisse journalières"),
+        help_text=_(
+            "Paiement exceptionnel (ex: régularisation rétroactive) à ne pas "
+            "comptabiliser dans les totaux encaissés d'une journée précise, "
+            "tout en restant visible sur la facture."
+        )
+    )
     transaction_id = models.CharField(
         max_length=255,
         blank=True,

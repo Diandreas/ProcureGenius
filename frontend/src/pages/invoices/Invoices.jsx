@@ -272,12 +272,16 @@ function Invoices() {
   //   par un encaissement explicite, donc sans ligne Payment) : leur montant
   //   total compte comme encaissé le jour de création de la facture.
   const allCollections = invoices.flatMap(inv => {
-    const realPayments = (inv.payments || []).filter(p => p.status === 'success');
+    // Paiements exceptionnels (régularisations rétroactives) : on les exclut
+    // volontairement des totaux du jour, tout en les laissant visibles sur la facture.
+    const realPayments = (inv.payments || []).filter(p => p.status === 'success' && !p.exclude_from_cash_stats);
     if (realPayments.length > 0) {
       return realPayments.map(p => ({
         amount: parseFloat(p.amount) || 0,
         date: p.payment_date,
         method: p.payment_method,
+        invoiceId: inv.id,
+        invoiceNumber: inv.invoice_number,
       }));
     }
     if (inv.status === 'paid') {
@@ -285,6 +289,8 @@ function Invoices() {
         amount: parseFloat(inv.total_amount) || 0,
         date: inv.created_at ? inv.created_at.split('T')[0] : null,
         method: inv.payment_method,
+        invoiceId: inv.id,
+        invoiceNumber: inv.invoice_number,
       }];
     }
     return [];
@@ -671,6 +677,58 @@ function Invoices() {
             </Card>
           </Grid>
         </Grid>
+
+        {/* Récap des encaissements de la période (avec lien vers chaque facture) */}
+        {collectionsInRange.length > 0 && (
+          <Card sx={{ mt: 2, borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+                Encaissements {startDate === endDate ? 'du jour' : 'de la période'} ({collectionsInRange.length})
+              </Typography>
+              <Stack spacing={0.5}>
+                {collectionsInRange
+                  .slice()
+                  .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+                  .map((c, idx) => (
+                    <Box
+                      key={idx}
+                      onClick={() => c.invoiceId && navigate(`/invoices/${c.invoiceId}`)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 1,
+                        p: 1,
+                        borderRadius: 1.5,
+                        cursor: c.invoiceId ? 'pointer' : 'default',
+                        '&:hover': c.invoiceId ? { bgcolor: theme => alpha(theme.palette.primary.main, 0.06) } : {},
+                      }}
+                    >
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Receipt fontSize="small" color="action" />
+                        <Typography variant="body2" fontWeight={600}>
+                          {c.invoiceNumber || '—'}
+                        </Typography>
+                        {startDate !== endDate && (
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDate(c.date)}
+                          </Typography>
+                        )}
+                        <Chip
+                          label={c.method === 'mobile_money' ? 'Mobile Money' : c.method === 'cash' || !c.method ? 'Cash' : c.method}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </Stack>
+                      <Typography variant="body2" fontWeight={700} color="success.main">
+                        {formatCurrency(c.amount)}
+                      </Typography>
+                    </Box>
+                  ))}
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filter Indicator */}
         {quickFilter && (

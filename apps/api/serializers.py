@@ -617,6 +617,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'amount', 'payment_date', 'payment_method',
             'reference_number', 'transaction_id', 'notes', 'status',
+            'exclude_from_cash_stats',
             'created_by', 'created_by_name', 'created_at',
         ]
         read_only_fields = ['id', 'created_by', 'created_by_name', 'created_at']

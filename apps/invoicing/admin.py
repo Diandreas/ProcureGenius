@@ -189,9 +189,9 @@ class PaymentAdmin(admin.ModelAdmin):
     """Administration des paiements"""
     list_display = [
         'invoice', 'amount', 'payment_date', 'payment_method',
-        'reference_number', 'created_by', 'created_at'
+        'reference_number', 'exclude_from_cash_stats', 'created_by', 'created_at'
     ]
-    list_filter = ['payment_method', 'payment_date', 'created_at']
+    list_filter = ['payment_method', 'payment_date', 'exclude_from_cash_stats', 'created_at']
     search_fields = [
         'invoice__invoice_number', 'reference_number',
         'created_by__username', 'created_by__email'
