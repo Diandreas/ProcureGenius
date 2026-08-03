@@ -980,7 +980,7 @@ class Invoice(models.Model):
     def get_balance_due(self):
         """Calcule le solde restant à payer"""
         from decimal import Decimal
-        total_payments = sum(Decimal(str(p.amount)) for p in self.payments.all())
+        total_payments = sum(Decimal(str(p.amount)) for p in self.payments.filter(status='success'))
         return Decimal(str(self.total_amount)) - total_payments
 
     def get_payment_status(self):

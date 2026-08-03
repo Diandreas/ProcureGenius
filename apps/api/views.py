@@ -2761,7 +2761,7 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 payment_date = timezone.now().date()
             
             # Calculer le solde dû (utilise la même méthode que Payment.clean() pour éviter les problèmes de précision)
-            total_payments = sum(Decimal(str(p.amount)) for p in invoice.payments.all())
+            total_payments = sum(Decimal(str(p.amount)) for p in invoice.payments.filter(status='success'))
             total_amount = Decimal(str(invoice.total_amount))
             balance_due = total_amount - total_payments
 
