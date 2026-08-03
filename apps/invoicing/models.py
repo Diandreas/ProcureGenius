@@ -1032,6 +1032,16 @@ class Invoice(models.Model):
         if self.status in ['paid', 'cancelled', 'draft']:
             return False
 
+        # Filet de sécurité contre une réécriture avec un statut en mémoire périmé :
+        # si un autre save() concurrent (ex: recalculate_totals() déclenché par un
+        # signal sur InvoiceItem) tient une copie de la facture antérieure au
+        # paiement qui vient d'être enregistré, self.status ci-dessus peut encore
+        # valoir 'sent'/'overdue' alors que la facture est réellement soldée en
+        # base. On revérifie directement l'état réel des paiements avant de
+        # marquer 'overdue', pour ne jamais écraser un statut 'paid' correct.
+        if self.get_payment_status() == 'paid':
+            return False
+
         # Si pas de date d'échéance, ne rien faire
         if not self.due_date:
             return False
