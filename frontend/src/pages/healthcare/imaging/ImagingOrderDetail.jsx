@@ -9,6 +9,7 @@ import {
     Receipt as ReceiptIcon, CloudUpload as UploadIcon, Delete as DeleteIcon,
     PlayArrow as StartIcon, CheckCircle as ReadyIcon, LocalShipping as DeliverIcon,
     Cancel as CancelIcon, InsertDriveFile as FileIcon, Image as ImageIcon,
+    Replay as RepresribeIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -165,6 +166,13 @@ const ImagingOrderDetail = () => {
                     {order.is_subcontracted && <Chip label={`↗ ${order.subcontractor_name}`} color="secondary" size="small" />}
                 </Stack>
                 <Stack direction="row" spacing={1}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<RepresribeIcon />}
+                        onClick={() => navigate(`/healthcare/imaging/new?patientId=${order.patient}&represcribe=${order.id}`)}
+                    >
+                        Représcrire
+                    </Button>
                     <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrintPDF}>Imprimer le rapport</Button>
                     {!order.imaging_invoice && (
                         <Button variant="outlined" color="secondary" startIcon={<ReceiptIcon />} onClick={handleGenerateInvoice}>

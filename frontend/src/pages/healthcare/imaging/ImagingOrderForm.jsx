@@ -55,7 +55,7 @@ const ImagingOrderForm = () => {
 
     useEffect(() => {
         const initializeForm = async () => {
-            await fetchOptions();
+            const options = await fetchOptions();
             const preselectedPatientId = searchParams.get('patientId');
             if (preselectedPatientId) {
                 try {
@@ -63,6 +63,40 @@ const ImagingOrderForm = () => {
                     setFormData(prev => ({ ...prev, patient: patientData }));
                 } catch (error) {
                     console.error('Error loading preselected patient:', error);
+                }
+            }
+
+            // Représcription : reprend les mêmes examens (individuels + bilans) d'une
+            // commande d'imagerie existante, pour éviter de tout ressaisir.
+            const represcribeId = searchParams.get('represcribe');
+            if (represcribeId && options) {
+                try {
+                    const original = await imagingAPI.getOrder(represcribeId);
+                    const individualItems = (original.items || []).filter(it => !it.panel);
+                    const panelIds = [...new Set((original.items || []).filter(it => it.panel).map(it => it.panel))];
+
+                    const reselectedExamTypes = individualItems
+                        .map(it => options.examTypes.find(e => e.id === it.exam_type))
+                        .filter(Boolean);
+                    const reselectedPanels = panelIds
+                        .map(pid => options.panels.find(p => p.id === pid))
+                        .filter(Boolean);
+                    const reselectedPrescriber = original.prescriber
+                        ? options.prescribers.find(p => p.id === original.prescriber) || null
+                        : null;
+
+                    setFormData(prev => ({
+                        ...prev,
+                        exam_types: reselectedExamTypes,
+                        panels: reselectedPanels,
+                        prescriber: reselectedPrescriber,
+                    }));
+                    if (reselectedExamTypes.length || reselectedPanels.length) {
+                        enqueueSnackbar(`Examens repris de la commande ${original.order_number}`, { variant: 'info' });
+                    }
+                } catch (error) {
+                    console.error('Error loading order to re-prescribe:', error);
+                    enqueueSnackbar('Impossible de charger la commande à représcrire', { variant: 'error' });
                 }
             }
         };
@@ -82,17 +116,24 @@ const ImagingOrderForm = () => {
                 laboratoryAPI.getCategories(),
                 laboratoryAPI.getPanels({ active_only: true }),
             ]);
+            const resolvedExamTypes = examData.results || examData || [];
+            const resolvedPrescribers = Array.isArray(prescriberData) ? prescriberData : prescriberData.results || [];
+            const resolvedPanels = Array.isArray(panelData) ? panelData : panelData.results || [];
+
             setPatients(patData.results || patData || []);
-            setExamTypes(examData.results || examData || []);
+            setExamTypes(resolvedExamTypes);
             setCategories(catData.results || catData || []);
-            setPrescribers(Array.isArray(prescriberData) ? prescriberData : prescriberData.results || []);
+            setPrescribers(resolvedPrescribers);
             setSubcontractors(Array.isArray(subData) ? subData : subData.results || []);
             setLabTests(labTestData.results || labTestData || []);
             setLabCategories(labCatData.results || labCatData || []);
-            setPanels(Array.isArray(panelData) ? panelData : panelData.results || []);
+            setPanels(resolvedPanels);
+
+            return { examTypes: resolvedExamTypes, prescribers: resolvedPrescribers, panels: resolvedPanels };
         } catch (error) {
             console.error('Error fetching options:', error);
             enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
+            return null;
         }
     };
 
