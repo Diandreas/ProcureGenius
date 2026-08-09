@@ -355,12 +355,16 @@ class LabOrderCreateView(APIView):
             prescriber=prescriber,
             subcontractor=subcontractor,
         )
-        
+
         # Create order items for each test
         total_order_price = 0
         total_order_discount = 0
 
-        # Handle panels_data (bilans with forfait price)
+        # Handle panels_data (bilans with forfait price — peuvent être mixtes
+        # labo + imagerie : le volet imagerie crée une ImagingOrder liée, avec
+        # une répartition du prix forfaitaire au prorata des prix catalogue,
+        # exactement comme côté ImagingOrderCreateView.post).
+        panel_imaging_entries = []  # [{'exam_type', 'panel', 'panel_price'}]
         if data.get('panels_data'):
             for panel_data in data['panels_data']:
                 try:
@@ -370,10 +374,22 @@ class LabOrderCreateView(APIView):
                         is_active=True,
                     )
                     panel_tests = list(panel.tests.filter(is_active=True))
+                    panel_exam_types = list(panel.imaging_exam_types.filter(is_active=True))
                     panel_net_price = panel.price - (panel.discount or Decimal('0'))
                     panel_discount_override = panel_data.get('discount')
                     if panel_discount_override is not None:
                         panel_net_price = panel.price - Decimal(str(panel_discount_override))
+
+                    lab_catalog_total = sum((t.price or Decimal('0')) for t in panel_tests)
+                    imaging_catalog_total = sum((e.price or Decimal('0')) for e in panel_exam_types)
+                    combined_total = lab_catalog_total + imaging_catalog_total
+
+                    if panel_exam_types and combined_total > 0:
+                        lab_share = (panel_net_price * lab_catalog_total / combined_total)
+                        imaging_share = panel_net_price - lab_share
+                    else:
+                        lab_share = panel_net_price
+                        imaging_share = Decimal('0')
 
                     for i, test in enumerate(panel_tests):
                         # First item carries the panel_price; others have price=0
@@ -383,10 +399,16 @@ class LabOrderCreateView(APIView):
                             price=Decimal('0'),
                             discount=Decimal('0'),
                             panel=panel,
-                            panel_price=panel_net_price if i == 0 else None,
+                            panel_price=lab_share if i == 0 else None,
                         )
 
-                    total_order_price += panel_net_price
+                    for i, exam_type in enumerate(panel_exam_types):
+                        panel_imaging_entries.append({
+                            'exam_type': exam_type, 'panel': panel,
+                            'panel_price': imaging_share if i == 0 else None,
+                        })
+
+                    total_order_price += lab_share
                     # panel discount already factored into net price
                 except (LabTestPanel.DoesNotExist, KeyError):
                     continue
@@ -450,6 +472,43 @@ class LabOrderCreateView(APIView):
             import traceback
             print(f"Error creating lab invoice: {e}")
             traceback.print_exc()
+
+        # Volet imagerie d'un bilan mixte : ImagingOrder liée, avec sa propre
+        # facture (healthcare_imaging) — même logique que ImagingOrderCreateView.
+        if panel_imaging_entries:
+            try:
+                from apps.imaging.models import ImagingOrder, ImagingOrderItem
+                from apps.imaging.invoice_services import ImagingOrderInvoiceService
+
+                imaging_order = ImagingOrder.objects.create(
+                    organization=request.user.organization,
+                    patient=patient,
+                    visit=visit,
+                    priority=data.get('priority', 'routine'),
+                    clinical_notes=data.get('clinical_notes', ''),
+                    ordered_by=request.user,
+                    payment_method=data.get('payment_method', 'cash'),
+                    prescriber=prescriber,
+                    subcontractor=subcontractor,
+                    linked_lab_order=order,
+                )
+                imaging_total = Decimal('0')
+                for entry in panel_imaging_entries:
+                    item_price = entry['panel_price'] if entry['panel_price'] is not None else Decimal('0')
+                    ImagingOrderItem.objects.create(
+                        imaging_order=imaging_order, exam_type=entry['exam_type'],
+                        panel=entry['panel'], panel_price=entry['panel_price'],
+                        price=item_price, discount=Decimal('0'),
+                    )
+                    imaging_total += item_price
+                imaging_order.total_price = imaging_total
+                imaging_order.save(update_fields=['total_price'])
+                imaging_order.refresh_from_db()
+                ImagingOrderInvoiceService.generate_invoice(imaging_order)
+            except Exception as e:
+                import traceback
+                print(f"Error creating linked imaging order/invoice: {e}")
+                traceback.print_exc()
 
         # Refresh order from database to ensure all relationships are loaded
         order.refresh_from_db()

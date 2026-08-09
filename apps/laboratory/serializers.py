@@ -433,6 +433,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
     lab_invoice = serializers.SerializerMethodField()
     diagnosed_by_name = serializers.SerializerMethodField()
     prescriber_name = serializers.SerializerMethodField()
+    linked_imaging_orders = serializers.SerializerMethodField()
     prescriber_commission_rate = serializers.DecimalField(
         source='prescriber.commission_rate', max_digits=5, decimal_places=2,
         read_only=True, default=None
@@ -485,6 +486,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'is_subcontracted',
             'diagnosed_by_name',
             'diagnosed_at',
+            'linked_imaging_orders',
             'created_at',
             'updated_at',
         ]
@@ -533,6 +535,12 @@ class LabOrderSerializer(serializers.ModelSerializer):
 
     def get_prescriber_name(self, obj):
         return str(obj.prescriber) if obj.prescriber else None
+
+    def get_linked_imaging_orders(self, obj):
+        return [
+            {'id': str(io.id), 'order_number': io.order_number, 'status': io.status}
+            for io in obj.linked_imaging_orders.all()
+        ]
 
 
 class LabOrderListItemSerializer(serializers.ModelSerializer):
