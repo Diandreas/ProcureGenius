@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Box, Button, Card, CardContent, Grid, TextField, Typography,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    MenuItem, Autocomplete, Divider, Stack, Chip, InputAdornment,
+    MenuItem, Autocomplete, Divider, Stack, Chip, InputAdornment, Tabs, Tab,
 } from '@mui/material';
 import { Search as SearchIcon, Save as SaveIcon, Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { useSnackbar } from 'notistack';
 import imagingAPI from '../../../services/imagingAPI';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
+import api from '../../../services/api';
 import QuickClientCreateModal from '../laboratory/components/QuickClientCreateModal';
 
 const ImagingOrderForm = () => {
@@ -27,12 +28,27 @@ const ImagingOrderForm = () => {
     const [categoryFilter, setCategoryFilter] = useState('');
     const [openClientModal, setOpenClientModal] = useState(false);
 
+    // Rapprochement labo : tests individuels + bilans (pouvant être mixtes)
+    const [selectionTab, setSelectionTab] = useState(0); // 0=Imagerie, 1=Examens Labo, 2=Bilans
+    const [labTests, setLabTests] = useState([]);
+    const [labCategories, setLabCategories] = useState([]);
+    const [labTestSearch, setLabTestSearch] = useState('');
+    const [labCategoryFilter, setLabCategoryFilter] = useState('');
+    const [panels, setPanels] = useState([]);
+
+    // Coupon de réduction (s'applique à la facture imagerie)
+    const [couponCode, setCouponCode] = useState('');
+    const [couponStatus, setCouponStatus] = useState(null); // null | 'loading' | 'valid' | 'invalid'
+    const [couponInfo, setCouponInfo] = useState(null);
+
     const [formData, setFormData] = useState({
         patient: null,
         prescriber: null,
         subcontractor: null,
         priority: 'routine',
         exam_types: [],
+        lab_tests: [],
+        panels: [],
         clinical_notes: '',
         payment_method: 'cash',
     });
@@ -56,18 +72,24 @@ const ImagingOrderForm = () => {
 
     const fetchOptions = async () => {
         try {
-            const [patData, examData, catData, prescriberData, subData] = await Promise.all([
+            const [patData, examData, catData, prescriberData, subData, labTestData, labCatData, panelData] = await Promise.all([
                 patientAPI.getPatients({ page_size: 1000 }),
                 imagingAPI.getExamTypes({ page_size: 1000 }),
                 imagingAPI.getCategories(),
                 laboratoryAPI.getPrescribers({ active_only: true }),
                 laboratoryAPI.getSubcontractors({ active_only: 'true' }),
+                laboratoryAPI.getTests({ page_size: 1000 }),
+                laboratoryAPI.getCategories(),
+                laboratoryAPI.getPanels({ active_only: true }),
             ]);
             setPatients(patData.results || patData || []);
             setExamTypes(examData.results || examData || []);
             setCategories(catData.results || catData || []);
             setPrescribers(Array.isArray(prescriberData) ? prescriberData : prescriberData.results || []);
             setSubcontractors(Array.isArray(subData) ? subData : subData.results || []);
+            setLabTests(labTestData.results || labTestData || []);
+            setLabCategories(labCatData.results || labCatData || []);
+            setPanels(Array.isArray(panelData) ? panelData : panelData.results || []);
         } catch (error) {
             console.error('Error fetching options:', error);
             enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
@@ -87,6 +109,14 @@ const ImagingOrderForm = () => {
         return matchesSearch && matchesCategory;
     });
 
+    const filteredLabTests = labTests.filter(test => {
+        const matchesSearch = !labTestSearch ||
+            test.name?.toLowerCase().includes(labTestSearch.toLowerCase()) ||
+            test.test_code?.toLowerCase().includes(labTestSearch.toLowerCase());
+        const matchesCategory = !labCategoryFilter || test.category === labCategoryFilter;
+        return matchesSearch && matchesCategory;
+    });
+
     const handleExamToggle = (exam) => {
         const isSelected = formData.exam_types.some(e => e.id === exam.id);
         if (isSelected) {
@@ -96,8 +126,69 @@ const ImagingOrderForm = () => {
         }
     };
 
-    const calculateTotal = () => {
-        return formData.exam_types.reduce((sum, e) => sum + (parseFloat(e.price) || 0) - (parseFloat(e.discount) || 0), 0);
+    const handleLabTestToggle = (test) => {
+        const isSelected = formData.lab_tests.some(t => t.id === test.id);
+        if (isSelected) {
+            setFormData(prev => ({ ...prev, lab_tests: prev.lab_tests.filter(t => t.id !== test.id) }));
+        } else {
+            setFormData(prev => ({ ...prev, lab_tests: [...prev.lab_tests, test] }));
+        }
+    };
+
+    const handlePanelToggle = (panel) => {
+        const isSelected = formData.panels.some(p => p.id === panel.id);
+        if (isSelected) {
+            setFormData(prev => ({ ...prev, panels: prev.panels.filter(p => p.id !== panel.id) }));
+        } else {
+            setFormData(prev => ({ ...prev, panels: [...prev.panels, panel] }));
+        }
+    };
+
+    const calculateSubtotal = () => {
+        const examsTotal = formData.exam_types.reduce((sum, e) => sum + (parseFloat(e.price) || 0) - (parseFloat(e.discount) || 0), 0);
+        const labTestsTotal = formData.lab_tests.reduce((sum, t) => sum + (parseFloat(t.price) || 0) - (parseFloat(t.discount) || 0), 0);
+        const panelsTotal = formData.panels.reduce((sum, p) => sum + (parseFloat(p.net_price ?? p.price) || 0), 0);
+        return examsTotal + labTestsTotal + panelsTotal;
+    };
+
+    const couponDiscount = () => {
+        if (couponStatus === 'valid' && couponInfo?.discount_amount) {
+            return Math.min(parseFloat(couponInfo.discount_amount) || 0, calculateSubtotal());
+        }
+        return 0;
+    };
+
+    const calculateTotal = () => Math.max(0, calculateSubtotal() - couponDiscount());
+
+    const validateCoupon = async () => {
+        const code = couponCode.trim().toUpperCase();
+        if (!code) return;
+        setCouponStatus('loading');
+        setCouponInfo(null);
+        try {
+            const subtotal = calculateSubtotal();
+            const res = await api.post('/documents/coupons/validate/', {
+                code,
+                invoice_amount: subtotal,
+            });
+            if (res.data.valid) {
+                setCouponStatus('valid');
+                setCouponInfo(res.data);
+                enqueueSnackbar(`Coupon validé : -${res.data.discount_amount} FCFA`, { variant: 'success' });
+            } else {
+                setCouponStatus('invalid');
+                setCouponInfo({ error: res.data.error });
+            }
+        } catch (e) {
+            setCouponStatus('invalid');
+            setCouponInfo({ error: e.response?.data?.error || 'Coupon introuvable.' });
+        }
+    };
+
+    const clearCoupon = () => {
+        setCouponCode('');
+        setCouponStatus(null);
+        setCouponInfo(null);
     };
 
     const handleSubmit = async () => {
@@ -105,7 +196,7 @@ const ImagingOrderForm = () => {
             enqueueSnackbar('Veuillez sélectionner un patient', { variant: 'warning' });
             return;
         }
-        if (formData.exam_types.length === 0) {
+        if (formData.exam_types.length === 0 && formData.lab_tests.length === 0 && formData.panels.length === 0) {
             enqueueSnackbar('Veuillez sélectionner au moins un examen', { variant: 'warning' });
             return;
         }
@@ -130,11 +221,34 @@ const ImagingOrderForm = () => {
                 clinical_notes: formData.clinical_notes || '',
                 payment_method: formData.payment_method || 'cash',
                 exam_type_ids: formData.exam_types.map(e => e.id),
+                lab_test_ids: formData.lab_tests.map(t => t.id),
+                panel_ids: formData.panels.map(p => p.id),
             };
 
             const newOrder = await imagingAPI.createOrder(payload);
-            enqueueSnackbar('Commande d\'imagerie créée avec succès', { variant: 'success' });
-            navigate(`/healthcare/imaging/${newOrder.id}`);
+
+            // Si un coupon valide est saisi, l'appliquer sur la facture imagerie
+            // (la facture labo liée, si elle existe, n'est pas remisée par ce coupon)
+            if (couponStatus === 'valid' && couponCode) {
+                const invoiceId = newOrder.imaging_invoice?.id || newOrder.imaging_invoice;
+                if (invoiceId) {
+                    try {
+                        await api.post('/documents/coupons/apply/', {
+                            code: couponCode.trim().toUpperCase(),
+                            invoice_id: invoiceId,
+                        });
+                        enqueueSnackbar(`Coupon ${couponCode} appliqué sur la facture imagerie`, { variant: 'success' });
+                    } catch (couponErr) {
+                        const msg = couponErr.response?.data?.error || 'Erreur application coupon';
+                        enqueueSnackbar(`Commande créée, mais coupon non appliqué : ${msg}`, { variant: 'warning' });
+                    }
+                }
+            }
+
+            enqueueSnackbar('Commande créée avec succès', { variant: 'success' });
+            navigate(newOrder.imaging_invoice !== undefined || newOrder.exams_count !== undefined
+                ? `/healthcare/imaging/${newOrder.id}`
+                : `/healthcare/laboratory/${newOrder.id}`);
         } catch (error) {
             console.error('Error creating imaging order:', error);
             const errorMessage = error?.response?.data?.detail || error?.response?.data?.error ||
@@ -267,9 +381,79 @@ const ImagingOrderForm = () => {
 
                             <Typography variant="h6" gutterBottom>Résumé</Typography>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                <Typography>Examens sélectionnés:</Typography>
+                                <Typography>Examens d'imagerie:</Typography>
                                 <Typography fontWeight="bold">{formData.exam_types.length}</Typography>
                             </Box>
+                            {(formData.lab_tests.length > 0 || formData.panels.length > 0) && (
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography>Examens labo (facture séparée) :</Typography>
+                                    <Typography fontWeight="bold" color="secondary.main">
+                                        {formData.lab_tests.length} + {formData.panels.length} bilan(s)
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, mt: 1 }}>
+                                <Typography variant="body2">Sous-total:</Typography>
+                                <Typography variant="body2" fontWeight="bold">
+                                    {new Intl.NumberFormat('fr-FR').format(calculateSubtotal())} XAF
+                                </Typography>
+                            </Box>
+
+                            {/* Coupon de réduction (facture imagerie uniquement) */}
+                            <Box sx={{ mt: 1, mb: 1 }}>
+                                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 600 }}>
+                                    Coupon de réduction
+                                </Typography>
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                    <TextField
+                                        size="small"
+                                        placeholder="Code coupon"
+                                        value={couponCode}
+                                        onChange={(e) => {
+                                            setCouponCode(e.target.value);
+                                            if (couponStatus) {
+                                                setCouponStatus(null);
+                                                setCouponInfo(null);
+                                            }
+                                        }}
+                                        disabled={couponStatus === 'valid' || couponStatus === 'loading'}
+                                        sx={{ flex: 1 }}
+                                        error={couponStatus === 'invalid'}
+                                        helperText={
+                                            couponStatus === 'invalid'
+                                                ? (couponInfo?.error || 'Coupon invalide')
+                                                : couponStatus === 'valid'
+                                                ? `${couponInfo?.label || ''} — ${new Intl.NumberFormat('fr-FR').format(couponInfo?.discount_amount || 0)} FCFA`
+                                                : ''
+                                        }
+                                    />
+                                    {couponStatus !== 'valid' ? (
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={validateCoupon}
+                                            disabled={!couponCode.trim() || couponStatus === 'loading'}
+                                        >
+                                            {couponStatus === 'loading' ? '...' : 'Valider'}
+                                        </Button>
+                                    ) : (
+                                        <Button variant="outlined" color="error" size="small" onClick={clearCoupon}>
+                                            Retirer
+                                        </Button>
+                                    )}
+                                </Stack>
+                            </Box>
+
+                            {couponDiscount() > 0 && (
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography variant="body2" color="error.main">Remise coupon:</Typography>
+                                    <Typography variant="body2" color="error.main" fontWeight="bold">
+                                        −{new Intl.NumberFormat('fr-FR').format(couponDiscount())} XAF
+                                    </Typography>
+                                </Box>
+                            )}
+
                             <Divider sx={{ my: 1 }} />
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                                 <Typography variant="h6">Total:</Typography>
@@ -296,81 +480,224 @@ const ImagingOrderForm = () => {
 
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>Examens ({formData.exam_types.length} sélectionnés)</Typography>
+                            <Tabs value={selectionTab} onChange={(_, v) => setSelectionTab(v)} sx={{ mb: 2 }}>
+                                <Tab label={`Examens Imagerie (${formData.exam_types.length})`} />
+                                <Tab label={`Examens Labo (${formData.lab_tests.length})`} />
+                                <Tab label={`Bilans (${formData.panels.length})`} />
+                            </Tabs>
 
-                            <Grid container spacing={2} sx={{ mb: 2 }}>
-                                <Grid item xs={12} md={6}>
-                                    <TextField
-                                        fullWidth size="small"
-                                        placeholder="Rechercher un examen..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
-                                    />
+                            {/* Tab 0 : Examens d'imagerie */}
+                            {selectionTab === 0 && (<>
+                                <Grid container spacing={2} sx={{ mb: 2 }}>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth size="small"
+                                            placeholder="Rechercher un examen..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth size="small" select
+                                            value={categoryFilter}
+                                            onChange={(e) => setCategoryFilter(e.target.value)}
+                                            label="Catégorie"
+                                        >
+                                            <MenuItem value="">Toutes les catégories</MenuItem>
+                                            {categories.map((cat) => (
+                                                <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+                                            ))}
+                                        </TextField>
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs={12} md={6}>
-                                    <TextField
-                                        fullWidth size="small" select
-                                        value={categoryFilter}
-                                        onChange={(e) => setCategoryFilter(e.target.value)}
-                                        label="Catégorie"
-                                    >
-                                        <MenuItem value="">Toutes les catégories</MenuItem>
-                                        {categories.map((cat) => (
-                                            <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-                                        ))}
-                                    </TextField>
-                                </Grid>
-                            </Grid>
 
-                            <TableContainer sx={{ maxHeight: 450 }}>
-                                <Table stickyHeader size="small">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell>Examen</TableCell>
-                                            <TableCell>Modalité</TableCell>
-                                            <TableCell>Prix</TableCell>
-                                            <TableCell align="center">Sélection</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {filteredExamTypes.map((exam) => {
-                                            const isSelected = formData.exam_types.some(e => e.id === exam.id);
-                                            return (
-                                                <TableRow
-                                                    key={exam.id}
-                                                    hover
-                                                    onClick={() => handleExamToggle(exam)}
-                                                    sx={{ cursor: 'pointer', backgroundColor: isSelected ? 'action.selected' : 'inherit' }}
-                                                >
-                                                    <TableCell>
-                                                        <Typography fontWeight={isSelected ? 'bold' : 'normal'}>{exam.name}</Typography>
-                                                        {exam.exam_code && (
-                                                            <Typography variant="caption" color="text.secondary">{exam.exam_code}</Typography>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Chip label={exam.modality_display || exam.modality} size="small" variant="outlined" />
-                                                    </TableCell>
-                                                    <TableCell>{exam.price} XAF</TableCell>
-                                                    <TableCell align="center">
-                                                        {isSelected ? <Chip label="✓" color="primary" size="small" /> : <Chip label="+" variant="outlined" size="small" />}
+                                <TableContainer sx={{ maxHeight: 450 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Examen</TableCell>
+                                                <TableCell>Modalité</TableCell>
+                                                <TableCell>Prix</TableCell>
+                                                <TableCell align="center">Sélection</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {filteredExamTypes.map((exam) => {
+                                                const isSelected = formData.exam_types.some(e => e.id === exam.id);
+                                                return (
+                                                    <TableRow
+                                                        key={exam.id}
+                                                        hover
+                                                        onClick={() => handleExamToggle(exam)}
+                                                        sx={{ cursor: 'pointer', backgroundColor: isSelected ? 'action.selected' : 'inherit' }}
+                                                    >
+                                                        <TableCell>
+                                                            <Typography fontWeight={isSelected ? 'bold' : 'normal'}>{exam.name}</Typography>
+                                                            {exam.exam_code && (
+                                                                <Typography variant="caption" color="text.secondary">{exam.exam_code}</Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Chip label={exam.modality_display || exam.modality} size="small" variant="outlined" />
+                                                        </TableCell>
+                                                        <TableCell>{exam.price} XAF</TableCell>
+                                                        <TableCell align="center">
+                                                            {isSelected ? <Chip label="✓" color="primary" size="small" /> : <Chip label="+" variant="outlined" size="small" />}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                                {filteredExamTypes.length === 0 && (
+                                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                                        <Typography color="text.secondary">
+                                            {examTypes.length === 0
+                                                ? "Aucun examen disponible. Créez-en dans le Catalogue Examens Imagerie."
+                                                : "Aucun examen ne correspond aux critères."}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </>)}
+
+                            {/* Tab 1 : Examens de labo — crée une LabOrder liée */}
+                            {selectionTab === 1 && (<>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Ajouter des tests de labo créera une commande labo séparée, liée à cette commande
+                                    d'imagerie. Les résultats se saisiront normalement dans le module Laboratoire.
+                                </Typography>
+                                <Grid container spacing={2} sx={{ mb: 2 }}>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth size="small"
+                                            placeholder="Rechercher un test de labo..."
+                                            value={labTestSearch}
+                                            onChange={(e) => setLabTestSearch(e.target.value)}
+                                            InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth size="small" select
+                                            value={labCategoryFilter}
+                                            onChange={(e) => setLabCategoryFilter(e.target.value)}
+                                            label="Catégorie"
+                                        >
+                                            <MenuItem value="">Toutes les catégories</MenuItem>
+                                            {labCategories.map((cat) => (
+                                                <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+                                            ))}
+                                        </TextField>
+                                    </Grid>
+                                </Grid>
+
+                                <TableContainer sx={{ maxHeight: 450 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Test</TableCell>
+                                                <TableCell>Catégorie</TableCell>
+                                                <TableCell>Prix</TableCell>
+                                                <TableCell align="center">Sélection</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {filteredLabTests.map((test) => {
+                                                const isSelected = formData.lab_tests.some(t => t.id === test.id);
+                                                return (
+                                                    <TableRow
+                                                        key={test.id}
+                                                        hover
+                                                        onClick={() => handleLabTestToggle(test)}
+                                                        sx={{ cursor: 'pointer', backgroundColor: isSelected ? 'action.selected' : 'inherit' }}
+                                                    >
+                                                        <TableCell>
+                                                            <Typography fontWeight={isSelected ? 'bold' : 'normal'}>{test.name}</Typography>
+                                                            {test.test_code && (
+                                                                <Typography variant="caption" color="text.secondary">{test.test_code}</Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Chip label={test.category_name || 'N/A'} size="small" variant="outlined" />
+                                                        </TableCell>
+                                                        <TableCell>{test.price} XAF</TableCell>
+                                                        <TableCell align="center">
+                                                            {isSelected ? <Chip label="✓" color="primary" size="small" /> : <Chip label="+" variant="outlined" size="small" />}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                                {filteredLabTests.length === 0 && (
+                                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                                        <Typography color="text.secondary">Aucun test ne correspond aux critères.</Typography>
+                                    </Box>
+                                )}
+                            </>)}
+
+                            {/* Tab 2 : Bilans (peuvent être 100% labo, 100% imagerie, ou mixtes) */}
+                            {selectionTab === 2 && (<>
+                                <TableContainer sx={{ maxHeight: 450 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Bilan</TableCell>
+                                                <TableCell>Composition</TableCell>
+                                                <TableCell align="right">Prix forfaitaire</TableCell>
+                                                <TableCell align="center">Sélection</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {panels.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                                        Aucun bilan configuré. Créez des bilans dans le Catalogue Bilans (module Laboratoire).
                                                     </TableCell>
                                                 </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
-                            {filteredExamTypes.length === 0 && (
-                                <Box sx={{ textAlign: 'center', py: 4 }}>
-                                    <Typography color="text.secondary">
-                                        {examTypes.length === 0
-                                            ? "Aucun examen disponible. Créez-en dans le Catalogue Examens Imagerie."
-                                            : "Aucun examen ne correspond aux critères."}
-                                    </Typography>
-                                </Box>
-                            )}
+                                            ) : panels.map((panel) => {
+                                                const isSelected = formData.panels.some(p => p.id === panel.id);
+                                                const netPrice = parseFloat(panel.net_price ?? panel.price) || 0;
+                                                return (
+                                                    <TableRow
+                                                        key={panel.id}
+                                                        hover
+                                                        onClick={() => handlePanelToggle(panel)}
+                                                        sx={{ cursor: 'pointer', backgroundColor: isSelected ? 'action.selected' : 'inherit' }}
+                                                    >
+                                                        <TableCell>
+                                                            <Typography fontWeight={isSelected ? 'bold' : 'normal'}>{panel.name}</Typography>
+                                                            <Typography variant="caption" color="text.secondary">{panel.code}</Typography>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Box display="flex" flexWrap="wrap" gap={0.5}>
+                                                                {(panel.tests_detail || []).map(t => (
+                                                                    <Chip key={t.id} label={t.test_code} size="small" variant="outlined" />
+                                                                ))}
+                                                                {(panel.imaging_exam_types_detail || []).map(e => (
+                                                                    <Chip key={e.id} label={e.name} size="small" variant="outlined" color="secondary" />
+                                                                ))}
+                                                            </Box>
+                                                        </TableCell>
+                                                        <TableCell align="right">
+                                                            <Typography fontWeight={600} color="primary">
+                                                                {netPrice.toLocaleString()} XAF
+                                                            </Typography>
+                                                        </TableCell>
+                                                        <TableCell align="center">
+                                                            {isSelected ? <Chip label="✓" color="primary" size="small" /> : <Chip label="+" variant="outlined" size="small" />}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </>)}
                         </CardContent>
                     </Card>
                 </Grid>

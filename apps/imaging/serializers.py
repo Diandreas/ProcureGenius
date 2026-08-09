@@ -42,7 +42,8 @@ class ImagingOrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImagingOrderItem
         fields = [
-            'id', 'imaging_order', 'exam_type', 'exam_type_detail', 'price', 'discount',
+            'id', 'imaging_order', 'exam_type', 'exam_type_detail', 'panel', 'panel_price',
+            'price', 'discount',
             'report_text', 'technician_notes', 'is_urgent_finding',
             'performed_at', 'performed_by', 'performed_by_name',
             'report_entered_at', 'report_entered_by', 'report_entered_by_name',
@@ -67,6 +68,7 @@ class ImagingOrderSerializer(serializers.ModelSerializer):
     all_results_entered = serializers.BooleanField(read_only=True)
     imaging_invoice = serializers.SerializerMethodField()
     prescriber_name = serializers.SerializerMethodField()
+    linked_lab_order = serializers.SerializerMethodField()
 
     class Meta:
         model = ImagingOrder
@@ -81,6 +83,7 @@ class ImagingOrderSerializer(serializers.ModelSerializer):
             'imaging_invoice', 'items', 'total_price', 'discount', 'payment_method',
             'exams_count', 'all_results_entered',
             'subcontractor', 'subcontractor_name', 'is_subcontracted',
+            'linked_lab_order',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'order_number', 'created_at', 'updated_at', 'results_completed_at', 'results_delivered_at']
@@ -94,6 +97,12 @@ class ImagingOrderSerializer(serializers.ModelSerializer):
     def get_ordered_by_name(self, obj):
         if obj.ordered_by:
             return obj.ordered_by.get_full_name() or obj.ordered_by.username
+        return None
+
+    def get_linked_lab_order(self, obj):
+        if obj.linked_lab_order_id:
+            lo = obj.linked_lab_order
+            return {'id': str(lo.id), 'order_number': lo.order_number, 'status': lo.status}
         return None
 
     def get_imaging_invoice(self, obj):
@@ -138,7 +147,12 @@ class ImagingOrderCreateSerializer(serializers.Serializer):
     """Serializer for creating an imaging order with one or more exam types"""
     patient_id = serializers.UUIDField()
     visit_id = serializers.UUIDField(required=False, allow_null=True)
-    exam_type_ids = serializers.ListField(child=serializers.UUIDField())
+    exam_type_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
+    # Rapprochement avec le module Laboratoire : on peut ajouter des tests de
+    # labo (individuels et/ou via un bilan mixte) depuis ce même formulaire —
+    # ça crée une vraie LabOrder liée, voir ImagingOrderCreateView.post.
+    lab_test_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
+    panel_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
     subcontractor_id = serializers.UUIDField(required=False, allow_null=True)
     prescriber_id = serializers.UUIDField(required=False, allow_null=True)
     priority = serializers.ChoiceField(choices=ImagingOrder.PRIORITY_CHOICES, default='routine')
@@ -147,10 +161,12 @@ class ImagingOrderCreateSerializer(serializers.Serializer):
         choices=ImagingOrder.PAYMENT_METHOD_CHOICES, default='cash', required=False
     )
 
-    def validate_exam_type_ids(self, value):
-        if not value:
-            raise serializers.ValidationError("Au moins un examen est requis")
-        return value
+    def validate(self, data):
+        if not data.get('exam_type_ids') and not data.get('lab_test_ids') and not data.get('panel_ids'):
+            raise serializers.ValidationError(
+                "Au moins un examen d'imagerie, test de labo ou bilan est requis"
+            )
+        return data
 
 
 class EnterImagingResultsSerializer(serializers.Serializer):

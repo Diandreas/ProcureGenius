@@ -699,10 +699,12 @@ class EnterResultsSerializer(serializers.Serializer):
 
 
 class LabTestPanelSerializer(serializers.ModelSerializer):
-    """Serializer for LabTestPanel (bilans)"""
+    """Serializer for LabTestPanel (bilans) — peut mélanger labo et imagerie"""
     tests_detail = LabTestListSerializer(source='tests', many=True, read_only=True)
     tests_count = serializers.SerializerMethodField()
     net_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    imaging_exam_types_detail = serializers.SerializerMethodField()
+    imaging_exam_types_count = serializers.SerializerMethodField()
 
     class Meta:
         model = LabTestPanel
@@ -710,12 +712,21 @@ class LabTestPanelSerializer(serializers.ModelSerializer):
             'id', 'code', 'name', 'description',
             'price', 'discount', 'net_price',
             'tests', 'tests_detail', 'tests_count',
+            'imaging_exam_types', 'imaging_exam_types_detail', 'imaging_exam_types_count',
             'is_active', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_tests_count(self, obj):
         return obj.tests.count()
+
+    def get_imaging_exam_types_detail(self, obj):
+        # Import tardif pour éviter tout risque de cycle au chargement des apps
+        from apps.imaging.serializers import ImagingExamTypeSerializer
+        return ImagingExamTypeSerializer(obj.imaging_exam_types.all(), many=True).data
+
+    def get_imaging_exam_types_count(self, obj):
+        return obj.imaging_exam_types.count()
 
 
 # =============================================================================

@@ -202,6 +202,19 @@ const ImagingOrderDetail = () => {
                                     Facture {order.imaging_invoice.invoice_number} ({order.imaging_invoice.status})
                                 </Typography>
                             )}
+                            {order.linked_lab_order && (
+                                <>
+                                    <Divider sx={{ my: 2 }} />
+                                    <Chip
+                                        label={`Commande labo liée : ${order.linked_lab_order.order_number} (${order.linked_lab_order.status})`}
+                                        color="secondary"
+                                        variant="outlined"
+                                        clickable
+                                        onClick={() => navigate(`/healthcare/laboratory/${order.linked_lab_order.id}`)}
+                                        sx={{ width: '100%' }}
+                                    />
+                                </>
+                            )}
                         </CardContent>
                     </Card>
 

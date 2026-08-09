@@ -191,6 +191,8 @@ class ImagingOrderCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        from apps.laboratory.models import LabTest, LabOrder, LabOrderItem, LabTestPanel
+
         serializer = ImagingOrderCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -210,12 +212,52 @@ class ImagingOrderCreateView(APIView):
                 id=data['visit_id'], organization=request.user.organization
             ).first()
 
+        exam_type_ids = data.get('exam_type_ids') or []
         exam_types = list(ImagingExamType.objects.filter(
-            id__in=data['exam_type_ids'],
-            organization=request.user.organization,
-            is_active=True
+            id__in=exam_type_ids, organization=request.user.organization, is_active=True
         ))
-        if not exam_types:
+        if exam_type_ids and not exam_types:
+            return Response({'error': 'Aucun examen d\'imagerie valide'}, status=status.HTTP_400_BAD_REQUEST)
+
+        lab_test_ids = data.get('lab_test_ids') or []
+        lab_tests = list(LabTest.objects.filter(
+            id__in=lab_test_ids, organization=request.user.organization, is_active=True
+        ))
+        if lab_test_ids and not lab_tests:
+            return Response({'error': 'Aucun test de labo valide'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # --- Bilans (peuvent être mixtes labo + imagerie) : on répartit le prix
+        # forfaitaire entre les deux volets, au prorata des prix catalogue. ---
+        panel_imaging_entries = []  # [{'exam_type', 'panel', 'panel_price'}]
+        panel_lab_entries = []      # [{'test', 'panel', 'panel_price'}]
+        panel_ids = data.get('panel_ids') or []
+        if panel_ids:
+            panels = LabTestPanel.objects.filter(
+                id__in=panel_ids, organization=request.user.organization, is_active=True
+            ).prefetch_related('tests', 'imaging_exam_types')
+            for panel in panels:
+                panel_lab_tests = list(panel.tests.filter(is_active=True))
+                panel_exam_types = list(panel.imaging_exam_types.filter(is_active=True))
+                lab_catalog_total = sum((t.price or Decimal('0')) for t in panel_lab_tests)
+                imaging_catalog_total = sum((e.price or Decimal('0')) for e in panel_exam_types)
+                combined_total = lab_catalog_total + imaging_catalog_total
+
+                if combined_total > 0:
+                    lab_share = (panel.net_price * lab_catalog_total / combined_total)
+                    imaging_share = panel.net_price - lab_share
+                else:
+                    lab_share = imaging_share = Decimal('0')
+
+                for i, t in enumerate(panel_lab_tests):
+                    panel_lab_entries.append({
+                        'test': t, 'panel': panel, 'panel_price': lab_share if i == 0 else None
+                    })
+                for i, e in enumerate(panel_exam_types):
+                    panel_imaging_entries.append({
+                        'exam_type': e, 'panel': panel, 'panel_price': imaging_share if i == 0 else None
+                    })
+
+        if not exam_types and not panel_imaging_entries and not lab_tests and not panel_lab_entries:
             return Response({'error': 'Aucun examen valide'}, status=status.HTTP_400_BAD_REQUEST)
 
         prescriber = None
@@ -230,43 +272,112 @@ class ImagingOrderCreateView(APIView):
                 id=data['subcontractor_id'], organization=request.user.organization, is_active=True
             ).first()
 
-        order = ImagingOrder.objects.create(
-            organization=request.user.organization,
-            patient=patient,
-            visit=visit,
-            priority=data.get('priority', 'routine'),
-            clinical_notes=data.get('clinical_notes', ''),
-            ordered_by=request.user,
-            payment_method=data.get('payment_method', 'cash'),
-            prescriber=prescriber,
-            subcontractor=subcontractor,
-        )
-
-        total_price = Decimal('0')
-        total_discount = Decimal('0')
-        for exam_type in exam_types:
-            item_price = exam_type.price
-            item_discount = exam_type.discount or Decimal('0')
-            ImagingOrderItem.objects.create(
-                imaging_order=order,
-                exam_type=exam_type,
-                price=item_price,
-                discount=item_discount,
+        order = None
+        if exam_types or panel_imaging_entries:
+            order = ImagingOrder.objects.create(
+                organization=request.user.organization,
+                patient=patient,
+                visit=visit,
+                priority=data.get('priority', 'routine'),
+                clinical_notes=data.get('clinical_notes', ''),
+                ordered_by=request.user,
+                payment_method=data.get('payment_method', 'cash'),
+                prescriber=prescriber,
+                subcontractor=subcontractor,
             )
-            total_price += item_price
-            total_discount += item_discount
 
-        order.total_price = total_price
-        order.discount = total_discount
-        order.save(update_fields=['total_price', 'discount'])
+            total_price = Decimal('0')
+            total_discount = Decimal('0')
+            for exam_type in exam_types:
+                item_price = exam_type.price
+                item_discount = exam_type.discount or Decimal('0')
+                ImagingOrderItem.objects.create(
+                    imaging_order=order, exam_type=exam_type, price=item_price, discount=item_discount,
+                )
+                total_price += item_price
+                total_discount += item_discount
 
-        try:
-            order.refresh_from_db()
-            ImagingOrderInvoiceService.generate_invoice(order)
-        except Exception as e:
-            import traceback
-            print(f"Error creating imaging invoice: {e}")
-            traceback.print_exc()
+            for entry in panel_imaging_entries:
+                item_price = entry['panel_price'] if entry['panel_price'] is not None else Decimal('0')
+                ImagingOrderItem.objects.create(
+                    imaging_order=order, exam_type=entry['exam_type'],
+                    panel=entry['panel'], panel_price=entry['panel_price'],
+                    price=item_price, discount=Decimal('0'),
+                )
+                total_price += item_price
+
+            order.total_price = total_price
+            order.discount = total_discount
+            order.save(update_fields=['total_price', 'discount'])
+
+            try:
+                order.refresh_from_db()
+                ImagingOrderInvoiceService.generate_invoice(order)
+            except Exception as e:
+                import traceback
+                print(f"Error creating imaging invoice: {e}")
+                traceback.print_exc()
+
+        # --- Commande labo liée, créée dans le même geste depuis le formulaire
+        # d'imagerie. Les résultats se saisissent normalement dans le module
+        # Laboratoire — rien de spécifique à l'imagerie n'est géré ici. ---
+        lab_order = None
+        if lab_tests or panel_lab_entries:
+            lab_order = LabOrder.objects.create(
+                organization=request.user.organization,
+                patient=patient,
+                visit=visit,
+                priority=data.get('priority', 'routine'),
+                clinical_notes=data.get('clinical_notes', ''),
+                ordered_by=request.user,
+                payment_method=data.get('payment_method', 'cash'),
+                prescriber=prescriber,
+                subcontractor=subcontractor,
+            )
+
+            lab_total_price = Decimal('0')
+            lab_total_discount = Decimal('0')
+            for test in lab_tests:
+                item_price = test.price
+                item_discount = test.discount or Decimal('0')
+                LabOrderItem.objects.create(
+                    lab_order=lab_order, lab_test=test, price=item_price, discount=item_discount,
+                )
+                lab_total_price += item_price
+                lab_total_discount += item_discount
+
+            for entry in panel_lab_entries:
+                item_price = entry['panel_price'] if entry['panel_price'] is not None else Decimal('0')
+                LabOrderItem.objects.create(
+                    lab_order=lab_order, lab_test=entry['test'],
+                    panel=entry['panel'], panel_price=entry['panel_price'],
+                    price=item_price, discount=Decimal('0'),
+                )
+                lab_total_price += item_price
+
+            lab_order.total_price = lab_total_price
+            lab_order.discount = lab_total_discount
+            lab_order.save(update_fields=['total_price', 'discount'])
+
+            try:
+                from apps.healthcare.invoice_services import LabOrderInvoiceService
+                lab_order.refresh_from_db()
+                LabOrderInvoiceService.generate_invoice(lab_order)
+            except Exception as e:
+                import traceback
+                print(f"Error creating linked lab invoice: {e}")
+                traceback.print_exc()
+
+        if order is None:
+            # Le patient n'a demandé que des examens de labo depuis le formulaire
+            # imagerie : rien à renvoyer côté imagerie, on répond avec la LabOrder.
+            lab_order.refresh_from_db()
+            from apps.laboratory.serializers import LabOrderSerializer
+            return Response(LabOrderSerializer(lab_order).data, status=status.HTTP_201_CREATED)
+
+        if lab_order is not None:
+            order.linked_lab_order = lab_order
+            order.save(update_fields=['linked_lab_order'])
 
         order.refresh_from_db()
         return Response(ImagingOrderSerializer(order).data, status=status.HTTP_201_CREATED)

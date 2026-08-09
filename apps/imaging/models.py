@@ -206,6 +206,19 @@ class ImagingOrder(models.Model):
         verbose_name=_("Patient sous-traitant")
     )
 
+    # Commande labo créée en même temps que celle-ci, quand des tests de labo
+    # (individuels ou issus d'un bilan mixte) ont été ajoutés depuis le
+    # formulaire d'imagerie. Les résultats de cette LabOrder continuent de se
+    # saisir normalement dans le module Laboratoire.
+    linked_lab_order = models.ForeignKey(
+        'laboratory.LabOrder',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='linked_imaging_orders',
+        verbose_name=_("Commande labo liée")
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -280,6 +293,21 @@ class ImagingOrderItem(models.Model):
         on_delete=models.PROTECT,
         related_name='order_items',
         verbose_name=_("Examen")
+    )
+    # Bilan (mixte labo + imagerie) dont cet item est issu — la part du prix
+    # forfaitaire revenant au volet imagerie du bilan n'est portée que par le
+    # premier item du groupe (même convention que LabOrderItem.panel_price).
+    panel = models.ForeignKey(
+        'laboratory.LabTestPanel',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='imaging_order_items',
+        verbose_name=_("Bilan")
+    )
+    panel_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        verbose_name=_("Prix du bilan (part imagerie)")
     )
 
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_("Prix"))

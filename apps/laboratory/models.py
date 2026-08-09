@@ -676,17 +676,29 @@ class LabOrder(models.Model):
         """
         for item in self.items.filter(sample_collected_at__isnull=True):
             item.collect_sample(collected_by=collected_by)
+        self.sync_collection_status(collected_by=collected_by)
         self.refresh_from_db()
 
-        # Filet de sécurité : commande sans aucun item (cas dégénéré, ne devrait pas
-        # arriver en pratique) — l'agrégation par item ne peut pas déclencher le
-        # changement de statut, on le force ici.
-        if self.status == 'pending' and not self.items.exists():
-            self.status = 'sample_collected'
-            self.sample_collected_at = timezone.now()
-            if collected_by:
-                self.sample_collected_by = collected_by
-            self.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
+    def sync_collection_status(self, collected_by=None):
+        """
+        Recalcule et applique le statut 'sample_collected' à partir de l'état réel
+        des items en base (requête fraîche — n'utilise jamais un objet Python mis
+        en cache). Idempotent : sûr à appeler après chaque prélèvement, individuel
+        ou groupé, pour garantir que le statut agrégé ne reste jamais désynchronisé
+        de l'état réel des tests.
+        """
+        order = LabOrder.objects.get(pk=self.pk)
+        if order.status != 'pending':
+            return
+        # .exists() est False à la fois si tous les tests sont prélevés ET si la
+        # commande n'a aucun item (cas dégénéré) — les deux cas doivent transitionner.
+        if order.items.filter(sample_collected_at__isnull=True).exists():
+            return
+        order.status = 'sample_collected'
+        order.sample_collected_at = order.sample_collected_at or timezone.now()
+        if collected_by:
+            order.sample_collected_by = collected_by
+        order.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
 
     def start_processing(self):
         """Mark order as in progress"""
@@ -720,7 +732,25 @@ class LabOrder(models.Model):
             if verified_by:
                 self.results_verified_by = verified_by
             self.save(update_fields=['status', 'results_verified_at', 'results_verified_by'])
-    
+
+    def sync_verification_status(self, verified_by=None):
+        """
+        Recalcule et applique le statut 'results_ready' à partir de l'état réel
+        des validations en base (requête fraîche). Idempotent : sûr à appeler
+        après chaque validation individuelle de test.
+        """
+        order = LabOrder.objects.get(pk=self.pk)
+        if order.status not in ('in_progress', 'completed'):
+            return
+        items = list(order.items.all())
+        if not items or not all(i.has_result and i.result_verified_at for i in items):
+            return
+        order.status = 'results_ready'
+        order.results_verified_at = order.results_verified_at or timezone.now()
+        if verified_by:
+            order.results_verified_by = verified_by
+        order.save(update_fields=['status', 'results_verified_at', 'results_verified_by'])
+
     def mark_delivered(self):
         """Mark results as delivered to patient"""
         self.status = 'results_delivered'
@@ -983,13 +1013,7 @@ class LabOrderItem(models.Model):
             # Ne bloque pas le prélèvement des autres tests en cas d'erreur de stock
             print(f"Error deducting stock for LabOrderItem {self.id} ({self.lab_order.order_number}): {e}")
 
-        order = self.lab_order
-        if order.status == 'pending' and not order.items.filter(sample_collected_at__isnull=True).exists():
-            order.status = 'sample_collected'
-            order.sample_collected_at = timezone.now()
-            if collected_by:
-                order.sample_collected_by = collected_by
-            order.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
+        LabOrder.objects.get(pk=self.lab_order_id).sync_collection_status(collected_by=collected_by)
 
     @property
     def has_result(self):
@@ -1013,15 +1037,7 @@ class LabOrderItem(models.Model):
             self.verified_by = verified_by
         self.save(update_fields=['result_verified_at', 'verified_by'])
 
-        order = self.lab_order
-        if order.status in ('in_progress', 'completed'):
-            items = list(order.items.all())
-            if items and all(i.has_result and i.result_verified_at for i in items):
-                order.status = 'results_ready'
-                order.results_verified_at = timezone.now()
-                if verified_by:
-                    order.results_verified_by = verified_by
-                order.save(update_fields=['status', 'results_verified_at', 'results_verified_by'])
+        LabOrder.objects.get(pk=self.lab_order_id).sync_verification_status(verified_by=verified_by)
 
     def unverify_result(self):
         """Annule la validation individuelle de ce test (permet de le corriger)."""
@@ -1031,20 +1047,12 @@ class LabOrderItem(models.Model):
         self.verified_by = None
         self.save(update_fields=['result_verified_at', 'verified_by'])
 
-        order = self.lab_order
+        order = LabOrder.objects.get(pk=self.lab_order_id)
         if order.status == 'results_ready':
             order.status = 'completed'
             order.results_verified_at = None
             order.results_verified_by = None
             order.save(update_fields=['status', 'results_verified_at', 'results_verified_by'])
-
-        order = self.lab_order
-        if order.status == 'pending' and not order.items.filter(sample_collected_at__isnull=True).exists():
-            order.status = 'sample_collected'
-            order.sample_collected_at = timezone.now()
-            if collected_by:
-                order.sample_collected_by = collected_by
-            order.save(update_fields=['status', 'sample_collected_at', 'sample_collected_by'])
     
     # price is now a field, property removed
     
@@ -1329,6 +1337,15 @@ class LabTestPanel(models.Model):
         related_name='panels',
         blank=True,
         verbose_name=_("Examens inclus")
+    )
+    # Bilan mixte : un bilan peut aussi inclure des examens d'imagerie, en plus
+    # (ou à la place) des tests de labo. Référence cross-app par string — pas
+    # d'import circulaire, résolu paresseusement par le registre d'apps Django.
+    imaging_exam_types = models.ManyToManyField(
+        'imaging.ImagingExamType',
+        related_name='panels',
+        blank=True,
+        verbose_name=_("Examens d'imagerie inclus")
     )
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
     created_at = models.DateTimeField(auto_now_add=True)

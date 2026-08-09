@@ -7,6 +7,7 @@ import {
 import { Close as CloseIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
+import imagingAPI from '../../../services/imagingAPI';
 
 const EMPTY_FORM = {
     code: '',
@@ -23,12 +24,17 @@ export default function LabPanelFormModal({ open, onClose, panel, onSaved }) {
     const [selectedTests, setSelectedTests] = useState([]);
     const [allTests, setAllTests] = useState([]);
     const [testSearch, setTestSearch] = useState('');
+    const [selectedImagingExams, setSelectedImagingExams] = useState([]);
+    const [allImagingExams, setAllImagingExams] = useState([]);
+    const [imagingExamSearch, setImagingExamSearch] = useState('');
     const [loading, setLoading] = useState(false);
     const [loadingTests, setLoadingTests] = useState(false);
+    const [loadingImagingExams, setLoadingImagingExams] = useState(false);
 
     useEffect(() => {
         if (open) {
             fetchTests();
+            fetchImagingExams();
             if (panel) {
                 setFormData({
                     code: panel.code || '',
@@ -39,9 +45,11 @@ export default function LabPanelFormModal({ open, onClose, panel, onSaved }) {
                     is_active: panel.is_active !== undefined ? panel.is_active : true,
                 });
                 setSelectedTests(panel.tests_detail || []);
+                setSelectedImagingExams(panel.imaging_exam_types_detail || []);
             } else {
                 setFormData(EMPTY_FORM);
                 setSelectedTests([]);
+                setSelectedImagingExams([]);
             }
         }
     }, [open, panel]);
@@ -56,6 +64,18 @@ export default function LabPanelFormModal({ open, onClose, panel, onSaved }) {
             enqueueSnackbar('Erreur chargement examens', { variant: 'error' });
         } finally {
             setLoadingTests(false);
+        }
+    };
+
+    const fetchImagingExams = async () => {
+        setLoadingImagingExams(true);
+        try {
+            const data = await imagingAPI.getExamTypes({ page_size: 500, is_active: true });
+            setAllImagingExams(Array.isArray(data) ? data : data.results || []);
+        } catch {
+            enqueueSnackbar('Erreur chargement examens d\'imagerie', { variant: 'error' });
+        } finally {
+            setLoadingImagingExams(false);
         }
     };
 
@@ -74,7 +94,18 @@ export default function LabPanelFormModal({ open, onClose, panel, onSaved }) {
         setSelectedTests(prev => prev.filter(t => t.id !== testId));
     };
 
-    const individualTotal = selectedTests.reduce((sum, t) => sum + (parseFloat(t.price) || 0), 0);
+    const addImagingExam = (exam) => {
+        if (!exam) return;
+        if (selectedImagingExams.find(e => e.id === exam.id)) return;
+        setSelectedImagingExams(prev => [...prev, exam]);
+    };
+
+    const removeImagingExam = (examId) => {
+        setSelectedImagingExams(prev => prev.filter(e => e.id !== examId));
+    };
+
+    const individualTotal = selectedTests.reduce((sum, t) => sum + (parseFloat(t.price) || 0), 0)
+        + selectedImagingExams.reduce((sum, e) => sum + (parseFloat(e.price) || 0), 0);
     const forfaitPrice = parseFloat(formData.price) || 0;
     const discount = parseFloat(formData.discount) || 0;
     const netPrice = forfaitPrice - discount;
@@ -88,8 +119,8 @@ export default function LabPanelFormModal({ open, onClose, panel, onSaved }) {
             enqueueSnackbar('Le prix forfaitaire doit être supérieur à 0', { variant: 'warning' });
             return;
         }
-        if (selectedTests.length === 0) {
-            enqueueSnackbar('Ajoutez au moins un examen au bilan', { variant: 'warning' });
+        if (selectedTests.length === 0 && selectedImagingExams.length === 0) {
+            enqueueSnackbar('Ajoutez au moins un examen (labo ou imagerie) au bilan', { variant: 'warning' });
             return;
         }
 
@@ -100,6 +131,7 @@ export default function LabPanelFormModal({ open, onClose, panel, onSaved }) {
                 price: parseFloat(formData.price),
                 discount: parseFloat(formData.discount) || 0,
                 tests: selectedTests.map(t => t.id),
+                imaging_exam_types: selectedImagingExams.map(e => e.id),
             };
 
             if (panel) {
@@ -245,7 +277,50 @@ export default function LabPanelFormModal({ open, onClose, panel, onSaved }) {
                         </Box>
                     ) : (
                         <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                            Aucun examen sélectionné
+                            Aucun examen labo sélectionné
+                        </Typography>
+                    )}
+
+                    <Divider />
+
+                    {/* Imaging exam selection — bilan mixte labo + imagerie */}
+                    <Typography variant="subtitle2">
+                        Examens d'imagerie inclus dans ce bilan ({selectedImagingExams.length})
+                    </Typography>
+
+                    <Autocomplete
+                        options={allImagingExams.filter(e => !selectedImagingExams.find(s => s.id === e.id) &&
+                            (imagingExamSearch === '' || e.name.toLowerCase().includes(imagingExamSearch.toLowerCase())))}
+                        getOptionLabel={(e) => `${e.exam_code ? e.exam_code + ' — ' : ''}${e.name}`}
+                        inputValue={imagingExamSearch}
+                        onInputChange={(_, v) => setImagingExamSearch(v)}
+                        onChange={(_, v) => { addImagingExam(v); setImagingExamSearch(''); }}
+                        loading={loadingImagingExams}
+                        renderInput={(params) => (
+                            <TextField {...params} size="small" placeholder="Rechercher un examen d'imagerie à ajouter..." />
+                        )}
+                        value={null}
+                        blurOnSelect
+                        clearOnBlur
+                    />
+
+                    {selectedImagingExams.length > 0 ? (
+                        <Box display="flex" flexWrap="wrap" gap={1}>
+                            {selectedImagingExams.map(e => (
+                                <Chip
+                                    key={e.id}
+                                    label={`${e.name} (${parseFloat(e.price || 0).toLocaleString()} XAF)`}
+                                    onDelete={() => removeImagingExam(e.id)}
+                                    deleteIcon={<DeleteIcon />}
+                                    variant="outlined"
+                                    color="secondary"
+                                    size="small"
+                                />
+                            ))}
+                        </Box>
+                    ) : (
+                        <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                            Aucun examen d'imagerie sélectionné
                         </Typography>
                     )}
                 </Box>
