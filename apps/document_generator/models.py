@@ -213,6 +213,14 @@ class DiscountCoupon(models.Model):
         verbose_name=_("Valeur de la remise"),
         help_text=_("Ex: 10 pour 10% ou 5000 pour 5 000 FCFA")
     )
+    is_surcharge = models.BooleanField(
+        default=False,
+        verbose_name=_("Majoration"),
+        help_text=_(
+            "Si coché, ce coupon AJOUTE le montant au total au lieu de le "
+            "retirer (ex: frais d'urgence, majoration de nuit)."
+        )
+    )
     min_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -281,9 +289,10 @@ class DiscountCoupon(models.Model):
         return f"{self.code} — {self.get_discount_display()}"
 
     def get_discount_display(self):
+        sign = '+' if self.is_surcharge else '-'
         if self.discount_type == 'percent':
-            return f"{self.discount_value}%"
-        return f"{int(self.discount_value):,} FCFA".replace(',', ' ')
+            return f"{sign}{self.discount_value}%"
+        return f"{sign}{int(self.discount_value):,} FCFA".replace(',', ' ')
 
     @property
     def is_valid(self):
@@ -296,7 +305,11 @@ class DiscountCoupon(models.Model):
         return True
 
     def calculate_discount(self, invoice_amount):
-        """Retourne le montant de remise à appliquer pour une facture donnée."""
+        """
+        Retourne le montant de remise (ou de majoration si is_surcharge) à
+        appliquer pour une facture donnée. Une majoration n'est pas plafonnée
+        au montant de la facture — ce plafond n'a de sens que pour une remise.
+        """
         from decimal import Decimal
         amount = Decimal(str(invoice_amount))
         if self.discount_type == 'percent':
@@ -305,7 +318,7 @@ class DiscountCoupon(models.Model):
                 disc = min(disc, self.max_discount_amount)
         else:
             disc = self.discount_value
-        return min(disc, amount)
+        return disc if self.is_surcharge else min(disc, amount)
 
     def apply_to_invoice(self, invoice, user=None):
         """

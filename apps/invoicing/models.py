@@ -764,7 +764,12 @@ class Invoice(models.Model):
         verbose_name=_("Montant calculé de la remise globale"),
         help_text=_("Calculé automatiquement depuis type et value lors du recalcul")
     )
-    
+    global_discount_is_surcharge = models.BooleanField(
+        default=False,
+        verbose_name=_("Remise globale = majoration"),
+        help_text=_("Si coché, global_discount_value AJOUTE au total au lieu de le retirer")
+    )
+
     # Relations et informations supplémentaires
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='created_invoices', verbose_name=_("Créé par"))
     organization = models.ForeignKey(
@@ -903,17 +908,22 @@ class Invoice(models.Model):
         self.subtotal = sum(item.total_price for item in items)
 
         # Calcul de la remise globale — uniquement sur les items NON exemptés (discount_exempt=False)
-        # Les consultations (discount_exempt=True) gardent toujours leur prix plein
+        # Les consultations (discount_exempt=True) gardent toujours leur prix plein.
+        # Une majoration (global_discount_is_surcharge) n'est pas plafonnée par le
+        # sous-total ou par 100% — ces plafonds n'ont de sens que pour une remise.
+        # Elle est stockée comme un global_discount_amount NÉGATIF, ce qui fait que
+        # la formule total = subtotal + tax - discount_amount l'ajoute naturellement.
         if self.global_discount_value and self.global_discount_value > 0:
             discountable_subtotal = sum(
                 item.total_price for item in items
                 if not (item.product and item.product.discount_exempt)
             )
             if self.global_discount_type == 'percent':
-                pct = min(self.global_discount_value, Decimal('100'))
-                self.global_discount_amount = (discountable_subtotal * pct / Decimal('100')).quantize(Decimal('0.01'))
+                pct = self.global_discount_value if self.global_discount_is_surcharge else min(self.global_discount_value, Decimal('100'))
+                magnitude = (discountable_subtotal * pct / Decimal('100')).quantize(Decimal('0.01'))
             else:
-                self.global_discount_amount = min(self.global_discount_value, discountable_subtotal)
+                magnitude = self.global_discount_value if self.global_discount_is_surcharge else min(self.global_discount_value, discountable_subtotal)
+            self.global_discount_amount = -magnitude if self.global_discount_is_surcharge else magnitude
         else:
             self.global_discount_amount = Decimal('0')
 

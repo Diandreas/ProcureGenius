@@ -24,7 +24,7 @@ class DiscountCouponSerializer(serializers.ModelSerializer):
     class Meta:
         model = DiscountCoupon
         fields = [
-            'id', 'code', 'label', 'discount_type', 'discount_value',
+            'id', 'code', 'label', 'discount_type', 'discount_value', 'is_surcharge',
             'min_amount', 'max_discount_amount',
             'max_uses', 'uses_count', 'expires_at', 'status',
             'created_by', 'created_by_name', 'created_at',

@@ -192,9 +192,11 @@ const ImagingOrderForm = () => {
         return examsTotal + labTestsTotal + panelsTotal;
     };
 
+    // Positif = remise (retiré du total), négatif = majoration (ajouté au total)
     const couponDiscount = () => {
         if (couponStatus === 'valid' && couponInfo?.discount_amount) {
-            return Math.min(parseFloat(couponInfo.discount_amount) || 0, calculateSubtotal());
+            const amount = parseFloat(couponInfo.discount_amount) || 0;
+            return couponInfo.is_surcharge ? -amount : Math.min(amount, calculateSubtotal());
         }
         return 0;
     };
@@ -486,11 +488,13 @@ const ImagingOrderForm = () => {
                                 </Stack>
                             </Box>
 
-                            {couponDiscount() > 0 && (
+                            {couponDiscount() !== 0 && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                    <Typography variant="body2" color="error.main">Remise coupon:</Typography>
-                                    <Typography variant="body2" color="error.main" fontWeight="bold">
-                                        −{new Intl.NumberFormat('fr-FR').format(couponDiscount())} XAF
+                                    <Typography variant="body2" color={couponDiscount() < 0 ? 'warning.main' : 'error.main'}>
+                                        {couponDiscount() < 0 ? 'Majoration coupon:' : 'Remise coupon:'}
+                                    </Typography>
+                                    <Typography variant="body2" color={couponDiscount() < 0 ? 'warning.main' : 'error.main'} fontWeight="bold">
+                                        {couponDiscount() < 0 ? '+' : '−'}{new Intl.NumberFormat('fr-FR').format(Math.abs(couponDiscount()))} XAF
                                     </Typography>
                                 </Box>
                             )}

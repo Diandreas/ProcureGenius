@@ -9,6 +9,8 @@ import {
 import {
   Add, Cancel, ContentCopy, CheckCircle, AccessTime, Block,
 } from '@mui/icons-material';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import api from '../../services/api';
 
 const BASE = '/documents/coupons/';
@@ -61,7 +63,7 @@ function CouponCode({ code }) {
 
 function CreateDialog({ open, onClose, onCreated }) {
   const [form, setForm] = useState({
-    label: '', discount_type: 'percent', discount_value: '',
+    label: '', discount_type: 'percent', discount_value: '', is_surcharge: false,
     max_uses: 1, expires_days: '', min_amount: '', max_discount_amount: '',
   });
   const [loading, setLoading] = useState(false);
@@ -77,9 +79,10 @@ function CreateDialog({ open, onClose, onCreated }) {
         label: form.label,
         discount_type: form.discount_type,
         discount_value: parseFloat(form.discount_value),
+        is_surcharge: form.is_surcharge,
         max_uses: parseInt(form.max_uses) || 1,
         min_amount: parseFloat(form.min_amount) || 0,
-        max_discount_amount: form.max_discount_amount ? parseFloat(form.max_discount_amount) : null,
+        max_discount_amount: (!form.is_surcharge && form.max_discount_amount) ? parseFloat(form.max_discount_amount) : null,
       };
       if (form.expires_days) {
         const d = new Date();
@@ -89,7 +92,7 @@ function CreateDialog({ open, onClose, onCreated }) {
       const res = await api.post(BASE, payload);
       onCreated(res.data);
       onClose();
-      setForm({ label: '', discount_type: 'percent', discount_value: '', max_uses: 1, expires_days: '', min_amount: '', max_discount_amount: '' });
+      setForm({ label: '', discount_type: 'percent', discount_value: '', is_surcharge: false, max_uses: 1, expires_days: '', min_amount: '', max_discount_amount: '' });
     } catch (e) {
       setError(e.response?.data?.detail || JSON.stringify(e.response?.data) || 'Erreur lors de la création.');
     } finally {
@@ -106,13 +109,27 @@ function CreateDialog({ open, onClose, onCreated }) {
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <TextField fullWidth label="Libellé (optionnel)"
-              placeholder="Ex : Offre Fête des Mères, Fidélité…"
+              placeholder="Ex : Offre Fête des Mères, Fidélité, Frais d'urgence…"
               value={form.label} onChange={e => set('label', e.target.value)} />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.is_surcharge}
+                  onChange={e => set('is_surcharge', e.target.checked)}
+                  color="warning"
+                />
+              }
+              label={form.is_surcharge
+                ? "Majoration — AJOUTE le montant au total (ex: frais d'urgence)"
+                : "Remise — RETIRE le montant du total"}
+            />
           </Grid>
           <Grid item xs={6}>
             <FormControl fullWidth>
-              <InputLabel>Type de remise</InputLabel>
-              <Select value={form.discount_type} label="Type de remise"
+              <InputLabel>{form.is_surcharge ? 'Type de majoration' : 'Type de remise'}</InputLabel>
+              <Select value={form.discount_type} label={form.is_surcharge ? 'Type de majoration' : 'Type de remise'}
                 onChange={e => set('discount_type', e.target.value)}>
                 <MenuItem value="percent">Pourcentage (%)</MenuItem>
                 <MenuItem value="fixed">Montant fixe (FCFA)</MenuItem>
@@ -140,7 +157,7 @@ function CreateDialog({ open, onClose, onCreated }) {
               inputProps={{ min: 0, step: 100 }} placeholder="0 = aucun minimum"
               value={form.min_amount} onChange={e => set('min_amount', e.target.value)} />
           </Grid>
-          {form.discount_type === 'percent' && (
+          {form.discount_type === 'percent' && !form.is_surcharge && (
             <Grid item xs={6}>
               <TextField fullWidth label="Remise max (FCFA)" type="number"
                 inputProps={{ min: 0, step: 100 }} placeholder="Vide = illimité"
@@ -189,10 +206,13 @@ function CouponCard({ coupon, onCancel }) {
         )}
 
         <Box display="flex" flexWrap="wrap" gap={0.75} mt={1}>
-          <Chip size="small" variant="outlined" color="primary"
+          {coupon.is_surcharge && (
+            <Chip size="small" color="warning" label="Majoration" sx={{ fontWeight: 700 }} />
+          )}
+          <Chip size="small" variant="outlined" color={coupon.is_surcharge ? 'warning' : 'primary'}
             label={coupon.discount_type === 'percent'
-              ? `${coupon.discount_value}% de remise`
-              : `${parseInt(coupon.discount_value).toLocaleString('fr-FR')} FCFA`}
+              ? `${coupon.is_surcharge ? '+' : ''}${coupon.discount_value}% ${coupon.is_surcharge ? '' : 'de remise'}`
+              : `${coupon.is_surcharge ? '+' : ''}${parseInt(coupon.discount_value).toLocaleString('fr-FR')} FCFA`}
           />
           <Chip size="small" variant="outlined"
             label={`${coupon.uses_count}/${coupon.max_uses} utilisations`}

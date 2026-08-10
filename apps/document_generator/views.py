@@ -494,6 +494,7 @@ class CouponValidateView(APIView):
             'discount_type': coupon.discount_type,
             'discount_value': float(coupon.discount_value),
             'discount_amount': float(discount) if discount is not None else None,
+            'is_surcharge': coupon.is_surcharge,
             'uses_remaining': coupon.max_uses - coupon.uses_count,
         })
 
@@ -534,11 +535,15 @@ class CouponApplyView(APIView):
             except ValueError as e:
                 return Response({'detail': str(e)}, status=400)
 
-        # Appliquer la remise sur la facture
+        # Appliquer la remise (ou la majoration) sur la facture
         invoice.global_discount_type = coupon.discount_type
         invoice.global_discount_value = coupon.discount_value
+        invoice.global_discount_is_surcharge = coupon.is_surcharge
         invoice.global_discount_label = f"Coupon {coupon.code}" + (f" — {coupon.label}" if coupon.label else "")
-        invoice.save(update_fields=['global_discount_type', 'global_discount_value', 'global_discount_label', 'updated_at'])
+        invoice.save(update_fields=[
+            'global_discount_type', 'global_discount_value', 'global_discount_is_surcharge',
+            'global_discount_label', 'updated_at',
+        ])
 
         # Recalculer les totaux (global_discount_amount + total_amount)
         if hasattr(invoice, 'recalculate_totals'):

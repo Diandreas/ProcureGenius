@@ -116,7 +116,8 @@ function InvoiceForm() {
     invoice_date: new Date().toISOString().split('T')[0],
     global_discount_type: 'fixed',
     global_discount_value: 0,
-    global_discount_label: ''
+    global_discount_label: '',
+    global_discount_is_surcharge: false,
   });
 
   // Génère titre et description automatiquement à partir des items (seulement en création)
@@ -210,7 +211,8 @@ function InvoiceForm() {
         payment_method: invoice.payment_method || 'cash',
         global_discount_type: invoice.global_discount_type || 'fixed',
         global_discount_value: parseFloat(invoice.global_discount_value) || 0,
-        global_discount_label: invoice.global_discount_label || ''
+        global_discount_label: invoice.global_discount_label || '',
+        global_discount_is_surcharge: !!invoice.global_discount_is_surcharge,
       });
       setItems(invoice.items || []);
 
@@ -221,10 +223,11 @@ function InvoiceForm() {
           setCouponCode(match[1]);
           setCouponStatus('valid');
           setCouponInfo({
-            discount_amount: parseFloat(invoice.global_discount_amount) || 0,
+            discount_amount: Math.abs(parseFloat(invoice.global_discount_amount) || 0),
             label: invoice.global_discount_label.replace(/^Coupon\s+\S+\s*—\s*/, ''),
             discount_type: 'fixed',
             discount_value: parseFloat(invoice.global_discount_value) || 0,
+            is_surcharge: !!invoice.global_discount_is_surcharge,
           });
         }
       }
@@ -248,15 +251,20 @@ function InvoiceForm() {
     return isNaN(taxAmount) ? 0 : taxAmount;
   };
 
+  // Positif = remise (retirée du total), négatif = majoration (ajoutée au total)
   const calculateDiscountAmount = () => {
     const subtotal = calculateSubtotal();
     const value = parseFloat(formData.global_discount_value) || 0;
     if (value <= 0) return 0;
+    const isSurcharge = !!formData.global_discount_is_surcharge;
+    let magnitude;
     if (formData.global_discount_type === 'percent') {
-      const pct = Math.min(value, 100);
-      return Math.round((subtotal * pct / 100) * 100) / 100;
+      const pct = isSurcharge ? value : Math.min(value, 100);
+      magnitude = Math.round((subtotal * pct / 100) * 100) / 100;
+    } else {
+      magnitude = isSurcharge ? value : Math.min(value, subtotal);
     }
-    return Math.min(value, subtotal);
+    return isSurcharge ? -magnitude : magnitude;
   };
 
   const calculateTotal = () => {
@@ -299,6 +307,7 @@ function InvoiceForm() {
             global_discount_type: 'fixed',
             global_discount_value: data.discount_amount || 0,
             global_discount_label: `Coupon ${code}${data.label ? ' — ' + data.label : ''}`,
+            global_discount_is_surcharge: !!data.is_surcharge,
           }));
         } else {
           setCouponStatus('invalid');
@@ -320,6 +329,7 @@ function InvoiceForm() {
       global_discount_type: 'fixed',
       global_discount_value: 0,
       global_discount_label: '',
+      global_discount_is_surcharge: false,
     }));
     // En édition : persister immédiatement le retrait de la remise
     if (isEdit && id) {
