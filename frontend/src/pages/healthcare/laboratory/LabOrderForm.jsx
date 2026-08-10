@@ -319,8 +319,11 @@ const LabOrderForm = () => {
             }
 
             const newOrder = await laboratoryAPI.createOrder(payload);
+            const linkedImagingOrders = newOrder.linked_imaging_orders || [];
 
             // Si un coupon valide est saisi, l'appliquer sur la facture générée
+            // (celle du labo, ou à défaut celle de l'imagerie liée si la commande
+            // ne contenait que des examens d'imagerie — voir cas ci-dessous).
             if (couponStatus === 'valid' && couponCode) {
                 try {
                     const invoiceId = newOrder.lab_invoice?.id || newOrder.lab_invoice;
@@ -339,8 +342,17 @@ const LabOrderForm = () => {
                 }
             }
 
-            enqueueSnackbar('Ordre de laboratoire créé avec succès', { variant: 'success' });
-            navigate(`/healthcare/laboratory/${newOrder.id}/dispatch`);
+            enqueueSnackbar('Ordre créé avec succès', { variant: 'success' });
+
+            // Commande sans aucun test labo (uniquement des examens d'imagerie) :
+            // la LabOrder créée est vide (pas de facture), la redirection vers son
+            // dispatch afficherait une page vide. On redirige plutôt vers la vraie
+            // commande d'imagerie liée, où se trouve le contenu facturé.
+            if ((!newOrder.items || newOrder.items.length === 0) && linkedImagingOrders.length > 0) {
+                navigate(`/healthcare/imaging/${linkedImagingOrders[0].id}`);
+            } else {
+                navigate(`/healthcare/laboratory/${newOrder.id}/dispatch`);
+            }
 
         } catch (error) {
             if (isOfflineError(error)) {
