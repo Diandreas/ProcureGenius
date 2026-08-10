@@ -649,6 +649,14 @@ class LabOrderCreateSerializer(serializers.Serializer):
         required=False
     )
 
+    # Rapprochement avec le module Imagerie : on peut ajouter des examens
+    # d'imagerie individuels depuis ce meme formulaire — cree une vraie
+    # ImagingOrder liee, voir LabOrderCreateView.post.
+    exam_type_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False
+    )
+
     subcontractor_id = serializers.UUIDField(required=False, allow_null=True)
     prescriber_id = serializers.UUIDField(required=False, allow_null=True)
 
@@ -670,8 +678,8 @@ class LabOrderCreateSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
-        if not data.get('test_ids') and not data.get('tests_data') and not data.get('panels_data'):
-            raise serializers.ValidationError("Either test_ids, tests_data, or panels_data is required")
+        if not any(data.get(k) for k in ('test_ids', 'tests_data', 'panels_data', 'exam_type_ids')):
+            raise serializers.ValidationError("Either test_ids, tests_data, panels_data, or exam_type_ids is required")
         return data
 
 

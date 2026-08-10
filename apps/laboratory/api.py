@@ -303,8 +303,16 @@ class LabOrderCreateView(APIView):
             organization=request.user.organization,
             is_active=True
         )
-        
-        if not tests.exists() and not data.get('panels_data'):
+
+        # Examens d'imagerie individuels (rapprochement labo/imagerie) — voir plus
+        # bas, creation de la ImagingOrder liee apres la LabOrder.
+        from apps.imaging.models import ImagingExamType
+        exam_type_ids = data.get('exam_type_ids') or []
+        individual_exam_types = list(ImagingExamType.objects.filter(
+            id__in=exam_type_ids, organization=request.user.organization, is_active=True
+        ))
+
+        if not tests.exists() and not data.get('panels_data') and not individual_exam_types:
             return Response(
                 {'error': 'No valid tests found'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -473,9 +481,10 @@ class LabOrderCreateView(APIView):
             print(f"Error creating lab invoice: {e}")
             traceback.print_exc()
 
-        # Volet imagerie d'un bilan mixte : ImagingOrder liée, avec sa propre
-        # facture (healthcare_imaging) — même logique que ImagingOrderCreateView.
-        if panel_imaging_entries:
+        # Volet imagerie (examens individuels et/ou bilan mixte) : ImagingOrder
+        # liée, avec sa propre facture (healthcare_imaging) — même logique que
+        # ImagingOrderCreateView.
+        if panel_imaging_entries or individual_exam_types:
             try:
                 from apps.imaging.models import ImagingOrder, ImagingOrderItem
                 from apps.imaging.invoice_services import ImagingOrderInvoiceService
@@ -493,6 +502,13 @@ class LabOrderCreateView(APIView):
                     linked_lab_order=order,
                 )
                 imaging_total = Decimal('0')
+                for exam_type in individual_exam_types:
+                    item_price = exam_type.price
+                    ImagingOrderItem.objects.create(
+                        imaging_order=imaging_order, exam_type=exam_type,
+                        price=item_price, discount=exam_type.discount or Decimal('0'),
+                    )
+                    imaging_total += item_price
                 for entry in panel_imaging_entries:
                     item_price = entry['panel_price'] if entry['panel_price'] is not None else Decimal('0')
                     ImagingOrderItem.objects.create(

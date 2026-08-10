@@ -36,6 +36,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
+import imagingAPI from '../../../services/imagingAPI';
 import patientAPI from '../../../services/patientAPI';
 import api from '../../../services/api';
 import QuickClientCreateModal from './components/QuickClientCreateModal';
@@ -57,7 +58,14 @@ const LabOrderForm = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [openClientModal, setOpenClientModal] = useState(false);
-    const [selectionTab, setSelectionTab] = useState(0); // 0=examens, 1=bilans
+    const [selectionTab, setSelectionTab] = useState(0); // 0=examens, 1=imagerie, 2=bilans
+
+    // Rapprochement imagerie : examens d'imagerie individuels, ajoutables au
+    // même ordre de labo (crée une ImagingOrder liée, voir LabOrderCreateView).
+    const [examTypes, setExamTypes] = useState([]);
+    const [imagingCategories, setImagingCategories] = useState([]);
+    const [examSearchTerm, setExamSearchTerm] = useState('');
+    const [examCategoryFilter, setExamCategoryFilter] = useState('');
 
     // Import needs to be added at the top, but I can't do it in this chunk easily if I stick to single contiguous block rules strictly without seeing the imports.
     // I will add the handleClientCreated function here though.
@@ -82,6 +90,7 @@ const LabOrderForm = () => {
         priority: 'routine',
         tests: [], // Array of test objects
         panels: [], // Array of panel objects (bilans)
+        exam_types: [], // Array of imaging exam type objects
         clinical_notes: '',
         payment_method: 'cash'
     });
@@ -110,13 +119,15 @@ const LabOrderForm = () => {
 
     const fetchOptions = async () => {
         try {
-            const [patData, testData, catData, panelData, prescriberData, subData] = await Promise.all([
+            const [patData, testData, catData, panelData, prescriberData, subData, examData, imgCatData] = await Promise.all([
                 patientAPI.getPatients({ page_size: 1000 }),
                 laboratoryAPI.getTests({ page_size: 1000 }),
                 laboratoryAPI.getCategories(),
                 laboratoryAPI.getPanels({ active_only: true }),
                 laboratoryAPI.getPrescribers({ active_only: true }),
                 laboratoryAPI.getSubcontractors({ active_only: 'true' }),
+                imagingAPI.getExamTypes({ page_size: 1000 }),
+                imagingAPI.getCategories(),
             ]);
             setPatients(patData.results || patData || []);
             setTests(testData.results || testData || []);
@@ -124,6 +135,8 @@ const LabOrderForm = () => {
             setPanels(Array.isArray(panelData) ? panelData : panelData.results || []);
             setPrescribers(Array.isArray(prescriberData) ? prescriberData : prescriberData.results || []);
             setSubcontractors(Array.isArray(subData) ? subData : subData.results || []);
+            setExamTypes(examData.results || examData || []);
+            setImagingCategories(imgCatData.results || imgCatData || []);
         } catch (error) {
             console.error('Error fetching options:', error);
             enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
@@ -165,6 +178,23 @@ const LabOrderForm = () => {
         }));
     };
 
+    const filteredExamTypes = examTypes.filter(exam => {
+        const matchesSearch = !examSearchTerm ||
+            exam.name?.toLowerCase().includes(examSearchTerm.toLowerCase()) ||
+            exam.exam_code?.toLowerCase().includes(examSearchTerm.toLowerCase());
+        const matchesCategory = !examCategoryFilter || exam.category === examCategoryFilter;
+        return matchesSearch && matchesCategory;
+    });
+
+    const handleExamTypeToggle = (exam) => {
+        const isSelected = formData.exam_types.some(e => e.id === exam.id);
+        if (isSelected) {
+            setFormData(prev => ({ ...prev, exam_types: prev.exam_types.filter(e => e.id !== exam.id) }));
+        } else {
+            setFormData(prev => ({ ...prev, exam_types: [...prev.exam_types, exam] }));
+        }
+    };
+
     const handlePanelToggle = (panel) => {
         const isSelected = formData.panels.some(p => p.id === panel.id);
         if (isSelected) {
@@ -189,7 +219,10 @@ const LabOrderForm = () => {
         const panelsTotal = formData.panels.reduce((sum, panel) => {
             return sum + (parseFloat(panel.net_price || panel.price) || 0);
         }, 0);
-        return testsTotal + panelsTotal;
+        const examTypesTotal = formData.exam_types.reduce((sum, e) => {
+            return sum + (parseFloat(e.price) || 0) - (parseFloat(e.discount) || 0);
+        }, 0);
+        return testsTotal + panelsTotal + examTypesTotal;
     };
 
     // Positif = remise (retiré du total), négatif = majoration (ajouté au total)
@@ -241,8 +274,8 @@ const LabOrderForm = () => {
             enqueueSnackbar('Veuillez sélectionner un patient', { variant: 'warning' });
             return;
         }
-        if (formData.tests.length === 0 && formData.panels.length === 0) {
-            enqueueSnackbar('Veuillez sélectionner au moins un examen ou un bilan', { variant: 'warning' });
+        if (formData.tests.length === 0 && formData.panels.length === 0 && formData.exam_types.length === 0) {
+            enqueueSnackbar('Veuillez sélectionner au moins un examen, un bilan ou un examen d\'imagerie', { variant: 'warning' });
             return;
         }
 
@@ -279,6 +312,10 @@ const LabOrderForm = () => {
                 payload.panels_data = formData.panels.map(panel => ({
                     panel_id: panel.id,
                 }));
+            }
+
+            if (formData.exam_types.length > 0) {
+                payload.exam_type_ids = formData.exam_types.map(e => e.id);
             }
 
             const newOrder = await laboratoryAPI.createOrder(payload);
@@ -486,6 +523,10 @@ const LabOrderForm = () => {
                                 <Typography>Bilans sélectionnés:</Typography>
                                 <Typography fontWeight="bold">{formData.panels.length}</Typography>
                             </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography>Examens imagerie:</Typography>
+                                <Typography fontWeight="bold">{formData.exam_types.length}</Typography>
+                            </Box>
 
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, mt: 1 }}>
                                 <Typography variant="body2">Sous-total:</Typography>
@@ -584,7 +625,8 @@ const LabOrderForm = () => {
                     <Card>
                         <CardContent>
                             <Tabs value={selectionTab} onChange={(_, v) => setSelectionTab(v)} sx={{ mb: 2 }}>
-                                <Tab label={`Examens (${formData.tests.length} sélectionnés)`} />
+                                <Tab label={`Examens Labo (${formData.tests.length} sélectionnés)`} />
+                                <Tab label={`Imagerie (${formData.exam_types.length} sélectionnés)`} />
                                 <Tab label={`Bilans (${formData.panels.length} sélectionnés)`} />
                             </Tabs>
 
@@ -694,8 +736,92 @@ const LabOrderForm = () => {
                                 )}
                             </>)}
 
-                            {/* Tab 1: Bilans */}
+                            {/* Tab 1: Examens d'imagerie individuels */}
                             {selectionTab === 1 && (<>
+                                <Grid container spacing={2} sx={{ mb: 2 }}>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="Rechercher un examen d'imagerie..."
+                                            value={examSearchTerm}
+                                            onChange={(e) => setExamSearchTerm(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start"><SearchIcon /></InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            select
+                                            value={examCategoryFilter}
+                                            onChange={(e) => setExamCategoryFilter(e.target.value)}
+                                            label="Catégorie"
+                                        >
+                                            <MenuItem value="">Toutes les catégories</MenuItem>
+                                            {imagingCategories.map((cat) => (
+                                                <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+                                            ))}
+                                        </TextField>
+                                    </Grid>
+                                </Grid>
+
+                                <TableContainer sx={{ maxHeight: 400 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Examen</TableCell>
+                                                <TableCell>Modalité</TableCell>
+                                                <TableCell>Prix</TableCell>
+                                                <TableCell align="center">Sélection</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {filteredExamTypes.map((exam) => {
+                                                const isSelected = formData.exam_types.some(e => e.id === exam.id);
+                                                return (
+                                                    <TableRow
+                                                        key={exam.id}
+                                                        hover
+                                                        onClick={() => handleExamTypeToggle(exam)}
+                                                        sx={{ cursor: 'pointer', backgroundColor: isSelected ? 'action.selected' : 'inherit' }}
+                                                    >
+                                                        <TableCell>
+                                                            <Typography fontWeight={isSelected ? 'bold' : 'normal'}>{exam.name}</Typography>
+                                                            {exam.exam_code && (
+                                                                <Typography variant="caption" color="text.secondary">{exam.exam_code}</Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Chip label={exam.modality_display || exam.modality} size="small" variant="outlined" />
+                                                        </TableCell>
+                                                        <TableCell>{exam.price} XAF</TableCell>
+                                                        <TableCell align="center">
+                                                            {isSelected ? <Chip label="✓" color="primary" size="small" /> : <Chip label="+" variant="outlined" size="small" />}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                                {filteredExamTypes.length === 0 && (
+                                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                                        <Typography color="text.secondary">
+                                            {examTypes.length === 0
+                                                ? "Aucun examen d'imagerie disponible."
+                                                : "Aucun examen ne correspond aux critères."}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </>)}
+
+                            {/* Tab 2: Bilans */}
+                            {selectionTab === 2 && (<>
                                 <TableContainer sx={{ maxHeight: 400 }}>
                                     <Table stickyHeader size="small">
                                         <TableHead>

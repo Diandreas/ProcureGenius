@@ -14,7 +14,7 @@ import {
     CheckCircle as CompletedIcon, Error as UrgentIcon, CalendarToday,
     Person as PersonIcon, ArrowForward, Print as PrintIcon,
     ArrowBack as ArrowBackIcon, ArrowForward as ArrowForwardIcon, Today as TodayIcon,
-    SwapHoriz as SubcontractedIcon,
+    SwapHoriz as SubcontractedIcon, ListAlt as CatalogIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -236,10 +236,16 @@ const ImagingOrderList = () => {
                     <Typography variant="h4" fontWeight="700" sx={{ mb: 0.5 }}>Imagerie</Typography>
                     <Typography variant="body1" color="text.secondary">Commandes et rapports d'imagerie médicale</Typography>
                 </Box>
-                <Button variant="contained" size="large" startIcon={<AddIcon />} onClick={() => navigate('/healthcare/imaging/new')}
-                    sx={{ borderRadius: 3, px: 3, py: 1.5 }}>
-                    Nouvelle Commande
-                </Button>
+                <Stack direction="row" spacing={1.5}>
+                    <Button variant="outlined" size="large" startIcon={<CatalogIcon />} onClick={() => navigate('/healthcare/imaging/catalog')}
+                        sx={{ borderRadius: 3, px: 2.5, py: 1.5 }}>
+                        Catalogue
+                    </Button>
+                    <Button variant="contained" size="large" startIcon={<AddIcon />} onClick={() => navigate('/healthcare/imaging/new')}
+                        sx={{ borderRadius: 3, px: 3, py: 1.5 }}>
+                        Nouvelle Commande
+                    </Button>
+                </Stack>
             </Stack>
 
             <Grid container spacing={2} mb={4}>
