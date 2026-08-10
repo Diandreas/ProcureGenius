@@ -45,6 +45,7 @@ import consultationAPI from '../../../services/consultationAPI';
 import patientAPI from '../../../services/patientAPI';
 import pharmacyAPI from '../../../services/pharmacyAPI';
 import laboratoryAPI from '../../../services/laboratoryAPI';
+import imagingAPI from '../../../services/imagingAPI';
 import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
 import QuickTemplate from '../../../components/healthcare/QuickTemplate';
 import {
@@ -90,6 +91,7 @@ const ConsultationForm = () => {
     const [patients, setPatients] = useState([]);
     const [medications, setMedications] = useState([]);
     const [labTests, setLabTests] = useState([]);
+    const [imagingExamTypes, setImagingExamTypes] = useState([]);
 
     const [formData, setFormData] = useState({
         patient: null,
@@ -121,7 +123,8 @@ const ConsultationForm = () => {
         started_at: null,
         ended_at: null,
         medications: [],
-        lab_tests: []
+        lab_tests: [],
+        imaging_exam_types: []
     });
 
     useEffect(() => {
@@ -130,15 +133,17 @@ const ConsultationForm = () => {
                 console.log("Initializing Consultation Form, ID:", id);
                 setInitializing(true);
                 
-                const [patData, medData, labData] = await Promise.all([
+                const [patData, medData, labData, imgData] = await Promise.all([
                     patientAPI.getPatients({ page_size: 100 }),
                     pharmacyAPI.getMedications({ page_size: 100 }),
-                    laboratoryAPI.getTests({ page_size: 200, is_active: true })
+                    laboratoryAPI.getTests({ page_size: 200, is_active: true }),
+                    imagingAPI.getExamTypes({ page_size: 200, is_active: true })
                 ]);
-                
+
                 setPatients(patData.results || patData || []);
                 setMedications(medData.results || medData || []);
                 setLabTests(labData.results || labData || []);
+                setImagingExamTypes(imgData.results || imgData || []);
 
                 if (id) {
                     const data = await consultationAPI.getConsultation(id);
@@ -192,7 +197,8 @@ const ConsultationForm = () => {
                         started_at: data.started_at || null,
                         ended_at: data.ended_at || null,
                         medications: medicationsList,
-                        lab_tests: data.prescribed_lab_tests ? data.prescribed_lab_tests.map(t => typeof t === 'object' ? t.id : t) : []
+                        lab_tests: data.prescribed_lab_tests ? data.prescribed_lab_tests.map(t => typeof t === 'object' ? t.id : t) : [],
+                        imaging_exam_types: data.prescribed_imaging_exam_types ? data.prescribed_imaging_exam_types.map(t => typeof t === 'object' ? t.id : t) : []
                     });
                 } else {
                     const prePatientId = searchParams.get('patientId');
@@ -302,6 +308,7 @@ const ConsultationForm = () => {
                 imaging: formData.imaging,
                 treatment_plan: formData.treatment_plan,
                 prescribed_lab_tests: formData.lab_tests,
+                prescribed_imaging_exam_types: formData.imaging_exam_types,
                 temperature: formData.temperature || null,
                 blood_pressure_systolic: formData.blood_pressure_systolic || null,
                 blood_pressure_diastolic: formData.blood_pressure_diastolic || null,
@@ -530,6 +537,10 @@ const ConsultationForm = () => {
                             <Grid item xs={12}>
                                 <Typography variant="subtitle2" gutterBottom sx={{ mt: 1 }}>Examens Complémentaires (Biologie)</Typography>
                                 <Autocomplete multiple options={labTests} getOptionLabel={(o) => `${o.test_code} - ${o.name}`} value={labTests.filter(t => formData.lab_tests.includes(t.id))} onChange={(e, v) => setFormData(p => ({ ...p, lab_tests: v.map(t => t.id) }))} renderInput={(p) => <TextField {...p} placeholder="Sélectionner les examens biologiques" inputProps={{...p.inputProps, 'data-testid': 'consult-input-lab-tests'}} />} renderTags={(v, getTagProps) => v.map((o, i) => <Chip label={o.name} {...getTagProps({ index: i })} size="small" color="primary" />)} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2" gutterBottom sx={{ mt: 1 }}>Examens Complémentaires (Imagerie)</Typography>
+                                <Autocomplete multiple options={imagingExamTypes} getOptionLabel={(o) => `${o.exam_code ? o.exam_code + ' - ' : ''}${o.name}`} value={imagingExamTypes.filter(t => formData.imaging_exam_types.includes(t.id))} onChange={(e, v) => setFormData(p => ({ ...p, imaging_exam_types: v.map(t => t.id) }))} renderInput={(p) => <TextField {...p} placeholder="Sélectionner les examens d'imagerie" inputProps={{...p.inputProps, 'data-testid': 'consult-input-imaging-exams'}} />} renderTags={(v, getTagProps) => v.map((o, i) => <Chip label={o.name} {...getTagProps({ index: i })} size="small" color="secondary" />)} />
                             </Grid>
                         </Grid>
                     </CardContent>

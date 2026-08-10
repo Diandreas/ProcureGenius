@@ -320,6 +320,15 @@ class Consultation(models.Model):
         verbose_name=_("Examens prescrits (Indicatif)")
     )
 
+    # Examens d'imagerie prescrits (Indicatif, meme logique que prescribed_lab_tests —
+    # la commande d'imagerie effective se cree separement dans le module Imagerie)
+    prescribed_imaging_exam_types = models.ManyToManyField(
+        'imaging.ImagingExamType',
+        blank=True,
+        related_name='consultation_prescriptions',
+        verbose_name=_("Examens d'imagerie prescrits (Indicatif)")
+    )
+
     # Billing
     consultation_invoice = models.ForeignKey(
         'invoicing.Invoice',

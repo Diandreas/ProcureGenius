@@ -119,6 +119,7 @@ class ConsultationSerializer(serializers.ModelSerializer):
     vitals_taken_by_name = serializers.SerializerMethodField()
     completed_by_name = serializers.SerializerMethodField()
     prescribed_lab_tests_data = serializers.SerializerMethodField()
+    prescribed_imaging_exam_types_data = serializers.SerializerMethodField()
 
     class Meta:
         model = Consultation
@@ -189,6 +190,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'lab_orders_data',
             'prescribed_lab_tests',
             'prescribed_lab_tests_data',
+            'prescribed_imaging_exam_types',
+            'prescribed_imaging_exam_types_data',
             # Invoice
             'consultation_invoice',
             # Timestamps
@@ -223,6 +226,19 @@ class ConsultationSerializer(serializers.ModelSerializer):
                 'price': float(test.price)
             }
             for test in tests
+        ]
+
+    def get_prescribed_imaging_exam_types_data(self, obj):
+        """Get prescribed imaging exam types (indicative)"""
+        exams = obj.prescribed_imaging_exam_types.all()
+        return [
+            {
+                'id': str(exam.id),
+                'name': exam.name,
+                'exam_code': exam.exam_code,
+                'price': float(exam.price)
+            }
+            for exam in exams
         ]
 
     def get_lab_orders_data(self, obj):

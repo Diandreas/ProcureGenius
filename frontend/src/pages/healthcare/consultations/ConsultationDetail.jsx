@@ -202,7 +202,7 @@ const ConsultationDetail = () => {
                         </AccordionDetails>
                     </Accordion>
 
-                    {(consultation.prescribed_lab_tests_data?.length > 0 || consultation.complementary_exams || consultation.imaging) && (
+                    {(consultation.prescribed_lab_tests_data?.length > 0 || consultation.prescribed_imaging_exam_types_data?.length > 0 || consultation.complementary_exams || consultation.imaging) && (
                         <Accordion defaultExpanded elevation={0} sx={{ mt: 2 }}>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'info.main', color: 'white', borderRadius: 1 }}>
                                 <AssignmentIcon sx={{ mr: 1 }} fontSize="small" /><Typography variant="body2" fontWeight={700}>EXAMENS & ANALYSES</Typography>
@@ -214,6 +214,16 @@ const ConsultationDetail = () => {
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                             {consultation.prescribed_lab_tests_data.map((test, i) => (
                                                 <Chip key={i} label={`${test.test_code} - ${test.name}`} variant="outlined" color="info" size="small" />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                                {consultation.prescribed_imaging_exam_types_data?.length > 0 && (
+                                    <Box sx={{ mb: 2 }}>
+                                        <Typography variant="caption" fontWeight={700} display="block" gutterBottom>IMAGERIE</Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                            {consultation.prescribed_imaging_exam_types_data.map((exam, i) => (
+                                                <Chip key={i} label={exam.exam_code ? `${exam.exam_code} - ${exam.name}` : exam.name} variant="outlined" color="secondary" size="small" />
                                             ))}
                                         </Box>
                                     </Box>
