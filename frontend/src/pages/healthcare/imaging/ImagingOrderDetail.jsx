@@ -206,9 +206,15 @@ const ImagingOrderDetail = () => {
                             <Divider sx={{ my: 2 }} />
                             <Typography variant="body2"><strong>Total :</strong> {new Intl.NumberFormat('fr-FR').format(order.total_price)} XAF</Typography>
                             {order.imaging_invoice && (
-                                <Typography variant="body2" color="success.main">
-                                    Facture {order.imaging_invoice.invoice_number} ({order.imaging_invoice.status})
-                                </Typography>
+                                <Chip
+                                    icon={<ReceiptIcon />}
+                                    label={`Facture ${order.imaging_invoice.invoice_number} (${order.imaging_invoice.status})`}
+                                    color="success"
+                                    variant="outlined"
+                                    clickable
+                                    onClick={() => navigate(`/invoices/${order.imaging_invoice.id}`)}
+                                    sx={{ mt: 1, width: '100%' }}
+                                />
                             )}
                             {order.linked_lab_order && (
                                 <>
