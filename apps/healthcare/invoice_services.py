@@ -118,37 +118,47 @@ class LabOrderInvoiceService:
         # via TestConsumable, donc facturer un kit en double est redondant.
 
         # Ajouter les tests de laboratoire avec réductions
-        # Bilans (panels) : une seule ligne forfaitaire par bilan
+        # Bilans (panels) : une seule ligne forfaitaire par bilan.
+        #
+        # IMPORTANT : LabOrderItem.Meta.ordering = ['lab_test__name'] — l'ordre
+        # de lecture ci-dessous n'a donc RIEN à voir avec l'ordre dans lequel les
+        # items ont été créés (et donc avec lequel a reçu panel_price). Si on se
+        # fiait à "le premier item du bilan rencontré porte panel_price", un item
+        # sans panel_price rencontré avant marquait le bilan comme déjà facturé
+        # (billed_panels) et l'item porteur du prix, rencontré plus tard, était
+        # alors ignoré silencieusement → facture à 0 F pour tout le bilan. D'où
+        # le pré-calcul ci-dessous, indépendant de l'ordre d'itération.
+        all_items = list(lab_order.items.all().select_related('panel', 'lab_test'))
+        panel_prices = {}
+        panel_test_codes = {}
+        for lab_item in all_items:
+            if not lab_item.panel_id:
+                continue
+            panel_test_codes.setdefault(lab_item.panel_id, []).append(lab_item.lab_test.test_code)
+            if lab_item.panel_price is not None:
+                panel_prices[lab_item.panel_id] = lab_item.panel_price
+
         billed_panels = set()
 
-        for lab_item in lab_order.items.all().select_related('panel', 'lab_test'):
+        for lab_item in all_items:
             if lab_item.panel_id:
-                # Cet item fait partie d'un bilan
+                # Cet item fait partie d'un bilan — une seule ligne forfaitaire
                 if lab_item.panel_id in billed_panels:
-                    # Déjà facturé via le premier item du bilan → ignorer
                     continue
-
-                if lab_item.panel_price is not None:
-                    # Premier item du bilan : créer une ligne forfaitaire
-                    billed_panels.add(lab_item.panel_id)
-                    panel = lab_item.panel
-                    test_list = ", ".join(
-                        lab_order.items.filter(panel=panel)
-                        .values_list('lab_test__test_code', flat=True)
-                    )
-                    InvoiceItem.objects.create(
-                        invoice=invoice,
-                        product=None,
-                        description=f"Bilan : {panel.name}",
-                        quantity=1,
-                        unit_price=lab_item.panel_price,
-                        discount_amount=0,
-                        total_price=lab_item.panel_price,
-                        notes=f"Forfait bilan — Examens inclus : {test_list}"
-                    )
-                else:
-                    # Item de bilan sans panel_price (ne devrait pas arriver) → marquer comme traité
-                    billed_panels.add(lab_item.panel_id)
+                billed_panels.add(lab_item.panel_id)
+                panel = lab_item.panel
+                panel_price = panel_prices.get(lab_item.panel_id, Decimal('0'))
+                test_list = ", ".join(panel_test_codes.get(lab_item.panel_id, []))
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    product=None,
+                    description=f"Bilan : {panel.name}",
+                    quantity=1,
+                    unit_price=panel_price,
+                    discount_amount=0,
+                    total_price=panel_price,
+                    notes=f"Forfait bilan — Examens inclus : {test_list}"
+                )
             else:
                 # Test individuel (hors bilan)
                 test_price = lab_item.price or lab_item.lab_test.price
