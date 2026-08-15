@@ -175,6 +175,7 @@ const ImagingOrderList = () => {
                                     {examsToShow.map((item, idx) => (
                                         <Typography key={idx} variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 500, display: 'block' }}>
                                             • {item.exam_type_detail?.name || item.exam_type_name}
+                                            {item.exam_type_detail?.exam_code && ` (${item.exam_type_detail.exam_code})`}
                                         </Typography>
                                     ))}
                                     {remaining > 0 && (

@@ -134,6 +134,28 @@ const PatientRow = ({ row, index, patients, examTypes, onUpdate, onRemove, onCop
                     size="small" multiple
                     options={examTypes}
                     getOptionLabel={e => e.name}
+                    filterOptions={(options, state) => {
+                        const input = state.inputValue.toLowerCase();
+                        if (!input) return options;
+                        return options.filter(e =>
+                            e.name?.toLowerCase().includes(input) ||
+                            e.exam_code?.toLowerCase().includes(input) ||
+                            e.short_name?.toLowerCase().includes(input)
+                        );
+                    }}
+                    renderOption={(props, e) => {
+                        const { key, ...optionProps } = props;
+                        return (
+                            <li key={key} {...optionProps}>
+                                <Box>
+                                    <Typography variant="body2">{e.name}</Typography>
+                                    {e.exam_code && (
+                                        <Typography variant="caption" color="text.secondary">{e.exam_code}</Typography>
+                                    )}
+                                </Box>
+                            </li>
+                        );
+                    }}
                     value={row.exams}
                     onChange={(_, v) => onUpdate(index, 'exams', v)}
                     renderTags={(value, getTagProps) => value.map((e, i) => {
