@@ -30,6 +30,7 @@ import { getNeumorphicShadow } from '../styles/neumorphism/mixins';
 import {
   Add,
   SupervisorAccount,
+  SupportAgent,
   Tune,
   Refresh,
   DarkMode,
@@ -51,6 +52,7 @@ import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
 import OfflineIndicator from '../components/OfflineIndicator';
+import SupportFAB from '../components/support/SupportFAB';
 import { useNotification } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
@@ -577,6 +579,27 @@ function MainLayout() {
                 </ListItemIcon>
                 <ListItemText
                   primary={t('navigation:menu.users')}
+                  primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
+                />
+              </ListItemButton>
+            </ListItem>
+          </Box>
+        )}
+        {userPermissions?.can_manage_users && (
+          <Box>
+            <ListItem disablePadding sx={{ mb: 1 }}>
+              <ListItemButton
+                onClick={() => navigate('/settings/support-tickets')}
+                sx={{
+                  minHeight: 48, px: 2, borderRadius: 3,
+                  '&:hover': { bgcolor: alpha(theme.palette.action.hover, 0.08) }
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <SupportAgent sx={{ fontSize: 22, color: 'text.secondary' }} />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Tickets Support"
                   primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500, color: 'text.secondary' }}
                 />
               </ListItemButton>
@@ -1244,6 +1267,9 @@ function MainLayout() {
 
         {/* Offline / Sync indicator */}
         <OfflineIndicator />
+
+        {/* Support / SAV floating button */}
+        <SupportFAB />
       </Box>
     </AINotificationProvider>
   );
