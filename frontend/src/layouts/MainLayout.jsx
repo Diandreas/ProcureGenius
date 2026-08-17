@@ -143,6 +143,7 @@ function MainLayout() {
     { text: 'Hospitalisations', iconSrc: '/icon/contract.png', path: '/healthcare/hospitalizations', moduleId: 'consultations', isCore: false },
     { text: 'Documents Médicaux', iconSrc: '/icon/contract.png', path: '/healthcare/medical-documents', moduleId: 'consultations', isCore: false },
     { text: 'Documents Centre', iconSrc: '/icon/bill.png', path: '/admin/documents', moduleId: 'dashboard', isCore: true },
+    { text: 'Mes Tickets Support', iconSrc: '/icon/support.png', path: '/support/my-tickets', moduleId: 'dashboard', isCore: true },
 
     // Coupons de réduction — réservé à Boris uniquement
     { divider: true, sectionLabel: 'Administration', allowedUsernames: ['boris'] },

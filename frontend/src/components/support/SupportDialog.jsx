@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, AddPhotoAlternate as AddPhotoIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useNavigate } from 'react-router-dom';
 import supportAPI from '../../services/supportAPI';
 
 const MODULE_OPTIONS = [
@@ -62,6 +63,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function SupportDialog({ open, onClose }) {
     const { enqueueSnackbar } = useSnackbar();
+    const navigate = useNavigate();
     const [title, setTitle] = useState('');
     const [module, setModule] = useState(() => guessModuleFromPath(window.location.pathname));
     const [category, setCategory] = useState('bug');
@@ -187,11 +189,20 @@ export default function SupportDialog({ open, onClose }) {
                     </Typography>
                 </Stack>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={handleClose} disabled={submitting}>Annuler</Button>
-                <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
-                    {submitting ? <CircularProgress size={20} /> : 'Envoyer'}
+            <DialogActions sx={{ justifyContent: 'space-between' }}>
+                <Button
+                    size="small" color="inherit"
+                    onClick={() => { onClose(); navigate('/support/my-tickets'); }}
+                    disabled={submitting}
+                >
+                    Voir mes tickets
                 </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button onClick={handleClose} disabled={submitting}>Annuler</Button>
+                    <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
+                        {submitting ? <CircularProgress size={20} /> : 'Envoyer'}
+                    </Button>
+                </Box>
             </DialogActions>
         </Dialog>
     );

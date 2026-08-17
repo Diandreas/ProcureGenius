@@ -71,6 +71,7 @@ import DocumentImport from './pages/ai-chat/DocumentImport';
 import Settings from './pages/settings/Settings';
 import UserManagement from './pages/settings/UserManagement';
 import SupportTicketsAdmin from './pages/settings/SupportTicketsAdmin';
+import MyTickets from './pages/support/MyTickets';
 import WeeklyReportSettings from './pages/settings/WeeklyReportSettings';
 import MigrationJobs from './pages/migration/MigrationJobs';
 import MigrationWizard from './pages/migration/MigrationWizard';
@@ -835,6 +836,7 @@ function App() {
                               <Route path="/settings" element={<Settings />} />
                               <Route path="/settings/users" element={<UserManagement />} />
                               <Route path="/settings/support-tickets" element={<SupportTicketsAdmin />} />
+                              <Route path="/support/my-tickets" element={<MyTickets />} />
                               <Route path="/settings/import" element={<DataImportPage />} />
                               <Route path="/settings/reports" element={<WeeklyReportSettings />} />
                               <Route path="/settings/erpnext-export" element={<ErpNextExport />} />
