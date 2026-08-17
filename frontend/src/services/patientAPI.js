@@ -25,6 +25,12 @@ const patientAPI = {
         return response.data;
     },
 
+    // Get privilege card usage history
+    getPrivilegeCardUsages: async (id) => {
+        const response = await api.get(`/healthcare/patients/${id}/privilege-card-usages/`);
+        return response.data;
+    },
+
     // Get patient medical history
     getPatientHistory: async (id) => {
         const response = await api.get(`/healthcare/patients/${id}/history/`);

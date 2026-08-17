@@ -102,6 +102,7 @@ import SIG from './pages/accounting/SIG';
 import PatientList from './pages/healthcare/patients/PatientList';
 import PatientForm from './pages/healthcare/patients/PatientForm';
 import PatientDetail from './pages/healthcare/patients/PatientDetail';
+import PrivilegeCardUsageHistory from './pages/healthcare/patients/PrivilegeCardUsageHistory';
 import VisitForm from './pages/healthcare/patients/VisitForm';
 import VisitsDashboard from './pages/healthcare/reception/ReceptionDashboard';
 import LabOrderList from './pages/healthcare/laboratory/LabOrderList';
@@ -850,6 +851,7 @@ function App() {
                               <Route path="/healthcare/patients/new" element={<ModuleRoute module="patients"><PatientForm /></ModuleRoute>} />
                               <Route path="/healthcare/patients/:id" element={<ModuleRoute module="patients"><PatientDetail /></ModuleRoute>} />
                               <Route path="/healthcare/patients/:id/edit" element={<ModuleRoute module="patients"><PatientForm /></ModuleRoute>} />
+                              <Route path="/healthcare/patients/:id/privilege-card-usages" element={<ModuleRoute module="patients"><PrivilegeCardUsageHistory /></ModuleRoute>} />
                               <Route path="/healthcare/visits/new" element={<ModuleRoute module="patients"><VisitForm /></ModuleRoute>} />
                               <Route path="/healthcare/visits" element={<ModuleRoute module="visits"><VisitsDashboard /></ModuleRoute>} />
 
