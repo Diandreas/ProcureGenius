@@ -54,6 +54,8 @@ TENANT_APPS = [
     'apps.document_generator',
     # Comptabilité
     'apps.accounting',
+    # Support (SAV)
+    'apps.support',
 ]
 
 SHARED_APPS = [

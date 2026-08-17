@@ -106,6 +106,9 @@ urlpatterns = [
     # Healthcare - Imaging (radiologie, échographie, scanner, IRM)
     path('healthcare/imaging/', include('apps.imaging.urls')),
 
+    # Support (SAV)
+    path('support/', include('apps.support.urls')),
+
     # Healthcare - Pharmacy
     path('healthcare/pharmacy/', include('apps.pharmacy.urls')),
 
