@@ -272,6 +272,21 @@ class ImagingOrderCreateView(APIView):
                 id=data['subcontractor_id'], organization=request.user.organization, is_active=True
             ).first()
 
+        # Carte privilège : qui a utilisé la carte du patient (titulaire par défaut)
+        privilege_card_used_by = None
+        used_by_patient_id = data.get('privilege_card_used_by_patient_id')
+        used_by_name = data.get('privilege_card_used_by_name', '')
+        used_by_relationship = data.get('privilege_card_used_by_relationship', '')
+        if used_by_patient_id or used_by_name:
+            used_by_patient_obj = None
+            if used_by_patient_id:
+                used_by_patient_obj = Client.objects.filter(
+                    id=used_by_patient_id, organization=request.user.organization
+                ).first()
+            privilege_card_used_by = {
+                'patient': used_by_patient_obj, 'name': used_by_name, 'relationship': used_by_relationship,
+            }
+
         # Prix personnalisés du prescripteur (mode "prix libre") : le patient
         # paie ce prix, pas le tarif catalogue — voir PrescriberCustomPrice.
         from apps.laboratory.models import PrescriberCustomPrice
@@ -327,7 +342,7 @@ class ImagingOrderCreateView(APIView):
 
             try:
                 order.refresh_from_db()
-                ImagingOrderInvoiceService.generate_invoice(order)
+                ImagingOrderInvoiceService.generate_invoice(order, privilege_card_used_by=privilege_card_used_by)
             except Exception as e:
                 import traceback
                 print(f"Error creating imaging invoice: {e}")
@@ -377,7 +392,7 @@ class ImagingOrderCreateView(APIView):
             try:
                 from apps.healthcare.invoice_services import LabOrderInvoiceService
                 lab_order.refresh_from_db()
-                LabOrderInvoiceService.generate_invoice(lab_order)
+                LabOrderInvoiceService.generate_invoice(lab_order, privilege_card_used_by=privilege_card_used_by)
             except Exception as e:
                 import traceback
                 print(f"Error creating linked lab invoice: {e}")

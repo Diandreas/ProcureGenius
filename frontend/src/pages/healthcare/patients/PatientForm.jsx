@@ -26,7 +26,9 @@ import {
     Select,
     Accordion,
     AccordionSummary,
-    AccordionDetails
+    AccordionDetails,
+    Checkbox,
+    FormControlLabel
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -74,6 +76,8 @@ const PatientForm = () => {
         chronic_conditions: '',
         emergency_contact_name: '',
         emergency_contact_phone: '',
+        has_privilege_card: false,
+        privilege_card_number: '',
     });
 
     // Services facturables state
@@ -128,6 +132,8 @@ const PatientForm = () => {
                 profession: data.profession || '',
                 emergency_contact_name: data.emergency_contact_name || '',
                 emergency_contact_phone: data.emergency_contact_phone || '',
+                has_privilege_card: data.has_privilege_card || false,
+                privilege_card_number: data.privilege_card_number || '',
             });
         } catch (error) {
             console.error('Error fetching patient:', error);
@@ -367,6 +373,28 @@ const PatientForm = () => {
                                 rows={2}
                             />
                         </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={formData.has_privilege_card || false}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, has_privilege_card: e.target.checked }))}
+                                    />
+                                }
+                                label="Carte Privilège"
+                            />
+                        </Grid>
+                        {formData.has_privilege_card && (
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Numéro de carte"
+                                    name="privilege_card_number"
+                                    value={formData.privilege_card_number || ''}
+                                    onChange={handleChange}
+                                />
+                            </Grid>
+                        )}
                     </Grid>
 
                     <Accordion

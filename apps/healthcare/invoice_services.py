@@ -83,10 +83,13 @@ class LabOrderInvoiceService:
     """Service pour créer facture commande labo"""
 
     @staticmethod
-    def generate_invoice(lab_order):
+    def generate_invoice(lab_order, privilege_card_used_by=None):
         """
         Génère facture pour commande laboratoire avec kit de prélèvement automatique
         et gestion des réductions.
+
+        privilege_card_used_by: dict optionnel {'patient': Client|None, 'name': str, 'relationship': str}
+        précisant qui a utilisé la carte privilège du patient (par défaut le titulaire).
         """
         if lab_order.lab_invoice:
             raise ValueError("Une facture existe déjà pour cette commande labo")
@@ -185,7 +188,13 @@ class LabOrderInvoiceService:
                 )
 
         # Carte privilège : réduction automatique si le patient en est titulaire
-        apply_privilege_card_discount(invoice, lab_order.patient, 'laboratory')
+        used_by = privilege_card_used_by or {}
+        apply_privilege_card_discount(
+            invoice, lab_order.patient, 'laboratory',
+            used_by_patient=used_by.get('patient'),
+            used_by_name=used_by.get('name', ''),
+            used_by_relationship=used_by.get('relationship', ''),
+        )
 
         # Recalculer totaux
         invoice.recalculate_totals()

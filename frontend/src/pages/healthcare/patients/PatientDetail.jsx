@@ -269,7 +269,16 @@ const PatientDetail = () => {
                                 </Avatar>
                                 <Box>
                                     <Typography variant="h6">{patient.name}</Typography>
-                                    <Chip label={patient.patient_number} size="small" color="primary" variant="outlined" />
+                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                                        <Chip label={patient.patient_number} size="small" color="primary" variant="outlined" />
+                                        {patient.has_privilege_card && (
+                                            <Chip
+                                                label={`Carte Privilège${patient.privilege_card_number ? ` · ${patient.privilege_card_number}` : ''}`}
+                                                size="small" color="secondary"
+                                                onClick={() => navigate(`/healthcare/patients/${patient.id}/privilege-card-usages`)}
+                                            />
+                                        )}
+                                    </Box>
                                 </Box>
                             </Box>
                             <Divider sx={{ my: 2 }} />

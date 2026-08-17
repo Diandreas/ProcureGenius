@@ -331,6 +331,21 @@ class LabOrderCreateView(APIView):
             except Prescriber.DoesNotExist:
                 pass
 
+        # Carte privilège : qui a utilisé la carte du patient (titulaire par défaut)
+        privilege_card_used_by = None
+        used_by_patient_id = data.get('privilege_card_used_by_patient_id')
+        used_by_name = data.get('privilege_card_used_by_name', '')
+        used_by_relationship = data.get('privilege_card_used_by_relationship', '')
+        if used_by_patient_id or used_by_name:
+            used_by_patient_obj = None
+            if used_by_patient_id:
+                used_by_patient_obj = Client.objects.filter(
+                    id=used_by_patient_id, organization=request.user.organization
+                ).first()
+            privilege_card_used_by = {
+                'patient': used_by_patient_obj, 'name': used_by_name, 'relationship': used_by_relationship,
+            }
+
         # Prix personnalisés du prescripteur (mode "prix libre") : le patient
         # paie ce prix, pas le tarif catalogue — voir PrescriberCustomPrice.
         prescriber_custom_prices = {}
@@ -488,7 +503,7 @@ class LabOrderCreateView(APIView):
             from apps.healthcare.invoice_services import LabOrderInvoiceService
             # Ensure we have the latest version of the order with its items
             order.refresh_from_db()
-            LabOrderInvoiceService.generate_invoice(order)
+            LabOrderInvoiceService.generate_invoice(order, privilege_card_used_by=privilege_card_used_by)
         except Exception as e:
             # Don't fail the order if invoice creation fails
             import traceback
@@ -541,7 +556,7 @@ class LabOrderCreateView(APIView):
                 imaging_order.total_price = imaging_total
                 imaging_order.save(update_fields=['total_price'])
                 imaging_order.refresh_from_db()
-                ImagingOrderInvoiceService.generate_invoice(imaging_order)
+                ImagingOrderInvoiceService.generate_invoice(imaging_order, privilege_card_used_by=privilege_card_used_by)
             except Exception as e:
                 import traceback
                 print(f"Error creating linked imaging order/invoice: {e}")

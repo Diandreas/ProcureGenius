@@ -155,6 +155,9 @@ class ImagingOrderCreateSerializer(serializers.Serializer):
     panel_ids = serializers.ListField(child=serializers.UUIDField(), required=False)
     subcontractor_id = serializers.UUIDField(required=False, allow_null=True)
     prescriber_id = serializers.UUIDField(required=False, allow_null=True)
+    privilege_card_used_by_patient_id = serializers.UUIDField(required=False, allow_null=True)
+    privilege_card_used_by_name = serializers.CharField(required=False, allow_blank=True)
+    privilege_card_used_by_relationship = serializers.CharField(required=False, allow_blank=True)
     priority = serializers.ChoiceField(choices=ImagingOrder.PRIORITY_CHOICES, default='routine')
     clinical_notes = serializers.CharField(required=False, allow_blank=True)
     payment_method = serializers.ChoiceField(

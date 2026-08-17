@@ -26,6 +26,10 @@ const ImagingOrderForm = () => {
     const [subcontractors, setSubcontractors] = useState([]);
     const [prescriberCustomTestPrices, setPrescriberCustomTestPrices] = useState({});
     const [prescriberCustomExamPrices, setPrescriberCustomExamPrices] = useState({});
+    const [privilegeCardUsedByMode, setPrivilegeCardUsedByMode] = useState('self');
+    const [privilegeCardUsedByPatient, setPrivilegeCardUsedByPatient] = useState(null);
+    const [privilegeCardUsedByName, setPrivilegeCardUsedByName] = useState('');
+    const [privilegeCardUsedByRelationship, setPrivilegeCardUsedByRelationship] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [openClientModal, setOpenClientModal] = useState(false);
@@ -303,6 +307,15 @@ const ImagingOrderForm = () => {
                 panel_ids: formData.panels.map(p => p.id),
             };
 
+            if (formData.patient.has_privilege_card) {
+                if (privilegeCardUsedByMode === 'patient' && privilegeCardUsedByPatient) {
+                    payload.privilege_card_used_by_patient_id = privilegeCardUsedByPatient.id;
+                } else if (privilegeCardUsedByMode === 'name' && privilegeCardUsedByName) {
+                    payload.privilege_card_used_by_name = privilegeCardUsedByName;
+                    payload.privilege_card_used_by_relationship = privilegeCardUsedByRelationship;
+                }
+            }
+
             const newOrder = await imagingAPI.createOrder(payload);
 
             // Si un coupon valide est saisi, l'appliquer sur la facture imagerie
@@ -381,6 +394,48 @@ const ImagingOrderForm = () => {
                                     <AddIcon />
                                 </Button>
                             </Box>
+
+                            {formData.patient?.has_privilege_card && (
+                                <Box sx={{ mt: 2 }}>
+                                    <Alert severity="success" sx={{ mb: 1 }}>
+                                        Carte Privilège active — une réduction sera appliquée automatiquement.
+                                    </Alert>
+                                    <TextField
+                                        select size="small" fullWidth
+                                        label="Carte utilisée par"
+                                        value={privilegeCardUsedByMode}
+                                        onChange={(e) => setPrivilegeCardUsedByMode(e.target.value)}
+                                    >
+                                        <MenuItem value="self">Le patient lui-même</MenuItem>
+                                        <MenuItem value="patient">Un proche enregistré comme patient</MenuItem>
+                                        <MenuItem value="name">Un proche non enregistré</MenuItem>
+                                    </TextField>
+                                    {privilegeCardUsedByMode === 'patient' && (
+                                        <Autocomplete
+                                            size="small" sx={{ mt: 1 }}
+                                            options={patients}
+                                            getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
+                                            value={privilegeCardUsedByPatient}
+                                            onChange={(_, v) => setPrivilegeCardUsedByPatient(v)}
+                                            renderInput={(params) => <TextField {...params} label="Proche (patient)" />}
+                                        />
+                                    )}
+                                    {privilegeCardUsedByMode === 'name' && (
+                                        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                                            <TextField
+                                                size="small" fullWidth label="Nom du proche"
+                                                value={privilegeCardUsedByName}
+                                                onChange={(e) => setPrivilegeCardUsedByName(e.target.value)}
+                                            />
+                                            <TextField
+                                                size="small" fullWidth label="Lien de parenté"
+                                                value={privilegeCardUsedByRelationship}
+                                                onChange={(e) => setPrivilegeCardUsedByRelationship(e.target.value)}
+                                            />
+                                        </Stack>
+                                    )}
+                                </Box>
+                            )}
                         </CardContent>
                     </Card>
 

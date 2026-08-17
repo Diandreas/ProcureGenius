@@ -678,6 +678,12 @@ class LabOrderCreateSerializer(serializers.Serializer):
     subcontractor_id = serializers.UUIDField(required=False, allow_null=True)
     prescriber_id = serializers.UUIDField(required=False, allow_null=True)
 
+    # Carte privilège : si le patient l'a, précise qui l'a utilisée (par
+    # défaut le titulaire lui-même) — un proche déjà enregistré ou un nom libre.
+    privilege_card_used_by_patient_id = serializers.UUIDField(required=False, allow_null=True)
+    privilege_card_used_by_name = serializers.CharField(required=False, allow_blank=True)
+    privilege_card_used_by_relationship = serializers.CharField(required=False, allow_blank=True)
+
     priority = serializers.ChoiceField(
         choices=LabOrder.PRIORITY_CHOICES,
         default='routine'

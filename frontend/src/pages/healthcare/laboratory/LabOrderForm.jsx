@@ -57,6 +57,10 @@ const LabOrderForm = () => {
     const [prescribers, setPrescribers] = useState([]);
     const [prescriberCustomTestPrices, setPrescriberCustomTestPrices] = useState({});
     const [prescriberCustomExamPrices, setPrescriberCustomExamPrices] = useState({});
+    const [privilegeCardUsedByMode, setPrivilegeCardUsedByMode] = useState('self');
+    const [privilegeCardUsedByPatient, setPrivilegeCardUsedByPatient] = useState(null);
+    const [privilegeCardUsedByName, setPrivilegeCardUsedByName] = useState('');
+    const [privilegeCardUsedByRelationship, setPrivilegeCardUsedByRelationship] = useState('');
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -334,6 +338,15 @@ const LabOrderForm = () => {
                 payment_method: formData.payment_method || 'cash',
             };
 
+            if (formData.patient.has_privilege_card) {
+                if (privilegeCardUsedByMode === 'patient' && privilegeCardUsedByPatient) {
+                    payload.privilege_card_used_by_patient_id = privilegeCardUsedByPatient.id;
+                } else if (privilegeCardUsedByMode === 'name' && privilegeCardUsedByName) {
+                    payload.privilege_card_used_by_name = privilegeCardUsedByName;
+                    payload.privilege_card_used_by_relationship = privilegeCardUsedByRelationship;
+                }
+            }
+
             if (formData.tests.length > 0) {
                 payload.tests_data = formData.tests.map(test => ({
                     test_id: test.id,
@@ -457,6 +470,48 @@ const LabOrderForm = () => {
                                     <Typography variant="body2"><strong>Âge:</strong> {formData.patient.age} ans</Typography>
                                     <Typography variant="body2"><strong>Sexe:</strong> {formData.patient.gender}</Typography>
                                     <Typography variant="body2" color="error"><strong>Allergies:</strong> {formData.patient.allergies || 'Aucune'}</Typography>
+                                </Box>
+                            )}
+
+                            {formData.patient?.has_privilege_card && (
+                                <Box sx={{ mt: 2 }}>
+                                    <Alert severity="success" sx={{ mb: 1 }}>
+                                        Carte Privilège active — une réduction sera appliquée automatiquement.
+                                    </Alert>
+                                    <TextField
+                                        select size="small" fullWidth
+                                        label="Carte utilisée par"
+                                        value={privilegeCardUsedByMode}
+                                        onChange={(e) => setPrivilegeCardUsedByMode(e.target.value)}
+                                    >
+                                        <MenuItem value="self">Le patient lui-même</MenuItem>
+                                        <MenuItem value="patient">Un proche enregistré comme patient</MenuItem>
+                                        <MenuItem value="name">Un proche non enregistré</MenuItem>
+                                    </TextField>
+                                    {privilegeCardUsedByMode === 'patient' && (
+                                        <Autocomplete
+                                            size="small" sx={{ mt: 1 }}
+                                            options={patients}
+                                            getOptionLabel={(option) => `${option.name} (${option.patient_number})`}
+                                            value={privilegeCardUsedByPatient}
+                                            onChange={(_, v) => setPrivilegeCardUsedByPatient(v)}
+                                            renderInput={(params) => <TextField {...params} label="Proche (patient)" />}
+                                        />
+                                    )}
+                                    {privilegeCardUsedByMode === 'name' && (
+                                        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                                            <TextField
+                                                size="small" fullWidth label="Nom du proche"
+                                                value={privilegeCardUsedByName}
+                                                onChange={(e) => setPrivilegeCardUsedByName(e.target.value)}
+                                            />
+                                            <TextField
+                                                size="small" fullWidth label="Lien de parenté"
+                                                value={privilegeCardUsedByRelationship}
+                                                onChange={(e) => setPrivilegeCardUsedByRelationship(e.target.value)}
+                                            />
+                                        </Stack>
+                                    )}
                                 </Box>
                             )}
                         </CardContent>

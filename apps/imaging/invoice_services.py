@@ -11,12 +11,13 @@ class ImagingOrderInvoiceService:
     """Service pour créer facture commande imagerie"""
 
     @staticmethod
-    def generate_invoice(imaging_order):
+    def generate_invoice(imaging_order, privilege_card_used_by=None):
         """
         Génère facture pour une commande d'imagerie.
 
         Args:
             imaging_order: Instance de ImagingOrder
+            privilege_card_used_by: dict optionnel {'patient': Client|None, 'name': str, 'relationship': str}
 
         Returns:
             Invoice: La facture créée
@@ -61,7 +62,13 @@ class ImagingOrderInvoiceService:
             )
 
         # Carte privilège : réduction automatique si le patient en est titulaire
-        apply_privilege_card_discount(invoice, imaging_order.patient, 'imaging')
+        used_by = privilege_card_used_by or {}
+        apply_privilege_card_discount(
+            invoice, imaging_order.patient, 'imaging',
+            used_by_patient=used_by.get('patient'),
+            used_by_name=used_by.get('name', ''),
+            used_by_relationship=used_by.get('relationship', ''),
+        )
 
         invoice.recalculate_totals()
 

@@ -1171,6 +1171,77 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
             </AccordionDetails>
           </Accordion>
         </Grid>
+
+        {/* Carte Privilège - Accordion */}
+        <Grid item xs={12}>
+          <Accordion defaultExpanded={false}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Receipt sx={{ mr: 1, color: 'primary.main' }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Carte Privilège</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={settings.privilegeCardEnabled ?? false}
+                        onChange={(e) => onUpdate('privilegeCardEnabled', e.target.checked)}
+                      />
+                    }
+                    label="Activer la carte privilège"
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Réduction Pharmacie (%)"
+                    type="number"
+                    value={settings.privilegeCardPharmacyDiscountPercent ?? 20}
+                    onChange={(e) => onUpdate('privilegeCardPharmacyDiscountPercent', parseFloat(e.target.value))}
+                    disabled={!settings.privilegeCardEnabled}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Réduction Laboratoire (%)"
+                    type="number"
+                    value={settings.privilegeCardLaboratoryDiscountPercent ?? 20}
+                    onChange={(e) => onUpdate('privilegeCardLaboratoryDiscountPercent', parseFloat(e.target.value))}
+                    disabled={!settings.privilegeCardEnabled}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Réduction Consultation (%)"
+                    type="number"
+                    value={settings.privilegeCardConsultationDiscountPercent ?? 20}
+                    onChange={(e) => onUpdate('privilegeCardConsultationDiscountPercent', parseFloat(e.target.value))}
+                    disabled={!settings.privilegeCardEnabled}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Réduction Imagerie (%)"
+                    type="number"
+                    value={settings.privilegeCardImagingDiscountPercent ?? 20}
+                    onChange={(e) => onUpdate('privilegeCardImagingDiscountPercent', parseFloat(e.target.value))}
+                    disabled={!settings.privilegeCardEnabled}
+                  />
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+        </Grid>
       </Grid>
     </Box>
   );
