@@ -1218,3 +1218,24 @@ class PatientMergeView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+from apps.accounts.models import PrivilegeCardUsage
+from .serializers import PrivilegeCardUsageSerializer
+
+
+class PrivilegeCardUsageListView(generics.ListAPIView):
+    """
+    GET /healthcare/patients/<patient_id>/privilege-card-usages/
+    Historique des utilisations de la carte privilège d'un patient
+    (titulaire ou proche l'ayant utilisée).
+    """
+    serializer_class = PrivilegeCardUsageSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        patient_id = self.kwargs['patient_id']
+        return PrivilegeCardUsage.objects.filter(
+            organization=self.request.user.organization,
+            card_holder_id=patient_id,
+        ).select_related('used_by_patient', 'invoice')
+

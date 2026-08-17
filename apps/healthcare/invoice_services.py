@@ -5,6 +5,7 @@ Manuel uniquement (bouton "Générer Facture")
 from decimal import Decimal
 from django.utils import timezone
 from apps.invoicing.models import Invoice, InvoiceItem, Product
+from apps.accounts.privilege_card import apply_privilege_card_discount
 
 
 class ConsultationInvoiceService:
@@ -64,6 +65,9 @@ class ConsultationInvoiceService:
             unit_price=consultation_product.price,
             total_price=consultation_product.price
         )
+
+        # Carte privilège : réduction automatique si le patient en est titulaire
+        apply_privilege_card_discount(invoice, consultation.patient, 'consultation')
 
         # Recalculer totaux
         invoice.recalculate_totals()
@@ -180,6 +184,9 @@ class LabOrderInvoiceService:
                     notes=notes
                 )
 
+        # Carte privilège : réduction automatique si le patient en est titulaire
+        apply_privilege_card_discount(invoice, lab_order.patient, 'laboratory')
+
         # Recalculer totaux
         invoice.recalculate_totals()
 
@@ -239,6 +246,10 @@ class PharmacyInvoiceService:
                 total_price=disp_item.total_price,
                 notes=f"Posologie: {disp_item.dosage_instructions}" if disp_item.dosage_instructions else None
             )
+
+        # Carte privilège : réduction automatique si le patient en est titulaire
+        if dispensing.patient:
+            apply_privilege_card_discount(invoice, dispensing.patient, 'pharmacy')
 
         # Recalculer totaux
         invoice.recalculate_totals()

@@ -3,7 +3,7 @@ Serializers for Patients app
 """
 from rest_framework import serializers
 from django.utils import timezone
-from apps.accounts.models import Client
+from apps.accounts.models import Client, PrivilegeCardUsage
 from .models import PatientVisit
 
 
@@ -47,6 +47,8 @@ class PatientSerializer(serializers.ModelSerializer):
             'whatsapp',
             'registration_source',
             'referring_hospital',
+            'has_privilege_card',
+            'privilege_card_number',
             'is_active',
             'visits_count',
             'last_visit_date',
@@ -93,6 +95,7 @@ class PatientListSerializer(serializers.ModelSerializer):
             'phone',
             'gender',
             'age',
+            'has_privilege_card',
             'is_active',
             'created_at',
         ]
@@ -436,3 +439,16 @@ class PatientFollowUpSerializer(serializers.ModelSerializer):
         if obj.provided_by:
             return obj.provided_by.get_full_name() or obj.provided_by.username
         return None
+
+
+class PrivilegeCardUsageSerializer(serializers.ModelSerializer):
+    used_by_display = serializers.CharField(read_only=True)
+    invoice_number = serializers.CharField(source='invoice.invoice_number', read_only=True, default=None)
+
+    class Meta:
+        model = PrivilegeCardUsage
+        fields = [
+            'id', 'card_holder', 'used_by_patient', 'used_by_name', 'used_by_relationship',
+            'used_by_display', 'invoice', 'invoice_number', 'module', 'discount_amount', 'used_at',
+        ]
+        read_only_fields = fields

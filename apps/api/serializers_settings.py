@@ -77,6 +77,12 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'auto_backup',
             'backup_frequency',
             'backup_retention',
+            # Carte Privilège
+            'privilege_card_enabled',
+            'privilege_card_pharmacy_discount_percent',
+            'privilege_card_laboratory_discount_percent',
+            'privilege_card_consultation_discount_percent',
+            'privilege_card_imaging_discount_percent',
             'created_at',
             'updated_at',
         ]

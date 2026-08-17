@@ -152,6 +152,28 @@ class OrganizationSettings(models.Model):
         help_text=_("Créer automatiquement un produit consommable pour chaque nouveau test de laboratoire")
     )
 
+    # Carte Privilège — réduction automatique par module pour les patients porteurs
+    privilege_card_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Activer la carte privilège"),
+    )
+    privilege_card_pharmacy_discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=20.00,
+        verbose_name=_("Réduction carte privilège — Pharmacie (%)")
+    )
+    privilege_card_laboratory_discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=20.00,
+        verbose_name=_("Réduction carte privilège — Laboratoire (%)")
+    )
+    privilege_card_consultation_discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=20.00,
+        verbose_name=_("Réduction carte privilège — Consultation (%)")
+    )
+    privilege_card_imaging_discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=20.00,
+        verbose_name=_("Réduction carte privilège — Imagerie (%)")
+    )
+
     # Taxation
     default_tax_rate = models.DecimalField(
         max_digits=5,

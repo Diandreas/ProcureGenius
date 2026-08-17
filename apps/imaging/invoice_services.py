@@ -4,6 +4,7 @@ Mirroir de LabOrderInvoiceService (apps/healthcare/invoice_services.py).
 """
 from django.utils import timezone
 from apps.invoicing.models import Invoice, InvoiceItem
+from apps.accounts.privilege_card import apply_privilege_card_discount
 
 
 class ImagingOrderInvoiceService:
@@ -58,6 +59,9 @@ class ImagingOrderInvoiceService:
                 total_price=final_price,
                 notes=notes,
             )
+
+        # Carte privilège : réduction automatique si le patient en est titulaire
+        apply_privilege_card_discount(invoice, imaging_order.patient, 'imaging')
 
         invoice.recalculate_totals()
 

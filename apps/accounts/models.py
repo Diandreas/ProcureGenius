@@ -289,7 +289,17 @@ class Client(models.Model):
         verbose_name=_("Hôpital référent"),
         help_text=_("Pour les patients externes")
     )
-    
+
+    # === Carte Privilège ===
+    has_privilege_card = models.BooleanField(
+        default=False,
+        verbose_name=_("Carte Privilège"),
+        help_text=_("Donne droit à une réduction automatique (taux configurable par module) sur les factures")
+    )
+    privilege_card_number = models.CharField(
+        max_length=50, blank=True, verbose_name=_("Numéro de carte privilège")
+    )
+
     # === Status & Activity ===
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
     last_activity_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Dernière activité"))
@@ -468,6 +478,78 @@ class Client(models.Model):
             # Sauvegarder quand même pour mettre à jour last_activity_date
             self.save(update_fields=['last_activity_date', 'updated_at'])
             return False
+
+
+class PrivilegeCardUsage(models.Model):
+    """
+    Journal d'utilisation de la carte privilège d'un patient : trace chaque
+    réduction appliquée automatiquement à une facture (labo/pharmacie/
+    consultation/imagerie), y compris quand c'est un proche du titulaire
+    qui a utilisé la carte.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='privilege_card_usages',
+        verbose_name=_("Organisation")
+    )
+    card_holder = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='privilege_card_usages',
+        verbose_name=_("Titulaire de la carte")
+    )
+    used_by_patient = models.ForeignKey(
+        Client,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='privilege_card_usages_as_relative',
+        verbose_name=_("Utilisée par (patient enregistré)"),
+        help_text=_("Si un proche enregistré comme patient a utilisé la carte")
+    )
+    used_by_name = models.CharField(
+        max_length=200, blank=True, verbose_name=_("Utilisée par (nom libre)"),
+        help_text=_("Si le proche n'est pas enregistré comme patient")
+    )
+    used_by_relationship = models.CharField(
+        max_length=100, blank=True, verbose_name=_("Lien de parenté"),
+        help_text=_("Ex: Épouse, Enfant — laisser vide si utilisée par le titulaire lui-même")
+    )
+    invoice = models.ForeignKey(
+        'invoicing.Invoice',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='privilege_card_usages',
+        verbose_name=_("Facture")
+    )
+    module = models.CharField(max_length=30, blank=True, verbose_name=_("Module"))
+    discount_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, verbose_name=_("Montant économisé")
+    )
+    used_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Utilisation carte privilège")
+        verbose_name_plural = _("Utilisations carte privilège")
+        ordering = ['-used_at']
+
+    def __str__(self):
+        user_label = self.used_by_patient.name if self.used_by_patient_id else (self.used_by_name or self.card_holder.name)
+        return f"{self.card_holder.name} — {user_label} — {self.discount_amount}"
+
+    @property
+    def used_by_display(self):
+        if self.used_by_patient_id:
+            return self.used_by_patient.name
+        if self.used_by_name:
+            label = self.used_by_name
+            if self.used_by_relationship:
+                label += f" ({self.used_by_relationship})"
+            return label
+        return self.card_holder.name
 
 
 class UserPreferences(models.Model):
