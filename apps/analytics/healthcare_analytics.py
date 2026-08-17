@@ -1739,6 +1739,7 @@ class PrescriberAnalyticsView(APIView):
             'prescriber__last_name',
             'prescriber__clinic_name',
             'prescriber__commission_rate',
+            'prescriber__pricing_mode',
         ).annotate(
             patient_count=Count('patient', distinct=True),
             orders_count=Count('id'),
@@ -1751,14 +1752,30 @@ class PrescriberAnalyticsView(APIView):
         rows = []
         for row in by_prescriber_qs:
             revenue = row['total_revenue'] or Decimal('0')
-            rate = row['prescriber__commission_rate'] or Decimal('0')
-            commission_amount = (revenue * rate / Decimal('100')).quantize(Decimal('0.01'))
+            pricing_mode = row.get('prescriber__pricing_mode') or 'commission'
             share_pct = float(revenue / grand_total * 100) if grand_total else 0
+
+            if pricing_mode == 'custom_price':
+                # Prescripteur "prix libre" : le dû n'est pas un %, c'est la somme
+                # (prix facturé au patient − prix catalogue normal) sur les tests
+                # individuels (les bilans/panels gardent leur forfait, non concernés).
+                prescriber_orders = queryset.filter(prescriber_id=row['prescriber__id'])
+                due_agg = LabOrderItem.objects.filter(
+                    lab_order__in=prescriber_orders, panel__isnull=True
+                ).aggregate(due=Sum(F('price') - F('lab_test__price')))
+                commission_amount = (due_agg['due'] or Decimal('0')).quantize(Decimal('0.01'))
+                commission_rate = None
+            else:
+                rate = row['prescriber__commission_rate'] or Decimal('0')
+                commission_amount = (revenue * rate / Decimal('100')).quantize(Decimal('0.01'))
+                commission_rate = float(row['prescriber__commission_rate'] or 0)
+
             rows.append({
                 'prescriber_id': str(row['prescriber__id']),
                 'prescriber_name': f"Dr {row['prescriber__last_name']} {row['prescriber__first_name']}",
                 'clinic_name': row['prescriber__clinic_name'],
-                'commission_rate': float(row['prescriber__commission_rate'] or 0),
+                'pricing_mode': pricing_mode,
+                'commission_rate': commission_rate,
                 'patient_count': row['patient_count'],
                 'orders_count': row['orders_count'],
                 'total_revenue': float(revenue),

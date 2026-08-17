@@ -60,6 +60,8 @@ urlpatterns = [
     # Prescribers
     path('prescribers/', api.PrescriberListCreateView.as_view(), name='prescriber-list'),
     path('prescribers/<uuid:pk>/', api.PrescriberDetailView.as_view(), name='prescriber-detail'),
+    path('prescriber-custom-prices/', api.PrescriberCustomPriceListCreateView.as_view(), name='prescriber-custom-price-list'),
+    path('prescriber-custom-prices/<uuid:pk>/', api.PrescriberCustomPriceDetailView.as_view(), name='prescriber-custom-price-detail'),
 
     # Subcontractor Labs
     path('subcontractors/', api.SubcontractorLabListCreateView.as_view(), name='subcontractor-list'),

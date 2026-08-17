@@ -17,7 +17,7 @@ from .signals import set_current_user
 
 from apps.accounts.models import Client
 from apps.patients.models import PatientVisit
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, PrescriberCustomPrice, SubcontractorLab, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable
 from .serializers import (
     LabTestCategorySerializer,
     LabTestSerializer,
@@ -31,6 +31,7 @@ from .serializers import (
     LabTestPanelSerializer,
     PrescriberSerializer,
     PrescriberListSerializer,
+    PrescriberCustomPriceSerializer,
     SubcontractorLabSerializer,
     SubcontractorLabListSerializer,
     SubcontractorPriceSerializer,
@@ -330,6 +331,15 @@ class LabOrderCreateView(APIView):
             except Prescriber.DoesNotExist:
                 pass
 
+        # Prix personnalisés du prescripteur (mode "prix libre") : le patient
+        # paie ce prix, pas le tarif catalogue — voir PrescriberCustomPrice.
+        prescriber_custom_prices = {}
+        if prescriber and prescriber.pricing_mode == 'custom_price':
+            prescriber_custom_prices = {
+                str(cp.lab_test_id): cp.custom_price
+                for cp in PrescriberCustomPrice.objects.filter(prescriber=prescriber, lab_test__isnull=False)
+            }
+
         # Get subcontractor if provided
         subcontractor = None
         subcontractor_prices = {}
@@ -429,8 +439,10 @@ class LabOrderCreateView(APIView):
                         id=item_data['test_id'],
                         organization=request.user.organization
                     )
-                    # Use subcontractor price if available, else standard price
-                    item_price = subcontractor_prices.get(str(test.id), test.price)
+                    # Priorité : prix libre prescripteur > prix sous-traitant > prix catalogue
+                    item_price = prescriber_custom_prices.get(
+                        str(test.id), subcontractor_prices.get(str(test.id), test.price)
+                    )
                     item_discount = Decimal(str(item_data.get('discount', test.discount or 0)))
 
                     LabOrderItem.objects.create(
@@ -447,8 +459,10 @@ class LabOrderCreateView(APIView):
         # Handle legacy test_ids (simple list)
         elif data.get('test_ids') and not data.get('panels_data'):
             for test in tests:
-                # Use subcontractor price if available
-                item_price = subcontractor_prices.get(str(test.id), test.price)
+                # Priorité : prix libre prescripteur > prix sous-traitant > prix catalogue
+                item_price = prescriber_custom_prices.get(
+                    str(test.id), subcontractor_prices.get(str(test.id), test.price)
+                )
                 item_discount = test.discount or 0
 
                 LabOrderItem.objects.create(
@@ -501,9 +515,16 @@ class LabOrderCreateView(APIView):
                     subcontractor=subcontractor,
                     linked_lab_order=order,
                 )
+                prescriber_custom_exam_prices = {}
+                if prescriber and prescriber.pricing_mode == 'custom_price':
+                    prescriber_custom_exam_prices = {
+                        str(cp.exam_type_id): cp.custom_price
+                        for cp in PrescriberCustomPrice.objects.filter(prescriber=prescriber, exam_type__isnull=False)
+                    }
+
                 imaging_total = Decimal('0')
                 for exam_type in individual_exam_types:
-                    item_price = exam_type.price
+                    item_price = prescriber_custom_exam_prices.get(str(exam_type.id), exam_type.price)
                     ImagingOrderItem.objects.create(
                         imaging_order=imaging_order, exam_type=exam_type,
                         price=item_price, discount=exam_type.discount or Decimal('0'),
@@ -1317,6 +1338,33 @@ class PrescriberDetailView(generics.RetrieveUpdateDestroyAPIView):
     def perform_destroy(self, instance):
         set_current_user(self.request.user)
         instance.delete()
+
+
+class PrescriberCustomPriceListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /healthcare/laboratory/prescriber-custom-prices/?prescriber=<uuid>
+    POST /healthcare/laboratory/prescriber-custom-prices/
+    """
+    serializer_class = PrescriberCustomPriceSerializer
+    permission_classes = [IsAdminOrBiologist]
+
+    def get_queryset(self):
+        qs = PrescriberCustomPrice.objects.filter(prescriber__organization=self.request.user.organization)
+        prescriber_id = self.request.query_params.get('prescriber')
+        if prescriber_id:
+            qs = qs.filter(prescriber_id=prescriber_id)
+        return qs
+
+
+class PrescriberCustomPriceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    PATCH/DELETE /healthcare/laboratory/prescriber-custom-prices/<uuid>/
+    """
+    serializer_class = PrescriberCustomPriceSerializer
+    permission_classes = [IsAdminOrBiologist]
+
+    def get_queryset(self):
+        return PrescriberCustomPrice.objects.filter(prescriber__organization=self.request.user.organization)
 
 
 # =============================================================================

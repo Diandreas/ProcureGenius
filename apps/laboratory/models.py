@@ -1392,6 +1392,21 @@ class Prescriber(models.Model):
         verbose_name=_("Taux de commission (%)"),
         help_text=_("Pourcentage appliqué sur les factures de labo")
     )
+    PRICING_MODE_CHOICES = [
+        ('commission', _('Commission (% sur le prix normal)')),
+        ('custom_price', _('Prix libre (le prescripteur fixe son propre prix)')),
+    ]
+    pricing_mode = models.CharField(
+        max_length=20,
+        choices=PRICING_MODE_CHOICES,
+        default='commission',
+        verbose_name=_("Mode de tarification"),
+        help_text=_(
+            "Commission : le patient paie le prix normal, le prescripteur touche un %. "
+            "Prix libre : le patient paie le prix fixé par le prescripteur, la clinique "
+            "garde son prix normal et reverse la différence au prescripteur."
+        )
+    )
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
     notes = models.TextField(blank=True, verbose_name=_("Notes"))
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1408,6 +1423,69 @@ class Prescriber(models.Model):
     @property
     def full_name(self):
         return f"{self.last_name} {self.first_name}"
+
+
+class PrescriberCustomPrice(models.Model):
+    """
+    Prix personnalisé fixé par un prescripteur en mode 'prix libre', pour un
+    test de labo OU un examen d'imagerie donné (exactement un des deux).
+    Ce prix est facturé au patient ; la différence avec le prix catalogue
+    normal revient au prescripteur.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    prescriber = models.ForeignKey(
+        Prescriber,
+        on_delete=models.CASCADE,
+        related_name='custom_prices',
+        verbose_name=_("Prescripteur")
+    )
+    lab_test = models.ForeignKey(
+        LabTest,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='prescriber_custom_prices',
+        verbose_name=_("Test de laboratoire")
+    )
+    exam_type = models.ForeignKey(
+        'imaging.ImagingExamType',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='prescriber_custom_prices',
+        verbose_name=_("Examen d'imagerie")
+    )
+    custom_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("Prix fixé par le prescripteur")
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Prix personnalisé prescripteur")
+        verbose_name_plural = _("Prix personnalisés prescripteur")
+        constraints = [
+            models.CheckConstraint(
+                check=(
+                    models.Q(lab_test__isnull=False, exam_type__isnull=True) |
+                    models.Q(lab_test__isnull=True, exam_type__isnull=False)
+                ),
+                name='prescriber_custom_price_exactly_one_target'
+            ),
+            models.UniqueConstraint(fields=['prescriber', 'lab_test'], name='unique_prescriber_lab_test_price'),
+            models.UniqueConstraint(fields=['prescriber', 'exam_type'], name='unique_prescriber_exam_type_price'),
+        ]
+
+    def __str__(self):
+        target = self.lab_test.name if self.lab_test_id else self.exam_type.name
+        return f"{self.prescriber.full_name} - {target} - {self.custom_price}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if bool(self.lab_test_id) == bool(self.exam_type_id):
+            raise ValidationError(_("Renseigner soit un test de laboratoire, soit un examen d'imagerie (pas les deux)."))
 
 
 class SubcontractorLab(models.Model):

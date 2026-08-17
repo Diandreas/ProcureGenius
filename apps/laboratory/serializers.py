@@ -3,7 +3,7 @@ Serializers for Laboratory (LIMS) app
 """
 from rest_framework import serializers
 from decimal import Decimal, InvalidOperation
-from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, SubcontractorLab, SubcontractorContact, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable, LabAuditLog
+from .models import LabTestCategory, LabTest, LabOrder, LabOrderItem, LabTestParameter, LabResultValue, LabTestPanel, Prescriber, PrescriberCustomPrice, SubcontractorLab, SubcontractorContact, SubcontractorPrice, SubcontractorDefaultPrice, SubcontractorPatient, LabTestConsumable, LabAuditLog
 
 
 class LabTestParameterSerializer(serializers.ModelSerializer):
@@ -383,18 +383,36 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
         return internal_data
 
 
+class PrescriberCustomPriceSerializer(serializers.ModelSerializer):
+    lab_test_name = serializers.CharField(source='lab_test.name', read_only=True)
+    exam_type_name = serializers.CharField(source='exam_type.name', read_only=True)
+
+    class Meta:
+        model = PrescriberCustomPrice
+        fields = ['id', 'prescriber', 'lab_test', 'lab_test_name', 'exam_type', 'exam_type_name', 'custom_price', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        lab_test = data.get('lab_test', getattr(self.instance, 'lab_test', None))
+        exam_type = data.get('exam_type', getattr(self.instance, 'exam_type', None))
+        if bool(lab_test) == bool(exam_type):
+            raise serializers.ValidationError("Renseigner soit un test de laboratoire, soit un examen d'imagerie (pas les deux).")
+        return data
+
+
 class PrescriberSerializer(serializers.ModelSerializer):
     """Full serializer for Prescriber (admin CRUD)"""
     full_name = serializers.CharField(read_only=True)
     orders_count = serializers.SerializerMethodField()
+    custom_prices = PrescriberCustomPriceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Prescriber
         fields = [
             'id', 'first_name', 'last_name', 'full_name', 'specialty',
             'phone', 'email', 'clinic_name', 'address',
-            'commission_rate', 'is_active', 'notes',
-            'orders_count', 'created_at', 'updated_at',
+            'pricing_mode', 'commission_rate', 'is_active', 'notes',
+            'orders_count', 'custom_prices', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -409,7 +427,7 @@ class PrescriberListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescriber
         fields = ['id', 'full_name', 'first_name', 'last_name',
-                  'specialty', 'clinic_name', 'commission_rate', 'is_active']
+                  'specialty', 'clinic_name', 'pricing_mode', 'commission_rate', 'is_active']
 
 
 class LabOrderSerializer(serializers.ModelSerializer):

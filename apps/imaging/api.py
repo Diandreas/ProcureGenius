@@ -272,6 +272,21 @@ class ImagingOrderCreateView(APIView):
                 id=data['subcontractor_id'], organization=request.user.organization, is_active=True
             ).first()
 
+        # Prix personnalisés du prescripteur (mode "prix libre") : le patient
+        # paie ce prix, pas le tarif catalogue — voir PrescriberCustomPrice.
+        from apps.laboratory.models import PrescriberCustomPrice
+        prescriber_custom_exam_prices = {}
+        prescriber_custom_test_prices = {}
+        if prescriber and prescriber.pricing_mode == 'custom_price':
+            prescriber_custom_exam_prices = {
+                str(cp.exam_type_id): cp.custom_price
+                for cp in PrescriberCustomPrice.objects.filter(prescriber=prescriber, exam_type__isnull=False)
+            }
+            prescriber_custom_test_prices = {
+                str(cp.lab_test_id): cp.custom_price
+                for cp in PrescriberCustomPrice.objects.filter(prescriber=prescriber, lab_test__isnull=False)
+            }
+
         order = None
         if exam_types or panel_imaging_entries:
             order = ImagingOrder.objects.create(
@@ -289,7 +304,7 @@ class ImagingOrderCreateView(APIView):
             total_price = Decimal('0')
             total_discount = Decimal('0')
             for exam_type in exam_types:
-                item_price = exam_type.price
+                item_price = prescriber_custom_exam_prices.get(str(exam_type.id), exam_type.price)
                 item_discount = exam_type.discount or Decimal('0')
                 ImagingOrderItem.objects.create(
                     imaging_order=order, exam_type=exam_type, price=item_price, discount=item_discount,
@@ -338,7 +353,7 @@ class ImagingOrderCreateView(APIView):
             lab_total_price = Decimal('0')
             lab_total_discount = Decimal('0')
             for test in lab_tests:
-                item_price = test.price
+                item_price = prescriber_custom_test_prices.get(str(test.id), test.price)
                 item_discount = test.discount or Decimal('0')
                 LabOrderItem.objects.create(
                     lab_order=lab_order, lab_test=test, price=item_price, discount=item_discount,
