@@ -22,6 +22,7 @@ import {
     InputAdornment,
     Tabs,
     Tab,
+    Alert,
 } from '@mui/material';
 import {
     Search as SearchIcon
@@ -54,6 +55,8 @@ const LabOrderForm = () => {
     const [tests, setTests] = useState([]);
     const [panels, setPanels] = useState([]);
     const [prescribers, setPrescribers] = useState([]);
+    const [prescriberCustomTestPrices, setPrescriberCustomTestPrices] = useState({});
+    const [prescriberCustomExamPrices, setPrescriberCustomExamPrices] = useState({});
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -116,6 +119,29 @@ const LabOrderForm = () => {
 
         initializeForm();
     }, []);
+
+    useEffect(() => {
+        const prescriber = formData.prescriber;
+        if (prescriber?.pricing_mode === 'custom_price') {
+            laboratoryAPI.getPrescriberCustomPrices(prescriber.id).then(data => {
+                const list = Array.isArray(data) ? data : data.results || [];
+                const testPrices = {};
+                const examPrices = {};
+                list.forEach(cp => {
+                    if (cp.lab_test) testPrices[cp.lab_test] = cp.custom_price;
+                    if (cp.exam_type) examPrices[cp.exam_type] = cp.custom_price;
+                });
+                setPrescriberCustomTestPrices(testPrices);
+                setPrescriberCustomExamPrices(examPrices);
+            }).catch(() => {
+                setPrescriberCustomTestPrices({});
+                setPrescriberCustomExamPrices({});
+            });
+        } else {
+            setPrescriberCustomTestPrices({});
+            setPrescriberCustomExamPrices({});
+        }
+    }, [formData.prescriber]);
 
     const fetchOptions = async () => {
         try {
@@ -205,9 +231,16 @@ const LabOrderForm = () => {
     };
 
     const getEffectivePrice = (test) => {
-        // Utilise le tarif sous-traitant si disponible, sinon le prix standard
+        // Priorité : prix libre prescripteur > tarif sous-traitant > prix standard
+        const customPrice = prescriberCustomTestPrices[test.id];
+        if (customPrice !== undefined) return parseFloat(customPrice);
         const subPrice = subcontractorPrices[test.id];
         return subPrice !== undefined ? parseFloat(subPrice) : (parseFloat(test.price) || 0);
+    };
+
+    const getEffectiveExamPrice = (exam) => {
+        const customPrice = prescriberCustomExamPrices[exam.id];
+        return customPrice !== undefined ? parseFloat(customPrice) : (parseFloat(exam.price) || 0);
     };
 
     const calculateSubtotal = () => {
@@ -220,7 +253,7 @@ const LabOrderForm = () => {
             return sum + (parseFloat(panel.net_price || panel.price) || 0);
         }, 0);
         const examTypesTotal = formData.exam_types.reduce((sum, e) => {
-            return sum + (parseFloat(e.price) || 0) - (parseFloat(e.discount) || 0);
+            return sum + getEffectiveExamPrice(e) - (parseFloat(e.discount) || 0);
         }, 0);
         return testsTotal + panelsTotal + examTypesTotal;
     };
@@ -450,6 +483,11 @@ const LabOrderForm = () => {
                                 )}
                                 isOptionEqualToValue={(a, b) => a.id === b.id}
                             />
+                            {formData.prescriber?.pricing_mode === 'custom_price' && (
+                                <Alert severity="info" sx={{ mt: 1.5 }}>
+                                    Ce prescripteur est en mode "prix libre" — ses prix personnalisés (quand définis) remplacent le tarif catalogue pour les tests/examens sélectionnés ci-dessous.
+                                </Alert>
+                            )}
 
                             {subcontractors.length > 0 && (
                                 <>

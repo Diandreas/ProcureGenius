@@ -285,6 +285,27 @@ const laboratoryAPI = {
         await api.delete(`/healthcare/laboratory/prescribers/${id}/`);
     },
 
+    // --- Prescriber custom prices ("prix libre") ---
+
+    getPrescriberCustomPrices: async (prescriberId) => {
+        const response = await api.get('/healthcare/laboratory/prescriber-custom-prices/', { params: { prescriber: prescriberId } });
+        return response.data;
+    },
+
+    createPrescriberCustomPrice: async (data) => {
+        const response = await api.post('/healthcare/laboratory/prescriber-custom-prices/', data);
+        return response.data;
+    },
+
+    updatePrescriberCustomPrice: async (id, data) => {
+        const response = await api.patch(`/healthcare/laboratory/prescriber-custom-prices/${id}/`, data);
+        return response.data;
+    },
+
+    deletePrescriberCustomPrice: async (id) => {
+        await api.delete(`/healthcare/laboratory/prescriber-custom-prices/${id}/`);
+    },
+
     // --- Subcontractor Labs ---
 
     getSubcontractors: async (params = {}) => {

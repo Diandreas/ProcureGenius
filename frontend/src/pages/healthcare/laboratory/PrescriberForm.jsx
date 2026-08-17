@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
-    Button, TextField, Grid, Switch, FormControlLabel,
+    Button, TextField, Grid, Switch, FormControlLabel, MenuItem, Divider,
     CircularProgress,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
+import PrescriberCustomPriceEditor from './PrescriberCustomPriceEditor';
 
 const emptyForm = {
     first_name: '',
@@ -15,6 +16,7 @@ const emptyForm = {
     phone: '',
     email: '',
     address: '',
+    pricing_mode: 'commission',
     commission_rate: '0.00',
     notes: '',
     is_active: true,
@@ -35,6 +37,7 @@ export default function PrescriberForm({ open, onClose, onSaved, prescriber }) {
                 phone: prescriber.phone || '',
                 email: prescriber.email || '',
                 address: prescriber.address || '',
+                pricing_mode: prescriber.pricing_mode || 'commission',
                 commission_rate: prescriber.commission_rate ?? '0.00',
                 notes: prescriber.notes || '',
                 is_active: prescriber.is_active ?? true,
@@ -158,18 +161,34 @@ export default function PrescriberForm({ open, onClose, onSaved, prescriber }) {
                         </Grid>
                         <Grid item xs={6}>
                             <TextField
-                                label="Taux de commission (%)"
-                                name="commission_rate"
-                                type="number"
-                                inputProps={{ min: 0, max: 100, step: 0.01 }}
-                                value={form.commission_rate}
+                                select
+                                label="Mode de tarification"
+                                name="pricing_mode"
+                                value={form.pricing_mode}
                                 onChange={handleChange}
                                 fullWidth
                                 size="small"
-                                helperText="% sur les factures de labo"
-                            />
+                            >
+                                <MenuItem value="commission">Commission (% sur le prix normal)</MenuItem>
+                                <MenuItem value="custom_price">Prix libre (le prescripteur fixe son prix)</MenuItem>
+                            </TextField>
                         </Grid>
-                        <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                        {form.pricing_mode === 'commission' && (
+                            <Grid item xs={6}>
+                                <TextField
+                                    label="Taux de commission (%)"
+                                    name="commission_rate"
+                                    type="number"
+                                    inputProps={{ min: 0, max: 100, step: 0.01 }}
+                                    value={form.commission_rate}
+                                    onChange={handleChange}
+                                    fullWidth
+                                    size="small"
+                                    helperText="% sur les factures de labo"
+                                />
+                            </Grid>
+                        )}
+                        <Grid item xs={form.pricing_mode === 'commission' ? 6 : 12} sx={{ display: 'flex', alignItems: 'center' }}>
                             <FormControlLabel
                                 control={
                                     <Switch
@@ -181,6 +200,19 @@ export default function PrescriberForm({ open, onClose, onSaved, prescriber }) {
                                 label="Actif"
                             />
                         </Grid>
+                        {form.pricing_mode === 'custom_price' && (
+                            <Grid item xs={12}>
+                                <Divider sx={{ my: 1 }} />
+                                {prescriber ? (
+                                    <PrescriberCustomPriceEditor prescriberId={prescriber.id} />
+                                ) : (
+                                    <TextField
+                                        disabled fullWidth size="small" value=""
+                                        helperText="Enregistre d'abord le prescripteur, puis rouvre-le pour définir ses prix personnalisés par test/examen."
+                                    />
+                                )}
+                            </Grid>
+                        )}
                         <Grid item xs={12}>
                             <TextField
                                 label="Notes"

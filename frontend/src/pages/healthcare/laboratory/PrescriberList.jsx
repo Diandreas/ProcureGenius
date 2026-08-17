@@ -141,12 +141,16 @@ export default function PrescriberList() {
                                                 <TableCell>{p.specialty || '—'}</TableCell>
                                                 <TableCell>{p.clinic_name || '—'}</TableCell>
                                                 <TableCell>
-                                                    <Chip
-                                                        label={`${p.commission_rate} %`}
-                                                        size="small"
-                                                        color="primary"
-                                                        variant="outlined"
-                                                    />
+                                                    {p.pricing_mode === 'custom_price' ? (
+                                                        <Chip label="Prix libre" size="small" color="secondary" variant="outlined" />
+                                                    ) : (
+                                                        <Chip
+                                                            label={`${p.commission_rate} %`}
+                                                            size="small"
+                                                            color="primary"
+                                                            variant="outlined"
+                                                        />
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>{p.phone || '—'}</TableCell>
                                                 <TableCell>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Box, Button, Card, CardContent, Grid, TextField, Typography,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    MenuItem, Autocomplete, Divider, Stack, Chip, InputAdornment, Tabs, Tab,
+    MenuItem, Autocomplete, Divider, Stack, Chip, InputAdornment, Tabs, Tab, Alert,
 } from '@mui/material';
 import { Search as SearchIcon, Save as SaveIcon, Add as AddIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -24,6 +24,8 @@ const ImagingOrderForm = () => {
     const [categories, setCategories] = useState([]);
     const [prescribers, setPrescribers] = useState([]);
     const [subcontractors, setSubcontractors] = useState([]);
+    const [prescriberCustomTestPrices, setPrescriberCustomTestPrices] = useState({});
+    const [prescriberCustomExamPrices, setPrescriberCustomExamPrices] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [openClientModal, setOpenClientModal] = useState(false);
@@ -103,6 +105,29 @@ const ImagingOrderForm = () => {
         initializeForm();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        const prescriber = formData.prescriber;
+        if (prescriber?.pricing_mode === 'custom_price') {
+            laboratoryAPI.getPrescriberCustomPrices(prescriber.id).then(data => {
+                const list = Array.isArray(data) ? data : data.results || [];
+                const testPrices = {};
+                const examPrices = {};
+                list.forEach(cp => {
+                    if (cp.lab_test) testPrices[cp.lab_test] = cp.custom_price;
+                    if (cp.exam_type) examPrices[cp.exam_type] = cp.custom_price;
+                });
+                setPrescriberCustomTestPrices(testPrices);
+                setPrescriberCustomExamPrices(examPrices);
+            }).catch(() => {
+                setPrescriberCustomTestPrices({});
+                setPrescriberCustomExamPrices({});
+            });
+        } else {
+            setPrescriberCustomTestPrices({});
+            setPrescriberCustomExamPrices({});
+        }
+    }, [formData.prescriber]);
 
     const fetchOptions = async () => {
         try {
@@ -185,9 +210,19 @@ const ImagingOrderForm = () => {
         }
     };
 
+    const getEffectiveExamPrice = (exam) => {
+        const customPrice = prescriberCustomExamPrices[exam.id];
+        return customPrice !== undefined ? parseFloat(customPrice) : (parseFloat(exam.price) || 0);
+    };
+
+    const getEffectiveTestPrice = (test) => {
+        const customPrice = prescriberCustomTestPrices[test.id];
+        return customPrice !== undefined ? parseFloat(customPrice) : (parseFloat(test.price) || 0);
+    };
+
     const calculateSubtotal = () => {
-        const examsTotal = formData.exam_types.reduce((sum, e) => sum + (parseFloat(e.price) || 0) - (parseFloat(e.discount) || 0), 0);
-        const labTestsTotal = formData.lab_tests.reduce((sum, t) => sum + (parseFloat(t.price) || 0) - (parseFloat(t.discount) || 0), 0);
+        const examsTotal = formData.exam_types.reduce((sum, e) => sum + getEffectiveExamPrice(e) - (parseFloat(e.discount) || 0), 0);
+        const labTestsTotal = formData.lab_tests.reduce((sum, t) => sum + getEffectiveTestPrice(t) - (parseFloat(t.discount) || 0), 0);
         const panelsTotal = formData.panels.reduce((sum, p) => sum + (parseFloat(p.net_price ?? p.price) || 0), 0);
         return examsTotal + labTestsTotal + panelsTotal;
     };
@@ -370,6 +405,11 @@ const ImagingOrderForm = () => {
                                 )}
                                 isOptionEqualToValue={(a, b) => a.id === b.id}
                             />
+                            {formData.prescriber?.pricing_mode === 'custom_price' && (
+                                <Alert severity="info" sx={{ mt: 1.5 }}>
+                                    Ce prescripteur est en mode "prix libre" — ses prix personnalisés (quand définis) remplacent le tarif catalogue pour les examens/tests sélectionnés ci-dessous.
+                                </Alert>
+                            )}
 
                             {subcontractors.length > 0 && (
                                 <>
