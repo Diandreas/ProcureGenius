@@ -13,6 +13,8 @@ import {
     LocalPharmacy as PharmacyIcon,
     Description as StandardIcon,
     CalendarToday as CalendarIcon,
+    MonitorHeart as ImagingIcon,
+    InfoOutlined as InfoIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -71,6 +73,8 @@ const RevenueAnalyticsDashboard = () => {
                 return <ConsultationIcon />;
             case 'healthcare_laboratory':
                 return <LabIcon />;
+            case 'healthcare_imaging':
+                return <ImagingIcon />;
             case 'healthcare_pharmacy':
                 return <PharmacyIcon />;
             default:
@@ -84,6 +88,8 @@ const RevenueAnalyticsDashboard = () => {
                 return theme.palette.info.main;
             case 'healthcare_laboratory':
                 return theme.palette.success.main;
+            case 'healthcare_imaging':
+                return theme.palette.secondary.main;
             case 'healthcare_pharmacy':
                 return theme.palette.warning.main;
             default:
@@ -330,12 +336,34 @@ const RevenueAnalyticsDashboard = () => {
 
                     {/* Sous-traitance info banner (sous-ensemble du CA Labo) */}
                     {data.subcontracting_info?.revenue > 0 && (
-                        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ mb: 1, p: 1.5, bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Typography variant="body2" color="info.main" fontWeight={600}>
-                                Sous-traitance Labo : {formatCurrency(data.subcontracting_info.revenue)} ({data.subcontracting_info.count} examens) — déjà incluse dans CA Laboratoire
+                                Sous-traitance Labo : {formatCurrency(data.subcontracting_info.revenue)} ({data.subcontracting_info.count} examens) — déjà incluse dans CA Laboratoire.
+                                Seuls 90% reviennent au centre, 10% sont reversés à Emmanuel et Christian.
                             </Typography>
                         </Box>
                     )}
+
+                    {/* Notes de lecture : CA affiché vs CA réellement conservé par le centre */}
+                    <Box sx={{ mb: 3, p: 1.5, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                        <Stack direction="row" alignItems="flex-start" spacing={1}>
+                            <InfoIcon fontSize="small" sx={{ color: 'text.secondary', mt: 0.25 }} />
+                            <Stack spacing={0.5}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                                    À lire : le CA ci-dessus est le montant facturé au patient, pas ce que le centre conserve net.
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    • Consultation : le centre ne retient que 2 150 FCFA par consultation, le reste part en primes au médecin.
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    • Imagerie : le centre ne conserve que 30% du CA imagerie, 15% est reversé au médecin prescripteur.
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    • Sous-traitance Labo : 10% est reversé à Emmanuel et Christian (voir encart ci-dessus).
+                                </Typography>
+                            </Stack>
+                        </Stack>
+                    </Box>
 
                     {/* Activity Breakdown */}
                     <Grid container spacing={3} sx={{ mb: 3 }}>
