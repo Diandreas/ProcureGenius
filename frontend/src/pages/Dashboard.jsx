@@ -59,11 +59,20 @@ const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 const ACTIVITY_LABELS = {
   healthcare_consultation: 'Consultation',
   healthcare_laboratory: 'Laboratoire',
+  healthcare_imaging: 'Imagerie médicale',
   healthcare_pharmacy: 'Pharmacie & Médicaments',
   healthcare_services: 'Soins / Chirurgie / Hosp.',
   standard: 'Pharmacie & Médicaments',
   subcontracting: 'Sous-traitance Labo',
 };
+
+// Quote-part réellement conservée par le centre — le CA affiché est le montant
+// facturé au patient, pas ce qui reste net après reversement aux médecins/partenaires.
+const CONSULTATION_NET_PER_UNIT = 2150; // FCFA retenus par le centre, par consultation (reste = primes médecin)
+const IMAGING_CENTER_SHARE = 0.30; // 30% pour le centre
+const IMAGING_DOCTOR_SHARE = 0.15; // 15% reversés au médecin prescripteur
+const SUBCONTRACT_CENTER_SHARE = 0.90; // 90% pour le centre
+const SUBCONTRACT_PARTNER_SHARE = 0.10; // 10% reversés à Emmanuel et Christian
 const getActivityLabel = (type) => ACTIVITY_LABELS[type] || `Autres (${type || 'non défini'})`;
 
 const QuickLink = ({ title, description, icon, color, to, navigate }) => (
@@ -193,7 +202,17 @@ const Dashboard = () => {
   const pharmacyRevenue = (byActivity.find(a => a.activity_type === 'healthcare_pharmacy')?.revenue || 0)
     + (byActivity.find(a => a.activity_type === 'standard')?.revenue || 0);
   const labRevenue = byActivity.find(a => a.activity_type === 'healthcare_laboratory')?.revenue || 0;
+  const imagingRevenue = byActivity.find(a => a.activity_type === 'healthcare_imaging')?.revenue || 0;
   const servicesRevenue = byActivity.find(a => a.activity_type === 'healthcare_services')?.revenue || 0;
+
+  // CA facturé vs part réellement conservée par le centre
+  const consultationRevenue = byActivity.find(a => a.activity_type === 'healthcare_consultation')?.revenue || 0;
+  const consultationCount = byActivity.find(a => a.activity_type === 'healthcare_consultation')?.count || 0;
+  const consultationNetRevenue = consultationCount * CONSULTATION_NET_PER_UNIT;
+  const imagingCenterNet = imagingRevenue * IMAGING_CENTER_SHARE;
+  const imagingDoctorShare = imagingRevenue * IMAGING_DOCTOR_SHARE;
+  const subcontractCenterNet = (subcontractingInfo.revenue || 0) * SUBCONTRACT_CENTER_SHARE;
+  const subcontractPartnerShare = (subcontractingInfo.revenue || 0) * SUBCONTRACT_PARTNER_SHARE;
 
   // Soins par catégorie
   const allServicesCategories = servicesData?.by_category || [];
@@ -332,10 +351,16 @@ const Dashboard = () => {
                   subtitle="Inclus dans CA Labo" />
               </Grid>
               <Grid item xs={6} sm={6} md={3}>
+                <StatCard title="CA Imagerie médicale"
+                  value={loading ? '...' : formatCurrency(imagingRevenue)}
+                  icon={<BiotechIcon />} color="#8b5cf6" loading={loading}
+                  subtitle={loading ? '' : `Net centre (30%) : ${formatCurrency(imagingCenterNet)} · Médecin (15%) : ${formatCurrency(imagingDoctorShare)}`} />
+              </Grid>
+              <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Sous-traitance Labo"
                   value={loading ? '...' : formatCurrency(financial.subcontract_revenue)}
                   icon={<ShippingIcon />} color="#8b5cf6" loading={loading}
-                  subtitle={`${financial.subcontract_count ?? 0} examens envoyés`} />
+                  subtitle={`${financial.subcontract_count ?? 0} examens envoyés · Net centre (90%) : ${formatCurrency((financial.subcontract_revenue || 0) * SUBCONTRACT_CENTER_SHARE)}`} />
               </Grid>
             </Grid>
 
@@ -442,8 +467,9 @@ const Dashboard = () => {
               </Grid>
               <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="CA Consultations"
-                  value={loading ? '...' : formatCurrency(byActivity.find(a => a.activity_type === 'healthcare_consultation')?.revenue)}
-                  icon={<MedicalIcon />} color="#8b5cf6" loading={loading} />
+                  value={loading ? '...' : formatCurrency(consultationRevenue)}
+                  icon={<MedicalIcon />} color="#8b5cf6" loading={loading}
+                  subtitle={loading ? '' : `Net centre : ${formatCurrency(consultationNetRevenue)} (${CONSULTATION_NET_PER_UNIT} F/consultation, reste = primes médecin)`} />
               </Grid>
             </Grid>
             {/* KPI cards — ligne 1bis : CA Jour / Nuit */}
@@ -467,11 +493,17 @@ const Dashboard = () => {
               </Grid>
             </Grid>
             {/* KPI cards — ligne 2 : détail par flux */}
-            <Grid container spacing={2} mb={3}>
+            <Grid container spacing={2} mb={2}>
               <Grid item xs={6} md={3}>
                 <StatCard title="CA Laboratoire"
                   value={loading ? '...' : formatCurrency(labRevenue)}
                   icon={<ScienceIcon />} color="#ef4444" loading={loading} />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <StatCard title="CA Imagerie médicale"
+                  value={loading ? '...' : formatCurrency(imagingRevenue)}
+                  icon={<BiotechIcon />} color="#8b5cf6" loading={loading}
+                  subtitle={loading ? '' : `Net centre (30%) : ${formatCurrency(imagingCenterNet)} · Médecin (15%) : ${formatCurrency(imagingDoctorShare)}`} />
               </Grid>
               <Grid item xs={6} md={3}>
                 <StatCard title="CA Pharmacie & Médicaments"
@@ -485,11 +517,13 @@ const Dashboard = () => {
                   icon={<PharmacyIcon />} color="#059669" loading={loading}
                   subtitle="Vente comptoir pure, sans autre acte" />
               </Grid>
-              <Grid item xs={6} md={3}>
+            </Grid>
+            <Grid container spacing={2} mb={3}>
+              <Grid item xs={12}>
                 <StatCard title="Sous-traitance Labo"
                   value={loading ? '...' : formatCurrency(subcontractingInfo.revenue)}
                   icon={<ShippingIcon />} color="#6366f1" loading={loading}
-                  subtitle={`${subcontractingInfo.count ?? 0} examens · inclus dans CA Labo`} />
+                  subtitle={loading ? '' : `${subcontractingInfo.count ?? 0} examens · inclus dans CA Labo · Net centre (90%) : ${formatCurrency(subcontractCenterNet)} · Emmanuel/Christian (10%) : ${formatCurrency(subcontractPartnerShare)}`} />
               </Grid>
             </Grid>
 
