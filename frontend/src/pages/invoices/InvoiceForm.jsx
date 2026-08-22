@@ -51,6 +51,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import api, { invoicesAPI, clientsAPI, productsAPI } from '../../services/api';
+import { settingsAPI } from '../../services/settingsAPI';
 import { buildInvoiceGroup, enqueueGroup } from '../../db/offlineDb';
 import { isOfflineError } from '../../services/syncEngine';
 import { formatDate } from '../../utils/formatters';
@@ -101,6 +102,7 @@ function InvoiceForm() {
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
   const [items, setItems] = useState([]);
+  const [privilegeCardSettings, setPrivilegeCardSettings] = useState({ enabled: false, pharmacyDiscountPercent: 0 });
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -159,6 +161,12 @@ function InvoiceForm() {
   useEffect(() => {
     fetchClients();
     fetchProducts();
+    settingsAPI.getAll().then(res => {
+      setPrivilegeCardSettings({
+        enabled: !!res.data.privilegeCardEnabled,
+        pharmacyDiscountPercent: parseFloat(res.data.privilegeCardPharmacyDiscountPercent) || 0,
+      });
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -267,11 +275,26 @@ function InvoiceForm() {
     return isSurcharge ? -magnitude : magnitude;
   };
 
+  // Carte Privilège : uniquement sur les produits de catégorie "Médicaments"
+  // (miroir de is_medication_item côté backend, apps/accounts/privilege_card.py).
+  const MEDICATION_CATEGORY_NAMES = ['medicaments', 'médicaments', 'medicament', 'médicament'];
+  const isMedicationItem = (item) => MEDICATION_CATEGORY_NAMES.includes(
+    (item.product?.category_name || '').trim().toLowerCase()
+  );
+
+  const privilegeCardDiscount = () => {
+    if (!privilegeCardSettings.enabled || !formData.client?.has_privilege_card) return 0;
+    const medicationTotal = items.reduce((sum, item) => (
+      isMedicationItem(item) ? sum + (item.total_price || 0) : sum
+    ), 0);
+    return Math.round(medicationTotal * privilegeCardSettings.pharmacyDiscountPercent) / 100;
+  };
+
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
     const taxAmount = calculateTaxAmount();
     const discount = calculateDiscountAmount();
-    const total = subtotal + taxAmount - discount;
+    const total = subtotal + taxAmount - discount - privilegeCardDiscount();
     return isNaN(total) ? 0 : Math.max(total, 0);
   };
 
@@ -548,6 +571,13 @@ function InvoiceForm() {
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
               {item.description}
             </Typography>
+            {formData.client?.has_privilege_card && item.product && (
+              isMedicationItem(item) ? (
+                <Chip size="small" color="success" label="Médicament — carte privilège" sx={{ height: 16, fontSize: '0.6rem', mt: 0.5 }} />
+              ) : (
+                <Chip size="small" label={`Non éligible (${item.product.category_name || 'sans catégorie'})`} sx={{ height: 16, fontSize: '0.6rem', mt: 0.5 }} />
+              )
+            )}
           </Box>
           <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
             {formatCurrency(item.total_price)}
@@ -774,6 +804,11 @@ function InvoiceForm() {
                       </Typography>
                     </Box>
                   )}
+                  {formData.client?.has_privilege_card && (
+                    <Alert severity="success" sx={{ mt: 1.5, fontSize: '0.8rem' }}>
+                      Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur les médicaments de la facture.
+                    </Alert>
+                  )}
                 </CardContent>
               </Card>
 
@@ -894,6 +929,18 @@ function InvoiceForm() {
                           </Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                             Remise
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
+                    {privilegeCardDiscount() > 0 && (
+                      <Grid item xs={6}>
+                        <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'success.50', borderRadius: 1 }}>
+                          <Typography variant="h6" color="success.main" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                            -{formatCurrency(privilegeCardDiscount())}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                            Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}% médicaments)
                           </Typography>
                         </Box>
                       </Grid>
@@ -1026,7 +1073,16 @@ function InvoiceForm() {
                           {items.map((item, index) => (
                             <TableRow key={index} hover>
                               <TableCell>{item.product_reference || '-'}</TableCell>
-                              <TableCell>{item.description}</TableCell>
+                              <TableCell>
+                                {item.description}
+                                {formData.client?.has_privilege_card && item.product && (
+                                  isMedicationItem(item) ? (
+                                    <Chip size="small" color="success" label="Médicament — carte privilège" sx={{ height: 18, fontSize: '0.65rem', ml: 1 }} />
+                                  ) : (
+                                    <Chip size="small" label={`Non éligible (${item.product.category_name || 'sans catégorie'})`} sx={{ height: 18, fontSize: '0.65rem', ml: 1 }} />
+                                  )
+                                )}
+                              </TableCell>
                               <TableCell>
                                 {item.batch ? (
                                   <Box>
@@ -1166,6 +1222,18 @@ function InvoiceForm() {
                           </Box>
                         </Grid>
                       )}
+                      {privilegeCardDiscount() > 0 && (
+                        <Grid item xs={12} sm={4}>
+                          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
+                            <Typography variant="h5" color="success.main" sx={{ fontWeight: 600 }}>
+                              -{formatCurrency(privilegeCardDiscount())}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}% médicaments)
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      )}
                       <Grid item xs={12} sm={4}>
                         <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
                           <Typography variant="h5" color="success.main" sx={{ fontWeight: 600 }}>
@@ -1258,6 +1326,11 @@ function InvoiceForm() {
                           </Typography>
                         )}
                       </Box>
+                    )}
+                    {formData.client?.has_privilege_card && (
+                      <Alert severity="success" sx={{ mt: 2 }}>
+                        Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur les médicaments de la facture.
+                      </Alert>
                     )}
                   </CardContent>
                 </Card>

@@ -39,6 +39,14 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
     À appeler après création des InvoiceItem et AVANT invoice.recalculate_totals().
     Retourne l'objet PrivilegeCardUsage créé, ou None si rien n'a été appliqué.
     """
+    from apps.accounts.models import PrivilegeCardUsage
+
+    # Idempotent : une facture généraliste (page de création de facture) peut être
+    # éditée plusieurs fois — les items sont recréés à chaque édition, donc on
+    # repart toujours d'un journal d'usage propre pour cette facture avant de
+    # ré-appliquer la réduction, plutôt que de l'empiler ou de la dupliquer.
+    PrivilegeCardUsage.objects.filter(invoice=invoice).delete()
+
     if not patient or not getattr(patient, 'has_privilege_card', False):
         return None
 
@@ -70,7 +78,6 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
     if total_discount <= 0:
         return None
 
-    from apps.accounts.models import PrivilegeCardUsage
     return PrivilegeCardUsage.objects.create(
         organization=patient.organization,
         card_holder=patient,

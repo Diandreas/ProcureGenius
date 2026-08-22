@@ -151,6 +151,10 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         required=False,
         allow_null=True
     )
+    category_name = serializers.SerializerMethodField()
+
+    def get_category_name(self, obj):
+        return obj.category.name if obj.category else None
 
     # Statistiques
     total_invoices = serializers.SerializerMethodField()
@@ -180,7 +184,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         model = Product
         fields = [
             'id', 'name', 'reference', 'description', 'barcode',
-            'product_type', 'source_type', 'category', 'supplier', 'supplier_name',
+            'product_type', 'source_type', 'category', 'category_name', 'supplier', 'supplier_name',
             'warehouse', 'warehouse_name', 'warehouse_code', 'warehouse_location',
             'price', 'cost_price', 'operating_cost', 'price_editable', 'discount_exempt', 'margin', 'margin_percent',
             'stock_quantity', 'low_stock_threshold', 'stock_status',
@@ -198,7 +202,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
             'stock_status', 'is_low_stock', 'is_out_of_stock', 'is_expired', 'days_until_expiration',
-            'warehouse_name', 'warehouse_code', 'warehouse_location',
+            'warehouse_name', 'warehouse_code', 'warehouse_location', 'category_name',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count',
             'prev_product_id', 'next_product_id'
@@ -372,6 +376,7 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'email', 'phone', 'address',
             'contact_person', 'tax_id', 'payment_terms', 'is_active',
+            'has_privilege_card', 'privilege_card_number',
             'total_invoices', 'total_sales_amount', 'total_paid_amount',
             'total_outstanding', 'last_invoice_date',
             'last_activity_date', 'auto_inactive_since', 'is_manually_active',
@@ -733,6 +738,13 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         for item_data in items_data:
             InvoiceItem.objects.create(invoice=invoice, **item_data)
 
+        # Carte privilège : réduction automatique si le client en est titulaire —
+        # uniquement sur les produits de catégorie "Médicaments" (les factures
+        # génériques peuvent contenir n'importe quel produit, pas que des médicaments).
+        if invoice.client_id:
+            from apps.accounts.privilege_card import apply_privilege_card_discount, is_medication_item
+            apply_privilege_card_discount(invoice, invoice.client, 'pharmacy', item_filter=is_medication_item)
+
         # Recalculer les totaux
         invoice.recalculate_totals()
 
@@ -830,6 +842,13 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
                                 batch_ref.quantity_remaining -= diff
                                 batch_ref.save(update_fields=['quantity_remaining'])
                                 batch_ref.update_status()
+
+                # Carte privilège : réappliquée à chaque édition puisque les items
+                # viennent d'être recréés à neuf (voir apply_privilege_card_discount,
+                # idempotent — remplace le journal d'usage existant pour cette facture).
+                if instance.client_id:
+                    from apps.accounts.privilege_card import apply_privilege_card_discount, is_medication_item
+                    apply_privilege_card_discount(instance, instance.client, 'pharmacy', item_filter=is_medication_item)
 
                 # Recalculer les totaux une seule fois à la fin
                 instance.recalculate_totals()
