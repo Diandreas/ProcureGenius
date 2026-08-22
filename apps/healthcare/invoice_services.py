@@ -5,7 +5,7 @@ Manuel uniquement (bouton "Générer Facture")
 from decimal import Decimal
 from django.utils import timezone
 from apps.invoicing.models import Invoice, InvoiceItem, Product
-from apps.accounts.privilege_card import apply_privilege_card_discount
+from apps.accounts.privilege_card import apply_privilege_card_discount, is_medication_item
 
 
 class ConsultationInvoiceService:
@@ -258,9 +258,14 @@ class PharmacyInvoiceService:
                 notes=f"Posologie: {disp_item.dosage_instructions}" if disp_item.dosage_instructions else None
             )
 
-        # Carte privilège : réduction automatique si le patient en est titulaire
+        # Carte privilège : réduction automatique si le patient en est titulaire —
+        # uniquement sur les produits de catégorie "Médicaments" (le stock pharmacie
+        # contient aussi des consommables/matériel qui ne sont pas des médicaments).
         if dispensing.patient:
-            apply_privilege_card_discount(invoice, dispensing.patient, 'pharmacy')
+            apply_privilege_card_discount(
+                invoice, dispensing.patient, 'pharmacy',
+                item_filter=is_medication_item,
+            )
 
         # Recalculer totaux
         invoice.recalculate_totals()

@@ -17,7 +17,9 @@ import {
     MenuItem,
     Autocomplete,
     Divider,
-    Stack
+    Stack,
+    Alert,
+    Chip,
 } from '@mui/material';
 import {
     Save as SaveIcon,
@@ -31,7 +33,15 @@ import { useSnackbar } from 'notistack';
 import pharmacyAPI from '../../../services/pharmacyAPI';
 import patientAPI from '../../../services/patientAPI';
 import batchAPI from '../../../services/batchAPI';
+import { settingsAPI } from '../../../services/settingsAPI';
 import dayjs from 'dayjs';
+
+// Reflète MEDICATION_CATEGORY_NAMES côté backend (apps/accounts/privilege_card.py) —
+// seuls les produits de cette catégorie donnent droit à la réduction carte privilège.
+const MEDICATION_CATEGORY_NAMES = ['medicaments', 'médicaments', 'medicament', 'médicament'];
+const isMedicationItem = (item) => MEDICATION_CATEGORY_NAMES.includes(
+    (item.medication?.category_name || '').trim().toLowerCase()
+);
 
 const DispensingForm = () => {
     const { t } = useTranslation();
@@ -43,6 +53,7 @@ const DispensingForm = () => {
     const [patients, setPatients] = useState([]);
     const [medications, setMedications] = useState([]);
     const [medicationBatches, setMedicationBatches] = useState({}); // { medicationId: [batches] }
+    const [privilegeCardSettings, setPrivilegeCardSettings] = useState({ enabled: false, pharmacyDiscountPercent: 0 });
 
     const [formData, setFormData] = useState({
         patient: null,
@@ -61,7 +72,7 @@ const DispensingForm = () => {
                     const patientData = await patientAPI.getPatient(preselectedPatientId);
                     setFormData(prev => ({
                         ...prev,
-                        patient: { id: patientData.id, name: patientData.name }
+                        patient: patientData
                     }));
                 } catch (error) {
                     console.error('Error loading preselected patient:', error);
@@ -80,6 +91,13 @@ const DispensingForm = () => {
             ]);
             setPatients(patData.results || []);
             setMedications(medData.results || []);
+
+            settingsAPI.getAll().then(res => {
+                setPrivilegeCardSettings({
+                    enabled: !!res.data.privilegeCardEnabled,
+                    pharmacyDiscountPercent: parseFloat(res.data.privilegeCardPharmacyDiscountPercent) || 0,
+                });
+            }).catch(() => {});
         } catch (error) {
             console.error('Error fetching options:', error);
         }
@@ -147,12 +165,29 @@ const DispensingForm = () => {
         setFormData(prev => ({ ...prev, items: newItems }));
     };
 
-    const calculateTotal = () => {
+    const calculateSubtotal = () => {
         return formData.items.reduce((sum, item) => {
             const quantity = parseFloat(item.quantity) || 0;
             const price = parseFloat(item.price) || 0;
             return sum + (quantity * price);
         }, 0);
+    };
+
+    // Carte Privilège : uniquement sur les articles de catégorie "Médicaments"
+    // (miroir de is_medication_item côté backend, apps/accounts/privilege_card.py).
+    const privilegeCardDiscount = () => {
+        if (!privilegeCardSettings.enabled || !formData.patient?.has_privilege_card) return 0;
+        const medicationTotal = formData.items.reduce((sum, item) => {
+            if (!isMedicationItem(item)) return sum;
+            const quantity = parseFloat(item.quantity) || 0;
+            const price = parseFloat(item.price) || 0;
+            return sum + (quantity * price);
+        }, 0);
+        return Math.round(medicationTotal * privilegeCardSettings.pharmacyDiscountPercent) / 100;
+    };
+
+    const calculateTotal = () => {
+        return Math.max(0, calculateSubtotal() - privilegeCardDiscount());
     };
 
     const handleSubmit = async () => {
@@ -246,6 +281,12 @@ const DispensingForm = () => {
                                     <Typography variant="body2" color="error"><strong>Allergies:</strong> {formData.patient.allergies || 'Aucune'}</Typography>
                                 </Box>
                             )}
+
+                            {formData.patient?.has_privilege_card && (
+                                <Alert severity="success" sx={{ mt: 2 }}>
+                                    Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur les médicaments (n'affecte pas les consommables/matériel).
+                                </Alert>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -256,6 +297,20 @@ const DispensingForm = () => {
                                 <Typography>Total Articles:</Typography>
                                 <Typography fontWeight="bold">{formData.items.length}</Typography>
                             </Box>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography>Sous-total:</Typography>
+                                <Typography fontWeight="bold">{new Intl.NumberFormat('fr-FR').format(calculateSubtotal())} XAF</Typography>
+                            </Box>
+                            {privilegeCardDiscount() > 0 && (
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography variant="body2" color="success.main">
+                                        Réduction Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}% sur médicaments) :
+                                    </Typography>
+                                    <Typography variant="body2" color="success.main" fontWeight="bold">
+                                        −{new Intl.NumberFormat('fr-FR').format(privilegeCardDiscount())} XAF
+                                    </Typography>
+                                </Box>
+                            )}
                             <Divider sx={{ my: 1 }} />
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                                 <Typography variant="h5">Total à Payer:</Typography>
@@ -309,6 +364,13 @@ const DispensingForm = () => {
                                                         renderInput={(params) => <TextField {...params} placeholder="Choisir..." size="small" />}
                                                         disableClearable
                                                     />
+                                                    {formData.patient?.has_privilege_card && item.medication && (
+                                                        isMedicationItem(item) ? (
+                                                            <Chip size="small" color="success" label="Médicament — carte privilège applicable" sx={{ mt: 0.5, fontSize: '0.65rem' }} />
+                                                        ) : (
+                                                            <Chip size="small" color="default" label={`Non éligible (${item.medication.category_name || 'sans catégorie'})`} sx={{ mt: 0.5, fontSize: '0.65rem' }} />
+                                                        )
+                                                    )}
                                                 </TableCell>
                                                 <TableCell>
                                                     {item.medication ? (

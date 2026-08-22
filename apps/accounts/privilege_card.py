@@ -12,6 +12,20 @@ MODULE_DISCOUNT_FIELDS = {
     'consultation': 'privilege_card_consultation_discount_percent',
 }
 
+# Noms de catégorie de produit considérés comme "médicament" pour la réduction
+# carte privilège pharmacie — le stock pharmacie mélange médicaments et autres
+# produits physiques (consommables labo, matériel médical, etc.), la réduction
+# de 15% ne doit porter que sur les vrais médicaments.
+MEDICATION_CATEGORY_NAMES = {'medicaments', 'médicaments', 'medicament', 'médicament'}
+
+
+def is_medication_item(invoice_item):
+    """True si la ligne de facture correspond à un produit de catégorie 'Médicaments'."""
+    product = invoice_item.product
+    if not product or not product.category_id:
+        return False
+    return product.category.name.strip().lower() in MEDICATION_CATEGORY_NAMES
+
 
 def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None, used_by_name='', used_by_relationship='', item_filter=None):
     """
