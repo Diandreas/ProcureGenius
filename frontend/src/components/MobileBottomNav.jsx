@@ -1,10 +1,19 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { BottomNavigation, Paper, Box, useTheme, alpha, Badge } from '@mui/material';
+import {
+  BottomNavigation, Paper, Box, useTheme, alpha,
+  SwipeableDrawer, List, ListItemButton, ListItemIcon, ListItemText, Typography,
+} from '@mui/material';
+import { MoreHoriz as MoreIcon } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { aiChatAPI } from '../services/api';
 import IconImage from './IconImage';
 import { SafeBottomNavigationAction } from './safe';
+
+// Nombre max d'icônes affichées directement dans la barre — au-delà, le reste
+// part dans le tiroir "Plus" pour ne jamais surcharger l'écran (ex: profil admin
+// avec beaucoup de modules activés).
+const MAX_VISIBLE_ITEMS = 4;
 
 function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const { t } = useTranslation(['navigation']);
@@ -13,6 +22,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [notificationsCount, setNotificationsCount] = useState(0);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   // Pages où cacher la tab bar pour une meilleure UX
   const shouldHideTabBar = () => {
@@ -96,18 +106,18 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     return enabledModules.includes(item.moduleId);
   });
 
-  const halfLength = Math.ceil(navigationItems.length / 2);
-  const leftItems = navigationItems.slice(0, halfLength);
-  const rightItems = navigationItems.slice(halfLength);
+  const visibleItems = navigationItems.slice(0, MAX_VISIBLE_ITEMS);
+  const overflowItems = navigationItems.slice(MAX_VISIBLE_ITEMS);
+  const hasOverflow = overflowItems.length > 0;
 
   const currentPath = location.pathname.startsWith(aiItem.value)
     ? aiItem.value
     : navigationItems.find(item => location.pathname.startsWith(item.value))?.value || '/dashboard';
 
-  const isAIActive = location.pathname.startsWith(aiItem.value);
+  const isOverflowActive = hasOverflow && overflowItems.some(item => location.pathname.startsWith(item.value));
 
   // Icon wrapper component avec neumorphisme doux
-  const NavIcon = ({ src, alt, isSelected }) => (
+  const NavIcon = ({ src, alt, isSelected, customIcon }) => (
     <Box
       component="span"
       sx={{
@@ -128,23 +138,26 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
         justifyContent: 'center',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+        color: isSelected ? 'primary.main' : 'text.secondary',
         '&:hover': {
           transform: 'scale(1.08)',
         }
       }}
     >
-      <Box
-        component="img"
-        src={src}
-        alt={alt}
-        sx={{
-          width: 22,
-          height: 22,
-          objectFit: 'contain',
-          filter: isSelected ? 'brightness(1.2)' : 'none',
-          transition: 'filter 0.3s ease',
-        }}
-      />
+      {customIcon || (
+        <Box
+          component="img"
+          src={src}
+          alt={alt}
+          sx={{
+            width: 22,
+            height: 22,
+            objectFit: 'contain',
+            filter: isSelected ? 'brightness(1.2)' : 'none',
+            transition: 'filter 0.3s ease',
+          }}
+        />
+      )}
     </Box>
   );
 
@@ -189,191 +202,95 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
         maxWidth: 500,
         mx: 'auto',
       }}>
-        {/* Items de gauche */}
-        <Box sx={{ display: 'flex', flex: 1 }}>
-          <BottomNavigation
-            value={currentPath}
-            onChange={(_event, newValue) => navigate(newValue)}
-            showLabels
-            sx={{
-              backgroundColor: 'transparent',
-              width: '100%',
-              height: 'auto',
-              '& .MuiBottomNavigationAction-root': {
-                minWidth: 'auto',
-                padding: '4px 2px',
-                color: 'text.secondary',
-                transition: 'all 0.2s ease',
-                '&.Mui-selected': {
-                  color: 'primary.main',
-                },
-              },
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.625rem',
-                marginTop: '2px',
-                opacity: 0.8,
-                '&.Mui-selected': {
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  opacity: 1,
-                },
-              },
-            }}
-          >
-            {/* Show all items via the left/right logic, but maybe we should just render them all here if we remove the center button? 
-                Actually, the original logic splits items into left and right. 
-                If I remove the center button, I should probably merge them or just hide the center button and keep the gap?
-                Let's just hide the center button for now. 
-            */}
-            {navigationItems.map((item) => {
-              const isSelected = currentPath === item.value;
-              return (
-                <SafeBottomNavigationAction
-                  key={item.value}
-                  label={item.label || ''}
-                  value={item.value}
-                  icon={<NavIcon src={item.icon} alt={item.label || ''} isSelected={isSelected} />}
-                  data-tutorial={`menu-${item.moduleId}`}
-                />
-              );
-            })}
-          </BottomNavigation>
-        </Box>
-
-        {/* IA au centre avec design neumorphique élégant - HIDDEN */}
-        {/* <Box
-          sx={{
-            mx: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            cursor: 'pointer',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:active': { transform: 'scale(0.92)' },
+        <BottomNavigation
+          value={isOverflowActive ? '__more__' : currentPath}
+          onChange={(_event, newValue) => {
+            if (newValue === '__more__') {
+              setMoreMenuOpen(true);
+            } else {
+              navigate(newValue);
+            }
           }}
-          onClick={() => navigate(aiItem.value)}
-          data-tutorial="ai-button"
-        >
-          <Badge
-            badgeContent={notificationsCount}
-            color="error"
-            max={9}
-            overlap="circular"
-            sx={{
-              '& .MuiBadge-badge': {
-                fontSize: '0.625rem',
-                height: 18,
-                minWidth: 18,
-                padding: '0 4px',
-                fontWeight: 700,
-                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+          showLabels
+          sx={{
+            backgroundColor: 'transparent',
+            width: '100%',
+            height: 'auto',
+            '& .MuiBottomNavigationAction-root': {
+              minWidth: 'auto',
+              padding: '4px 2px',
+              color: 'text.secondary',
+              transition: 'all 0.2s ease',
+              '&.Mui-selected': {
+                color: 'primary.main',
               },
-            }}
-          >
-            <Box
-              sx={{
-                width: 52,
-                height: 52,
-                borderRadius: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: isAIActive
-                  ? 'primary.main'
-                  : (isDark ? bgColor : theme.palette.background.paper),
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                // Ombres neumorphiques douces pour le bouton IA central
-                boxShadow: isAIActive
-                  ? `0 6px 20px ${alpha(theme.palette.primary.main, 0.45)}, 0 2px 8px ${alpha(theme.palette.primary.main, 0.3)}`
-                  : (isDark
-                    ? '4px 4px 10px rgba(0,0,0,0.5), -3px -3px 10px rgba(255,255,255,0.08)'
-                    : '5px 5px 12px rgba(0,0,0,0.1), -3px -3px 10px rgba(255,255,255,1)'),
-                transform: isAIActive ? 'translateY(-6px) scale(1.05)' : 'translateY(0)',
-                '&:hover': {
-                  transform: isAIActive ? 'translateY(-7px) scale(1.08)' : 'translateY(-2px) scale(1.03)',
-                  boxShadow: isAIActive
-                    ? `0 8px 24px ${alpha(theme.palette.primary.main, 0.5)}`
-                    : (isDark
-                      ? '6px 6px 14px rgba(0,0,0,0.6), -4px -4px 12px rgba(255,255,255,0.1)'
-                      : '6px 6px 16px rgba(0,0,0,0.12), -4px -4px 12px rgba(255,255,255,1)'),
-                }
-              }}
-            >
-              <Box
-                component="img"
-                src={aiItem.icon}
-                alt="Assistant IA"
-                sx={{
-                  width: 28,
-                  height: 28,
-                  objectFit: 'contain',
-                  filter: isAIActive && !isDark ? 'brightness(0) invert(1) drop-shadow(0 0 4px rgba(255,255,255,0.5))' : 'none',
-                  transition: 'filter 0.3s ease',
-                }}
-              />
-            </Box>
-          </Badge>
-          <Box
-            component="span"
-            sx={{
+            },
+            '& .MuiBottomNavigationAction-label': {
               fontSize: '0.625rem',
-              mt: 0.5,
-              color: isAIActive ? 'primary.main' : 'text.secondary',
-              fontWeight: isAIActive ? 700 : 500,
-              transition: 'all 0.3s ease',
-              textShadow: isAIActive ? `0 0 8px ${alpha(theme.palette.primary.main, 0.3)}` : 'none',
-            }}
-          >
-            {aiItem.label}
-          </Box>
-        </Box>
-
-        {/* Items de droite */}
-        <Box sx={{ display: 'flex', flex: 1 }}>
-          <BottomNavigation
-            value={currentPath}
-            onChange={(_event, newValue) => navigate(newValue)}
-            showLabels
-            sx={{
-              backgroundColor: 'transparent',
-              width: '100%',
-              height: 'auto',
-              '& .MuiBottomNavigationAction-root': {
-                minWidth: 'auto',
-                padding: '4px 2px',
-                color: 'text.secondary',
-                transition: 'all 0.2s ease',
-                '&.Mui-selected': {
-                  color: 'primary.main',
-                },
+              marginTop: '2px',
+              opacity: 0.8,
+              '&.Mui-selected': {
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                opacity: 1,
               },
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.625rem',
-                marginTop: '2px',
-                opacity: 0.8,
-                '&.Mui-selected': {
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  opacity: 1,
-                },
-              },
-            }}
-          >
-            {rightItems.map((item) => {
-              const isSelected = currentPath === item.value;
-              return (
-                <SafeBottomNavigationAction
-                  key={item.value}
-                  label={item.label || ''}
-                  value={item.value}
-                  icon={<NavIcon src={item.icon} alt={item.label || ''} isSelected={isSelected} />}
-                  data-tutorial={`menu-${item.moduleId}`}
-                />
-              );
-            })}
-          </BottomNavigation>
-        </Box>
+            },
+          }}
+        >
+          {visibleItems.map((item) => {
+            const isSelected = currentPath === item.value;
+            return (
+              <SafeBottomNavigationAction
+                key={item.value}
+                label={item.label || ''}
+                value={item.value}
+                icon={<NavIcon src={item.icon} alt={item.label || ''} isSelected={isSelected} />}
+                data-tutorial={`menu-${item.moduleId}`}
+              />
+            );
+          })}
+          {hasOverflow && (
+            <SafeBottomNavigationAction
+              key="__more__"
+              label="Plus"
+              value="__more__"
+              icon={<NavIcon src={null} alt="Plus" isSelected={isOverflowActive} customIcon={<MoreIcon sx={{ fontSize: 20 }} />} />}
+              data-tutorial="menu-more"
+            />
+          )}
+        </BottomNavigation>
       </Box>
+
+      {/* Tiroir "Plus" — modules au-delà de MAX_VISIBLE_ITEMS, pour ne jamais surcharger la barre */}
+      <SwipeableDrawer
+        anchor="bottom"
+        open={moreMenuOpen}
+        onOpen={() => setMoreMenuOpen(true)}
+        onClose={() => setMoreMenuOpen(false)}
+        disableSwipeToOpen
+        PaperProps={{ sx: { borderTopLeftRadius: 16, borderTopRightRadius: 16, pb: 'env(safe-area-inset-bottom)' } }}
+      >
+        <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+          <Box sx={{ width: 36, height: 4, bgcolor: 'divider', borderRadius: 2, mx: 'auto', mb: 1.5 }} />
+          <Typography variant="subtitle2" color="text.secondary" fontWeight={700}>
+            Autres modules
+          </Typography>
+        </Box>
+        <List sx={{ pt: 0 }}>
+          {overflowItems.map((item) => (
+            <ListItemButton
+              key={item.value}
+              selected={currentPath === item.value}
+              onClick={() => { setMoreMenuOpen(false); navigate(item.value); }}
+            >
+              <ListItemIcon sx={{ minWidth: 44 }}>
+                <NavIcon src={item.icon} alt={item.label || ''} isSelected={currentPath === item.value} />
+              </ListItemIcon>
+              <ListItemText primary={item.label} />
+            </ListItemButton>
+          ))}
+        </List>
+      </SwipeableDrawer>
     </Paper>
   );
 }
