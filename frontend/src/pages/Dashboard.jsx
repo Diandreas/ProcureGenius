@@ -171,23 +171,6 @@ const Dashboard = () => {
   // Revenue by activity (from enhanced revenue)
   const byActivity = revenueData?.by_activity || [];
 
-  // Merge entries with same display label (ex: healthcare_pharmacy + standard → Pharmacie & Médicaments)
-  const mergedActivity = Object.values(
-    byActivity.reduce((acc, a) => {
-      const label = getActivityLabel(a.activity_type);
-      if (acc[label]) {
-        acc[label] = {
-          ...acc[label],
-          revenue: parseFloat(acc[label].revenue || 0) + parseFloat(a.revenue || 0),
-          count: (acc[label].count || 0) + (a.count || 0),
-        };
-      } else {
-        acc[label] = { ...a, _label: label, revenue: parseFloat(a.revenue || 0) };
-      }
-      return acc;
-    }, {})
-  );
-
   // Catégories labo — déjà filtrées par invoice_type=healthcare_laboratory côté backend
   const labCategories = (labServiceData?.by_category || []);
 
@@ -224,9 +207,41 @@ const Dashboard = () => {
   const sumCatMatching = (pattern) => allServicesCategories
     .filter(c => (c.category_name || '').toLowerCase().includes(pattern))
     .reduce((s, c) => s + parseFloat(c.revenue || 0), 0);
+  const sumCountMatching = (pattern) => allServicesCategories
+    .filter(c => (c.category_name || '').toLowerCase().includes(pattern))
+    .reduce((s, c) => s + (c.count || c.transactions || 0), 0);
   const chirurgieRevenue = sumCatMatching('chirurgie');
   const hospitalisationRevenue = sumCatMatching('hospitalisation');
   const soinsRevenue = servicesTotalRevenue - chirurgieRevenue - hospitalisationRevenue;
+  const chirurgieCount = sumCountMatching('chirurgie');
+  const hospitalisationCount = sumCountMatching('hospitalisation');
+  const soinsCount = Math.max(0, (byActivity.find(a => a.activity_type === 'healthcare_services')?.count || 0) - chirurgieCount - hospitalisationCount);
+
+  // Merge entries with same display label (ex: healthcare_pharmacy + standard → Pharmacie & Médicaments).
+  // "healthcare_services" est éclaté en 3 lignes (Soins / Chirurgie / Hospitalisation) au lieu d'un
+  // seul total combiné — sinon la carte "CA Soins" isolée plus haut ne représente qu'un sous-ensemble
+  // de ce que montre ce tableau, ce qui prête à confusion en lecture rapide.
+  const mergedActivity = Object.values(
+    byActivity.reduce((acc, a) => {
+      if (a.activity_type === 'healthcare_services') {
+        if (soinsRevenue > 0) acc['Soins'] = { activity_type: 'healthcare_services_soins', _label: 'Soins', revenue: soinsRevenue, count: soinsCount };
+        if (chirurgieRevenue > 0) acc['Chirurgie'] = { activity_type: 'healthcare_services_chirurgie', _label: 'Chirurgie', revenue: chirurgieRevenue, count: chirurgieCount };
+        if (hospitalisationRevenue > 0) acc['Hospitalisation'] = { activity_type: 'healthcare_services_hospitalisation', _label: 'Hospitalisation', revenue: hospitalisationRevenue, count: hospitalisationCount };
+        return acc;
+      }
+      const label = getActivityLabel(a.activity_type);
+      if (acc[label]) {
+        acc[label] = {
+          ...acc[label],
+          revenue: parseFloat(acc[label].revenue || 0) + parseFloat(a.revenue || 0),
+          count: (acc[label].count || 0) + (a.count || 0),
+        };
+      } else {
+        acc[label] = { ...a, _label: label, revenue: parseFloat(a.revenue || 0) };
+      }
+      return acc;
+    }, {})
+  );
 
   const hospitalization = activityData?.hospitalization || {};
   const pharmacyOnlyRevenue = financial?.pharmacy_only_revenue || 0;
