@@ -187,13 +187,15 @@ class LabOrderInvoiceService:
                     notes=notes
                 )
 
-        # Carte privilège : réduction automatique si le patient en est titulaire
+        # Carte privilège : réduction automatique si le patient en est titulaire —
+        # uniquement sur les bilans/packs, jamais sur les examens individuels.
         used_by = privilege_card_used_by or {}
         apply_privilege_card_discount(
             invoice, lab_order.patient, 'laboratory',
             used_by_patient=used_by.get('patient'),
             used_by_name=used_by.get('name', ''),
             used_by_relationship=used_by.get('relationship', ''),
+            item_filter=lambda item: item.description.startswith('Bilan : '),
         )
 
         # Recalculer totaux

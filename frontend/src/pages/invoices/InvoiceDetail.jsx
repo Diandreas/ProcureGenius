@@ -54,6 +54,7 @@ import {
   MoreVert,
   AttachMoney,
   Business,
+  Loyalty,
   Person,
   CalendarToday,
   Receipt,
@@ -1237,6 +1238,29 @@ Cordialement`
                       Encaisser maintenant
                     </Button>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Badge Carte Privilège */}
+            {invoice.privilege_card_usage && (
+              <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', border: '1px solid', borderColor: 'success.light', bgcolor: 'success.50' }}>
+                <CardContent>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <Loyalty color="success" />
+                    <Typography variant="subtitle2" color="success.dark" fontWeight={700}>
+                      Carte Privilège utilisée
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Utilisée par : <strong>{invoice.privilege_card_usage.used_by_name}</strong>
+                    {invoice.privilege_card_usage.used_by_relationship && (
+                      <> ({invoice.privilege_card_usage.used_by_relationship})</>
+                    )}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Réduction appliquée : <strong>{new Intl.NumberFormat('fr-FR').format(invoice.privilege_card_usage.discount_amount)} XAF</strong>
+                  </Typography>
                 </CardContent>
               </Card>
             )}

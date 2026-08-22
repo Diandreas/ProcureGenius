@@ -651,6 +651,25 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     def get_payment_status(self, obj):
         return obj.get_payment_status()
 
+    privilege_card_usage = serializers.SerializerMethodField()
+
+    def get_privilege_card_usage(self, obj):
+        from apps.accounts.models import PrivilegeCardUsage
+        usage = PrivilegeCardUsage.objects.filter(invoice=obj).select_related('card_holder', 'used_by_patient').first()
+        if not usage:
+            return None
+        used_by = (
+            usage.used_by_patient.name if usage.used_by_patient
+            else usage.used_by_name or usage.card_holder.name
+        )
+        return {
+            'card_holder_name': usage.card_holder.name,
+            'used_by_name': used_by,
+            'used_by_relationship': usage.used_by_relationship,
+            'discount_amount': usage.discount_amount,
+            'used_at': usage.used_at,
+        }
+
     # Hide fields for disabled modules
     module_dependent_fields = {
         'purchase-orders': ['purchase_order', 'purchase_order_number'],
@@ -669,7 +688,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'is_subcontractor_invoice', 'subcontractor_id', 'subcontractor_name',
             'global_discount_type', 'global_discount_value', 'global_discount_label',
             'global_discount_amount',
-            'payments', 'balance_due', 'payment_status',
+            'payments', 'balance_due', 'payment_status', 'privilege_card_usage',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
@@ -679,6 +698,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'client_detail', 'created_by_detail',
             'is_subcontractor_invoice', 'subcontractor_id', 'subcontractor_name',
             'global_discount_amount', 'payments', 'balance_due', 'payment_status',
+            'privilege_card_usage',
         ]
     
     def to_representation(self, instance):

@@ -13,11 +13,14 @@ MODULE_DISCOUNT_FIELDS = {
 }
 
 
-def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None, used_by_name='', used_by_relationship=''):
+def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None, used_by_name='', used_by_relationship='', item_filter=None):
     """
     Si le patient a la carte privilège et que la fonctionnalité est activée pour
     l'organisation, applique le taux de réduction configuré pour ce module sur
-    chaque ligne déjà créée de la facture, et journalise l'utilisation.
+    les lignes éligibles de la facture (toutes les lignes par défaut, ou
+    seulement celles retenues par item_filter(item) -> bool si fourni — ex:
+    en laboratoire, uniquement les bilans/packs, jamais les examens individuels),
+    et journalise l'utilisation.
 
     À appeler après création des InvoiceItem et AVANT invoice.recalculate_totals().
     Retourne l'objet PrivilegeCardUsage créé, ou None si rien n'a été appliqué.
@@ -38,7 +41,10 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
         return None
 
     total_discount = Decimal('0')
-    for item in invoice.items.all():
+    eligible_items = invoice.items.all()
+    if item_filter is not None:
+        eligible_items = [item for item in eligible_items if item_filter(item)]
+    for item in eligible_items:
         item_discount = (item.total_price * rate / Decimal('100')).quantize(Decimal('0.01'))
         if item_discount <= 0:
             continue

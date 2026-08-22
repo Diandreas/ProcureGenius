@@ -39,6 +39,7 @@ import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import imagingAPI from '../../../services/imagingAPI';
 import patientAPI from '../../../services/patientAPI';
+import { settingsAPI } from '../../../services/settingsAPI';
 import api from '../../../services/api';
 import QuickClientCreateModal from './components/QuickClientCreateModal';
 import { buildLabOrderGroup, enqueueGroup } from '../../../db/offlineDb';
@@ -61,6 +62,7 @@ const LabOrderForm = () => {
     const [privilegeCardUsedByPatient, setPrivilegeCardUsedByPatient] = useState(null);
     const [privilegeCardUsedByName, setPrivilegeCardUsedByName] = useState('');
     const [privilegeCardUsedByRelationship, setPrivilegeCardUsedByRelationship] = useState('');
+    const [privilegeCardSettings, setPrivilegeCardSettings] = useState({ enabled: false, laboratoryDiscountPercent: 0 });
     const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -167,6 +169,13 @@ const LabOrderForm = () => {
             setSubcontractors(Array.isArray(subData) ? subData : subData.results || []);
             setExamTypes(examData.results || examData || []);
             setImagingCategories(imgCatData.results || imgCatData || []);
+
+            settingsAPI.getAll().then(res => {
+                setPrivilegeCardSettings({
+                    enabled: !!res.data.privilegeCardEnabled,
+                    laboratoryDiscountPercent: parseFloat(res.data.privilegeCardLaboratoryDiscountPercent) || 0,
+                });
+            }).catch(() => {});
         } catch (error) {
             console.error('Error fetching options:', error);
             enqueueSnackbar('Erreur lors du chargement des données', { variant: 'error' });
@@ -271,8 +280,16 @@ const LabOrderForm = () => {
         return 0;
     };
 
+    // Carte Privilège : uniquement sur les bilans/packs, jamais sur les examens individuels
+    // (miroir exact de la règle appliquée côté backend dans apply_privilege_card_discount).
+    const privilegeCardDiscount = () => {
+        if (!privilegeCardSettings.enabled || !formData.patient?.has_privilege_card) return 0;
+        const panelsTotal = formData.panels.reduce((sum, panel) => sum + (parseFloat(panel.net_price || panel.price) || 0), 0);
+        return Math.round(panelsTotal * privilegeCardSettings.laboratoryDiscountPercent) / 100;
+    };
+
     const calculateTotal = () => {
-        return Math.max(0, calculateSubtotal() - couponDiscount());
+        return Math.max(0, calculateSubtotal() - couponDiscount() - privilegeCardDiscount());
     };
 
     const validateCoupon = async () => {
@@ -476,7 +493,7 @@ const LabOrderForm = () => {
                             {formData.patient?.has_privilege_card && (
                                 <Box sx={{ mt: 2 }}>
                                     <Alert severity="success" sx={{ mb: 1 }}>
-                                        Carte Privilège active — une réduction sera appliquée automatiquement.
+                                        Carte Privilège active — {privilegeCardSettings.laboratoryDiscountPercent}% appliqué automatiquement sur les bilans/packs sélectionnés (n'affecte pas les examens individuels).
                                     </Alert>
                                     <TextField
                                         select size="small" fullWidth
@@ -697,6 +714,17 @@ const LabOrderForm = () => {
                                     </Typography>
                                     <Typography variant="body2" color={couponDiscount() < 0 ? 'warning.main' : 'error.main'} fontWeight="bold">
                                         {couponDiscount() < 0 ? '+' : '−'}{new Intl.NumberFormat('fr-FR').format(Math.abs(couponDiscount()))} XAF
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            {privilegeCardDiscount() > 0 && (
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography variant="body2" color="success.main">
+                                        Réduction Carte Privilège ({privilegeCardSettings.laboratoryDiscountPercent}% sur bilans/packs) :
+                                    </Typography>
+                                    <Typography variant="body2" color="success.main" fontWeight="bold">
+                                        −{new Intl.NumberFormat('fr-FR').format(privilegeCardDiscount())} XAF
                                     </Typography>
                                 </Box>
                             )}
