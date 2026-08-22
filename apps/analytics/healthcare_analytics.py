@@ -1031,7 +1031,22 @@ class EnhancedRevenueAnalyticsView(APIView):
             if agg['rev']:
                 _add_activity(inv_type, agg['rev'], agg['cnt'])
 
-        # Tous les items des factures healthcare_consultation + standard → décomposer par catégorie
+        # Tous les items des factures healthcare_consultation + standard → décomposer par catégorie.
+        # Accumulé à PART (decomp_acc) et non dans activity_acc : ces deux invoice_type sont les
+        # SEULS à jamais passer par cette décomposition, alors que 'healthcare_pharmacy' et
+        # 'healthcare_services' reçoivent AUSSI une contribution directe (facture entière) juste
+        # au-dessus. Mélanger les deux dans le même dict avant la correction de remise ci-dessous
+        # faussait discountable_items_total (il incluait alors du CA pharmacie/services qui n'avait
+        # rien à voir avec decomp_inv_total), et la mise à l'échelle rognait à tort le CA direct —
+        # d'où un total par activité qui ne recollait plus au CA brut.
+        decomp_acc = {}
+
+        def _add_decomp(act, rev, cnt=1):
+            if act not in decomp_acc:
+                decomp_acc[act] = {'revenue': 0.0, 'count': 0}
+            decomp_acc[act]['revenue'] += float(rev or 0)
+            decomp_acc[act]['count'] += int(cnt or 0)
+
         all_items = InvoiceItem.objects.filter(
             invoice__in=invoices.filter(
                 invoice_type__in=['healthcare_consultation', 'standard']
@@ -1050,7 +1065,7 @@ class EnhancedRevenueAnalyticsView(APIView):
             # Détecter consultation : catégorie exacte "Consultations" OU description "Consultation M"
             is_consult = (cat_lower == 'consultations') or ('consultation m' in prod_name)
             if is_consult:
-                _add_activity('healthcare_consultation', item.total_price)
+                _add_decomp('healthcare_consultation', item.total_price)
                 continue
 
             # Mapper via catégorie
@@ -1060,16 +1075,18 @@ class EnhancedRevenueAnalyticsView(APIView):
                     matched = act
                     break
             if matched:
-                _add_activity(matched, item.total_price)
+                _add_decomp(matched, item.total_price)
             else:
                 # Catégorie inconnue → propharmacie comptoir
-                _add_activity('standard', item.total_price)
+                _add_decomp('standard', item.total_price)
 
         # Correction des remises au niveau facture : si la somme des items discountables
         # dépasse le montant réel payé, on redistribue proportionnellement.
         # IMPORTANT : healthcare_consultation est discount_exempt → son montant ne change jamais.
-        # La remise ne s'applique qu'aux catégories discountables (pharmacie, soins, divers).
-        consult_revenue = activity_acc.get('healthcare_consultation', {}).get('revenue', 0.0)
+        # La remise ne s'applique qu'aux catégories discountables (pharmacie, soins, divers),
+        # et uniquement à l'intérieur de decomp_acc (donc jamais au CA direct labo/imagerie/
+        # pharmacie/services agrégé plus haut).
+        consult_revenue = decomp_acc.get('healthcare_consultation', {}).get('revenue', 0.0)
         decomp_inv_total = float(
             invoices.filter(invoice_type__in=['healthcare_consultation', 'standard'])
             .aggregate(t=Sum('total_amount'))['t'] or 0
@@ -1077,14 +1094,20 @@ class EnhancedRevenueAnalyticsView(APIView):
         # Sous-total discountable = total facture - part consultation (qui reste intacte)
         discountable_inv_total = decomp_inv_total - consult_revenue
         discountable_items_total = sum(
-            v['revenue'] for k, v in activity_acc.items()
-            if k not in ('healthcare_laboratory', 'healthcare_imaging', 'healthcare_consultation')
+            v['revenue'] for k, v in decomp_acc.items() if k != 'healthcare_consultation'
         )
         if discountable_items_total > 0 and abs(discountable_items_total - discountable_inv_total) > 0.01:
             scale = discountable_inv_total / discountable_items_total
-            for k in activity_acc:
-                if k not in ('healthcare_laboratory', 'healthcare_imaging', 'healthcare_consultation'):
-                    activity_acc[k]['revenue'] *= scale
+            for k in decomp_acc:
+                if k != 'healthcare_consultation':
+                    decomp_acc[k]['revenue'] *= scale
+
+        # Fusionner la décomposition (corrigée) dans le total par activité, en s'additionnant à
+        # une éventuelle contribution directe déjà présente (ex: healthcare_pharmacy alimenté à
+        # la fois par les factures de type pharmacie directes ET par les items médicaments des
+        # factures 'standard').
+        for act, v in decomp_acc.items():
+            _add_activity(act, v['revenue'], v['count'])
 
         # Sous-traitance labo : informationnel uniquement (INCLUSE dans CA Labo healthcare_laboratory)
         # On ne l'ajoute PAS à activity_acc pour éviter le double comptage
