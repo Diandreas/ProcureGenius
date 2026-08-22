@@ -37,6 +37,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList,
 } from 'recharts';
 import StatCard from '../components/analytics/StatCard';
+import NestedStatCard from '../components/analytics/NestedStatCard';
 import DateRangeSelector from '../components/analytics/DateRangeSelector';
 import BatchAlertCard from '../components/inventory/BatchAlertCard';
 import { LabOrdersStatusWidget, LabTurnaroundWidget } from '../components/widgets/healthcare';
@@ -338,29 +339,22 @@ const Dashboard = () => {
                   icon={<AssessmentIcon />} color="#6366f1" loading={loading}
                   subtitle="Pharmacie ordonnance + Soins divers" />
               </Grid>
-              <Grid item xs={6} sm={6} md={3}>
-                <StatCard title="CA Examens Labo"
-                  value={loading ? '...' : formatCurrency(financial.lab_exams_revenue)}
+              <Grid item xs={12} sm={6} md={3}>
+                <NestedStatCard title="CA Laboratoire"
+                  value={loading ? '...' : formatCurrency((financial.lab_exams_revenue || 0) + (financial.lab_kit_revenue || 0))}
                   icon={<ScienceIcon />} color="#ef4444" loading={loading}
-                  subtitle="Hors kits de prélèvement" />
+                  breakdownItems={[
+                    { label: 'Examens', value: formatCurrency(financial.lab_exams_revenue) },
+                    { label: `dont Sous-traitance (${financial.subcontract_count ?? 0} ex.)`, value: formatCurrency(financial.subcontract_revenue), indent: true },
+                    { label: 'Kits de prélèvement', value: formatCurrency(financial.lab_kit_revenue) },
+                  ]}
+                  footnote={loading ? '' : `Net centre sur sous-traitance (90%) : ${formatCurrency((financial.subcontract_revenue || 0) * SUBCONTRACT_CENTER_SHARE)}`} />
               </Grid>
-              <Grid item xs={6} sm={6} md={3}>
-                <StatCard title="Kits de Prélèvement"
-                  value={loading ? '...' : formatCurrency(financial.lab_kit_revenue)}
-                  icon={<ScienceIcon />} color="#f59e0b" loading={loading}
-                  subtitle="Inclus dans CA Labo" />
-              </Grid>
-              <Grid item xs={6} sm={6} md={3}>
+              <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="CA Imagerie médicale"
                   value={loading ? '...' : formatCurrency(imagingRevenue)}
                   icon={<BiotechIcon />} color="#8b5cf6" loading={loading}
                   subtitle={loading ? '' : `Net centre (30%) : ${formatCurrency(imagingCenterNet)} · Médecin (15%) : ${formatCurrency(imagingDoctorShare)}`} />
-              </Grid>
-              <Grid item xs={6} sm={6} md={3}>
-                <StatCard title="Sous-traitance Labo"
-                  value={loading ? '...' : formatCurrency(financial.subcontract_revenue)}
-                  icon={<ShippingIcon />} color="#8b5cf6" loading={loading}
-                  subtitle={`${financial.subcontract_count ?? 0} examens envoyés · Net centre (90%) : ${formatCurrency((financial.subcontract_revenue || 0) * SUBCONTRACT_CENTER_SHARE)}`} />
               </Grid>
             </Grid>
 
@@ -492,38 +486,31 @@ const Dashboard = () => {
                   icon={<MoneyIcon />} color="#2563eb" loading={loading} />
               </Grid>
             </Grid>
-            {/* KPI cards — ligne 2 : détail par flux */}
-            <Grid container spacing={2} mb={2}>
-              <Grid item xs={6} md={3}>
-                <StatCard title="CA Laboratoire"
+            {/* KPI cards — ligne 2 : détail par flux (blocs parent/enfant pour les sous-ensembles réels) */}
+            <Grid container spacing={2} mb={3}>
+              <Grid item xs={12} sm={6} md={4}>
+                <NestedStatCard title="CA Laboratoire"
                   value={loading ? '...' : formatCurrency(labRevenue)}
-                  icon={<ScienceIcon />} color="#ef4444" loading={loading} />
+                  icon={<ScienceIcon />} color="#ef4444" loading={loading}
+                  breakdownItems={[
+                    { label: `dont Sous-traitance (${subcontractingInfo.count ?? 0} ex.)`, value: formatCurrency(subcontractingInfo.revenue), indent: true },
+                  ]}
+                  footnote={loading ? '' : `Net centre sur sous-traitance (90%) : ${formatCurrency(subcontractCenterNet)} · Emmanuel/Christian (10%) : ${formatCurrency(subcontractPartnerShare)}`} />
               </Grid>
-              <Grid item xs={6} md={3}>
+              <Grid item xs={12} sm={6} md={4}>
                 <StatCard title="CA Imagerie médicale"
                   value={loading ? '...' : formatCurrency(imagingRevenue)}
                   icon={<BiotechIcon />} color="#8b5cf6" loading={loading}
                   subtitle={loading ? '' : `Net centre (30%) : ${formatCurrency(imagingCenterNet)} · Médecin (15%) : ${formatCurrency(imagingDoctorShare)}`} />
               </Grid>
-              <Grid item xs={6} md={3}>
-                <StatCard title="CA Pharmacie & Médicaments"
+              <Grid item xs={12} sm={6} md={4}>
+                <NestedStatCard title="CA Pharmacie & Médicaments"
                   value={loading ? '...' : formatCurrency(pharmacyRevenue)}
                   icon={<HospitalIcon />} color="#10b981" loading={loading}
-                  subtitle="Ordonnances + vente comptoir" />
-              </Grid>
-              <Grid item xs={6} md={3}>
-                <StatCard title="CA Pharmacie (patients pharmacie)"
-                  value={loading ? '...' : formatCurrency(pharmacyOnlyRevenue)}
-                  icon={<PharmacyIcon />} color="#059669" loading={loading}
-                  subtitle="Vente comptoir pure, sans autre acte" />
-              </Grid>
-            </Grid>
-            <Grid container spacing={2} mb={3}>
-              <Grid item xs={12}>
-                <StatCard title="Sous-traitance Labo"
-                  value={loading ? '...' : formatCurrency(subcontractingInfo.revenue)}
-                  icon={<ShippingIcon />} color="#6366f1" loading={loading}
-                  subtitle={loading ? '' : `${subcontractingInfo.count ?? 0} examens · inclus dans CA Labo · Net centre (90%) : ${formatCurrency(subcontractCenterNet)} · Emmanuel/Christian (10%) : ${formatCurrency(subcontractPartnerShare)}`} />
+                  breakdownItems={[
+                    { label: 'dont Vente comptoir pure', value: formatCurrency(pharmacyOnlyRevenue), indent: true },
+                  ]}
+                  footnote="Total = ordonnances + vente comptoir" />
               </Grid>
             </Grid>
 

@@ -334,16 +334,6 @@ const RevenueAnalyticsDashboard = () => {
                         </Grid>
                     </Grid>
 
-                    {/* Sous-traitance info banner (sous-ensemble du CA Labo) */}
-                    {data.subcontracting_info?.revenue > 0 && (
-                        <Box sx={{ mb: 1, p: 1.5, bgcolor: 'info.50', border: '1px solid', borderColor: 'info.200', borderRadius: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body2" color="info.main" fontWeight={600}>
-                                Sous-traitance Labo : {formatCurrency(data.subcontracting_info.revenue)} ({data.subcontracting_info.count} examens) — déjà incluse dans CA Laboratoire.
-                                Seuls 90% reviennent au centre, 10% sont reversés à Emmanuel et Christian.
-                            </Typography>
-                        </Box>
-                    )}
-
                     {/* Notes de lecture : CA affiché vs CA réellement conservé par le centre */}
                     <Box sx={{ mb: 3, p: 1.5, bgcolor: 'grey.50', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                         <Stack direction="row" alignItems="flex-start" spacing={1}>
@@ -359,7 +349,7 @@ const RevenueAnalyticsDashboard = () => {
                                     • Imagerie : le centre ne conserve que 30% du CA imagerie, 15% est reversé au médecin prescripteur.
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
-                                    • Sous-traitance Labo : 10% est reversé à Emmanuel et Christian (voir encart ci-dessus).
+                                    • Sous-traitance Labo : incluse dans le CA Laboratoire ci-dessous (détail sur la carte), 10% reversé à Emmanuel et Christian.
                                 </Typography>
                             </Stack>
                         </Stack>
@@ -417,6 +407,16 @@ const RevenueAnalyticsDashboard = () => {
                                             <Typography variant="caption" color="text.secondary">
                                                 Moy: {formatCurrency(activity.avg_amount)}
                                             </Typography>
+                                            {activity.activity_type === 'healthcare_laboratory' && data.subcontracting_info?.revenue > 0 && (
+                                                <Box sx={{ mt: 1, pt: 1, borderTop: '1px dashed', borderColor: 'divider' }}>
+                                                    <Typography variant="caption" color="text.secondary" display="block">
+                                                        ↳ dont Sous-traitance ({data.subcontracting_info.count} ex.) : {formatCurrency(data.subcontracting_info.revenue)}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontStyle: 'italic' }}>
+                                                        Net centre (90%) : {formatCurrency(data.subcontracting_info.revenue * 0.9)}
+                                                    </Typography>
+                                                </Box>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </motion.div>
