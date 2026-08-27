@@ -642,14 +642,14 @@ const LabOrderDetail = () => {
 
     const invalidateOrder = async () => {
         try {
-            if (!window.confirm('Êtes-vous sûr de vouloir invalider ces résultats ? Cela permettra de les modifier à nouveau.')) return;
+            if (!window.confirm('Remettre cette commande en analyse ? Les résultats déjà saisis sont conservés mais dé-vérifiés, et pourront être modifiés à nouveau.')) return;
 
             await laboratoryAPI.updateStatus(id, { action: 'invalidate' });
-            enqueueSnackbar('Résultats invalidés', { variant: 'success' });
+            enqueueSnackbar('Commande remise en analyse', { variant: 'success' });
             fetchOrder();
         } catch (error) {
             console.error('Error invalidating:', error);
-            enqueueSnackbar('Erreur lors de l\'invalidation', { variant: 'error' });
+            enqueueSnackbar('Erreur lors de la remise en analyse', { variant: 'error' });
         }
     };
 
@@ -1259,9 +1259,9 @@ const LabOrderDetail = () => {
                         </Button>
                     )}
 
-                    {order.status === 'results_ready' && (
+                    {['results_ready', 'results_delivered'].includes(order.status) && (
                         <Button variant="outlined" color="warning" onClick={invalidateOrder} size={isMobile ? 'small' : 'medium'}>
-                            Invalider
+                            Remettre en analyse
                         </Button>
                     )}
                 </Box>
@@ -1541,8 +1541,8 @@ const LabOrderDetail = () => {
                                     <TableRow key={item.id} sx={{ verticalAlign: 'top' }}>
                                         <TableCell colSpan={8} sx={{ p: 0 }}>
                                             <Box sx={{ p: 1.5 }}>
-                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                                                         <Typography variant="subtitle2" fontWeight={700} sx={{ mr: 1 }}>{item.test_name}</Typography>
                                                         <Tooltip title="Configurer l'unite et le facteur de conversion">
                                                             <IconButton size="small" onClick={() => handleEditTest(item.lab_test)} color="secondary">
@@ -1855,6 +1855,154 @@ const LabOrderDetail = () => {
                                 );
                             }
 
+                            const refRange = (() => {
+                                const gender = order.patient_gender;
+                                if (gender === 'M') return item.normal_range_male || item.normal_range_general || '';
+                                if (gender === 'F') return item.normal_range_female || item.normal_range_general || '';
+                                return item.normal_range_general || item.normal_range_male || '';
+                            })();
+
+                            const resultField = canEdit ? (
+                                <Box>
+                                    <RichTextEditor
+                                        value={results[item.id]?.result_value || ''}
+                                        onChange={(val) => handleResultChange(item.id, 'result_value', val)}
+                                        placeholder="Entrer valeur"
+                                        minHeight={60}
+                                        simple={true}
+                                        onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
+                                    />
+                                    <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>
+                                        {item.result_template && (
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                color="secondary"
+                                                sx={{ fontSize: '0.7rem', py: 0.3 }}
+                                                onClick={() => {
+                                                    const html = item.result_template
+                                                        .split('\n')
+                                                        .map(line => `<p>${line.trim() || '<br>'}</p>`)
+                                                        .join('');
+                                                    handleResultChange(item.id, 'result_value', html);
+                                                }}
+                                            >
+                                                Modèle
+                                            </Button>
+                                        )}
+                                        <Button
+                                            size="small"
+                                            variant="text"
+                                            color="primary"
+                                            sx={{ fontSize: '0.7rem', py: 0.3 }}
+                                            onClick={() => handleSaveAsTemplate(item.id)}
+                                            disabled={!results[item.id]?.result_value}
+                                        >
+                                            Enr. Modèle
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            ) : (
+                                <Typography
+                                    fontWeight="bold"
+                                    component="div"
+                                    dangerouslySetInnerHTML={{ __html: item.result_value || '-' }}
+                                    sx={{ '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                                />
+                            );
+
+                            const notesField = canEdit ? (
+                                <RichTextEditor
+                                    value={results[item.id]?.technician_notes || ''}
+                                    onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
+                                    placeholder="Commentaires du technicien"
+                                    minHeight={60}
+                                    onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
+                                />
+                            ) : (
+                                <Box>
+                                    {item.technician_notes ? (
+                                        <Typography
+                                            variant="body2"
+                                            component="div"
+                                            dangerouslySetInnerHTML={{ __html: item.technician_notes }}
+                                            sx={{ mb: 0.5, '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
+                                        />
+                                    ) : !item.interpretation ? '-' : null}
+                                    {item.interpretation && (
+                                        <Alert severity="info" sx={{ mt: 1, py: 0 }}>
+                                            <Typography variant="caption">
+                                                <strong>Interprétation:</strong> {item.interpretation}
+                                            </Typography>
+                                        </Alert>
+                                    )}
+                                </Box>
+                            );
+
+                            const itemActions = (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
+                                    <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => handleShowHistory(item)}
+                                        title="Afficher l'historique des valeurs"
+                                        color="primary"
+                                    >
+                                        <HistoryIcon fontSize="small" />
+                                    </IconButton>
+                                </Box>
+                            );
+
+                            // ── Mobile : une carte empilée par test, pas de colonnes serrées ──
+                            if (isMobile) {
+                                return (
+                                    <TableRow key={item.id}>
+                                        <TableCell colSpan={8} sx={{ p: 1.5 }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, mb: 1 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                                                    <Typography variant="body2" fontWeight="bold">{item.test_name}</Typography>
+                                                    <IconButton size="small" onClick={() => handleEditTest(item.lab_test)} color="secondary">
+                                                        <SettingsIcon sx={{ fontSize: 16 }} />
+                                                    </IconButton>
+                                                    {item.category_name && (
+                                                        <Chip label={item.category_name} size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem' }} />
+                                                    )}
+                                                    {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" sx={{ height: 18, fontSize: '0.65rem' }} />}
+                                                </Box>
+                                                {itemActions}
+                                            </Box>
+
+                                            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">RÉSULTAT</Typography>
+                                            {resultField}
+
+                                            <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                                                <Box sx={{ flex: '1 1 120px' }}>
+                                                    <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">UNITÉS</Typography>
+                                                    <QuickConfigSelector
+                                                        item={item}
+                                                        onConfigChanged={onTestSaved}
+                                                        canEdit={canEdit}
+                                                        currentValues={results}
+                                                        updateValue={handleResultChange}
+                                                        patientGender={order.patient_gender}
+                                                    />
+                                                </Box>
+                                                {refRange && (
+                                                    <Box sx={{ flex: '1 1 160px' }}>
+                                                        <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">VALEURS DE RÉFÉRENCE</Typography>
+                                                        <Typography sx={{ fontSize: '0.75rem', whiteSpace: 'pre-line', color: '#6b7280' }}>{refRange}</Typography>
+                                                    </Box>
+                                                )}
+                                            </Box>
+
+                                            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mt: 1 }}>NOTES</Typography>
+                                            {notesField}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            }
+
                             return (
                                 <TableRow key={item.id}>
                                     <TableCell>
@@ -1868,60 +2016,11 @@ const LabOrderDetail = () => {
                                         </Box>
                                     </TableCell>
                                     <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{item.category_name}</TableCell>
+                                    <TableCell>{resultField}</TableCell>
                                     <TableCell>
-                                        {canEdit ? (
-                                            <Box>
-                                                <RichTextEditor
-                                                    value={results[item.id]?.result_value || ''}
-                                                    onChange={(val) => handleResultChange(item.id, 'result_value', val)}
-                                                    placeholder="Entrer valeur"
-                                                    minHeight={60}
-                                                    simple={true}
-                                                    onExpand={() => openWysiwygModal(item.id, 'result_value', `Résultat — ${item.test_name}`)}
-                                                />
-                                                <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>
-                                                    {item.result_template && (
-                                                        <Button
-                                                            size="small"
-                                                            variant="outlined"
-                                                            color="secondary"
-                                                            sx={{ fontSize: '0.7rem', py: 0.3 }}
-                                                            onClick={() => {
-                                                                const html = item.result_template
-                                                                    .split('\n')
-                                                                    .map(line => `<p>${line.trim() || '<br>'}</p>`)
-                                                                    .join('');
-                                                                handleResultChange(item.id, 'result_value', html);
-                                                            }}
-                                                        >
-                                                            Modèle
-                                                        </Button>
-                                                    )}
-                                                    <Button
-                                                        size="small"
-                                                        variant="text"
-                                                        color="primary"
-                                                        sx={{ fontSize: '0.7rem', py: 0.3 }}
-                                                        onClick={() => handleSaveAsTemplate(item.id)}
-                                                        disabled={!results[item.id]?.result_value}
-                                                    >
-                                                        Enr. Modèle
-                                                    </Button>
-                                                </Box>
-                                            </Box>
-                                        ) : (
-                                            <Typography
-                                                fontWeight="bold"
-                                                component="div"
-                                                dangerouslySetInnerHTML={{ __html: item.result_value || '-' }}
-                                                sx={{ '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
-                                            />
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <QuickConfigSelector 
-                                            item={item} 
-                                            onConfigChanged={onTestSaved} 
+                                        <QuickConfigSelector
+                                            item={item}
+                                            onConfigChanged={onTestSaved}
                                             canEdit={canEdit}
                                             currentValues={results}
                                             updateValue={handleResultChange}
@@ -1929,62 +2028,13 @@ const LabOrderDetail = () => {
                                         />
                                     </TableCell>
                                     <TableCell sx={{ fontSize: '0.75rem', whiteSpace: 'pre-line', verticalAlign: 'top', maxWidth: 180, color: '#6b7280' }}>
-                                        {(() => {
-                                            const gender = order.patient_gender;
-                                            if (gender === 'M') {
-                                                return item.normal_range_male || item.normal_range_general || '';
-                                            } else if (gender === 'F') {
-                                                return item.normal_range_female || item.normal_range_general || '';
-                                            }
-                                            return item.normal_range_general || item.normal_range_male || '';
-                                        })()}
+                                        {refRange}
                                     </TableCell>
-                                    <TableCell>
-                                        {canEdit ? (
-                                            <RichTextEditor
-                                                value={results[item.id]?.technician_notes || ''}
-                                                onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
-                                                placeholder="Commentaires du technicien"
-                                                minHeight={60}
-                                                onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
-                                            />
-                                        ) : (
-                                            <Box>
-                                                {item.technician_notes ? (
-                                                    <Typography
-                                                        variant="body2"
-                                                        component="div"
-                                                        dangerouslySetInnerHTML={{ __html: item.technician_notes }}
-                                                        sx={{ mb: 0.5, '& ul, & ol': { pl: 2 }, '& p': { my: 0 } }}
-                                                    />
-                                                ) : !item.interpretation ? '-' : null}
-                                                {item.interpretation && (
-                                                    <Alert severity="info" sx={{ mt: 1, py: 0 }}>
-                                                        <Typography variant="caption">
-                                                            <strong>Interprétation:</strong> {item.interpretation}
-                                                        </Typography>
-                                                    </Alert>
-                                                )}
-                                            </Box>
-                                        )}
-                                    </TableCell>
+                                    <TableCell>{notesField}</TableCell>
                                     <TableCell>
                                         {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" />}
                                     </TableCell>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                            <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
-                                            <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleShowHistory(item)}
-                                                title="Afficher l'historique des valeurs"
-                                                color="primary"
-                                            >
-                                                <HistoryIcon fontSize="small" />
-                                            </IconButton>
-                                        </Box>
-                                    </TableCell>
+                                    <TableCell>{itemActions}</TableCell>
                                 </TableRow>
                             );
                         })}
