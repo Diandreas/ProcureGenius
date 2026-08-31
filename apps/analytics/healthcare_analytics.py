@@ -892,6 +892,46 @@ class ActivityIndicatorsView(APIView):
             organization=organization, status='admitted'
         ).exclude(bed_number='').values('bed_number').distinct().count()
 
+        # ── CA Encaissé (base caisse) ──
+        # total_revenue ci-dessus est en date de FACTURATION (created_at) — cohérent
+        # pour "combien d'activité ce mois", mais une facture de sous-traitance
+        # facturée fin juillet et réellement réglée début août ne compte alors que
+        # dans le CA de juillet. Le recap "encaissements" de la page Factures
+        # répond à une question différente ("combien reçu en caisse ce mois") en
+        # utilisant la date de PAIEMENT. On réplique ici la même logique hybride :
+        # - si la facture a au moins un Payment réussi et non exclu, on compte CES
+        #   paiements, datés par payment_date (peu importe la date de la facture) ;
+        # - sinon (factures historiquement marquées payées dès la création, sans
+        #   ligne Payment — la majorité des cas), on compte le montant total de la
+        #   facture, daté par sa date de création (created_at), faute de mieux.
+        from apps.invoicing.models import Payment as PaymentModel
+
+        invoices_with_real_payment_ids = PaymentModel.objects.filter(
+            invoice__organization=organization,
+            status='success',
+            exclude_from_cash_stats=False,
+        ).values_list('invoice_id', flat=True).distinct()
+
+        payments_collected = PaymentModel.objects.filter(
+            invoice__organization=organization,
+            invoice__status='paid',
+            status='success',
+            exclude_from_cash_stats=False,
+            payment_date__gte=start_date,
+            payment_date__lte=end_date,
+        ).exclude(invoice__invoice_type='credit_note').aggregate(t=Sum('amount'))['t'] or 0
+
+        invoices_without_payment_collected = InvoiceModel.objects.filter(
+            organization=organization,
+            status='paid',
+            created_at__date__gte=start_date,
+            created_at__date__lte=end_date,
+        ).exclude(invoice_type='credit_note').exclude(
+            id__in=invoices_with_real_payment_ids
+        ).aggregate(t=Sum('total_amount'))['t'] or 0
+
+        collected_revenue = float(payments_collected) + float(invoices_without_payment_collected)
+
         return Response({
             'period': period,
             'start_date': start_date.isoformat(),
@@ -928,6 +968,7 @@ class ActivityIndicatorsView(APIView):
 
             'financial': {
                 'total_revenue': round(total_revenue, 2),
+                'collected_revenue': round(collected_revenue, 2),
                 'day_revenue': round(day_revenue, 2),
                 'night_revenue': round(night_revenue, 2),
                 'day_invoices_count': day_invoices_count,

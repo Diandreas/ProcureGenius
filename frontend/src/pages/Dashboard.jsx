@@ -469,7 +469,14 @@ const Dashboard = () => {
               <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="CA Total (factures payées)"
                   value={loading ? '...' : formatCurrency(revenueData?.total_stats?.total_revenue)}
-                  icon={<MoneyIcon />} color="#2563eb" loading={loading} />
+                  icon={<MoneyIcon />} color="#2563eb" loading={loading}
+                  subtitle="Par date de facturation" />
+              </Grid>
+              <Grid item xs={6} sm={6} md={3}>
+                <StatCard title="CA Encaissé (période)"
+                  value={loading ? '...' : formatCurrency(financial.collected_revenue)}
+                  icon={<MoneyIcon />} color="#0891b2" loading={loading}
+                  subtitle="Par date d'encaissement — inclut les paiements reçus ce mois pour des factures antérieures" />
               </Grid>
               <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Factures Payées"
