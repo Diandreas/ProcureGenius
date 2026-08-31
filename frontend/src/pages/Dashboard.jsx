@@ -210,9 +210,16 @@ const Dashboard = () => {
   const sumCountMatching = (pattern) => allServicesCategories
     .filter(c => (c.category_name || '').toLowerCase().includes(pattern))
     .reduce((s, c) => s + (c.count || c.transactions || 0), 0);
-  const chirurgieRevenue = sumCatMatching('chirurgie');
-  const hospitalisationRevenue = sumCatMatching('hospitalisation');
-  const soinsRevenue = servicesTotalRevenue - chirurgieRevenue - hospitalisationRevenue;
+  // servicesTotalRevenue (ServiceRevenueAnalyticsView) est une somme brute d'items —
+  // elle ignore les remises appliquées au niveau facture (coupon), contrairement à
+  // servicesRevenue (EnhancedRevenueAnalyticsView, corrigé). On remet donc Chirurgie/
+  // Hospitalisation à l'échelle du total corrigé avant de calculer Soins par différence,
+  // pour que les 3 lignes du tableau "CA par Activité" s'additionnent toujours exactement
+  // au vrai total (voir la même correction déjà appliquée côté backend pour Labo/Pharmacie).
+  const rawServiceScale = servicesTotalRevenue > 0 ? servicesRevenue / servicesTotalRevenue : 1;
+  const chirurgieRevenue = sumCatMatching('chirurgie') * rawServiceScale;
+  const hospitalisationRevenue = sumCatMatching('hospitalisation') * rawServiceScale;
+  const soinsRevenue = servicesRevenue - chirurgieRevenue - hospitalisationRevenue;
   const chirurgieCount = sumCountMatching('chirurgie');
   const hospitalisationCount = sumCountMatching('hospitalisation');
   const soinsCount = Math.max(0, (byActivity.find(a => a.activity_type === 'healthcare_services')?.count || 0) - chirurgieCount - hospitalisationCount);

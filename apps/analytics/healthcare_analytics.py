@@ -1006,6 +1006,7 @@ class EnhancedRevenueAnalyticsView(APIView):
             'soins infirmiers':          'healthcare_services',
             'actes medicaux':            'healthcare_services',
             'chirurgie':                 'healthcare_services',
+            'hospitalisation':           'healthcare_services',
             'surveillance':              'healthcare_services',
             'autres services':           'healthcare_services',
             'medicaments':               'healthcare_pharmacy',
@@ -1326,7 +1327,7 @@ class ServiceRevenueAnalyticsView(APIView):
 
         # Mapping catégories → type d'activité (pour décomposer les factures standard)
         PHARMACY_CATS = ['medicaments', 'consommables laboratoire', 'materiel medical']
-        SERVICES_CATS = ['soins infirmiers', 'actes medicaux', 'chirurgie', 'surveillance', 'autres services']
+        SERVICES_CATS = ['soins infirmiers', 'actes medicaux', 'chirurgie', 'hospitalisation', 'surveillance', 'autres services']
 
         if invoice_type_filter == 'healthcare_consultation':
             # Consultation : items contenant "consultation" dans toutes les factures
