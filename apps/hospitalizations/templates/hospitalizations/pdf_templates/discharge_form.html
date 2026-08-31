@@ -136,7 +136,7 @@
         </tr>
         <tr>
             <td class="info-label">Médecin traitant :</td>
-            <td colspan="3">Dr. {{ hospitalization.admitting_doctor.get_full_name|default:hospitalization.admitting_doctor.email }}</td>
+            <td colspan="3">Dr. {{ admitting_doctor_name }}</td>
         </tr>
     </table>
 
@@ -174,7 +174,7 @@
             Signature du Patient / Accompagnant
         </div>
         <div class="signature-box right">
-            Dr. {{ hospitalization.discharging_doctor.get_full_name|default:hospitalization.admitting_doctor.get_full_name|default:"Médecin" }}<br>
+            Dr. {{ discharging_doctor_name }}<br>
             Signature & Cachet
         </div>
     </div>

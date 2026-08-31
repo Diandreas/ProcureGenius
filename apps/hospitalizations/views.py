@@ -54,12 +54,28 @@ class HospitalizationViewSet(viewsets.ModelViewSet, HealthcarePDFMixin):
     def generate_discharge_pdf(self, request, pk=None):
         """Génère la fiche de sortie en PDF"""
         hospitalization = self.get_object()
-        
+
+        # admitting_doctor/discharging_doctor peuvent être None (ex: admission par un
+        # profil non-médecin, ou patient pas encore sorti) — calculé ici en Python plutôt
+        # que via des chaînes {{ x.y|default:x.z }} dans le template : quand x est None,
+        # Django essaie quand même de résoudre l'argument du filtre default (x.z), ce qui
+        # lève VariableDoesNotExist et fait planter tout le rendu du PDF.
+        admitting_doctor_name = (
+            hospitalization.admitting_doctor.get_full_name()
+            if hospitalization.admitting_doctor else ''
+        )
+        discharging_doctor_name = (
+            hospitalization.discharging_doctor.get_full_name()
+            if hospitalization.discharging_doctor
+            else (admitting_doctor_name or 'Médecin')
+        )
+
         context = {
             'hospitalization': hospitalization,
-            'organization': hospitalization.organization,
+            'admitting_doctor_name': admitting_doctor_name or 'Médecin',
+            'discharging_doctor_name': discharging_doctor_name,
         }
-        
+
         return self.render_to_pdf(
             template_name='hospitalizations/pdf_templates/discharge_form.html',
             context=context,
