@@ -29,6 +29,7 @@ import {
   Support as SupportIcon, // Reception
   Science as ScienceIcon, // Laboratory
   MedicalInformation as ImagingIcon, // Imaging
+  PregnantWoman as MaternityIcon, // Maternity
   LocalPharmacy as PharmacyIcon, // Pharmacy
   MedicalServices as MedicalServicesIcon, // Consultations
 } from '@mui/icons-material';
@@ -49,6 +50,7 @@ const AVAILABLE_MODULES = [
   { code: 'visits', name: 'Visites', description: 'Gestion des visites patients', IconComponent: SupportIcon },
   { code: 'laboratory', name: 'Laboratoire', description: 'Analyses et LIMS', IconComponent: ScienceIcon },
   { code: 'imaging', name: 'Imagerie', description: 'Radiologie, échographie, scanner, IRM', IconComponent: ImagingIcon },
+  { code: 'maternity', name: 'Maternité', description: 'Suivi prénatal, accouchement, nouveau-né, suivi post-natal', IconComponent: MaternityIcon },
   { code: 'pharmacy', name: 'Pharmacie', description: 'Stocks et délivrance', IconComponent: PharmacyIcon },
   { code: 'consultations', name: 'Consultations', description: 'Dossiers médicaux', IconComponent: MedicalServicesIcon },
 ];

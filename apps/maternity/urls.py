@@ -12,5 +12,6 @@ router.register('newborns', api.NewbornViewSet, basename='newborn')
 router.register('postnatal-visits', api.PostnatalVisitViewSet, basename='postnatal-visit')
 
 urlpatterns = [
+    path('patient/<uuid:patient_id>/info/', api.PatientMaternityInfoView.as_view(), name='patient-maternity-info'),
     path('', include(router.urls)),
 ]

@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.utils import timezone
 
 from .models import PregnancyRecord, PrenatalVisit, Delivery, Newborn, PostnatalVisit
@@ -50,6 +51,9 @@ class PregnancyRecordViewSet(OrgScopedViewSet):
         status_filter = self.request.query_params.get('status')
         if status_filter:
             qs = qs.filter(status=status_filter)
+        patient_id = self.request.query_params.get('patient')
+        if patient_id:
+            qs = qs.filter(patient_id=patient_id)
         return qs
 
 
@@ -209,3 +213,38 @@ class PostnatalVisitViewSet(viewsets.ModelViewSet):
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'invoice_id': str(invoice.id), 'invoice_number': invoice.invoice_number})
+
+
+class PatientMaternityInfoView(APIView):
+    """
+    GET /healthcare/maternity/patient/<patient_id>/info/
+    Résumé maternité pour la fiche patient : ses propres dossiers de grossesse
+    (si c'est une mère), et — si ce patient est lui-même enregistré comme
+    nouveau-né d'un accouchement (Newborn.patient_record) — un lien vers la mère.
+    Permet d'associer une patiente à son enfant (et réciproquement) depuis
+    n'importe quel dossier patient, pas seulement depuis le module Maternité.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, patient_id):
+        user = request.user
+        pregnancies_qs = PregnancyRecord.objects.filter(patient_id=patient_id)
+        if user.role not in ('admin', 'owner') and user.organization:
+            pregnancies_qs = pregnancies_qs.filter(organization=user.organization)
+
+        pregnancies_data = PregnancyRecordListSerializer(pregnancies_qs.order_by('-created_at'), many=True).data
+
+        as_child = None
+        newborn = Newborn.objects.filter(patient_record_id=patient_id).select_related(
+            'delivery__pregnancy__patient'
+        ).first()
+        if newborn:
+            mother = newborn.delivery.pregnancy.patient
+            as_child = {
+                'newborn_id': str(newborn.id),
+                'mother_patient_id': str(mother.id),
+                'mother_name': mother.name,
+                'pregnancy_id': str(newborn.delivery.pregnancy_id),
+            }
+
+        return Response({'pregnancies': pregnancies_data, 'as_child_of': as_child})

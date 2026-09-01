@@ -12,6 +12,10 @@ const maternityAPI = {
         const response = await api.get(`${BASE}/pregnancies/${id}/`);
         return response.data;
     },
+    getPatientMaternityInfo: async (patientId) => {
+        const response = await api.get(`${BASE}/patient/${patientId}/info/`);
+        return response.data;
+    },
     createPregnancy: async (data) => {
         const response = await api.post(`${BASE}/pregnancies/`, data);
         return response.data;

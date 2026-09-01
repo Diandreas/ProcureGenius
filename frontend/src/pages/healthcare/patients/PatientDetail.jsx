@@ -10,6 +10,7 @@ import {
     MedicalServices as ConsultationIcon,
     Science as LabIcon,
     LocalPharmacy as PharmacyIcon,
+    PregnantWoman as MaternityTabIcon,
     Receipt as PrescriptionIcon,
     Dashboard as SummaryIcon,
     TrackChanges as FollowUpIcon,
@@ -23,6 +24,7 @@ import { Accordion, AccordionSummary, AccordionDetails, Table, TableBody, TableC
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
+import maternityAPI from '../../../services/maternityAPI';
 import LabOrderHistory from './components/LabOrderHistory';
 import PharmacyHistory from './components/PharmacyHistory';
 import MedicalSummaryTab from './components/MedicalSummaryTab';
@@ -30,6 +32,7 @@ import PatientTimeline from './components/PatientTimeline';
 import AdministerCareModal from './components/AdministerCareModal';
 import PatientFollowUpModal from './components/PatientFollowUpModal';
 import PatientJournalTab from './components/PatientJournalTab';
+import MaternityHistoryTab from './components/MaternityHistoryTab';
 import PrintModal from '../../../components/PrintModal';
 import { formatDate } from '../../../utils/formatters';
 
@@ -58,10 +61,21 @@ const PatientDetail = () => {
     const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
     const [followUps, setFollowUps] = useState([]);
     const [editingFollowUp, setEditingFollowUp] = useState(null);
+    const [maternityInfo, setMaternityInfo] = useState(null);
 
     useEffect(() => {
         fetchData();
     }, [id]);
+
+    // Chargement léger pour savoir s'il faut montrer l'onglet Maternité — pas
+    // que pour les patientes (genre F) : un nouveau-né enregistré comme
+    // patient à part (garçon ou fille) doit aussi voir le lien vers sa mère.
+    useEffect(() => {
+        if (!id) return;
+        maternityAPI.getPatientMaternityInfo(id).then(setMaternityInfo).catch(() => setMaternityInfo(null));
+    }, [id]);
+
+    const showMaternityTab = showMaternityTab || !!maternityInfo?.as_child_of;
 
     // Lazy-load history only when tabs 3/4/5 are opened
     useEffect(() => {
@@ -355,6 +369,9 @@ const PatientDetail = () => {
                         <SafeTab icon={<ConsultationIcon />} iconPosition="start" label="Consultations" />
                         <SafeTab icon={<LabIcon />} iconPosition="start" label="Examens Labo" />
                         <SafeTab icon={<PharmacyIcon />} iconPosition="start" label="Pharmacie" />
+                        {showMaternityTab && (
+                            <SafeTab icon={<MaternityTabIcon />} iconPosition="start" label="Maternité" />
+                        )}
                     </Tabs>
                 </Box>
 
@@ -522,6 +539,13 @@ const PatientDetail = () => {
                 <Box role="tabpanel" hidden={tabValue !== 5} sx={{ p: 3 }}>
                     {tabValue === 5 && <PharmacyHistory dispensings={history?.pharmacy_dispensings} />}
                 </Box>
+
+                {/* Tab 6: Maternité (patientes uniquement) */}
+                {showMaternityTab && (
+                    <Box role="tabpanel" hidden={tabValue !== 6} sx={{ p: 3 }}>
+                        {tabValue === 6 && <MaternityHistoryTab patientId={id} initialInfo={maternityInfo} />}
+                    </Box>
+                )}
 
             </Card>
 

@@ -3,7 +3,7 @@ import {
     Box, Card, CardContent, Grid, TextField, Typography, Autocomplete, Button, Stack,
 } from '@mui/material';
 import { Save as SaveIcon } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import maternityAPI from '../../../services/maternityAPI';
 import patientAPI from '../../../services/patientAPI';
@@ -11,6 +11,7 @@ import BackButton from '../../../components/navigation/BackButton';
 
 export default function PregnancyForm() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { enqueueSnackbar } = useSnackbar();
     const [patients, setPatients] = useState([]);
     const [saving, setSaving] = useState(false);
@@ -25,8 +26,15 @@ export default function PregnancyForm() {
 
     useEffect(() => {
         patientAPI.getPatients({ page_size: 200 }).then(data => {
-            setPatients(Array.isArray(data) ? data : data.results || []);
+            const list = Array.isArray(data) ? data : data.results || [];
+            setPatients(list);
+            const preselectId = searchParams.get('patientId');
+            if (preselectId) {
+                const match = list.find(p => p.id === preselectId);
+                if (match) setFormData(prev => ({ ...prev, patient: match }));
+            }
         }).catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleSubmit = async () => {
