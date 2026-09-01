@@ -82,6 +82,14 @@ class PrenatalVisit(models.Model):
         PregnancyRecord, on_delete=models.CASCADE,
         related_name='prenatal_visits', verbose_name=_("Grossesse")
     )
+    # Lien vers le module Consultations centralisé — créé automatiquement à la
+    # sauvegarde (voir PrenatalVisitViewSet.perform_create), même pattern que
+    # Delivery.hospitalization : la CPN apparaît ainsi dans l'historique de
+    # consultations du patient comme n'importe quelle autre visite.
+    consultation = models.OneToOneField(
+        'consultations.Consultation', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='prenatal_visit', verbose_name=_("Consultation liée")
+    )
     visit_date = models.DateTimeField(default=timezone.now, verbose_name=_("Date de la visite"))
     gestational_age_weeks = models.PositiveIntegerField(
         null=True, blank=True, verbose_name=_("Âge gestationnel (SA)")
@@ -250,6 +258,12 @@ class PostnatalVisit(models.Model):
     newborn = models.ForeignKey(
         Newborn, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='postnatal_visits', verbose_name=_("Nouveau-né concerné")
+    )
+    # Lien vers le module Consultations centralisé (visite de la mère) — même
+    # principe que PrenatalVisit.consultation.
+    consultation = models.OneToOneField(
+        'consultations.Consultation', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='postnatal_visit', verbose_name=_("Consultation liée")
     )
     visit_date = models.DateTimeField(default=timezone.now, verbose_name=_("Date de la visite"))
     days_after_delivery = models.PositiveIntegerField(

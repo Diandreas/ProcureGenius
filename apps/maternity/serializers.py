@@ -25,11 +25,12 @@ class NewbornSerializer(serializers.ModelSerializer):
 class PostnatalVisitSerializer(serializers.ModelSerializer):
     doctor_details = UserBasicSerializer(source='doctor', read_only=True)
     newborn_details = NewbornSerializer(source='newborn', read_only=True)
+    consultation_number = serializers.CharField(source='consultation.consultation_number', read_only=True, default=None)
 
     class Meta:
         model = PostnatalVisit
         fields = '__all__'
-        read_only_fields = ['id', 'visit_invoice', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'visit_invoice', 'consultation', 'created_at', 'updated_at']
 
 
 class DeliverySerializer(serializers.ModelSerializer):
@@ -46,11 +47,12 @@ class DeliverySerializer(serializers.ModelSerializer):
 
 class PrenatalVisitSerializer(serializers.ModelSerializer):
     doctor_details = UserBasicSerializer(source='doctor', read_only=True)
+    consultation_number = serializers.CharField(source='consultation.consultation_number', read_only=True, default=None)
 
     class Meta:
         model = PrenatalVisit
         fields = '__all__'
-        read_only_fields = ['id', 'visit_invoice', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'visit_invoice', 'consultation', 'created_at', 'updated_at']
 
 
 class PregnancyRecordListSerializer(serializers.ModelSerializer):

@@ -10,6 +10,7 @@ from .serializers import (
 )
 from .invoice_services import MaternityInvoiceService
 from apps.hospitalizations.models import Hospitalization
+from apps.consultations.models import Consultation
 
 
 class OrgScopedViewSet(viewsets.ModelViewSet):
@@ -65,6 +66,29 @@ class PrenatalVisitViewSet(viewsets.ModelViewSet):
         if pregnancy_id:
             qs = qs.filter(pregnancy_id=pregnancy_id)
         return qs
+
+    def perform_create(self, serializer):
+        """
+        Crée automatiquement une Consultation liée — même principe que
+        DeliveryViewSet.perform_create pour Hospitalization : la CPN doit
+        apparaître dans l'historique de consultations centralisé du patient,
+        pas rester isolée dans un dossier maternité à part.
+        """
+        pregnancy = serializer.validated_data['pregnancy']
+        doctor = serializer.validated_data.get('doctor')
+        consultation = Consultation.objects.create(
+            organization=pregnancy.organization,
+            patient=pregnancy.patient,
+            doctor=doctor if doctor else (self.request.user if getattr(self.request.user, 'role', None) == 'doctor' else None),
+            created_by=self.request.user,
+            chief_complaint="Consultation prénatale (CPN)",
+            status='completed',
+            consultation_date=serializer.validated_data.get('visit_date') or timezone.now(),
+            weight=serializer.validated_data.get('weight'),
+            blood_pressure_systolic=serializer.validated_data.get('blood_pressure_systolic'),
+            blood_pressure_diastolic=serializer.validated_data.get('blood_pressure_diastolic'),
+        )
+        serializer.save(consultation=consultation)
 
     @action(detail=True, methods=['post'], url_path='generate-invoice')
     def generate_invoice(self, request, pk=None):
@@ -157,6 +181,25 @@ class PostnatalVisitViewSet(viewsets.ModelViewSet):
         if delivery_id:
             qs = qs.filter(delivery_id=delivery_id)
         return qs
+
+    def perform_create(self, serializer):
+        """Crée automatiquement une Consultation liée (mère) — voir PrenatalVisitViewSet."""
+        delivery = serializer.validated_data['delivery']
+        pregnancy = delivery.pregnancy
+        doctor = serializer.validated_data.get('doctor')
+        consultation = Consultation.objects.create(
+            organization=pregnancy.organization,
+            patient=pregnancy.patient,
+            doctor=doctor if doctor else (self.request.user if getattr(self.request.user, 'role', None) == 'doctor' else None),
+            created_by=self.request.user,
+            chief_complaint="Suivi post-natal",
+            status='completed',
+            consultation_date=serializer.validated_data.get('visit_date') or timezone.now(),
+            weight=serializer.validated_data.get('mother_weight'),
+            blood_pressure_systolic=serializer.validated_data.get('mother_blood_pressure_systolic'),
+            blood_pressure_diastolic=serializer.validated_data.get('mother_blood_pressure_diastolic'),
+        )
+        serializer.save(consultation=consultation)
 
     @action(detail=True, methods=['post'], url_path='generate-invoice')
     def generate_invoice(self, request, pk=None):

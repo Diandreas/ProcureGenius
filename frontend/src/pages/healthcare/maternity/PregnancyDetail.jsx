@@ -168,7 +168,7 @@ export default function PregnancyDetail() {
                         <TableHead>
                             <TableRow>
                                 <TableCell>Date</TableCell><TableCell>SA</TableCell><TableCell>Poids</TableCell>
-                                <TableCell>Tension</TableCell><TableCell>HU</TableCell><TableCell>BCF</TableCell>
+                                <TableCell>Tension</TableCell><TableCell>HU</TableCell><TableCell>BCF</TableCell><TableCell></TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -180,10 +180,17 @@ export default function PregnancyDetail() {
                                     <TableCell>{v.blood_pressure_systolic ?? '-'}/{v.blood_pressure_diastolic ?? '-'}</TableCell>
                                     <TableCell>{v.fundal_height ?? '-'} cm</TableCell>
                                     <TableCell>{v.fetal_heart_rate ?? '-'} bpm</TableCell>
+                                    <TableCell>
+                                        {v.consultation && (
+                                            <Button size="small" onClick={() => navigate(`/healthcare/consultations/${v.consultation}`)}>
+                                                Voir la consultation
+                                            </Button>
+                                        )}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                             {(!pregnancy.prenatal_visits || pregnancy.prenatal_visits.length === 0) && (
-                                <TableRow><TableCell colSpan={6}><Typography color="text.secondary" variant="body2">Aucune CPN enregistrée</Typography></TableCell></TableRow>
+                                <TableRow><TableCell colSpan={7}><Typography color="text.secondary" variant="body2">Aucune CPN enregistrée</Typography></TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
@@ -251,7 +258,7 @@ export default function PregnancyDetail() {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Date</TableCell><TableCell>J+</TableCell><TableCell>Poids mère</TableCell>
-                                    <TableCell>Tension mère</TableCell><TableCell>Poids bébé</TableCell><TableCell>Alimentation</TableCell>
+                                    <TableCell>Tension mère</TableCell><TableCell>Poids bébé</TableCell><TableCell>Alimentation</TableCell><TableCell></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -265,10 +272,17 @@ export default function PregnancyDetail() {
                                         <TableCell>
                                             {{ breast: 'Maternel', formula: 'Artificiel', mixed: 'Mixte' }[v.feeding_status] || '-'}
                                         </TableCell>
+                                        <TableCell>
+                                            {v.consultation && (
+                                                <Button size="small" onClick={() => navigate(`/healthcare/consultations/${v.consultation}`)}>
+                                                    Voir la consultation
+                                                </Button>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                                 {(!delivery.postnatal_visits || delivery.postnatal_visits.length === 0) && (
-                                    <TableRow><TableCell colSpan={6}><Typography color="text.secondary" variant="body2">Aucune visite post-natale enregistrée</Typography></TableCell></TableRow>
+                                    <TableRow><TableCell colSpan={7}><Typography color="text.secondary" variant="body2">Aucune visite post-natale enregistrée</Typography></TableCell></TableRow>
                                 )}
                             </TableBody>
                         </Table>
