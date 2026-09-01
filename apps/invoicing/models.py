@@ -700,6 +700,7 @@ class Invoice(models.Model):
         ('healthcare_consultation', _('Consultation médicale')),
         ('healthcare_laboratory', _('Laboratoire')),
         ('healthcare_imaging', _('Imagerie médicale')),
+        ('healthcare_maternity', _('Maternité')),
         ('healthcare_pharmacy', _('Pharmacie / Médicaments')),
         ('healthcare_services', _('Soins / Petite chirurgie / Hospitalisation')),
         ('credit_note', _('Avoir - Note de crédit')),

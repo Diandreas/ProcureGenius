@@ -31,6 +31,7 @@ import {
   HealthAndSafety as SoinsIcon,
   SwapHoriz as SubcontractIcon,
   PersonSearch as PersonSearchIcon,
+  PregnantWoman as MaternityIcon,
 } from '@mui/icons-material';
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
@@ -61,6 +62,7 @@ const ACTIVITY_LABELS = {
   healthcare_consultation: 'Consultation',
   healthcare_laboratory: 'Laboratoire',
   healthcare_imaging: 'Imagerie médicale',
+  healthcare_maternity: 'Maternité',
   healthcare_pharmacy: 'Pharmacie & Médicaments',
   healthcare_services: 'Soins / Chirurgie / Hosp.',
   standard: 'Pharmacie & Médicaments',
@@ -187,6 +189,7 @@ const Dashboard = () => {
     + (byActivity.find(a => a.activity_type === 'standard')?.revenue || 0);
   const labRevenue = byActivity.find(a => a.activity_type === 'healthcare_laboratory')?.revenue || 0;
   const imagingRevenue = byActivity.find(a => a.activity_type === 'healthcare_imaging')?.revenue || 0;
+  const maternityRevenue = byActivity.find(a => a.activity_type === 'healthcare_maternity')?.revenue || 0;
   const servicesRevenue = byActivity.find(a => a.activity_type === 'healthcare_services')?.revenue || 0;
 
   // CA facturé vs part réellement conservée par le centre
@@ -378,6 +381,11 @@ const Dashboard = () => {
                   icon={<BiotechIcon />} color="#8b5cf6" loading={loading}
                   subtitle={loading ? '' : `Net centre (30%) : ${formatCurrency(imagingCenterNet)} · Médecin (15%) : ${formatCurrency(imagingDoctorShare)}`} />
               </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="CA Maternité"
+                  value={loading ? '...' : formatCurrency(maternityRevenue)}
+                  icon={<MaternityIcon />} color="#ec4899" loading={loading} />
+              </Grid>
             </Grid>
 
             {/* Tableau sous-traitance par laboratoire */}
@@ -517,7 +525,7 @@ const Dashboard = () => {
             </Grid>
             {/* KPI cards — ligne 2 : détail par flux (blocs parent/enfant pour les sous-ensembles réels) */}
             <Grid container spacing={2} mb={3}>
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid item xs={12} sm={6} md={3}>
                 <NestedStatCard title="CA Laboratoire"
                   value={loading ? '...' : formatCurrency(labRevenue)}
                   icon={<ScienceIcon />} color="#ef4444" loading={loading}
@@ -526,13 +534,18 @@ const Dashboard = () => {
                   ]}
                   footnote={loading ? '' : `Net centre sur sous-traitance (90%) : ${formatCurrency(subcontractCenterNet)} · Emmanuel/Christian (10%) : ${formatCurrency(subcontractPartnerShare)}`} />
               </Grid>
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="CA Imagerie médicale"
                   value={loading ? '...' : formatCurrency(imagingRevenue)}
                   icon={<BiotechIcon />} color="#8b5cf6" loading={loading}
                   subtitle={loading ? '' : `Net centre (30%) : ${formatCurrency(imagingCenterNet)} · Médecin (15%) : ${formatCurrency(imagingDoctorShare)}`} />
               </Grid>
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="CA Maternité"
+                  value={loading ? '...' : formatCurrency(maternityRevenue)}
+                  icon={<MaternityIcon />} color="#ec4899" loading={loading} />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
                 <NestedStatCard title="CA Pharmacie & Médicaments"
                   value={loading ? '...' : formatCurrency(pharmacyRevenue)}
                   icon={<HospitalIcon />} color="#10b981" loading={loading}

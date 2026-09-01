@@ -24,6 +24,7 @@ class Modules:
     CONSULTATIONS = 'consultations'
     LABORATORY = 'laboratory'
     IMAGING = 'imaging'
+    MATERNITY = 'maternity'
     PHARMACY = 'pharmacy'
     
     # Always available to admins (not controllable by profiles)
@@ -113,6 +114,12 @@ MODULE_METADATA = {
         'icon': 'medical_information',
         'always_enabled': False,
     },
+    Modules.MATERNITY: {
+        'name': _('Maternité'),
+        'description': _('Suivi prénatal, accouchement, nouveau-né, suivi post-natal'),
+        'icon': 'pregnant_woman',
+        'always_enabled': False,
+    },
     Modules.PHARMACY: {
         'name': _('Pharmacie'),
         'description': _('Dispensation de médicaments'),
@@ -195,6 +202,7 @@ PROFILE_MODULES = {
         Modules.CONSULTATIONS,
         Modules.LABORATORY,
         Modules.IMAGING,
+        Modules.MATERNITY,
         Modules.PHARMACY,
         Modules.PRODUCTS,
         Modules.INVOICES,

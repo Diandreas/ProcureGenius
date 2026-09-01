@@ -119,6 +119,9 @@ import ImagingOrderForm from './pages/healthcare/imaging/ImagingOrderForm';
 import ImagingOrderDetail from './pages/healthcare/imaging/ImagingOrderDetail';
 import ImagingExamCatalog from './pages/healthcare/imaging/ImagingExamCatalog';
 import ImagingSubcontractorBatchOrder from './pages/healthcare/imaging/ImagingSubcontractorBatchOrder';
+import PregnancyList from './pages/healthcare/maternity/PregnancyList';
+import PregnancyForm from './pages/healthcare/maternity/PregnancyForm';
+import PregnancyDetail from './pages/healthcare/maternity/PregnancyDetail';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
 import DispensingForm from './pages/healthcare/pharmacy/DispensingForm';
 import DispensingDetail from './pages/healthcare/pharmacy/DispensingDetail';
@@ -884,6 +887,9 @@ function App() {
                               <Route path="/healthcare/imaging/catalog" element={<ModuleRoute module="imaging"><ImagingExamCatalog /></ModuleRoute>} />
                               <Route path="/healthcare/imaging/subcontractors/batch-order" element={<ModuleRoute module="imaging"><ImagingSubcontractorBatchOrder /></ModuleRoute>} />
                               <Route path="/healthcare/imaging/:id" element={<ModuleRoute module="imaging"><ImagingOrderDetail /></ModuleRoute>} />
+                              <Route path="/healthcare/maternity" element={<ModuleRoute module="maternity"><PregnancyList /></ModuleRoute>} />
+                              <Route path="/healthcare/maternity/new" element={<ModuleRoute module="maternity"><PregnancyForm /></ModuleRoute>} />
+                              <Route path="/healthcare/maternity/:id" element={<ModuleRoute module="maternity"><PregnancyDetail /></ModuleRoute>} />
 
                               {/* Pharmacy */}
                               <Route path="/healthcare/pharmacy/dispensing" element={<ModuleRoute module="pharmacy"><DispensingList /></ModuleRoute>} />

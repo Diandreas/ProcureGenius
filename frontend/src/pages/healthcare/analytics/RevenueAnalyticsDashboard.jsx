@@ -15,6 +15,7 @@ import {
     CalendarToday as CalendarIcon,
     MonitorHeart as ImagingIcon,
     InfoOutlined as InfoIcon,
+    PregnantWoman as MaternityIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -75,6 +76,8 @@ const RevenueAnalyticsDashboard = () => {
                 return <LabIcon />;
             case 'healthcare_imaging':
                 return <ImagingIcon />;
+            case 'healthcare_maternity':
+                return <MaternityIcon />;
             case 'healthcare_pharmacy':
                 return <PharmacyIcon />;
             default:
@@ -90,6 +93,8 @@ const RevenueAnalyticsDashboard = () => {
                 return theme.palette.success.main;
             case 'healthcare_imaging':
                 return theme.palette.secondary.main;
+            case 'healthcare_maternity':
+                return '#ec4899';
             case 'healthcare_pharmacy':
                 return theme.palette.warning.main;
             default:
