@@ -23,6 +23,11 @@ def _get_maternity_product(organization, reference, name, default_price='0.00'):
             'price': Decimal(default_price),
             'category': category,
             'description': name,
+            # Product.clean() interdit stock_quantity/low_stock_threshold != 0 pour
+            # product_type='service' — low_stock_threshold a un default=10 sur le
+            # modèle, donc il faut l'expliciter à 0 ici sous peine de ValidationError.
+            'stock_quantity': 0,
+            'low_stock_threshold': 0,
         }
     )
     return product
