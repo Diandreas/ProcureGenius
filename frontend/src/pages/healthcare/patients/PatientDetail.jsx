@@ -75,7 +75,7 @@ const PatientDetail = () => {
         maternityAPI.getPatientMaternityInfo(id).then(setMaternityInfo).catch(() => setMaternityInfo(null));
     }, [id]);
 
-    const showMaternityTab = showMaternityTab || !!maternityInfo?.as_child_of;
+    const showMaternityTab = patient?.gender === 'F' || !!maternityInfo?.as_child_of;
 
     // Lazy-load history only when tabs 3/4/5 are opened
     useEffect(() => {
