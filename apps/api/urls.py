@@ -121,6 +121,9 @@ urlpatterns = [
     # Healthcare - Maternity (CPN, accouchement, nouveau-né, suivi post-natal)
     path('healthcare/maternity/', include('apps.maternity.urls')),
 
+    # Healthcare - Vaccination (catalogue PEV + anténatal)
+    path('healthcare/vaccination/', include('apps.vaccination.urls')),
+
     # Healthcare - Medical Documents (référence, repos médical, soins infirmiers, contre-référence)
     path('healthcare/medical-documents/', include('apps.medical_documents.urls')),
 

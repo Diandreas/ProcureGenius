@@ -17,6 +17,7 @@ INVOICE_TYPE_TO_ACCOUNT = {
     'healthcare_pharmacy':     '7300',
     'healthcare_services':     '7400',
     'standard':                '7500',
+    'healthcare_vaccination':  '7600',  # "Recettes — Autres services", déjà semé pour toutes les orgs
     'credit_note':             '7500',  # Note de crédit sur comptes produits
 }
 

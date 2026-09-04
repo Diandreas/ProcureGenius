@@ -18,7 +18,6 @@ import patientAPI from '../../../../services/patientAPI';
 const SERVICE_TYPES = [
     { value: 'nursing_care', label: 'Soin infirmier' },
     { value: 'procedure', label: 'Procédure / Intervention' },
-    { value: 'vaccination', label: 'Vaccination' },
     { value: 'imaging', label: 'Imagerie' },
     { value: 'physiotherapy', label: 'Kinésithérapie' },
     { value: 'other', label: 'Autre' },

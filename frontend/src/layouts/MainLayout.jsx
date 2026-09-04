@@ -139,6 +139,7 @@ function MainLayout() {
     { text: 'Journal d\'audit', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/audit-log', moduleId: 'laboratory', isCore: false },
     { text: 'Imagerie', iconSrc: '/icon/analysis.png', path: '/healthcare/imaging', moduleId: 'imaging', isCore: false },
     { text: 'Maternité', iconSrc: '/icon/contract.png', path: '/healthcare/maternity', moduleId: 'maternity', isCore: false },
+    { text: 'Vaccinations', iconSrc: '/icon/analysis.png', path: '/healthcare/vaccination/catalog', moduleId: 'vaccination', isCore: false },
     { text: 'Pharmacie Stock', iconSrc: '/icon/product.png', path: '/products', moduleId: 'pharmacy', isCore: false },
     { text: 'Consultations', iconSrc: '/icon/contract.png', path: '/healthcare/consultations', moduleId: 'consultations', isCore: false },
     { text: 'Hospitalisations', iconSrc: '/icon/contract.png', path: '/healthcare/hospitalizations', moduleId: 'consultations', isCore: false },

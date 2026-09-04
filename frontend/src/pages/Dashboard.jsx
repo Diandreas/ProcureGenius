@@ -32,6 +32,7 @@ import {
   SwapHoriz as SubcontractIcon,
   PersonSearch as PersonSearchIcon,
   PregnantWoman as MaternityIcon,
+  Vaccines as VaccinesIcon,
 } from '@mui/icons-material';
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
@@ -63,6 +64,7 @@ const ACTIVITY_LABELS = {
   healthcare_laboratory: 'Laboratoire',
   healthcare_imaging: 'Imagerie médicale',
   healthcare_maternity: 'Maternité',
+  healthcare_vaccination: 'Vaccination',
   healthcare_pharmacy: 'Pharmacie & Médicaments',
   healthcare_services: 'Soins / Chirurgie / Hosp.',
   standard: 'Pharmacie & Médicaments',
@@ -190,6 +192,7 @@ const Dashboard = () => {
   const labRevenue = byActivity.find(a => a.activity_type === 'healthcare_laboratory')?.revenue || 0;
   const imagingRevenue = byActivity.find(a => a.activity_type === 'healthcare_imaging')?.revenue || 0;
   const maternityRevenue = byActivity.find(a => a.activity_type === 'healthcare_maternity')?.revenue || 0;
+  const vaccinationRevenue = byActivity.find(a => a.activity_type === 'healthcare_vaccination')?.revenue || 0;
   const servicesRevenue = byActivity.find(a => a.activity_type === 'healthcare_services')?.revenue || 0;
 
   // CA facturé vs part réellement conservée par le centre
@@ -386,6 +389,11 @@ const Dashboard = () => {
                   value={loading ? '...' : formatCurrency(maternityRevenue)}
                   icon={<MaternityIcon />} color="#ec4899" loading={loading} />
               </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="CA Vaccination"
+                  value={loading ? '...' : formatCurrency(vaccinationRevenue)}
+                  icon={<VaccinesIcon />} color="#0ea5e9" loading={loading} />
+              </Grid>
             </Grid>
 
             {/* Tableau sous-traitance par laboratoire */}
@@ -544,6 +552,11 @@ const Dashboard = () => {
                 <StatCard title="CA Maternité"
                   value={loading ? '...' : formatCurrency(maternityRevenue)}
                   icon={<MaternityIcon />} color="#ec4899" loading={loading} />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="CA Vaccination"
+                  value={loading ? '...' : formatCurrency(vaccinationRevenue)}
+                  icon={<VaccinesIcon />} color="#0ea5e9" loading={loading} />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <NestedStatCard title="CA Pharmacie & Médicaments"

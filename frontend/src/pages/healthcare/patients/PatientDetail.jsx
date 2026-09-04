@@ -11,6 +11,7 @@ import {
     Science as LabIcon,
     LocalPharmacy as PharmacyIcon,
     PregnantWoman as MaternityTabIcon,
+    Vaccines as VaccinationTabIcon,
     Receipt as PrescriptionIcon,
     Dashboard as SummaryIcon,
     TrackChanges as FollowUpIcon,
@@ -33,6 +34,7 @@ import AdministerCareModal from './components/AdministerCareModal';
 import PatientFollowUpModal from './components/PatientFollowUpModal';
 import PatientJournalTab from './components/PatientJournalTab';
 import MaternityHistoryTab from './components/MaternityHistoryTab';
+import VaccinationHistoryTab from './components/VaccinationHistoryTab';
 import PrintModal from '../../../components/PrintModal';
 import { formatDate } from '../../../utils/formatters';
 
@@ -76,6 +78,10 @@ const PatientDetail = () => {
     }, [id]);
 
     const showMaternityTab = patient?.gender === 'F' || !!maternityInfo?.as_child_of;
+    // L'onglet Vaccinations est toujours affiché, en dernier — son index dépend
+    // donc de si Maternité (conditionnel, juste avant) est rendu ou non. On ne
+    // touche jamais l'index fixe (6) de Maternité, on calcule le nôtre à côté.
+    const vaccinationTabIndex = showMaternityTab ? 7 : 6;
 
     // Lazy-load history only when tabs 3/4/5 are opened
     useEffect(() => {
@@ -372,6 +378,7 @@ const PatientDetail = () => {
                         {showMaternityTab && (
                             <SafeTab icon={<MaternityTabIcon />} iconPosition="start" label="Maternité" />
                         )}
+                        <SafeTab icon={<VaccinationTabIcon />} iconPosition="start" label="Vaccinations" />
                     </Tabs>
                 </Box>
 
@@ -546,6 +553,11 @@ const PatientDetail = () => {
                         {tabValue === 6 && <MaternityHistoryTab patientId={id} initialInfo={maternityInfo} />}
                     </Box>
                 )}
+
+                {/* Vaccinations (tous patients) — index dynamique, voir vaccinationTabIndex */}
+                <Box role="tabpanel" hidden={tabValue !== vaccinationTabIndex} sx={{ p: 3 }}>
+                    {tabValue === vaccinationTabIndex && <VaccinationHistoryTab patientId={id} />}
+                </Box>
 
             </Card>
 

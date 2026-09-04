@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import PregnancyRecord, PrenatalVisit, Delivery, Newborn, PostnatalVisit
 from apps.accounts.models import Client, CustomUser
+from apps.vaccination.serializers import VaccinationRecordSerializer
 
 
 class PatientBasicSerializer(serializers.ModelSerializer):
@@ -82,6 +83,7 @@ class PregnancyRecordSerializer(serializers.ModelSerializer):
     referring_doctor_details = UserBasicSerializer(source='referring_doctor', read_only=True)
     prenatal_visits = PrenatalVisitSerializer(many=True, read_only=True)
     delivery = DeliverySerializer(read_only=True)
+    vaccination_records = VaccinationRecordSerializer(many=True, read_only=True)
 
     class Meta:
         model = PregnancyRecord

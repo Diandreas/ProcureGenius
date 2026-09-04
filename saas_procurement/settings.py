@@ -51,6 +51,7 @@ TENANT_APPS = [
     'apps.consultations',
     'apps.hospitalizations',
     'apps.maternity',
+    'apps.vaccination',
     'apps.medical_documents',
     'apps.document_generator',
     # Comptabilité

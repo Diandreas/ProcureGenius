@@ -25,6 +25,7 @@ class Modules:
     LABORATORY = 'laboratory'
     IMAGING = 'imaging'
     MATERNITY = 'maternity'
+    VACCINATION = 'vaccination'
     PHARMACY = 'pharmacy'
     
     # Always available to admins (not controllable by profiles)
@@ -120,6 +121,12 @@ MODULE_METADATA = {
         'icon': 'pregnant_woman',
         'always_enabled': False,
     },
+    Modules.VACCINATION: {
+        'name': _('Vaccination'),
+        'description': _('Catalogue de vaccins, historique patient et vaccination anténatale'),
+        'icon': 'vaccines',
+        'always_enabled': False,
+    },
     Modules.PHARMACY: {
         'name': _('Pharmacie'),
         'description': _('Dispensation de médicaments'),
@@ -203,6 +210,7 @@ PROFILE_MODULES = {
         Modules.LABORATORY,
         Modules.IMAGING,
         Modules.MATERNITY,
+        Modules.VACCINATION,
         Modules.PHARMACY,
         Modules.PRODUCTS,
         Modules.INVOICES,

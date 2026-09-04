@@ -16,6 +16,7 @@ import {
     MonitorHeart as ImagingIcon,
     InfoOutlined as InfoIcon,
     PregnantWoman as MaternityIcon,
+    Vaccines as VaccinesIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -78,6 +79,8 @@ const RevenueAnalyticsDashboard = () => {
                 return <ImagingIcon />;
             case 'healthcare_maternity':
                 return <MaternityIcon />;
+            case 'healthcare_vaccination':
+                return <VaccinesIcon />;
             case 'healthcare_pharmacy':
                 return <PharmacyIcon />;
             default:
@@ -95,6 +98,8 @@ const RevenueAnalyticsDashboard = () => {
                 return theme.palette.secondary.main;
             case 'healthcare_maternity':
                 return '#ec4899';
+            case 'healthcare_vaccination':
+                return '#0ea5e9';
             case 'healthcare_pharmacy':
                 return theme.palette.warning.main;
             default:

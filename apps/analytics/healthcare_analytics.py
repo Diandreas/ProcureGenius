@@ -1066,7 +1066,7 @@ class EnhancedRevenueAnalyticsView(APIView):
             activity_acc[act]['count'] += int(cnt or 0)
 
         # Factures healthcare_* directes (labo, pharmacie, services) → montant total de la facture
-        for inv_type in ['healthcare_laboratory', 'healthcare_imaging', 'healthcare_maternity', 'healthcare_pharmacy', 'healthcare_services']:
+        for inv_type in ['healthcare_laboratory', 'healthcare_imaging', 'healthcare_maternity', 'healthcare_vaccination', 'healthcare_pharmacy', 'healthcare_services']:
             agg = invoices.filter(invoice_type=inv_type).aggregate(
                 rev=Sum('total_amount'), cnt=Count('id')
             )
@@ -1192,6 +1192,7 @@ class EnhancedRevenueAnalyticsView(APIView):
             'healthcare_laboratory':   'Laboratoire',
             'healthcare_imaging':      'Imagerie médicale',
             'healthcare_maternity':    'Maternité',
+            'healthcare_vaccination':  'Vaccination',
             'healthcare_pharmacy':     'Pharmacie / Médicaments',
             'healthcare_services':     'Soins / Petite chirurgie / Hospitalisation',
             'standard':                'Vente comptoir / Divers',

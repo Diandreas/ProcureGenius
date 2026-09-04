@@ -4,11 +4,12 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions, Divider, MenuItem,
     Table, TableBody, TableCell, TableHead, TableRow, Checkbox, FormControlLabel,
 } from '@mui/material';
-import { Add as AddIcon, Receipt as ReceiptIcon } from '@mui/icons-material';
+import { Add as AddIcon, Receipt as ReceiptIcon, Vaccines as VaccinesIcon } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 import maternityAPI from '../../../services/maternityAPI';
+import vaccinationAPI from '../../../services/vaccinationAPI';
 import LoadingState from '../../../components/LoadingState';
 import BackButton from '../../../components/navigation/BackButton';
 import { formatDate as formatDisplayDate } from '../../../utils/formatters';
@@ -37,6 +38,11 @@ const emptyPostnatal = {
     newborn: '', newborn_weight_grams: '', feeding_status: '', complications: '', notes: '', next_visit_date: '',
 };
 
+const emptyVaccination = {
+    vaccine_type: '', dose_number: '', administered_date: dayjs().format('YYYY-MM-DDTHH:mm'),
+    next_dose_due_date: '', batch_number: '', notes: '',
+};
+
 export default function PregnancyDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -47,10 +53,13 @@ export default function PregnancyDetail() {
     const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
     const [newbornDialogOpen, setNewbornDialogOpen] = useState(false);
     const [postnatalDialogOpen, setPostnatalDialogOpen] = useState(false);
+    const [vaccinationDialogOpen, setVaccinationDialogOpen] = useState(false);
     const [cpnForm, setCpnForm] = useState(emptyVisit);
     const [deliveryForm, setDeliveryForm] = useState(emptyDelivery);
     const [newbornForm, setNewbornForm] = useState(emptyNewborn);
     const [postnatalForm, setPostnatalForm] = useState(emptyPostnatal);
+    const [vaccinationForm, setVaccinationForm] = useState(emptyVaccination);
+    const [vaccineTypes, setVaccineTypes] = useState([]);
     const [saving, setSaving] = useState(false);
 
     const fetchPregnancy = useCallback(() => {
@@ -60,6 +69,11 @@ export default function PregnancyDetail() {
     }, [id, enqueueSnackbar]);
 
     useEffect(() => { fetchPregnancy(); }, [fetchPregnancy]);
+    useEffect(() => {
+        vaccinationAPI.getVaccineTypes({ is_active: true }).then(data => {
+            setVaccineTypes(Array.isArray(data) ? data : data.results || []);
+        }).catch(() => {});
+    }, []);
 
     const handleSaveCpn = async () => {
         setSaving(true);
@@ -135,6 +149,29 @@ export default function PregnancyDetail() {
         }
     };
 
+    const handleSaveVaccination = async () => {
+        if (!vaccinationForm.vaccine_type) {
+            enqueueSnackbar('Sélectionne un vaccin', { variant: 'warning' });
+            return;
+        }
+        setSaving(true);
+        try {
+            // Pas de `patient` envoyé : le backend le déduit de `pregnancy`.
+            const record = await vaccinationAPI.createRecord({ ...vaccinationForm, pregnancy: id });
+            try {
+                await vaccinationAPI.generateRecordInvoice(record.id);
+            } catch (e) { /* facturation optionnelle, ne bloque pas l'enregistrement */ }
+            enqueueSnackbar('Vaccination enregistrée', { variant: 'success' });
+            setVaccinationDialogOpen(false);
+            setVaccinationForm(emptyVaccination);
+            fetchPregnancy();
+        } catch (error) {
+            enqueueSnackbar("Erreur lors de l'enregistrement de la vaccination", { variant: 'error' });
+        } finally {
+            setSaving(false);
+        }
+    };
+
     if (loading) return <LoadingState />;
     if (!pregnancy) return null;
 
@@ -191,6 +228,51 @@ export default function PregnancyDetail() {
                             ))}
                             {(!pregnancy.prenatal_visits || pregnancy.prenatal_visits.length === 0) && (
                                 <TableRow><TableCell colSpan={7}><Typography color="text.secondary" variant="body2">Aucune CPN enregistrée</Typography></TableCell></TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            {/* Vaccinations anténatales */}
+            <Card sx={{ mb: 3 }}>
+                <CardContent>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                        <Typography variant="h6">Vaccinations (anténatales)</Typography>
+                        <Button size="small" startIcon={<AddIcon />} onClick={() => setVaccinationDialogOpen(true)}>
+                            Ajouter une vaccination
+                        </Button>
+                    </Stack>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Date</TableCell><TableCell>Vaccin</TableCell><TableCell>Dose</TableCell>
+                                <TableCell>Prochaine dose</TableCell><TableCell>Facturation</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {(pregnancy.vaccination_records || []).map(v => (
+                                <TableRow key={v.id}>
+                                    <TableCell>{dayjs(v.administered_date).format('DD/MM/YYYY HH:mm')}</TableCell>
+                                    <TableCell>
+                                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                                            <VaccinesIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                            <Typography variant="body2">{v.vaccine_type_detail?.name}</Typography>
+                                        </Stack>
+                                    </TableCell>
+                                    <TableCell>{v.dose_number ?? '-'}</TableCell>
+                                    <TableCell>{v.next_dose_due_date ? dayjs(v.next_dose_due_date).format('DD/MM/YYYY') : '-'}</TableCell>
+                                    <TableCell>
+                                        {v.invoice_detail ? (
+                                            <Chip size="small" color="success" label={`Facturé — ${v.invoice_detail.total_amount} XAF`} />
+                                        ) : (
+                                            <Chip size="small" variant="outlined" label="Gratuit" />
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                            {(!pregnancy.vaccination_records || pregnancy.vaccination_records.length === 0) && (
+                                <TableRow><TableCell colSpan={5}><Typography color="text.secondary" variant="body2">Aucune vaccination anténatale enregistrée</Typography></TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
@@ -344,6 +426,49 @@ export default function PregnancyDetail() {
                     <Button variant="contained" onClick={handleSaveCpn} disabled={saving} startIcon={<ReceiptIcon />}>
                         Enregistrer + Facturer
                     </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog Vaccination anténatale */}
+            <Dialog open={vaccinationDialogOpen} onClose={() => setVaccinationDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Nouvelle vaccination anténatale</DialogTitle>
+                <DialogContent dividers>
+                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        <Grid item xs={12}>
+                            <TextField fullWidth select label="Vaccin *" value={vaccinationForm.vaccine_type}
+                                onChange={e => setVaccinationForm(p => ({ ...p, vaccine_type: e.target.value }))}>
+                                {vaccineTypes.map(v => (
+                                    <MenuItem key={v.id} value={v.id}>
+                                        {v.name} {v.is_billable ? `(${v.price} XAF)` : '(Gratuit)'}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <TextField fullWidth type="number" label="Numéro de dose"
+                                value={vaccinationForm.dose_number} onChange={e => setVaccinationForm(p => ({ ...p, dose_number: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={6}>
+                            <TextField fullWidth type="datetime-local" label="Date d'administration" InputLabelProps={{ shrink: true }}
+                                value={vaccinationForm.administered_date} onChange={e => setVaccinationForm(p => ({ ...p, administered_date: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={6}>
+                            <TextField fullWidth type="date" label="Prochaine dose due" InputLabelProps={{ shrink: true }}
+                                value={vaccinationForm.next_dose_due_date} onChange={e => setVaccinationForm(p => ({ ...p, next_dose_due_date: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={6}>
+                            <TextField fullWidth label="Numéro de lot"
+                                value={vaccinationForm.batch_number} onChange={e => setVaccinationForm(p => ({ ...p, batch_number: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField fullWidth multiline minRows={2} label="Notes"
+                                value={vaccinationForm.notes} onChange={e => setVaccinationForm(p => ({ ...p, notes: e.target.value }))} />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setVaccinationDialogOpen(false)}>Annuler</Button>
+                    <Button variant="contained" onClick={handleSaveVaccination} disabled={saving}>Enregistrer</Button>
                 </DialogActions>
             </Dialog>
 
