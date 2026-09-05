@@ -157,7 +157,12 @@ export default function PregnancyDetail() {
         setSaving(true);
         try {
             // Pas de `patient` envoyé : le backend le déduit de `pregnancy`.
-            const record = await vaccinationAPI.createRecord({ ...vaccinationForm, pregnancy: id });
+            const record = await vaccinationAPI.createRecord({
+                ...vaccinationForm,
+                pregnancy: id,
+                dose_number: vaccinationForm.dose_number === '' ? null : vaccinationForm.dose_number,
+                next_dose_due_date: vaccinationForm.next_dose_due_date === '' ? null : vaccinationForm.next_dose_due_date,
+            });
             try {
                 await vaccinationAPI.generateRecordInvoice(record.id);
             } catch (e) { /* facturation optionnelle, ne bloque pas l'enregistrement */ }

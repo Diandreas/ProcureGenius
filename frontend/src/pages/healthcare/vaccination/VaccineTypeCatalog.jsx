@@ -93,7 +93,13 @@ const VaccineTypeCatalog = () => {
             return;
         }
         try {
-            const payload = { ...formData, price: formData.is_billable ? formData.price : 0 };
+            const payload = {
+                ...formData,
+                price: formData.is_billable ? formData.price : 0,
+                category: formData.category || null,
+                standard_doses_count: formData.standard_doses_count === '' ? null : formData.standard_doses_count,
+                dose_interval_days: formData.dose_interval_days === '' ? null : formData.dose_interval_days,
+            };
             if (editingId) {
                 await vaccinationAPI.updateVaccineType(editingId, payload);
                 enqueueSnackbar('Vaccin mis à jour', { variant: 'success' });

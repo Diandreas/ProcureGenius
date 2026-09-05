@@ -44,7 +44,13 @@ const VaccinationHistoryTab = ({ patientId }) => {
         }
         setSaving(true);
         try {
-            const record = await vaccinationAPI.createRecord({ ...form, patient: patientId });
+            const payload = {
+                ...form,
+                patient: patientId,
+                dose_number: form.dose_number === '' ? null : form.dose_number,
+                next_dose_due_date: form.next_dose_due_date === '' ? null : form.next_dose_due_date,
+            };
+            const record = await vaccinationAPI.createRecord(payload);
             try {
                 await vaccinationAPI.generateRecordInvoice(record.id);
             } catch (e) { /* facturation optionnelle, ne bloque pas l'enregistrement */ }
