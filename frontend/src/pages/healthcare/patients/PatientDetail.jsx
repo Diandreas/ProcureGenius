@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Card, CardContent, Grid, Typography, Chip, Tabs, Divider, List, Avatar, CircularProgress } from '@mui/material';
+import { Box, Button, Card, CardContent, Grid, Typography, Chip, Tabs, Divider, List, Avatar, CircularProgress, useMediaQuery, useTheme } from '@mui/material';
 import { SafeTab } from '../../../components/safe';
 import {
     Edit as EditIcon,
@@ -45,6 +45,8 @@ const PatientDetail = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { id } = useParams();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const [patient, setPatient] = useState(null);
     const [summary, setSummary] = useState(null);
@@ -179,19 +181,37 @@ const PatientDetail = () => {
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'space-between',
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: { xs: 1.5, sm: 0 },
+                mb: 3,
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
                     <BackButton />
-                    <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+                    <Typography
+                        variant="h4"
+                        component="h1"
+                        sx={{
+                            fontWeight: 600,
+                            fontSize: { xs: '1.4rem', sm: '2.125rem' },
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
                         {patient.name}
                     </Typography>
                 </Box>
-                <Box>
+                <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
                     <Button
                         startIcon={<PdfIcon />}
                         onClick={() => setPrintModalOpen(true)}
-                        sx={{ mr: 2 }}
                         variant="outlined"
+                        fullWidth={isMobile}
+                        size={isMobile ? 'small' : 'medium'}
                     >
                         Imprimer Dossier
                     </Button>
@@ -200,180 +220,233 @@ const PatientDetail = () => {
                         startIcon={<EditIcon />}
                         onClick={() => navigate(`/healthcare/patients/${id}/edit`)}
                         sx={{ borderRadius: 2 }}
+                        fullWidth={isMobile}
+                        size={isMobile ? 'small' : 'medium'}
                     >
                         {t('common.edit', 'Modifier')}
                     </Button>
                 </Box>
             </Box>
 
-            {/* Quick Action Buttons */}
-            <Card sx={{ mb: 3, bgcolor: 'primary.50', borderLeft: 4, borderColor: 'primary.main' }}>
+            {/* Quick Action Buttons — rangée de boutons sur tablette/desktop,
+                grille compacte icônes-first sur mobile (même liste d'actions,
+                juste une présentation plus dense pour petit écran). */}
+            <Card sx={{ mb: 3, borderLeft: 4, borderColor: 'primary.main' }}>
                 <CardContent sx={{ py: 2 }}>
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ mb: 1.5 }}>
                         Actions Rapides
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                        <Button
-                            variant="contained"
-                            startIcon={<ConsultationIcon />}
-                            onClick={() => navigate(`/healthcare/consultations/new?patientId=${id}`)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Nouvelle Consultation
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            startIcon={<LabIcon />}
-                            onClick={() => navigate(`/healthcare/imaging/new?patientId=${id}`)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Commande Labo / Imagerie
-                        </Button>
-                        <Button
-                            variant="contained"
-                            sx={{ borderRadius: 2, bgcolor: 'success.dark', '&:hover': { bgcolor: 'success.main' } }}
-                            startIcon={<MedicationIcon />}
-                            onClick={() => setPrescriptionModalOpen(true)}
-                        >
-                            Ordonnance
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="success"
-                            startIcon={<HospitalIcon />}
-                            onClick={() => navigate(`/healthcare/visits/new?patientId=${id}`)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Nouvelle Visite
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="info"
-                            startIcon={<PrescriptionIcon />}
-                            onClick={() => navigate(`/invoices/new?clientId=${id}`)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Nouvelle Facture
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<HospitalIcon />}
-                            onClick={() => setCareModalOpen(true)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Administrer un Soin
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            color="secondary"
-                            startIcon={<FollowUpIcon />}
-                            onClick={() => setFollowUpModalOpen(true)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Suivi
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<PdfIcon />}
-                            onClick={() => navigate(`/healthcare/medical-documents/new?patientId=${id}&type=nursing_care`)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Fiche de Soins
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<FileIcon />}
-                            onClick={() => navigate(`/healthcare/medical-documents/new?patientId=${id}`)}
-                            sx={{ borderRadius: 2 }}
-                        >
-                            Document Médical
-                        </Button>
-                    </Box>
+
+                    {isMobile ? (
+                        <Grid container spacing={1}>
+                            {[
+                                { label: 'Consultation', icon: <ConsultationIcon />, bg: 'primary.main', onClick: () => navigate(`/healthcare/consultations/new?patientId=${id}`) },
+                                { label: 'Labo / Imagerie', icon: <LabIcon />, bg: 'secondary.main', onClick: () => navigate(`/healthcare/imaging/new?patientId=${id}`) },
+                                { label: 'Ordonnance', icon: <MedicationIcon />, bg: 'success.dark', onClick: () => setPrescriptionModalOpen(true) },
+                                { label: 'Visite', icon: <HospitalIcon />, bg: 'success.main', onClick: () => navigate(`/healthcare/visits/new?patientId=${id}`) },
+                                { label: 'Facture', icon: <PrescriptionIcon />, bg: 'info.main', onClick: () => navigate(`/invoices/new?clientId=${id}`) },
+                                { label: 'Soin', icon: <HospitalIcon />, bg: 'grey.100', fg: 'primary.main', onClick: () => setCareModalOpen(true) },
+                                { label: 'Suivi', icon: <FollowUpIcon />, bg: 'grey.100', fg: 'secondary.main', onClick: () => setFollowUpModalOpen(true) },
+                                { label: 'Fiche Soins', icon: <PdfIcon />, bg: 'grey.100', fg: 'primary.main', onClick: () => navigate(`/healthcare/medical-documents/new?patientId=${id}&type=nursing_care`) },
+                                { label: 'Document', icon: <FileIcon />, bg: 'grey.100', fg: 'primary.main', onClick: () => navigate(`/healthcare/medical-documents/new?patientId=${id}`) },
+                            ].map((action) => (
+                                <Grid item xs={4} key={action.label}>
+                                    <Box
+                                        onClick={action.onClick}
+                                        sx={{
+                                            display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                            gap: 0.5, py: 1, borderRadius: 2, cursor: 'pointer',
+                                            '&:active': { bgcolor: 'action.selected' },
+                                        }}
+                                    >
+                                        <Avatar sx={{ bgcolor: action.bg, color: action.fg || '#fff', width: 40, height: 40 }}>
+                                            {action.icon}
+                                        </Avatar>
+                                        <Typography variant="caption" sx={{ fontSize: '0.68rem', textAlign: 'center', lineHeight: 1.15 }}>
+                                            {action.label}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    ) : (
+                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                            <Button
+                                variant="contained"
+                                startIcon={<ConsultationIcon />}
+                                onClick={() => navigate(`/healthcare/consultations/new?patientId=${id}`)}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Nouvelle Consultation
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                startIcon={<LabIcon />}
+                                onClick={() => navigate(`/healthcare/imaging/new?patientId=${id}`)}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Commande Labo / Imagerie
+                            </Button>
+                            <Button
+                                variant="contained"
+                                sx={{ borderRadius: 2, bgcolor: 'success.dark', '&:hover': { bgcolor: 'success.main' } }}
+                                startIcon={<MedicationIcon />}
+                                onClick={() => setPrescriptionModalOpen(true)}
+                            >
+                                Ordonnance
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="success"
+                                startIcon={<HospitalIcon />}
+                                onClick={() => navigate(`/healthcare/visits/new?patientId=${id}`)}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Nouvelle Visite
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="info"
+                                startIcon={<PrescriptionIcon />}
+                                onClick={() => navigate(`/invoices/new?clientId=${id}`)}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Nouvelle Facture
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<HospitalIcon />}
+                                onClick={() => setCareModalOpen(true)}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Administrer un Soin
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                startIcon={<FollowUpIcon />}
+                                onClick={() => setFollowUpModalOpen(true)}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Suivi
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<PdfIcon />}
+                                onClick={() => navigate(`/healthcare/medical-documents/new?patientId=${id}&type=nursing_care`)}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Fiche de Soins
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<FileIcon />}
+                                onClick={() => navigate(`/healthcare/medical-documents/new?patientId=${id}`)}
+                                sx={{ borderRadius: 2 }}
+                            >
+                                Document Médical
+                            </Button>
+                        </Box>
+                    )}
                 </CardContent>
             </Card>
 
-            {/* Patient Info Cards */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} md={4}>
-                    <Card sx={{ height: '100%' }}>
-                        <CardContent>
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                <Avatar sx={{ width: 64, height: 64, mr: 2, bgcolor: 'primary.main' }}>
-                                    {patient.name.charAt(0)}
-                                </Avatar>
-                                <Box>
-                                    <Typography variant="h6">{patient.name}</Typography>
-                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
-                                        <Chip label={patient.patient_number} size="small" color="primary" variant="outlined" />
-                                        {patient.has_privilege_card && (
-                                            <Chip
-                                                label={`Carte Privilège${patient.privilege_card_number ? ` · ${patient.privilege_card_number}` : ''}`}
-                                                size="small" color="secondary"
-                                                onClick={() => navigate(`/healthcare/patients/${patient.id}/privilege-card-usages`)}
-                                            />
-                                        )}
-                                    </Box>
+            {/* Fiche Patient — identité + alertes (groupe sanguin/allergies) fusionnées
+                dans une seule carte pleine largeur : l'onglet "Résumé Médical" juste en
+                dessous (actif par défaut) réaffichait déjà ces 3 mêmes infos dans un
+                encadré dédié — inutile de les dupliquer dans une deuxième carte ici.
+                Groupe sanguin + allergies restent visibles au premier coup d'œil,
+                sans clic, à côté du nom ; conditions chroniques rejoint la grille
+                d'identité ci-dessous. Aucune donnée retirée, juste moins répétée. */}
+            <Card sx={{ mb: 4 }}>
+                <CardContent>
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        justifyContent: 'space-between',
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        gap: 2,
+                    }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+                            <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main', flexShrink: 0 }}>
+                                {patient.name.charAt(0)}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="h6" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {patient.name}
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                                    <Chip label={patient.patient_number} size="small" color="primary" variant="outlined" />
+                                    {patient.has_privilege_card && (
+                                        <Chip
+                                            label={`Carte Privilège${patient.privilege_card_number ? ` · ${patient.privilege_card_number}` : ''}`}
+                                            size="small" color="secondary"
+                                            onClick={() => navigate(`/healthcare/patients/${patient.id}/privilege-card-usages`)}
+                                        />
+                                    )}
                                 </Box>
                             </Box>
-                            <Divider sx={{ my: 2 }} />
-                            <Grid container spacing={1}>
-                                <Grid item xs={6}>
-                                    <Typography variant="caption" color="text.secondary">Âge / Sexe</Typography>
-                                    <Typography variant="body2" fontWeight="500">{patient.age} ans / {patient.gender}</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography variant="caption" color="text.secondary">Date de Naissance</Typography>
-                                    <Typography variant="body2" fontWeight="500">{patient.date_of_birth ? formatDate(patient.date_of_birth) : '-'}</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography variant="caption" color="text.secondary">Téléphone</Typography>
-                                    <Typography variant="body2" fontWeight="500">{patient.phone || '-'}</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography variant="caption" color="text.secondary">Situation Matrimoniale</Typography>
-                                    <Typography variant="body2" fontWeight="500">
-                                        {patient.marital_status === 'single' ? 'Célibataire' :
-                                         patient.marital_status === 'married' ? 'Marié(e)' :
-                                         patient.marital_status === 'divorced' ? 'Divorcé(e)' :
-                                         patient.marital_status === 'widowed' ? 'Veuf/Veuve' : '-'}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography variant="caption" color="text.secondary">Profession</Typography>
-                                    <Typography variant="body2" fontWeight="500">{patient.profession || '-'}</Typography>
-                                </Grid>
-                                <Grid item xs={12} sx={{ mt: 1 }}>
-                                    <Typography variant="caption" color="text.secondary">Adresse</Typography>
-                                    <Typography variant="body2">{patient.address || '-'}</Typography>
-                                </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
-                </Grid>
+                        </Box>
 
-                <Grid item xs={12} md={8}>
-                    <Card sx={{ height: '100%' }}>
-                        <CardContent>
-                            <Typography variant="h6" gutterBottom color="error.main">Alertes Médicales</Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={6}>
-                                    <Typography variant="caption" color="text.secondary">Groupe Sanguin</Typography>
-                                    <Typography variant="h5" fontWeight="bold">{patient.blood_type || 'N/A'}</Typography>
-                                </Grid>
-                                <Grid item xs={6}>
-                                    <Typography variant="caption" color="text.secondary">Allergies</Typography>
-                                    <Typography variant="body1" color="error">{patient.allergies || 'Aucune'}</Typography>
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <Typography variant="caption" color="text.secondary">Conditions Chroniques</Typography>
-                                    <Typography variant="body1">{patient.chronic_conditions || 'Aucune'}</Typography>
-                                </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                            <Chip
+                                label={`Groupe ${patient.blood_type || 'N/A'}`}
+                                size="small"
+                                sx={{ fontWeight: 700, bgcolor: 'grey.900', color: '#fff' }}
+                            />
+                            <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                color={patient.allergies ? 'error.main' : 'success.main'}
+                                sx={{ wordBreak: 'break-word', maxWidth: { xs: '100%', sm: 260 } }}
+                            >
+                                {patient.allergies ? `⚠ ${patient.allergies}` : 'Aucune allergie connue'}
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <Divider sx={{ my: 2 }} />
+
+                    <Grid container spacing={2}>
+                        <Grid item xs={6} sm={4} md={2.4}>
+                            <Typography variant="caption" color="text.secondary">Âge / Sexe</Typography>
+                            <Typography variant="body2" fontWeight="500">{patient.age} ans / {patient.gender}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={4} md={2.4}>
+                            <Typography variant="caption" color="text.secondary">Date de Naissance</Typography>
+                            <Typography variant="body2" fontWeight="500">{patient.date_of_birth ? formatDate(patient.date_of_birth) : '-'}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={4} md={2.4}>
+                            <Typography variant="caption" color="text.secondary">Téléphone</Typography>
+                            <Typography variant="body2" fontWeight="500">{patient.phone || '-'}</Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={6} md={2.4}>
+                            <Typography variant="caption" color="text.secondary">Situation Matrimoniale</Typography>
+                            <Typography variant="body2" fontWeight="500">
+                                {patient.marital_status === 'single' ? 'Célibataire' :
+                                 patient.marital_status === 'married' ? 'Marié(e)' :
+                                 patient.marital_status === 'divorced' ? 'Divorcé(e)' :
+                                 patient.marital_status === 'widowed' ? 'Veuf/Veuve' : '-'}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={6} sm={6} md={2.4}>
+                            <Typography variant="caption" color="text.secondary">Profession</Typography>
+                            <Typography variant="body2" fontWeight="500">{patient.profession || '-'}</Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="caption" color="text.secondary">Adresse</Typography>
+                            <Typography variant="body2">{patient.address || '-'}</Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="caption" color="text.secondary">Conditions Chroniques</Typography>
+                            <Typography variant="body2" color={patient.chronic_conditions ? 'text.primary' : 'text.secondary'}>
+                                {patient.chronic_conditions || 'Aucune'}
+                            </Typography>
+                        </Grid>
+                    </Grid>
+                </CardContent>
+            </Card>
 
             {/* Tabs - New structure */}
             <Card>
