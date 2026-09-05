@@ -842,14 +842,17 @@ class TodayLabOrdersView(APIView):
         )
         serialized = LabOrderListSerializer(active_sorted, many=True).data
 
-        # Add wait_minutes to each order
+        # Add wait_minutes to each order — basé sur le premier prélèvement réel
+        # quand il est connu (first_collected_at), pas la date de création de
+        # la commande, sinon un dossier créé longtemps avant d'être vraiment
+        # pris en charge paraît "en attente" depuis le mauvais moment.
         now = timezone.now()
         for order_data in serialized:
-            order_date = order_data.get('order_date')
-            if order_date:
+            reference_date = order_data.get('first_collected_at') or order_data.get('order_date')
+            if reference_date:
                 try:
                     from django.utils.dateparse import parse_datetime
-                    dt = parse_datetime(order_date) if isinstance(order_date, str) else order_date
+                    dt = parse_datetime(reference_date) if isinstance(reference_date, str) else reference_date
                     if dt:
                         if timezone.is_naive(dt):
                             dt = timezone.make_aware(dt)

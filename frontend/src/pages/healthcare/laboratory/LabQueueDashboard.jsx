@@ -84,6 +84,21 @@ const statusColors = {
     results_ready: 'success',
 };
 
+// État réel de la commande, indépendant par test (apps/laboratory/serializers.py
+// LabOrderListSerializer.get_progress_state) — remplace le simple `order.status`
+// qui ne suffit plus une fois qu'un test peut avancer sans attendre les autres.
+const PROGRESS_STATE_INFO = {
+    not_started: { label: 'Non commencé', color: 'default' },
+    partially_collected: { label: 'Prélèvement partiel', color: 'warning' },
+    ready_to_analyze: { label: 'Prêt à analyser', color: 'info' },
+    partially_resulted: { label: 'Analyse partielle', color: 'info' },
+    awaiting_validation: { label: 'En attente de validation', color: 'primary' },
+    validated: { label: 'Validé', color: 'success' },
+    results_delivered: { label: 'Résultats remis', color: 'success' },
+    cancelled: { label: 'Annulé', color: 'error' },
+};
+const getProgressStateInfo = (order) => PROGRESS_STATE_INFO[order.progress_state] || { label: statusLabels[order.status] || order.status, color: statusColors[order.status] || 'default' };
+
 // État individuel de chaque test dans une commande (prélèvement / résultat / validation partiels)
 const itemStatusConfig = {
     pending: { label: 'En attente', color: '#9ca3af', bg: '#f3f4f6' },
@@ -257,7 +272,7 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, 
                             {pConfig.icon && (
                                 <Chip icon={pConfig.icon} label={pConfig.label} size="small" color={pConfig.color} sx={{ fontWeight: 600, height: 18, fontSize: '0.65rem' }} />
                             )}
-                            <Chip label={statusLabels[order.status] || order.status} size="small" color={statusColors[order.status] || 'default'} sx={{ fontWeight: 600, height: 18, fontSize: '0.65rem' }} />
+                            <Chip label={getProgressStateInfo(order).label} size="small" color={getProgressStateInfo(order).color} sx={{ fontWeight: 600, height: 18, fontSize: '0.65rem' }} />
                         </Box>
                         {/* Action row */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 4.5 }}>
@@ -339,7 +354,7 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, 
                         </Tooltip>
 
                         {/* Status chip */}
-                        <Chip label={statusLabels[order.status] || order.status} size="small" color={statusColors[order.status] || 'default'} sx={{ fontWeight: 600, minWidth: 100 }} />
+                        <Chip label={getProgressStateInfo(order).label} size="small" color={getProgressStateInfo(order).color} sx={{ fontWeight: 600, minWidth: 100 }} />
 
                         {/* Action button */}
                         <Box sx={{ minWidth: 140, textAlign: 'right' }}>{getActionButton()}</Box>
