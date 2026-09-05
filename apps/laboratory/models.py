@@ -1015,6 +1015,39 @@ class LabOrderItem(models.Model):
 
         LabOrder.objects.get(pk=self.lab_order_id).sync_collection_status(collected_by=collected_by)
 
+    def reset_collection(self):
+        """
+        Renvoie ce test au prélèvement — ex: conditions de prélèvement non
+        respectées (hémolyse, tube inadapté, jeûne non respecté...). Efface
+        le prélèvement ET tout résultat déjà saisi, puisqu'un résultat basé
+        sur un prélèvement invalide n'a plus de valeur ; indépendant des
+        autres tests de la même commande. Le stock déjà déduit pour le
+        prélèvement raté n'est PAS restitué (le consommable a réellement été
+        utilisé) — un nouveau prélèvement en déduira un nouveau le moment venu.
+        """
+        self.sample_collected_at = None
+        self.sample_collected_by = None
+        self.result_value = ''
+        self.result_numeric = None
+        self.result_entered_at = None
+        self.result_verified_at = None
+        self.verified_by = None
+        self.is_abnormal = False
+        self.parameter_results.all().delete()
+        self.save(update_fields=[
+            'sample_collected_at', 'sample_collected_by', 'result_value', 'result_numeric',
+            'result_entered_at', 'result_verified_at', 'verified_by', 'is_abnormal',
+        ])
+
+        order = LabOrder.objects.get(pk=self.lab_order_id)
+        order.sync_collection_status()
+        # Un statut déjà avancé (sample_collected/in_progress/completed/results_ready) ne
+        # reflète plus la réalité si ce test doit repartir du prélèvement — le redescendre
+        # à 'pending' pour qu'il redevienne visible dans la section "Prélèvement par test".
+        if order.status not in ('pending', 'results_delivered', 'cancelled'):
+            order.status = 'pending'
+            order.save(update_fields=['status'])
+
     @property
     def has_result(self):
         """Un résultat (texte, numérique ou paramètres structurés) a été saisi."""

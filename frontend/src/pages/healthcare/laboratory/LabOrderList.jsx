@@ -478,12 +478,24 @@ const LabOrderList = () => {
                                     </Typography>
                                 </Box>
                             </Stack>
-                        ) : (
+                        ) : order.progress_state === 'not_started' ? (
                             <Stack direction="row" spacing={0.5} alignItems="center" mb={2}>
                                 <AccessTime sx={{ fontSize: 16, color: 'warning.main' }} />
                                 <Typography variant="caption" color="warning.main" fontWeight="600">
                                     En attente de prélèvement (commande créée le {formatDisplayDate(order.order_date)})
                                 </Typography>
+                            </Stack>
+                        ) : (
+                            /* Progresse déjà (statut de la commande le confirme) mais aucune date
+                               précise de prélèvement n'a été enregistrée — afficher la date de
+                               création sans le message alarmant "en attente", qui serait faux ici. */
+                            <Stack direction="row" spacing={2} mb={2}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary" fontWeight="600">
+                                        {formatDisplayDate(order.order_date)}
+                                    </Typography>
+                                </Box>
                             </Stack>
                         )}
 

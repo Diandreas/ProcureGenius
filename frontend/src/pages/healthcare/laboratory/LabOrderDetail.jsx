@@ -52,6 +52,7 @@ import {
     Delete as DeleteIcon,
     Add as AddIcon,
     Print as PrintIcon,
+    Replay as ReplayIcon,
     QrCode as QrCodeIcon,
     Receipt as ReceiptIcon,
     AttachMoney as InvoiceIcon,
@@ -326,6 +327,28 @@ const PrintItemButton = ({ item, onPrint, printing }) => {
         <Tooltip title="Imprimer ce résultat">
             <IconButton size="small" color="primary" onClick={() => onPrint(item)} disabled={printing}>
                 {printing ? <CircularProgress size={16} /> : <PrintIcon fontSize="small" />}
+            </IconButton>
+        </Tooltip>
+    );
+};
+
+/**
+ * Renvoie ce test au prélèvement — ex: conditions de prélèvement non
+ * respectées. N'apparaît que si le test a déjà été prélevé et/ou a déjà un
+ * résultat (rien à renvoyer sinon) ; verrouillé une fois les résultats remis
+ * au patient ou la commande annulée.
+ */
+const ResetCollectionButton = ({ item, onReset, resetting, locked = false }) => {
+    const hasProgress = Boolean(item.sample_collected_at) || Boolean(item.result_value)
+        || (item.result_numeric !== null && item.result_numeric !== undefined)
+        || (item.parameter_results && item.parameter_results.length > 0);
+
+    if (locked || !hasProgress) return null;
+
+    return (
+        <Tooltip title="Renvoyer ce test au prélèvement (conditions non respectées)">
+            <IconButton size="small" color="warning" onClick={() => onReset(item)} disabled={resetting}>
+                {resetting ? <CircularProgress size={16} /> : <ReplayIcon fontSize="small" />}
             </IconButton>
         </Tooltip>
     );
@@ -690,6 +713,21 @@ const LabOrderDetail = () => {
             enqueueSnackbar(error.response?.data?.error || 'Erreur lors de la validation', { variant: 'error' });
         } finally {
             setVerifyingItemId(null);
+        }
+    };
+
+    const handleResetItemCollection = async (item) => {
+        if (!window.confirm(`Renvoyer "${item.test_name}" au prélèvement ? Le prélèvement et le résultat déjà saisi (le cas échéant) seront effacés.`)) return;
+        setCollectingItemId(item.id);
+        try {
+            await laboratoryAPI.resetItemCollection(item.id);
+            enqueueSnackbar('Test renvoyé au prélèvement', { variant: 'success' });
+            fetchOrder();
+        } catch (error) {
+            console.error('Error resetting item collection:', error);
+            enqueueSnackbar(error.response?.data?.error || 'Erreur lors du renvoi au prélèvement', { variant: 'error' });
+        } finally {
+            setCollectingItemId(null);
         }
     };
 
@@ -1569,6 +1607,7 @@ const LabOrderDetail = () => {
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                         <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
+                                                        <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} />
                                                         <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                                         <IconButton size="small" onClick={() => handleShowHistory(item)} title="Historique" color="primary">
                                                             <HistoryIcon fontSize="small" />
@@ -1744,6 +1783,7 @@ const LabOrderDetail = () => {
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} />
+                                                        <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} />
                                                         <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                                         <Button
                                                             startIcon={<HistoryIcon />}
@@ -1959,6 +1999,7 @@ const LabOrderDetail = () => {
                             const itemActions = (
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                     <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
+                                    <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} />
                                     <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                     <IconButton
                                         size="small"

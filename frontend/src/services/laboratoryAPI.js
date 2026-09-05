@@ -129,6 +129,11 @@ const laboratoryAPI = {
         return response.data;
     },
 
+    resetItemCollection: async (itemId) => {
+        const response = await api.post(`/healthcare/laboratory/items/${itemId}/reset-collection/`);
+        return response.data;
+    },
+
     // --- Test Catalog ---
 
     // Get all lab tests (for selection)

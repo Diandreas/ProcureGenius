@@ -49,6 +49,7 @@ urlpatterns = [
     path('items/<uuid:item_id>/save-as-template/', api.SaveTestTemplateView.as_view(), name='item-save-template'),
     path('items/<uuid:item_id>/collect/', api.LabOrderItemCollectView.as_view(), name='item-collect'),
     path('items/<uuid:item_id>/verify/', api.LabOrderItemVerifyView.as_view(), name='item-verify'),
+    path('items/<uuid:item_id>/reset-collection/', api.LabOrderItemResetCollectionView.as_view(), name='item-reset-collection'),
 
     # Quick unit update
     path('quick-update-unit/', api.QuickUpdateConfigView.as_view(), name='quick-update-unit'),

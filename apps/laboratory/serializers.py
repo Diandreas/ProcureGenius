@@ -645,6 +645,21 @@ class LabOrderListSerializer(serializers.ModelSerializer):
         result_dates = [i.result_entered_at for i in items if i.result_entered_at]
         return min(result_dates) if result_dates else None
 
+    # Ordre de progression, du moins au plus avancé.
+    _STATE_RANK = ['not_started', 'partially_collected', 'ready_to_analyze', 'partially_resulted', 'awaiting_validation', 'validated']
+    # Plancher garanti par le statut de la commande lui-même : certaines commandes
+    # anciennes ont un `status` déjà avancé (sample_collected/in_progress/completed)
+    # sans qu'AUCUN item n'ait de sample_collected_at ni de résultat renseigné —
+    # confirmé sur la prod (ex: LAB-20260901-0005, status='sample_collected' mais
+    # 0 item avec la moindre trace). Le calcul par item ne doit jamais faire
+    # régresser l'état en dessous de ce que le statut affirme déjà.
+    _STATUS_FLOOR = {
+        'sample_collected': 'ready_to_analyze',
+        'in_progress': 'ready_to_analyze',
+        'completed': 'awaiting_validation',
+        'results_ready': 'validated',
+    }
+
     def get_progress_state(self, obj):
         """
         État réel de la commande, indépendant par test : `status` seul ne suffit
@@ -658,18 +673,24 @@ class LabOrderListSerializer(serializers.ModelSerializer):
         progress = self.get_tests_progress(obj)
         total = progress['total']
         if total == 0:
-            return 'not_started'
-        if progress['collected'] == 0:
-            return 'not_started'
-        if progress['collected'] < total:
-            return 'partially_collected'
-        if progress['resulted'] == 0:
-            return 'ready_to_analyze'
-        if progress['resulted'] < total:
-            return 'partially_resulted'
-        if progress['verified'] < total:
-            return 'awaiting_validation'
-        return 'validated'
+            item_state = 'not_started'
+        elif progress['collected'] == 0:
+            item_state = 'not_started'
+        elif progress['collected'] < total:
+            item_state = 'partially_collected'
+        elif progress['resulted'] == 0:
+            item_state = 'ready_to_analyze'
+        elif progress['resulted'] < total:
+            item_state = 'partially_resulted'
+        elif progress['verified'] < total:
+            item_state = 'awaiting_validation'
+        else:
+            item_state = 'validated'
+
+        floor_state = self._STATUS_FLOOR.get(obj.status)
+        if floor_state and self._STATE_RANK.index(floor_state) > self._STATE_RANK.index(item_state):
+            return floor_state
+        return item_state
 
     class Meta:
         model = LabOrder

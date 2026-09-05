@@ -1012,6 +1012,35 @@ class LabOrderItemVerifyView(APIView):
         return Response(LabOrderItemSerializer(item).data)
 
 
+class LabOrderItemResetCollectionView(APIView):
+    """
+    Renvoie un test au prélèvement — conditions de prélèvement non respectées
+    (hémolyse, tube inadapté, jeûne non respecté...). Efface le prélèvement ET
+    le résultat déjà saisi le cas échéant ; indépendant des autres tests de la
+    même commande.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, item_id):
+        try:
+            item = LabOrderItem.objects.select_related('lab_order').get(id=item_id)
+        except LabOrderItem.DoesNotExist:
+            return Response({'error': 'Test introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if item.lab_order.organization != request.user.organization:
+            return Response({'error': 'Permission refusée'}, status=status.HTTP_403_FORBIDDEN)
+
+        if item.lab_order.status in ('results_delivered', 'cancelled'):
+            return Response(
+                {'error': 'Résultats déjà remis au patient ou commande annulée.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        item.reset_collection()
+        item.refresh_from_db()
+        return Response(LabOrderItemSerializer(item).data)
+
+
 class LabResultPDFView(APIView):
     """Generate PDF for lab results"""
     permission_classes = [IsAuthenticated]
