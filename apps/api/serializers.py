@@ -542,14 +542,11 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
         # Recalculer les totaux
         purchase_order.recalculate_totals()
 
-        from apps.analytics.activity_logger import log_create
-        request = self.context.get('request')
-        log_create(
-            'purchase_order', str(purchase_order.id), purchase_order.po_number,
-            user=purchase_order.created_by, request=request,
-            supplier=purchase_order.supplier.name if purchase_order.supplier else None,
-            total_amount=str(purchase_order.total_amount),
-        )
+        # NB : pas de log_create ici — apps/analytics/signals.py a déjà un
+        # post_save(sender=PurchaseOrder) qui journalise la création (et
+        # toute modification) automatiquement, quel que soit le chemin de
+        # code ; un appel ici ferait doublon (vérifié : deux entrées créées
+        # pour un seul appel API lors du test de bout en bout).
 
         return purchase_order
 
@@ -570,12 +567,8 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
                 PurchaseOrderItem.objects.create(purchase_order=instance, **item_data)
             instance.recalculate_totals()
 
-        from apps.analytics.activity_logger import log_update
-        request = self.context.get('request')
-        log_update(
-            'purchase_order', str(instance.id), instance.po_number,
-            user=getattr(request, 'user', None), request=request,
-        )
+        # NB : pas de log_update ici, même raison que dans create() — le
+        # signal post_save générique s'en charge déjà pour tout instance.save().
 
         return instance
 
