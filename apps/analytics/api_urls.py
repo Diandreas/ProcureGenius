@@ -19,6 +19,7 @@ from .healthcare_analytics import (
     PatientActivityView,
 )
 from .report_views import ReportConfigView, ReportTestView
+from .api import ActivityLogListView
 from .inventory_analytics import (
     ReorderQuantitiesView,
     StockoutRiskAnalysisView,
@@ -77,4 +78,7 @@ urlpatterns = [
     # Report Configuration
     path('report-config/', ReportConfigView.as_view(), name='report_config'),
     path('report-config/test/', ReportTestView.as_view(), name='report_config_test'),
+
+    # Journal d'audit généraliste (achats, fournisseurs, ...)
+    path('activity-logs/', ActivityLogListView.as_view(), name='activity_logs'),
 ]

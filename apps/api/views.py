@@ -2285,21 +2285,37 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             queryset = queryset.filter(created_at__gte=date_from)
         if date_to:
             queryset = queryset.filter(created_at__lte=date_to)
-        
+
         return queryset
-    
+
+    def perform_destroy(self, instance):
+        """Supprimer le BC — journalisé avant suppression (id/numéro plus dispo après)."""
+        from apps.analytics.activity_logger import log_delete
+        po_id, po_number = str(instance.id), instance.po_number
+        request = self.request
+        instance.delete()
+        log_delete('purchase_order', po_id, po_number, user=request.user, request=request)
+
     @action(detail=True, methods=['post'])
     def add_item(self, request, pk=None):
         """Ajouter un item au bon de commande"""
         purchase_order = self.get_object()
         serializer = PurchaseOrderItemSerializer(data=request.data)
-        
+
         if serializer.is_valid():
             serializer.save(purchase_order=purchase_order)
             purchase_order.recalculate_totals()
+
+            from apps.analytics.activity_logger import log_update
+            log_update(
+                'purchase_order', str(purchase_order.id), purchase_order.po_number,
+                user=request.user, request=request,
+                added_item=serializer.data.get('description'),
+            )
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """Approuver un bon de commande"""
@@ -2308,6 +2324,13 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             purchase_order.status = 'approved'
             purchase_order.approved_by = request.user if request.user.is_authenticated else None
             purchase_order.save()
+
+            from apps.analytics.activity_logger import log_approve
+            log_approve(
+                'purchase_order', str(purchase_order.id), purchase_order.po_number,
+                user=purchase_order.approved_by, request=request,
+            )
+
             serializer = self.get_serializer(purchase_order)
             return Response(serializer.data)
         return Response(
@@ -2333,6 +2356,18 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
         if 'error' in result:
             return Response({'error': result['error']}, status=status.HTTP_400_BAD_REQUEST)
+
+        from apps.analytics.activity_logger import log_activity
+        log_activity(
+            action_type='update',
+            entity_type='purchase_order',
+            entity_id=str(purchase_order.id),
+            description=f"Réception du BC {purchase_order.po_number} "
+                        f"({result.get('total_updated', 0)} article(s) mis en stock)",
+            user=request.user if request.user.is_authenticated else None,
+            metadata={'movements': result.get('movements', [])},
+            request=request,
+        )
 
         serializer = self.get_serializer(purchase_order)
         return Response({
@@ -2372,6 +2407,13 @@ class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         )
 
         if result['success']:
+            from apps.analytics.activity_logger import log_send
+            log_send(
+                'purchase_order', str(purchase_order.id), purchase_order.po_number,
+                recipient=recipient_email or (purchase_order.supplier.email if purchase_order.supplier else None),
+                user=request.user if request.user.is_authenticated else None, request=request,
+            )
+
             serializer = self.get_serializer(purchase_order)
             return Response({
                 'purchase_order': serializer.data,
@@ -3252,17 +3294,25 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             # Create audit trail log (if activity logger exists)
             try:
                 from apps.analytics.activity_logger import log_activity
+                # NB: log_activity's real signature is action_type/entity_type/
+                # entity_id/description/metadata — this call used to pass
+                # action/model_name/object_id/details instead, which raises a
+                # TypeError (not ImportError, so the except below never caught
+                # it) *after* the invoice was already cancelled and the credit
+                # note already created, crashing the response with a 500.
                 log_activity(
+                    action_type='cancel',
+                    entity_type='invoice',
+                    entity_id=str(invoice.id),
+                    description=f"Annulation de la facture {invoice.invoice_number}",
                     user=request.user,
-                    action='invoice_cancelled',
-                    model_name='Invoice',
-                    object_id=str(invoice.id),
-                    details={
+                    metadata={
                         'invoice_number': invoice.invoice_number,
                         'credit_note_number': credit_note.invoice_number,
                         'reason': cancellation_reason,
                         'original_amount': float(invoice.total_amount)
-                    }
+                    },
+                    request=request,
                 )
             except ImportError:
                 # Activity logger not available

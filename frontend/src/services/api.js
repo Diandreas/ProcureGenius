@@ -157,6 +157,11 @@ export const purchaseOrdersAPI = {
   printPDF: (id) => api.get(`/purchase-orders/${id}/print_pdf/`, { responseType: 'blob' }),
 };
 
+// Analytics API — journal d'audit généraliste (achats, fournisseurs, ...)
+export const analyticsAPI = {
+  getActivityLogs: (params) => api.get('/analytics/activity-logs/', { params }),
+};
+
 // Invoices API
 export const invoicesAPI = {
   list: (params) => api.get('/invoices/', { params }),

@@ -2,7 +2,29 @@
 Serializers for analytics and widgets
 """
 from rest_framework import serializers
-from .models import DashboardLayout, DashboardConfig, SavedDashboardView
+from .models import DashboardLayout, DashboardConfig, SavedDashboardView, ActivityLog
+
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+    """Journal d'activité généraliste (voir apps/analytics/activity_logger.py) —
+    mirror de LabAuditLogSerializer côté Labo, mais pour les entity_type
+    hors module Labo (bons de commande, fournisseurs, factures, ...)."""
+    user_name = serializers.SerializerMethodField()
+    action_label = serializers.CharField(source='get_action_type_display', read_only=True)
+    entity_type_label = serializers.CharField(source='get_entity_type_display', read_only=True)
+
+    class Meta:
+        model = ActivityLog
+        fields = [
+            'id', 'created_at', 'action_type', 'action_label',
+            'entity_type', 'entity_type_label', 'entity_id',
+            'description', 'metadata', 'user_name',
+        ]
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name() or obj.user.username
+        return 'Système'
 
 
 class DashboardLayoutSerializer(serializers.ModelSerializer):

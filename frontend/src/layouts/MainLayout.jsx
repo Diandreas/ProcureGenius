@@ -124,6 +124,7 @@ function MainLayout() {
     { text: t('navigation:menu.dashboard'), iconSrc: '/icon/dashboard.png', path: '/dashboard', moduleId: 'dashboard', isCore: false },
     { text: t('navigation:menu.suppliers'), iconSrc: '/icon/supplier.png', path: '/suppliers', moduleId: 'suppliers', isCore: false },
     { text: t('navigation:menu.purchaseOrders'), iconSrc: '/icon/purchase-order.png', path: '/purchase-orders', moduleId: 'purchase-orders', isCore: false },
+    { text: "Journal d'audit — Achats", iconSrc: '/icon/analysis.png', path: '/purchase-orders/audit-log', moduleId: 'purchase-orders', isCore: false },
     { text: t('navigation:menu.invoices'), iconSrc: '/icon/bill.png', path: '/invoices', moduleId: 'invoices', isCore: false },
     { text: t('navigation:menu.products'), iconSrc: '/icon/product.png', path: '/products', moduleId: 'products', isCore: false },
     { text: t('navigation:menu.clients'), iconSrc: '/icon/user.png', path: '/clients', moduleId: 'clients', isCore: false },
@@ -303,6 +304,8 @@ function MainLayout() {
             onClick: () => navigate('/purchase-orders/new')
           }
         };
+      case '/purchase-orders/audit-log':
+        return { title: "Journal d'audit — Achats" };
       case '/invoices':
         return {
           title: t('navigation:menu.invoices'),

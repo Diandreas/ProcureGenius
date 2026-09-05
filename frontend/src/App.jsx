@@ -49,6 +49,7 @@ import SupplierForm from './pages/suppliers/SupplierForm';
 import PurchaseOrders from './pages/purchase-orders/PurchaseOrders';
 import PurchaseOrderDetail from './pages/purchase-orders/PurchaseOrderDetail';
 import PurchaseOrderForm from './pages/purchase-orders/PurchaseOrderForm';
+import PurchaseOrderAuditLog from './pages/purchase-orders/PurchaseOrderAuditLog';
 import Invoices from './pages/invoices/Invoices';
 import InvoiceDetail from './pages/invoices/InvoiceDetail';
 import InvoiceForm from './pages/invoices/InvoiceForm';
@@ -807,6 +808,7 @@ function App() {
                               <Route path="/purchase-orders/new" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
                               <Route path="/purchase-orders/:id" element={<ModuleRoute module="purchase-orders"><PurchaseOrderDetail /></ModuleRoute>} />
                               <Route path="/purchase-orders/:id/edit" element={<ModuleRoute module="purchase-orders"><PurchaseOrderForm /></ModuleRoute>} />
+                              <Route path="/purchase-orders/audit-log" element={<ModuleRoute module="purchase-orders"><PurchaseOrderAuditLog /></ModuleRoute>} />
 
                               {/* Invoices */}
                               <Route path="/invoices" element={<ModuleRoute module="invoices"><Invoices /></ModuleRoute>} />

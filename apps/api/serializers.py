@@ -542,6 +542,15 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
         # Recalculer les totaux
         purchase_order.recalculate_totals()
 
+        from apps.analytics.activity_logger import log_create
+        request = self.context.get('request')
+        log_create(
+            'purchase_order', str(purchase_order.id), purchase_order.po_number,
+            user=purchase_order.created_by, request=request,
+            supplier=purchase_order.supplier.name if purchase_order.supplier else None,
+            total_amount=str(purchase_order.total_amount),
+        )
+
         return purchase_order
 
     def update(self, instance, validated_data):
@@ -560,6 +569,13 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
             for item_data in items_data:
                 PurchaseOrderItem.objects.create(purchase_order=instance, **item_data)
             instance.recalculate_totals()
+
+        from apps.analytics.activity_logger import log_update
+        request = self.context.get('request')
+        log_update(
+            'purchase_order', str(instance.id), instance.po_number,
+            user=getattr(request, 'user', None), request=request,
+        )
 
         return instance
 
