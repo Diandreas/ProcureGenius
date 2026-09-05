@@ -1127,8 +1127,13 @@ const LabOrderDetail = () => {
         );
     }
 
-    // canEdit: allow entering/editing results when analysis is in progress or results just entered (not yet validated)
-    const canEdit = ['in_progress', 'completed'].includes(order.status);
+    // canEdit (niveau commande) : au moins un test a été prélevé et la commande n'est pas
+    // dans un état terminal — utilisé pour les actions globales (Enregistrer/Valider,
+    // diagnostic du biologiste). La saisie par test elle-même utilise `itemEditable`
+    // (calculé par item dans la boucle plus bas) : chaque test est indépendant, plus
+    // besoin d'attendre que TOUS les tests de la commande soient prélevés.
+    const canEdit = !['cancelled', 'results_delivered'].includes(order.status)
+        && (order.items || []).some(item => !!item.sample_collected_at);
     // Validation individuelle verrouillée une fois les résultats remis (ou commande annulée)
     const verifyLocked = ['results_delivered', 'cancelled'].includes(order.status);
 
@@ -1241,7 +1246,14 @@ const LabOrderDetail = () => {
                         </Button>
                     )}
 
-                    {canEdit && (
+                    {/* "Valider" globalement n'a de sens que si TOUS les tests ont un résultat —
+                        pour valider un test isolé pendant que d'autres attendent encore leur
+                        prélèvement, utiliser le bouton de validation individuel sur ce test.
+                        (item.has_result n'est pas sérialisé : on reproduit ici la même règle
+                        que LabOrderItem.has_result côté backend, à partir des champs déjà reçus.) */}
+                    {(order.items?.length > 0) && order.items.every(item =>
+                        !!item.result_value || item.result_numeric !== null && item.result_numeric !== undefined || (item.parameter_results?.length > 0)
+                    ) && (
                         <Button data-testid="lab-detail-btn-validate-results" variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} size={isMobile ? 'small' : 'medium'}>
                             Valider
                         </Button>
@@ -1449,14 +1461,9 @@ const LabOrderDetail = () => {
             })()}
 
             {/* Workflow guidance message */}
-            {order.status === 'pending' && (
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                    <strong>Étape 1 :</strong> Prélevez chaque test individuellement ci-dessus, ou utilisez "Tout prélever". Dès que tous les tests sont prélevés, la commande passe à l'étape suivante.
-                </Alert>
-            )}
-            {order.status === 'sample_collected' && (
+            {['pending', 'sample_collected'].includes(order.status) && (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                    <strong>Étape 2 :</strong> L'échantillon a été prélevé. Cliquez sur "Analyser" pour démarrer l'analyse et pouvoir saisir les résultats.
+                    Prélevez chaque test individuellement ci-dessus (ou "Tout prélever"). Chaque test devient saisissable dès qu'IL est prélevé — pas besoin d'attendre que tous les autres tests de la commande le soient aussi.
                 </Alert>
             )}
             {order.status === 'in_progress' && (
@@ -1503,6 +1510,10 @@ const LabOrderDetail = () => {
                         {order.items?.map((item) => {
                             const patientGender = order.patient_gender;
                             const patientAge = order.patient?.age ?? null;
+                            // Indépendant par test : ce test précis est modifiable dès qu'IL a
+                            // été prélevé, peu importe l'état des autres tests de la commande.
+                            const itemEditable = !!item.sample_collected_at
+                                && !['cancelled', 'results_delivered'].includes(order.status);
 
                             // ─── COMPOUND TEST (e.g. NFS) ───────────────────────────────────────────
                             if (item.has_parameters && item.parameters?.length > 0) {
@@ -1592,7 +1603,7 @@ const LabOrderDetail = () => {
                                                                         : (pvState.result_text ?? '');
 
                                                                     const existingResult = item.parameter_results?.find(pr => pr.parameter === param.id);
-                                                                    const displayVal = canEdit
+                                                                    const displayVal = itemEditable
                                                                         ? currentVal
                                                                         : (isNumeric
                                                                             ? (existingResult?.result_numeric ?? '')
@@ -1600,7 +1611,7 @@ const LabOrderDetail = () => {
 
                                                                     // Flag only makes sense for numeric parameters
                                                                     const flag = isNumeric
-                                                                        ? (canEdit
+                                                                        ? (itemEditable
                                                                             ? computeFlag(currentVal, param, patientGender, patientAge)
                                                                             : (existingResult?.flag || ''))
                                                                         : '';
@@ -1615,7 +1626,7 @@ const LabOrderDetail = () => {
                                                                             <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>{param.code}</TableCell>
                                                                             <TableCell sx={{ fontSize: '0.75rem', color: '#374151' }}>{param.name}</TableCell>
                                                                             <TableCell>
-                                                                                {canEdit ? (
+                                                                                {itemEditable ? (
                                                                                     isNumeric ? (
                                                                                         <TextField
                                                                                             size="small"
@@ -1666,8 +1677,8 @@ const LabOrderDetail = () => {
                                                                                 <QuickConfigSelector 
                                                                                     item={item} 
                                                                                     parameter={param} 
-                                                                                    onConfigChanged={onTestSaved} 
-                                                                                    canEdit={canEdit}
+                                                                                    onConfigChanged={onTestSaved}
+                                                                                    canEdit={itemEditable}
                                                                                     currentValues={parameterValues}
                                                                                     updateValue={handleParameterValueChange}
                                                                                     patientGender={order.patient_gender}
@@ -1683,7 +1694,7 @@ const LabOrderDetail = () => {
                                                     </Box>
                                                 ))}
                                                 {/* Optional notes for compound tests */}
-                                                {canEdit && (
+                                                {itemEditable && (
                                                     <RichTextEditor
                                                         value={results[item.id]?.technician_notes || ''}
                                                         onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
@@ -1693,7 +1704,7 @@ const LabOrderDetail = () => {
                                                         onExpand={() => openWysiwygModal(item.id, 'technician_notes', `Notes — ${item.test_name}`)}
                                                     />
                                                 )}
-                                                {!canEdit && item.technician_notes && (
+                                                {!itemEditable && item.technician_notes && (
                                                     <Typography variant="body2" component="div" dangerouslySetInnerHTML={{ __html: item.technician_notes }} sx={{ mt: 1, fontSize: '0.75rem', color: '#4b5563', '& p': { my: 0 } }} />
                                                 )}
                                             </Box>
@@ -1754,7 +1765,7 @@ const LabOrderDetail = () => {
                                                 <Grid container spacing={4}>
                                                     <Grid item xs={12} md={8}>
                                                         <Typography variant="overline" sx={{ fontWeight: 900, color: '#64748b', mb: 1, display: 'block' }}>RAPPORT D'ANALYSE DÉTAILLÉ</Typography>
-                                                        {canEdit ? (
+                                                        {itemEditable ? (
                                                             <Box>
                                                                 <RichTextEditor
                                                                     value={results[item.id]?.result_value || ''}
@@ -1810,9 +1821,9 @@ const LabOrderDetail = () => {
                                                                 <Typography variant="overline" sx={{ fontWeight: 900, color: '#475569', mb: 1, display: 'block' }}>PARAMÈTRES DE RÉFÉRENCE</Typography>
                                                                 <Box sx={{ mb: 2 }}>
                                                                     <QuickConfigSelector 
-                                                                        item={item} 
-                                                                        onConfigChanged={onTestSaved} 
-                                                                        canEdit={canEdit}
+                                                                        item={item}
+                                                                        onConfigChanged={onTestSaved}
+                                                                        canEdit={itemEditable}
                                                                         currentValues={results}
                                                                         updateValue={handleResultChange}
                                                                         patientGender={order.patient_gender}
@@ -1835,7 +1846,7 @@ const LabOrderDetail = () => {
 
                                                             <Box>
                                                                 <Typography variant="overline" sx={{ fontWeight: 900, color: '#64748b', mb: 1, display: 'block' }}>NOTES TECHNIQUES</Typography>
-                                                                {canEdit ? (
+                                                                {itemEditable ? (
                                                                     <RichTextEditor
                                                                         value={results[item.id]?.technician_notes || ''}
                                                                         onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
@@ -1868,7 +1879,7 @@ const LabOrderDetail = () => {
                                 return item.normal_range_general || item.normal_range_male || '';
                             })();
 
-                            const resultField = canEdit ? (
+                            const resultField = itemEditable ? (
                                 <Box>
                                     <RichTextEditor
                                         value={results[item.id]?.result_value || ''}
@@ -1917,7 +1928,7 @@ const LabOrderDetail = () => {
                                 />
                             );
 
-                            const notesField = canEdit ? (
+                            const notesField = itemEditable ? (
                                 <RichTextEditor
                                     value={results[item.id]?.technician_notes || ''}
                                     onChange={(val) => handleResultChange(item.id, 'technician_notes', val)}
@@ -1988,7 +1999,7 @@ const LabOrderDetail = () => {
                                                     <QuickConfigSelector
                                                         item={item}
                                                         onConfigChanged={onTestSaved}
-                                                        canEdit={canEdit}
+                                                        canEdit={itemEditable}
                                                         currentValues={results}
                                                         updateValue={handleResultChange}
                                                         patientGender={order.patient_gender}
@@ -2027,7 +2038,7 @@ const LabOrderDetail = () => {
                                         <QuickConfigSelector
                                             item={item}
                                             onConfigChanged={onTestSaved}
-                                            canEdit={canEdit}
+                                            canEdit={itemEditable}
                                             currentValues={results}
                                             updateValue={handleResultChange}
                                             patientGender={order.patient_gender}

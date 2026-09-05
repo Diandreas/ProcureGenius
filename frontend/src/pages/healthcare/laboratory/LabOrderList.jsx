@@ -16,7 +16,8 @@ import {
     useMediaQuery,
     Button,
     Paper,
-    alpha
+    alpha,
+    LinearProgress
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -249,6 +250,21 @@ const LabOrderList = () => {
         return labels[status] || status;
     };
 
+    // État réel par commande, indépendant par test (voir LabOrderListSerializer.get_progress_state) —
+    // remplace le simple statut global qui ne suffit plus une fois qu'un test peut avancer
+    // sans attendre les autres (ex: 11/12 tests validés, 1 encore en attente de prélèvement).
+    const PROGRESS_STATE_INFO = {
+        not_started: { label: 'Non commencé', color: 'default' },
+        partially_collected: { label: 'Prélèvement partiel', color: 'warning' },
+        ready_to_analyze: { label: 'Prêt à analyser', color: 'info' },
+        partially_resulted: { label: 'Analyse partielle', color: 'info' },
+        awaiting_validation: { label: 'En attente de validation', color: 'primary' },
+        validated: { label: 'Validé', color: 'success' },
+        results_delivered: { label: 'Résultats remis', color: 'success' },
+        cancelled: { label: 'Annulé', color: 'error' },
+    };
+    const getProgressStateInfo = (order) => PROGRESS_STATE_INFO[order.progress_state] || { label: getStatusLabel(order.status), color: getStatusColor(order.status) };
+
     const getSampleTypeColor = (sampleType) => {
         const colors = {
             blood: '#dc2626', // Rouge sang
@@ -359,10 +375,10 @@ const LabOrderList = () => {
                                 </Typography>
                             </Box>
                             <Chip
-                                label={getStatusLabel(order.status)}
+                                label={getProgressStateInfo(order).label}
                                 size="small"
-                                color={getStatusColor(order.status)}
-                                variant={['pending', 'sample_collected'].includes(order.status) ? 'outlined' : 'filled'}
+                                color={getProgressStateInfo(order).color}
+                                variant={['not_started', 'partially_collected'].includes(order.progress_state) ? 'outlined' : 'filled'}
                                 sx={{
                                     height: 26,
                                     fontSize: '0.75rem',
@@ -372,6 +388,25 @@ const LabOrderList = () => {
                                 }}
                             />
                         </Stack>
+
+                        {/* Avancement par test — visible dès qu'au moins un test a été prélevé */}
+                        {order.tests_progress?.total > 0 && order.tests_progress.collected > 0 && (
+                            <Box sx={{ mb: 2 }}>
+                                <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {order.tests_progress.verified}/{order.tests_progress.total} validés
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                                        {order.tests_progress.percent}%
+                                    </Typography>
+                                </Stack>
+                                <LinearProgress
+                                    variant="determinate"
+                                    value={order.tests_progress.percent}
+                                    sx={{ height: 6, borderRadius: 3, bgcolor: alpha(theme.palette.divider, 0.3) }}
+                                />
+                            </Box>
+                        )}
 
                         {/* Tests List */}
                         <Box sx={{
@@ -424,21 +459,32 @@ const LabOrderList = () => {
                             )}
                         </Box>
 
-                        {/* Footer Info */}
-                        <Stack direction="row" spacing={2} mb={2}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
-                                <Typography variant="caption" color="text.secondary" fontWeight="600">
-                                    {formatDisplayDate(order.order_date)}
+                        {/* Footer Info — date du premier prélèvement réel, pas la création de la
+                            commande ; tant que rien n'est prélevé, on l'indique explicitement
+                            plutôt que d'afficher une date de création qui prête à confusion. */}
+                        {order.first_collected_at ? (
+                            <Stack direction="row" spacing={2} mb={2}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <CalendarToday sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary" fontWeight="600">
+                                        {formatDisplayDate(order.first_collected_at)}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <AccessTime sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary" fontWeight="600">
+                                        {formatTime(order.first_collected_at)}
+                                    </Typography>
+                                </Box>
+                            </Stack>
+                        ) : (
+                            <Stack direction="row" spacing={0.5} alignItems="center" mb={2}>
+                                <AccessTime sx={{ fontSize: 16, color: 'warning.main' }} />
+                                <Typography variant="caption" color="warning.main" fontWeight="600">
+                                    En attente de prélèvement (commande créée le {formatDisplayDate(order.order_date)})
                                 </Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <AccessTime sx={{ fontSize: 16, color: 'text.secondary' }} />
-                                <Typography variant="caption" color="text.secondary" fontWeight="600">
-                                    {formatTime(order.order_date)}
-                                </Typography>
-                            </Box>
-                        </Stack>
+                            </Stack>
+                        )}
 
                         {/* Actions */}
                         <Box sx={{

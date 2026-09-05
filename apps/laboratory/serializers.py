@@ -593,6 +593,8 @@ class LabOrderListSerializer(serializers.ModelSerializer):
     subcontractor_name = serializers.CharField(source='subcontractor.name', read_only=True, default=None)
     is_subcontracted = serializers.SerializerMethodField()
     tests_progress = serializers.SerializerMethodField()
+    first_collected_at = serializers.SerializerMethodField()
+    progress_state = serializers.SerializerMethodField()
 
     def get_tests_count(self, obj):
         """Get count of items"""
@@ -622,6 +624,40 @@ class LabOrderListSerializer(serializers.ModelSerializer):
             'percent': round(verified / total * 100),
         }
 
+    def get_first_collected_at(self, obj):
+        """
+        Date du premier prélèvement réel (pas la date de création de la commande) —
+        None tant qu'aucun test n'a encore été prélevé.
+        """
+        dates = [i.sample_collected_at for i in obj.items.all() if i.sample_collected_at]
+        return min(dates) if dates else None
+
+    def get_progress_state(self, obj):
+        """
+        État réel de la commande, indépendant par test : `status` seul ne suffit
+        plus une fois qu'un test peut avancer sans attendre les autres (ex: 11/12
+        tests validés, 1 encore en attente de prélèvement -> `status` reste
+        'pending', ce qui ne reflète plus la réalité). `delivered`/`cancelled`
+        restent fiables tels quels et sont recopiés directement.
+        """
+        if obj.status in ('results_delivered', 'cancelled'):
+            return obj.status
+        progress = self.get_tests_progress(obj)
+        total = progress['total']
+        if total == 0:
+            return 'not_started'
+        if progress['collected'] == 0:
+            return 'not_started'
+        if progress['collected'] < total:
+            return 'partially_collected'
+        if progress['resulted'] == 0:
+            return 'ready_to_analyze'
+        if progress['resulted'] < total:
+            return 'partially_resulted'
+        if progress['verified'] < total:
+            return 'awaiting_validation'
+        return 'validated'
+
     class Meta:
         model = LabOrder
         fields = [
@@ -630,8 +666,10 @@ class LabOrderListSerializer(serializers.ModelSerializer):
             'patient',
             'patient_name',
             'order_date',
+            'first_collected_at',
             'status',
             'status_display',
+            'progress_state',
             'priority',
             'priority_display',
             'tests_count',
