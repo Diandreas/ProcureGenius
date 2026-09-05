@@ -918,7 +918,7 @@ const LabOrderDetail = () => {
             <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/laboratory')} sx={{ mr: 2 }}>
+                        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mr: 2 }}>
                             Retour
                         </Button>
                         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
@@ -1149,7 +1149,7 @@ const LabOrderDetail = () => {
             <Box sx={{ mb: isMobile ? 2 : 3 }}>
                 {/* Top: back + title */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: isMobile ? 1.5 : 2, flexWrap: 'wrap', gap: 1 }}>
-                    <Button size={isMobile ? 'small' : 'medium'} startIcon={<ArrowBackIcon />} onClick={() => navigate('/healthcare/laboratory')}>
+                    <Button size={isMobile ? 'small' : 'medium'} startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)}>
                         Retour
                     </Button>
                     <Typography variant={isMobile ? 'h6' : 'h4'} component="h1" sx={{ fontWeight: 600, flex: 1 }}>

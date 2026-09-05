@@ -45,7 +45,7 @@ import {
     Today as TodayIcon,
     SwapHoriz as SubcontractedIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { motion } from 'framer-motion';
@@ -61,15 +61,27 @@ const LabOrderList = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    // Filtres synchronisés avec l'URL pour que le retour depuis le détail
+    // d'une commande (navigate(-1)) restaure exactement la recherche/le
+    // filtre en cours, plutôt que de repartir sur l'état par défaut.
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState([]);
-    const [search, setSearch] = useState('');
-    const [quickFilter, setQuickFilter] = useState('pending'); // Default to pending actions
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [search, setSearch] = useState(searchParams.get('search') || '');
+    const [quickFilter, setQuickFilter] = useState(searchParams.get('quickFilter') || 'pending'); // Default to pending actions
+    const [startDate, setStartDate] = useState(searchParams.get('startDate') || '');
+    const [endDate, setEndDate] = useState(searchParams.get('endDate') || '');
 
     useEffect(() => {
         fetchOrders();
+        const params = {};
+        if (search) params.search = search;
+        if (quickFilter) params.quickFilter = quickFilter;
+        if (startDate) params.startDate = startDate;
+        if (endDate) params.endDate = endDate;
+        setSearchParams(params, { replace: true });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [quickFilter, search, startDate, endDate]);
 
     const fetchOrders = async () => {
