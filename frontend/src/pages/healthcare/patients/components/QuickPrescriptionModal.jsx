@@ -54,11 +54,11 @@ const QuickPrescriptionModal = ({ open, onClose, patientId, patientName, onSucce
         setLoadingData(true);
         try {
             const [patientHistory, medData] = await Promise.all([
-                patientAPI.getPatientHistory(patientId),
+                patientAPI.getPatientCompleteHistory(patientId),
                 pharmacyAPI.getMedications({ page_size: 1000 })
             ]);
 
-            setConsultations(patientHistory.recent_consultations || []);
+            setConsultations(patientHistory.consultations || []);
             setMedications(medData.results || medData || []);
         } catch (error) {
             console.error('Error fetching data:', error);

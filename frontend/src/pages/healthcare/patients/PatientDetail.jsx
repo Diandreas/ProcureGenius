@@ -13,6 +13,7 @@ import {
     PregnantWoman as MaternityTabIcon,
     Vaccines as VaccinationTabIcon,
     Receipt as PrescriptionIcon,
+    Medication as MedicationIcon,
     Dashboard as SummaryIcon,
     TrackChanges as FollowUpIcon,
     ExpandMore as ExpandMoreIcon,
@@ -31,6 +32,7 @@ import PharmacyHistory from './components/PharmacyHistory';
 import MedicalSummaryTab from './components/MedicalSummaryTab';
 import PatientTimeline from './components/PatientTimeline';
 import AdministerCareModal from './components/AdministerCareModal';
+import QuickPrescriptionModal from './components/QuickPrescriptionModal';
 import PatientFollowUpModal from './components/PatientFollowUpModal';
 import PatientJournalTab from './components/PatientJournalTab';
 import MaternityHistoryTab from './components/MaternityHistoryTab';
@@ -59,6 +61,7 @@ const PatientDetail = () => {
 
     // Care Modal State
     const [careModalOpen, setCareModalOpen] = useState(false);
+    const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
 
     // Follow-up Modal & data
     const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
@@ -225,7 +228,15 @@ const PatientDetail = () => {
                             onClick={() => navigate(`/healthcare/imaging/new?patientId=${id}`)}
                             sx={{ borderRadius: 2 }}
                         >
-                            Ordonnance Labo / Imagerie
+                            Commande Labo / Imagerie
+                        </Button>
+                        <Button
+                            variant="contained"
+                            sx={{ borderRadius: 2, bgcolor: 'success.dark', '&:hover': { bgcolor: 'success.main' } }}
+                            startIcon={<MedicationIcon />}
+                            onClick={() => setPrescriptionModalOpen(true)}
+                        >
+                            Ordonnance
                         </Button>
                         <Button
                             variant="contained"
@@ -581,6 +592,14 @@ const PatientDetail = () => {
                 onClose={() => setCareModalOpen(false)}
                 patientId={id}
                 onSaved={() => fetchData()}
+            />
+
+            <QuickPrescriptionModal
+                open={prescriptionModalOpen}
+                onClose={() => setPrescriptionModalOpen(false)}
+                patientId={id}
+                patientName={patient?.name}
+                onSuccess={() => fetchData()}
             />
 
             {/* ── Bloc Suivis ─────────────────────────────────────────── */}
