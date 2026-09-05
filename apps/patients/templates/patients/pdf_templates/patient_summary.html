@@ -31,8 +31,14 @@
         margin: 0;
     }
 
-    /* Nom patient dans running string (pied de page auto) */
-    .patient-name-running { string-set: patient-name content(); }
+    /* Nom patient dans running string (pied de page auto) — visibility:hidden
+       (pas display:none) car un élément display:none ne génère aucune boîte,
+       donc string-set ne se déclenche jamais dans ce cas. */
+    .patient-name-running {
+        string-set: patient-name content();
+        position: absolute;
+        visibility: hidden;
+    }
 
     /* ── Bandeau "carnet" — remplace le petit badge, donne l'effet couverture
        de carnet de santé plutôt que rapport administratif ── */
@@ -265,7 +271,7 @@
 {% block content %}
 
 <!-- Nom patient dans le running footer -->
-<span class="patient-name-running" style="display:none;">{{ patient.name }}</span>
+<span class="patient-name-running">{{ patient.name }}</span>
 
 <!-- ══ COUVERTURE CARNET ══════════════════════════════════════════════════ -->
 <div class="booklet-cover">
