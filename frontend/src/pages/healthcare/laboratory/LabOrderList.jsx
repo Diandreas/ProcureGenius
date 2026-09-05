@@ -383,8 +383,9 @@ const LabOrderList = () => {
                                     height: 26,
                                     fontSize: '0.75rem',
                                     fontWeight: 600,
-                                    minWidth: 110,
-                                    textAlign: 'center'
+                                    flexShrink: 0,
+                                    whiteSpace: 'nowrap',
+                                    '& .MuiChip-label': { px: 1.2 },
                                 }}
                             />
                         </Stack>
