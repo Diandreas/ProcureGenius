@@ -349,7 +349,11 @@ const LabOrderList = () => {
                                         />
                                     )}
                                 </Stack>
-                                <Typography variant="h6" fontWeight="700" sx={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography
+                                    variant="h6" fontWeight="700"
+                                    sx={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 1, width: 'fit-content', '&:hover': { textDecoration: 'underline' } }}
+                                    onClick={(e) => { e.stopPropagation(); navigate(`/healthcare/patients/${order.patient}`); }}
+                                >
                                     <PersonIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
                                     {order.patient_name}
                                 </Typography>

@@ -36,6 +36,7 @@ import PatientJournalTab from './components/PatientJournalTab';
 import MaternityHistoryTab from './components/MaternityHistoryTab';
 import VaccinationHistoryTab from './components/VaccinationHistoryTab';
 import PrintModal from '../../../components/PrintModal';
+import BackButton from '../../../components/navigation/BackButton';
 import { formatDate } from '../../../utils/formatters';
 
 const PatientDetail = () => {
@@ -176,9 +177,12 @@ const PatientDetail = () => {
     return (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, alignItems: 'center' }}>
-                <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-                    {patient.name}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <BackButton />
+                    <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+                        {patient.name}
+                    </Typography>
+                </Box>
                 <Box>
                     <Button
                         startIcon={<PdfIcon />}

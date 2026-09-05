@@ -1272,7 +1272,13 @@ const LabOrderDetail = () => {
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Patient</Typography>
-                            <Typography variant="body1" fontWeight="bold">{order.patient_name}</Typography>
+                            <Typography
+                                variant="body1" fontWeight="bold"
+                                sx={{ cursor: 'pointer', width: 'fit-content', '&:hover': { textDecoration: 'underline' } }}
+                                onClick={() => navigate(`/healthcare/patients/${order.patient}`)}
+                            >
+                                {order.patient_name}
+                            </Typography>
                             <Typography variant="body2">{order.patient_age != null ? `${order.patient_age} ans` : ''}{order.patient_age != null && order.patient_gender ? ' / ' : ''}{order.patient_gender || ''}</Typography>
                             {order.prescriber_name && (
                                 <>
