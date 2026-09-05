@@ -608,12 +608,19 @@ class LabOrderListSerializer(serializers.ModelSerializer):
         Avancement de la commande au niveau de chaque test : combien sont
         prélevés / ont un résultat / sont validés, et le % de complétion
         (basé sur les tests validés) pour affichage dans la file d'attente.
+
+        Un test est compté "prélevé" si `sample_collected_at` est renseigné
+        OU s'il a déjà un résultat — en pratique, le personnel saute parfois
+        le clic "Prélever" et saisit le résultat directement (confirmé sur
+        la prod : ~75% des commandes déjà en cours/terminées n'ont AUCUN
+        horodatage de prélèvement alors qu'elles ont bien des résultats).
+        Avoir un résultat est la preuve qu'il a été prélevé, même sans clic.
         """
         items = list(obj.items.all())
         total = len(items)
         if total == 0:
             return {'total': 0, 'collected': 0, 'resulted': 0, 'verified': 0, 'percent': 0}
-        collected = sum(1 for i in items if i.sample_collected_at)
+        collected = sum(1 for i in items if i.sample_collected_at or i.has_result)
         resulted = sum(1 for i in items if i.has_result)
         verified = sum(1 for i in items if i.result_verified_at)
         return {
@@ -626,11 +633,17 @@ class LabOrderListSerializer(serializers.ModelSerializer):
 
     def get_first_collected_at(self, obj):
         """
-        Date du premier prélèvement réel (pas la date de création de la commande) —
-        None tant qu'aucun test n'a encore été prélevé.
+        Date du premier prélèvement réel. Repli sur la date de saisie du
+        premier résultat si aucun item n'a d'horodatage de prélèvement
+        (même raison que get_tests_progress) — None seulement si rien n'a
+        ni été prélevé ni résulté.
         """
-        dates = [i.sample_collected_at for i in obj.items.all() if i.sample_collected_at]
-        return min(dates) if dates else None
+        items = list(obj.items.all())
+        dates = [i.sample_collected_at for i in items if i.sample_collected_at]
+        if dates:
+            return min(dates)
+        result_dates = [i.result_entered_at for i in items if i.result_entered_at]
+        return min(result_dates) if result_dates else None
 
     def get_progress_state(self, obj):
         """
