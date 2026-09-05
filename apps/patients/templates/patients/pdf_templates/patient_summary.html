@@ -34,19 +34,24 @@
     /* Nom patient dans running string (pied de page auto) */
     .patient-name-running { string-set: patient-name content(); }
 
-    /* ── Badge document ── */
-    .doc-badge {
-        display: inline-block;
+    /* ── Bandeau "carnet" — remplace le petit badge, donne l'effet couverture
+       de carnet de santé plutôt que rapport administratif ── */
+    .booklet-cover {
         background-color: {{ organization.brand_color|default:"#2563eb" }};
-        color: #fff;
-        font-size: 8.5pt;
-        font-weight: 700;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        padding: 3px 10px;
-        border-radius: 3px;
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin-bottom: 10px;
+        display: table;
+        width: 100%;
     }
-    .doc-date { font-size: 7pt; color: #9ca3af; margin-top: 2px; }
+    .booklet-cover-left { display: table-cell; vertical-align: middle; }
+    .booklet-cover-title {
+        color: #fff; font-size: 15pt; font-weight: 800;
+        letter-spacing: 1.2px; text-transform: uppercase;
+    }
+    .booklet-cover-subtitle { color: rgba(255,255,255,0.85); font-size: 7.5pt; margin-top: 1px; }
+    .booklet-cover-right { display: table-cell; vertical-align: middle; text-align: right; }
+    .booklet-cover-date { color: rgba(255,255,255,0.85); font-size: 7pt; }
 
     /* ── Fiche identité patient ── */
     .patient-card {
@@ -262,10 +267,15 @@
 <!-- Nom patient dans le running footer -->
 <span class="patient-name-running" style="display:none;">{{ patient.name }}</span>
 
-<!-- ══ BADGE DOCUMENT ═════════════════════════════════════════════════════ -->
-<div style="text-align:right; margin-bottom:8px;">
-    <div class="doc-badge">Dossier Médical</div>
-    <div class="doc-date">Généré le {% now "d/m/Y à H:i" %}</div>
+<!-- ══ COUVERTURE CARNET ══════════════════════════════════════════════════ -->
+<div class="booklet-cover">
+    <div class="booklet-cover-left">
+        <div class="booklet-cover-title">Carnet de Santé</div>
+        <div class="booklet-cover-subtitle">Dossier médical complet — {{ organization.name|default:"Centre de Santé" }}</div>
+    </div>
+    <div class="booklet-cover-right">
+        <div class="booklet-cover-date">Édité le {% now "d/m/Y à H:i" %}</div>
+    </div>
 </div>
 
 <!-- ══ FICHE PATIENT ══════════════════════════════════════════════════════ -->
