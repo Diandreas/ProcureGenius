@@ -205,7 +205,7 @@ const PatientDetail = () => {
                         {patient.name}
                     </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
                     <Button
                         startIcon={<PdfIcon />}
                         onClick={() => setPrintModalOpen(true)}
