@@ -197,6 +197,7 @@ const PatientDetail = () => {
                         sx={{
                             fontWeight: 600,
                             fontSize: { xs: '1.4rem', sm: '2.125rem' },
+                            minWidth: 0,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -373,7 +374,7 @@ const PatientDetail = () => {
                                 {patient.name.charAt(0)}
                             </Avatar>
                             <Box sx={{ minWidth: 0 }}>
-                                <Typography variant="h6" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <Typography variant="h6" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {patient.name}
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>

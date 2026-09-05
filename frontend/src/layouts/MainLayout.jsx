@@ -1236,6 +1236,10 @@ function MainLayout() {
           component="main"
           sx={{
             flexGrow: 1,
+            minWidth: 0, // sinon un flex item refuse de rétrécir sous la largeur
+                         // "naturelle" (non wrappée) de son contenu — une seule
+                         // rangée un peu large dans une page pousse alors TOUTE
+                         // la page en scroll horizontal, écran mobile inclus.
             p: { xs: 2, sm: 2.5 },
             pb: { xs: 10, sm: 2.5 },
             width: { md: `calc(100% - ${drawerWidth}px)` },
