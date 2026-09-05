@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from django.utils import timezone
 from datetime import timedelta
-from .dashboard_service import DashboardService
 from .models import ActivityLog
 from .serializers import ActivityLogSerializer
 
@@ -17,6 +16,15 @@ class DetailedStockStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Import local : apps.analytics.dashboard_service n'existe plus dans le
+        # repo (supprimé sans que cet import soit nettoyé) — en top-level ça
+        # cassait le chargement de TOUT apps/analytics/api.py au démarrage dès
+        # qu'un autre module l'importe (ce qui n'arrivait jamais avant : cette
+        # vue n'est câblée que sous apps/analytics/urls.py, commenté dans
+        # saas_procurement/urls.py). Import local = l'appli démarre quand même ;
+        # cette vue précise continuera de 404 si jamais rappelée telle quelle.
+        from .dashboard_service import DashboardService
+
         # Get date range from query params or default to last 30 days
         days = int(request.GET.get('days', 30))
         end_date = timezone.now()
