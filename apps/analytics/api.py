@@ -8,7 +8,37 @@ from rest_framework.permissions import IsAuthenticated, BasePermission
 from django.utils import timezone
 from datetime import timedelta
 from .models import ActivityLog
-from .serializers import ActivityLogSerializer
+
+# ActivityLogSerializer est défini ici plutôt qu'importé de .serializers :
+# ce fichier importe (en top-level) trois modèles qui n'existent plus dans
+# apps/analytics/models.py (DashboardLayout/DashboardConfig/SavedDashboardView
+# - supprimés sans que le fichier soit nettoyé). Il n'a jamais planté car rien
+# ne l'importait jusqu'ici (apps/analytics/urls.py, seul point d'entrée, est
+# commenté dans saas_procurement/urls.py). Rester à l'écart plutôt que de
+# remettre en état tout un fichier mort et hors-scope ici.
+from rest_framework import serializers as drf_serializers
+
+
+class ActivityLogSerializer(drf_serializers.ModelSerializer):
+    """Journal d'activité généraliste (voir apps/analytics/activity_logger.py) —
+    mirror de LabAuditLogSerializer côté Labo, mais pour les entity_type
+    hors module Labo (bons de commande, fournisseurs, factures, ...)."""
+    user_name = drf_serializers.SerializerMethodField()
+    action_label = drf_serializers.CharField(source='get_action_type_display', read_only=True)
+    entity_type_label = drf_serializers.CharField(source='get_entity_type_display', read_only=True)
+
+    class Meta:
+        model = ActivityLog
+        fields = [
+            'id', 'created_at', 'action_type', 'action_label',
+            'entity_type', 'entity_type_label', 'entity_id',
+            'description', 'metadata', 'user_name',
+        ]
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name() or obj.user.username
+        return 'Système'
 
 
 class DetailedStockStatsView(APIView):
