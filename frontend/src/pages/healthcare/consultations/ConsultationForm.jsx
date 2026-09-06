@@ -44,6 +44,7 @@ import { useSnackbar } from 'notistack';
 import consultationAPI from '../../../services/consultationAPI';
 import patientAPI from '../../../services/patientAPI';
 import pharmacyAPI from '../../../services/pharmacyAPI';
+import PatientQuickViewButton from '../../../components/patients/PatientQuickView';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import imagingAPI from '../../../services/imagingAPI';
 import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
@@ -383,6 +384,9 @@ const ConsultationForm = () => {
                             color={isCompleted ? 'success' : 'warning'}
                             size="small"
                         />
+                    )}
+                    {formData.patient?.id && (
+                        <PatientQuickViewButton patientId={formData.patient.id} patientName={formData.patient.name} size="small" />
                     )}
                 </Stack>
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>

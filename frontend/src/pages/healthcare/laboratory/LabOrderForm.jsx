@@ -40,6 +40,7 @@ import laboratoryAPI from '../../../services/laboratoryAPI';
 import imagingAPI from '../../../services/imagingAPI';
 import patientAPI from '../../../services/patientAPI';
 import { settingsAPI } from '../../../services/settingsAPI';
+import PatientQuickViewButton from '../../../components/patients/PatientQuickView';
 import api from '../../../services/api';
 import QuickClientCreateModal from './components/QuickClientCreateModal';
 import { buildLabOrderGroup, enqueueGroup } from '../../../db/offlineDb';
@@ -444,6 +445,9 @@ const LabOrderForm = () => {
                     <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
                         Nouvel Ordre de Laboratoire
                     </Typography>
+                    {formData.patient?.id && (
+                        <PatientQuickViewButton patientId={formData.patient.id} patientName={formData.patient.name} size="small" />
+                    )}
                 </Stack>
                 <Button
                     id="manual-btn-creer-ordre"

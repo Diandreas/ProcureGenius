@@ -11,6 +11,7 @@ import imagingAPI from '../../../services/imagingAPI';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import patientAPI from '../../../services/patientAPI';
 import api from '../../../services/api';
+import PatientQuickViewButton from '../../../components/patients/PatientQuickView';
 import QuickClientCreateModal from '../laboratory/components/QuickClientCreateModal';
 
 const ImagingOrderForm = () => {
@@ -360,6 +361,9 @@ const ImagingOrderForm = () => {
                     <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
                         Nouvelle Commande d'Imagerie
                     </Typography>
+                    {formData.patient?.id && (
+                        <PatientQuickViewButton patientId={formData.patient.id} patientName={formData.patient.name} size="small" />
+                    )}
                 </Stack>
                 <Button
                     variant="contained"

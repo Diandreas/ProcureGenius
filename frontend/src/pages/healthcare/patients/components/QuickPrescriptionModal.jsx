@@ -28,6 +28,7 @@ import consultationAPI from '../../../../services/consultationAPI';
 import pharmacyAPI from '../../../../services/pharmacyAPI';
 import patientAPI from '../../../../services/patientAPI';
 import { formatDate } from '../../../../utils/formatters';
+import PatientQuickViewButton from '../../../../components/patients/PatientQuickView';
 
 const QuickPrescriptionModal = ({ open, onClose, patientId, patientName, onSuccess }) => {
     const navigate = useNavigate();
@@ -175,9 +176,12 @@ const QuickPrescriptionModal = ({ open, onClose, patientId, patientName, onSucce
                         Nouvelle Prescription Rapide
                     </Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Patient: <strong>{patientName}</strong>
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1, flexWrap: 'wrap', gap: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                        Patient: <strong>{patientName}</strong>
+                    </Typography>
+                    <PatientQuickViewButton patientId={patientId} patientName={patientName} size="small" />
+                </Box>
             </DialogTitle>
 
             <form onSubmit={handleSubmit}>

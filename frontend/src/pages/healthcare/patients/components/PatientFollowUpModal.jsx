@@ -20,6 +20,7 @@ import {
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../../services/patientAPI';
 import QuickTemplate from '../../../../components/healthcare/QuickTemplate';
+import PatientQuickViewButton from '../../../../components/patients/PatientQuickView';
 import {
     CHIEF_COMPLAINT_TEMPLATES,
     PHYSICAL_EXAM_TEMPLATES,
@@ -166,9 +167,12 @@ const PatientFollowUpModal = ({ open, onClose, onSaved, patientId, patientName, 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
             <DialogTitle sx={{ pb: 1 }}>
-                <Typography variant="h6" fontWeight={700}>
-                    {isEditing ? 'Modifier le Suivi' : 'Suivi Patient'}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="h6" fontWeight={700}>
+                        {isEditing ? 'Modifier le Suivi' : 'Suivi Patient'}
+                    </Typography>
+                    <PatientQuickViewButton patientId={patientId} patientName={patientName} size="small" />
+                </Box>
                 {patientName && (
                     <Typography variant="body2" color="text.secondary">{patientName}</Typography>
                 )}

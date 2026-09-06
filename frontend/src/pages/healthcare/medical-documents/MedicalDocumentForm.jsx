@@ -18,6 +18,7 @@ import 'dayjs/locale/fr';
 import medicalDocumentsAPI from '../../../services/medicalDocumentsAPI';
 import patientAPI from '../../../services/patientAPI';
 import BackButton from '../../../components/navigation/BackButton';
+import PatientQuickViewButton from '../../../components/patients/PatientQuickView';
 
 const DOCUMENT_TYPES = [
   { value: 'referral', label: 'Fiche de référence médicale' },
@@ -253,7 +254,10 @@ export default function MedicalDocumentForm() {
             {isEdit ? 'Modifier le document' : 'Nouveau document médical'}
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          {selectedPatient?.id && (
+            <PatientQuickViewButton patientId={selectedPatient.id} patientName={selectedPatient.name} size="small" />
+          )}
           {isEdit && (
             <Button
               variant="outlined"

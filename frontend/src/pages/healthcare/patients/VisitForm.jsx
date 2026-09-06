@@ -15,6 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../services/patientAPI';
+import PatientQuickViewButton from '../../../components/patients/PatientQuickView';
 
 const VisitForm = () => {
     const { t } = useTranslation();
@@ -127,15 +128,18 @@ const VisitForm = () => {
 
     return (
         <Box sx={{ p: 3 }}>
-            <Box sx={{ mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold" gutterBottom>
-                    Nouvelle Visite
-                </Typography>
-                {patient && (
-                    <Typography variant="body1" color="text.secondary">
-                        Patient: {patient.name} ({patient.patient_number})
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1 }}>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold" gutterBottom>
+                        Nouvelle Visite
                     </Typography>
-                )}
+                    {patient && (
+                        <Typography variant="body1" color="text.secondary">
+                            Patient: {patient.name} ({patient.patient_number})
+                        </Typography>
+                    )}
+                </Box>
+                {patient?.id && <PatientQuickViewButton patientId={patient.id} patientName={patient.name} />}
             </Box>
 
             <Card>

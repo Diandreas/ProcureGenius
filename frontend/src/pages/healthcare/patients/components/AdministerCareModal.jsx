@@ -9,11 +9,13 @@ import {
     Grid,
     MenuItem,
     IconButton,
-    CircularProgress
+    CircularProgress,
+    Box
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../../services/patientAPI';
+import PatientQuickViewButton from '../../../../components/patients/PatientQuickView';
 
 const SERVICE_TYPES = [
     { value: 'nursing_care', label: 'Soin infirmier' },
@@ -93,8 +95,11 @@ const AdministerCareModal = ({ open, onClose, patientId, onSaved, careId = null,
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                {isEditing ? 'Modifier le Soin' : 'Administrer un Soin'}
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                    {isEditing ? 'Modifier le Soin' : 'Administrer un Soin'}
+                    <PatientQuickViewButton patientId={patientId} size="small" />
+                </Box>
                 <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
             </DialogTitle>
             <DialogContent dividers>
