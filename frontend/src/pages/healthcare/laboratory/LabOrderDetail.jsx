@@ -1165,13 +1165,26 @@ const LabOrderDetail = () => {
         );
     }
 
-    // canEdit (niveau commande) : au moins un test a été prélevé et la commande n'est pas
-    // dans un état terminal — utilisé pour les actions globales (Enregistrer/Valider,
+    // item.has_result n'est jamais sérialisé (ni côté liste ni côté détail) — c'est une
+    // propriété calculée côté modèle, jamais renvoyée en JSON. On la reconstruit ici à partir
+    // des champs reçus, même règle que LabOrderItem.has_result côté backend.
+    const itemHasResult = (item) => !!item.result_value
+        || (item.result_numeric !== null && item.result_numeric !== undefined)
+        || (item.parameter_results?.length > 0);
+
+    // canEdit (niveau commande) : utilisé pour les actions globales (bouton Enregistrer,
     // diagnostic du biologiste). La saisie par test elle-même utilise `itemEditable`
     // (calculé par item dans la boucle plus bas) : chaque test est indépendant, plus
     // besoin d'attendre que TOUS les tests de la commande soient prélevés.
+    // Comme pour itemEditable : ne pas se fier uniquement à sample_collected_at (souvent
+    // jamais renseigné en pratique) — si la commande a déjà dépassé "pending" (ex: déjà
+    // "en cours d'analyse"), Enregistrer doit rester disponible même si aucun item n'a
+    // individuellement de sample_collected_at (bug réel constaté : commande TANGA DOLLY,
+    // status='in_progress', bouton Enregistrer invisible car ce test précis n'avait jamais
+    // été marqué "prélevé").
     const canEdit = !['cancelled', 'results_delivered'].includes(order.status)
-        && (order.items || []).some(item => !!item.sample_collected_at);
+        && (order.status !== 'pending'
+            || (order.items || []).some(item => !!item.sample_collected_at || itemHasResult(item)));
     // Validation individuelle verrouillée une fois les résultats remis (ou commande annulée)
     const verifyLocked = ['results_delivered', 'cancelled'].includes(order.status);
 
@@ -1286,12 +1299,8 @@ const LabOrderDetail = () => {
 
                     {/* "Valider" globalement n'a de sens que si TOUS les tests ont un résultat —
                         pour valider un test isolé pendant que d'autres attendent encore leur
-                        prélèvement, utiliser le bouton de validation individuel sur ce test.
-                        (item.has_result n'est pas sérialisé : on reproduit ici la même règle
-                        que LabOrderItem.has_result côté backend, à partir des champs déjà reçus.) */}
-                    {(order.items?.length > 0) && order.items.every(item =>
-                        !!item.result_value || item.result_numeric !== null && item.result_numeric !== undefined || (item.parameter_results?.length > 0)
-                    ) && (
+                        prélèvement, utiliser le bouton de validation individuel sur ce test. */}
+                    {(order.items?.length > 0) && order.items.every(itemHasResult) && (
                         <Button data-testid="lab-detail-btn-validate-results" variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} size={isMobile ? 'small' : 'medium'}>
                             Valider
                         </Button>
@@ -1550,8 +1559,21 @@ const LabOrderDetail = () => {
                             const patientAge = order.patient?.age ?? null;
                             // Indépendant par test : ce test précis est modifiable dès qu'IL a
                             // été prélevé, peu importe l'état des autres tests de la commande.
-                            const itemEditable = !!item.sample_collected_at
-                                && !['cancelled', 'results_delivered'].includes(order.status);
+                            // MAIS ~75% des commandes réelles n'ont jamais de sample_collected_at
+                            // renseigné du tout (le personnel saisit le résultat directement sans
+                            // cliquer "Prélever") — se baser uniquement sur ce champ bloquait la
+                            // saisie de commandes bien réelles, déjà "en cours d'analyse" au niveau
+                            // de la commande (ex: commande TANGA DOLLY, item jamais marqué prélevé
+                            // individuellement alors que order.status === 'in_progress'). Un test
+                            // est donc modifiable si LUI a une trace de prélèvement/résultat, OU si
+                            // la commande dans son ensemble a déjà dépassé l'état initial "pending"
+                            // (même logique que le floor de statut côté serveur, voir
+                            // LabOrderListSerializer._STATUS_FLOOR).
+                            const itemEditable = (
+                                !!item.sample_collected_at
+                                || itemHasResult(item)
+                                || order.status !== 'pending'
+                            ) && !['cancelled', 'results_delivered'].includes(order.status);
 
                             // ─── COMPOUND TEST (e.g. NFS) ───────────────────────────────────────────
                             if (item.has_parameters && item.parameters?.length > 0) {
