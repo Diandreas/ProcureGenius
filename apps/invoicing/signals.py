@@ -1,9 +1,31 @@
 # Signals pour la gestion automatique des factures
 from django.db.models.signals import post_save, post_delete, pre_delete, pre_save
 from django.dispatch import receiver
-from .models import Invoice, InvoiceItem
+from .models import Invoice, InvoiceItem, ProductBatch
 from apps.accounts.models import Client
 from apps.purchase_orders.models import PurchaseOrder
+
+
+@receiver(post_save, sender=ProductBatch)
+@receiver(post_delete, sender=ProductBatch)
+def sync_product_stock_on_batch_change(sender, instance, **kwargs):
+    """
+    Recale product.stock_quantity dès qu'un lot est créé/modifié/supprimé.
+
+    Sans ça, tout code qui touche ProductBatch.quantity_remaining directement
+    (scripts de chargement en masse, ajustements manuels de lot...) sans passer
+    par Product.adjust_stock() laisse stock_quantity désynchronisé du vrai
+    stock — exactement le bug constaté en prod (load_pharmacy_batches créait
+    des lots avec les vraies quantités d'inventaire sans jamais mettre à jour
+    stock_quantity, resté à 0 pour des dizaines de produits). Voir
+    Product.sync_stock_from_batches().
+    """
+    try:
+        instance.product.sync_stock_from_batches()
+    except Exception:
+        # Ne jamais faire échouer la sauvegarde/suppression du lot pour ça.
+        import logging
+        logging.getLogger(__name__).exception("Echec sync stock_quantity depuis lots")
 
 
 @receiver(post_save, sender=InvoiceItem)

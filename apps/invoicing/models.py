@@ -365,6 +365,31 @@ class Product(models.Model):
         ).aggregate(total=models.Sum('quantity_remaining'))['total'] or 0
         return max(self.stock_quantity or 0, batch_total)
 
+    def sync_stock_from_batches(self):
+        """
+        Recale stock_quantity sur la somme des lots actifs, pour les produits
+        gérés par lots (ProductBatch). Ne fait rien pour un produit sans lot
+        (mode "stock_quantity classique" — adjust_stock() reste seul maître).
+
+        Existe pour empêcher la classe de bug constatée en prod : un script
+        (ex: load_pharmacy_batches) crée/modifie des ProductBatch directement
+        sans jamais toucher product.stock_quantity, qui reste alors bloqué à
+        une vieille valeur (souvent 0) pendant que les lots, eux, reflètent le
+        vrai stock — la liste des produits et la fiche produit finissent par
+        afficher deux nombres différents pour le même produit.
+        Appelée automatiquement par le signal post_save/post_delete sur
+        ProductBatch (voir apps/invoicing/signals.py) : tenir stock_quantity
+        à jour n'est donc plus une responsabilité manuelle de chaque appelant.
+        """
+        if not self.batches.exists():
+            return
+        batch_total = self.batches.filter(
+            status__in=['available', 'opened']
+        ).aggregate(total=models.Sum('quantity_remaining'))['total'] or 0
+        if self.stock_quantity != batch_total:
+            self.stock_quantity = batch_total
+            self.save(update_fields=['stock_quantity'])
+
     @property
     def is_low_stock(self):
         """Vérifie si le stock est bas"""

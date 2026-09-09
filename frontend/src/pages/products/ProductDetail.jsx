@@ -270,8 +270,17 @@ function ProductDetail() {
     );
   }
 
-  // Stock = cumul des lots (quantity_remaining)
-  const computedStock = productBatches.reduce((sum, b) => sum + (b.quantity_remaining || 0), 0);
+  // Stock = même formule que Product.total_stock côté backend (utilisée par la
+  // liste des produits) : max(stock_quantity, somme des lots ACTIFS). Avant,
+  // cette page sommait TOUS les lots sans filtrer par statut ni comparer à
+  // stock_quantity — deux formules différentes pour le même produit selon
+  // qu'on regardait la liste ou la fiche détail, avec des écarts réels
+  // constatés en prod (lots dépletés/expirés inclus à tort, ou stock_quantity
+  // resté à une vieille valeur pendant que les lots reflétaient le vrai stock).
+  const activeBatchTotal = productBatches
+    .filter(b => ['available', 'opened'].includes(b.status))
+    .reduce((sum, b) => sum + (b.quantity_remaining || 0), 0);
+  const computedStock = Math.max(product.stock_quantity || 0, activeBatchTotal);
   const stockStatus = computedStock === 0 ? 'error' :
     computedStock <= (product.low_stock_threshold || 10) ? 'warning' : 'success';
 
