@@ -692,21 +692,19 @@ const LabOrderDetail = () => {
     const finalizeOrder = async () => {
         try {
             const sansResultat = (order.items || []).filter(i => !itemHasResult(i));
-            let message = 'Voulez-vous valider ces résultats ? Cette action est définitive.';
+            let message = "Voulez-vous valider ces résultats ? Cette action est définitive.";
             if (sansResultat.length > 0) {
                 const noms = sansResultat
-                    .map(i => '- ' + (i.lab_test_name || i.lab_test?.name || 'Test'))
-                    .join('
-');
-                message =
-                    sansResultat.length + ' test(s) n'ont aucun résultat saisi dans l'application :
-
-'
-                    + noms
-                    + '
-
-Valider quand même ? (à faire si le résultat a été rendu autrement, '
-                    + 'par exemple par le logiciel de l'automate)';
+                    .map(i => "- " + (i.lab_test_name || i.lab_test?.name || "Test"))
+                    .join("\n");
+                message = [
+                    sansResultat.length + " test(s) n'ont aucun résultat saisi dans l'application :",
+                    "",
+                    noms,
+                    "",
+                    "Valider quand même ? (à faire si le résultat a été rendu autrement,",
+                    "par exemple par le logiciel de l'automate)",
+                ].join("\n");
             }
             if (!window.confirm(message)) return;
 
