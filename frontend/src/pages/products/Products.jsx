@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
+import StockQuickActions from '../../components/stock/StockQuickActions';
 import {
   Box,
   Card,
@@ -249,6 +250,12 @@ function Products() {
     setPage(1);
   }, [debouncedSearchTerm, categoryFilter, statusFilter, warehouseFilter, stockFilter, expirationFilter, registeredAfter, registeredBefore, expirationAfter, expirationBefore]);
 
+  // Incremente apres une action de stock pour relancer la requete avec les
+  // filtres/pagination en cours (la liste vient de Redux, pas d'une fonction
+  // de fetch locale qu'on pourrait rappeler directement).
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refreshProducts = useCallback(() => setRefreshKey((k) => k + 1), []);
+
   // Fetch products when params change
   useEffect(() => {
     const params = {
@@ -282,7 +289,7 @@ function Products() {
   }, [
     dispatch, page, pageSize, debouncedSearchTerm, categoryFilter, statusFilter,
     warehouseFilter, stockFilter, expirationFilter, registeredAfter, registeredBefore,
-    expirationAfter, expirationBefore
+    expirationAfter, expirationBefore, refreshKey
   ]);
 
   // Register report action in top nav
@@ -638,6 +645,11 @@ function Products() {
                 </Box>
               )}
             </Stack>
+
+            {/* Actions de stock directement dans la liste, sans ouvrir la fiche */}
+            {isPhysical && (
+              <StockQuickActions product={product} onDone={refreshProducts} />
+            )}
 
           </CardContent>
         </Card>
