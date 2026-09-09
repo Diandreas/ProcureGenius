@@ -339,12 +339,17 @@ const PrintItemButton = ({ item, onPrint, printing }) => {
  * résultat (rien à renvoyer sinon) ; verrouillé une fois les résultats remis
  * au patient ou la commande annulée.
  */
-const ResetCollectionButton = ({ item, onReset, resetting, locked = false }) => {
+const ResetCollectionButton = ({ item, onReset, resetting, locked = false, orderStarted = false }) => {
     const hasProgress = Boolean(item.sample_collected_at) || Boolean(item.result_value)
         || (item.result_numeric !== null && item.result_numeric !== undefined)
         || (item.parameter_results && item.parameter_results.length > 0);
 
-    if (locked || !hasProgress) return null;
+    // `orderStarted` : la commande a depasse l'etat initial. Beaucoup de tests
+    // n'ont aucune trace au niveau de l'item (le personnel saute le clic
+    // "Prelever", et certains resultats arrivent par le logiciel de l'automate)
+    // alors que la commande, elle, est bien en cours. Sans ca, le renvoi au
+    // prelevement etait introuvable precisement sur ces tests-la.
+    if (locked || !(hasProgress || orderStarted)) return null;
 
     return (
         <Tooltip title="Renvoyer ce test au prélèvement (conditions non respectées)">
@@ -686,7 +691,24 @@ const LabOrderDetail = () => {
 
     const finalizeOrder = async () => {
         try {
-            if (!window.confirm('Voulez-vous valider ces résultats ? Cette action est définitive.')) return;
+            const sansResultat = (order.items || []).filter(i => !itemHasResult(i));
+            let message = 'Voulez-vous valider ces résultats ? Cette action est définitive.';
+            if (sansResultat.length > 0) {
+                const noms = sansResultat
+                    .map(i => '- ' + (i.lab_test_name || i.lab_test?.name || 'Test'))
+                    .join('
+');
+                message =
+                    sansResultat.length + ' test(s) n'ont aucun résultat saisi dans l'application :
+
+'
+                    + noms
+                    + '
+
+Valider quand même ? (à faire si le résultat a été rendu autrement, '
+                    + 'par exemple par le logiciel de l'automate)';
+            }
+            if (!window.confirm(message)) return;
 
             await saveResults(); // Save first
             // Note: verification logic is handled by updateStatus('verify')
@@ -1310,31 +1332,8 @@ const LabOrderDetail = () => {
                                 </Button>
                             )}
 
-                            {order.lab_invoice?.privilege_card_toggle_available && (
-                                order.lab_invoice.privilege_card_usage ? (
-                                    <Button
-                                        variant="outlined"
-                                        color="warning"
-                                        startIcon={privilegeCardSaving ? <CircularProgress size={16} /> : <LoyaltyIcon />}
-                                        onClick={() => handleTogglePrivilegeCard(false)}
-                                        disabled={privilegeCardSaving}
-                                        size={isMobile ? 'small' : 'medium'}
-                                    >
-                                        {isMobile ? 'Annuler Privilège' : 'Annuler carte privilège'}
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="outlined"
-                                        color="success"
-                                        startIcon={privilegeCardSaving ? <CircularProgress size={16} /> : <LoyaltyIcon />}
-                                        onClick={() => handleTogglePrivilegeCard(true)}
-                                        disabled={privilegeCardSaving}
-                                        size={isMobile ? 'small' : 'medium'}
-                                    >
-                                        {isMobile ? 'Activer Privilège' : 'Activer carte privilège'}
-                                    </Button>
-                                )
-                            )}
+                            {/* La bascule carte privilege reste sur la facture : elle n'a
+                                pas sa place dans le detail d'une commande labo. */}
                         </>
                     )}
 
@@ -1359,10 +1358,12 @@ const LabOrderDetail = () => {
                         </Button>
                     )}
 
-                    {/* "Valider" globalement n'a de sens que si TOUS les tests ont un résultat —
-                        pour valider un test isolé pendant que d'autres attendent encore leur
-                        prélèvement, utiliser le bouton de validation individuel sur ce test. */}
-                    {(order.items?.length > 0) && order.items.every(itemHasResult) && (
+                    {/* "Valider" reste disponible meme si des tests n'ont pas de resultat
+                        saisi dans l'application : certains examens (NFS...) sont rendus par
+                        le logiciel de l'automate, et il arrive qu'on doive cloturer une
+                        commande sans avoir tout rempli ni tout preleve. Les tests vides sont
+                        listes dans la confirmation avant validation. */}
+                    {(order.items?.length > 0) && !verifyLocked && (
                         <Button data-testid="lab-detail-btn-validate-results" variant="contained" color="success" startIcon={<VerifyIcon />} onClick={finalizeOrder} size={isMobile ? 'small' : 'medium'}>
                             Valider
                         </Button>
@@ -1691,7 +1692,7 @@ const LabOrderDetail = () => {
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                         <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
-                                                        <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} />
+                                                        <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} orderStarted={order.status !== 'pending'} />
                                                         <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                                         <IconButton size="small" onClick={() => handleShowHistory(item)} title="Historique" color="primary">
                                                             <HistoryIcon fontSize="small" />
@@ -1867,7 +1868,7 @@ const LabOrderDetail = () => {
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} />
-                                                        <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} />
+                                                        <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} orderStarted={order.status !== 'pending'} />
                                                         <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                                         <Button
                                                             startIcon={<HistoryIcon />}
@@ -2083,7 +2084,7 @@ const LabOrderDetail = () => {
                             const itemActions = (
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                     <ItemVerifyControl item={item} onVerify={handleVerifyItem} verifying={verifyingItemId === item.id} locked={verifyLocked} compact />
-                                    <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} />
+                                    <ResetCollectionButton item={item} onReset={handleResetItemCollection} resetting={collectingItemId === item.id} locked={verifyLocked} orderStarted={order.status !== 'pending'} />
                                     <PrintItemButton item={item} onPrint={handlePrintItem} printing={printingItemId === item.id} />
                                     <IconButton
                                         size="small"
