@@ -157,10 +157,10 @@ const StockLabels = () => {
                         onChange={(e, v) => v && setTaille(v)}
                     >
                         <ToggleButton value="grande">
-                            <Tooltip title="70 × 37 mm — 24 par page"><span>Grande</span></Tooltip>
+                            <Tooltip title="63,5 × 38 mm — 24 par page (planche standard 3 × 8)"><span>Grande</span></Tooltip>
                         </ToggleButton>
                         <ToggleButton value="petite">
-                            <Tooltip title="38 × 21 mm — 65 par page"><span>Petite</span></Tooltip>
+                            <Tooltip title="38 × 21 mm — 65 par page (planche standard 5 × 13)"><span>Petite</span></Tooltip>
                         </ToggleButton>
                     </ToggleButtonGroup>
                 </Stack>

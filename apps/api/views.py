@@ -2181,8 +2181,10 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 images[e['code']] = base64.b64encode(tampon.getvalue()).decode('ascii')
 
         if taille == 'grande':
-            largeur, hauteur, police, cote_qr = '70mm', '37mm', '8pt', '22mm'
+            # Planche standard 3 x 8 (type Avery L7160) : 63,5 x 38 mm.
+            largeur, hauteur, police, cote_qr = '63.5mm', '38mm', '8pt', '22mm'
         else:
+            # Planche standard 5 x 13 : 38 x 21 mm.
             largeur, hauteur, police, cote_qr = '38mm', '21mm', '6pt', '13mm'
 
         cellules = []
@@ -2202,7 +2204,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             )
 
         styles = """
-  @page { size: A4; margin: 8mm; }
+  @page { size: A4; margin: 5mm; }
   body { font-family: Helvetica, Arial, sans-serif; margin: 0; }
   .planche { display: flex; flex-wrap: wrap; gap: 2mm; }
   .etiquette {
