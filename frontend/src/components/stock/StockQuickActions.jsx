@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import {
     Box, Button, Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, MenuItem, Typography, Stack, Tooltip, IconButton,
-    CircularProgress, Alert, Divider,
+    CircularProgress, Alert, Divider, Menu,
 } from '@mui/material';
 import {
     Add as AddIcon,
     Remove as RemoveIcon,
     ReportProblem as LossIcon,
-    Inventory2 as BatchIcon,
-    History as HistoryIcon,
+    MoreVert as MoreIcon,
+    LockOpen as OpenIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
-import { productsAPI } from '../../services/api';
+import api, { productsAPI } from '../../services/api';
 
 const LOSS_REASONS = [
     { value: 'damaged', label: 'Produit endommagé' },
@@ -31,46 +30,35 @@ const MODES = {
 };
 
 /**
- * Actions de stock réalisables directement depuis la liste des produits, sans
- * avoir à ouvrir la fiche : entrée, sortie, perte, plus les raccourcis vers les
- * lots et l'historique des mouvements.
+ * Mouvements de stock depuis la fiche produit : entrée, sortie/ajustement,
+ * déclaration de perte. Les endpoints existaient déjà côté backend
+ * (adjust_stock / report_loss) mais n'étaient reliés à aucun bouton.
  *
- * Les endpoints existaient déjà côté backend (adjust_stock / report_loss), ils
- * n'étaient simplement joignables que depuis la fiche produit.
+ * Deux usages :
+ *  - carte Stock  : <StockQuickActions product={p} batches={b} onDone={f} />
+ *  - ligne de lot : <StockQuickActions product={p} batch={lot} onDone={f} compact />
+ *    (le lot est alors pré-sélectionné et verrouillé)
  */
-const StockQuickActions = ({ product, onDone }) => {
-    const navigate = useNavigate();
+export const StockQuickActions = ({ product, batches = [], batch = null, onDone, compact = false }) => {
     const { enqueueSnackbar } = useSnackbar();
     const [mode, setMode] = useState(null);
     const [quantity, setQuantity] = useState('');
     const [notes, setNotes] = useState('');
     const [lossReason, setLossReason] = useState('expired');
     const [batchId, setBatchId] = useState('');
-    const [batches, setBatches] = useState([]);
-    const [loadingBatches, setLoadingBatches] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const cfg = mode ? MODES[mode] : null;
+    const lotsActifs = batches.filter((b) => ['available', 'opened'].includes(b.status));
+    const gereParLots = !batch && lotsActifs.length > 0;
 
-    // Les lots ne sont chargés qu'à l'ouverture de la boîte de dialogue :
-    // inutile de faire une requête par produit sur toute la liste.
     useEffect(() => {
-        if (!mode) return;
-        let annule = false;
-        setLoadingBatches(true);
-        productsAPI.getBatches(product.id)
-            .then((res) => {
-                if (annule) return;
-                const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
-                setBatches(data.filter((b) => ['available', 'opened'].includes(b.status)));
-            })
-            .catch(() => { if (!annule) setBatches([]); })
-            .finally(() => { if (!annule) setLoadingBatches(false); });
-        return () => { annule = true; };
-    }, [mode, product.id]);
+        if (mode && batch) setBatchId(batch.id);
+    }, [mode, batch]);
 
     const fermer = () => {
-        setMode(null); setQuantity(''); setNotes(''); setBatchId(''); setLossReason('expired');
+        setMode(null); setQuantity(''); setNotes(''); setLossReason('expired');
+        setBatchId(batch ? batch.id : '');
     };
 
     const valider = async () => {
@@ -107,59 +95,59 @@ const StockQuickActions = ({ product, onDone }) => {
     };
 
     // Un produit géré par lots doit voir son mouvement rattaché à un lot, sinon
-    // le compteur du produit et la somme des lots divergent (cf. bug de stock
-    // corrigé le 09/09 : liste et fiche affichaient deux nombres différents).
-    const gereParLots = batches.length > 0;
+    // le compteur du produit et la somme des lots divergent (cf. bug du 09/09 :
+    // la liste et la fiche affichaient deux nombres différents).
     const lotManquant = gereParLots && !batchId && mode !== 'loss';
+
+    const declencheurs = compact ? (
+        <>
+            <Tooltip title="Entrée sur ce lot">
+                <IconButton size="small" color="success" onClick={() => setMode('in')}>
+                    <AddIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Sortie sur ce lot">
+                <IconButton size="small" color="warning" onClick={() => setMode('out')}>
+                    <RemoveIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+            </Tooltip>
+        </>
+    ) : (
+        <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Button size="small" variant="outlined" color="success" startIcon={<AddIcon />} onClick={() => setMode('in')} sx={{ flex: 1 }}>
+                Entrée
+            </Button>
+            <Button size="small" variant="outlined" color="warning" startIcon={<RemoveIcon />} onClick={() => setMode('out')} sx={{ flex: 1 }}>
+                Sortie
+            </Button>
+            <Tooltip title="Déclarer une perte">
+                <Button size="small" variant="outlined" color="error" onClick={() => setMode('loss')} sx={{ minWidth: 40, px: 1 }}>
+                    <LossIcon fontSize="small" />
+                </Button>
+            </Tooltip>
+        </Stack>
+    );
 
     return (
         <>
-            <Box
-                sx={{
-                    display: 'flex', alignItems: 'center', gap: 0.5,
-                    mt: 1.5, pt: 1.5, borderTop: '1px solid', borderColor: 'divider',
-                }}
-                onClick={(e) => e.stopPropagation()}
-            >
-                <Tooltip title="Entrée de stock">
-                    <IconButton size="small" color="success" onClick={() => setMode('in')}>
-                        <AddIcon fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Sortie / ajustement">
-                    <IconButton size="small" color="warning" onClick={() => setMode('out')}>
-                        <RemoveIcon fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Déclarer une perte">
-                    <IconButton size="small" color="error" onClick={() => setMode('loss')}>
-                        <LossIcon fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-                <Box sx={{ flex: 1 }} />
-                <Tooltip title="Lots & péremptions">
-                    <IconButton size="small" onClick={() => navigate('/products/' + product.id + '/batches')}>
-                        <BatchIcon fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Historique des mouvements">
-                    <IconButton size="small" onClick={() => navigate('/products/' + product.id)}>
-                        <HistoryIcon fontSize="small" />
-                    </IconButton>
-                </Tooltip>
-            </Box>
+            {declencheurs}
 
-            <Dialog open={!!mode} onClose={fermer} maxWidth="xs" fullWidth onClick={(e) => e.stopPropagation()}>
+            <Dialog open={!!mode} onClose={fermer} maxWidth="xs" fullWidth>
                 {cfg && (
                     <>
                         <DialogTitle sx={{ pb: 1 }}>
                             <Typography variant="h6" fontWeight={700}>{cfg.titre}</Typography>
-                            <Typography variant="body2" color="text.secondary" noWrap>{product.name}</Typography>
+                            <Typography variant="body2" color="text.secondary" noWrap>
+                                {product.name}
+                                {batch ? ' — lot ' + (batch.batch_number || batch.lot_number) : ''}
+                            </Typography>
                         </DialogTitle>
                         <DialogContent>
                             <Stack spacing={2} sx={{ mt: 0.5 }}>
                                 <Alert severity="info" icon={false} sx={{ py: 0.5 }}>
-                                    Stock actuel : <strong>{product.stock_quantity ?? 0}</strong>
+                                    {batch
+                                        ? <>Reste sur ce lot : <strong>{batch.quantity_remaining}</strong></>
+                                        : <>Stock actuel : <strong>{product.stock_quantity ?? 0}</strong></>}
                                 </Alert>
 
                                 <TextField
@@ -181,11 +169,7 @@ const StockQuickActions = ({ product, onDone }) => {
                                     </TextField>
                                 )}
 
-                                {loadingBatches ? (
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
-                                        <CircularProgress size={20} />
-                                    </Box>
-                                ) : gereParLots && mode !== 'loss' && (
+                                {gereParLots && mode !== 'loss' && (
                                     <TextField
                                         select label="Lot concerné" size="small" fullWidth
                                         value={batchId}
@@ -195,7 +179,7 @@ const StockQuickActions = ({ product, onDone }) => {
                                             ? 'Ce produit est géré par lots : choisissez le lot concerné.'
                                             : ' '}
                                     >
-                                        {batches.map((b) => (
+                                        {lotsActifs.map((b) => (
                                             <MenuItem key={b.id} value={b.id}>
                                                 {b.batch_number} — reste {b.quantity_remaining}
                                                 {b.expiry_date ? ' — exp. ' + b.expiry_date : ''}
@@ -232,6 +216,108 @@ const StockQuickActions = ({ product, onDone }) => {
                 )}
             </Dialog>
         </>
+    );
+};
+
+/** Menu par lot : ouvrir le lot, ou le retirer du stock actif. */
+export const BatchRowMenu = ({ batch, onDone }) => {
+    const { enqueueSnackbar } = useSnackbar();
+    const [anchor, setAnchor] = useState(null);
+
+    const ouvrirLot = async () => {
+        setAnchor(null);
+        try {
+            await api.post('/batches/' + batch.id + '/open/');
+            enqueueSnackbar('Lot marqué comme ouvert', { variant: 'success' });
+            onDone?.();
+        } catch (e) {
+            enqueueSnackbar(e.response?.data?.error || 'Échec', { variant: 'error' });
+        }
+    };
+
+    return (
+        <>
+            <IconButton size="small" onClick={(e) => setAnchor(e.currentTarget)}>
+                <MoreIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+            <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
+                <MenuItem onClick={ouvrirLot} disabled={batch.status === 'opened'}>
+                    <OpenIcon fontSize="small" style={{ marginRight: 8 }} />
+                    {batch.status === 'opened' ? 'Lot déjà ouvert' : 'Marquer comme ouvert'}
+                </MenuItem>
+            </Menu>
+        </>
+    );
+};
+
+/** Création d'un lot depuis la fiche produit. */
+export const AddBatchDialog = ({ product, open, onClose, onDone, aDesLots }) => {
+    const { enqueueSnackbar } = useSnackbar();
+    const [form, setForm] = useState({ batch_number: '', quantity: '', expiry_date: '', notes: '' });
+    const [saving, setSaving] = useState(false);
+
+    const maj = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+    const valider = async () => {
+        if (!form.batch_number || !form.quantity || !form.expiry_date) {
+            enqueueSnackbar('Numéro de lot, quantité et péremption sont requis', { variant: 'warning' });
+            return;
+        }
+        setSaving(true);
+        try {
+            await productsAPI.createBatch(product.id, {
+                batch_number: form.batch_number,
+                quantity: parseInt(form.quantity, 10),
+                quantity_remaining: parseInt(form.quantity, 10),
+                expiry_date: form.expiry_date,
+                notes: form.notes,
+            });
+            enqueueSnackbar('Lot créé et ajouté au stock', { variant: 'success' });
+            setForm({ batch_number: '', quantity: '', expiry_date: '', notes: '' });
+            onClose();
+            onDone?.();
+        } catch (e) {
+            const d = e.response?.data;
+            enqueueSnackbar(d?.error || (d && JSON.stringify(d)) || 'Échec de la création', { variant: 'error' });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+            <DialogTitle sx={{ pb: 1 }}>
+                <Typography variant="h6" fontWeight={700}>Nouveau lot</Typography>
+                <Typography variant="body2" color="text.secondary" noWrap>{product.name}</Typography>
+            </DialogTitle>
+            <DialogContent>
+                <Stack spacing={2} sx={{ mt: 0.5 }}>
+                    {!aDesLots && (
+                        <Alert severity="warning" sx={{ py: 0.5 }}>
+                            Ce produit n&apos;était pas suivi par lots. Sa quantité actuelle
+                            ({product.stock_quantity ?? 0}) n&apos;est rattachée à aucun lot :
+                            pensez à la répartir pour garder un suivi de péremption fiable.
+                        </Alert>
+                    )}
+                    <TextField label="Numéro de lot" size="small" fullWidth autoFocus
+                        value={form.batch_number} onChange={maj('batch_number')} />
+                    <TextField label="Quantité reçue" type="number" size="small" fullWidth
+                        value={form.quantity} onChange={maj('quantity')} inputProps={{ min: 1 }} />
+                    <TextField label="Date de péremption" type="date" size="small" fullWidth
+                        InputLabelProps={{ shrink: true }}
+                        value={form.expiry_date} onChange={maj('expiry_date')} />
+                    <TextField label="Note" size="small" fullWidth multiline rows={2}
+                        value={form.notes} onChange={maj('notes')} />
+                </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button onClick={onClose} disabled={saving}>Annuler</Button>
+                <Button variant="contained" onClick={valider} disabled={saving}
+                    startIcon={saving ? <CircularProgress size={16} /> : null}>
+                    Créer le lot
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 };
 

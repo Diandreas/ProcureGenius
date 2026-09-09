@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import StockQuickActions from '../../components/stock/StockQuickActions';
 import {
   Box,
   Card,
@@ -645,11 +644,6 @@ function Products() {
                 </Box>
               )}
             </Stack>
-
-            {/* Actions de stock directement dans la liste, sans ouvrir la fiche */}
-            {isPhysical && (
-              <StockQuickActions product={product} onDone={refreshProducts} />
-            )}
 
           </CardContent>
         </Card>

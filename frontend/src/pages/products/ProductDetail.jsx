@@ -74,6 +74,7 @@ import ErrorState from '../../components/ErrorState';
 import ProductInvoicesTable from '../../components/products/ProductInvoicesTable';
 import ProductClientsTable from '../../components/products/ProductClientsTable';
 import StockMovementsTab from '../../components/StockMovementsTab';
+import StockQuickActions, { BatchRowMenu, AddBatchDialog } from '../../components/stock/StockQuickActions';
 import { generateProductReportPDF, downloadPDF, openPDFInNewTab } from '../../services/pdfReportService';
 import useCurrentUser from '../../hooks/useCurrentUser';
 
@@ -143,6 +144,10 @@ function ProductDetail() {
   const [generatedPdfBlob, setGeneratedPdfBlob] = useState(null);
   const [dispensingHistory, setDispensingHistory] = useState([]);
   const [loadingDispensing, setLoadingDispensing] = useState(false);
+  const [addBatchOpen, setAddBatchOpen] = useState(false);
+
+  // Apres un mouvement de stock, le produit ET ses lots ont change.
+  const refreshStock = () => { fetchProduct(); fetchBatches(); };
 
   useEffect(() => {
     fetchProduct();
@@ -1302,6 +1307,13 @@ function ProductDetail() {
                           computedStock <= (product.low_stock_threshold || 10) ? t('products:stockStatus.low') : t('products:filters.inStock')}
                       </Typography>
                     </Box>
+
+                    {/* Mouvements de stock directement depuis la fiche */}
+                    <StockQuickActions
+                      product={product}
+                      batches={productBatches}
+                      onDone={refreshStock}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -1385,8 +1397,8 @@ function ProductDetail() {
                 </Card>
               )}
 
-              {/* Lots & Péremptions */}
-              {product.product_type === 'physical' && productBatches.length > 0 && (
+              {/* Lots & Péremptions — affichee meme sans lot, pour pouvoir en creer un */}
+              {product.product_type === 'physical' && (
                 <Card sx={{
                   borderRadius: isMobile ? 2.5 : 2,
                   mb: isMobile ? 1.5 : 3,
@@ -1399,9 +1411,14 @@ function ProductDetail() {
                       <Typography variant="subtitle1" fontWeight="600" sx={{ fontSize: isMobile ? '0.938rem' : undefined }}>
                         Lots & Péremptions
                       </Typography>
-                      <Button size="small" variant="outlined" onClick={() => navigate(`/products/${id}/batches`)} sx={{ fontSize: '0.72rem' }}>
-                        Gérer
-                      </Button>
+                      <Stack direction="row" spacing={0.75}>
+                        <Button size="small" variant="contained" onClick={() => setAddBatchOpen(true)} sx={{ fontSize: '0.72rem' }}>
+                          + Lot
+                        </Button>
+                        <Button size="small" variant="outlined" onClick={() => navigate(`/products/${id}/batches`)} sx={{ fontSize: '0.72rem' }}>
+                          Gérer
+                        </Button>
+                      </Stack>
                     </Box>
                     <Stack spacing={0.75}>
                       {productBatches
@@ -1432,20 +1449,43 @@ function ProductDetail() {
                                   {isExpired ? ' ⚠ PÉRIMÉ' : isCritical ? ` (${daysLeft}j)` : ''}
                                 </Typography>
                               </Box>
-                              <Chip
-                                label={`${batch.quantity_remaining} ${product.sell_unit || 'u.'}`}
-                                size="small"
-                                color={isExpired ? 'error' : isCritical ? 'warning' : 'default'}
-                                variant={isExpired || isCritical ? 'filled' : 'outlined'}
-                                sx={{ fontSize: '0.72rem', height: 22 }}
-                              />
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                                <Chip
+                                  label={`${batch.quantity_remaining} ${product.sell_unit || 'u.'}`}
+                                  size="small"
+                                  color={isExpired ? 'error' : isCritical ? 'warning' : 'default'}
+                                  variant={isExpired || isCritical ? 'filled' : 'outlined'}
+                                  sx={{ fontSize: '0.72rem', height: 22, mr: 0.5 }}
+                                />
+                                <StockQuickActions
+                                  product={product}
+                                  batch={batch}
+                                  onDone={refreshStock}
+                                  compact
+                                />
+                                <BatchRowMenu batch={batch} onDone={refreshStock} />
+                              </Box>
                             </Box>
                           );
                         })}
                     </Stack>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                      {productBatches.filter(b => b.quantity_remaining > 0).length} lot(s) actif(s) — Total : {computedStock} {product.sell_unit || 'u.'}
-                    </Typography>
+                    {productBatches.filter(b => b.quantity_remaining > 0).length === 0 ? (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                        Aucun lot actif. Créez-en un pour suivre les péremptions de ce produit.
+                      </Typography>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                        {productBatches.filter(b => b.quantity_remaining > 0).length} lot(s) actif(s) — Total : {computedStock} {product.sell_unit || 'u.'}
+                      </Typography>
+                    )}
+
+                    <AddBatchDialog
+                      product={product}
+                      open={addBatchOpen}
+                      onClose={() => setAddBatchOpen(false)}
+                      onDone={refreshStock}
+                      aDesLots={productBatches.length > 0}
+                    />
                   </CardContent>
                 </Card>
               )}
