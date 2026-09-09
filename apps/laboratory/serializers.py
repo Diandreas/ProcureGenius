@@ -310,6 +310,10 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
     lab_test_data = LabTestSerializer(source='lab_test', read_only=True)
     parameters = LabTestParameterSerializer(source='lab_test.active_parameters', many=True, read_only=True)
     parameter_results = LabResultValueSerializer(many=True, read_only=True)
+    # Qui a preleve : affiche dans le recapitulatif des prelevements du detail
+    sample_collected_by_name = serializers.CharField(
+        source='sample_collected_by.get_full_name', read_only=True, default=None
+    )
 
     class Meta:
         model = LabOrderItem
@@ -339,6 +343,7 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
             'technician_notes',
             'sample_collected_at',
             'sample_collected_by',
+            'sample_collected_by_name',
             'result_entered_at',
             'result_verified_at',
             'verified_by',

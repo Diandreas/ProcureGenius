@@ -53,6 +53,7 @@ import {
     Add as AddIcon,
     Print as PrintIcon,
     Replay as ReplayIcon,
+    Schedule as ScheduleIcon,
     QrCode as QrCodeIcon,
     Receipt as ReceiptIcon,
     AttachMoney as InvoiceIcon,
@@ -454,6 +455,8 @@ const LabOrderDetail = () => {
 
     // Carte Privilège — bascule manuelle depuis la commande labo
     const [privilegeCardSaving, setPrivilegeCardSaving] = useState(false);
+    // Récapitulatif des prélèvements (qui a prélevé quoi, et à quelle heure)
+    const [collectionsOpen, setCollectionsOpen] = useState(false);
     const [associateCardDialogOpen, setAssociateCardDialogOpen] = useState(false);
     const [associateCardNumber, setAssociateCardNumber] = useState('');
 
@@ -695,7 +698,7 @@ const LabOrderDetail = () => {
             let message = "Voulez-vous valider ces résultats ? Cette action est définitive.";
             if (sansResultat.length > 0) {
                 const noms = sansResultat
-                    .map(i => "- " + (i.lab_test_name || i.lab_test?.name || "Test"))
+                    .map(i => "- " + (i.test_name || i.lab_test_data?.name || "Test"))
                     .join("\n");
                 message = [
                     sansResultat.length + " test(s) n'ont aucun résultat saisi dans l'application :",
@@ -1313,6 +1316,17 @@ const LabOrderDetail = () => {
                             >
                                 {isMobile ? 'Reçu' : 'Imprimer Reçu'}
                             </Button>
+
+                            <Tooltip title="Heures de prélèvement de chaque test">
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<ScheduleIcon />}
+                                    onClick={() => setCollectionsOpen(true)}
+                                    size={isMobile ? 'small' : 'medium'}
+                                >
+                                    {isMobile ? 'Prélèv.' : 'Prélèvements'}
+                                </Button>
+                            </Tooltip>
 
                             <Button data-testid="lab-detail-btn-labels" variant="outlined" startIcon={<PrintIcon />} onClick={() => handleOpenPrintModal('tube_labels')} size={isMobile ? 'small' : 'medium'}>
                                 {isMobile ? 'Étiquettes' : 'Étiquettes Thermiques'}
@@ -2232,6 +2246,58 @@ const LabOrderDetail = () => {
                 onDownload={() => handlePrintAction('download')}
                 helpText="Choisissez une action pour générer le document"
             />
+
+            {/* Recapitulatif des prelevements : qui a preleve quoi, et quand.
+                Utile pour tracer un ecart (jeune non respecte, tube tardif...)
+                et pour repondre a "a quelle heure ce test a-t-il ete preleve ?". */}
+            <Dialog open={collectionsOpen} onClose={() => setCollectionsOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ pb: 1 }}>
+                    <Typography variant="h6" fontWeight={700}>Prélèvements</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        {order?.order_number} — {order?.patient_name || order?.patient?.name || ''}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell><strong>Examen</strong></TableCell>
+                                <TableCell><strong>Prélevé le</strong></TableCell>
+                                <TableCell><strong>Par</strong></TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {(order?.items || []).map((item) => (
+                                <TableRow key={item.id}>
+                                    <TableCell sx={{ fontSize: '0.8rem' }}>
+                                        {item.test_name || item.lab_test_data?.name || 'Test'}
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                                        {item.sample_collected_at
+                                            ? new Date(item.sample_collected_at).toLocaleString('fr-FR')
+                                            : <Typography component="span" variant="caption" color="text.disabled">
+                                                Non enregistré
+                                              </Typography>}
+                                    </TableCell>
+                                    <TableCell sx={{ fontSize: '0.8rem' }}>
+                                        {item.sample_collected_by_name || '—'}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+
+                    {(order?.items || []).every(i => !i.sample_collected_at) && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
+                            Aucune heure de prélèvement enregistrée pour cette commande : les tests
+                            ont été traités sans passer par le bouton « Prélever ».
+                        </Typography>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setCollectionsOpen(false)}>Fermer</Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Tube Labels Quantity Modal */}
             <Dialog open={tubeLabelsModalOpen} onClose={() => setTubeLabelsModalOpen(false)}>
