@@ -585,6 +585,72 @@ function PurchaseOrderForm() {
                   >
                     {t('purchaseOrders:messages.noItemsAlert')}
                   </Alert>
+                ) : isMobile ? (
+                  // Mobile Card View
+                  <Stack spacing={1.5}>
+                    {items.map((item, index) => (
+                      <Card key={index} variant="outlined" sx={{ borderRadius: 2 }}>
+                        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography variant="subtitle2" fontWeight={600} sx={{ fontSize: '0.875rem' }}>
+                                {item.description}
+                              </Typography>
+                              {item.product_reference && (
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                  {t('purchaseOrders:columns.reference')}: {item.product_reference}
+                                </Typography>
+                              )}
+                            </Box>
+                            <Box sx={{ display: 'flex', flexShrink: 0 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEditItem(index)}
+                                sx={{ width: 32, height: 32, '& .MuiSvgIcon-root': { fontSize: '1rem' } }}
+                              >
+                                <Edit />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDeleteItem(index)}
+                                color="error"
+                                sx={{ width: 32, height: 32, '& .MuiSvgIcon-root': { fontSize: '1rem' } }}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                          <Divider sx={{ my: 1 }} />
+                          <Grid container spacing={1}>
+                            <Grid item xs={4}>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {t('purchaseOrders:columns.quantity')}
+                              </Typography>
+                              <Typography variant="body2" fontWeight={500}>
+                                {item.quantity}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={4}>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {t('purchaseOrders:columns.unitPrice')}
+                              </Typography>
+                              <Typography variant="body2" fontWeight={500}>
+                                {formatCurrency(item.unit_price)}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={4}>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {t('purchaseOrders:columns.total')}
+                              </Typography>
+                              <Typography variant="body2" fontWeight={600} color="primary.main">
+                                {formatCurrency(item.quantity * item.unit_price)}
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Stack>
                 ) : (
                   <TableContainer
                     component={Paper}

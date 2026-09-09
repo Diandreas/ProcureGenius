@@ -16,6 +16,8 @@ import {
   Tab,
   Alert,
   Tooltip,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { Add, Search, Inventory, Build } from '@mui/icons-material';
 import {
@@ -81,6 +83,8 @@ function ProductSelectionDialog({
 }) {
   const { t } = useTranslation(['invoices', 'products', 'common']);
   const { format: formatCurrency } = useCurrency();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [tabValue, setTabValue] = useState(0);
   const [stockError, setStockError] = useState('');
   const [productBatches, setProductBatches] = useState([]);
@@ -245,7 +249,7 @@ function ProductSelectionDialog({
     !stockError;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={isMobile}>
       <DialogTitle sx={{ fontWeight: 600 }}>
         {editingItemIndex >= 0 ? t('invoices:dialogs.editItem') : t('invoices:dialogs.addItem')}
       </DialogTitle>
@@ -254,6 +258,7 @@ function ProductSelectionDialog({
         <Tabs
           value={tabValue}
           onChange={(e, newValue) => setTabValue(newValue)}
+          variant={isMobile ? 'fullWidth' : 'standard'}
           sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
         >
           <Tab

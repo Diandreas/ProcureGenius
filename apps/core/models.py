@@ -174,6 +174,28 @@ class OrganizationSettings(models.Model):
         verbose_name=_("Réduction carte privilège — Imagerie (%)")
     )
 
+    # Fonctions stock optionnelles.
+    # Le logiciel sert plusieurs centres : tous n'ont pas besoin d'un stock
+    # pharmacie complet (etiquettes a scanner, reception structuree, comptage
+    # d'inventaire). Ces fonctions restent donc desactivees par defaut et
+    # s'activent par organisation, pour ne pas alourdir l'interface des
+    # structures qui gerent un petit stock.
+    stock_barcode_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Codes-barres / QR sur le stock"),
+        help_text=_("Impression d'etiquettes produit/lot et recherche par scan")
+    )
+    stock_reception_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Reception de marchandise"),
+        help_text=_("Ecran de reception : quantites recues, n° de lot et peremption en une fois")
+    )
+    stock_inventory_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Inventaire physique"),
+        help_text=_("Mode comptage : saisie du stock reel compte, ecarts et ajustement trace")
+    )
+
     # Taxation
     default_tax_rate = models.DecimalField(
         max_digits=5,
