@@ -1904,6 +1904,135 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             'unchanged_count': len(ignores),
         })
 
+    @action(detail=False, methods=['post'], url_path='receive-goods')
+    def receive_goods(self, request):
+        """
+        Reception de marchandise : enregistre en une fois tout ce qui arrive
+        avec un bon de livraison — quantite, numero de lot et peremption saisis
+        ligne par ligne.
+
+        Corps attendu :
+          {"reference": "BL-2026-014", "supplier_id": "...", "notes": "",
+           "lines": [{"product_id": "...", "quantity": 20,
+                      "batch_number": "L123", "expiry_date": "2027-05-01"}]}
+
+        Comme l'inventaire, tout part dans une seule transaction : une
+        livraison a moitie enregistree fausserait le stock sans qu'on sache
+        ou reprendre.
+
+        Un produit deja suivi par lots exige un numero de lot et une
+        peremption : sans ca, la quantite recue echapperait au suivi de
+        peremption et on retomberait sur la divergence compteur/lots deja
+        constatee en production.
+        """
+        from apps.invoicing.models import Product, ProductBatch, StockMovement
+        from django.db import transaction
+
+        reference = (request.data.get('reference') or '').strip()[:100]
+        notes_globales = (request.data.get('notes') or '').strip()
+        lines = request.data.get('lines') or []
+        if not lines:
+            return Response({'error': 'Aucune ligne a receptionner'}, status=status.HTTP_400_BAD_REQUEST)
+
+        organization = request.user.organization
+        recues, erreurs = [], []
+
+        try:
+            with transaction.atomic():
+                for index, ligne in enumerate(lines, start=1):
+                    pid = ligne.get('product_id')
+                    repere = {'ligne': index, 'product_id': pid}
+
+                    try:
+                        quantite = int(ligne.get('quantity'))
+                    except (TypeError, ValueError):
+                        erreurs.append({**repere, 'error': 'Quantite invalide'})
+                        continue
+                    if quantite <= 0:
+                        erreurs.append({**repere, 'error': 'La quantite recue doit etre superieure a 0'})
+                        continue
+
+                    try:
+                        produit = Product.objects.get(id=pid, organization=organization,
+                                                      product_type='physical')
+                    except Product.DoesNotExist:
+                        erreurs.append({**repere, 'error': 'Produit introuvable'})
+                        continue
+
+                    numero_lot = (ligne.get('batch_number') or '').strip()[:100]
+                    peremption = ligne.get('expiry_date') or None
+                    suivi_par_lots = produit.batches.exists()
+
+                    if suivi_par_lots and not (numero_lot and peremption):
+                        erreurs.append({
+                            **repere,
+                            'error': f"{produit.name} est suivi par lots : "
+                                     f"le numero de lot et la peremption sont obligatoires",
+                        })
+                        continue
+                    if numero_lot and not peremption:
+                        erreurs.append({**repere, 'error': 'Peremption manquante pour ce lot'})
+                        continue
+
+                    avant = produit.total_stock
+
+                    if numero_lot:
+                        lot = ProductBatch.objects.create(
+                            organization=organization,
+                            product=produit,
+                            batch_number=numero_lot,
+                            quantity=quantite,
+                            quantity_remaining=quantite,
+                            expiry_date=peremption,
+                            notes=notes_globales,
+                            created_by=request.user,
+                        )
+                        # stock_quantity est resynchronise par le signal
+                        # ProductBatch : on ne le touche pas a la main, sinon
+                        # compteur et lots repartent en divergence.
+                        produit.refresh_from_db()
+                    else:
+                        lot = None
+                        produit.stock_quantity = (produit.stock_quantity or 0) + quantite
+                        produit.save(update_fields=['stock_quantity'])
+                        produit.refresh_from_db()
+
+                    apres = produit.total_stock
+                    StockMovement.objects.create(
+                        product=produit,
+                        batch=lot,
+                        movement_type='reception',
+                        quantity=quantite,
+                        quantity_before=avant,
+                        quantity_after=apres,
+                        reference_type='manual',
+                        reference_number=reference or None,
+                        notes=(f"Reception {reference}" if reference else "Reception")
+                              + (f" — lot {numero_lot} (peremption {peremption})" if numero_lot else ""),
+                        created_by=request.user,
+                    )
+                    recues.append({
+                        'product_id': pid, 'name': produit.name,
+                        'quantity': quantite, 'batch_number': numero_lot or None,
+                        'before': avant, 'after': apres,
+                    })
+
+                if erreurs:
+                    raise ValueError('lignes invalides')
+        except ValueError:
+            return Response(
+                {'error': "Reception non enregistree : certaines lignes sont invalides.",
+                 'details': erreurs},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({
+            'success': True,
+            'reference': reference,
+            'received': recues,
+            'received_count': len(recues),
+        })
+
     @action(detail=False, methods=['get'])
     def stock_alerts(self, request):
         """Liste des produits nécessitant une attention (stock bas/rupture)"""

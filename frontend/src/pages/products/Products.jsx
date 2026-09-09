@@ -44,6 +44,7 @@ import {
   FilterList as FilterListIcon,
   Inventory as InventoryIcon,
   FactCheck as FactCheckIcon,
+  LocalShipping as LocalShippingIcon,
   Business as SupplierIcon,
   Warehouse as WarehouseIcon,
   Category as CategoryIcon,
@@ -161,6 +162,7 @@ function Products() {
   const [statsLoading, setStatsLoading] = useState(true);
   // Fonctions stock optionnelles (toutes les structures n'en ont pas besoin)
   const [inventaireActif, setInventaireActif] = useState(false);
+  const [receptionActive, setReceptionActive] = useState(false);
 
   // Lire les filtres initiaux depuis l'URL (pour restaurer après un retour arrière)
   const _qp = useMemo(() => new URLSearchParams(location.search), []);
@@ -236,12 +238,15 @@ function Products() {
     fetchStockSummary();
   }, [fetchWarehousesData, fetchStockSummary]);
 
-  // L'inventaire physique est une option par organisation : le bouton
-  // n'apparait que la ou la fonction a ete activee dans les parametres.
+  // Les fonctions stock avancees sont des options par organisation : leurs
+  // boutons n'apparaissent que la ou elles ont ete activees dans les parametres.
   useEffect(() => {
     settingsAPI.getAll()
-      .then((res) => setInventaireActif(!!res.data?.stockInventoryEnabled))
-      .catch(() => setInventaireActif(false));
+      .then((res) => {
+        setInventaireActif(!!res.data?.stockInventoryEnabled);
+        setReceptionActive(!!res.data?.stockReceptionEnabled);
+      })
+      .catch(() => { setInventaireActif(false); setReceptionActive(false); });
   }, []);
 
   // Debounce search term (minimum 2 characters)
@@ -695,6 +700,17 @@ function Products() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.5}>
+          {receptionActive && (
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={<LocalShippingIcon />}
+              onClick={() => navigate('/products/reception')}
+              sx={{ borderRadius: 3, px: 2.5, py: 1.5, fontWeight: 600 }}
+            >
+              Réception
+            </Button>
+          )}
           {inventaireActif && (
             <Button
               variant="outlined"

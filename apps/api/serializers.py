@@ -156,6 +156,14 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     def get_category_name(self, obj):
         return obj.category.name if obj.category else None
 
+    # Le produit est-il suivi par lots ? (l'ecran de reception exige alors un
+    # numero de lot et une peremption). `batches` est deja prefetch sur
+    # list/retrieve : pas de requete supplementaire.
+    has_batches = serializers.SerializerMethodField()
+
+    def get_has_batches(self, obj):
+        return len(obj.batches.all()) > 0
+
     # Statistiques
     total_invoices = serializers.SerializerMethodField()
     total_sales_amount = serializers.SerializerMethodField()
@@ -198,6 +206,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'prev_product_id', 'next_product_id',
             'is_lab_consumable',
             'linked_lab_tests',
+            'has_batches',
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'margin', 'margin_percent',
@@ -205,7 +214,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'warehouse_name', 'warehouse_code', 'warehouse_location', 'category_name',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count',
-            'prev_product_id', 'next_product_id'
+            'prev_product_id', 'next_product_id', 'has_batches'
         ]
 
     def get_prev_product_id(self, obj):
