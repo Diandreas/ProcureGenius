@@ -2,31 +2,40 @@ import React, { isValidElement } from 'react';
 import { Card, CardContent, Typography, Box, alpha } from '@mui/material';
 import { motion } from 'framer-motion';
 
-const StatCard = ({ title, value, icon, color, onClick, subtitle, loading }) => (
-  <motion.div
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    style={{ height: '100%' }}
-  >
+// Carte de statistique.
+// Epuration : la carte est une surface neutre (blanche), et la couleur ne sert
+// plus de lavis de fond sur toute la carte mais d'accent porte par l'icone et
+// la valeur. Le code couleur par indicateur est donc conserve a l'identique
+// (on reconnait toujours "CA Laboratoire" a son rouge), mais 12 aplats pastels
+// ne se disputent plus l'ecran sur le tableau de bord.
+const StatCard = ({ title, value, icon, color, onClick, subtitle, loading }) => {
+  const content = (
     <Card
       onClick={onClick}
       sx={{
         cursor: onClick ? 'pointer' : 'default',
         height: '100%',
-        background: theme => `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
-        border: '1.5px solid',
-        borderColor: 'transparent',
-        transition: 'all 0.3s ease',
-        '&:hover': onClick ? {
-          borderColor: color,
-          boxShadow: `0 8px 20px ${alpha(color, 0.15)}`
-        } : {}
+        transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+        '&:hover': onClick ? { borderColor: alpha(color, 0.4) } : {},
       }}
     >
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.75 }}>
           {icon && (
-            <Box sx={{ color, mr: 1, display: 'flex', alignItems: 'center' }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 2,
+                flexShrink: 0,
+                bgcolor: alpha(color, 0.1),
+                color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                '& .MuiSvgIcon-root': { fontSize: 18 },
+              }}
+            >
               {icon}
             </Box>
           )}
@@ -58,7 +67,17 @@ const StatCard = ({ title, value, icon, color, onClick, subtitle, loading }) => 
         )}
       </CardContent>
     </Card>
-  </motion.div>
-);
+  );
+
+  // On n'anime que ce qui est reellement cliquable : une carte purement
+  // informative qui grossit au survol n'apporte rien et agite la page.
+  return onClick ? (
+    <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} style={{ height: '100%' }}>
+      {content}
+    </motion.div>
+  ) : (
+    <Box sx={{ height: '100%' }}>{content}</Box>
+  );
+};
 
 export default StatCard;

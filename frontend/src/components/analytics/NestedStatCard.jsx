@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Stack, Divider, alpha } from '@mui/material';
-import { motion } from 'framer-motion';
 
 // Carte de statistique avec sous-lignes imbriquées — pour un total qui EST composé
 // de plusieurs sous-montants (ex: CA Laboratoire = Examens + Kits, dont Sous-traitance).
@@ -8,18 +7,19 @@ import { motion } from 'framer-motion';
 // vrais sous-ensembles du parent, sinon la carte donne l'illusion d'une inclusion
 // qui n'existe pas en base.
 const NestedStatCard = ({ title, value, icon, color, loading, breakdownItems = [], footnote }) => (
-  <motion.div whileHover={{ scale: 1.01 }} style={{ height: '100%' }}>
-    <Card
-      sx={{
-        height: '100%',
-        background: theme => `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
-        border: '1.5px solid transparent',
-      }}
-    >
+  <Box sx={{ height: '100%' }}>
+    <Card sx={{ height: '100%' }}>
       <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.75 }}>
           {icon && (
-            <Box sx={{ color, mr: 1, display: 'flex', alignItems: 'center' }}>
+            <Box
+              sx={{
+                width: 32, height: 32, borderRadius: 2, flexShrink: 0,
+                bgcolor: alpha(color, 0.1), color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                '& .MuiSvgIcon-root': { fontSize: 18 },
+              }}
+            >
               {icon}
             </Box>
           )}
@@ -63,7 +63,7 @@ const NestedStatCard = ({ title, value, icon, color, loading, breakdownItems = [
         )}
       </CardContent>
     </Card>
-  </motion.div>
+  </Box>
 );
 
 export default NestedStatCard;
