@@ -54,6 +54,7 @@ urlpatterns = [
     path('accounts/organization/users/', accounts_api_views.api_organization_users, name='api_organization_users'),
     path('accounts/organization/users/<uuid:user_id>/', accounts_api_views.api_organization_user_detail, name='api_organization_user_detail'),
     path('accounts/organization/users/<uuid:user_id>/permissions/', accounts_api_views.api_user_permissions, name='api_user_permissions'),
+    path('accounts/permission-catalog/', accounts_api_views.api_permission_catalog, name='api_permission_catalog'),
     path('accounts/email-config/', accounts_api_views.email_config, name='email_config'),
     path('accounts/email-config/test/', accounts_api_views.email_config_test, name='email_config_test'),
     path('accounts/email-config/verify/', accounts_api_views.email_config_verify, name='email_config_verify'),

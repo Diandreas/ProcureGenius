@@ -152,6 +152,7 @@ def api_organization_users(request):
                         'can_view_analytics': user_perms.can_view_analytics,
                         'can_approve_purchases': user_perms.can_approve_purchases,
                         'module_access': user_perms.module_access,
+                        'module_permissions': user_perms.module_permissions or {},
                     }
                 })
             
@@ -176,8 +177,32 @@ def api_organization_users(request):
                     organization=request.user.organization
                 )
                 
-                # Les préférences et permissions seront créées automatiquement par le signal
-                
+                # Les preferences et permissions de base sont creees par le signal.
+                # On applique ensuite ce qui a ete choisi a la creation : les
+                # droits se definissent en une seule fois, sans avoir a rouvrir
+                # un second ecran de permissions apres coup.
+                perms, _ = UserPermissions.objects.get_or_create(user=user)
+
+                for flag in ['can_manage_users', 'can_manage_settings',
+                             'can_view_analytics', 'can_approve_purchases']:
+                    if flag in data:
+                        setattr(perms, flag, bool(data[flag]))
+
+                fines = data.get('module_permissions') or {}
+                fines = {m: a for m, a in fines.items() if a}
+                if fines:
+                    perms.module_permissions = fines
+                elif data.get('module_access'):
+                    perms.module_access = data['module_access']
+
+                perms.save()
+
+                modules_retenus = list(fines.keys()) if fines else (data.get('module_access') or [])
+                if modules_retenus:
+                    prefs, _ = UserPreferences.objects.get_or_create(user=user)
+                    prefs.enabled_modules = modules_retenus
+                    prefs.save(update_fields=['enabled_modules', 'updated_at'])
+
                 return Response({
                     'success': True,
                     'message': 'Utilisateur créé avec succès',
@@ -259,6 +284,7 @@ def api_user_permissions(request, user_id):
             'can_view_analytics': permissions.can_view_analytics,
             'can_approve_purchases': permissions.can_approve_purchases,
             'module_access': permissions.module_access,
+            'module_permissions': permissions.module_permissions or {},
         })
     
     elif request.method == 'PUT':
@@ -273,11 +299,26 @@ def api_user_permissions(request, user_id):
                 permissions.can_view_analytics = data['can_view_analytics']
             if 'can_approve_purchases' in data:
                 permissions.can_approve_purchases = data['can_approve_purchases']
-            if 'module_access' in data:
+            # Permissions fines : {"laboratory": ["view", "validate"], ...}
+            # module_access en est derive automatiquement (voir
+            # UserPermissions.save), donc on ne le recoit plus que pour
+            # compatibilite avec l'ancien format.
+            modules_retenus = None
+            if 'module_permissions' in data:
+                fines = data['module_permissions'] or {}
+                # On ne garde que les modules avec au moins une action cochee :
+                # un module sans aucune action n'est pas un acces.
+                fines = {m: a for m, a in fines.items() if a}
+                permissions.module_permissions = fines
+                modules_retenus = list(fines.keys())
+            elif 'module_access' in data:
                 permissions.module_access = data['module_access']
+                modules_retenus = data['module_access']
+
+            if modules_retenus is not None:
                 # Sync UserPreferences.enabled_modules so the user sees the right modules
                 prefs, _ = UserPreferences.objects.get_or_create(user=user)
-                prefs.enabled_modules = data['module_access']
+                prefs.enabled_modules = modules_retenus
                 prefs.save(update_fields=['enabled_modules', 'updated_at'])
 
             permissions.save()
@@ -288,6 +329,19 @@ def api_user_permissions(request, user_id):
             })
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_permission_catalog(request):
+    """
+    Catalogue des permissions proposables : pour chaque module actif de
+    l'organisation, la liste des actions qu'on peut accorder.
+    Le frontend construit son interface a partir de ca, pour que les deux
+    cotes partagent exactement la meme definition des droits.
+    """
+    from apps.core.modules import get_permission_catalog
+    return Response({'catalog': get_permission_catalog(request.user.organization)})
 
 
 @api_view(['GET'])

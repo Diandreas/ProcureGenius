@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Box,
+    Divider,
     Card,
     CardContent,
     Typography,
@@ -54,6 +55,7 @@ import {
     Category as CategoryIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import ModulePermissionsEditor from '../../components/settings/ModulePermissionsEditor';
 import { useTranslation } from 'react-i18next';
 import { authAPI } from '../../services/api';
 import Mascot from '../../components/Mascot';
@@ -212,6 +214,16 @@ function UserManagement() {
         password: '',
         confirmPassword: '',
     });
+    // Droits choisis des la creation : plus besoin de rouvrir un second ecran
+    // apres coup. Le role n'est qu'un point de depart, ce sont ces valeurs
+    // qui font foi.
+    const [inviteModulePerms, setInviteModulePerms] = useState({});
+    const [inviteFlags, setInviteFlags] = useState({
+        can_manage_users: false,
+        can_manage_settings: false,
+        can_view_analytics: false,
+        can_approve_purchases: false,
+    });
 
     const [permissionsForm, setPermissionsForm] = useState({
         can_manage_users: false,
@@ -274,11 +286,18 @@ function UserManagement() {
                 role: inviteForm.role,
             };
             if (inviteForm.password) payload.password = inviteForm.password;
+            payload.module_permissions = inviteModulePerms;
+            Object.assign(payload, inviteFlags);
 
             await authAPI.createUser(payload);
             enqueueSnackbar('Utilisateur créé avec succès', { variant: 'success' });
             setInviteDialogOpen(false);
             setInviteForm({ email: '', first_name: '', last_name: '', role: 'buyer', password: '', confirmPassword: '' });
+            setInviteModulePerms({});
+            setInviteFlags({
+                can_manage_users: false, can_manage_settings: false,
+                can_view_analytics: false, can_approve_purchases: false,
+            });
             fetchUsers();
         } catch (error) {
             const msg = error.response?.data?.error || error.message || 'Erreur lors de la création';
@@ -547,7 +566,7 @@ function UserManagement() {
             </Menu>
 
             {/* Dialog d'invitation */}
-            <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} maxWidth="sm" fullWidth>
+            <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} maxWidth="md" fullWidth>
                 <DialogTitle>Créer un utilisateur</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -612,6 +631,16 @@ function UserManagement() {
                             />
                         </Grid>
                     </Grid>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    {/* Les droits se definissent ici, en meme temps que le compte */}
+                    <ModulePermissionsEditor
+                        value={inviteModulePerms}
+                        onChange={setInviteModulePerms}
+                        flags={inviteFlags}
+                        onFlagsChange={setInviteFlags}
+                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setInviteDialogOpen(false)}>{t('common:cancel')}</Button>

@@ -111,6 +111,7 @@ export const authAPI = {
   updateUser: (id, data) => api.put(`/accounts/organization/users/${id}/`, data),
   deleteUser: (id) => api.delete(`/accounts/organization/users/${id}/`),
   getUserPermissions: (id) => api.get(`/accounts/organization/users/${id}/permissions/`),
+  getPermissionCatalog: () => api.get('/accounts/permission-catalog/'),
   updateUserPermissions: (id, data) => api.put(`/accounts/organization/users/${id}/permissions/`, data),
   // Preferences
   updatePreferences: (data) => api.put('/accounts/preferences/', data),

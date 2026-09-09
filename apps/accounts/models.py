@@ -647,6 +647,16 @@ class UserPermissions(models.Model):
         verbose_name=_("Accès aux modules"),
         help_text=_("Liste des modules accessibles (sous-ensemble des modules de l'organisation)")
     )
+    module_permissions = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name=_("Permissions par module"),
+        help_text=_(
+            "Ce que l'utilisateur peut FAIRE dans chaque module, "
+            "ex: {\"laboratory\": [\"view\", \"validate\"]}. "
+            "Vide = tous les droits sur les modules auxquels il a accès."
+        )
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -654,6 +664,21 @@ class UserPermissions(models.Model):
         verbose_name = _("Permission utilisateur")
         verbose_name_plural = _("Permissions utilisateur")
     
+    def save(self, *args, **kwargs):
+        # module_access reste la source unique pour tout le controle d'acces
+        # deja en place (get_user_accessible_modules, HasModuleAccess,
+        # ModuleRoute cote frontend). On le derive donc automatiquement des
+        # permissions fines : impossible d'avoir des droits sur un module
+        # auquel on n'a pas acces, et rien de l'existant n'a besoin de changer.
+        if self.module_permissions:
+            self.module_access = list(self.module_permissions.keys())
+        super().save(*args, **kwargs)
+
+    def can(self, module_code, action):
+        """Raccourci : cet utilisateur peut-il faire `action` dans ce module ?"""
+        from apps.core.modules import user_can
+        return user_can(self.user, module_code, action)
+
     def __str__(self):
         return f"Permissions de {self.user.get_full_name() or self.user.username}"
 

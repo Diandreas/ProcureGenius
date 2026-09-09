@@ -383,3 +383,104 @@ def user_has_module_access(user, module_code):
     return module_code in accessible_modules
 
 
+
+
+# ---------------------------------------------------------------------------
+# Permissions fines : ce qu'un utilisateur peut FAIRE dans chaque module.
+#
+# Les roles (admin, nurse, receptionist...) restent utiles comme point de
+# depart, mais ils ne definissent plus les droits : on choisit explicitement,
+# module par module, les actions autorisees. Stocke dans
+# UserPermissions.module_permissions sous la forme
+#   {"laboratory": ["view", "create", "validate"], "patients": ["view"]}
+# ---------------------------------------------------------------------------
+
+ACTION_LABELS = {
+    'view': 'Consulter',
+    'create': 'Créer',
+    'edit': 'Modifier',
+    'delete': 'Supprimer',
+    'validate': 'Valider',
+    'collect': 'Prélever',
+    'dispense': 'Dispenser',
+    'approve': 'Approuver',
+    'payment': 'Encaisser',
+    'cancel': 'Annuler',
+    'adjust_stock': 'Ajuster le stock',
+    'export': 'Exporter',
+}
+
+MODULE_ACTIONS = {
+    Modules.DASHBOARD: ['view'],
+    Modules.PATIENTS: ['view', 'create', 'edit', 'delete', 'export'],
+    Modules.CONSULTATIONS: ['view', 'create', 'edit', 'delete'],
+    Modules.LABORATORY: ['view', 'create', 'edit', 'delete', 'collect', 'validate'],
+    Modules.IMAGING: ['view', 'create', 'edit', 'delete', 'validate'],
+    Modules.PHARMACY: ['view', 'create', 'edit', 'dispense', 'adjust_stock'],
+    Modules.MATERNITY: ['view', 'create', 'edit', 'delete'],
+    Modules.VACCINATION: ['view', 'create', 'edit', 'delete'],
+    Modules.VISITS: ['view', 'create', 'edit', 'delete'],
+    Modules.INVOICES: ['view', 'create', 'edit', 'delete', 'payment', 'cancel', 'export'],
+    Modules.PRODUCTS: ['view', 'create', 'edit', 'delete', 'adjust_stock', 'export'],
+    Modules.CLIENTS: ['view', 'create', 'edit', 'delete', 'export'],
+    Modules.SUPPLIERS: ['view', 'create', 'edit', 'delete'],
+    Modules.PURCHASE_ORDERS: ['view', 'create', 'edit', 'delete', 'approve'],
+    Modules.ANALYTICS: ['view', 'export'],
+}
+
+
+def get_module_actions(module_code):
+    """Actions disponibles pour un module (au minimum : consulter)."""
+    return MODULE_ACTIONS.get(module_code, ['view'])
+
+
+def get_permission_catalog(organization=None):
+    """
+    Catalogue des permissions proposables, limite aux modules reellement
+    actifs pour l'organisation. Sert a construire l'interface : le frontend
+    et le backend partagent ainsi la meme source de verite.
+    """
+    codes = list(MODULE_ACTIONS.keys())
+    if organization is not None:
+        actifs = set(organization.get_available_modules() or [])
+        codes = [c for c in codes if c in actifs]
+
+    catalogue = []
+    for code in codes:
+        meta = MODULE_METADATA.get(code, {})
+        catalogue.append({
+            'module': code,
+            'name': str(meta.get('name', code)),
+            'category': meta.get('category', 'other'),
+            'actions': [
+                {'value': a, 'label': ACTION_LABELS.get(a, a)}
+                for a in get_module_actions(code)
+            ],
+        })
+    return catalogue
+
+
+def user_can(user, module_code, action):
+    """
+    Verifie une action precise dans un module.
+
+    Retrocompatibilite : un utilisateur qui n'a pas encore de permissions fines
+    (module_permissions vide) mais qui a acces au module garde tous les droits
+    dessus — sinon la mise en place des permissions fines retirerait d'un coup
+    des droits a tout le monde en production.
+    """
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    if not user_has_module_access(user, module_code):
+        return False
+
+    perms = getattr(user, 'permissions', None)
+    fines = getattr(perms, 'module_permissions', None) if perms else None
+    if not fines:
+        return True
+    actions = fines.get(module_code)
+    if actions is None:
+        return True
+    return action in actions
