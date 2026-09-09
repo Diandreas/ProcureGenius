@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0003_organizationsettings_privilege_card_consultation_discount_percent_and_more'),
+        ('core', '0004_organizationsettings_stock_barcode_enabled_and_more'),
     ]
 
     operations = [
