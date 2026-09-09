@@ -726,8 +726,17 @@ class ActivityIndicatorsView(APIView):
             id__in=sub_invoice_ids).aggregate(total=Sum('total_amount'))['total'] or 0)
 
         # Stats par sous-traitant
+        # NB : .order_by() est indispensable AVANT .distinct(). LabOrder a un
+        # ordering par defaut (['-order_date']) que Django ajoute alors au SELECT
+        # du DISTINCT : on dedoublonnait donc sur (nom, date de commande) et non
+        # sur le nom seul -> un sous-traitant avec 34 commandes ressortait en 34
+        # lignes identiques dans le tableau du tableau de bord.
         per_subcontractor = []
-        for sub_name in subcontract_orders.values_list('subcontractor__name', flat=True).distinct():
+        sub_names = (subcontract_orders
+                     .order_by()
+                     .values_list('subcontractor__name', flat=True)
+                     .distinct())
+        for sub_name in sub_names:
             sub_orders = subcontract_orders.filter(subcontractor__name=sub_name)
             sub_inv_ids = sub_orders.exclude(lab_invoice__isnull=True).values_list('lab_invoice_id', flat=True).distinct()
             sub_revenue = float(InvoiceModel.objects.filter(id__in=sub_inv_ids).aggregate(total=Sum('total_amount'))['total'] or 0)
