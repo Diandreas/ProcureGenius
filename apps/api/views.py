@@ -1783,6 +1783,128 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             'loss_value': float(loss_value)
         })
 
+    @action(detail=False, methods=['post'], url_path='apply-inventory')
+    def apply_inventory(self, request):
+        """
+        Applique un inventaire physique : pour chaque produit compte, cree
+        l'ajustement correspondant a l'ecart entre le stock theorique et le
+        stock reellement compte.
+
+        Corps attendu :
+          {"reference": "INV-20260910", "lines": [{"product_id": "...", "counted": 12}, ...]}
+
+        Tout est applique dans une seule transaction : un inventaire ne doit
+        jamais rester a moitie enregistre sur un stock en production.
+
+        Produits geres par lots : l'ecart est porte par le lot actif le plus
+        recemment recu (meme convention que la commande de correction
+        d'inventaire d'avril 2026), sinon le compteur du produit et la somme
+        des lots divergeraient.
+        """
+        from apps.invoicing.models import Product, ProductBatch, StockMovement
+        from django.db import transaction
+
+        reference = (request.data.get('reference') or 'INVENTAIRE').strip()[:100]
+        lines = request.data.get('lines') or []
+        if not lines:
+            return Response({'error': 'Aucune ligne a appliquer'}, status=status.HTTP_400_BAD_REQUEST)
+
+        organization = request.user.organization
+        appliques, ignores, erreurs = [], [], []
+
+        try:
+            with transaction.atomic():
+                for ligne in lines:
+                    pid = ligne.get('product_id')
+                    try:
+                        compte = int(ligne.get('counted'))
+                    except (TypeError, ValueError):
+                        erreurs.append({'product_id': pid, 'error': 'Quantite comptee invalide'})
+                        continue
+                    if compte < 0:
+                        erreurs.append({'product_id': pid, 'error': 'Quantite comptee negative'})
+                        continue
+
+                    try:
+                        produit = Product.objects.get(id=pid, organization=organization,
+                                                      product_type='physical')
+                    except Product.DoesNotExist:
+                        erreurs.append({'product_id': pid, 'error': 'Produit introuvable'})
+                        continue
+
+                    theorique = produit.total_stock
+                    delta = compte - theorique
+                    if delta == 0:
+                        ignores.append({'product_id': pid, 'name': produit.name})
+                        continue
+
+                    lots = list(produit.batches.filter(
+                        status__in=['available', 'opened']
+                    ).order_by('received_at'))
+                    lot = lots[-1] if lots else None
+
+                    if lots:
+                        # On recale la somme des lots actifs EXACTEMENT sur la
+                        # quantite comptee : appliquer simplement l'ecart a un
+                        # seul lot laisserait un produit deja desynchronise
+                        # (stock_quantity > somme des lots) toujours faux apres
+                        # inventaire. On sert les lots les plus anciens en
+                        # premier (FEFO) et c'est le plus recent qui absorbe la
+                        # difference.
+                        restant = compte
+                        for batch in lots:
+                            cible = min(batch.quantity_remaining, restant)
+                            restant -= cible
+                            if cible != batch.quantity_remaining:
+                                batch.quantity_remaining = cible
+                                batch.save(update_fields=['quantity_remaining'])
+                                batch.update_status()
+                        if restant > 0:
+                            lot.quantity_remaining += restant
+                            lot.save(update_fields=['quantity_remaining'])
+                            lot.update_status()
+                        # le signal ProductBatch resynchronise stock_quantity
+                        produit.refresh_from_db()
+                    else:
+                        produit.stock_quantity = compte
+                        produit.save(update_fields=['stock_quantity'])
+
+                    StockMovement.objects.create(
+                        product=produit,
+                        batch=lot,
+                        movement_type='adjustment',
+                        quantity=delta,
+                        quantity_before=theorique,
+                        quantity_after=compte,
+                        reference_type='manual',
+                        reference_number=reference,
+                        notes=f"Inventaire physique {reference} : compte {compte}, theorique {theorique}",
+                        created_by=request.user,
+                    )
+                    appliques.append({
+                        'product_id': pid, 'name': produit.name,
+                        'before': theorique, 'after': compte, 'delta': delta,
+                    })
+
+                if erreurs:
+                    # Un inventaire partiellement applique est pire que pas d'inventaire.
+                    raise ValueError('lignes invalides')
+        except ValueError:
+            return Response(
+                {'error': "Inventaire non applique : certaines lignes sont invalides.",
+                 'details': erreurs},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({
+            'success': True,
+            'reference': reference,
+            'applied': appliques,
+            'unchanged': ignores,
+            'applied_count': len(appliques),
+            'unchanged_count': len(ignores),
+        })
+
     @action(detail=False, methods=['get'])
     def stock_alerts(self, request):
         """Liste des produits nécessitant une attention (stock bas/rupture)"""

@@ -84,6 +84,10 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'privilege_card_consultation_discount_percent',
             'privilege_card_imaging_discount_percent',
             'privilege_card_manual_toggle_enabled',
+            # Fonctions stock optionnelles (par organisation)
+            'stock_barcode_enabled',
+            'stock_reception_enabled',
+            'stock_inventory_enabled',
             'created_at',
             'updated_at',
         ]

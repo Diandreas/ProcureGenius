@@ -43,6 +43,7 @@ import {
   Search as SearchIcon,
   FilterList as FilterListIcon,
   Inventory as InventoryIcon,
+  FactCheck as FactCheckIcon,
   Business as SupplierIcon,
   Warehouse as WarehouseIcon,
   Category as CategoryIcon,
@@ -74,6 +75,7 @@ import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { fetchProducts } from '../../store/slices/productsSlice';
 import { warehousesAPI, productsAPI } from '../../services/api';
+import { settingsAPI } from '../../services/settingsAPI';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
@@ -157,6 +159,8 @@ function Products() {
   // Stats globales (cartes) — chargées une seule fois, indépendamment de la grille
   const [stockSummary, setStockSummary] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  // Fonctions stock optionnelles (toutes les structures n'en ont pas besoin)
+  const [inventaireActif, setInventaireActif] = useState(false);
 
   // Lire les filtres initiaux depuis l'URL (pour restaurer après un retour arrière)
   const _qp = useMemo(() => new URLSearchParams(location.search), []);
@@ -231,6 +235,14 @@ function Products() {
     fetchWarehousesData();
     fetchStockSummary();
   }, [fetchWarehousesData, fetchStockSummary]);
+
+  // L'inventaire physique est une option par organisation : le bouton
+  // n'apparait que la ou la fonction a ete activee dans les parametres.
+  useEffect(() => {
+    settingsAPI.getAll()
+      .then((res) => setInventaireActif(!!res.data?.stockInventoryEnabled))
+      .catch(() => setInventaireActif(false));
+  }, []);
 
   // Debounce search term (minimum 2 characters)
   useEffect(() => {
@@ -683,6 +695,17 @@ function Products() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.5}>
+          {inventaireActif && (
+            <Button
+              variant="outlined"
+              size="large"
+              startIcon={<FactCheckIcon />}
+              onClick={() => navigate('/products/inventory')}
+              sx={{ borderRadius: 3, px: 2.5, py: 1.5, fontWeight: 600 }}
+            >
+              Inventaire
+            </Button>
+          )}
           <Button
             variant="outlined"
             size="large"

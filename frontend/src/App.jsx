@@ -57,6 +57,7 @@ import Products from './pages/products/Products';
 import ProductDetail from './pages/products/ProductDetail';
 import ProductBatches from './pages/products/ProductBatches';
 import ProductForm from './pages/products/ProductForm';
+import StockInventory from './pages/products/StockInventory';
 
 // New Analytics Pages
 import WilsonEOQAnalytics from './pages/inventory/analytics/WilsonEOQAnalytics';
@@ -822,6 +823,8 @@ function App() {
                               {/* Products */}
                               <Route path="/products" element={<ModuleRoute module="products"><Products /></ModuleRoute>} />
                               <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
+                              {/* Avant /products/:id, sinon "inventory" serait pris pour un identifiant */}
+                              <Route path="/products/inventory" element={<ModuleRoute module="products"><StockInventory /></ModuleRoute>} />
                               <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
                               <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
                               <Route path="/products/:productId/batches" element={<ModuleRoute module="products"><ProductBatches /></ModuleRoute>} />

@@ -1288,6 +1288,58 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
             </AccordionDetails>
           </Accordion>
         </Grid>
+
+        {/* Fonctions stock optionnelles.
+            Tous les centres n'ont pas besoin d'une gestion pharmacie complete :
+            ces fonctions restent desactivees par defaut et s'activent au cas
+            par cas, pour ne pas alourdir l'interface des petites structures. */}
+        <Grid item xs={12}>
+          <Accordion defaultExpanded={false}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Stock & Pharmacie</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Fonctions avancees de gestion du stock. Laissez-les desactivees si
+                votre stock se gere simplement : elles n'apparaitront nulle part.
+              </Typography>
+              <Grid container spacing={1}>
+                {[
+                  {
+                    cle: 'stockBarcodeEnabled',
+                    titre: 'Codes-barres / QR',
+                    detail: "Impression d'etiquettes produit et lot, et recherche d'un produit par scan.",
+                  },
+                  {
+                    cle: 'stockReceptionEnabled',
+                    titre: 'Reception de marchandise',
+                    detail: 'Ecran de reception : quantites recues, numero de lot et peremption saisis en une fois.',
+                  },
+                  {
+                    cle: 'stockInventoryEnabled',
+                    titre: 'Inventaire physique',
+                    detail: 'Mode comptage : saisie du stock reel compte, ecarts affiches, ajustement trace.',
+                  },
+                ].map((opt) => (
+                  <Grid item xs={12} key={opt.cle}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={settings[opt.cle] ?? false}
+                          onChange={(e) => onUpdate(opt.cle, e.target.checked)}
+                        />
+                      }
+                      label={opt.titre}
+                    />
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', ml: 6 }}>
+                      {opt.detail}
+                    </Typography>
+                  </Grid>
+                ))}
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+        </Grid>
       </Grid>
     </Box>
   );

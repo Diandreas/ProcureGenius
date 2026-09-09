@@ -192,6 +192,7 @@ export const productsAPI = {
   stockMovements: (id, params) => api.get(`/products/${id}/stock_movements/`, { params }),
   adjustStock: (id, data) => api.post(`/products/${id}/adjust_stock/`, data),
   reportLoss: (id, data) => api.post(`/products/${id}/report_loss/`, data),
+  applyInventory: (data) => api.post('/products/apply-inventory/', data),
   cancelMovement: (movementId) => api.delete(`/stock-movements/${movementId}/cancel/`),
   getBatchStats: () => api.get('/products/batch_stats/'),
   getStockSummary: () => api.get('/products/stock_summary/'),
