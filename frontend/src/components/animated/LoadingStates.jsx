@@ -9,8 +9,8 @@ export const NeumorphicSkeleton = ({ variant = 'card', width, height }) => {
   const isDark = theme.palette.mode === 'dark';
 
   const baseStyle = {
-    background: isDark ? '#1e2530' : '#e6e9ef',
-    boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'inset'),
+    background: isDark ? '#262e3b' : '#eef1f6',
+    boxShadow: 'none',
     borderRadius: variant === 'circular' ? '50%' : '12px',
     width: width || '100%',
     height: height || (variant === 'card' ? 200 : variant === 'text' ? 20 : 40),
@@ -59,7 +59,7 @@ export const NeumorphicProgress = ({ value = 0 }) => {
         boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'inset'),
         position: 'relative',
         overflow: 'hidden',
-        background: isDark ? '#1e2530' : '#e6e9ef',
+        background: isDark ? '#1e2530' : '#ffffff',
       }}
     >
       <motion.div
@@ -134,9 +134,9 @@ export const NeumorphicLoadingOverlay = ({ loading, children }) => {
           <Box
             sx={{
               p: 3,
-              borderRadius: '20px',
-              boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'medium'),
-              background: isDark ? '#1e2530' : '#e6e9ef',
+              borderRadius: '14px',
+              boxShadow: getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft'),
+              background: isDark ? '#1e2530' : '#ffffff',
             }}
           >
             <CircularProgress />

@@ -204,16 +204,16 @@ const getDesignTokens = (mode) => ({
           dark: '#059669',
         },
         background: {
-          default: '#e6e9ef',
-          paper: '#e6e9ef',
-          subtle: '#e6e9ef',
+          default: '#f4f6fa',
+          paper: '#ffffff',
+          subtle: '#f8fafc',
         },
         text: {
           primary: '#0f172a',
           secondary: '#64748b',
           disabled: '#94a3b8',
         },
-        divider: 'rgba(0, 0, 0, 0.06)',
+        divider: 'rgba(15, 23, 42, 0.08)',
         action: {
           hover: 'rgba(0, 0, 0, 0.04)',
           selected: 'rgba(37, 99, 235, 0.08)',
@@ -261,9 +261,9 @@ const getDesignTokens = (mode) => ({
           dark: '#10b981',
         },
         background: {
-          default: '#1e2530',
+          default: '#161b22',
           paper: '#1e2530',
-          subtle: '#1e2530',
+          subtle: '#222a36',
         },
         text: {
           primary: '#f1f5f9',
@@ -302,15 +302,28 @@ const getDesignTokens = (mode) => ({
     borderRadius: 8,
   },
   spacing: 8,
-  shadows: [
-    'none',
-    mode === 'light' ? '5px 5px 10px #c1c5cc, -5px -5px 10px #ffffff' : '5px 5px 10px #151820, -5px -5px 10px #272e3d',
-    mode === 'light' ? '8px 8px 16px #c1c5cc, -8px -8px 16px #ffffff' : '8px 8px 16px #151820, -8px -8px 16px #272e3d',
-    mode === 'light' ? '12px 12px 24px #c1c5cc, -12px -12px 24px #ffffff' : '12px 12px 24px #151820, -12px -12px 24px #272e3d',
-    mode === 'light' ? '16px 16px 32px #c1c5cc, -16px -16px 32px #ffffff' : '16px 16px 32px #151820, -16px -16px 32px #272e3d',
-    mode === 'light' ? '20px 20px 40px #c1c5cc, -20px -20px 40px #ffffff' : '20px 20px 40px #151820, -20px -20px 40px #272e3d',
-    ...Array(19).fill(mode === 'light' ? '12px 12px 24px #c1c5cc, -12px -12px 24px #ffffff' : '12px 12px 24px #151820, -12px -12px 24px #272e3d'),
-  ],
+  shadows: (() => {
+    // Elevation douce et progressive (ombre portee vers le bas), au lieu des
+    // doubles ombres neomorphiques claire+foncee qui alourdissaient tout.
+    const l = [
+      'none',
+      '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)',
+      '0 2px 4px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.07)',
+      '0 4px 8px rgba(15, 23, 42, 0.05), 0 12px 28px rgba(15, 23, 42, 0.10)',
+      '0 6px 12px rgba(15, 23, 42, 0.06), 0 18px 40px rgba(15, 23, 42, 0.12)',
+      '0 8px 16px rgba(15, 23, 42, 0.07), 0 24px 56px rgba(15, 23, 42, 0.14)',
+    ];
+    const d = [
+      'none',
+      '0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px rgba(0, 0, 0, 0.24)',
+      '0 2px 4px rgba(0, 0, 0, 0.30), 0 4px 12px rgba(0, 0, 0, 0.36)',
+      '0 4px 8px rgba(0, 0, 0, 0.34), 0 12px 28px rgba(0, 0, 0, 0.46)',
+      '0 6px 12px rgba(0, 0, 0, 0.38), 0 18px 40px rgba(0, 0, 0, 0.52)',
+      '0 8px 16px rgba(0, 0, 0, 0.42), 0 24px 56px rgba(0, 0, 0, 0.58)',
+    ];
+    const base = mode === 'light' ? l : d;
+    return [...base, ...Array(25 - base.length).fill(base[base.length - 1])];
+  })(),
   components: {
     MuiCssBaseline: {
       styleOverrides: (theme) => ({
@@ -334,42 +347,32 @@ const getDesignTokens = (mode) => ({
         root: {
           textTransform: 'none',
           fontWeight: 500,
-          borderRadius: 12,
+          borderRadius: 10,
           padding: '6px 14px',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
         },
         contained: {
-          boxShadow: mode === 'light'
-            ? '5px 5px 10px #c1c5cc, -5px -5px 10px #ffffff'
-            : '5px 5px 10px #151820, -5px -5px 10px #272e3d',
+          boxShadow: 'none',
           '&:hover': {
             boxShadow: mode === 'light'
-              ? '3px 3px 6px #c1c5cc, -3px -3px 6px #ffffff'
-              : '3px 3px 6px #151820, -3px -3px 6px #272e3d',
-            transform: 'translateY(1px)',
+              ? '0 2px 8px rgba(15, 23, 42, 0.12)'
+              : '0 2px 8px rgba(0, 0, 0, 0.40)',
           },
-          '&:active': {
-            boxShadow: mode === 'light'
-              ? 'inset 4px 4px 8px #c1c5cc, inset -4px -4px 8px #ffffff'
-              : 'inset 4px 4px 8px #151820, inset -4px -4px 8px #272e3d',
-            transform: 'translateY(2px)',
-          },
+          '&:active': { boxShadow: 'none' },
         },
         outlined: {
-          boxShadow: mode === 'light'
-            ? '5px 5px 10px #c1c5cc, -5px -5px 10px #ffffff'
-            : '5px 5px 10px #151820, -5px -5px 10px #272e3d',
+          boxShadow: 'none',
+          borderColor: mode === 'light' ? 'rgba(15, 23, 42, 0.14)' : 'rgba(255, 255, 255, 0.16)',
           '&:hover': {
-            boxShadow: mode === 'light'
-              ? '3px 3px 6px #c1c5cc, -3px -3px 6px #ffffff'
-              : '3px 3px 6px #151820, -3px -3px 6px #272e3d',
-            transform: 'translateY(1px)',
+            boxShadow: 'none',
+            borderColor: 'currentColor',
           },
         },
         text: {
           '&:hover': {
-            backgroundColor: 'transparent',
-            transform: 'scale(1.02)',
+            backgroundColor: mode === 'light'
+              ? 'rgba(15, 23, 42, 0.04)'
+              : 'rgba(255, 255, 255, 0.06)',
           },
         },
         sizeSmall: { padding: '4px 10px', fontSize: '0.75rem' },
@@ -379,18 +382,19 @@ const getDesignTokens = (mode) => ({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 20,
-          border: 'none',
-          background: mode === 'light' ? '#e6e9ef' : '#1e2530',
+          borderRadius: 14,
+          background: mode === 'light' ? '#ffffff' : '#1e2530',
+          border: mode === 'light'
+            ? '1px solid rgba(15, 23, 42, 0.06)'
+            : '1px solid rgba(255, 255, 255, 0.06)',
           boxShadow: mode === 'light'
-            ? '8px 8px 16px #c1c5cc, -8px -8px 16px #ffffff'
-            : '8px 8px 16px #151820, -8px -8px 16px #272e3d',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            ? '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)'
+            : '0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px rgba(0, 0, 0, 0.24)',
+          transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
           '&:hover': {
             boxShadow: mode === 'light'
-              ? '5px 5px 10px #c1c5cc, -5px -5px 10px #ffffff'
-              : '5px 5px 10px #151820, -5px -5px 10px #272e3d',
-            transform: 'translateY(-2px)',
+              ? '0 2px 4px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.07)'
+              : '0 2px 4px rgba(0, 0, 0, 0.30), 0 4px 12px rgba(0, 0, 0, 0.36)',
           },
         },
       },
@@ -406,20 +410,20 @@ const getDesignTokens = (mode) => ({
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 20,
+          borderRadius: 14,
           backgroundImage: 'none',
-          background: mode === 'light' ? '#e6e9ef' : '#1e2530',
+          background: mode === 'light' ? '#ffffff' : '#1e2530',
         },
         elevation0: { boxShadow: 'none' },
         elevation1: {
           boxShadow: mode === 'light'
-            ? '5px 5px 10px #c1c5cc, -5px -5px 10px #ffffff'
-            : '5px 5px 10px #151820, -5px -5px 10px #272e3d'
+            ? '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)'
+            : '0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px rgba(0, 0, 0, 0.24)'
         },
         elevation2: {
           boxShadow: mode === 'light'
-            ? '8px 8px 16px #c1c5cc, -8px -8px 16px #ffffff'
-            : '8px 8px 16px #151820, -8px -8px 16px #272e3d'
+            ? '0 2px 4px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.07)'
+            : '0 2px 4px rgba(0, 0, 0, 0.30), 0 4px 12px rgba(0, 0, 0, 0.36)'
         },
       },
     },
@@ -444,34 +448,33 @@ const getDesignTokens = (mode) => ({
     MuiListItemButton: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 10,
           margin: '2px 6px',
           padding: '8px 12px',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'background-color 0.15s ease',
           '&.Mui-selected': {
-            backgroundColor: mode === 'light' ? '#e6e9ef' : '#1e2530',
-            boxShadow: mode === 'light'
-              ? 'inset 5px 5px 10px #c1c5cc, inset -5px -5px 10px #ffffff'
-              : 'inset 5px 5px 10px #151820, inset -5px -5px 10px #272e3d',
+            backgroundColor: mode === 'light'
+              ? 'rgba(37, 99, 235, 0.08)'
+              : 'rgba(59, 130, 246, 0.16)',
+            boxShadow: 'none',
             '&:hover': {
-              boxShadow: mode === 'light'
-                ? 'inset 6px 6px 12px #c1c5cc, inset -6px -6px 12px #ffffff'
-                : 'inset 6px 6px 12px #151820, inset -6px -6px 12px #272e3d',
+              backgroundColor: mode === 'light'
+                ? 'rgba(37, 99, 235, 0.12)'
+                : 'rgba(59, 130, 246, 0.22)',
             },
           },
           '&:hover': {
-            backgroundColor: mode === 'light' ? '#e6e9ef' : '#1e2530',
-            boxShadow: mode === 'light'
-              ? '3px 3px 6px #c1c5cc, -3px -3px 6px #ffffff'
-              : '3px 3px 6px #151820, -3px -3px 6px #272e3d',
-            transform: 'translateY(-1px)',
+            backgroundColor: mode === 'light'
+              ? 'rgba(15, 23, 42, 0.04)'
+              : 'rgba(255, 255, 255, 0.06)',
+            boxShadow: 'none',
           },
         },
       },
     },
     MuiChip: {
       styleOverrides: {
-        root: { fontWeight: 500, borderRadius: 6, height: 26 },
+        root: { fontWeight: 500, borderRadius: 8, height: 26 },
         sizeSmall: { height: 22, fontSize: '0.75rem' },
       },
     },
@@ -479,22 +482,21 @@ const getDesignTokens = (mode) => ({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 12,
-            background: mode === 'light' ? '#e6e9ef' : '#1e2530',
-            boxShadow: mode === 'light'
-              ? 'inset 5px 5px 10px #c1c5cc, inset -5px -5px 10px #ffffff'
-              : 'inset 5px 5px 10px #151820, inset -5px -5px 10px #272e3d',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '& fieldset': { border: 'none' },
-            '&:hover': {
-              boxShadow: mode === 'light'
-                ? 'inset 6px 6px 12px #c1c5cc, inset -6px -6px 12px #ffffff'
-                : 'inset 6px 6px 12px #151820, inset -6px -6px 12px #272e3d',
+            borderRadius: 10,
+            background: mode === 'light' ? '#ffffff' : '#161b22',
+            boxShadow: 'none',
+            transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+            '& fieldset': {
+              borderColor: mode === 'light' ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)',
+            },
+            '&:hover fieldset': {
+              borderColor: mode === 'light' ? 'rgba(15, 23, 42, 0.24)' : 'rgba(255, 255, 255, 0.24)',
             },
             '&.Mui-focused': {
               boxShadow: mode === 'light'
-                ? '0 0 0 3px rgba(37, 99, 235, 0.2), inset 5px 5px 10px #c1c5cc, inset -5px -5px 10px #ffffff'
-                : '0 0 0 3px rgba(59, 130, 246, 0.2), inset 5px 5px 10px #151820, inset -5px -5px 10px #272e3d',
+                ? '0 0 0 3px rgba(37, 99, 235, 0.15)'
+                : '0 0 0 3px rgba(59, 130, 246, 0.22)',
+              '& fieldset': { borderWidth: 1 },
             },
           },
         },
@@ -510,7 +512,8 @@ const getDesignTokens = (mode) => ({
         },
         head: {
           fontWeight: 600,
-          backgroundColor: mode === 'light' ? '#f8fafc' : '#0f172a',
+          color: mode === 'light' ? '#475569' : '#94a3b8',
+          backgroundColor: mode === 'light' ? '#f8fafc' : '#161b22',
         },
       },
     },
@@ -545,13 +548,13 @@ const getDesignTokens = (mode) => ({
     MuiMenu: {
       styleOverrides: {
         paper: {
-          borderRadius: 8,
+          borderRadius: 12,
           boxShadow: mode === 'light'
-            ? '0 4px 20px rgba(0,0,0,0.1)'
-            : '0 4px 20px rgba(0,0,0,0.5)',
+            ? '0 4px 8px rgba(15, 23, 42, 0.05), 0 12px 28px rgba(15, 23, 42, 0.10)'
+            : '0 4px 8px rgba(0, 0, 0, 0.34), 0 12px 28px rgba(0, 0, 0, 0.46)',
           border: mode === 'light'
-            ? '1px solid rgba(0,0,0,0.05)'
-            : '1px solid rgba(255,255,255,0.05)',
+            ? '1px solid rgba(15, 23, 42, 0.08)'
+            : '1px solid rgba(255, 255, 255, 0.08)',
         },
       },
     },

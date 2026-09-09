@@ -4,9 +4,9 @@
    CSS Variables - Neumorphism
    ================================= */
 :root {
-  --dashboard-bg: #e6e9ef;
-  --dashboard-paper: #e6e9ef;
-  --dashboard-border: rgba(0, 0, 0, 0.06);
+  --dashboard-bg: #f4f6fa;
+  --dashboard-paper: #ffffff;
+  --dashboard-border: rgba(15, 23, 42, 0.08);
   --dashboard-text: #0f172a;
   --dashboard-text-secondary: #64748b;
   --dashboard-primary: #2563eb;
