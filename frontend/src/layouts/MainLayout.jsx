@@ -120,6 +120,14 @@ function MainLayout() {
     navigate('/ai-chat/import-reviews');
   };
 
+  // Entree de menu active = la PLUS SPECIFIQUE qui correspond a l'URL.
+  // Avant, chaque entree testait startsWith() de son cote : sur
+  // /purchase-orders/audit-log, "Achats" ET "Journal d'audit - Achats"
+  // ressortaient tous les deux en surbrillance (idem Laboratoire et ses
+  // sous-pages). On garde donc le chemin correspondant le plus long.
+  const matchesPath = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + '/');
+
   const menuItems = [
     { text: t('navigation:menu.dashboard'), iconSrc: '/icon/dashboard.png', path: '/dashboard', moduleId: 'dashboard', isCore: false },
     { text: t('navigation:menu.suppliers'), iconSrc: '/icon/supplier.png', path: '/suppliers', moduleId: 'suppliers', isCore: false },
@@ -174,6 +182,13 @@ function MainLayout() {
 
     // { text: t('navigation:menu.aiAssistant'), iconSrc: '/icon/ai-assistant.png', path: '/ai-chat', moduleId: 'dashboard', isCore: true },
   ];
+
+  // Le chemin correspondant le plus long l'emporte : une seule entree de menu
+  // ressort en surbrillance, la plus precise (ex: sur /purchase-orders/audit-log
+  // c'est "Journal d'audit - Achats" qui est actif, pas "Achats").
+  const activeMenuPath = menuItems
+    .filter((i) => i.path && matchesPath(i.path))
+    .reduce((best, i) => (best && best.length >= i.path.length ? best : i.path), null);
 
   const [user, setUser] = useState(null);
   const [userPermissions, setUserPermissions] = useState(null);
@@ -473,8 +488,7 @@ function MainLayout() {
                 );
               }
 
-              const isSelected = location.pathname === item.path ||
-                (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+              const isSelected = item.path === activeMenuPath;
 
               return (
                 <Box key={item.text}>
