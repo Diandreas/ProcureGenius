@@ -1796,10 +1796,9 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         Tout est applique dans une seule transaction : un inventaire ne doit
         jamais rester a moitie enregistre sur un stock en production.
 
-        Produits geres par lots : l'ecart est porte par le lot actif le plus
-        recemment recu (meme convention que la commande de correction
-        d'inventaire d'avril 2026), sinon le compteur du produit et la somme
-        des lots divergeraient.
+        Produits geres par lots : la somme des lots actifs est recalee
+        exactement sur la quantite comptee, sinon le compteur du produit et la
+        somme des lots resteraient divergents apres l'inventaire.
         """
         from apps.invoicing.models import Product, ProductBatch, StockMovement
         from django.db import transaction
@@ -1840,7 +1839,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
                     lots = list(produit.batches.filter(
                         status__in=['available', 'opened']
-                    ).order_by('received_at'))
+                    ).order_by('expiry_date', 'received_at'))
                     lot = lots[-1] if lots else None
 
                     if lots:
@@ -1849,8 +1848,8 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                         # seul lot laisserait un produit deja desynchronise
                         # (stock_quantity > somme des lots) toujours faux apres
                         # inventaire. On sert les lots les plus anciens en
-                        # premier (FEFO) et c'est le plus recent qui absorbe la
-                        # difference.
+                        # premier (peremption la plus proche) et c'est le lot a
+                        # peremption la plus lointaine qui absorbe la difference.
                         restant = compte
                         for batch in lots:
                             cible = min(batch.quantity_remaining, restant)
