@@ -447,12 +447,16 @@ def get_permission_catalog(organization=None):
         actifs = set(organization.get_available_modules() or [])
         codes = [c for c in codes if c in actifs]
 
+    # Certains identifiants de module n'ont pas d'entree dans MODULE_METADATA
+    # (ex: 'visits') : sans libellé de repli, l'interface affichait l'identifiant brut.
+    LIBELLES_DE_REPLI = {'visits': 'Visites', 'analytics': 'Analyses'}
+
     catalogue = []
     for code in codes:
         meta = MODULE_METADATA.get(code, {})
         catalogue.append({
             'module': code,
-            'name': str(meta.get('name', code)),
+            'name': str(meta.get('name') or LIBELLES_DE_REPLI.get(code, code)),
             'category': meta.get('category', 'other'),
             'actions': [
                 {'value': a, 'label': ACTION_LABELS.get(a, a)}
