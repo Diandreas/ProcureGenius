@@ -88,8 +88,13 @@ class Command(BaseCommand):
                     already_ok += 1
                     continue
 
-                # Cas ambigu : les deux valeurs sont positives -> ne pas trancher a l'aveugle.
-                if current > 0 and batch_total > 0:
+                # Cas ambigu : stock_quantity positif -> il peut deja etre le seul
+                # signal fiable (ex: lot passe 'expired', exclu du decompte des
+                # sorties labo/pharmacie, alors que stock_quantity continue de
+                # suivre la vraie consommation) - qu'il y ait 0 ou X en lots
+                # actifs ne change rien a cette ambiguite. Seul current <= 0 est
+                # un cas sur (rien n'a jamais ete suivi depuis la creation des lots).
+                if current > 0:
                     skipped_ambiguous += 1
                     continue
 
@@ -130,8 +135,8 @@ class Command(BaseCommand):
             ))
         if skipped_ambiguous:
             self.stdout.write(self.style.WARNING(
-                f"\n{skipped_ambiguous} produit(s) NON touches (stock_quantity et lots tous deux positifs "
-                f"mais differents - direction de l'erreur ambigue). Voir --report-ambiguous pour la liste."
+                f"\n{skipped_ambiguous} produit(s) NON touches (stock_quantity positif mais different "
+                f"des lots actifs - direction de l'erreur ambigue). Voir --report-ambiguous pour la liste."
             ))
 
     def _report_ambiguous(self):
@@ -147,7 +152,7 @@ class Command(BaseCommand):
                 status__in=['available', 'opened']
             ).aggregate(total=Sum('quantity_remaining'))['total'] or 0
             current = product.stock_quantity
-            if current > 0 and batch_total > 0 and current != batch_total:
+            if current > 0 and current != batch_total:
                 rows.append((product, current, batch_total))
 
         self.stdout.write(f"\n{len(rows)} produit(s) avec un ecart ambigu (verification manuelle / inventaire recommandee) :\n")
