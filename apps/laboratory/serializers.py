@@ -543,11 +543,14 @@ class LabOrderSerializer(serializers.ModelSerializer):
 
     def get_lab_invoice(self, obj):
         if obj.lab_invoice:
+            from apps.accounts.privilege_card import get_privilege_card_usage_display, is_privilege_card_toggle_available
             return {
                 'id': str(obj.lab_invoice.id),
                 'invoice_number': obj.lab_invoice.invoice_number,
                 'status': obj.lab_invoice.status,
-                'total_amount': str(obj.lab_invoice.total_amount)
+                'total_amount': str(obj.lab_invoice.total_amount),
+                'privilege_card_usage': get_privilege_card_usage_display(obj.lab_invoice),
+                'privilege_card_toggle_available': is_privilege_card_toggle_available(obj.lab_invoice),
             }
         return None
 

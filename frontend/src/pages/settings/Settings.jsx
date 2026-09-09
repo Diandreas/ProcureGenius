@@ -1224,6 +1224,22 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
                     label="Activer la carte privilège"
                   />
                 </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={settings.privilegeCardManualToggleEnabled ?? false}
+                        onChange={(e) => onUpdate('privilegeCardManualToggleEnabled', e.target.checked)}
+                        disabled={!settings.privilegeCardEnabled}
+                      />
+                    }
+                    label="Autoriser l'activation/annulation manuelle lors de la facturation"
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', ml: 6 }}>
+                    Permet au personnel d'activer ou d'annuler la réduction carte privilège directement
+                    sur une facture ou une commande labo déjà créée (ex: le patient se rappelle de sa carte après coup).
+                  </Typography>
+                </Grid>
                 <Grid item xs={12} md={3}>
                   <TextField
                     fullWidth

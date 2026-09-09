@@ -12,6 +12,16 @@ MODULE_DISCOUNT_FIELDS = {
     'consultation': 'privilege_card_consultation_discount_percent',
 }
 
+# Correspondance type de facture -> module carte privilège, pour retrouver le
+# module et le filtre d'éligibilité applicables à partir d'une simple Invoice
+# (utilisé par la bascule manuelle depuis la page de facturation / commande labo).
+INVOICE_TYPE_TO_MODULE = {
+    'healthcare_laboratory': 'laboratory',
+    'healthcare_imaging': 'imaging',
+    'healthcare_pharmacy': 'pharmacy',
+    'healthcare_consultation': 'consultation',
+}
+
 # Noms de catégorie de produit considérés comme "médicament" pour la réduction
 # carte privilège pharmacie — le stock pharmacie mélange médicaments et autres
 # produits physiques (consommables labo, matériel médical, etc.), la réduction
@@ -63,6 +73,7 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
         return None
 
     total_discount = Decimal('0')
+    item_discounts = {}
     eligible_items = invoice.items.all()
     if item_filter is not None:
         eligible_items = [item for item in eligible_items if item_filter(item)]
@@ -74,6 +85,7 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
         item.total_price = item.total_price - item_discount
         item.save(update_fields=['discount_amount', 'total_price'])
         total_discount += item_discount
+        item_discounts[str(item.id)] = str(item_discount)
 
     if total_discount <= 0:
         return None
@@ -87,4 +99,118 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
         invoice=invoice,
         module=module,
         discount_amount=total_discount,
+        item_discounts=item_discounts,
     )
+
+
+def get_privilege_card_usage_display(invoice):
+    """Retourne un résumé sérialisable de l'utilisation de la carte privilège
+    sur cette facture (ou None si aucune), pour affichage côté API
+    (facture, commande labo, imagerie...)."""
+    from apps.accounts.models import PrivilegeCardUsage
+
+    usage = PrivilegeCardUsage.objects.filter(invoice=invoice).select_related('card_holder', 'used_by_patient').first()
+    if not usage:
+        return None
+    used_by = (
+        usage.used_by_patient.name if usage.used_by_patient
+        else usage.used_by_name or usage.card_holder.name
+    )
+    return {
+        'card_holder_name': usage.card_holder.name,
+        'used_by_name': used_by,
+        'used_by_relationship': usage.used_by_relationship,
+        'discount_amount': usage.discount_amount,
+        'used_at': usage.used_at,
+    }
+
+
+def is_privilege_card_toggle_available(invoice):
+    """True si le personnel peut activer/annuler manuellement la carte
+    privilège sur cette facture (type de facture éligible + paramètre
+    d'organisation)."""
+    if not get_module_for_invoice(invoice):
+        return False
+
+    from apps.core.models import OrganizationSettings
+    org_settings = OrganizationSettings.objects.filter(organization=invoice.organization).first()
+    return bool(
+        org_settings
+        and org_settings.privilege_card_enabled
+        and org_settings.privilege_card_manual_toggle_enabled
+    )
+
+
+def get_module_for_invoice(invoice):
+    """Retourne le module carte privilège ('laboratory', 'pharmacy', ...)
+    correspondant au type de cette facture, ou None si elle n'est pas
+    éligible (facture standard, avoir, soins/hospitalisation, ...)."""
+    return INVOICE_TYPE_TO_MODULE.get(invoice.invoice_type)
+
+
+def get_item_filter_for_module(module):
+    """Retourne le filtre d'éligibilité des lignes pour ce module (même
+    logique que celle utilisée à la création de facture), ou None si toutes
+    les lignes sont éligibles."""
+    if module == 'laboratory':
+        return lambda item: item.description.startswith('Bilan : ')
+    if module == 'pharmacy':
+        return is_medication_item
+    return None
+
+
+def manually_apply_privilege_card(invoice, patient, used_by_name='', used_by_relationship='', used_by_patient=None):
+    """
+    Applique manuellement la réduction carte privilège sur une facture déjà
+    créée (ex: le patient se rappelle de sa carte après coup). Le patient doit
+    déjà avoir has_privilege_card=True — c'est à l'appelant de gérer
+    l'association de la carte au patient avant d'appeler cette fonction.
+
+    Retourne l'objet PrivilegeCardUsage créé, ou None si rien n'a été appliqué
+    (module non éligible, taux à 0%, aucune ligne éligible...).
+    """
+    module = get_module_for_invoice(invoice)
+    if not module:
+        return None
+    item_filter = get_item_filter_for_module(module)
+    usage = apply_privilege_card_discount(
+        invoice, patient, module,
+        used_by_patient=used_by_patient,
+        used_by_name=used_by_name,
+        used_by_relationship=used_by_relationship,
+        item_filter=item_filter,
+    )
+    if usage:
+        invoice.recalculate_totals()
+    return usage
+
+
+def reverse_privilege_card_discount(invoice):
+    """
+    Annule la réduction carte privilège actuellement appliquée sur cette
+    facture : restaure le prix de chaque ligne concernée (sans toucher aux
+    autres remises éventuellement présentes sur la même ligne) et supprime le
+    journal d'utilisation.
+
+    Retourne True si une réduction a bien été annulée, False s'il n'y en
+    avait aucune.
+    """
+    from apps.accounts.models import PrivilegeCardUsage
+
+    usage = PrivilegeCardUsage.objects.filter(invoice=invoice).first()
+    if not usage:
+        return False
+
+    items_by_id = {str(item.id): item for item in invoice.items.all()}
+    for item_id, amount in (usage.item_discounts or {}).items():
+        item = items_by_id.get(item_id)
+        if not item:
+            continue
+        refund = Decimal(str(amount))
+        item.discount_amount = max(Decimal('0'), (item.discount_amount or Decimal('0')) - refund)
+        item.total_price = item.total_price + refund
+        item.save(update_fields=['discount_amount', 'total_price'])
+
+    usage.delete()
+    invoice.recalculate_totals()
+    return True

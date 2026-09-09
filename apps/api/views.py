@@ -2681,6 +2681,70 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         instance.delete()
 
     @action(detail=True, methods=['post'])
+    def toggle_privilege_card(self, request, pk=None):
+        """
+        Active ou annule manuellement la réduction carte privilège sur cette
+        facture (ex: le patient se rappelle de sa carte après la création de
+        la facture). Disponible uniquement si l'organisation a activé la
+        bascule manuelle dans ses paramètres.
+
+        Body : {"enable": true|false, "used_by_name": "", "used_by_relationship": "",
+                "associate_card": true|false, "privilege_card_number": ""}
+
+        Si enable=true et que le patient n'a pas encore de carte privilège
+        associée, renvoie 409 {"needs_association": true} sans rien modifier
+        tant que associate_card=true n'est pas envoyé explicitement.
+        """
+        from apps.core.models import OrganizationSettings
+        from apps.accounts.privilege_card import manually_apply_privilege_card, reverse_privilege_card_discount
+
+        invoice = self.get_object()
+        org_settings = OrganizationSettings.objects.filter(organization=invoice.organization).first()
+        if not org_settings or not org_settings.privilege_card_enabled or not org_settings.privilege_card_manual_toggle_enabled:
+            return Response(
+                {'error': "L'activation/désactivation manuelle de la carte privilège n'est pas activée pour votre organisation."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        enable = bool(request.data.get('enable', True))
+
+        if not enable:
+            if not reverse_privilege_card_discount(invoice):
+                return Response({'error': "Aucune réduction carte privilège active sur cette facture."}, status=status.HTTP_400_BAD_REQUEST)
+            invoice.refresh_from_db()
+            return Response(InvoiceSerializer(invoice, context=self.get_serializer_context()).data)
+
+        patient = invoice.client
+        if not patient:
+            return Response({'error': "Cette facture n'a pas de patient associé."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not patient.has_privilege_card:
+            if not request.data.get('associate_card'):
+                return Response(
+                    {'needs_association': True, 'message': f"{patient.name} n'a pas de carte privilège associée."},
+                    status=status.HTTP_409_CONFLICT
+                )
+            patient.has_privilege_card = True
+            card_number = (request.data.get('privilege_card_number') or '').strip()
+            if card_number:
+                patient.privilege_card_number = card_number
+            patient.save(update_fields=['has_privilege_card', 'privilege_card_number'])
+
+        usage = manually_apply_privilege_card(
+            invoice, patient,
+            used_by_name=request.data.get('used_by_name', ''),
+            used_by_relationship=request.data.get('used_by_relationship', ''),
+        )
+        if not usage:
+            return Response(
+                {'error': "Aucune réduction applicable (type de facture non éligible, taux à 0% ou aucun article éligible)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        invoice.refresh_from_db()
+        return Response(InvoiceSerializer(invoice, context=self.get_serializer_context()).data)
+
+    @action(detail=True, methods=['post'])
     def add_item(self, request, pk=None):
         """Ajouter un item à la facture"""
         invoice = self.get_object()

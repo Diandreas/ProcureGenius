@@ -173,6 +173,15 @@ class OrganizationSettings(models.Model):
         max_digits=5, decimal_places=2, default=20.00,
         verbose_name=_("Réduction carte privilège — Imagerie (%)")
     )
+    privilege_card_manual_toggle_enabled = models.BooleanField(
+        default=False,
+        verbose_name=_("Activation/désactivation manuelle de la carte privilège"),
+        help_text=_(
+            "Autorise le personnel à activer ou annuler manuellement la réduction "
+            "carte privilège sur une facture ou une commande labo déjà créée "
+            "(ex: le patient se rappelle de sa carte après coup)."
+        )
+    )
 
     # Fonctions stock optionnelles.
     # Le logiciel sert plusieurs centres : tous n'ont pas besoin d'un stock

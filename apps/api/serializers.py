@@ -668,21 +668,17 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     privilege_card_usage = serializers.SerializerMethodField()
 
     def get_privilege_card_usage(self, obj):
-        from apps.accounts.models import PrivilegeCardUsage
-        usage = PrivilegeCardUsage.objects.filter(invoice=obj).select_related('card_holder', 'used_by_patient').first()
-        if not usage:
-            return None
-        used_by = (
-            usage.used_by_patient.name if usage.used_by_patient
-            else usage.used_by_name or usage.card_holder.name
-        )
-        return {
-            'card_holder_name': usage.card_holder.name,
-            'used_by_name': used_by,
-            'used_by_relationship': usage.used_by_relationship,
-            'discount_amount': usage.discount_amount,
-            'used_at': usage.used_at,
-        }
+        from apps.accounts.privilege_card import get_privilege_card_usage_display
+        return get_privilege_card_usage_display(obj)
+
+    privilege_card_toggle_available = serializers.SerializerMethodField()
+
+    def get_privilege_card_toggle_available(self, obj):
+        """True si le personnel peut activer/annuler manuellement la carte
+        privilège sur cette facture (paramètre d'organisation + type de
+        facture éligible à la carte privilège)."""
+        from apps.accounts.privilege_card import is_privilege_card_toggle_available
+        return is_privilege_card_toggle_available(obj)
 
     # Hide fields for disabled modules
     module_dependent_fields = {
@@ -703,6 +699,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'global_discount_type', 'global_discount_value', 'global_discount_label',
             'global_discount_amount',
             'payments', 'balance_due', 'payment_status', 'privilege_card_usage',
+            'privilege_card_toggle_available',
             'created_at', 'updated_at', 'items'
         ]
         read_only_fields = [
@@ -712,7 +709,7 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'client_detail', 'created_by_detail',
             'is_subcontractor_invoice', 'subcontractor_id', 'subcontractor_name',
             'global_discount_amount', 'payments', 'balance_due', 'payment_status',
-            'privilege_card_usage',
+            'privilege_card_usage', 'privilege_card_toggle_available',
         ]
     
     def to_representation(self, instance):

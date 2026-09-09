@@ -529,6 +529,15 @@ class PrivilegeCardUsage(models.Model):
     discount_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, verbose_name=_("Montant économisé")
     )
+    item_discounts = models.JSONField(
+        default=dict, blank=True,
+        verbose_name=_("Détail par ligne"),
+        help_text=_(
+            "Correspondance {id de la ligne de facture: montant remisé} — "
+            "permet d'annuler précisément la réduction sans toucher aux autres "
+            "remises éventuellement présentes sur les mêmes lignes."
+        )
+    )
     used_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

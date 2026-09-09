@@ -132,6 +132,9 @@ function InvoiceDetail() {
   const [encaisserPaymentMethod, setEncaisserPaymentMethod] = useState('cash');
   const [encaisserAmount, setEncaisserAmount] = useState('');
   const [deletingPaymentId, setDeletingPaymentId] = useState(null);
+  const [privilegeCardSaving, setPrivilegeCardSaving] = useState(false);
+  const [associateCardDialogOpen, setAssociateCardDialogOpen] = useState(false);
+  const [associateCardNumber, setAssociateCardNumber] = useState('');
   const [emailData, setEmailData] = useState({
     recipient_email: '',
     custom_message: ''
@@ -201,6 +204,35 @@ function InvoiceDetail() {
     } catch (error) {
       enqueueSnackbar(t('invoices:messages.sendError'), { variant: 'error' });
     }
+  };
+
+  const handleTogglePrivilegeCard = async (enable, extra = {}) => {
+    setPrivilegeCardSaving(true);
+    try {
+      const response = await invoicesAPI.togglePrivilegeCard(id, { enable, ...extra });
+      setInvoice(response.data);
+      enqueueSnackbar(
+        enable ? 'Réduction carte privilège appliquée' : 'Réduction carte privilège annulée',
+        { variant: 'success' }
+      );
+      setAssociateCardDialogOpen(false);
+      setAssociateCardNumber('');
+    } catch (error) {
+      if (error.response?.status === 409 && error.response?.data?.needs_association) {
+        setAssociateCardDialogOpen(true);
+      } else {
+        enqueueSnackbar(error.response?.data?.error || 'Erreur lors de la mise à jour de la carte privilège', { variant: 'error' });
+      }
+    } finally {
+      setPrivilegeCardSaving(false);
+    }
+  };
+
+  const handleConfirmAssociateCard = () => {
+    handleTogglePrivilegeCard(true, {
+      associate_card: true,
+      privilege_card_number: associateCardNumber,
+    });
   };
 
   const handleSendEmail = async () => {
@@ -1261,6 +1293,44 @@ Cordialement`
                   <Typography variant="body2" color="text.secondary">
                     Réduction appliquée : <strong>{new Intl.NumberFormat('fr-FR').format(invoice.privilege_card_usage.discount_amount)} XAF</strong>
                   </Typography>
+                  {invoice.privilege_card_toggle_available && (
+                    <Button
+                      size="small"
+                      color="warning"
+                      variant="outlined"
+                      disabled={privilegeCardSaving}
+                      onClick={() => handleTogglePrivilegeCard(false)}
+                      sx={{ mt: 1.5, textTransform: 'none' }}
+                    >
+                      Annuler la réduction
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {!invoice.privilege_card_usage && invoice.privilege_card_toggle_available && (
+              <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <CardContent>
+                  <Box display="flex" alignItems="center" gap={1} mb={1}>
+                    <Loyalty color="disabled" />
+                    <Typography variant="subtitle2" fontWeight={700}>
+                      Carte Privilège
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    Le patient s'est rappelé de sa carte privilège ? Vous pouvez appliquer la réduction sur cette facture.
+                  </Typography>
+                  <Button
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                    disabled={privilegeCardSaving}
+                    onClick={() => handleTogglePrivilegeCard(true)}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Activer la carte privilège
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -1711,6 +1781,35 @@ Cordialement`
             startIcon={encaisserSaving ? <CircularProgress size={18} /> : <Payment />}
           >
             Confirmer l'encaissement
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogue : associer une carte privilège au patient avant d'appliquer la réduction */}
+      <Dialog open={associateCardDialogOpen} onClose={() => setAssociateCardDialogOpen(false)}>
+        <DialogTitle>Associer une carte privilège</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {invoice?.client_name || 'Ce patient'} n'a pas encore de carte privilège associée à son dossier.
+            Voulez-vous lui en associer une maintenant et appliquer la réduction sur cette facture ?
+          </Typography>
+          <TextField
+            fullWidth
+            label="Numéro de carte (optionnel)"
+            value={associateCardNumber}
+            onChange={(e) => setAssociateCardNumber(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssociateCardDialogOpen(false)}>Annuler</Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleConfirmAssociateCard}
+            disabled={privilegeCardSaving}
+            startIcon={privilegeCardSaving ? <CircularProgress size={18} /> : <Loyalty />}
+          >
+            Associer et appliquer la réduction
           </Button>
         </DialogActions>
       </Dialog>

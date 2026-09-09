@@ -62,7 +62,8 @@ import {
     Send as SendIcon,
     Check as CheckIcon,
     Settings as SettingsIcon,
-    Edit as EditIcon
+    Edit as EditIcon,
+    Loyalty as LoyaltyIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -406,6 +407,36 @@ const LabOrderDetail = () => {
         }
     };
 
+    const handleTogglePrivilegeCard = async (enable, extra = {}) => {
+        if (!order?.lab_invoice) return;
+        setPrivilegeCardSaving(true);
+        try {
+            await invoicesAPI.togglePrivilegeCard(order.lab_invoice.id, { enable, ...extra });
+            enqueueSnackbar(
+                enable ? 'Réduction carte privilège appliquée' : 'Réduction carte privilège annulée',
+                { variant: 'success' }
+            );
+            setAssociateCardDialogOpen(false);
+            setAssociateCardNumber('');
+            fetchOrder();
+        } catch (error) {
+            if (error.response?.status === 409 && error.response?.data?.needs_association) {
+                setAssociateCardDialogOpen(true);
+            } else {
+                enqueueSnackbar(error.response?.data?.error || 'Erreur lors de la mise à jour de la carte privilège', { variant: 'error' });
+            }
+        } finally {
+            setPrivilegeCardSaving(false);
+        }
+    };
+
+    const handleConfirmAssociateCard = () => {
+        handleTogglePrivilegeCard(true, {
+            associate_card: true,
+            privilege_card_number: associateCardNumber,
+        });
+    };
+
     // History Modal State
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
     const [historyData, setHistoryData] = useState(null);
@@ -415,6 +446,11 @@ const LabOrderDetail = () => {
     // Payment Modal State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('cash');
+
+    // Carte Privilège — bascule manuelle depuis la commande labo
+    const [privilegeCardSaving, setPrivilegeCardSaving] = useState(false);
+    const [associateCardDialogOpen, setAssociateCardDialogOpen] = useState(false);
+    const [associateCardNumber, setAssociateCardNumber] = useState('');
 
     // Tube Labels Quantity Modal
     const [tubeLabelsModalOpen, setTubeLabelsModalOpen] = useState(false);
@@ -1272,6 +1308,32 @@ const LabOrderDetail = () => {
                                 >
                                     {isMobile ? 'Facture' : 'Voir Facture'}
                                 </Button>
+                            )}
+
+                            {order.lab_invoice?.privilege_card_toggle_available && (
+                                order.lab_invoice.privilege_card_usage ? (
+                                    <Button
+                                        variant="outlined"
+                                        color="warning"
+                                        startIcon={privilegeCardSaving ? <CircularProgress size={16} /> : <LoyaltyIcon />}
+                                        onClick={() => handleTogglePrivilegeCard(false)}
+                                        disabled={privilegeCardSaving}
+                                        size={isMobile ? 'small' : 'medium'}
+                                    >
+                                        {isMobile ? 'Annuler Privilège' : 'Annuler carte privilège'}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="outlined"
+                                        color="success"
+                                        startIcon={privilegeCardSaving ? <CircularProgress size={16} /> : <LoyaltyIcon />}
+                                        onClick={() => handleTogglePrivilegeCard(true)}
+                                        disabled={privilegeCardSaving}
+                                        size={isMobile ? 'small' : 'medium'}
+                                    >
+                                        {isMobile ? 'Activer Privilège' : 'Activer carte privilège'}
+                                    </Button>
+                                )
                             )}
                         </>
                     )}
@@ -2406,6 +2468,35 @@ const LabOrderDetail = () => {
                 test={selectedTestForEdit}
                 onSaved={onTestSaved}
             />
+
+            {/* Dialogue : associer une carte privilège au patient avant d'appliquer la réduction */}
+            <Dialog open={associateCardDialogOpen} onClose={() => setAssociateCardDialogOpen(false)}>
+                <DialogTitle>Associer une carte privilège</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {order?.patient_name || 'Ce patient'} n'a pas encore de carte privilège associée à son dossier.
+                        Voulez-vous lui en associer une maintenant et appliquer la réduction sur cette facture ?
+                    </Typography>
+                    <TextField
+                        fullWidth
+                        label="Numéro de carte (optionnel)"
+                        value={associateCardNumber}
+                        onChange={(e) => setAssociateCardNumber(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setAssociateCardDialogOpen(false)}>Annuler</Button>
+                    <Button
+                        variant="contained"
+                        color="success"
+                        onClick={handleConfirmAssociateCard}
+                        disabled={privilegeCardSaving}
+                        startIcon={privilegeCardSaving ? <CircularProgress size={18} /> : <LoyaltyIcon />}
+                    >
+                        Associer et appliquer la réduction
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

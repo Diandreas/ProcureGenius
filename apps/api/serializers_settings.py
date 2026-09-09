@@ -83,6 +83,7 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'privilege_card_laboratory_discount_percent',
             'privilege_card_consultation_discount_percent',
             'privilege_card_imaging_discount_percent',
+            'privilege_card_manual_toggle_enabled',
             'created_at',
             'updated_at',
         ]

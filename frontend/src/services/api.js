@@ -176,6 +176,7 @@ export const invoicesAPI = {
   deletePayment: (id, paymentId) => api.post(`/invoices/${id}/delete_payment/`, { payment_id: paymentId }),
   getReceiptPDF: (id) => api.get(`/invoices/${id}/receipt/`, { responseType: 'blob' }),
   getPDF: (id) => api.get(`/invoices/${id}/pdf/`, { responseType: 'blob' }),
+  togglePrivilegeCard: (id, data) => api.post(`/invoices/${id}/toggle_privilege_card/`, data),
 };
 
 // Products API
