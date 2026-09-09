@@ -280,17 +280,14 @@ const Dashboard = () => {
       <Container maxWidth="xl" disableGutters={false} sx={{ px: { xs: 1.5, sm: 3 } }}>
         {/* Header */}
         <Box mb={2} display="flex" alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
+          {/* Le titre de la page est deja affiche par le header de l'application :
+              on ne le repete pas ici. On garde seulement la periode analysee,
+              qui est l'information reellement utile a cote du selecteur. */}
           <Box>
-            <Typography fontWeight="800"
-              sx={{
-                fontSize: { xs: '1.4rem', sm: '1.8rem', md: '2.4rem' },
-                background: t => `linear-gradient(45deg, ${t.palette.primary.main}, ${t.palette.primary.light})`,
-                backgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.25,
-                lineHeight: 1.2,
-              }}>
-              {t('dashboard.title', 'Tableau de Bord')}
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.08em', lineHeight: 1.4, display: 'block' }}>
+              Période analysée
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ display: { xs: 'none', sm: 'block' } }}>
               {dateRange.start_date} → {dateRange.end_date}
             </Typography>
           </Box>

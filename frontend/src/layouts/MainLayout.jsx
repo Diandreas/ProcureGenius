@@ -492,21 +492,19 @@ function MainLayout() {
 
               return (
                 <Box key={item.text}>
-                  <ListItem disablePadding sx={{ mb: 1 }}>
+                  <ListItem disablePadding sx={{ mb: 0.25 }}>
                     <ListItemButton
                       selected={isSelected}
                       onClick={() => handleModuleClick(item)}
                       data-tutorial={`menu-${item.moduleId}`}
                       sx={{
-                        minHeight: 48,
-                        px: 2,
-                        borderRadius: 3,
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        minHeight: 40,
+                        px: 1.5,
+                        transition: 'background-color 0.15s ease',
                         position: 'relative',
                         overflow: 'hidden',
                         '&:hover': {
-                          bgcolor: alpha(theme.palette.primary.main, 0.08),
-                          transform: 'translateX(4px)',
+                          bgcolor: alpha(theme.palette.primary.main, 0.06),
                         },
                         '&.Mui-selected': {
                           bgcolor: alpha(theme.palette.primary.main, 0.12),
@@ -525,7 +523,7 @@ function MainLayout() {
                         },
                       }}
                     >
-                      <ListItemIcon sx={{ minWidth: 40, color: isSelected ? 'primary.main' : 'text.secondary' }}>
+                      <ListItemIcon sx={{ minWidth: 34, color: isSelected ? 'primary.main' : 'text.secondary' }}>
                         {(() => {
                           const badgeCount = getModuleCount(item.moduleId);
                           const icon = (
@@ -534,7 +532,7 @@ function MainLayout() {
                               alt={item.text}
                               size={22}
                               withBackground={mode === 'dark'}
-                              style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${alpha(theme.palette.primary.main, 0.3)})` : 'none' }}
+                              style={{ opacity: isSelected ? 1 : 0.85 }}
                             />
                           );
                           return badgeCount > 0 ? (
@@ -559,8 +557,9 @@ function MainLayout() {
                       <ListItemText
                         primary={item.text}
                         primaryTypographyProps={{
-                          fontSize: '0.9rem',
-                          fontWeight: isSelected ? 700 : 500,
+                          fontSize: '0.85rem',
+                          lineHeight: 1.25,
+                          fontWeight: isSelected ? 600 : 500,
                           color: isSelected ? 'primary.main' : 'text.secondary',
                         }}
                       />
@@ -681,7 +680,17 @@ function MainLayout() {
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 1.5, sm: 4 }, gap: { xs: 0.5, sm: 1 } }}>
+          {/* Le contenu du header suit la meme colonne centree (1400px) que le
+              contenu de la page, sinon sur grand ecran le titre et les icones
+              partent aux extremites pendant que la page reste centree. */}
+          <Toolbar sx={{
+            minHeight: { xs: 56, sm: 64 },
+            px: { xs: 1.5, sm: 4 },
+            gap: { xs: 0.5, sm: 1 },
+            width: '100%',
+            maxWidth: '1400px',
+            mx: 'auto',
+          }}>
 
             {/* Navigation mobile - Bouton menu/retour + Titre */}
             {(() => {
