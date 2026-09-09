@@ -461,7 +461,7 @@ const Settings = () => {
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}
-          variant={isMobile ? 'fullWidth' : 'fullWidth'}
+          variant={isMobile ? 'fullWidth' : 'standard'}
           sx={{
             borderBottom: 1,
             borderColor: 'divider',
@@ -471,8 +471,8 @@ const Settings = () => {
               minWidth: 0,
               padding: { xs: '6px 4px', sm: '8px 12px', md: '12px 16px' },
               textTransform: 'none',
-              fontSize: { xs: '0.7rem', sm: '0.85rem', md: '0.95rem' },
-              flex: 1,
+              fontSize: { xs: '0.7rem', sm: '0.85rem', md: '0.9rem' },
+              flex: { xs: 1, md: 'none' },
             },
             '& .MuiTab-iconWrapper': {
               marginBottom: isMobile ? '2px !important' : undefined,
@@ -515,8 +515,8 @@ const Settings = () => {
                   sx={{
                     p: 3, display: 'flex', alignItems: 'center', gap: 2,
                     cursor: 'pointer', border: '1px solid', borderColor: 'divider',
-                    borderRadius: 2, transition: 'all 0.2s ease',
-                    '&:hover': { borderColor: 'primary.main', transform: 'translateY(-1px)' }
+                    borderRadius: 2, transition: 'border-color 0.2s ease',
+                    '&:hover': { borderColor: 'primary.main' }
                   }}
                 >
                   <Box sx={{ fontSize: 32, color: 'primary.main', display: 'flex', alignItems: 'center' }}>📧</Box>
@@ -531,9 +531,9 @@ const Settings = () => {
                   onClick={() => navigate('/settings/erpnext-export')}
                   sx={{
                     p: 3, display: 'flex', alignItems: 'center', gap: 2,
-                    cursor: 'pointer', border: '1px solid', borderColor: 'warning.light',
-                    borderRadius: 2, transition: 'all 0.2s ease',
-                    '&:hover': { borderColor: 'warning.main', transform: 'translateY(-1px)', bgcolor: '#fffde7' }
+                    cursor: 'pointer', border: '1px solid', borderColor: 'divider',
+                    borderRadius: 2, transition: 'border-color 0.2s ease',
+                    '&:hover': { borderColor: 'primary.main' }
                   }}
                 >
                   <Box sx={{ fontSize: 32, color: 'warning.main', display: 'flex', alignItems: 'center' }}>📊</Box>
@@ -835,22 +835,42 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
           />
         </Grid>
 
-        {/* Logo et Branding - Compact */}
+        {/* Logo et couleur de marque : deux colonnes de meme structure
+            (intitule + contenu cadre), sinon l'apercu du logo et le champ
+            couleur flottaient a des hauteurs differentes. */}
         <Grid item xs={12} md={6}>
-          <Stack spacing={2}>
-            {settings.companyLogo && (
-              <Box
-                component="img"
-                src={settings.companyLogo}
-                alt="Logo"
-                sx={{ maxHeight: 120, maxWidth: 300, objectFit: 'contain' }}
-              />
-            )}
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.06em' }}>
+            Logo
+          </Typography>
+          <Box
+            sx={{
+              mt: 0.5, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                height: 96, width: '100%', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {settings.companyLogo ? (
+                <Box
+                  component="img"
+                  src={settings.companyLogo}
+                  alt="Logo"
+                  sx={{ maxHeight: 96, maxWidth: '100%', objectFit: 'contain' }}
+                />
+              ) : (
+                <Typography variant="caption" color="text.disabled">Aucun logo</Typography>
+              )}
+            </Box>
             <Button
               variant="outlined"
               component="label"
               startIcon={<CloudUploadIcon />}
               size="small"
+              fullWidth
             >
               {settings.companyLogo ? 'Changer le logo' : t('settings:logo.choose')}
               <input
@@ -864,26 +884,42 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
                 }}
               />
             </Button>
-          </Stack>
+          </Box>
         </Grid>
 
-        {/* Couleur de marque - Compact */}
         <Grid item xs={12} md={6}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <TextField
-              type="color"
-              value={settings.brandColor || '#2563eb'}
-              onChange={(e) => onUpdate('brandColor', e.target.value)}
-              sx={{ width: 80 }}
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.06em' }}>
+            Couleur de marque
+          </Typography>
+          <Box
+            sx={{
+              mt: 0.5, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2,
+              display: 'flex', flexDirection: 'column', gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                height: 96, borderRadius: 2,
+                bgcolor: settings.brandColor || '#2563eb',
+                border: '1px solid', borderColor: 'divider',
+              }}
             />
-            <TextField
-              fullWidth
-              label="Couleur de marque"
-              value={settings.brandColor || '#2563eb'}
-              onChange={(e) => onUpdate('brandColor', e.target.value)}
-              size="small"
-            />
-          </Stack>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <TextField
+                type="color"
+                value={settings.brandColor || '#2563eb'}
+                onChange={(e) => onUpdate('brandColor', e.target.value)}
+                size="small"
+                sx={{ width: 64 }}
+              />
+              <TextField
+                fullWidth
+                value={settings.brandColor || '#2563eb'}
+                onChange={(e) => onUpdate('brandColor', e.target.value)}
+                size="small"
+              />
+            </Stack>
+          </Box>
         </Grid>
 
         {/* Section Informations légales et fiscales - Accordion */}
@@ -1099,10 +1135,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
         <Grid item xs={12}>
           <Accordion defaultExpanded={false}>
             <AccordionSummary expandIcon={<ExpandMore />}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Receipt sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{t('settings:billing.title')}</Typography>
-              </Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{t('settings:billing.title')}</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Grid container spacing={2}>
@@ -1176,10 +1209,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
         <Grid item xs={12}>
           <Accordion defaultExpanded={false}>
             <AccordionSummary expandIcon={<ExpandMore />}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Receipt sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Carte Privilège</Typography>
-              </Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Carte Privilège</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Grid container spacing={2}>
