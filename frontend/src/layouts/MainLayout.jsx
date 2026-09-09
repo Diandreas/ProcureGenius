@@ -671,13 +671,21 @@ function MainLayout() {
           position="fixed"
           elevation={0}
           sx={{
-            width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
-            ml: { md: `${drawerWidth}px` },
+            // Barre "flottante" : elle ne colle plus aux bords, elle est posee
+            // avec une marge tout autour et des coins arrondis, comme une carte.
+            width: {
+              xs: 'calc(100% - 16px)',
+              md: `calc(100% - ${drawerWidth}px - 32px)`,
+            },
+            ml: { xs: '8px', md: `calc(${drawerWidth}px + 16px)` },
+            mt: { xs: '8px', md: '12px' },
+            borderRadius: 3,
             bgcolor: 'background.paper',
-            border: 'none',
+            border: '1px solid',
+            borderColor: 'divider',
             boxShadow: getNeumorphicShadow(mode === 'dark' ? 'dark' : 'light', 'soft'),
             color: 'text.primary',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: 'width 0.2s ease, margin 0.2s ease',
           }}
         >
           {/* Le contenu du header suit la meme colonne centree (1400px) que le
@@ -1275,7 +1283,8 @@ function MainLayout() {
             bgcolor: 'background.default',
           }}
         >
-          <Toolbar sx={{ minHeight: { xs: 56, sm: 60 } }} />
+          {/* Reserve la hauteur de la barre flottante + sa marge haute */}
+          <Toolbar sx={{ minHeight: { xs: 56, sm: 60 }, mb: { xs: '8px', md: '12px' } }} />
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             <LayoutGroup>
               <Outlet />

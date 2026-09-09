@@ -418,6 +418,21 @@ def api_organization_settings(request):
                     # FormData sends as string, need to parse JSON
                     modules_data = request.data['enabled_modules']
                     modules = json.loads(modules_data) if isinstance(modules_data, str) else modules_data
+
+                    # Garde-fou : Organization.save() repeuple enabled_modules
+                    # depuis le profil d'abonnement des qu'il est vide. Or le
+                    # profil (ex: 'professional') ne contient AUCUN module sante :
+                    # enregistrer une liste vide effacerait donc silencieusement
+                    # Patients, Laboratoire, Pharmacie, Maternite, Vaccination...
+                    # pour une structure en pleine activite. On refuse ce cas.
+                    if not modules:
+                        return Response(
+                            {'error': "Impossible d'enregistrer une liste de modules vide : "
+                                      "cela desactiverait tous les modules de l'organisation. "
+                                      "Gardez au moins un module actif."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
                     organization.enabled_modules = modules
                     org_updated = True
                 
