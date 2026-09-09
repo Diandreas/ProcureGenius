@@ -59,6 +59,8 @@ import ProductBatches from './pages/products/ProductBatches';
 import ProductForm from './pages/products/ProductForm';
 import StockInventory from './pages/products/StockInventory';
 import StockReception from './pages/products/StockReception';
+import StockLabels from './pages/products/StockLabels';
+import StockScan from './pages/products/StockScan';
 
 // New Analytics Pages
 import WilsonEOQAnalytics from './pages/inventory/analytics/WilsonEOQAnalytics';
@@ -827,6 +829,8 @@ function App() {
                               {/* Avant /products/:id, sinon "inventory" serait pris pour un identifiant */}
                               <Route path="/products/inventory" element={<ModuleRoute module="products"><StockInventory /></ModuleRoute>} />
                               <Route path="/products/reception" element={<ModuleRoute module="products"><StockReception /></ModuleRoute>} />
+                              <Route path="/products/labels" element={<ModuleRoute module="products"><StockLabels /></ModuleRoute>} />
+                              <Route path="/products/scan" element={<ModuleRoute module="products"><StockScan /></ModuleRoute>} />
                               <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
                               <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
                               <Route path="/products/:productId/batches" element={<ModuleRoute module="products"><ProductBatches /></ModuleRoute>} />

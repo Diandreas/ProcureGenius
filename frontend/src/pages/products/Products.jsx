@@ -45,6 +45,8 @@ import {
   Inventory as InventoryIcon,
   FactCheck as FactCheckIcon,
   LocalShipping as LocalShippingIcon,
+  QrCode2 as QrCode2Icon,
+  QrCodeScanner as QrCodeScannerIcon,
   Business as SupplierIcon,
   Warehouse as WarehouseIcon,
   Category as CategoryIcon,
@@ -163,6 +165,7 @@ function Products() {
   // Fonctions stock optionnelles (toutes les structures n'en ont pas besoin)
   const [inventaireActif, setInventaireActif] = useState(false);
   const [receptionActive, setReceptionActive] = useState(false);
+  const [codesBarresActifs, setCodesBarresActifs] = useState(false);
 
   // Lire les filtres initiaux depuis l'URL (pour restaurer après un retour arrière)
   const _qp = useMemo(() => new URLSearchParams(location.search), []);
@@ -245,8 +248,13 @@ function Products() {
       .then((res) => {
         setInventaireActif(!!res.data?.stockInventoryEnabled);
         setReceptionActive(!!res.data?.stockReceptionEnabled);
+        setCodesBarresActifs(!!res.data?.stockBarcodeEnabled);
       })
-      .catch(() => { setInventaireActif(false); setReceptionActive(false); });
+      .catch(() => {
+        setInventaireActif(false);
+        setReceptionActive(false);
+        setCodesBarresActifs(false);
+      });
   }, []);
 
   // Debounce search term (minimum 2 characters)
@@ -700,6 +708,28 @@ function Products() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1.5}>
+          {codesBarresActifs && (
+            <>
+              <Button
+                variant="outlined"
+                size="large"
+                startIcon={<QrCodeScannerIcon />}
+                onClick={() => navigate('/products/scan')}
+                sx={{ borderRadius: 3, px: 2.5, py: 1.5, fontWeight: 600 }}
+              >
+                Scanner
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                startIcon={<QrCode2Icon />}
+                onClick={() => navigate('/products/labels')}
+                sx={{ borderRadius: 3, px: 2.5, py: 1.5, fontWeight: 600 }}
+              >
+                Étiquettes
+              </Button>
+            </>
+          )}
           {receptionActive && (
             <Button
               variant="outlined"

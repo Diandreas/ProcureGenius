@@ -2033,6 +2033,206 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             'received_count': len(recues),
         })
 
+    @action(detail=False, methods=['get'], url_path='scan')
+    def scan(self, request):
+        """
+        Resout un code scanne (douchette USB ou saisie manuelle) vers un produit.
+
+        On accepte tout ce qui peut se retrouver sur une etiquette : le
+        code-barres fournisseur, la reference interne, ou un code d'etiquette
+        maison "REFERENCE|NUMERO_DE_LOT" imprime par cette application.
+        Un scan qui ne trouve rien renvoie 404 avec le code lu, pour que
+        l'ecran puisse le reafficher tel quel.
+        """
+        from apps.invoicing.models import Product, ProductBatch
+
+        code = (request.query_params.get('code') or '').strip()
+        if not code:
+            return Response({'error': 'Aucun code fourni'}, status=status.HTTP_400_BAD_REQUEST)
+
+        organization = request.user.organization
+        base = Product.objects.filter(organization=organization)
+
+        numero_lot = None
+        if '|' in code:
+            reference, numero_lot = [part.strip() for part in code.split('|', 1)]
+        else:
+            reference = code
+
+        produit = (base.filter(barcode=reference).first()
+                   or base.filter(reference__iexact=reference).first())
+
+        lot = None
+        if produit is None:
+            # Le code lu est peut-etre un numero de lot seul.
+            lot = ProductBatch.objects.filter(
+                organization=organization, batch_number__iexact=reference
+            ).select_related('product').first()
+            if lot:
+                produit = lot.product
+        elif numero_lot:
+            lot = produit.batches.filter(batch_number__iexact=numero_lot).first()
+
+        if produit is None:
+            return Response(
+                {'error': 'Aucun produit ne correspond a ce code', 'code': code},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        donnees = {
+            'code': code,
+            'product': {
+                'id': str(produit.id),
+                'name': produit.name,
+                'reference': produit.reference,
+                'barcode': produit.barcode or None,
+                'stock': produit.total_stock,
+                'low_stock_threshold': produit.low_stock_threshold,
+                'is_low_stock': produit.is_low_stock,
+                'category': produit.category.name if produit.category_id else None,
+            },
+            'batch': None,
+        }
+        if lot:
+            donnees['batch'] = {
+                'id': str(lot.id),
+                'batch_number': lot.batch_number,
+                'quantity_remaining': lot.quantity_remaining,
+                'expiry_date': str(lot.expiry_date),
+                'status': lot.status,
+                'is_expired': lot.is_expired,
+            }
+        return Response(donnees)
+
+    @action(detail=False, methods=['post'], url_path='labels')
+    def labels(self, request):
+        """
+        Planche d'etiquettes QR a imprimer (PDF A4).
+
+        Corps attendu :
+          {"size": "grande"|"petite",
+           "items": [{"product_id": "...", "batch_id": "..."|null, "copies": 2}]}
+
+        Le QR contient "REFERENCE" pour un produit, "REFERENCE|LOT" pour un lot :
+        c'est exactement ce que /products/scan/ sait relire, donc une etiquette
+        collee aujourd'hui restera lisible par l'application.
+        """
+        import base64
+        from io import BytesIO
+        from django.http import HttpResponse
+        from django.utils.html import escape
+        from apps.invoicing.models import Product, ProductBatch
+
+        items = request.data.get('items') or []
+        if not items:
+            return Response({'error': 'Aucune etiquette a imprimer'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        taille = request.data.get('size') or 'grande'
+        if taille not in ('grande', 'petite'):
+            taille = 'grande'
+
+        organization = request.user.organization
+        etiquettes = []
+
+        for item in items:
+            try:
+                produit = Product.objects.get(id=item.get('product_id'), organization=organization)
+            except (Product.DoesNotExist, ValueError, TypeError):
+                continue
+
+            lot = None
+            if item.get('batch_id'):
+                lot = ProductBatch.objects.filter(
+                    id=item['batch_id'], organization=organization, product=produit
+                ).first()
+
+            try:
+                copies = max(1, min(int(item.get('copies') or 1), 200))
+            except (TypeError, ValueError):
+                copies = 1
+
+            code = produit.reference or str(produit.id)
+            if lot:
+                code = code + '|' + lot.batch_number
+
+            etiquettes.extend([{
+                'code': code,
+                'nom': produit.name,
+                'reference': produit.reference,
+                'lot': lot.batch_number if lot else None,
+                'peremption': lot.expiry_date.strftime('%d/%m/%Y') if lot else None,
+            }] * copies)
+
+        if not etiquettes:
+            return Response({'error': 'Aucun produit valide dans la demande'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        import qrcode
+
+        # Un meme code revient souvent plusieurs fois (copies) : on ne genere
+        # l'image qu'une seule fois par code.
+        images = {}
+        for e in etiquettes:
+            if e['code'] not in images:
+                img = qrcode.make(e['code'], box_size=10, border=1)
+                tampon = BytesIO()
+                img.save(tampon, format='PNG')
+                images[e['code']] = base64.b64encode(tampon.getvalue()).decode('ascii')
+
+        if taille == 'grande':
+            largeur, hauteur, police, cote_qr = '70mm', '37mm', '8pt', '22mm'
+        else:
+            largeur, hauteur, police, cote_qr = '38mm', '21mm', '6pt', '13mm'
+
+        cellules = []
+        for e in etiquettes:
+            lignes = ["<div class='nom'>" + escape(e['nom']) + "</div>"]
+            if e['lot']:
+                lignes.append("<div class='meta'>Lot " + escape(e['lot']) + "</div>")
+            if e['peremption']:
+                lignes.append("<div class='meta'>Perime le " + e['peremption'] + "</div>")
+            if e['reference']:
+                lignes.append("<div class='ref'>" + escape(e['reference']) + "</div>")
+            cellules.append(
+                "<div class='etiquette'>"
+                "<img src='data:image/png;base64," + images[e['code']] + "' />"
+                "<div class='texte'>" + ''.join(lignes) + "</div>"
+                "</div>"
+            )
+
+        styles = """
+  @page { size: A4; margin: 8mm; }
+  body { font-family: Helvetica, Arial, sans-serif; margin: 0; }
+  .planche { display: flex; flex-wrap: wrap; gap: 2mm; }
+  .etiquette {
+     width: LARGEUR; height: HAUTEUR; box-sizing: border-box;
+     border: 0.2mm dashed #bbb; padding: 1.5mm;
+     display: flex; align-items: center; gap: 1.5mm; overflow: hidden;
+  }
+  .etiquette img { width: COTE_QR; height: COTE_QR; flex: none; }
+  .texte { font-size: POLICE; line-height: 1.25; overflow: hidden; }
+  .nom { font-weight: bold; }
+  .meta { color: #333; }
+  .ref { color: #666; font-size: 0.85em; }
+"""
+        styles = (styles.replace('LARGEUR', largeur).replace('HAUTEUR', hauteur)
+                        .replace('COTE_QR', cote_qr).replace('POLICE', police))
+
+        html_string = (
+            '<!DOCTYPE html><html><head><meta charset="utf-8"><style>' + styles
+            + '</style></head><body><div class="planche">'
+            + ''.join(cellules) + '</div></body></html>'
+        )
+
+        from weasyprint import HTML
+        from django.conf import settings as dj_settings
+
+        pdf = HTML(string=html_string, base_url=dj_settings.BASE_DIR).write_pdf()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="etiquettes.pdf"'
+        return response
+
     @action(detail=False, methods=['get'])
     def stock_alerts(self, request):
         """Liste des produits nécessitant une attention (stock bas/rupture)"""
