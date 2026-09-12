@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Card, CardContent, Grid, Typography, Chip, IconButton, Avatar, Tabs, LinearProgress, Tooltip, Badge, Divider, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Button, Card, CardContent, Grid, Typography, Chip, IconButton, Avatar, Tabs, LinearProgress, Tooltip, Badge, Divider, Dialog, DialogTitle, DialogContent, DialogActions, useTheme, useMediaQuery, Checkbox, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Alert, CircularProgress } from '@mui/material';
 import { SafeTab } from '../../../components/safe';
 import {
     Add as AddIcon,
@@ -139,7 +139,7 @@ const StatCard = ({ title, value, icon, color, subtitle }) => (
 
 // ── Queue Order Card (single row in queue) ──
 
-const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, onDelete, isAdmin, isMobile }) => {
+const QueueOrderCard = ({ order, position, onAction, onCollect, actionLoading, onNavigate, onDelete, isAdmin, isMobile }) => {
     const waitMinutes = order.wait_minutes || 0;
     const waitColor = getWaitColor(waitMinutes);
     const waitBg = getWaitBgColor(waitMinutes);
@@ -155,7 +155,7 @@ const QueueOrderCard = ({ order, position, onAction, actionLoading, onNavigate, 
                         size="small"
                         color="warning"
                         startIcon={<CollectIcon />}
-                        onClick={(e) => { e.stopPropagation(); onAction(order.id, 'collect_sample'); }}
+                        onClick={(e) => { e.stopPropagation(); onCollect(order); }}
                         disabled={actionLoading === order.id}
                         sx={{ borderRadius: 2, fontWeight: 600, textTransform: 'none' }}
                     >
@@ -392,6 +392,11 @@ const LabQueueDashboard = () => {
     const [tabValue, setTabValue] = useState(0);
     const [actionLoading, setActionLoading] = useState(null);
     const [deleteTarget, setDeleteTarget] = useState(null); // order to confirm delete
+    // Prelevement : on choisit les examens reellement preleves, on ne prend
+    // jamais toute la commande d'office.
+    const [prelevementCible, setPrelevementCible] = useState(null);
+    const [examensChoisis, setExamensChoisis] = useState([]);
+    const [prelevementEnCours, setPrelevementEnCours] = useState(false);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -430,6 +435,42 @@ const LabQueueDashboard = () => {
             enqueueSnackbar('Erreur lors de la mise à jour', { variant: 'error' });
         } finally {
             setActionLoading(null);
+        }
+    };
+
+    const ouvrirPrelevement = (order) => {
+        const aPrelever = (order.items || []).filter((i) => i.item_status === 'pending');
+        setPrelevementCible(order);
+        // Tout est propose coche : le cas courant reste « on a tout preleve ».
+        setExamensChoisis(aPrelever.map((i) => i.id));
+    };
+
+    const basculerExamen = (itemId) => {
+        setExamensChoisis((prev) => (
+            prev.includes(itemId) ? prev.filter((x) => x !== itemId) : [...prev, itemId]
+        ));
+    };
+
+    const confirmerPrelevement = async () => {
+        if (examensChoisis.length === 0) return;
+        setPrelevementEnCours(true);
+        try {
+            // Un appel par examen : c'est l'endpoint de prelevement partiel, qui
+            // fait aussi basculer la commande quand c'etait le dernier test.
+            for (const itemId of examensChoisis) {
+                await laboratoryAPI.collectItem(itemId);
+            }
+            enqueueSnackbar(
+                examensChoisis.length + ' examen(s) prélevé(s)',
+                { variant: 'success' },
+            );
+            setPrelevementCible(null);
+            setExamensChoisis([]);
+            fetchData();
+        } catch (error) {
+            enqueueSnackbar('Erreur lors du prélèvement', { variant: 'error' });
+        } finally {
+            setPrelevementEnCours(false);
         }
     };
 
@@ -473,6 +514,7 @@ const LabQueueDashboard = () => {
                 order={order}
                 position={index + 1}
                 onAction={handleAction}
+                onCollect={ouvrirPrelevement}
                 actionLoading={actionLoading}
                 onNavigate={handleNavigate}
                 onDelete={setDeleteTarget}
@@ -711,6 +753,96 @@ const LabQueueDashboard = () => {
                     )}
                 </CardContent>
             </Card>
+
+            {/* Choix des examens reellement preleves */}
+            <Dialog
+                open={!!prelevementCible}
+                onClose={() => !prelevementEnCours && setPrelevementCible(null)}
+                maxWidth="sm" fullWidth
+            >
+                <DialogTitle sx={{ pb: 1 }}>
+                    <Typography variant="h6" fontWeight={700}>Quels examens avez-vous prélevés ?</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        {prelevementCible?.patient_name} · {prelevementCible?.order_number}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    {(() => {
+                        const tous = prelevementCible?.items || [];
+                        const aPrelever = tous.filter((i) => i.item_status === 'pending');
+                        const dejaFaits = tous.filter((i) => i.item_status !== 'pending');
+                        return (
+                            <>
+                                <Alert severity="info" sx={{ mb: 1.5, py: 0.5 }}>
+                                    Décochez ce que vous n&apos;avez pas prélevé : ces examens
+                                    resteront en attente et pourront être prélevés plus tard.
+                                </Alert>
+                                <List dense disablePadding>
+                                    {aPrelever.map((item) => {
+                                        const coche = examensChoisis.includes(item.id);
+                                        return (
+                                            <ListItem key={item.id} disablePadding>
+                                                <ListItemButton onClick={() => basculerExamen(item.id)} dense>
+                                                    <ListItemIcon sx={{ minWidth: 36 }}>
+                                                        <Checkbox edge="start" size="small" checked={coche} tabIndex={-1} disableRipple />
+                                                    </ListItemIcon>
+                                                    <ListItemText
+                                                        primary={item.lab_test_name || item.test_name}
+                                                        secondary={item.sample_type || null}
+                                                        primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 600 }}
+                                                        secondaryTypographyProps={{ fontSize: '0.72rem' }}
+                                                    />
+                                                </ListItemButton>
+                                            </ListItem>
+                                        );
+                                    })}
+                                </List>
+
+                                {dejaFaits.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                                            DÉJÀ PRÉLEVÉS
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                            {dejaFaits.map((item) => (
+                                                <Chip key={item.id} size="small" variant="outlined"
+                                                    label={item.lab_test_name || item.test_name}
+                                                    sx={{ height: 20, fontSize: '0.7rem' }} />
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </>
+                        );
+                    })()}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button
+                        size="small"
+                        onClick={() => setExamensChoisis(
+                            (prelevementCible?.items || [])
+                                .filter((i) => i.item_status === 'pending').map((i) => i.id)
+                        )}
+                    >
+                        Tout cocher
+                    </Button>
+                    <Button size="small" color="inherit" onClick={() => setExamensChoisis([])}>
+                        Tout décocher
+                    </Button>
+                    <Box sx={{ flex: 1 }} />
+                    <Button onClick={() => setPrelevementCible(null)} disabled={prelevementEnCours}>
+                        Annuler
+                    </Button>
+                    <Button
+                        variant="contained" color="warning"
+                        startIcon={prelevementEnCours ? <CircularProgress size={16} /> : <CollectIcon />}
+                        onClick={confirmerPrelevement}
+                        disabled={prelevementEnCours || examensChoisis.length === 0}
+                    >
+                        Prélever ({examensChoisis.length})
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Dialog confirmation suppression — admin only */}
             <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
