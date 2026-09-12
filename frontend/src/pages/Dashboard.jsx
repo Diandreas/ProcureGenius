@@ -490,7 +490,11 @@ const Dashboard = () => {
                 <StatCard title="CA Encaissé (période)"
                   value={loading ? '...' : formatCurrency(financial.collected_revenue)}
                   icon={<MoneyIcon />} color="#0891b2" loading={loading}
-                  subtitle="Par date d'encaissement — inclut les paiements reçus ce mois pour des factures antérieures" />
+                  subtitle={loading
+                    ? ''
+                    : `Par date d'encaissement${financial?.partial_payments_revenue > 0
+                        ? ` — dont ${formatCurrency(financial.partial_payments_revenue)} reçus sur ${financial.partial_payments_count} facture(s) non soldée(s)`
+                        : ' — inclut les paiements reçus ce mois pour des factures antérieures'}`} />
               </Grid>
               <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Payé via Mobile Money"

@@ -933,14 +933,29 @@ class ActivityIndicatorsView(APIView):
             exclude_from_cash_stats=False,
         ).values_list('invoice_id', flat=True).distinct()
 
-        payments_collected = PaymentModel.objects.filter(
+        # Pas de filtre sur le statut de la facture : un paiement encaisse est de
+        # l'argent recu, que la facture soit soldee ou non. Exiger
+        # invoice__status='paid' faisait disparaitre les reglements partiels
+        # (ex: 25 000 F recus le 05/09 sur une facture de 38 000 F restee
+        # 'overdue') alors qu'ils sont bien passes en caisse.
+        paiements_periode = PaymentModel.objects.filter(
             invoice__organization=organization,
-            invoice__status='paid',
             status='success',
             exclude_from_cash_stats=False,
             payment_date__gte=start_date,
             payment_date__lte=end_date,
-        ).exclude(invoice__invoice_type='credit_note').aggregate(t=Sum('amount'))['t'] or 0
+        ).exclude(invoice__invoice_type='credit_note')
+
+        payments_collected = paiements_periode.aggregate(t=Sum('amount'))['t'] or 0
+
+        # Part de ces encaissements qui porte sur des factures non soldees :
+        # c'est ce qui explique un ecart entre la caisse et le CA des factures
+        # payees, donc on l'expose explicitement plutot que de le laisser deviner.
+        partial_payments_revenue = float(
+            paiements_periode.exclude(invoice__status='paid')
+            .aggregate(t=Sum('amount'))['t'] or 0
+        )
+        partial_payments_count = paiements_periode.exclude(invoice__status='paid').count()
 
         invoices_without_payment_collected = InvoiceModel.objects.filter(
             organization=organization,
@@ -990,6 +1005,8 @@ class ActivityIndicatorsView(APIView):
             'financial': {
                 'total_revenue': round(total_revenue, 2),
                 'collected_revenue': round(collected_revenue, 2),
+                'partial_payments_revenue': round(partial_payments_revenue, 2),
+                'partial_payments_count': partial_payments_count,
                 'mobile_money_revenue': round(mobile_money_revenue, 2),
                 'mobile_money_count': mobile_money_count,
                 'cash_revenue': round(cash_revenue, 2),
