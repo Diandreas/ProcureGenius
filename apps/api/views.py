@@ -1667,6 +1667,8 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         # Résoudre le lot si batch_id fourni
         from apps.invoicing.models import StockMovement, ProductBatch
         batch = None
+        old_quantity = product.total_stock
+
         if batch_id:
             try:
                 batch = ProductBatch.objects.get(
@@ -1690,11 +1692,23 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
             batch.save(update_fields=['quantity_remaining'])
             batch.update_status()
+            # Le signal ProductBatch vient de recaler stock_quantity sur la somme
+            # des lots : on relit, on n'ecrit PAS. Ecrire ici appliquerait le
+            # mouvement une seconde fois et ferait diverger compteur et lots.
+            product.refresh_from_db()
 
-        # Ajuster le stock produit
-        old_quantity = product.stock_quantity
-        product.stock_quantity += quantity
-        product.save(update_fields=['stock_quantity'])
+        elif product.batches.exists():
+            # Produit gere par lots : un mouvement sans lot laisserait le
+            # compteur et les lots se contredire des la prochaine ecriture de lot.
+            return Response(
+                {'error': "Ce produit est suivi par lots : choisissez le lot concerne "
+                          "pour que le stock reste coherent."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
+            product.stock_quantity += quantity
+            product.save(update_fields=['stock_quantity'])
 
         movement = StockMovement.objects.create(
             product=product,
@@ -1702,7 +1716,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             movement_type=movement_type_param,
             quantity=quantity,
             quantity_before=old_quantity,
-            quantity_after=product.stock_quantity,
+            quantity_after=product.total_stock,
             reference_type='manual',
             notes=notes,
             created_by=request.user if request.user.is_authenticated else None
@@ -1753,10 +1767,61 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         # Calculer la valeur de la perte
         loss_value = product.cost_price * quantity_lost if product.cost_price else 0
 
-        # Créer le mouvement de perte
-        old_quantity = product.stock_quantity
-        product.stock_quantity -= quantity_lost
-        product.save(update_fields=['stock_quantity'])
+        # Créer le mouvement de perte.
+        # Meme regle que l'ajustement : sur un produit gere par lots, la perte
+        # doit sortir d'un lot, sinon elle serait effacee au prochain recalcul
+        # du compteur a partir des lots.
+        from apps.invoicing.models import ProductBatch as _ProductBatch
+        old_quantity = product.total_stock
+        batch_perte = None
+        batch_id_perte = request.data.get('batch_id')
+
+        if batch_id_perte:
+            batch_perte = _ProductBatch.objects.filter(
+                id=batch_id_perte, product=product,
+                organization=request.user.organization
+            ).first()
+            if batch_perte is None:
+                return Response({'error': 'Lot introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if batch_perte is None and product.batches.exists():
+            # A defaut de lot precise, on sert les lots qui perimeront le plus
+            # tot : c'est l'ordre de consommation reel d'une pharmacie.
+            restant = quantity_lost
+            lots = list(product.batches.filter(
+                status__in=['available', 'opened'], quantity_remaining__gt=0
+            ).order_by('expiry_date', 'received_at'))
+            disponible = sum(b.quantity_remaining for b in lots)
+            if disponible < quantity_lost:
+                return Response(
+                    {'error': f'Stock insuffisant dans les lots ({disponible} disponible(s))'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            for b in lots:
+                if restant <= 0:
+                    break
+                pris = min(b.quantity_remaining, restant)
+                b.quantity_remaining -= pris
+                restant -= pris
+                b.save(update_fields=['quantity_remaining'])
+                b.update_status()
+                batch_perte = batch_perte or b
+            product.refresh_from_db()
+
+        elif batch_perte is not None:
+            if batch_perte.quantity_remaining < quantity_lost:
+                return Response(
+                    {'error': f'Stock insuffisant dans ce lot ({batch_perte.quantity_remaining} disponible(s))'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            batch_perte.quantity_remaining -= quantity_lost
+            batch_perte.save(update_fields=['quantity_remaining'])
+            batch_perte.update_status()
+            product.refresh_from_db()
+
+        else:
+            product.stock_quantity -= quantity_lost
+            product.save(update_fields=['stock_quantity'])
 
         movement = StockMovement.objects.create(
             product=product,

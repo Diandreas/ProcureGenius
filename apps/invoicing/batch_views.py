@@ -42,10 +42,12 @@ class ProductBatchListCreateView(APIView):
             # Créer un mouvement de stock "réception" lié au lot
             if product.product_type == 'physical' and batch.quantity > 0:
                 try:
-                    old_stock = product.stock_quantity or 0
-                    new_stock = old_stock + batch.quantity
-                    product.stock_quantity = new_stock
-                    product.save(update_fields=['stock_quantity'])
+                    # stock_quantity a deja ete recale par le signal ProductBatch
+                    # sur la somme des lots : on relit, on n'ecrit pas. Ecrire
+                    # ici comptait la reception deux fois pour le compteur.
+                    old_stock = (product.stock_quantity or 0) - batch.quantity
+                    product.refresh_from_db()
+                    new_stock = product.total_stock
                     StockMovement.objects.create(
                         product=product,
                         batch=batch,
