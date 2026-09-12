@@ -955,7 +955,10 @@ class ActivityIndicatorsView(APIView):
             paiements_periode.exclude(invoice__status='paid')
             .aggregate(t=Sum('amount'))['t'] or 0
         )
-        partial_payments_count = paiements_periode.exclude(invoice__status='paid').count()
+        # Nombre de FACTURES concernees (plusieurs versements peuvent porter
+        # sur la meme facture), c'est ce que l'utilisateur ira verifier.
+        partial_payments_count = (paiements_periode.exclude(invoice__status='paid')
+                                  .values('invoice_id').distinct().count())
 
         invoices_without_payment_collected = InvoiceModel.objects.filter(
             organization=organization,
