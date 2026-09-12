@@ -40,7 +40,8 @@ class Command(BaseCommand):
         if options['organisation']:
             produits = produits.filter(organization__name=options['organisation'])
 
-        ecarts = []
+        ecarts = []      # lots encore approvisionnes : ils font foi
+        a_compter = []   # plus aucun lot actif : les lots ne disent plus rien
         for produit in produits.prefetch_related('batches'):
             lots = [b for b in produit.batches.all()]
             if not lots:
@@ -50,29 +51,57 @@ class Command(BaseCommand):
                 if b.status in ('available', 'opened')
             )
             compteur = produit.stock_quantity or 0
-            if compteur != somme_lots:
+            if compteur == somme_lots:
+                continue
+            if somme_lots == 0 and compteur > 0:
+                # Tous les lots sont epuises alors que le compteur porte encore
+                # du stock : aligner sur les lots effacerait ce stock. Les lots
+                # ne sont plus une source fiable ici, seul un comptage physique
+                # peut trancher.
+                a_compter.append((produit, compteur, somme_lots))
+            else:
                 ecarts.append((produit, compteur, somme_lots))
 
-        if not ecarts:
+        if not ecarts and not a_compter:
             self.stdout.write(self.style.SUCCESS(
                 "Aucun ecart : le compteur colle aux lots sur tous les produits."
             ))
             return
 
-        self.stdout.write(self.style.WARNING(
-            "%s produit(s) en ecart entre le compteur et les lots :" % len(ecarts)
-        ))
-        for produit, compteur, somme_lots in ecarts:
-            self.stdout.write(
-                "  %-46s compteur %6s | lots %6s | ecart %+d" % (
-                    produit.name[:46], compteur, somme_lots, somme_lots - compteur
+        if ecarts:
+            self.stdout.write(self.style.WARNING(
+                "%s produit(s) recalables (les lots sont encore approvisionnes) :" % len(ecarts)
+            ))
+            for produit, compteur, somme_lots in ecarts:
+                self.stdout.write(
+                    "  %-46s compteur %6s | lots %6s | ecart %+d" % (
+                        produit.name[:46], compteur, somme_lots, somme_lots - compteur
+                    )
                 )
+
+        if a_compter:
+            self.stdout.write(self.style.ERROR(
+                "\n%s produit(s) A COMPTER PHYSIQUEMENT (aucun lot actif, "
+                "le compteur est la seule information) :" % len(a_compter)
+            ))
+            for produit, compteur, _ in a_compter:
+                self.stdout.write(
+                    "  %-46s compteur %6s | lots      0" % (produit.name[:46], compteur)
+                )
+            self.stdout.write(
+                "  Ces produits ne sont PAS touches : passez-les a l'inventaire "
+                "physique (Stock -> Inventaire)."
             )
 
         if not options['corriger']:
             self.stdout.write(
-                "\nRelancez avec --corriger pour aligner le compteur sur les lots."
+                "\nRelancez avec --corriger pour aligner le compteur sur les lots "
+                "(uniquement les produits recalables ci-dessus)."
             )
+            return
+
+        if not ecarts:
+            self.stdout.write("\nRien a recaler automatiquement.")
             return
 
         with transaction.atomic():
