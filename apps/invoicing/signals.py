@@ -88,19 +88,17 @@ def handle_stock_on_invoice_validation(sender, instance, created, **kwargs):
     if old_status == 'draft' and instance.status in ['sent', 'paid', 'overdue']:
         for item in instance.items.filter(product__product_type='physical'):
             # Ajuster le stock global du produit
+            # Le lot est passe a adjust_stock, qui est seul a ecrire : le
+            # toucher ici en plus comptait la sortie deux fois sur le lot.
             item.product.adjust_stock(
                 quantity=-item.quantity,
                 movement_type='sale',
                 reference_type='invoice',
                 reference_id=instance.id,
                 notes=f"Validation Facture {instance.invoice_number}",
-                user=instance.created_by
+                user=instance.created_by,
+                batch=item.batch,
             )
-            # Ajuster le lot si spécifié
-            if item.batch:
-                item.batch.quantity_remaining -= item.quantity
-                item.batch.save(update_fields=['quantity_remaining'])
-                item.batch.update_status()
     
     # Si passage de (sent, paid, overdue) -> cancelled
     elif old_status in ['sent', 'paid', 'overdue'] and instance.status == 'cancelled':
@@ -112,13 +110,9 @@ def handle_stock_on_invoice_validation(sender, instance, created, **kwargs):
                 reference_type='invoice',
                 reference_id=instance.id,
                 notes=f"Annulation Facture {instance.invoice_number}",
-                user=instance.created_by
+                user=instance.created_by,
+                batch=item.batch,
             )
-            # Restaurer le lot
-            if item.batch:
-                item.batch.quantity_remaining += item.quantity
-                item.batch.save(update_fields=['quantity_remaining'])
-                item.batch.update_status()
 
 
 @receiver(post_save, sender=Invoice)

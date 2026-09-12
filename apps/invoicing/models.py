@@ -472,7 +472,7 @@ class Product(models.Model):
         """Formate le prix"""
         return f"{self.price:,.2f} CAD"
 
-    def adjust_stock(self, quantity, movement_type, unit='base', reference_type=None, reference_id=None, notes="", user=None):
+    def adjust_stock(self, quantity, movement_type, unit='base', reference_type=None, reference_id=None, notes="", user=None, batch=None):
         """
         Ajuste le stock et crée un mouvement
 
@@ -484,6 +484,9 @@ class Product(models.Model):
             reference_id: ID de la référence
             notes: Notes du mouvement
             user: Utilisateur qui effectue le mouvement
+            batch: Lot concerne (facultatif). Si le produit est gere par lots et
+                   qu'aucun lot n'est precise, les lots sont servis/credites
+                   automatiquement selon leur peremption.
 
         Returns:
             StockMovement object ou None
@@ -500,17 +503,65 @@ class Product(models.Model):
             unit_info = f" (Unité vente: {quantity} {self.get_sell_unit_display()}, converti en {quantity_base} {self.get_base_unit_display()})"
         enhanced_notes = f"{notes}{unit_info}".strip()
 
-        old_quantity = self.stock_quantity
-        self.stock_quantity += quantity_base
-        self.save(update_fields=['stock_quantity'])
+        old_quantity = self.total_stock
+
+        # Un produit gere par lots ne doit JAMAIS voir son compteur ecrit a la
+        # main : c'est le signal ProductBatch qui le recale sur la somme des
+        # lots. Ecrire les deux, c'est compter le mouvement deux fois.
+        lots_actifs = list(self.batches.filter(
+            status__in=['available', 'opened']
+        ).order_by('expiry_date', 'received_at')) if self.pk else []
+
+        if batch is not None:
+            batch.quantity_remaining = max(0, batch.quantity_remaining + quantity_base)
+            batch.save(update_fields=['quantity_remaining'])
+            batch.update_status()
+            self.refresh_from_db()
+
+        elif lots_actifs:
+            if quantity_base < 0:
+                # Sortie : on sert d'abord ce qui perime le plus tot (FEFO).
+                restant = -quantity_base
+                for lot in lots_actifs:
+                    if restant <= 0:
+                        break
+                    pris = min(lot.quantity_remaining, restant)
+                    if pris <= 0:
+                        continue
+                    lot.quantity_remaining -= pris
+                    restant -= pris
+                    lot.save(update_fields=['quantity_remaining'])
+                    lot.update_status()
+                if restant > 0:
+                    # Les lots ne couvraient pas la sortie : on ne fabrique pas
+                    # du stock negatif dans un lot, mais on le dit dans la note
+                    # pour que l'ecart soit visible plutot que silencieux.
+                    enhanced_notes = (
+                        enhanced_notes
+                        + f" [!] {restant} unite(s) non couverte(s) par les lots"
+                    ).strip()
+            else:
+                # Entree : creditee sur le lot dont la peremption est la plus
+                # lointaine, c'est-a-dire le reapprovisionnement le plus recent.
+                lot = lots_actifs[-1]
+                lot.quantity_remaining += quantity_base
+                lot.save(update_fields=['quantity_remaining'])
+                lot.update_status()
+            self.refresh_from_db()
+
+        else:
+            # Produit sans lot : le compteur est la seule source.
+            self.stock_quantity += quantity_base
+            self.save(update_fields=['stock_quantity'])
 
         # Créer le mouvement (toujours en unité de base)
         movement = StockMovement.objects.create(
             product=self,
+            batch=batch,
             movement_type=movement_type,
             quantity=quantity_base,
             quantity_before=old_quantity,
-            quantity_after=self.stock_quantity,
+            quantity_after=self.total_stock,
             reference_type=reference_type,
             reference_id=reference_id,
             notes=enhanced_notes,

@@ -829,34 +829,18 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
                             continue
 
                         product = item_ref.product
-                        if diff > 0:
-                            # Plus de quantité vendue → déduire du stock
-                            product.adjust_stock(
-                                quantity=-diff,
-                                movement_type='sale',
-                                reference_type='invoice',
-                                reference_id=instance.id,
-                                notes=f"Modification Facture {instance.invoice_number}",
-                                user=instance.created_by
-                            )
-                        else:
-                            # Moins de quantité → retourner au stock
-                            product.adjust_stock(
-                                quantity=-diff,  # diff est négatif, donc -diff est positif
-                                movement_type='return',
-                                reference_type='invoice',
-                                reference_id=instance.id,
-                                notes=f"Modification Facture {instance.invoice_number}",
-                                user=instance.created_by
-                            )
-
-                        # Ajuster le lot si concerné
-                        if batch_id:
-                            batch_ref = item_ref.batch
-                            if batch_ref:
-                                batch_ref.quantity_remaining -= diff
-                                batch_ref.save(update_fields=['quantity_remaining'])
-                                batch_ref.update_status()
+                        # adjust_stock ecrit le lot lui-meme : on le lui passe
+                        # au lieu de le modifier une seconde fois apres coup.
+                        lot_concerne = item_ref.batch if batch_id else None
+                        product.adjust_stock(
+                            quantity=-diff,  # diff > 0 : sortie ; diff < 0 : retour
+                            movement_type='sale' if diff > 0 else 'return',
+                            reference_type='invoice',
+                            reference_id=instance.id,
+                            notes=f"Modification Facture {instance.invoice_number}",
+                            user=instance.created_by,
+                            batch=lot_concerne,
+                        )
 
                 # Carte privilège : réappliquée à chaque édition puisque les items
                 # viennent d'être recréés à neuf (voir apply_privilege_card_discount,
