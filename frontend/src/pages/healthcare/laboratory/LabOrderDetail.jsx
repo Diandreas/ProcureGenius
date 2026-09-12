@@ -1888,13 +1888,14 @@ const LabOrderDetail = () => {
                             const useLargeLayout = item.lab_test_data?.use_large_layout || item.lab_test?.use_large_layout;
 
                             if (useLargeLayout) {
+                                const etatLarge = itemStateStyle(item);
                                 return (
                                     <TableRow key={item.id}>
-                                        <TableCell colSpan={8} sx={{ p: 0, borderBottom: '2px solid #3b82f6' }}>
+                                        <TableCell colSpan={8} sx={{ p: 0, borderBottom: `2px solid ${etatLarge.color}` }}>
                                             <Box sx={{ 
                                                 p: 3, 
-                                                bgcolor: '#ffffff',
-                                                borderLeft: '10px solid #3b82f6',
+                                                bgcolor: etatLarge.bg,
+                                                borderLeft: `10px solid ${etatLarge.color}`,
                                                 m: 1,
                                                 borderRadius: '0 8px 8px 0',
                                                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
@@ -1904,10 +1905,18 @@ const LabOrderDetail = () => {
                                                         <Typography variant="h6" fontWeight="800" sx={{ mr: 2, color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: 1 }}>
                                                             {item.test_name}
                                                         </Typography>
-                                                        <Chip 
-                                                            label={item.category_name} 
-                                                            size="small" 
-                                                            sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 700 }} 
+                                                        <Chip
+                                                            label={item.category_name}
+                                                            size="small"
+                                                            sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 700, mr: 1 }}
+                                                        />
+                                                        <Chip
+                                                            label={etatLarge.label}
+                                                            size="small"
+                                                            sx={{
+                                                                fontWeight: 800, color: etatLarge.color,
+                                                                bgcolor: '#fff', border: `1px solid ${etatLarge.color}`,
+                                                            }}
                                                         />
                                                     </Box>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
