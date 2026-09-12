@@ -1905,6 +1905,22 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                     lots = list(produit.batches.filter(
                         status__in=['available', 'opened']
                     ).order_by('expiry_date', 'received_at'))
+
+                    if not lots and produit.batches.exists():
+                        # Tous les lots sont epuises (ou perimes) alors que le
+                        # produit est bien suivi par lots : on ranime le dernier
+                        # lot encore valable pour y rattacher le stock compte,
+                        # sinon le comptage resterait sur le compteur seul et le
+                        # produit repartirait sans lot.
+                        from django.utils import timezone as _tz
+                        relance = produit.batches.filter(
+                            expiry_date__gte=_tz.now().date()
+                        ).order_by('-received_at').first()
+                        if relance is not None:
+                            relance.status = 'available'
+                            relance.save(update_fields=['status'])
+                            lots = [relance]
+
                     lot = lots[-1] if lots else None
 
                     if lots:
