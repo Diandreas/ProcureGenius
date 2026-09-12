@@ -749,13 +749,22 @@ class ProductBatch(models.Model):
         self.save(update_fields=['opened_at', 'status', 'shelf_life_after_opening_days'])
 
     def update_status(self):
-        """Met à jour le statut automatiquement"""
+        """Met à jour le statut automatiquement.
+
+        Un lot JAMAIS OUVERT qui depasse sa date imprimee n'est pas sorti du
+        stock : le centre continue de le vendre (il existe une marge apres la
+        date sur beaucoup de produits). Sa peremption reste visible via
+        `expiry_date` / `is_expired` et alimente les alertes, mais elle ne fait
+        pas disparaitre la marchandise des compteurs.
+
+        Un lot OUVERT dont la duree de vie apres ouverture est depassee est,
+        lui, reellement inutilisable : il passe en 'expired' et sort du stock
+        (c'est ce que fait la tache de nuit expire_opened_batches).
+        """
         if self.quantity_remaining <= 0:
             self.status = 'depleted'
-        elif self.is_expired:
-            self.status = 'expired'
         elif self.opened_at:
-            self.status = 'opened'
+            self.status = 'expired' if self.is_expired else 'opened'
         else:
             self.status = 'available'
         self.save(update_fields=['status'])
