@@ -84,7 +84,7 @@
         </div>{% endif %}
     </div>
     <div class="invoice-header"><div class="invoice-title">Facture</div><div class="invoice-number">{{ invoice.invoice_number }}</div><div class="accent-line"></div></div>
-    <div class="info-section"><table class="info-row"><tr><td class="info-col"><div class="info-label">Détails</div><div class="info-content"><p><strong>{% if invoice.title %}{{ invoice.title }}{% else %}Sans titre{% endif %}</strong></p>{% if invoice.description %}<p>{{ invoice.description }}</p>{% endif %}{% if issue_date %}<p>Date d'émission: {{ issue_date|date:"d/m/Y" }}</p>{% endif %}
+    <div class="info-section"><table class="info-row"><tr><td class="info-col"><div class="info-label">Détails</div><div class="info-content"><p><strong>{% if invoice.title %}{{ invoice.title }}{% else %}Sans titre{% endif %}</strong></p>{% if invoice.description %}<p>{{ invoice.description }}</p>{% endif %}{% if issue_date %}<p>Date d'émission: {{ issue_date|date:"d/m/Y" }} à {{ issue_date|date:"H:i" }}</p>{% endif %}
     {% if invoice.status == 'paid' %}<p style="color: #10b981; font-weight: 600; margin-top: 10px;">Statut: PAYÉE</p>
     {% elif invoice.status == 'sent' %}<p style="color: {{ brand_color|default:'#2563eb' }}; font-weight: 600; margin-top: 10px;">Statut: ENVOYÉE</p>
     {% elif invoice.status == 'draft' %}<p style="color: #666666; font-weight: 600; margin-top: 10px;">Statut: BROUILLON</p>

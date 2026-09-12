@@ -81,6 +81,16 @@ import { formatDate, formatTime } from '../../../utils/formatters';
 import useCurrentUser from '../../../hooks/useCurrentUser';
 
 // Status display labels
+// Couleurs par etat d'examen. Volontairement les memes familles que les statuts
+// de commande (gris -> orange -> bleu -> vert) pour qu'on lise la meme
+// progression a l'echelle de la ligne et a l'echelle de la commande.
+const ITEM_STATES = {
+    verified:  { label: 'Validé',         color: '#16a34a', bg: '#f0fdf4', chip: 'success' },
+    resulted:  { label: 'Résultat saisi', color: '#2563eb', bg: '#eff6ff', chip: 'info' },
+    collected: { label: 'Prélevé',        color: '#f59e0b', bg: '#fffbeb', chip: 'warning' },
+    pending:   { label: 'À prélever',     color: '#9ca3af', bg: '#f9fafb', chip: 'default' },
+};
+
 const getStatusLabel = (status) => {
     const labels = {
         pending: 'En attente',
@@ -1231,6 +1241,17 @@ const LabOrderDetail = () => {
         || (item.result_numeric !== null && item.result_numeric !== undefined)
         || (item.parameter_results?.length > 0);
 
+    // Etat propre a CHAQUE examen, independant du statut global de la commande :
+    // depuis que la saisie est independante par test, le statut de la commande
+    // ne dit plus ce qu'il reste a faire sur une ligne donnee.
+    const getItemState = (item) => {
+        if (item.result_verified_at) return 'verified';
+        if (itemHasResult(item)) return 'resulted';
+        if (item.sample_collected_at) return 'collected';
+        return 'pending';
+    };
+    const itemStateStyle = (item) => ITEM_STATES[getItemState(item)];
+
     // canEdit (niveau commande) : utilisé pour les actions globales (bouton Enregistrer,
     // diagnostic du biologiste). La saisie par test elle-même utilise `itemEditable`
     // (calculé par item dans la boucle plus bas) : chaque test est indépendant, plus
@@ -1689,13 +1710,24 @@ const LabOrderDetail = () => {
                                     return {};
                                 };
 
+                                const etatCompose = itemStateStyle(item);
+
                                 return (
                                     <TableRow key={item.id} sx={{ verticalAlign: 'top' }}>
                                         <TableCell colSpan={8} sx={{ p: 0 }}>
-                                            <Box sx={{ p: 1.5 }}>
+                                            <Box sx={{ p: 1.5, borderLeft: `4px solid ${etatCompose.color}`, bgcolor: etatCompose.bg }}>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                                                         <Typography variant="subtitle2" fontWeight={700} sx={{ mr: 1 }}>{item.test_name}</Typography>
+                                                        <Chip
+                                                            label={etatCompose.label}
+                                                            size="small"
+                                                            sx={{
+                                                                height: 18, fontSize: '0.65rem', fontWeight: 700, mr: 1,
+                                                                color: etatCompose.color, bgcolor: '#fff',
+                                                                border: `1px solid ${etatCompose.color}`,
+                                                            }}
+                                                        />
                                                         <Tooltip title="Configurer l'unite et le facteur de conversion">
                                                             <IconButton size="small" onClick={() => handleEditTest(item.lab_test)} color="secondary">
                                                                 <SettingsIcon sx={{ fontSize: 16 }} />
@@ -2111,9 +2143,13 @@ const LabOrderDetail = () => {
 
                             // ── Mobile : une carte empilée par test, pas de colonnes serrées ──
                             if (isMobile) {
+                                const etatMobile = itemStateStyle(item);
                                 return (
                                     <TableRow key={item.id}>
-                                        <TableCell colSpan={8} sx={{ p: 1.5 }}>
+                                        <TableCell
+                                            colSpan={8}
+                                            sx={{ p: 1.5, borderLeft: `4px solid ${etatMobile.color}`, bgcolor: etatMobile.bg }}
+                                        >
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, mb: 1 }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
                                                     <Typography variant="body2" fontWeight="bold">{item.test_name}</Typography>
@@ -2123,6 +2159,15 @@ const LabOrderDetail = () => {
                                                     {item.category_name && (
                                                         <Chip label={item.category_name} size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem' }} />
                                                     )}
+                                                    <Chip
+                                                        label={etatMobile.label}
+                                                        size="small"
+                                                        sx={{
+                                                            height: 18, fontSize: '0.65rem', fontWeight: 700,
+                                                            color: etatMobile.color, bgcolor: '#fff',
+                                                            border: `1px solid ${etatMobile.color}`,
+                                                        }}
+                                                    />
                                                     {item.is_abnormal && <Chip label="ANORMAL" color="error" size="small" sx={{ height: 18, fontSize: '0.65rem' }} />}
                                                 </Box>
                                                 {itemActions}
@@ -2158,11 +2203,28 @@ const LabOrderDetail = () => {
                                 );
                             }
 
+                            const etat = itemStateStyle(item);
+
                             return (
-                                <TableRow key={item.id}>
+                                <TableRow
+                                    key={item.id}
+                                    sx={{
+                                        borderLeft: `4px solid ${etat.color}`,
+                                        bgcolor: etat.bg,
+                                    }}
+                                >
                                     <TableCell>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
                                             <Typography variant="body2" fontWeight="bold" sx={{ mr: 1 }}>{item.test_name}</Typography>
+                                            <Chip
+                                                label={etat.label}
+                                                size="small"
+                                                sx={{
+                                                    height: 18, fontSize: '0.65rem', fontWeight: 700,
+                                                    color: etat.color, bgcolor: '#fff',
+                                                    border: `1px solid ${etat.color}`,
+                                                }}
+                                            />
                                             <Tooltip title="Configurer l'unite et le facteur de conversion">
                                                 <IconButton size="small" onClick={() => handleEditTest(item.lab_test)} color="secondary">
                                                     <SettingsIcon sx={{ fontSize: 16 }} />

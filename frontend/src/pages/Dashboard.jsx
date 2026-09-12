@@ -15,6 +15,7 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Schedule as ScheduleIcon,
+  PhoneAndroid as PhoneAndroidIcon,
   Assessment as AssessmentIcon,
   ArrowForward as ArrowForwardIcon,
   Dashboard as DashboardIcon,
@@ -490,6 +491,12 @@ const Dashboard = () => {
                   value={loading ? '...' : formatCurrency(financial.collected_revenue)}
                   icon={<MoneyIcon />} color="#0891b2" loading={loading}
                   subtitle="Par date d'encaissement — inclut les paiements reçus ce mois pour des factures antérieures" />
+              </Grid>
+              <Grid item xs={6} sm={6} md={3}>
+                <StatCard title="Payé via Mobile Money"
+                  value={loading ? '...' : formatCurrency(financial?.mobile_money_revenue)}
+                  icon={<PhoneAndroidIcon />} color="#f97316" loading={loading}
+                  subtitle={loading ? '' : `${financial?.mobile_money_count ?? 0} facture(s) · espèces : ${formatCurrency(financial?.cash_revenue)}`} />
               </Grid>
               <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Factures Payées"

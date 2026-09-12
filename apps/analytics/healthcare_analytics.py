@@ -687,6 +687,18 @@ class ActivityIndicatorsView(APIView):
                 night_revenue += amount
                 night_invoices_count += 1
 
+        # Répartition par mode de paiement.
+        # Le mode reel se lit sur la facture elle-meme : la table Payment n'est
+        # quasiment pas alimentee ici (une poignee de lignes), l'encaissement se
+        # fait en enregistrant directement la facture comme payee.
+        revenue_by_payment_method = {
+            row['payment_method'] or 'unknown': float(row['total'] or 0)
+            for row in paid_invoices.values('payment_method').annotate(total=Sum('total_amount'))
+        }
+        mobile_money_revenue = revenue_by_payment_method.get('mobile_money', 0.0)
+        mobile_money_count = paid_invoices.filter(payment_method='mobile_money').count()
+        cash_revenue = revenue_by_payment_method.get('cash', 0.0)
+
         # CA consultation = items "Consultation Médecin" dans toutes les factures payées
         consultation_revenue = float(InvoiceItem.objects.filter(
             invoice__in=paid_invoices
@@ -978,6 +990,12 @@ class ActivityIndicatorsView(APIView):
             'financial': {
                 'total_revenue': round(total_revenue, 2),
                 'collected_revenue': round(collected_revenue, 2),
+                'mobile_money_revenue': round(mobile_money_revenue, 2),
+                'mobile_money_count': mobile_money_count,
+                'cash_revenue': round(cash_revenue, 2),
+                'revenue_by_payment_method': {
+                    k: round(v, 2) for k, v in revenue_by_payment_method.items()
+                },
                 'day_revenue': round(day_revenue, 2),
                 'night_revenue': round(night_revenue, 2),
                 'day_invoices_count': day_invoices_count,

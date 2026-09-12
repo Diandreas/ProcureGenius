@@ -72,7 +72,7 @@ import i18n from '../../i18n/config';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { invoicesAPI } from '../../services/api';
-import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
+import { getStatusColor, getStatusLabel, formatDate, formatTime } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 import PrintModal from '../../components/PrintModal';
@@ -951,7 +951,9 @@ Cordialement`
                     {t('invoices:labels.creationDate')}
                   </Typography>
                   <Typography variant="body2" sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                    {formatDate(invoice.created_at)}
+                    {/* Heure exacte : elle sert a departager les factures du
+                        meme jour et a distinguer permanence et garde. */}
+                    {formatDate(invoice.created_at)} à {formatTime(invoice.created_at)}
                   </Typography>
                 </Box>
 
@@ -1817,4 +1819,4 @@ Cordialement`
   );
 }
 
-export default InvoiceDetail;
+export default InvoiceDetail;

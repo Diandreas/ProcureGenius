@@ -462,7 +462,7 @@
                 <div class="card-content">
                     <strong>{% if invoice.title %}{{ invoice.title }}{% else %}Sans titre{% endif %}</strong><br>
                     {% if invoice.description %}{{ invoice.description }}<br>{% endif %}
-                    {% if issue_date %}<strong>Date d'émission:</strong> {{ issue_date|date:"d/m/Y" }}{% endif %}
+                    {% if issue_date %}<strong>Date d'émission:</strong> {{ issue_date|date:"d/m/Y" }} à {{ issue_date|date:"H:i" }}{% endif %}
                 </div>
             </td>
             <td style="width: 4%;"></td>
