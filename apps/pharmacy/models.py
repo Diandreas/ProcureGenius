@@ -316,6 +316,9 @@ class DispensingItem(models.Model):
         if self.medication and self.medication.product_type == 'physical':
             from apps.invoicing.models import StockMovement
             
+            # Le lot choisi est passe a adjust_stock : c'est lui qui le
+            # decremente. Avant, la quantite du lot etait modifiee en memoire
+            # sans jamais etre enregistree, et la sortie partait sur un autre lot.
             movement = self.medication.adjust_stock(
                 quantity=-self.quantity_dispensed,
                 movement_type='sale',
@@ -323,23 +326,14 @@ class DispensingItem(models.Model):
                 reference_type='dispensing',
                 reference_id=self.dispensing.id,
                 notes=f"Dispensation {self.dispensing.dispensing_number}",
-                user=self.dispensing.dispensed_by
+                user=self.dispensing.dispensed_by,
+                batch=self.batch,
             )
-            
+
             if movement:
-                # Link movement to batch if selected
                 if self.batch:
-                    movement.batch = self.batch
-                    
-                    # Also deduct from the batch quantity_remaining
-                    quantity_base = self.medication.convert_to_base_unit(
-                        self.quantity_dispensed, 
-                        from_unit=self.dispensing_unit
-                    )
-                    self.batch.quantity_remaining -= quantity_base
-                    self.batch.update_status()
                     movement.notes = f"{movement.notes} (Lot: {self.batch.batch_number})"
-                    movement.save(update_fields=['batch', 'notes'])
+                    movement.save(update_fields=['notes'])
 
                 self.stock_movement = movement
                 self.save(update_fields=['stock_movement'])
@@ -347,26 +341,16 @@ class DispensingItem(models.Model):
     def restore_stock(self):
         """Restore stock when dispensing is cancelled"""
         if self.medication and self.medication.product_type == 'physical':
-            movement = self.medication.adjust_stock(
+            self.medication.adjust_stock(
                 quantity=self.quantity_dispensed,
                 movement_type='return',
                 unit=self.dispensing_unit,
                 reference_type='dispensing_cancel',
                 reference_id=self.dispensing.id,
                 notes=f"Annulation dispensation {self.dispensing.dispensing_number}",
-                user=self.dispensing.dispensed_by
+                user=self.dispensing.dispensed_by,
+                batch=self.batch,
             )
-
-            if movement and self.batch:
-                # Restore batch quantity
-                quantity_base = self.medication.convert_to_base_unit(
-                    self.quantity_dispensed, 
-                    from_unit=self.dispensing_unit
-                )
-                self.batch.quantity_remaining += quantity_base
-                self.batch.update_status()
-                movement.batch = self.batch
-                movement.save(update_fields=['batch'])
     
     def __str__(self):
         return f"{self.medication.name} x{self.quantity_dispensed}"

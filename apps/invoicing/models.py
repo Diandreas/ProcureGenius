@@ -1442,19 +1442,17 @@ class InvoiceItem(models.Model):
         if not skip and self.invoice.status != 'draft' and self.product and self.product.product_type == 'physical':
             quantity_diff = self.quantity - old_quantity
             if quantity_diff != 0:
+                # Le lot est passe a adjust_stock, seul ecrivain : le modifier
+                # ici en plus le deduisait deux fois.
                 self.product.adjust_stock(
                     quantity=-quantity_diff, # Négatif pour une vente
                     movement_type='sale',
                     reference_type='invoice',
                     reference_id=self.invoice.id,
                     notes=f"Facture {self.invoice.invoice_number}",
-                    user=self.invoice.created_by
+                    user=self.invoice.created_by,
+                    batch=self.batch,
                 )
-                # Mettre à jour le lot si présent
-                if self.batch:
-                    self.batch.quantity_remaining -= quantity_diff
-                    self.batch.save(update_fields=['quantity_remaining'])
-                    self.batch.update_status()
 
         # Recalculer les totaux de la facture seulement si elle existe déjà
         if self.invoice_id:

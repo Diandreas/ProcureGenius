@@ -949,6 +949,18 @@ class LabOrderItem(models.Model):
         """Déduit le(s) consommable(s) liés à ce test (stock + lots FIFO)."""
         lab_test = self.lab_test
 
+        def lot_en_cours(produit, quantite):
+            # Au labo, on consomme d'abord le reactif deja OUVERT sur la
+            # paillasse (le plus anciennement ouvert), pas le lot scelle qui
+            # perime le plus tot. S'il n'en reste pas assez, adjust_stock
+            # repartit sur les lots par peremption.
+            ouvert = produit.batches.filter(
+                status='opened', quantity_remaining__gte=quantite
+            ).order_by('opened_at').first()
+            return ouvert
+
+        # adjust_stock ecrit lui-meme les lots : on ne les touche plus ici,
+        # sinon chaque consommable est sorti deux fois.
         consumables = lab_test.consumables.select_related('product').all()
         if consumables.exists():
             for consumable in consumables:
@@ -958,19 +970,9 @@ class LabOrderItem(models.Model):
                     reference_type='manual',
                     reference_id=self.lab_order_id,
                     notes=f"Labo - {self.lab_order.order_number} - {lab_test.test_code} ({consumable.product.name})",
-                    user=collected_by
+                    user=collected_by,
+                    batch=lot_en_cours(consumable.product, consumable.quantity_per_test),
                 )
-                remaining = consumable.quantity_per_test
-                for batch in consumable.product.batches.filter(
-                    quantity_remaining__gt=0, status__in=['available', 'opened']
-                ).order_by('expiry_date'):
-                    if remaining <= 0:
-                        break
-                    deduct = min(batch.quantity_remaining, remaining)
-                    batch.quantity_remaining -= deduct
-                    batch.save(update_fields=['quantity_remaining'])
-                    batch.update_status()
-                    remaining -= deduct
         # Fallback: legacy linked_product FK (si pas encore migré)
         elif lab_test.linked_product:
             lab_test.linked_product.adjust_stock(
@@ -979,19 +981,9 @@ class LabOrderItem(models.Model):
                 reference_type='manual',
                 reference_id=self.lab_order_id,
                 notes=f"Labo - {self.lab_order.order_number} - {lab_test.test_code}",
-                user=collected_by
+                user=collected_by,
+                batch=lot_en_cours(lab_test.linked_product, 1),
             )
-            remaining = 1
-            for batch in lab_test.linked_product.batches.filter(
-                quantity_remaining__gt=0, status__in=['available', 'opened']
-            ).order_by('expiry_date'):
-                if remaining <= 0:
-                    break
-                deduct = min(batch.quantity_remaining, remaining)
-                batch.quantity_remaining -= deduct
-                batch.save(update_fields=['quantity_remaining'])
-                batch.update_status()
-                remaining -= deduct
 
     def collect_sample(self, collected_by=None):
         """
