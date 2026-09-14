@@ -2,14 +2,17 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, TextField, Button, Chip, Stack, CircularProgress,
-    Alert, InputAdornment, MenuItem, Divider,
+    Alert, InputAdornment, MenuItem, Divider, IconButton, Tooltip,
 } from '@mui/material';
-import { Search as SearchIcon, Inventory as InventoryIcon, Save as SaveIcon } from '@mui/icons-material';
+import {
+    Search as SearchIcon, Inventory as InventoryIcon, Save as SaveIcon, PhotoCamera as CameraIcon,
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { productsAPI } from '../../services/api';
 import { settingsAPI } from '../../services/settingsAPI';
 import BackButton from '../../components/navigation/BackButton';
+import CameraScanner from '../../components/stock/CameraScanner';
 
 const aujourdhui = () => {
     const d = new Date();
@@ -34,6 +37,7 @@ const StockInventory = () => {
     const [produits, setProduits] = useState([]);
     const [chargement, setChargement] = useState(true);
     const [recherche, setRecherche] = useState('');
+    const [cameraOuverte, setCameraOuverte] = useState(false);
     const [categorie, setCategorie] = useState('');
     const [comptes, setComptes] = useState({});
     const [reference, setReference] = useState('INV-' + aujourdhui());
@@ -73,6 +77,22 @@ const StockInventory = () => {
                 || (p.reference || '').toLowerCase().includes(q);
         });
     }, [produits, recherche, categorie]);
+
+    // Pendant le comptage, on scanne la boite qu'on a en main : le tableau se
+    // filtre sur ce produit et il ne reste qu'a taper la quantite.
+    const filtrerDepuisScan = async (texte) => {
+        setCameraOuverte(false);
+        try {
+            const res = await productsAPI.scanCode(texte);
+            setCategorie('');
+            setRecherche(res.data.product.reference || res.data.product.name);
+        } catch (e) {
+            enqueueSnackbar(
+                e.response?.status === 404 ? `Aucun produit ne correspond au code « ${texte} »` : 'Lecture du code impossible',
+                { variant: 'warning' },
+            );
+        }
+    };
 
     const lignesSaisies = useMemo(
         () => Object.entries(comptes)
@@ -156,7 +176,18 @@ const StockInventory = () => {
                     <TextField
                         size="small" placeholder="Rechercher un produit..." fullWidth
                         value={recherche} onChange={(e) => setRecherche(e.target.value)}
-                        InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
+                        InputProps={{
+                            startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>,
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <Tooltip title="Scanner avec la caméra">
+                                        <IconButton size="small" edge="end" onClick={() => setCameraOuverte(true)}>
+                                            <CameraIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </InputAdornment>
+                            ),
+                        }}
                     />
                     <TextField
                         select size="small" label="Catégorie" sx={{ minWidth: 200 }}
@@ -186,6 +217,13 @@ const StockInventory = () => {
                     </Button>
                 </Stack>
             </Paper>
+
+            <CameraScanner
+                open={cameraOuverte}
+                onClose={() => setCameraOuverte(false)}
+                onDetected={filtrerDepuisScan}
+                title="Scanner le produit à compter"
+            />
 
             {chargement ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>

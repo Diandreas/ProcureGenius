@@ -2114,6 +2114,52 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             'received_count': len(recues),
         })
 
+    @staticmethod
+    def _lire_gs1(code):
+        """Decoupe un code GS1 en identifiants d'application.
+
+        Gere les deux ecritures rencontrees : avec parentheses
+        "(01)03400930000120(17)270531(10)AB12" et brute, telle que la renvoie
+        un lecteur DataMatrix ("0103400930000120172705311" + separateur FNC1).
+        Renvoie {} si le code n'est pas du GS1 — l'appelant retombe alors sur
+        la recherche normale.
+        """
+        import re
+        if not code:
+            return {}
+        texte = code.strip()
+        if texte.startswith(']d2') or texte.startswith(']Q3'):
+            texte = texte[3:]  # prefixe de symbologie ajoute par certains lecteurs
+
+        if texte.startswith('('):
+            return {ai: val for ai, val in re.findall(r'\((\d{2,4})\)([^(]+)', texte)}
+
+        # Ecriture brute : longueurs fixes connues, champs variables termines
+        # par le separateur FNC1 (\x1d) ou la fin du code.
+        FIXES = {'01': 14, '11': 6, '15': 6, '17': 6}
+        VARIABLES = {'10', '21', '240', '91'}
+        if not texte.startswith('01') or len(texte) < 16:
+            return {}
+        resultat, i = {}, 0
+        while i < len(texte):
+            if texte[i] == '\x1d':
+                i += 1
+                continue
+            ai2 = texte[i:i + 2]
+            ai3 = texte[i:i + 3]
+            if ai2 in FIXES:
+                resultat[ai2] = texte[i + 2:i + 2 + FIXES[ai2]]
+                i += 2 + FIXES[ai2]
+            elif ai2 in VARIABLES or ai3 in VARIABLES:
+                ai = ai3 if ai3 in VARIABLES else ai2
+                fin = texte.find('\x1d', i + len(ai))
+                fin = len(texte) if fin == -1 else fin
+                resultat[ai] = texte[i + len(ai):fin]
+                i = fin
+            else:
+                break  # identifiant inconnu : on garde ce qui a ete lu
+        return resultat if resultat.get('01') else {}
+
     @action(detail=False, methods=['get'], url_path='scan')
     def scan(self, request):
         """
@@ -2135,12 +2181,27 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         base = Product.objects.filter(organization=organization)
 
         numero_lot = None
-        if '|' in code:
+        gtin_candidats = []
+        gs1 = self._lire_gs1(code)
+        if gs1.get('01'):
+            # Code GS1 (DataMatrix de boite de medicament) : GTIN + lot.
+            gtin = gs1['01']
+            gtin_candidats = [gtin, gtin.lstrip('0'), gtin[1:] if gtin.startswith('0') else gtin]
+            reference = gtin
+            numero_lot = gs1.get('10')
+        elif '|' in code:
             reference, numero_lot = [part.strip() for part in code.split('|', 1)]
         else:
             reference = code
 
-        produit = (base.filter(barcode=reference).first()
+        produit = None
+        for candidat in gtin_candidats:
+            if candidat:
+                produit = base.filter(barcode=candidat).first()
+                if produit:
+                    break
+        produit = (produit
+                   or base.filter(barcode=reference).first()
                    or base.filter(reference__iexact=reference).first())
 
         lot = None
@@ -2182,6 +2243,26 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                 'expiry_date': str(lot.expiry_date),
                 'status': lot.status,
                 'is_expired': lot.is_expired,
+            }
+        if gs1:
+            from datetime import date as _date
+            import calendar
+            peremption = None
+            brut = gs1.get('17')
+            if brut and len(brut) == 6 and brut.isdigit():
+                an, mois, jour = 2000 + int(brut[:2]), int(brut[2:4]), int(brut[4:6])
+                if 1 <= mois <= 12:
+                    if jour == 0:  # GS1 : jour 00 = dernier jour du mois
+                        jour = calendar.monthrange(an, mois)[1]
+                    try:
+                        peremption = _date(an, mois, jour).isoformat()
+                    except ValueError:
+                        peremption = None
+            donnees['gs1'] = {
+                'gtin': gs1.get('01'),
+                'lot': gs1.get('10'),
+                'expiry_date': peremption,
+                'serial': gs1.get('21'),
             }
         return Response(donnees)
 

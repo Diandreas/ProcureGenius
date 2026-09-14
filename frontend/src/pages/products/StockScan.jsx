@@ -4,20 +4,23 @@ import {
     CircularProgress, Alert, Divider, List, ListItem, ListItemText,
 } from '@mui/material';
 import {
-    QrCodeScanner as ScannerIcon, ArrowForward as ArrowIcon,
+    QrCodeScanner as ScannerIcon, ArrowForward as ArrowIcon, PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { productsAPI } from '../../services/api';
 import { settingsAPI } from '../../services/settingsAPI';
 import BackButton from '../../components/navigation/BackButton';
+import CameraScanner from '../../components/stock/CameraScanner';
 
 /**
  * Recherche d'un produit par scan.
  *
- * Concu pour une douchette USB, qui se comporte comme un clavier : elle tape
- * le code puis envoie Entree. Le champ reste donc focalise en permanence et
- * valide sur Entree — aucune camera, aucun pilote, et la saisie manuelle
- * marche exactement pareil quand la douchette n'est pas la.
+ * Deux facons de lire un code :
+ * - la camera du telephone / de la tablette (bouton « Scanner avec la camera »),
+ *   qui lit QR, DataMatrix de boite de medicament et codes-barres ;
+ * - une douchette USB, qui se comporte comme un clavier : elle tape le code puis
+ *   envoie Entree. Le champ reste donc focalise entre deux scans (sauf pendant
+ *   que la camera est ouverte), et la saisie manuelle marche pareil.
  */
 const StockScan = () => {
     const navigate = useNavigate();
@@ -29,6 +32,11 @@ const StockScan = () => {
     const [resultat, setResultat] = useState(null);
     const [erreur, setErreur] = useState('');
     const [historique, setHistorique] = useState([]);
+    const [cameraOuverte, setCameraOuverte] = useState(false);
+    // Tant que la camera est ouverte, le champ ne doit pas reprendre le focus
+    // (sur mobile, ca ferait surgir le clavier par-dessus la video).
+    const cameraOuverteRef = useRef(false);
+    useEffect(() => { cameraOuverteRef.current = cameraOuverte; }, [cameraOuverte]);
 
     useEffect(() => {
         settingsAPI.getAll()
@@ -103,13 +111,28 @@ const StockScan = () => {
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); chercher(); } }}
-                        onBlur={() => setTimeout(() => champRef.current?.focus(), 100)}
+                        onBlur={() => setTimeout(() => {
+                            if (!cameraOuverteRef.current) champRef.current?.focus();
+                        }, 100)}
                     />
                     <Button variant="contained" onClick={() => chercher()} disabled={recherche || !code.trim()}>
                         {recherche ? <CircularProgress size={20} /> : 'Chercher'}
                     </Button>
                 </Stack>
+                <Button
+                    fullWidth variant="outlined" startIcon={<CameraIcon />}
+                    onClick={() => setCameraOuverte(true)} sx={{ mt: 1.5 }}
+                >
+                    Scanner avec la caméra
+                </Button>
             </Paper>
+
+            <CameraScanner
+                open={cameraOuverte}
+                onClose={() => setCameraOuverte(false)}
+                onDetected={(texte) => { setCameraOuverte(false); chercher(texte); }}
+                title="Scanner un produit"
+            />
 
             {erreur && <Alert severity="warning" sx={{ mb: 2 }}>{erreur}</Alert>}
 

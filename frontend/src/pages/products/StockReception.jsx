@@ -6,13 +6,14 @@ import {
 } from '@mui/material';
 import {
     LocalShipping as ShippingIcon, Save as SaveIcon,
-    Add as AddIcon, DeleteOutline as DeleteIcon,
+    Add as AddIcon, DeleteOutline as DeleteIcon, PhotoCamera as CameraIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { productsAPI } from '../../services/api';
 import { settingsAPI } from '../../services/settingsAPI';
 import BackButton from '../../components/navigation/BackButton';
+import CameraScanner from '../../components/stock/CameraScanner';
 
 const ligneVide = () => ({
     cle: Math.random().toString(36).slice(2),
@@ -65,6 +66,42 @@ const StockReception = () => {
     };
 
     const ajouterLigne = () => setLignes((prev) => [...prev, ligneVide()]);
+
+    const [cameraOuverte, setCameraOuverte] = useState(false);
+
+    // Un scan ajoute directement la ligne du produit. Si c'est un DataMatrix
+    // de boite (GS1), le lot et la peremption imprimes pre-remplissent la ligne :
+    // plus rien a recopier a la main.
+    const ajouterDepuisScan = async (texte) => {
+        setCameraOuverte(false);
+        try {
+            const res = await productsAPI.scanCode(texte);
+            const trouve = produits.find((p) => p.id === res.data.product.id);
+            if (!trouve) {
+                enqueueSnackbar(`${res.data.product.name} n'est pas un produit stockable`, { variant: 'warning' });
+                return;
+            }
+            const lot = res.data.gs1?.lot || '';
+            const peremption = res.data.gs1?.expiry_date || '';
+            setLignes((prev) => {
+                const vide = prev.findIndex((l) => !l.produit);
+                const nouvelle = { ...ligneVide(), produit: trouve, batch_number: lot, expiry_date: peremption };
+                if (vide === -1) return [...prev, nouvelle];
+                const copie = [...prev];
+                copie[vide] = { ...nouvelle, cle: prev[vide].cle };
+                return copie;
+            });
+            enqueueSnackbar(
+                `${trouve.name} ajouté${lot ? ` — lot ${lot}` : ''} : indiquez la quantité`,
+                { variant: 'success' },
+            );
+        } catch (e) {
+            enqueueSnackbar(
+                e.response?.status === 404 ? `Aucun produit ne correspond au code « ${texte} »` : 'Lecture du code impossible',
+                { variant: 'warning' },
+            );
+        }
+    };
     const retirerLigne = (cle) => setLignes((prev) => (
         prev.length === 1 ? [ligneVide()] : prev.filter((l) => l.cle !== cle)
     ));
@@ -174,6 +211,9 @@ const StockReception = () => {
                         <Chip size="small" color="warning" label={`${incompletes.length} incomplète(s)`} />
                     )}
                     <Box sx={{ flex: 1 }} />
+                    <Button size="small" startIcon={<CameraIcon />} onClick={() => setCameraOuverte(true)}>
+                        Scanner
+                    </Button>
                     <Button size="small" startIcon={<AddIcon />} onClick={ajouterLigne}>
                         Ajouter une ligne
                     </Button>
@@ -185,6 +225,13 @@ const StockReception = () => {
                     </Button>
                 </Stack>
             </Paper>
+
+            <CameraScanner
+                open={cameraOuverte}
+                onClose={() => setCameraOuverte(false)}
+                onDetected={ajouterDepuisScan}
+                title="Scanner un produit reçu"
+            />
 
             {chargement ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
