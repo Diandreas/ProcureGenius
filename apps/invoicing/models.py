@@ -232,6 +232,19 @@ class Product(models.Model):
         help_text=_("Ex: 2-8 °C, température ambiante, -20 °C")
     )
 
+    # Reactif compte en tests (facultatif). Vide = decompte en unites, comme avant.
+    tests_per_unit = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Tests par flacon / kit"),
+        help_text=_("Nombre de tests réalisables avec un flacon ou un kit. Vide : décompte en unités.")
+    )
+    # Examens realises alors qu'aucun flacon n'etait ouvert : rattrapes a l'ouverture suivante.
+    untracked_tests = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("Tests en attente de décompte")
+    )
+
     # Délai de livraison fournisseur (en jours)
     supply_lead_time_days = models.PositiveIntegerField(
         default=7,
@@ -480,6 +493,52 @@ class Product(models.Model):
     def format_price(self):
         """Formate le prix"""
         return f"{self.price:,.2f} CAD"
+
+    def consommer_tests(self, nombre, user=None, notes=""):
+        """
+        Reactif compte en tests (tests_per_unit renseigne) : decompte `nombre`
+        tests sur le flacon ouvert le plus ancien. Quand un flacon est vide, UNE
+        unite sort du stock (mouvement trace) et le flacon suivant du meme lot
+        prend le relais. Sans flacon ouvert, les tests sont memorises dans
+        untracked_tests et rattrapes a la prochaine ouverture.
+
+        Retourne le nombre de tests qui n'ont pas pu etre decomptes.
+        """
+        tpu = self.tests_per_unit or 0
+        restant = int(nombre or 0)
+        if tpu <= 0 or restant <= 0:
+            return 0
+
+        for lot in self.batches.filter(status='opened', quantity_remaining__gt=0).order_by('opened_at'):
+            while restant > 0 and lot.quantity_remaining > 0 and lot.status == 'opened':
+                if not lot.tests_remaining:
+                    lot.tests_remaining = tpu
+                pris = min(lot.tests_remaining, restant)
+                lot.tests_remaining -= pris
+                restant -= pris
+                lot.save(update_fields=['tests_remaining'])
+                if lot.tests_remaining == 0:
+                    # Flacon vide : une unite sort du stock.
+                    self.adjust_stock(
+                        quantity=-1,
+                        movement_type='sale',
+                        reference_type='manual',
+                        notes=((notes + ' — ') if notes else '')
+                        + "flacon/kit terminé (%s tests, lot %s)" % (tpu, lot.batch_number),
+                        user=user,
+                        batch=lot,
+                    )
+                    lot.refresh_from_db()
+                    # Flacon suivant du meme lot, s'il en reste.
+                    lot.tests_remaining = tpu if (lot.quantity_remaining > 0 and lot.status == 'opened') else 0
+                    lot.save(update_fields=['tests_remaining'])
+            if restant <= 0:
+                break
+
+        if restant > 0:
+            Product.objects.filter(pk=self.pk).update(untracked_tests=models.F('untracked_tests') + restant)
+            self.refresh_from_db(fields=['untracked_tests'])
+        return restant
 
     def adjust_stock(self, quantity, movement_type, unit='base', reference_type=None, reference_id=None, notes="", user=None, batch=None):
         """
@@ -731,6 +790,10 @@ class ProductBatch(models.Model):
         verbose_name=_("Motif de clôture")
     )
     closure_notes = models.TextField(blank=True, default='', verbose_name=_("Note de clôture"))
+    # Tests restant dans le flacon ouvert (reactifs comptes en tests uniquement)
+    tests_remaining = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name=_("Tests restants dans le flacon ouvert")
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', verbose_name=_("Statut"))
     notes = models.TextField(blank=True, verbose_name=_("Notes"))
     received_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de réception"))

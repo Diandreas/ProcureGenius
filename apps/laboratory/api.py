@@ -43,6 +43,20 @@ from .serializers import (
 
 
 LAB_ADMIN_ROLES = ('admin', 'manager')
+
+# Rattachement examens <-> reactifs : administrateurs seulement (demande du
+# centre). Memes roles que ceux qui voient les boutons a l'ecran
+# (useCurrentUser.isAdmin), pour qu'un bouton visible soit toujours autorise.
+REACTIF_ADMIN_ROLES = ('admin', 'manager', 'owner')
+
+
+def _refus_si_pas_admin_reactifs(user):
+    if user.is_superuser or getattr(user, 'role', '') in REACTIF_ADMIN_ROLES:
+        return None
+    return Response(
+        {'error': "Seuls les administrateurs peuvent rattacher des réactifs aux examens."},
+        status=status.HTTP_403_FORBIDDEN,
+    )
 LAB_WRITE_ROLES = ('admin', 'manager', 'lab_tech', 'biologist')
 # Biologiste + admin peuvent gérer les tarifs et la sous-traitance
 LAB_PRICING_ROLES = ('admin', 'manager', 'biologist')
@@ -1979,6 +1993,9 @@ class LabTestConsumableListView(APIView):
         return Response(LabTestConsumableSerializer(consumables, many=True).data)
 
     def post(self, request, test_id):
+        refus = _refus_si_pas_admin_reactifs(request.user)
+        if refus:
+            return refus
         test = LabTest.objects.filter(
             id=test_id, organization=request.user.organization
         ).first()
@@ -2031,6 +2048,9 @@ class LabTestConsumableDetailView(APIView):
         ).select_related('product', 'lab_test').first()
 
     def patch(self, request, pk):
+        refus = _refus_si_pas_admin_reactifs(request.user)
+        if refus:
+            return refus
         consumable = self._get_consumable(request, pk)
         if not consumable:
             return Response({'error': 'Introuvable'}, status=status.HTTP_404_NOT_FOUND)
@@ -2042,6 +2062,9 @@ class LabTestConsumableDetailView(APIView):
         return Response(LabTestConsumableSerializer(consumable).data)
 
     def delete(self, request, pk):
+        refus = _refus_si_pas_admin_reactifs(request.user)
+        if refus:
+            return refus
         consumable = self._get_consumable(request, pk)
         if not consumable:
             return Response({'error': 'Introuvable'}, status=status.HTTP_404_NOT_FOUND)

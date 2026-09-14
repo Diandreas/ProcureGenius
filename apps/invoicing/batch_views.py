@@ -146,6 +146,16 @@ class BatchOpenView(APIView):
             maj_produit['default_shelf_life_after_opening'] = stabilite
         if request.data.get('storage_conditions') is not None:
             maj_produit['storage_conditions'] = str(request.data.get('storage_conditions')).strip()[:100]
+        tests_saisis = request.data.get('tests_per_unit')
+        if tests_saisis not in (None, ''):
+            try:
+                tests_saisis = int(tests_saisis)
+                if tests_saisis <= 0:
+                    raise ValueError
+            except (TypeError, ValueError):
+                return Response({'error': 'Le nombre de tests par flacon doit être un entier positif.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+            maj_produit['tests_per_unit'] = tests_saisis
         if maj_produit:
             Product.objects.filter(pk=batch.product_id).update(**maj_produit)
 
@@ -154,6 +164,20 @@ class BatchOpenView(APIView):
         batch.shelf_life_after_opening_days = stabilite
         batch.status = 'opened'
         batch.save(update_fields=['opened_at', 'opened_by', 'shelf_life_after_opening_days', 'status'])
+
+        # Reactif compte en tests : le flacon ouvert demarre plein, puis on
+        # rattrape les examens faits pendant qu'aucun flacon n'etait ouvert.
+        produit = Product.objects.get(pk=batch.product_id)
+        if produit.tests_per_unit:
+            batch.tests_remaining = produit.tests_per_unit
+            batch.save(update_fields=['tests_remaining'])
+            en_attente = produit.untracked_tests or 0
+            if en_attente:
+                Product.objects.filter(pk=produit.pk).update(untracked_tests=0)
+                produit.refresh_from_db()
+                produit.consommer_tests(en_attente, user=request.user,
+                                        notes="Rattrapage d'examens faits sans flacon ouvert")
+            batch.refresh_from_db()
         return Response(ProductBatchSerializer(batch).data)
 
 
@@ -211,7 +235,9 @@ class BatchCloseView(APIView):
             batch.closure_reason = motif
             batch.closure_notes = note
             batch.status = 'expired' if motif == 'expired' else 'depleted'
-            batch.save(update_fields=['closed_at', 'closed_by', 'closure_reason', 'closure_notes', 'status'])
+            batch.tests_remaining = 0 if batch.tests_remaining is not None else None
+            batch.save(update_fields=['closed_at', 'closed_by', 'closure_reason', 'closure_notes', 'status',
+                                      'tests_remaining'])
 
         return Response(ProductBatchSerializer(batch).data)
 
@@ -356,6 +382,18 @@ class OpenedReagentsView(APIView):
                 'default_shelf_life': getattr(batch.product, 'default_shelf_life_after_opening', None),
                 'storage_conditions': batch.product.storage_conditions,
                 'opened_by_name': (batch.opened_by.get_full_name() or batch.opened_by.username) if batch.opened_by_id else None,
+                'tests_per_unit': batch.product.tests_per_unit,
+                'tests_remaining': batch.tests_remaining,
+                # Tests encore disponibles sur tout le lot : flacon en cours + flacons fermes.
+                'tests_total_left': (
+                    (batch.tests_remaining or 0)
+                    + max(0, batch.quantity_remaining - 1) * batch.product.tests_per_unit
+                ) if (batch.product.tests_per_unit and batch.status == 'opened') else None,
+                'low_tests': bool(
+                    batch.product.tests_per_unit and batch.status == 'opened'
+                    and batch.tests_remaining is not None
+                    and batch.tests_remaining <= max(5, batch.product.tests_per_unit // 10)
+                ),
             })
 
         return Response({
@@ -363,6 +401,19 @@ class OpenedReagentsView(APIView):
             'total': len(results),
             'opened_count': sum(1 for b in results if b['status'] == 'opened'),
             'expired_count': sum(1 for b in results if b['is_expired']),
+            # Flacons ouverts presque vides (<= 10 % des tests, au moins 5).
+            'low_tests_count': sum(1 for b in results if b.get('low_tests')),
+            # Reactifs dont des examens ont ete faits sans flacon ouvert.
+            'untracked': [
+                {'product_id': str(p.id), 'name': p.name, 'untracked_tests': p.untracked_tests}
+                for p in Product.objects.filter(
+                    organization=organization, untracked_tests__gt=0
+                ).filter(
+                    Q(category__name__icontains='labo')
+                    | Q(category__name__icontains='réactif')
+                    | Q(category__name__icontains='reactif')
+                ).order_by('-untracked_tests')
+            ],
             # Jamais renvoye jusqu'ici : la carte « Expirent bientot » restait vide.
             'expiring_soon_count': sum(
                 1 for b in results

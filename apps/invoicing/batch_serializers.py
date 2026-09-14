@@ -17,6 +17,7 @@ class ProductBatchSerializer(serializers.ModelSerializer):
             'shelf_life_after_opening_days', 'status', 'notes', 'received_at',
             'created_by', 'effective_expiry', 'is_expired', 'days_until_expiry',
             'opened_by', 'opened_by_name', 'closed_at', 'closure_reason', 'closure_notes',
+            'tests_remaining',
         ]
         read_only_fields = ['id', 'received_at', 'created_by', 'status',
                             'opened_by', 'closed_at', 'closure_reason', 'closure_notes']

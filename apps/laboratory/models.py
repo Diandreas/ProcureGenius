@@ -964,12 +964,20 @@ class LabOrderItem(models.Model):
         consumables = lab_test.consumables.select_related('product').all()
         if consumables.exists():
             for consumable in consumables:
+                note = f"Labo - {self.lab_order.order_number} - {lab_test.test_code} ({consumable.product.name})"
+                if consumable.product.tests_per_unit:
+                    # Reactif compte en tests : quantity_per_test = nombre de TESTS
+                    # consommes ; le flacon ouvert se vide test par test.
+                    consumable.product.consommer_tests(
+                        consumable.quantity_per_test, user=collected_by, notes=note,
+                    )
+                    continue
                 consumable.product.adjust_stock(
                     quantity=-(consumable.quantity_per_test),
                     movement_type='sale',
                     reference_type='manual',
                     reference_id=self.lab_order_id,
-                    notes=f"Labo - {self.lab_order.order_number} - {lab_test.test_code} ({consumable.product.name})",
+                    notes=note,
                     user=collected_by,
                     batch=lot_en_cours(consumable.product, consumable.quantity_per_test),
                 )
