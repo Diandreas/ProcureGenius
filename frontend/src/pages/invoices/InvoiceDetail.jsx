@@ -1350,7 +1350,7 @@ Cordialement`
                     </ListItemIcon>
                     <ListItemText
                       primary={t('invoices:labels.creationDateLabel')}
-                      secondary={formatDate(invoice.created_at)}
+                      secondary={`${formatDate(invoice.created_at)} à ${formatTime(invoice.created_at)}`}
                     />
                   </ListItem>
 
@@ -1382,7 +1382,7 @@ Cordialement`
                     </ListItemIcon>
                     <ListItemText
                       primary={t('invoices:labels.lastUpdate')}
-                      secondary={formatDate(invoice.updated_at)}
+                      secondary={`${formatDate(invoice.updated_at)} à ${formatTime(invoice.updated_at)}`}
                     />
                   </ListItem>
                 </List>

@@ -198,6 +198,12 @@ class OpenedReagentsView(APIView):
             'total': len(results),
             'opened_count': sum(1 for b in results if b['status'] == 'opened'),
             'expired_count': sum(1 for b in results if b['is_expired']),
+            # Jamais renvoye jusqu'ici : la carte « Expirent bientot » restait vide.
+            'expiring_soon_count': sum(
+                1 for b in results
+                if not b['is_expired'] and b['days_until_expiry'] is not None
+                and b['days_until_expiry'] <= 3
+            ),
             'expiring_soon_count': sum(1 for b in results if b['days_until_expiry'] is not None and 0 < b['days_until_expiry'] <= 3),
         })
 

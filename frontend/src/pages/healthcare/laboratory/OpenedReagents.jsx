@@ -109,9 +109,13 @@ const OpenedReagents = () => {
     const handleOpenDialog = async () => {
         setOpenDialogVisible(true);
         try {
-            const res = await productsAPI.list({ product_type: 'physical' });
+            // Sans page_size, l'API ne renvoyait que 20 produits : la plupart des
+            // reactifs etaient introuvables. On charge tout et on ne garde que
+            // ce qui releve du laboratoire.
+            const res = await productsAPI.list({ product_type: 'physical', page_size: 1000 });
             const list = res.data?.results || res.data || [];
-            setProducts(list);
+            const labo = list.filter((p) => p.is_lab_consumable || /labo/i.test(p.category?.name || ''));
+            setProducts(labo.length ? labo : list);
         } catch (error) {
             console.error('Error fetching products:', error);
             enqueueSnackbar('Erreur lors du chargement des produits', { variant: 'error' });

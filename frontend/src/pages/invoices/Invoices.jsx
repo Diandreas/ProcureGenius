@@ -53,7 +53,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { fetchInvoices } from '../../store/slices/invoicesSlice';
-import { formatDate } from '../../utils/formatters';
+import { formatDate, formatTime } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
@@ -359,7 +359,7 @@ function Invoices() {
                 {invoice.invoice_number}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
-                {formatDate(invoice.created_at)}
+                {formatDate(invoice.created_at)} à {formatTime(invoice.created_at)}
               </Typography>
             </Box>
 
@@ -479,7 +479,7 @@ function Invoices() {
               )}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{formatDate(invoice.created_at)}</Typography>
+                <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>{formatDate(invoice.created_at)} à {formatTime(invoice.created_at)}</Typography>
               </Box>
             </Stack>
 
