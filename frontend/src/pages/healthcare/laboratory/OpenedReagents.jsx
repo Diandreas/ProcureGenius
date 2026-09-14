@@ -114,8 +114,8 @@ const OpenedReagents = () => {
             // ce qui releve du laboratoire.
             const res = await productsAPI.list({ product_type: 'physical', page_size: 1000 });
             const list = res.data?.results || res.data || [];
-            const labo = list.filter((p) => p.is_lab_consumable || /labo/i.test(p.category?.name || ''));
-            setProducts(labo.length ? labo : list);
+            // Regle du centre : uniquement les categories « laboratoire » ou « reactif ».
+            setProducts(list.filter((p) => /labo|r[eé]actif/i.test(p.category?.name || '')));
         } catch (error) {
             console.error('Error fetching products:', error);
             enqueueSnackbar('Erreur lors du chargement des produits', { variant: 'error' });

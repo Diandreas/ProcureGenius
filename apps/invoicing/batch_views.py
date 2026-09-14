@@ -165,8 +165,16 @@ class OpenedReagentsView(APIView):
         else:
             filters['status'] = 'opened'
 
+        # Uniquement les categories « laboratoire » ou « reactif » : sans ce
+        # filtre, l'ecran listait aussi les medicaments et le materiel medical.
+        from django.db.models import Q
+        categorie_reactif = (
+            Q(product__category__name__icontains='labo')
+            | Q(product__category__name__icontains='réactif')
+            | Q(product__category__name__icontains='reactif')
+        )
         batches = ProductBatch.objects.filter(
-            **filters
+            categorie_reactif, **filters
         ).select_related('product').order_by('expiry_date')
 
         results = []
