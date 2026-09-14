@@ -61,6 +61,7 @@ import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { productsAPI, suppliersAPI, productCategoriesAPI, warehousesAPI, authAPI } from '../../services/api';
 import batchAPI from '../../services/batchAPI';
+import OpenBatchDialog from '../../components/stock/OpenBatchDialog';
 
 const UNIT_TYPES = [
     { value: 'piece', label: 'Pièce' },
@@ -117,6 +118,8 @@ function ProductForm() {
 
     // Raw product data (pour linked_lab_tests, is_lab_consumable, etc.)
     const [product, setProduct] = useState(null);
+    // Lot en cours d'ouverture : la date d'ouverture est saisie dans la fenetre partagee.
+    const [lotAOuvrir, setLotAOuvrir] = useState(null);
 
     // Batches (step 2)
     const [batches, setBatches] = useState([]);
@@ -425,15 +428,8 @@ function ProductForm() {
         }
     };
 
-    const handleOpenBatch = async (batchId) => {
-        const productId = savedProductId || id;
-        try {
-            await batchAPI.openBatch(batchId);
-            enqueueSnackbar('Lot marqué comme ouvert', { variant: 'success' });
-            await fetchBatches(productId);
-        } catch (error) {
-            console.error('Error opening batch:', error);
-        }
+    const handleOpenBatch = (batch) => {
+        setLotAOuvrir(batch);
     };
 
     const handleDeleteBatch = async () => {
@@ -862,7 +858,7 @@ function ProductForm() {
                                                                     <Stack direction="row" spacing={1} justifyContent="flex-end">
                                                                         {batch.status === 'available' && (
                                                                             <Tooltip title="Ouvrir le flacon/paquet">
-                                                                                <IconButton size="small" onClick={() => handleOpenBatch(batch.id)} color="info">
+                                                                                <IconButton size="small" onClick={() => handleOpenBatch(batch)} color="info">
                                                                                     <LockOpen fontSize="small" />
                                                                                 </IconButton>
                                                                             </Tooltip>
@@ -1016,6 +1012,14 @@ function ProductForm() {
             </Dialog>
 
             {/* Delete Batch Dialog */}
+            <OpenBatchDialog
+                open={!!lotAOuvrir}
+                batch={lotAOuvrir}
+                product={product}
+                onClose={() => setLotAOuvrir(null)}
+                onOpened={() => fetchBatches(savedProductId || id)}
+            />
+
             <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, batch: null })} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
                 <DialogTitle sx={{ fontWeight: 700 }}>Supprimer le lot</DialogTitle>
                 <DialogContent>

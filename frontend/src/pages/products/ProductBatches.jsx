@@ -16,6 +16,7 @@ import {
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import batchAPI from '../../services/batchAPI';
+import OpenBatchDialog from '../../components/stock/OpenBatchDialog';
 import api from '../../services/api';
 
 const statusColors = {
@@ -37,6 +38,8 @@ const ProductBatches = () => {
   const navigate = useNavigate();
   const [batches, setBatches] = useState([]);
   const [product, setProduct] = useState(null);
+  // Lot en cours d'ouverture : la date d'ouverture est saisie dans la fenetre partagee.
+  const [lotAOuvrir, setLotAOuvrir] = useState(null);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, batch: null });
@@ -111,13 +114,8 @@ const ProductBatches = () => {
     }
   };
 
-  const handleOpenBatch = async (batchId) => {
-    try {
-      await batchAPI.openBatch(batchId);
-      fetchData();
-    } catch (error) {
-      console.error('Error opening batch:', error);
-    }
+  const handleOpenBatch = (batch) => {
+    setLotAOuvrir(batch);
   };
 
   const handleDeleteBatch = async () => {
@@ -252,7 +250,7 @@ const ProductBatches = () => {
                   <TableCell>
                     {batch.status === 'available' && (
                       <Tooltip title="Marquer comme ouvert">
-                        <IconButton size="small" onClick={() => handleOpenBatch(batch.id)} color="primary">
+                        <IconButton size="small" onClick={() => handleOpenBatch(batch)} color="primary">
                           <OpenIcon />
                         </IconButton>
                       </Tooltip>
@@ -336,6 +334,14 @@ const ProductBatches = () => {
       </Dialog>
 
       {/* Dialog suppression lot */}
+      <OpenBatchDialog
+        open={!!lotAOuvrir}
+        batch={lotAOuvrir}
+        product={product}
+        onClose={() => setLotAOuvrir(null)}
+        onOpened={() => fetchData()}
+      />
+
       <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, batch: null })} maxWidth="xs" fullWidth>
         <DialogTitle>Supprimer le lot</DialogTitle>
         <DialogContent>

@@ -19,9 +19,34 @@ const batchAPI = {
     return response.data;
   },
 
-  // Open a batch
-  openBatch: async (batchId) => {
-    const response = await api.post(`/batches/${batchId}/open/`);
+  // Ouvrir un lot. La date d'ouverture est saisie et obligatoire :
+  // { opened_at: 'AAAA-MM-JJ', shelf_life_after_opening_days, save_as_product_default, storage_conditions }
+  openBatch: async (batchId, data) => {
+    const response = await api.post(`/batches/${batchId}/open/`, data);
+    return response.data;
+  },
+
+  // Clôturer un lot : { reason: 'depleted'|'expired'|'contaminated'|'qc_failed'|'other', notes }
+  closeBatch: async (batchId, data) => {
+    const response = await api.post(`/batches/${batchId}/close/`, data);
+    return response.data;
+  },
+
+  // Étiquette d'ouverture (PDF) à coller sur le flacon
+  getOpeningLabel: async (batchId) => {
+    const response = await api.get(`/batches/${batchId}/opening-label/`, { responseType: 'blob' });
+    return response.data;
+  },
+
+  // Examens sans réactif rattaché, les plus pratiqués d'abord
+  getTestsWithoutReagents: async (days = 30) => {
+    const response = await api.get('/healthcare/laboratory/reagents/tests-without-consumables/', { params: { days } });
+    return response.data;
+  },
+
+  // Rattacher un réactif à un examen
+  addTestConsumable: async (testId, data) => {
+    const response = await api.post(`/healthcare/laboratory/tests/${testId}/consumables/`, data);
     return response.data;
   },
 
