@@ -53,6 +53,7 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
     const [stabilite, setStabilite] = useState('');
     const [memoriser, setMemoriser] = useState(false);
     const [conservation, setConservation] = useState('');
+    const [testsParFlacon, setTestsParFlacon] = useState('');
     const [imprimer, setImprimer] = useState(true);
     const [tentative, setTentative] = useState(false);
     const [envoi, setEnvoi] = useState(false);
@@ -68,6 +69,7 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
         );
         setMemoriser(false);
         setConservation(product?.storage_conditions || '');
+        setTestsParFlacon(String(product?.tests_per_unit ?? ''));
         setImprimer(true);
         setTentative(false);
     }, [open, batch, product]);
@@ -101,6 +103,11 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
             enqueueSnackbar('La stabilité doit être un nombre de jours positif', { variant: 'warning' });
             return;
         }
+        const tests = parseInt(testsParFlacon, 10);
+        if (testsParFlacon && !(tests > 0)) {
+            enqueueSnackbar('Le nombre de tests par flacon doit être un entier positif', { variant: 'warning' });
+            return;
+        }
         setEnvoi(true);
         try {
             const ouvert = await batchAPI.openBatch(batch.id, {
@@ -108,6 +115,8 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
                 shelf_life_after_opening_days: jours > 0 ? jours : null,
                 save_as_product_default: memoriser && jours > 0,
                 storage_conditions: conservation,
+                // null = ne change rien au reglage existant du reactif
+                tests_per_unit: tests > 0 ? tests : null,
             });
             enqueueSnackbar(`Lot ${batch.batch_number} ouvert`, { variant: 'success' });
             if (imprimer) await imprimerEtiquetteOuverture(batch.id, enqueueSnackbar);
@@ -166,6 +175,19 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
                             <TextField {...params} label="Conservation" helperText="Imprimée sur l'étiquette, retenue pour ce réactif" />
                         )}
                     />
+
+                    <TextField
+                        label="Tests par flacon / kit (facultatif)" type="number" fullWidth
+                        value={testsParFlacon}
+                        onChange={(e) => setTestsParFlacon(e.target.value)}
+                        inputProps={{ min: 1 }}
+                        helperText="Renseigné : chaque examen décompte des tests sur ce flacon, et une unité sort du stock quand il est vide. Vide : décompte en unités, comme aujourd'hui."
+                    />
+                    {product?.untracked_tests > 0 && (
+                        <Alert severity="info">
+                            {product.untracked_tests} test(s) réalisé(s) sans flacon ouvert seront décomptés sur ce flacon.
+                        </Alert>
+                    )}
 
                     {limite ? (
                         <Alert severity={dejaDepasse ? 'error' : 'info'}>

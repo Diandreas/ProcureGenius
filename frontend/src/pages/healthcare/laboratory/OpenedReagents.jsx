@@ -25,6 +25,7 @@ import { useSnackbar } from 'notistack';
 import batchAPI from '../../../services/batchAPI';
 import { productsAPI } from '../../../services/api';
 import OpenBatchDialog, { imprimerEtiquetteOuverture } from '../../../components/stock/OpenBatchDialog';
+import useCurrentUser from '../../../hooks/useCurrentUser';
 
 // Regle du centre : un reactif est un produit dont la categorie contient
 // « laboratoire » ou « reactif ».
@@ -63,8 +64,13 @@ const formatDate = (s) => (s ? new Date(s).toLocaleDateString('fr-FR', { day: '2
 
 const OpenedReagents = () => {
     const { enqueueSnackbar } = useSnackbar();
+    // Ouvrir et cloturer : tout le monde. Rattacher un reactif : administrateurs.
+    const { isAdmin } = useCurrentUser();
     const [loading, setLoading] = useState(false);
-    const [data, setData] = useState({ batches: [], total: 0, opened_count: 0, expired_count: 0, expiring_soon_count: 0 });
+    const [data, setData] = useState({
+        batches: [], total: 0, opened_count: 0, expired_count: 0, expiring_soon_count: 0,
+        low_tests_count: 0, untracked: [],
+    });
     const [showAll, setShowAll] = useState(false);
 
     // Liste des reactifs (chargee une fois : ouverture et rattachement)
@@ -174,6 +180,7 @@ const OpenedReagents = () => {
                 name: ligne.product_name,
                 default_shelf_life_after_opening: ligne.default_shelf_life,
                 storage_conditions: ligne.storage_conditions,
+                tests_per_unit: ligne.tests_per_unit,
             },
         });
     };
@@ -283,6 +290,18 @@ const OpenedReagents = () => {
                 </Alert>
             )}
 
+            {data.low_tests_count > 0 && (
+                <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 2, borderRadius: 2 }}>
+                    <strong>{data.low_tests_count} flacon(s) presque vide(s)</strong> : préparez le flacon suivant.
+                </Alert>
+            )}
+            {(data.untracked || []).length > 0 && (
+                <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+                    <strong>Examens faits sans flacon ouvert</strong> — ils seront décomptés à la prochaine ouverture :{' '}
+                    {data.untracked.map((u) => `${u.name} (${u.untracked_tests} test(s))`).join(', ')}
+                </Alert>
+            )}
+
             {/* Tableau des lots */}
             <Card sx={{ borderRadius: 3, mb: 3 }}>
                 <TableContainer sx={{ overflowX: 'auto' }}>
@@ -364,7 +383,17 @@ const OpenedReagents = () => {
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="h6" fontWeight={700} color="primary">{b.quantity_remaining}</Typography>
-                                            <Typography variant="caption" color="text.secondary">/ {b.quantity} total</Typography>
+                                            <Typography variant="caption" color="text.secondary" display="block">/ {b.quantity} total</Typography>
+                                            {b.tests_per_unit && estOuvert && (
+                                                <Tooltip title="Tests restants dans le flacon en cours · tests disponibles sur tout le lot">
+                                                    <Chip
+                                                        size="small"
+                                                        color={b.low_tests ? 'warning' : 'default'}
+                                                        sx={{ mt: 0.5, fontWeight: 600 }}
+                                                        label={`${b.tests_remaining ?? b.tests_per_unit}/${b.tests_per_unit} tests · ${b.tests_total_left ?? '-'} au total`}
+                                                    />
+                                                </Tooltip>
+                                            )}
                                         </TableCell>
                                         <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                                             {estOuvert ? (
@@ -430,9 +459,13 @@ const OpenedReagents = () => {
                                             <TableCell>{e.category || '-'}</TableCell>
                                             <TableCell align="right"><Chip size="small" label={e.volume} /></TableCell>
                                             <TableCell align="right">
-                                                <Button size="small" startIcon={<LinkIcon />} onClick={() => demanderRattachement(e)}>
-                                                    Rattacher
-                                                </Button>
+                                                {isAdmin ? (
+                                                    <Button size="small" startIcon={<LinkIcon />} onClick={() => demanderRattachement(e)}>
+                                                        Rattacher
+                                                    </Button>
+                                                ) : (
+                                                    <Typography variant="caption" color="text.secondary">Réservé aux administrateurs</Typography>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -552,7 +585,9 @@ const OpenedReagents = () => {
                         />
                         <TextField label="Quantité consommée par examen" type="number" inputProps={{ min: 1 }}
                             value={quantiteParTest} onChange={(e) => setQuantiteParTest(e.target.value)}
-                            helperText="Ex. 1 cassette par test, 1 bandelette par examen d'urine" />
+                            helperText={reactifLie?.tests_per_unit
+                                ? `Ce réactif est compté en tests (${reactifLie.tests_per_unit} par flacon) : indiquez le nombre de tests par examen`
+                                : "Ex. 1 cassette par test, 1 bandelette par examen d'urine"} />
                         <Typography variant="caption" color="text.secondary">
                             Vous pourrez rattacher d&apos;autres réactifs à cet examen depuis le catalogue des examens.
                         </Typography>

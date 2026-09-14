@@ -495,15 +495,20 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                                                         <TextField
                                                             type="number"
                                                             size="small"
+                                                            disabled={!isAdmin}
                                                             value={c.quantity_per_test}
                                                             onChange={e => handleUpdateConsumableQty(c.id, parseInt(e.target.value) || 1)}
                                                             inputProps={{ min: 1, style: { width: 50, textAlign: 'center' } }}
                                                         />
                                                     </TableCell>
                                                     <TableCell align="center">
-                                                        <IconButton size="small" color="error" onClick={() => handleDeleteConsumable(c.id)}>
-                                                            <DeleteIcon fontSize="small" />
-                                                        </IconButton>
+                                                        {isAdmin ? (
+                                                            <IconButton size="small" color="error" onClick={() => handleDeleteConsumable(c.id)}>
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        ) : (
+                                                            <Typography variant="caption" color="text.secondary">—</Typography>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -514,8 +519,14 @@ const LabTestFormModal = ({ open, onClose, test, onSaved, initialTab }) => {
                                 )}
                             </Grid>
                         )}
-                        {/* Formulaire ajout consommable (seulement si test existe) */}
-                        {test?.id ? (
+                        {/* Formulaire ajout consommable (seulement si test existe, administrateurs seulement) */}
+                        {test?.id && !isAdmin ? (
+                            <Grid item xs={12}>
+                                <Alert severity="info" sx={{ py: 0.5 }}>
+                                    Seuls les administrateurs peuvent rattacher ou retirer des réactifs.
+                                </Alert>
+                            </Grid>
+                        ) : test?.id ? (
                             <>
                                 <Grid item xs={12} sm={3}>
                                     <TextField
