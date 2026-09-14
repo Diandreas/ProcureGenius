@@ -78,6 +78,7 @@ urlpatterns = [
     path('subcontractors/<uuid:subcontractor_id>/batch-order/', api.SubcontractorBatchOrderView.as_view(), name='subcontractor-batch-order'),
 
     # Lab Test Consumables (stock links)
+    path('reagents/tests-without-consumables/', api.LabTestsWithoutConsumablesView.as_view(), name='tests-without-consumables'),
     path('tests/<uuid:test_id>/consumables/', api.LabTestConsumableListView.as_view(), name='test-consumables'),
     path('consumables/<uuid:pk>/', api.LabTestConsumableDetailView.as_view(), name='consumable-detail'),
 

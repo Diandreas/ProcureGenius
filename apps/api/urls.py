@@ -10,7 +10,8 @@ from apps.accounts import api_views as accounts_api_views
 from apps.accounts import auth_api_views
 from apps.invoicing.batch_views import (
     ProductBatchListCreateView, ProductBatchDetailView,
-    BatchOpenView, ExpiringBatchesView, OpenedReagentsView, BatchDeleteView
+    BatchOpenView, ExpiringBatchesView, OpenedReagentsView, BatchDeleteView,
+    BatchCloseView, BatchOpeningLabelView,
 )
 from .views import StockMovementCancelView
 from . import erpnext_export_views
@@ -138,6 +139,8 @@ urlpatterns = [
     path('products/<uuid:product_id>/batches/', ProductBatchListCreateView.as_view(), name='product-batches'),
     path('batches/<uuid:batch_id>/', ProductBatchDetailView.as_view(), name='batch-detail'),
     path('batches/<uuid:batch_id>/open/', BatchOpenView.as_view(), name='batch-open'),
+    path('batches/<uuid:batch_id>/close/', BatchCloseView.as_view(), name='batch-close'),
+    path('batches/<uuid:batch_id>/opening-label/', BatchOpeningLabelView.as_view(), name='batch-opening-label'),
     path('batches/<uuid:batch_id>/delete/', BatchDeleteView.as_view(), name='batch-delete'),
     path('batches/expiring/', ExpiringBatchesView.as_view(), name='batches-expiring'),
     path('batches/opened-reagents/', OpenedReagentsView.as_view(), name='opened-reagents'),

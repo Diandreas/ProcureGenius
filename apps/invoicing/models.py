@@ -223,6 +223,15 @@ class Product(models.Model):
         help_text=_("Nombre de jours de validité après ouverture d'un flacon/lot. Ex: 14 jours pour un réactif.")
     )
 
+    # Conditions de conservation (reactifs labo), imprimees sur l'etiquette d'ouverture
+    storage_conditions = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name=_("Conditions de conservation"),
+        help_text=_("Ex: 2-8 °C, température ambiante, -20 °C")
+    )
+
     # Délai de livraison fournisseur (en jours)
     supply_lead_time_days = models.PositiveIntegerField(
         default=7,
@@ -699,6 +708,29 @@ class ProductBatch(models.Model):
         verbose_name=_("Durée de vie après ouverture (jours)"),
         help_text=_("Ex: 14 jours pour réactifs")
     )
+    opened_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='opened_batches', verbose_name=_("Ouvert par")
+    )
+
+    # Cloture d'un lot de reactif (flacon termine ou mis au rebut)
+    CLOSURE_REASONS = [
+        ('depleted', 'Flacon terminé'),
+        ('expired', 'Périmé'),
+        ('contaminated', 'Contaminé / altéré'),
+        ('qc_failed', 'Contrôle qualité non conforme'),
+        ('other', 'Autre'),
+    ]
+    closed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Clôturé le"))
+    closed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='closed_batches', verbose_name=_("Clôturé par")
+    )
+    closure_reason = models.CharField(
+        max_length=20, choices=CLOSURE_REASONS, blank=True, default='',
+        verbose_name=_("Motif de clôture")
+    )
+    closure_notes = models.TextField(blank=True, default='', verbose_name=_("Note de clôture"))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', verbose_name=_("Statut"))
     notes = models.TextField(blank=True, verbose_name=_("Notes"))
     received_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de réception"))

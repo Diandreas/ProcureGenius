@@ -94,6 +94,17 @@ class BatchOpenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, batch_id):
+        """
+        Ouvre un lot. La date d'ouverture est SAISIE et obligatoire : un flacon
+        est souvent ouvert a la paillasse et enregistre plus tard, la date du
+        clic ne dit pas la verite.
+
+        Corps : {"opened_at": "AAAA-MM-JJ", "shelf_life_after_opening_days": 30,
+                 "save_as_product_default": true, "storage_conditions": "2-8 °C"}
+        """
+        from datetime import datetime, time as dtime
+        from .models import Product
+
         organization = request.user.organization
         batch = get_object_or_404(ProductBatch, id=batch_id, organization=organization)
 
@@ -103,8 +114,152 @@ class BatchOpenView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        batch.open_batch()
+        brut = str(request.data.get('opened_at') or '').strip()
+        if not brut:
+            return Response({'error': "La date d'ouverture est obligatoire."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            jour = date.fromisoformat(brut[:10])
+        except ValueError:
+            return Response({'error': "Date d'ouverture invalide."}, status=status.HTTP_400_BAD_REQUEST)
+        if jour > date.today():
+            return Response({'error': "La date d'ouverture ne peut pas être dans le futur."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        stabilite = request.data.get('shelf_life_after_opening_days')
+        if stabilite in (None, ''):
+            stabilite = batch.shelf_life_after_opening_days or batch.product.default_shelf_life_after_opening
+        else:
+            try:
+                stabilite = int(stabilite)
+                if stabilite <= 0:
+                    raise ValueError
+            except (TypeError, ValueError):
+                return Response({'error': "La stabilité après ouverture doit être un nombre de jours positif."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        # Parametres du reactif, memorises sur le produit. update() plutot que
+        # save() : Product.save() lance une validation complete qui peut buter
+        # sur d'anciennes donnees sans rapport avec l'ouverture.
+        maj_produit = {}
+        if request.data.get('save_as_product_default') and stabilite:
+            maj_produit['default_shelf_life_after_opening'] = stabilite
+        if request.data.get('storage_conditions') is not None:
+            maj_produit['storage_conditions'] = str(request.data.get('storage_conditions')).strip()[:100]
+        if maj_produit:
+            Product.objects.filter(pk=batch.product_id).update(**maj_produit)
+
+        batch.opened_at = timezone.make_aware(datetime.combine(jour, dtime(8, 0)))
+        batch.opened_by = request.user
+        batch.shelf_life_after_opening_days = stabilite
+        batch.status = 'opened'
+        batch.save(update_fields=['opened_at', 'opened_by', 'shelf_life_after_opening_days', 'status'])
         return Response(ProductBatchSerializer(batch).data)
+
+
+class BatchCloseView(APIView):
+    """
+    Cloture un lot : flacon termine, perime, contamine, CQ non conforme, autre.
+    La quantite restante eventuelle sort du stock — perte tracee avec son motif,
+    ou simple ajustement si le flacon est termine.
+    """
+    permission_classes = [IsAuthenticated]
+
+    MOTIFS = {
+        'depleted': ('adjustment', None, 'Flacon terminé'),
+        'expired': ('loss', 'expired', 'Périmé'),
+        'contaminated': ('loss', 'damaged', 'Contaminé / altéré'),
+        'qc_failed': ('loss', 'quality_issue', 'Contrôle qualité non conforme'),
+        'other': ('loss', 'other', 'Autre'),
+    }
+
+    def post(self, request, batch_id):
+        from django.db import transaction
+
+        organization = request.user.organization
+        batch = get_object_or_404(ProductBatch, id=batch_id, organization=organization)
+        if batch.closed_at:
+            return Response({'error': 'Ce lot est déjà clôturé.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        motif = request.data.get('reason')
+        if motif not in self.MOTIFS:
+            return Response({'error': 'Motif de clôture invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+        note = str(request.data.get('notes') or '').strip()
+        type_mouvement, raison_perte, libelle = self.MOTIFS[motif]
+
+        with transaction.atomic():
+            restant = batch.quantity_remaining or 0
+            if restant > 0:
+                mouvement = batch.product.adjust_stock(
+                    quantity=-restant,
+                    movement_type=type_mouvement,
+                    reference_type='manual',
+                    notes="Clôture lot %s — %s%s" % (batch.batch_number, libelle, (' : ' + note) if note else ''),
+                    user=request.user,
+                    batch=batch,
+                )
+                if mouvement and raison_perte:
+                    mouvement.loss_reason = raison_perte
+                    mouvement.loss_description = note
+                    if batch.product.cost_price:
+                        mouvement.loss_value = batch.product.cost_price * restant
+                    mouvement.save(update_fields=['loss_reason', 'loss_description', 'loss_value'])
+                batch.refresh_from_db()
+
+            batch.closed_at = timezone.now()
+            batch.closed_by = request.user
+            batch.closure_reason = motif
+            batch.closure_notes = note
+            batch.status = 'expired' if motif == 'expired' else 'depleted'
+            batch.save(update_fields=['closed_at', 'closed_by', 'closure_reason', 'closure_notes', 'status'])
+
+        return Response(ProductBatchSerializer(batch).data)
+
+
+class BatchOpeningLabelView(APIView):
+    """Etiquette d'ouverture (PDF 60 x 40 mm) a coller sur le flacon."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, batch_id):
+        from django.http import HttpResponse
+        from django.utils.html import escape
+        from weasyprint import HTML
+
+        batch = get_object_or_404(ProductBatch, id=batch_id, organization=request.user.organization)
+        if not batch.opened_at:
+            return Response({'error': "Ce lot n'est pas ouvert."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ouvert_le = timezone.localtime(batch.opened_at).strftime('%d/%m/%Y')
+        limite = batch.effective_expiry.strftime('%d/%m/%Y') if batch.effective_expiry else '-'
+        par = batch.opened_by
+        nom = (par.get_full_name() or par.username) if par else ''
+        initiales = ''.join(m[0] for m in nom.split() if m).upper()[:3]
+        conservation = batch.product.storage_conditions or ''
+        stabilite = ('%s j après ouverture' % batch.shelf_life_after_opening_days
+                     if batch.shelf_life_after_opening_days else '')
+
+        lignes = [
+            "<div class='nom'>%s</div>" % escape(batch.product.name),
+            "<div>Lot <b>%s</b></div>" % escape(batch.batch_number),
+            "<div>Ouvert le <b>%s</b>%s</div>" % (ouvert_le, (' par <b>%s</b>' % escape(initiales)) if initiales else ''),
+            "<div class='limite'>À utiliser avant : %s</div>" % limite,
+        ]
+        if stabilite or conservation:
+            lignes.append("<div class='petit'>%s</div>" % escape(' · '.join(x for x in (stabilite, conservation) if x)))
+
+        html = (
+            "<!DOCTYPE html><html><head><meta charset='utf-8'><style>"
+            "@page { size: 60mm 40mm; margin: 2mm; }"
+            "body { font-family: Helvetica, Arial, sans-serif; font-size: 7.5pt; line-height: 1.3; margin: 0; }"
+            ".nom { font-weight: bold; font-size: 8.5pt; margin-bottom: 1mm; }"
+            ".limite { font-weight: bold; font-size: 9pt; margin-top: 1mm; border-top: 0.3mm solid #000; padding-top: 1mm; }"
+            ".petit { font-size: 6.5pt; color: #333; margin-top: 0.5mm; }"
+            "</style></head><body>" + ''.join(lignes) + "</body></html>"
+        )
+        pdf = HTML(string=html).write_pdf()
+        reponse = HttpResponse(pdf, content_type='application/pdf')
+        reponse['Content-Disposition'] = 'inline; filename="etiquette-ouverture-%s.pdf"' % batch.batch_number
+        return reponse
 
 
 class ExpiringBatchesView(APIView):
@@ -175,7 +330,7 @@ class OpenedReagentsView(APIView):
         )
         batches = ProductBatch.objects.filter(
             categorie_reactif, **filters
-        ).select_related('product').order_by('expiry_date')
+        ).select_related('product', 'opened_by').order_by('expiry_date')
 
         results = []
         for batch in batches:
@@ -199,6 +354,8 @@ class OpenedReagentsView(APIView):
                 'status': batch.status,
                 'is_expired': batch.is_expired,
                 'default_shelf_life': getattr(batch.product, 'default_shelf_life_after_opening', None),
+                'storage_conditions': batch.product.storage_conditions,
+                'opened_by_name': (batch.opened_by.get_full_name() or batch.opened_by.username) if batch.opened_by_id else None,
             })
 
         return Response({

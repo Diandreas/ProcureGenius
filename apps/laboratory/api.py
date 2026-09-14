@@ -2413,3 +2413,49 @@ class LabPanelStatsDetailView(APIView):
             'pages': paginator.num_pages,
             'page': page_num,
         })
+
+
+class LabTestsWithoutConsumablesView(APIView):
+    """
+    GET /healthcare/laboratory/reagents/tests-without-consumables/?days=30
+
+    Examens actifs sans aucun reactif rattache, les plus pratiques d'abord :
+    tant qu'un examen n'a pas de reactif, sa realisation ne decompte rien du
+    stock (ex. NFS, Hepatite B).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from datetime import timedelta
+        from django.db.models import Count
+
+        try:
+            jours = max(1, min(int(request.query_params.get('days', 30)), 365))
+        except (TypeError, ValueError):
+            jours = 30
+        organisation = request.user.organization
+        depuis = timezone.now() - timedelta(days=jours)
+
+        volumes = dict(
+            LabOrderItem.objects.filter(
+                lab_order__organization=organisation, sample_collected_at__gte=depuis
+            ).values('lab_test').annotate(n=Count('id')).values_list('lab_test', 'n')
+        )
+        tests = LabTest.objects.filter(
+            organization=organisation, is_active=True, consumables__isnull=True
+        ).select_related('category')
+
+        resultats = sorted(
+            (
+                {
+                    'id': str(t.id),
+                    'name': t.name,
+                    'test_code': t.test_code,
+                    'category': t.category.name if t.category_id else None,
+                    'volume': volumes.get(t.id, 0),
+                }
+                for t in tests
+            ),
+            key=lambda x: (-x['volume'], x['name']),
+        )
+        return Response({'days': jours, 'count': len(resultats), 'tests': resultats})

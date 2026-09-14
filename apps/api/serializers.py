@@ -199,7 +199,7 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             'is_low_stock', 'is_out_of_stock', 'is_expired', 'days_until_expiration', 'is_active',
             'base_unit', 'sell_unit', 'conversion_factor',
             'ordering_cost', 'holding_cost_percent',
-            'expiration_date', 'supply_lead_time_days', 'default_shelf_life_after_opening',
+            'expiration_date', 'supply_lead_time_days', 'default_shelf_life_after_opening', 'storage_conditions',
             'total_invoices', 'total_sales_amount', 'unique_clients_count',
             'last_sale_date', 'active_contracts_count',
             'created_at', 'updated_at',
