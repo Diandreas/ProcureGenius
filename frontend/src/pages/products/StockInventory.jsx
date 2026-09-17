@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import {
     Search as SearchIcon, Inventory as InventoryIcon, Save as SaveIcon, PhotoCamera as CameraIcon,
+    ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -39,7 +40,10 @@ const StockInventory = () => {
     const [recherche, setRecherche] = useState('');
     const [cameraOuverte, setCameraOuverte] = useState(false);
     const [categorie, setCategorie] = useState('');
-    const [comptes, setComptes] = useState({});
+    const [comptes, setComptes] = useState({});        // par produit (produit a 0 ou 1 lot)
+    const [comptesLots, setComptesLots] = useState({}); // par lot (produit multi-lots)
+    const [lots, setLots] = useState({});               // product_id -> lots actifs
+    const [deplies, setDeplies] = useState({});
     const [reference, setReference] = useState('INV-' + aujourdhui());
     const [envoi, setEnvoi] = useState(false);
 
@@ -60,6 +64,15 @@ const StockInventory = () => {
             })
             .catch(() => enqueueSnackbar('Impossible de charger les produits', { variant: 'error' }))
             .finally(() => setChargement(false));
+    }, [autorise, enqueueSnackbar]);
+
+    // Les lots actifs de tous les produits, en un seul appel : un produit a
+    // plusieurs lots se compte lot par lot, chacun ayant sa peremption.
+    useEffect(() => {
+        if (!autorise) return;
+        productsAPI.getInventoryBatches()
+            .then((res) => setLots(res.data?.batches || {}))
+            .catch(() => enqueueSnackbar('Impossible de charger les lots', { variant: 'warning' }));
     }, [autorise, enqueueSnackbar]);
 
     const categories = useMemo(() => {
@@ -94,18 +107,45 @@ const StockInventory = () => {
         }
     };
 
-    const lignesSaisies = useMemo(
-        () => Object.entries(comptes)
-            .filter(([, v]) => v !== '' && v !== null && v !== undefined)
-            .map(([id, v]) => ({ id, counted: parseInt(v, 10) }))
-            .filter((l) => Number.isFinite(l.counted) && l.counted >= 0),
-        [comptes],
-    );
+    const lotsDe = (produitId) => lots[produitId] || [];
+    const multiLots = (produitId) => lotsDe(produitId).length >= 2;
 
-    const avecEcart = useMemo(() => lignesSaisies.filter((l) => {
-        const p = produits.find((x) => x.id === l.id);
-        return p && l.counted !== (p.stock_quantity ?? 0);
-    }), [lignesSaisies, produits]);
+    // Un produit multi-lots est compte lot par lot ; les autres gardent la
+    // saisie globale.
+    const lignesSaisies = useMemo(() => {
+        const valide = (v) => {
+            if (v === '' || v === null || v === undefined) return null;
+            const n = parseInt(v, 10);
+            return Number.isFinite(n) && n >= 0 ? n : null;
+        };
+        const lignes = [];
+        Object.entries(comptes).forEach(([id, v]) => {
+            const n = valide(v);
+            if (n !== null && !multiLots(id)) {
+                const p = produits.find((x) => x.id === id);
+                lignes.push({ product_id: id, counted: n, theorique: p?.stock_quantity ?? 0 });
+            }
+        });
+        Object.entries(comptesLots).forEach(([batchId, v]) => {
+            const n = valide(v);
+            if (n === null) return;
+            const entree = Object.entries(lots).find(([, l]) => l.some((b) => b.id === batchId));
+            if (!entree) return;
+            const [produitId, liste] = entree;
+            const lot = liste.find((b) => b.id === batchId);
+            lignes.push({
+                product_id: produitId, batch_id: batchId, counted: n,
+                theorique: lot.quantity_remaining, batch_number: lot.batch_number,
+            });
+        });
+        return lignes;
+    }, [comptes, comptesLots, produits, lots]);
+
+    const avecEcart = useMemo(
+        () => lignesSaisies.filter((l) => l.counted !== l.theorique),
+        [lignesSaisies],
+    );
+    const nbLignesLots = lignesSaisies.filter((l) => l.batch_id).length;
 
     const valider = async () => {
         if (lignesSaisies.length === 0) {
@@ -113,15 +153,21 @@ const StockInventory = () => {
             return;
         }
         const msg = avecEcart.length === 0
-            ? `Aucun écart sur les ${lignesSaisies.length} produit(s) comptés. Enregistrer quand même l'inventaire ?`
-            : `${avecEcart.length} produit(s) présentent un écart et seront ajustés.\n\nAppliquer l'inventaire « ${reference} » ?`;
+            ? `Aucun écart sur les ${lignesSaisies.length} ligne(s) comptée(s). Enregistrer quand même l'inventaire ?`
+            : `${avecEcart.length} ligne(s) présentent un écart et seront ajustées`
+              + `${nbLignesLots ? ` (dont ${nbLignesLots} comptage(s) de lot)` : ''}.`
+              + `\n\nAppliquer l'inventaire « ${reference} » ?`;
         if (!window.confirm(msg)) return;
 
         setEnvoi(true);
         try {
             const res = await productsAPI.applyInventory({
                 reference,
-                lines: lignesSaisies.map((l) => ({ product_id: l.id, counted: l.counted })),
+                lines: lignesSaisies.map((l) => (
+                    l.batch_id
+                        ? { product_id: l.product_id, batch_id: l.batch_id, counted: l.counted }
+                        : { product_id: l.product_id, counted: l.counted }
+                )),
             });
             const d = res.data;
             enqueueSnackbar(
@@ -129,6 +175,7 @@ const StockInventory = () => {
                 { variant: 'success' },
             );
             setComptes({});
+            setComptesLots({});
             navigate('/products');
         } catch (e) {
             const d = e.response?.data;
@@ -202,7 +249,10 @@ const StockInventory = () => {
 
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                     <Chip size="small" label={`${visibles.length} produit(s) affiché(s)`} />
-                    <Chip size="small" color="primary" label={`${lignesSaisies.length} compté(s)`} />
+                    <Chip size="small" color="primary" label={`${lignesSaisies.length} ligne(s) comptée(s)`} />
+                    {nbLignesLots > 0 && (
+                        <Chip size="small" variant="outlined" label={`dont ${nbLignesLots} lot(s)`} />
+                    )}
                     <Chip
                         size="small"
                         color={avecEcart.length ? 'warning' : 'success'}
@@ -242,41 +292,119 @@ const StockInventory = () => {
                             <TableBody>
                                 {visibles.map((p) => {
                                     const theorique = p.stock_quantity ?? 0;
+                                    const sesLots = lotsDe(p.id);
+                                    const parLot = sesLots.length >= 2;
+                                    const deplie = !!deplies[p.id];
+
+                                    // Produit multi-lots : on additionne les lots comptes
+                                    // et on montre l'ecart reellement applique.
+                                    const comptesDuProduit = sesLots
+                                        .map((b) => ({ b, v: comptesLots[b.id] }))
+                                        .filter(({ v }) => v !== '' && v !== undefined && v !== null
+                                            && Number.isFinite(parseInt(v, 10)));
+                                    const sommeComptee = comptesDuProduit
+                                        .reduce((s, { v }) => s + parseInt(v, 10), 0);
+                                    const ecartLots = comptesDuProduit
+                                        .reduce((s, { b, v }) => s + (parseInt(v, 10) - b.quantity_remaining), 0);
+
                                     const brut = comptes[p.id];
                                     const compte = brut === '' || brut === undefined ? null : parseInt(brut, 10);
-                                    const ecart = compte === null || !Number.isFinite(compte) ? null : compte - theorique;
+                                    const ecart = parLot
+                                        ? (comptesDuProduit.length ? ecartLots : null)
+                                        : (compte === null || !Number.isFinite(compte) ? null : compte - theorique);
+
+                                    const pastilleEcart = (valeur) => (valeur === null ? (
+                                        <Typography variant="caption" color="text.disabled">—</Typography>
+                                    ) : (
+                                        <Chip
+                                            size="small"
+                                            label={valeur > 0 ? `+${valeur}` : valeur}
+                                            color={valeur === 0 ? 'success' : valeur > 0 ? 'info' : 'warning'}
+                                            variant={valeur === 0 ? 'outlined' : 'filled'}
+                                            sx={{ height: 22, fontSize: '0.72rem' }}
+                                        />
+                                    ));
+
                                     return (
-                                        <TableRow key={p.id} hover>
-                                            <TableCell sx={{ fontSize: '0.82rem' }}>
-                                                {p.name}
-                                                <Typography variant="caption" color="text.secondary" display="block">
-                                                    {p.reference}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell align="right" sx={{ fontSize: '0.82rem' }}>{theorique}</TableCell>
-                                            <TableCell align="right" sx={{ width: 120 }}>
-                                                <TextField
-                                                    size="small" type="number" placeholder="—"
-                                                    value={brut ?? ''}
-                                                    onChange={(e) => setComptes({ ...comptes, [p.id]: e.target.value })}
-                                                    inputProps={{ min: 0, style: { textAlign: 'right', padding: '6px 8px' } }}
-                                                    sx={{ width: 100 }}
-                                                />
-                                            </TableCell>
-                                            <TableCell align="right" sx={{ width: 90 }}>
-                                                {ecart === null ? (
-                                                    <Typography variant="caption" color="text.disabled">—</Typography>
-                                                ) : (
-                                                    <Chip
-                                                        size="small"
-                                                        label={ecart > 0 ? `+${ecart}` : ecart}
-                                                        color={ecart === 0 ? 'success' : ecart > 0 ? 'info' : 'warning'}
-                                                        variant={ecart === 0 ? 'outlined' : 'filled'}
-                                                        sx={{ height: 22, fontSize: '0.72rem' }}
-                                                    />
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
+                                        <React.Fragment key={p.id}>
+                                            <TableRow hover>
+                                                <TableCell sx={{ fontSize: '0.82rem' }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                        {parLot && (
+                                                            <IconButton size="small" sx={{ p: 0.25 }}
+                                                                onClick={() => setDeplies({ ...deplies, [p.id]: !deplie })}>
+                                                                {deplie ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                                                            </IconButton>
+                                                        )}
+                                                        <Box>
+                                                            {p.name}
+                                                            <Typography variant="caption" color="text.secondary" display="block">
+                                                                {p.reference}
+                                                                {parLot && ` · ${sesLots.length} lots`}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ fontSize: '0.82rem' }}>{theorique}</TableCell>
+                                                <TableCell align="right" sx={{ width: 120 }}>
+                                                    {parLot ? (
+                                                        <Tooltip title="Ce produit a plusieurs lots : comptez-les un par un">
+                                                            <Chip
+                                                                size="small"
+                                                                variant={comptesDuProduit.length ? 'filled' : 'outlined'}
+                                                                color={comptesDuProduit.length ? 'primary' : 'default'}
+                                                                onClick={() => setDeplies({ ...deplies, [p.id]: !deplie })}
+                                                                label={comptesDuProduit.length
+                                                                    ? `${sommeComptee} (${comptesDuProduit.length}/${sesLots.length} lots)`
+                                                                    : 'Compter par lot'}
+                                                                sx={{ height: 22, fontSize: '0.72rem', cursor: 'pointer' }}
+                                                            />
+                                                        </Tooltip>
+                                                    ) : (
+                                                        <TextField
+                                                            size="small" type="number" placeholder="—"
+                                                            value={brut ?? ''}
+                                                            onChange={(e) => setComptes({ ...comptes, [p.id]: e.target.value })}
+                                                            inputProps={{ min: 0, style: { textAlign: 'right', padding: '6px 8px' } }}
+                                                            sx={{ width: 100 }}
+                                                        />
+                                                    )}
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ width: 90 }}>{pastilleEcart(ecart)}</TableCell>
+                                            </TableRow>
+
+                                            {parLot && deplie && sesLots.map((b) => {
+                                                const brutLot = comptesLots[b.id];
+                                                const compteLot = brutLot === '' || brutLot === undefined
+                                                    ? null : parseInt(brutLot, 10);
+                                                const ecartLot = compteLot === null || !Number.isFinite(compteLot)
+                                                    ? null : compteLot - b.quantity_remaining;
+                                                return (
+                                                    <TableRow key={b.id} sx={{ bgcolor: 'action.hover' }}>
+                                                        <TableCell sx={{ fontSize: '0.78rem', pl: 5 }}>
+                                                            Lot {b.batch_number}
+                                                            <Typography variant="caption" color="text.secondary" display="block">
+                                                                Péremption {b.expiry_date
+                                                                    ? new Date(b.expiry_date).toLocaleDateString('fr-FR')
+                                                                    : '—'}
+                                                                {b.status === 'opened' && ' · ouvert'}
+                                                            </Typography>
+                                                        </TableCell>
+                                                        <TableCell align="right" sx={{ fontSize: '0.78rem' }}>{b.quantity_remaining}</TableCell>
+                                                        <TableCell align="right">
+                                                            <TextField
+                                                                size="small" type="number" placeholder="—"
+                                                                value={brutLot ?? ''}
+                                                                onChange={(e) => setComptesLots({ ...comptesLots, [b.id]: e.target.value })}
+                                                                inputProps={{ min: 0, style: { textAlign: 'right', padding: '6px 8px' } }}
+                                                                sx={{ width: 100 }}
+                                                            />
+                                                        </TableCell>
+                                                        <TableCell align="right">{pastilleEcart(ecartLot)}</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </React.Fragment>
                                     );
                                 })}
                             </TableBody>

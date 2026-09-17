@@ -1848,6 +1848,38 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             'loss_value': float(loss_value)
         })
 
+    @action(detail=False, methods=['get'], url_path='inventory-batches')
+    def inventory_batches(self, request):
+        """
+        Lots actifs de tous les produits physiques, en un seul appel.
+
+        L'ecran d'inventaire couvre des centaines de produits : interroger les
+        lots produit par produit ferait autant d'appels.
+        Reponse : {"batches": {"<product_id>": [{id, batch_number, expiry_date,
+                   quantity_remaining, status}, ...]}}
+        """
+        from apps.invoicing.models import ProductBatch
+        from collections import defaultdict
+
+        lots = (ProductBatch.objects
+                .filter(organization=request.user.organization,
+                        status__in=['available', 'opened'],
+                        product__product_type='physical')
+                .order_by('expiry_date', 'received_at')
+                .values('id', 'product_id', 'batch_number', 'expiry_date',
+                        'quantity_remaining', 'status'))
+
+        par_produit = defaultdict(list)
+        for lot in lots:
+            par_produit[str(lot['product_id'])].append({
+                'id': str(lot['id']),
+                'batch_number': lot['batch_number'],
+                'expiry_date': lot['expiry_date'].isoformat() if lot['expiry_date'] else None,
+                'quantity_remaining': lot['quantity_remaining'],
+                'status': lot['status'],
+            })
+        return Response({'batches': par_produit})
+
     @action(detail=False, methods=['post'], url_path='apply-inventory')
     def apply_inventory(self, request):
         """
@@ -1856,14 +1888,22 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         stock reellement compte.
 
         Corps attendu :
-          {"reference": "INV-20260910", "lines": [{"product_id": "...", "counted": 12}, ...]}
+          {"reference": "INV-20260910", "lines": [
+              {"product_id": "...", "batch_id": "...", "counted": 12},  # un lot precis
+              {"product_id": "...", "counted": 5}                       # tout le produit
+          ]}
 
         Tout est applique dans une seule transaction : un inventaire ne doit
         jamais rester a moitie enregistre sur un stock en production.
 
-        Produits geres par lots : la somme des lots actifs est recalee
-        exactement sur la quantite comptee, sinon le compteur du produit et la
-        somme des lots resteraient divergents apres l'inventaire.
+        Ligne avec batch_id : CE lot est mis exactement a la quantite comptee,
+        les autres lots ne sont pas touches. C'est le mode a utiliser des qu'un
+        produit a plusieurs lots, puisque chacun a sa propre peremption.
+
+        Ligne sans batch_id : la somme des lots actifs est recalee exactement
+        sur la quantite comptee (peremptions les plus proches servies d'abord),
+        sinon le compteur du produit et la somme des lots resteraient
+        divergents apres l'inventaire.
         """
         from apps.invoicing.models import Product, ProductBatch, StockMovement
         from django.db import transaction
@@ -1875,6 +1915,18 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
 
         organization = request.user.organization
         appliques, ignores, erreurs = [], [], []
+
+        # Une ligne globale et des lignes par lot sur le MEME produit se
+        # contrediraient : on refuse avant d'ecrire quoi que ce soit.
+        globaux = {str(l.get('product_id')) for l in lines if not l.get('batch_id')}
+        par_lot = {str(l.get('product_id')) for l in lines if l.get('batch_id')}
+        melanges = globaux & par_lot
+        if melanges:
+            return Response(
+                {'error': "Un même produit ne peut pas être compté globalement et par lot.",
+                 'details': [{'product_id': pid} for pid in sorted(melanges)]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             with transaction.atomic():
@@ -1894,6 +1946,46 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
                                                       product_type='physical')
                     except Product.DoesNotExist:
                         erreurs.append({'product_id': pid, 'error': 'Produit introuvable'})
+                        continue
+
+                    # Comptage d'un lot precis : on ne touche qu'a ce lot.
+                    bid = ligne.get('batch_id')
+                    if bid:
+                        lot_compte = ProductBatch.objects.filter(
+                            id=bid, product=produit, organization=organization
+                        ).first()
+                        if lot_compte is None:
+                            erreurs.append({'product_id': pid, 'batch_id': bid,
+                                            'error': 'Lot introuvable pour ce produit'})
+                            continue
+                        avant_lot = lot_compte.quantity_remaining
+                        if avant_lot == compte:
+                            ignores.append({'product_id': pid, 'name': produit.name,
+                                            'batch_number': lot_compte.batch_number})
+                            continue
+                        avant_produit = produit.total_stock
+                        lot_compte.quantity_remaining = compte
+                        lot_compte.save(update_fields=['quantity_remaining'])
+                        lot_compte.update_status()
+                        produit.refresh_from_db()
+                        StockMovement.objects.create(
+                            product=produit,
+                            batch=lot_compte,
+                            movement_type='adjustment',
+                            quantity=compte - avant_lot,
+                            quantity_before=avant_produit,
+                            quantity_after=produit.total_stock,
+                            reference_type='manual',
+                            reference_number=reference,
+                            notes=("Inventaire physique %s — lot %s : compte %s, theorique %s"
+                                   % (reference, lot_compte.batch_number, compte, avant_lot)),
+                            created_by=request.user,
+                        )
+                        appliques.append({
+                            'product_id': pid, 'name': produit.name,
+                            'batch_number': lot_compte.batch_number,
+                            'before': avant_lot, 'after': compte, 'delta': compte - avant_lot,
+                        })
                         continue
 
                     theorique = produit.total_stock

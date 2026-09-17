@@ -193,6 +193,7 @@ export const productsAPI = {
   adjustStock: (id, data) => api.post(`/products/${id}/adjust_stock/`, data),
   reportLoss: (id, data) => api.post(`/products/${id}/report_loss/`, data),
   applyInventory: (data) => api.post('/products/apply-inventory/', data),
+  getInventoryBatches: () => api.get('/products/inventory-batches/'),
   receiveGoods: (data) => api.post('/products/receive-goods/', data),
   scanCode: (code) => api.get('/products/scan/', { params: { code } }),
   printLabels: (data) => api.post('/products/labels/', data, { responseType: 'blob' }),
