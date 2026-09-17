@@ -50,6 +50,22 @@ const batchAPI = {
     return response.data;
   },
 
+  // Contrôles qualité d'un lot de réactif
+  getQualityControls: async (batchId) => {
+    const response = await api.get(`/healthcare/laboratory/reagents/batches/${batchId}/quality-controls/`);
+    return response.data;
+  },
+  addQualityControl: async (batchId, data) => {
+    const response = await api.post(`/healthcare/laboratory/reagents/batches/${batchId}/quality-controls/`, data);
+    return response.data;
+  },
+
+  // Patients testés avec ce lot
+  getBatchPatients: async (batchId) => {
+    const response = await api.get(`/healthcare/laboratory/reagents/batches/${batchId}/patients/`);
+    return response.data;
+  },
+
   // Get expiring batches
   getExpiringBatches: async (days = 30) => {
     const response = await api.get(`/batches/expiring/?days=${days}`);

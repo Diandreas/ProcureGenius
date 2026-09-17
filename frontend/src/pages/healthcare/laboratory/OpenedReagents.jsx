@@ -4,7 +4,7 @@ import {
     TableHead, TableRow, Paper, Chip, Button, Dialog, DialogTitle, DialogContent,
     DialogActions, TextField, Grid, Alert, Avatar, FormControlLabel, Switch,
     Autocomplete, CircularProgress, LinearProgress, Stack, Tooltip, IconButton,
-    RadioGroup, Radio, alpha,
+    RadioGroup, Radio, MenuItem, Divider, alpha,
 } from '@mui/material';
 import {
     Science as ScienceIcon,
@@ -20,6 +20,8 @@ import {
     Print as PrintIcon,
     DoNotDisturbOn as CloseLotIcon,
     Link as LinkIcon,
+    FactCheck as QcIcon,
+    People as PatientsIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import batchAPI from '../../../services/batchAPI';
@@ -30,6 +32,28 @@ import useCurrentUser from '../../../hooks/useCurrentUser';
 // Regle du centre : un reactif est un produit dont la categorie contient
 // « laboratoire » ou « reactif ».
 const CATEGORIE_REACTIF = /labo|r[eé]actif/i;
+
+const TYPES_CONTROLE = [
+    { value: 'control_serum', label: 'Sérum de contrôle' },
+    { value: 'positive', label: 'Témoin positif' },
+    { value: 'negative', label: 'Témoin négatif' },
+    { value: 'duplicate', label: 'Double lecture / répétabilité' },
+    { value: 'other', label: 'Autre' },
+];
+
+// Etat du controle qualite d'un lot : tant qu'aucun controle n'est enregistre,
+// le lot est « en attente » — il sert peut-etre deja sur des patients.
+const ETAT_CQ = {
+    conform: { label: 'CQ conforme', color: 'success' },
+    non_conform: { label: 'CQ non conforme', color: 'error' },
+    pending: { label: 'CQ en attente', color: 'warning' },
+};
+
+const aujourdhuiISO = () => {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
 
 const MOTIFS_CLOTURE = [
     { value: 'depleted', label: 'Flacon terminé', aide: 'Le réactif a été entièrement utilisé.' },
@@ -96,6 +120,17 @@ const OpenedReagents = () => {
     const [reactifLie, setReactifLie] = useState(null);
     const [quantiteParTest, setQuantiteParTest] = useState('1');
     const [rattachement, setRattachement] = useState(false);
+
+    // Controle qualite
+    const [aControler, setAControler] = useState(null);
+    const [historiqueCQ, setHistoriqueCQ] = useState([]);
+    const [cq, setCq] = useState({ performed_on: '', result: 'conform', control_type: 'control_serum', values: '', notes: '' });
+    const [envoiCQ, setEnvoiCQ] = useState(false);
+
+    // Patients testes avec un lot
+    const [lotPatients, setLotPatients] = useState(null);
+    const [donneesPatients, setDonneesPatients] = useState(null);
+    const [chargementPatients, setChargementPatients] = useState(false);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -233,6 +268,62 @@ const OpenedReagents = () => {
         }
     };
 
+    // ── Controle qualite ─────────────────────────────────────────────────────
+    const ouvrirCQ = async (ligne) => {
+        setAControler(ligne);
+        setHistoriqueCQ([]);
+        setCq({ performed_on: '', result: 'conform', control_type: 'control_serum', values: '', notes: '' });
+        try {
+            const res = await batchAPI.getQualityControls(ligne.id);
+            setHistoriqueCQ(res.controls || []);
+        } catch (e) {
+            setHistoriqueCQ([]);
+        }
+    };
+
+    const enregistrerCQ = async () => {
+        if (!cq.performed_on) {
+            enqueueSnackbar('Saisissez la date du contrôle', { variant: 'warning' });
+            return;
+        }
+        setEnvoiCQ(true);
+        try {
+            const res = await batchAPI.addQualityControl(aControler.id, cq);
+            enqueueSnackbar(
+                res.result === 'conform' ? 'Contrôle conforme enregistré' : 'Contrôle NON conforme enregistré',
+                { variant: res.result === 'conform' ? 'success' : 'warning' },
+            );
+            const lotControle = aControler;
+            setAControler(null);
+            fetchData();
+            // Un lot non conforme ne doit plus servir : on propose la clôture.
+            if (res.should_close) {
+                setACloturer(lotControle);
+                setMotif('qc_failed');
+                setNoteCloture('Contrôle qualité non conforme');
+            }
+        } catch (e) {
+            enqueueSnackbar(e.response?.data?.error || "Échec de l'enregistrement du contrôle", { variant: 'error' });
+        } finally {
+            setEnvoiCQ(false);
+        }
+    };
+
+    // ── Patients testes avec ce lot ──────────────────────────────────────────
+    const ouvrirPatients = async (ligne) => {
+        setLotPatients(ligne);
+        setDonneesPatients(null);
+        setChargementPatients(true);
+        try {
+            setDonneesPatients(await batchAPI.getBatchPatients(ligne.id));
+        } catch (e) {
+            enqueueSnackbar('Impossible de charger les patients de ce lot', { variant: 'error' });
+            setLotPatients(null);
+        } finally {
+            setChargementPatients(false);
+        }
+    };
+
     const motifCourant = MOTIFS_CLOTURE.find((m) => m.value === motif);
     const examensPratiques = examens.filter((e) => e.volume > 0);
 
@@ -302,6 +393,19 @@ const OpenedReagents = () => {
                 </Alert>
             )}
 
+            {data.qc_failed_count > 0 && (
+                <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+                    <strong>{data.qc_failed_count} lot(s) au contrôle qualité non conforme</strong> : à clôturer, et vérifiez
+                    les patients déjà testés avec ces lots.
+                </Alert>
+            )}
+            {data.qc_pending_count > 0 && (
+                <Alert severity="warning" icon={<QcIcon />} sx={{ mb: 2, borderRadius: 2 }}>
+                    <strong>{data.qc_pending_count} lot(s) ouvert(s) sans contrôle qualité</strong> : enregistrez le contrôle
+                    avant de les utiliser sur des patients.
+                </Alert>
+            )}
+
             {/* Tableau des lots */}
             <Card sx={{ borderRadius: 3, mb: 3 }}>
                 <TableContainer sx={{ overflowX: 'auto' }}>
@@ -352,12 +456,21 @@ const OpenedReagents = () => {
                                             {b.lot_number && <Chip label={`Lot : ${b.lot_number}`} size="small" variant="outlined" />}
                                         </TableCell>
                                         <TableCell>
-                                            <Chip
-                                                icon={estOuvert ? <OpenIcon /> : <OkIcon />}
-                                                label={estOuvert ? 'Ouvert' : 'Disponible'}
-                                                color={estOuvert ? 'primary' : 'success'}
-                                                size="small" sx={{ fontWeight: 600 }}
-                                            />
+                                            <Stack spacing={0.5} alignItems="flex-start">
+                                                <Chip
+                                                    icon={estOuvert ? <OpenIcon /> : <OkIcon />}
+                                                    label={estOuvert ? 'Ouvert' : 'Disponible'}
+                                                    color={estOuvert ? 'primary' : 'success'}
+                                                    size="small" sx={{ fontWeight: 600 }}
+                                                />
+                                                <Chip
+                                                    label={(ETAT_CQ[b.qc_status] || ETAT_CQ.pending).label}
+                                                    color={(ETAT_CQ[b.qc_status] || ETAT_CQ.pending).color}
+                                                    size="small" variant="outlined"
+                                                    onClick={() => ouvrirCQ(b)}
+                                                    sx={{ height: 20, fontSize: '0.68rem', cursor: 'pointer' }}
+                                                />
+                                            </Stack>
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="body2">{formatDate(b.opened_at)}</Typography>
@@ -396,6 +509,16 @@ const OpenedReagents = () => {
                                             )}
                                         </TableCell>
                                         <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                                            <Tooltip title="Contrôle qualité de ce lot">
+                                                <IconButton size="small" color="primary" onClick={() => ouvrirCQ(b)}>
+                                                    <QcIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Patients testés avec ce lot">
+                                                <IconButton size="small" onClick={() => ouvrirPatients(b)}>
+                                                    <PatientsIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
                                             {estOuvert ? (
                                                 <>
                                                     <Tooltip title="Imprimer l'étiquette d'ouverture">
@@ -565,6 +688,141 @@ const OpenedReagents = () => {
                         Clôturer
                     </Button>
                 </DialogActions>
+            </Dialog>
+
+            {/* Controle qualite */}
+            <Dialog open={!!aControler} onClose={() => !envoiCQ && setAControler(null)} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    <Typography variant="h6" fontWeight={700}>Contrôle qualité — lot {aControler?.batch_number}</Typography>
+                    <Typography variant="body2" color="text.secondary">{aControler?.product_name}</Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Stack spacing={2}>
+                        <Alert severity="info" sx={{ py: 0.5 }}>
+                            Un nouveau lot se contrôle <strong>avant</strong> d&apos;être utilisé sur des patients.
+                        </Alert>
+                        <TextField
+                            label="Date du contrôle" type="date" required fullWidth
+                            value={cq.performed_on}
+                            onChange={(e) => setCq({ ...cq, performed_on: e.target.value })}
+                            InputLabelProps={{ shrink: true }}
+                            inputProps={{ max: aujourdhuiISO() }}
+                            helperText="Le jour où le contrôle a réellement été fait"
+                        />
+                        <TextField
+                            select label="Type de contrôle" fullWidth
+                            value={cq.control_type}
+                            onChange={(e) => setCq({ ...cq, control_type: e.target.value })}
+                        >
+                            {TYPES_CONTROLE.map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
+                        </TextField>
+                        <RadioGroup row value={cq.result} onChange={(e) => setCq({ ...cq, result: e.target.value })}>
+                            <FormControlLabel value="conform" control={<Radio size="small" color="success" />}
+                                label={<Typography variant="body2" fontWeight={600}>Conforme</Typography>} />
+                            <FormControlLabel value="non_conform" control={<Radio size="small" color="error" />}
+                                label={<Typography variant="body2" fontWeight={600}>Non conforme</Typography>} />
+                        </RadioGroup>
+                        {cq.result === 'non_conform' && (
+                            <Alert severity="warning" sx={{ py: 0.5 }}>
+                                Après enregistrement, la clôture du lot vous sera proposée, et vous pourrez voir
+                                les patients déjà testés avec ce lot.
+                            </Alert>
+                        )}
+                        <TextField
+                            label="Valeurs mesurées / attendues" fullWidth multiline minRows={2}
+                            value={cq.values}
+                            onChange={(e) => setCq({ ...cq, values: e.target.value })}
+                            placeholder="Ex. contrôle niveau 1 : 5,2 mmol/L (attendu 4,8 - 5,6)"
+                        />
+                        <TextField
+                            label="Note (facultatif)" fullWidth
+                            value={cq.notes}
+                            onChange={(e) => setCq({ ...cq, notes: e.target.value })}
+                        />
+
+                        {historiqueCQ.length > 0 && (
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={700}>Contrôles précédents</Typography>
+                                <Divider sx={{ my: 1 }} />
+                                {historiqueCQ.map((c) => (
+                                    <Box key={c.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                        <Chip size="small"
+                                            color={c.result === 'conform' ? 'success' : 'error'}
+                                            label={c.result === 'conform' ? 'Conforme' : 'Non conforme'}
+                                            sx={{ height: 20, fontSize: '0.68rem' }} />
+                                        <Typography variant="caption">
+                                            {new Date(c.performed_on).toLocaleDateString('fr-FR')} · {c.control_type_display}
+                                            {c.performed_by ? ` · ${c.performed_by}` : ''}
+                                            {c.values ? ` · ${c.values}` : ''}
+                                        </Typography>
+                                    </Box>
+                                ))}
+                            </Box>
+                        )}
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={() => setAControler(null)} disabled={envoiCQ}>Annuler</Button>
+                    <Button variant="contained" onClick={enregistrerCQ} disabled={envoiCQ}
+                        startIcon={envoiCQ ? <CircularProgress size={16} /> : <QcIcon />}>
+                        Enregistrer le contrôle
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Patients testes avec ce lot */}
+            <Dialog open={!!lotPatients} onClose={() => setLotPatients(null)} maxWidth="md" fullWidth>
+                <DialogTitle>
+                    <Typography variant="h6" fontWeight={700}>Patients testés avec le lot {lotPatients?.batch_number}</Typography>
+                    <Typography variant="body2" color="text.secondary">{lotPatients?.product_name}</Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    {chargementPatients ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+                    ) : !donneesPatients || donneesPatients.count === 0 ? (
+                        <Alert severity="info">
+                            Aucun examen enregistré avec ce lot. La traçabilité démarre aux prélèvements
+                            faits après la mise en service de cette fonction.
+                        </Alert>
+                    ) : (
+                        <>
+                            <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+                                <Chip size="small" color="primary" label={`${donneesPatients.patients_count} patient(s)`} />
+                                <Chip size="small" label={`${donneesPatients.count} examen(s)`} />
+                            </Stack>
+                            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, maxHeight: '50vh' }}>
+                                <Table size="small" stickyHeader>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell sx={{ fontWeight: 700 }}>Patient</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Examen</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }}>Commande</TableCell>
+                                            <TableCell sx={{ fontWeight: 700 }} align="right">Quantité</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {donneesPatients.usages.map((u) => (
+                                            <TableRow key={u.usage_id} hover>
+                                                <TableCell sx={{ fontSize: '0.82rem', fontWeight: 600 }}>{u.patient_name}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.82rem' }}>{u.test_name}</TableCell>
+                                                <TableCell sx={{ fontSize: '0.78rem' }}>
+                                                    {u.order_number}
+                                                    <Typography variant="caption" color="text.secondary" display="block">
+                                                        {u.order_date ? new Date(u.order_date).toLocaleDateString('fr-FR') : ''}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ fontSize: '0.82rem' }}>
+                                                    {u.quantity} {u.unit === 'test' ? 'test(s)' : 'unité(s)'}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </>
+                    )}
+                </DialogContent>
+                <DialogActions><Button onClick={() => setLotPatients(null)}>Fermer</Button></DialogActions>
             </Dialog>
 
             {/* Rattachement */}
