@@ -2482,3 +2482,140 @@ class LabTestsWithoutConsumablesView(APIView):
             key=lambda x: (-x['volume'], x['name']),
         )
         return Response({'days': jours, 'count': len(resultats), 'tests': resultats})
+
+
+class ReagentQualityControlView(APIView):
+    """
+    GET  /healthcare/laboratory/reagents/batches/<uuid>/quality-controls/
+    POST idem — enregistre un controle qualite sur un lot de reactif.
+
+    Corps : {"performed_on": "AAAA-MM-JJ", "result": "conform"|"non_conform",
+             "control_type": "control_serum", "values": "...", "notes": "..."}
+    La date est saisie : un controle est souvent enregistre apres coup.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _lot(self, request, batch_id):
+        from apps.invoicing.models import ProductBatch
+        return ProductBatch.objects.filter(
+            id=batch_id, organization=request.user.organization
+        ).select_related('product').first()
+
+    def get(self, request, batch_id):
+        lot = self._lot(request, batch_id)
+        if lot is None:
+            return Response({'error': 'Lot introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        controles = lot.quality_controls.select_related('performed_by')
+        return Response({
+            'batch_number': lot.batch_number,
+            'product_name': lot.product.name,
+            'qc_status': lot.qc_status,
+            'controls': [{
+                'id': str(c.id),
+                'performed_on': c.performed_on.isoformat(),
+                'performed_by': (c.performed_by.get_full_name() or c.performed_by.username)
+                                if c.performed_by_id else None,
+                'control_type': c.control_type,
+                'control_type_display': c.get_control_type_display(),
+                'result': c.result,
+                'values': c.values,
+                'notes': c.notes,
+            } for c in controles],
+        })
+
+    def post(self, request, batch_id):
+        from datetime import date as _date
+        from .models import ReagentQualityControl
+
+        lot = self._lot(request, batch_id)
+        if lot is None:
+            return Response({'error': 'Lot introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        brut = str(request.data.get('performed_on') or '').strip()
+        if not brut:
+            return Response({'error': "La date du contrôle est obligatoire."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            jour = _date.fromisoformat(brut[:10])
+        except ValueError:
+            return Response({'error': "Date de contrôle invalide."}, status=status.HTTP_400_BAD_REQUEST)
+        if jour > _date.today():
+            return Response({'error': "La date du contrôle ne peut pas être dans le futur."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        resultat = request.data.get('result')
+        if resultat not in ('conform', 'non_conform'):
+            return Response({'error': "Résultat invalide : conforme ou non conforme."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        type_controle = request.data.get('control_type') or 'control_serum'
+        if type_controle not in dict(ReagentQualityControl.CONTROL_TYPES):
+            type_controle = 'other'
+
+        controle = ReagentQualityControl.objects.create(
+            organization=request.user.organization,
+            batch=lot,
+            performed_on=jour,
+            performed_by=request.user,
+            control_type=type_controle,
+            result=resultat,
+            values=str(request.data.get('values') or '').strip(),
+            notes=str(request.data.get('notes') or '').strip(),
+        )
+        return Response({
+            'id': str(controle.id),
+            'qc_status': lot.qc_status,
+            'result': controle.result,
+            # Un lot non conforme ne doit plus servir : l'ecran propose de le cloturer.
+            'should_close': resultat == 'non_conform' and lot.quantity_remaining > 0,
+        }, status=status.HTTP_201_CREATED)
+
+
+class ReagentBatchPatientsView(APIView):
+    """
+    GET /healthcare/laboratory/reagents/batches/<uuid>/patients/
+
+    Patients testes avec ce lot de reactif — la question a laquelle il faut
+    pouvoir repondre quand un lot se revele defectueux (CQ rate, rappel
+    fabricant, rupture de la chaine du froid).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, batch_id):
+        from apps.invoicing.models import ProductBatch
+        from .models import ReagentUsage
+
+        lot = ProductBatch.objects.filter(
+            id=batch_id, organization=request.user.organization
+        ).select_related('product').first()
+        if lot is None:
+            return Response({'error': 'Lot introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        usages = (ReagentUsage.objects
+                  .filter(batch=lot)
+                  .select_related('lab_order_item__lab_order__patient',
+                                  'lab_order_item__lab_test')
+                  .order_by('-used_at'))
+
+        lignes = []
+        for u in usages:
+            item = u.lab_order_item
+            commande = item.lab_order
+            lignes.append({
+                'usage_id': str(u.id),
+                'order_id': str(commande.id),
+                'order_number': commande.order_number,
+                'order_date': commande.order_date.isoformat() if commande.order_date else None,
+                'patient_id': str(commande.patient_id),
+                'patient_name': commande.patient.name,
+                'test_name': item.lab_test.name,
+                'quantity': u.quantity,
+                'unit': u.unit,
+                'used_at': u.used_at.isoformat(),
+            })
+        return Response({
+            'batch_number': lot.batch_number,
+            'product_name': lot.product.name,
+            'count': len(lignes),
+            'patients_count': len({l['patient_id'] for l in lignes}),
+            'usages': lignes,
+        })

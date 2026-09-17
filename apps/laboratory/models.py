@@ -949,15 +949,35 @@ class LabOrderItem(models.Model):
         """Déduit le(s) consommable(s) liés à ce test (stock + lots FIFO)."""
         lab_test = self.lab_test
 
-        def lot_en_cours(produit, quantite):
-            # Au labo, on consomme d'abord le reactif deja OUVERT sur la
-            # paillasse (le plus anciennement ouvert), pas le lot scelle qui
-            # perime le plus tot. S'il n'en reste pas assez, adjust_stock
-            # repartit sur les lots par peremption.
-            ouvert = produit.batches.filter(
-                status='opened', quantity_remaining__gte=quantite
-            ).order_by('opened_at').first()
-            return ouvert
+        def repartir_en_unites(produit, quantite):
+            """Quels lots servent cette sortie, et pour combien.
+
+            On sert d'abord le reactif deja OUVERT sur la paillasse (le plus
+            anciennement ouvert), puis les lots scelles par peremption la plus
+            proche. On resout AVANT de sortir le stock : sans ca, la sortie
+            partait sans lot et on ne pouvait plus savoir quel lot a servi a
+            quel patient.
+            """
+            ouverts = list(produit.batches.filter(status='opened', quantity_remaining__gt=0)
+                           .order_by('opened_at'))
+            scelles = list(produit.batches.filter(status='available', quantity_remaining__gt=0)
+                           .order_by('expiry_date', 'received_at'))
+            repartition, restant = [], quantite
+            for lot in ouverts + scelles:
+                if restant <= 0:
+                    break
+                pris = min(lot.quantity_remaining, restant)
+                if pris > 0:
+                    repartition.append((lot, pris))
+                    restant -= pris
+            return repartition, restant
+
+        def tracer(produit, lot, quantite, unite):
+            ReagentUsage.objects.create(
+                organization=self.lab_order.organization,
+                lab_order_item=self, product=produit, batch=lot,
+                quantity=quantite, unit=unite,
+            )
 
         # adjust_stock ecrit lui-meme les lots : on ne les touche plus ici,
         # sinon chaque consommable est sorti deux fois.
@@ -968,30 +988,58 @@ class LabOrderItem(models.Model):
                 if consumable.product.tests_per_unit:
                     # Reactif compte en tests : quantity_per_test = nombre de TESTS
                     # consommes ; le flacon ouvert se vide test par test.
-                    consumable.product.consommer_tests(
+                    resultat = consumable.product.consommer_tests(
                         consumable.quantity_per_test, user=collected_by, notes=note,
                     )
+                    for lot, nb in resultat['lots']:
+                        tracer(consumable.product, lot, nb, 'test')
+                    if resultat['restant']:
+                        # Aucun flacon ouvert : on trace quand meme l'examen,
+                        # sans lot, pour ne pas perdre la trace de l'usage.
+                        tracer(consumable.product, None, resultat['restant'], 'test')
                     continue
-                consumable.product.adjust_stock(
-                    quantity=-(consumable.quantity_per_test),
-                    movement_type='sale',
-                    reference_type='manual',
-                    reference_id=self.lab_order_id,
-                    notes=note,
-                    user=collected_by,
-                    batch=lot_en_cours(consumable.product, consumable.quantity_per_test),
-                )
+
+                repartition, non_couvert = repartir_en_unites(
+                    consumable.product, consumable.quantity_per_test)
+                for lot, pris in repartition:
+                    consumable.product.adjust_stock(
+                        quantity=-pris,
+                        movement_type='sale',
+                        reference_type='manual',
+                        reference_id=self.lab_order_id,
+                        notes=note,
+                        user=collected_by,
+                        batch=lot,
+                    )
+                    tracer(consumable.product, lot, pris, 'unit')
+                if non_couvert:
+                    # Produit sans lot (ou lots insuffisants) : le compteur reste
+                    # la seule source, l'usage est trace sans lot.
+                    consumable.product.adjust_stock(
+                        quantity=-non_couvert,
+                        movement_type='sale',
+                        reference_type='manual',
+                        reference_id=self.lab_order_id,
+                        notes=note,
+                        user=collected_by,
+                    )
+                    tracer(consumable.product, None, non_couvert, 'unit')
         # Fallback: legacy linked_product FK (si pas encore migré)
         elif lab_test.linked_product:
-            lab_test.linked_product.adjust_stock(
-                quantity=-1,
-                movement_type='sale',
-                reference_type='manual',
-                reference_id=self.lab_order_id,
-                notes=f"Labo - {self.lab_order.order_number} - {lab_test.test_code}",
-                user=collected_by,
-                batch=lot_en_cours(lab_test.linked_product, 1),
-            )
+            note = f"Labo - {self.lab_order.order_number} - {lab_test.test_code}"
+            repartition, non_couvert = repartir_en_unites(lab_test.linked_product, 1)
+            for lot, pris in repartition:
+                lab_test.linked_product.adjust_stock(
+                    quantity=-pris, movement_type='sale', reference_type='manual',
+                    reference_id=self.lab_order_id, notes=note, user=collected_by, batch=lot,
+                )
+                tracer(lab_test.linked_product, lot, pris, 'unit')
+            if non_couvert:
+                lab_test.linked_product.adjust_stock(
+                    quantity=-non_couvert, movement_type='sale', reference_type='manual',
+                    reference_id=self.lab_order_id, notes=note, user=collected_by,
+                )
+                tracer(lab_test.linked_product, None, non_couvert, 'unit')
 
     def collect_sample(self, collected_by=None):
         """
@@ -1879,3 +1927,100 @@ class LabAuditLog(models.Model):
             target_name=str(target_obj),
             changes=changes or {},
         )
+
+
+class ReagentQualityControl(models.Model):
+    """
+    Controle qualite d'un lot de reactif : on verifie qu'un nouveau lot repond
+    juste AVANT de l'utiliser sur des patients. Un lot sans CQ enregistre est
+    considere « en attente ».
+    """
+    RESULTS = [
+        ('conform', _('Conforme')),
+        ('non_conform', _('Non conforme')),
+    ]
+    CONTROL_TYPES = [
+        ('control_serum', _('Sérum de contrôle')),
+        ('positive', _('Témoin positif')),
+        ('negative', _('Témoin négatif')),
+        ('duplicate', _('Double lecture / répétabilité')),
+        ('other', _('Autre')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='reagent_quality_controls', verbose_name=_("Organisation")
+    )
+    batch = models.ForeignKey(
+        'invoicing.ProductBatch', on_delete=models.CASCADE,
+        related_name='quality_controls', verbose_name=_("Lot de réactif")
+    )
+    performed_on = models.DateField(verbose_name=_("Date du contrôle"))
+    performed_by = models.ForeignKey(
+        'accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reagent_quality_controls', verbose_name=_("Réalisé par")
+    )
+    control_type = models.CharField(
+        max_length=20, choices=CONTROL_TYPES, default='control_serum',
+        verbose_name=_("Type de contrôle")
+    )
+    result = models.CharField(max_length=15, choices=RESULTS, verbose_name=_("Résultat"))
+    values = models.TextField(blank=True, default='', verbose_name=_("Valeurs mesurées / attendues"))
+    notes = models.TextField(blank=True, default='', verbose_name=_("Note"))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Contrôle qualité de réactif")
+        verbose_name_plural = _("Contrôles qualité de réactifs")
+        ordering = ['-performed_on', '-created_at']
+        indexes = [models.Index(fields=['batch', '-performed_on'])]
+
+    def __str__(self):
+        return "CQ %s - %s" % (self.batch.batch_number, self.get_result_display())
+
+
+class ReagentUsage(models.Model):
+    """
+    Quel lot de reactif a servi pour quel examen.
+
+    Permet de repondre a la seule question qui compte quand un lot se revele
+    defectueux : quels patients ont ete testes avec ce lot ?
+    """
+    UNITS = [
+        ('unit', _('Unité')),
+        ('test', _('Test')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='reagent_usages', verbose_name=_("Organisation")
+    )
+    lab_order_item = models.ForeignKey(
+        LabOrderItem, on_delete=models.CASCADE,
+        related_name='reagent_usages', verbose_name=_("Examen")
+    )
+    product = models.ForeignKey(
+        'invoicing.Product', on_delete=models.CASCADE,
+        related_name='reagent_usages', verbose_name=_("Réactif")
+    )
+    batch = models.ForeignKey(
+        'invoicing.ProductBatch', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='reagent_usages', verbose_name=_("Lot utilisé")
+    )
+    quantity = models.PositiveIntegerField(default=1, verbose_name=_("Quantité"))
+    unit = models.CharField(max_length=10, choices=UNITS, default='unit', verbose_name=_("Unité"))
+    used_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Utilisé le"))
+
+    class Meta:
+        verbose_name = _("Réactif utilisé")
+        verbose_name_plural = _("Réactifs utilisés")
+        ordering = ['-used_at']
+        indexes = [
+            models.Index(fields=['batch', '-used_at']),
+            models.Index(fields=['product', '-used_at']),
+        ]
+
+    def __str__(self):
+        return "%s - lot %s" % (self.product.name, self.batch.batch_number if self.batch_id else '?')

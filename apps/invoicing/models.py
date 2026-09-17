@@ -502,12 +502,14 @@ class Product(models.Model):
         prend le relais. Sans flacon ouvert, les tests sont memorises dans
         untracked_tests et rattrapes a la prochaine ouverture.
 
-        Retourne le nombre de tests qui n'ont pas pu etre decomptes.
+        Retourne {'restant': tests non decomptes, 'lots': [(lot, nb_tests), ...]}
+        — le detail sert a tracer quel lot a servi pour quel examen.
         """
         tpu = self.tests_per_unit or 0
         restant = int(nombre or 0)
+        servis = {}
         if tpu <= 0 or restant <= 0:
-            return 0
+            return {'restant': 0, 'lots': []}
 
         for lot in self.batches.filter(status='opened', quantity_remaining__gt=0).order_by('opened_at'):
             while restant > 0 and lot.quantity_remaining > 0 and lot.status == 'opened':
@@ -516,6 +518,7 @@ class Product(models.Model):
                 pris = min(lot.tests_remaining, restant)
                 lot.tests_remaining -= pris
                 restant -= pris
+                servis[lot.pk] = (lot, servis.get(lot.pk, (lot, 0))[1] + pris)
                 lot.save(update_fields=['tests_remaining'])
                 if lot.tests_remaining == 0:
                     # Flacon vide : une unite sort du stock.
@@ -538,7 +541,7 @@ class Product(models.Model):
         if restant > 0:
             Product.objects.filter(pk=self.pk).update(untracked_tests=models.F('untracked_tests') + restant)
             self.refresh_from_db(fields=['untracked_tests'])
-        return restant
+        return {'restant': restant, 'lots': list(servis.values())}
 
     def adjust_stock(self, quantity, movement_type, unit='base', reference_type=None, reference_id=None, notes="", user=None, batch=None):
         """
@@ -832,6 +835,17 @@ class ProductBatch(models.Model):
     def days_until_expiry(self):
         from django.utils import timezone
         return (self.effective_expiry - timezone.now().date()).days
+
+    @property
+    def qc_status(self):
+        """'pending' tant qu'aucun controle qualite n'a ete enregistre sur ce
+        lot, sinon le resultat du dernier controle ('conform' / 'non_conform')."""
+        dernier = self.quality_controls.order_by('-performed_on', '-created_at').first()
+        return dernier.result if dernier else 'pending'
+
+    @property
+    def qc_last(self):
+        return self.quality_controls.order_by('-performed_on', '-created_at').first()
 
     def open_batch(self):
         """Marquer le lot comme ouvert"""

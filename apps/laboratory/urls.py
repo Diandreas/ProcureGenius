@@ -79,6 +79,8 @@ urlpatterns = [
 
     # Lab Test Consumables (stock links)
     path('reagents/tests-without-consumables/', api.LabTestsWithoutConsumablesView.as_view(), name='tests-without-consumables'),
+    path('reagents/batches/<uuid:batch_id>/quality-controls/', api.ReagentQualityControlView.as_view(), name='reagent-quality-controls'),
+    path('reagents/batches/<uuid:batch_id>/patients/', api.ReagentBatchPatientsView.as_view(), name='reagent-batch-patients'),
     path('tests/<uuid:test_id>/consumables/', api.LabTestConsumableListView.as_view(), name='test-consumables'),
     path('consumables/<uuid:pk>/', api.LabTestConsumableDetailView.as_view(), name='consumable-detail'),
 

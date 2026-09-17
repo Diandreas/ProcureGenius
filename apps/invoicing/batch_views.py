@@ -382,6 +382,8 @@ class OpenedReagentsView(APIView):
                 'default_shelf_life': getattr(batch.product, 'default_shelf_life_after_opening', None),
                 'storage_conditions': batch.product.storage_conditions,
                 'opened_by_name': (batch.opened_by.get_full_name() or batch.opened_by.username) if batch.opened_by_id else None,
+                'qc_status': batch.qc_status,
+                'qc_last_on': batch.qc_last.performed_on.isoformat() if batch.qc_last else None,
                 'tests_per_unit': batch.product.tests_per_unit,
                 'tests_remaining': batch.tests_remaining,
                 # Tests encore disponibles sur tout le lot : flacon en cours + flacons fermes.
@@ -403,6 +405,10 @@ class OpenedReagentsView(APIView):
             'expired_count': sum(1 for b in results if b['is_expired']),
             # Flacons ouverts presque vides (<= 10 % des tests, au moins 5).
             'low_tests_count': sum(1 for b in results if b.get('low_tests')),
+            # Lots ouverts utilises sans controle qualite enregistre.
+            'qc_pending_count': sum(1 for b in results
+                                    if b['status'] == 'opened' and b.get('qc_status') == 'pending'),
+            'qc_failed_count': sum(1 for b in results if b.get('qc_status') == 'non_conform'),
             # Reactifs dont des examens ont ete faits sans flacon ouvert.
             'untracked': [
                 {'product_id': str(p.id), 'name': p.name, 'untracked_tests': p.untracked_tests}
