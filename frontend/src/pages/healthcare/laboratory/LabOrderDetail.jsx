@@ -1438,7 +1438,9 @@ const LabOrderDetail = () => {
                             {order.prescriber_name && (
                                 <>
                                     <Divider sx={{ my: 1 }} />
-                                    <Typography variant="caption" color="text.secondary">Prescripteur</Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {order.prescriber_pricing_mode === 'subcontract' ? 'Prescripteur sous-traitant' : 'Prescripteur'}
+                                    </Typography>
                                     <Typography variant="body2">{order.prescriber_name}</Typography>
                                 </>
                             )}

@@ -1476,6 +1476,7 @@ class Prescriber(models.Model):
     PRICING_MODE_CHOICES = [
         ('commission', _('Commission (% sur le prix normal)')),
         ('custom_price', _('Prix libre (le prescripteur fixe son propre prix)')),
+        ('subcontract', _('Prescripteur sous-traitant (tarif négocié, aucun reversement)')),
     ]
     pricing_mode = models.CharField(
         max_length=20,
@@ -1485,8 +1486,15 @@ class Prescriber(models.Model):
         help_text=_(
             "Commission : le patient paie le prix normal, le prescripteur touche un %. "
             "Prix libre : le patient paie le prix fixé par le prescripteur, la clinique "
-            "garde son prix normal et reverse la différence au prescripteur."
+            "garde son prix normal et reverse la différence au prescripteur. "
+            "Prescripteur sous-traitant : tarif négocié comme pour la sous-traitance, "
+            "mais le rapport reste à l'en-tête de la clinique et rien n'est reversé."
         )
+    )
+    show_on_report = models.BooleanField(
+        default=True,
+        verbose_name=_("Afficher le nom sur le rapport"),
+        help_text=_("Si décoché, le nom du prescripteur n'apparaît pas sur le rapport de laboratoire.")
     )
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
     notes = models.TextField(blank=True, verbose_name=_("Notes"))
@@ -1504,6 +1512,12 @@ class Prescriber(models.Model):
     @property
     def full_name(self):
         return f"{self.last_name} {self.first_name}"
+
+    @property
+    def uses_custom_prices(self):
+        """Vrai pour les modes ou le prescripteur a sa propre grille de prix
+        (prix libre et prescripteur sous-traitant)."""
+        return self.pricing_mode in ('custom_price', 'subcontract')
 
 
 class PrescriberCustomPrice(models.Model):

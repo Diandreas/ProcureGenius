@@ -416,7 +416,7 @@ class PrescriberSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'first_name', 'last_name', 'full_name', 'specialty',
             'phone', 'email', 'clinic_name', 'address',
-            'pricing_mode', 'commission_rate', 'is_active', 'notes',
+            'pricing_mode', 'commission_rate', 'show_on_report', 'is_active', 'notes',
             'orders_count', 'custom_prices', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -432,7 +432,8 @@ class PrescriberListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescriber
         fields = ['id', 'full_name', 'first_name', 'last_name',
-                  'specialty', 'clinic_name', 'pricing_mode', 'commission_rate', 'is_active']
+                  'specialty', 'clinic_name', 'pricing_mode', 'commission_rate',
+                  'show_on_report', 'is_active']
 
 
 class LabOrderSerializer(serializers.ModelSerializer):
@@ -461,6 +462,9 @@ class LabOrderSerializer(serializers.ModelSerializer):
         source='prescriber.commission_rate', max_digits=5, decimal_places=2,
         read_only=True, default=None
     )
+    prescriber_pricing_mode = serializers.CharField(
+        source='prescriber.pricing_mode', read_only=True, default=None
+    )
 
     class Meta:
         model = LabOrder
@@ -485,6 +489,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'prescriber',
             'prescriber_name',
             'prescriber_commission_rate',
+            'prescriber_pricing_mode',
             'sample_collected_at',
             'sample_collected_by',
             'sample_collected_by_name',

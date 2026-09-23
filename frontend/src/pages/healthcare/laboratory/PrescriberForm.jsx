@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, TextField, Grid, Switch, FormControlLabel, MenuItem, Divider,
-    CircularProgress,
+    CircularProgress, Typography,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import laboratoryAPI from '../../../services/laboratoryAPI';
@@ -18,6 +18,7 @@ const emptyForm = {
     address: '',
     pricing_mode: 'commission',
     commission_rate: '0.00',
+    show_on_report: true,
     notes: '',
     is_active: true,
 };
@@ -39,6 +40,7 @@ export default function PrescriberForm({ open, onClose, onSaved, prescriber }) {
                 address: prescriber.address || '',
                 pricing_mode: prescriber.pricing_mode || 'commission',
                 commission_rate: prescriber.commission_rate ?? '0.00',
+                show_on_report: prescriber.show_on_report ?? true,
                 notes: prescriber.notes || '',
                 is_active: prescriber.is_active ?? true,
             });
@@ -171,7 +173,14 @@ export default function PrescriberForm({ open, onClose, onSaved, prescriber }) {
                             >
                                 <MenuItem value="commission">Commission (% sur le prix normal)</MenuItem>
                                 <MenuItem value="custom_price">Prix libre (le prescripteur fixe son prix)</MenuItem>
+                                <MenuItem value="subcontract">Prescripteur sous-traitant (tarif négocié)</MenuItem>
                             </TextField>
+                            {form.pricing_mode === 'subcontract' && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                                    Ses tarifs négociés remplacent le prix catalogue, comme en sous-traitance,
+                                    mais le rapport garde l'en-tête de la clinique et rien ne lui est reversé.
+                                </Typography>
+                            )}
                         </Grid>
                         {form.pricing_mode === 'commission' && (
                             <Grid item xs={6}>
@@ -188,7 +197,7 @@ export default function PrescriberForm({ open, onClose, onSaved, prescriber }) {
                                 />
                             </Grid>
                         )}
-                        <Grid item xs={form.pricing_mode === 'commission' ? 6 : 12} sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center' }}>
                             <FormControlLabel
                                 control={
                                     <Switch
@@ -200,7 +209,19 @@ export default function PrescriberForm({ open, onClose, onSaved, prescriber }) {
                                 label="Actif"
                             />
                         </Grid>
-                        {form.pricing_mode === 'custom_price' && (
+                        <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center' }}>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        name="show_on_report"
+                                        checked={form.show_on_report}
+                                        onChange={handleChange}
+                                    />
+                                }
+                                label="Nom sur le rapport"
+                            />
+                        </Grid>
+                        {(form.pricing_mode === 'custom_price' || form.pricing_mode === 'subcontract') && (
                             <Grid item xs={12}>
                                 <Divider sx={{ my: 1 }} />
                                 {prescriber ? (

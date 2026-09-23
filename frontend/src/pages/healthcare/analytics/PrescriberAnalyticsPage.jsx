@@ -233,18 +233,26 @@ export default function PrescriberAnalyticsPage() {
                                                         <Chip label={`${row.revenue_share_pct} %`} size="small" variant="outlined" />
                                                     </TableCell>
                                                     <TableCell align="right">
-                                                        {row.pricing_mode === 'custom_price' ? (
+                                                        {row.pricing_mode === 'subcontract' ? (
+                                                            <Chip label="Sous-traitant" size="small" color="info" variant="outlined" />
+                                                        ) : row.pricing_mode === 'custom_price' ? (
                                                             <Chip label="Prix libre" size="small" color="secondary" variant="outlined" />
                                                         ) : (
                                                             <Chip label={`${row.commission_rate} %`} size="small" color="primary" variant="outlined" />
                                                         )}
                                                     </TableCell>
                                                     <TableCell align="right">
-                                                        <Typography variant="body2" fontWeight={700} color="warning.main">
+                                                        <Typography
+                                                            variant="body2"
+                                                            fontWeight={700}
+                                                            color={row.pricing_mode === 'subcontract' ? 'text.disabled' : 'warning.main'}
+                                                        >
                                                             {formatCurrency(row.commission_amount)}
                                                         </Typography>
                                                         <Typography variant="caption" color="text.secondary">
-                                                            {row.pricing_mode === 'custom_price' ? 'dû (prix libre)' : 'commission'}
+                                                            {row.pricing_mode === 'subcontract'
+                                                                ? 'aucun reversement'
+                                                                : row.pricing_mode === 'custom_price' ? 'dû (prix libre)' : 'commission'}
                                                         </Typography>
                                                     </TableCell>
                                                 </TableRow>

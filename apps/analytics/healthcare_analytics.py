@@ -1869,7 +1869,11 @@ class PrescriberAnalyticsView(APIView):
             pricing_mode = row.get('prescriber__pricing_mode') or 'commission'
             share_pct = float(revenue / grand_total * 100) if grand_total else 0
 
-            if pricing_mode == 'custom_price':
+            if pricing_mode == 'subcontract':
+                # Prescripteur sous-traitant : tarif négocié, aucun reversement.
+                commission_amount = Decimal('0.00')
+                commission_rate = None
+            elif pricing_mode == 'custom_price':
                 # Prescripteur "prix libre" : le dû n'est pas un %, c'est la somme
                 # (prix facturé au patient − prix catalogue normal) sur les tests
                 # individuels (les bilans/panels gardent leur forfait, non concernés).

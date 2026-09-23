@@ -141,7 +141,9 @@ export default function PrescriberList() {
                                                 <TableCell>{p.specialty || '—'}</TableCell>
                                                 <TableCell>{p.clinic_name || '—'}</TableCell>
                                                 <TableCell>
-                                                    {p.pricing_mode === 'custom_price' ? (
+                                                    {p.pricing_mode === 'subcontract' ? (
+                                                        <Chip label="Prescripteur sous-traitant" size="small" color="info" variant="outlined" />
+                                                    ) : p.pricing_mode === 'custom_price' ? (
                                                         <Chip label="Prix libre" size="small" color="secondary" variant="outlined" />
                                                     ) : (
                                                         <Chip

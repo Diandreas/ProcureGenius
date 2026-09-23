@@ -292,7 +292,7 @@ class ImagingOrderCreateView(APIView):
         from apps.laboratory.models import PrescriberCustomPrice
         prescriber_custom_exam_prices = {}
         prescriber_custom_test_prices = {}
-        if prescriber and prescriber.pricing_mode == 'custom_price':
+        if prescriber and prescriber.uses_custom_prices:
             prescriber_custom_exam_prices = {
                 str(cp.exam_type_id): cp.custom_price
                 for cp in PrescriberCustomPrice.objects.filter(prescriber=prescriber, exam_type__isnull=False)

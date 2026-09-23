@@ -360,10 +360,11 @@ class LabOrderCreateView(APIView):
                 'patient': used_by_patient_obj, 'name': used_by_name, 'relationship': used_by_relationship,
             }
 
-        # Prix personnalisés du prescripteur (mode "prix libre") : le patient
-        # paie ce prix, pas le tarif catalogue — voir PrescriberCustomPrice.
+        # Prix personnalisés du prescripteur (modes "prix libre" et
+        # "prescripteur sous-traitant") : le patient paie ce prix, pas le tarif
+        # catalogue — voir PrescriberCustomPrice.
         prescriber_custom_prices = {}
-        if prescriber and prescriber.pricing_mode == 'custom_price':
+        if prescriber and prescriber.uses_custom_prices:
             prescriber_custom_prices = {
                 str(cp.lab_test_id): cp.custom_price
                 for cp in PrescriberCustomPrice.objects.filter(prescriber=prescriber, lab_test__isnull=False)
@@ -545,7 +546,7 @@ class LabOrderCreateView(APIView):
                     linked_lab_order=order,
                 )
                 prescriber_custom_exam_prices = {}
-                if prescriber and prescriber.pricing_mode == 'custom_price':
+                if prescriber and prescriber.uses_custom_prices:
                     prescriber_custom_exam_prices = {
                         str(cp.exam_type_id): cp.custom_price
                         for cp in PrescriberCustomPrice.objects.filter(prescriber=prescriber, exam_type__isnull=False)

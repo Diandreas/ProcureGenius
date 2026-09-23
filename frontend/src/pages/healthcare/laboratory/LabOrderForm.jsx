@@ -129,7 +129,8 @@ const LabOrderForm = () => {
 
     useEffect(() => {
         const prescriber = formData.prescriber;
-        if (prescriber?.pricing_mode === 'custom_price') {
+        // Prix libre et prescripteur sous-traitant ont tous deux leur propre grille.
+        if (prescriber?.pricing_mode === 'custom_price' || prescriber?.pricing_mode === 'subcontract') {
             laboratoryAPI.getPrescriberCustomPrices(prescriber.id).then(data => {
                 const list = Array.isArray(data) ? data : data.results || [];
                 const testPrices = {};
@@ -562,6 +563,14 @@ const LabOrderForm = () => {
                             {formData.prescriber?.pricing_mode === 'custom_price' && (
                                 <Alert severity="info" sx={{ mt: 1.5 }}>
                                     Ce prescripteur est en mode "prix libre" — ses prix personnalisés (quand définis) remplacent le tarif catalogue pour les tests/examens sélectionnés ci-dessous.
+                                </Alert>
+                            )}
+                            {formData.prescriber?.pricing_mode === 'subcontract' && (
+                                <Alert severity="info" sx={{ mt: 1.5 }}>
+                                    <strong>Prescripteur sous-traitant</strong> — ses tarifs négociés remplacent le prix
+                                    catalogue pour les examens sélectionnés ci-dessous. Le rapport reste à l'en-tête de
+                                    la clinique et rien ne lui est reversé.
+                                    {formData.prescriber?.show_on_report === false && " Son nom n'apparaîtra pas sur le rapport."}
                                 </Alert>
                             )}
 

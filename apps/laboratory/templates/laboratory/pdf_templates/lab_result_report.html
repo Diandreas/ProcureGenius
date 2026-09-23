@@ -119,7 +119,7 @@
         <div class="info-label">Médecin Prescripteur</div>
         <div class="info-value">
             <span style="font-size: 9pt;">
-                {% if lab_order.prescriber %}{{ lab_order.prescriber.full_name }}{% else %}-{% endif %}
+                {% if lab_order.prescriber and lab_order.prescriber.show_on_report %}{{ lab_order.prescriber.full_name }}{% else %}-{% endif %}
             </span>
         </div>
     </div>

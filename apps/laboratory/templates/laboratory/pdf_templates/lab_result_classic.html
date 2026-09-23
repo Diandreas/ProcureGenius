@@ -230,7 +230,7 @@
         </div>
         <div class="info-column">
             <div class="info-label">Médecin Prescripteur</div>
-            {% if order.prescriber %}
+            {% if order.prescriber and order.prescriber.show_on_report %}
             <div class="info-value">{{ order.prescriber.full_name }}</div>
             {% else %}
             <div style="margin-top: 4px; border-bottom: 1px solid #9ca3af; width: 160px; height: 16px;"></div>
