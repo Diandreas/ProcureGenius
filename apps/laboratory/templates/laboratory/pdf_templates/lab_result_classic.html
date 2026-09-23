@@ -244,8 +244,7 @@
         <div class="info-column">
             <div class="info-label">Statut</div>
             <div class="info-value">
-                {% if order.status == 'completed' or order.status == 'results_delivered' %}Validé{% else %}Provisoire{%
-                endif %}
+                {% if order.status == 'completed' or order.status == 'results_delivered' %}Validé{% else %}Provisoire{% endif %}
             </div>
             <div class="sm-text">
                 Imprimé le: {% now "d/m/Y H:i" %}
