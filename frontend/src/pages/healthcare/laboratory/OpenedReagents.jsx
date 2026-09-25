@@ -22,6 +22,7 @@ import {
     Link as LinkIcon,
     FactCheck as QcIcon,
     People as PatientsIcon,
+    EditCalendar as PeremptionIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import batchAPI from '../../../services/batchAPI';
@@ -128,6 +129,11 @@ const OpenedReagents = () => {
     const [envoiCQ, setEnvoiCQ] = useState(false);
 
     // Patients testes avec un lot
+    // Correction de la peremption imprimee d'un lot
+    const [aDater, setADater] = useState(null);
+    const [nouvellePeremption, setNouvellePeremption] = useState('');
+    const [envoiPeremption, setEnvoiPeremption] = useState(false);
+
     const [lotPatients, setLotPatients] = useState(null);
     const [donneesPatients, setDonneesPatients] = useState(null);
     const [chargementPatients, setChargementPatients] = useState(false);
@@ -306,6 +312,30 @@ const OpenedReagents = () => {
             enqueueSnackbar(e.response?.data?.error || "Échec de l'enregistrement du contrôle", { variant: 'error' });
         } finally {
             setEnvoiCQ(false);
+        }
+    };
+
+    // ── Peremption imprimee : saisie ou correction ───────────────────────────
+    const ouvrirPeremption = (ligne) => {
+        setADater(ligne);
+        setNouvellePeremption((ligne.expiry_date || '').slice(0, 10));
+    };
+
+    const enregistrerPeremption = async () => {
+        if (!nouvellePeremption) {
+            enqueueSnackbar('Saisissez la date de péremption', { variant: 'warning' });
+            return;
+        }
+        setEnvoiPeremption(true);
+        try {
+            await batchAPI.updateBatch(aDater.id, { expiry_date: nouvellePeremption });
+            enqueueSnackbar(`Péremption du lot ${aDater.batch_number} enregistrée`, { variant: 'success' });
+            setADater(null);
+            fetchData();
+        } catch (e) {
+            enqueueSnackbar(e.response?.data?.error || 'Échec de l enregistrement', { variant: 'error' });
+        } finally {
+            setEnvoiPeremption(false);
         }
     };
 
@@ -517,6 +547,11 @@ const OpenedReagents = () => {
                                             <Tooltip title="Patients testés avec ce lot">
                                                 <IconButton size="small" onClick={() => ouvrirPatients(b)}>
                                                     <PatientsIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Corriger la date de péremption imprimée">
+                                                <IconButton size="small" onClick={() => ouvrirPeremption(b)}>
+                                                    <PeremptionIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
                                             {estOuvert ? (
@@ -856,6 +891,39 @@ const OpenedReagents = () => {
                     <Button variant="contained" onClick={confirmerRattachement} disabled={rattachement}
                         startIcon={rattachement ? <CircularProgress size={16} /> : <LinkIcon />}>
                         Rattacher
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            {/* Peremption imprimee */}
+            <Dialog open={Boolean(aDater)} onClose={() => !envoiPeremption && setADater(null)}
+                maxWidth="xs" fullWidth>
+                <DialogTitle sx={{ pb: 1 }}>
+                    <Typography variant="h6" fontWeight={700}>Date de péremption</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Lot {aDater?.batch_number} — {aDater?.product_name}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Stack spacing={2}>
+                        <TextField
+                            label="Date de péremption imprimée" type="date" fullWidth autoFocus
+                            value={nouvellePeremption}
+                            onChange={(e) => setNouvellePeremption(e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            helperText="Celle qui figure sur le flacon"
+                        />
+                        <Alert severity="info">
+                            La correction est enregistrée dans les notes du lot (qui, quand, ancienne
+                            et nouvelle date). La date limite d&apos;utilisation est recalculée : c&apos;est
+                            la plus proche entre cette péremption et « ouverture + stabilité ».
+                        </Alert>
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={() => setADater(null)} disabled={envoiPeremption}>Annuler</Button>
+                    <Button variant="contained" onClick={enregistrerPeremption} disabled={envoiPeremption}
+                        startIcon={envoiPeremption ? <CircularProgress size={16} /> : <PeremptionIcon />}>
+                        Enregistrer
                     </Button>
                 </DialogActions>
             </Dialog>

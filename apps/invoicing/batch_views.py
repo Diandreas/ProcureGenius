@@ -14,6 +14,33 @@ from .models import ProductBatch, Product, StockMovement
 from .batch_serializers import ProductBatchSerializer, ProductBatchCreateSerializer
 
 
+def _corriger_peremption(batch, valeur, utilisateur):
+    """Applique une nouvelle date de peremption imprimee a un lot.
+
+    Renvoie (liste_des_champs_modifies, erreur). La correction est tracee dans
+    les notes du lot : la peremption imprimee est une donnee que l'on relit sur
+    le flacon, il faut pouvoir savoir qui l'a changee et depuis quoi.
+    """
+    if valeur in (None, ''):
+        return [], None
+    try:
+        nouvelle = date.fromisoformat(str(valeur)[:10])
+    except ValueError:
+        return [], "Date de péremption invalide."
+    if nouvelle.year < 2000 or nouvelle.year > date.today().year + 30:
+        return [], "Date de péremption invalide."
+    if nouvelle == batch.expiry_date:
+        return [], None
+    qui = utilisateur.get_full_name() or utilisateur.username
+    trace = "Péremption corrigée le %s par %s : %s → %s" % (
+        date.today().strftime('%d/%m/%Y'), qui,
+        batch.expiry_date.strftime('%d/%m/%Y') if batch.expiry_date else '(absente)',
+        nouvelle.strftime('%d/%m/%Y'))
+    batch.notes = chr(10).join(x for x in [(batch.notes or '').strip(), trace] if x)
+    batch.expiry_date = nouvelle
+    return ['expiry_date', 'notes'], None
+
+
 class ProductBatchListCreateView(APIView):
     """List and create batches for a product"""
     permission_classes = [IsAuthenticated]
@@ -84,6 +111,13 @@ class ProductBatchDetailView(APIView):
             if field in request.data:
                 setattr(batch, field, request.data[field])
 
+        # La peremption imprimee passe par un chemin a part : elle est validee
+        # et sa modification est tracee.
+        if 'expiry_date' in request.data:
+            _, erreur = _corriger_peremption(batch, request.data.get('expiry_date'), request.user)
+            if erreur:
+                return Response({'error': erreur}, status=status.HTTP_400_BAD_REQUEST)
+
         batch.save()
         batch.update_status()
         return Response(ProductBatchSerializer(batch).data)
@@ -100,7 +134,11 @@ class BatchOpenView(APIView):
         clic ne dit pas la verite.
 
         Corps : {"opened_at": "AAAA-MM-JJ", "shelf_life_after_opening_days": 30,
-                 "save_as_product_default": true, "storage_conditions": "2-8 °C"}
+                 "save_as_product_default": true, "storage_conditions": "2-8 °C",
+                 "expiry_date": "AAAA-MM-JJ"}
+
+        expiry_date est facultatif : c'est l'occasion de corriger la peremption
+        imprimee, qu'on relit sur le flacon au moment de l'ouvrir.
         """
         from datetime import datetime, time as dtime
         from .models import Product
@@ -159,11 +197,17 @@ class BatchOpenView(APIView):
         if maj_produit:
             Product.objects.filter(pk=batch.product_id).update(**maj_produit)
 
+        champs_peremption, erreur = _corriger_peremption(
+            batch, request.data.get('expiry_date'), request.user)
+        if erreur:
+            return Response({'error': erreur}, status=status.HTTP_400_BAD_REQUEST)
+
         batch.opened_at = timezone.make_aware(datetime.combine(jour, dtime(8, 0)))
         batch.opened_by = request.user
         batch.shelf_life_after_opening_days = stabilite
         batch.status = 'opened'
-        batch.save(update_fields=['opened_at', 'opened_by', 'shelf_life_after_opening_days', 'status'])
+        batch.save(update_fields=['opened_at', 'opened_by', 'shelf_life_after_opening_days',
+                                  'status'] + champs_peremption)
 
         # Reactif compte en tests : le flacon ouvert demarre plein, puis on
         # rattrape les examens faits pendant qu'aucun flacon n'etait ouvert.

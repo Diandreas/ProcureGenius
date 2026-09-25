@@ -3303,6 +3303,31 @@ class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'total_amount', 'due_date']
     ordering = ['-created_at']
 
+    @action(detail=True, methods=['get'], url_path='neighbors')
+    def neighbors(self, request, pk=None):
+        """Facture precedente et suivante, dans l'ordre de la liste (la plus
+        recente en premier), pour passer d'une facture a l'autre sans revenir
+        a la liste. Les filtres de date eventuels sont respectes."""
+        facture = self.get_object()
+        base = self.get_queryset()
+        precedente = (base.filter(created_at__gt=facture.created_at)
+                      .order_by('created_at').first())
+        suivante = (base.filter(created_at__lt=facture.created_at)
+                    .order_by('-created_at').first())
+
+        def resume(f):
+            if f is None:
+                return None
+            return {
+                'id': str(f.id),
+                'invoice_number': f.invoice_number,
+                'client_name': getattr(f.client, 'name', '') or '',
+                'total_amount': str(f.total_amount),
+                'created_at': f.created_at.isoformat(),
+            }
+
+        return Response({'previous': resume(precedente), 'next': resume(suivante)})
+
     def get_queryset(self):
         # First apply organization filter (+ prefetch items/payments pour eviter le
         # N+1 maintenant que payments est serialise sur chaque facture de la liste)

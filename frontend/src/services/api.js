@@ -178,6 +178,8 @@ export const invoicesAPI = {
   getReceiptPDF: (id) => api.get(`/invoices/${id}/receipt/`, { responseType: 'blob' }),
   getPDF: (id) => api.get(`/invoices/${id}/pdf/`, { responseType: 'blob' }),
   togglePrivilegeCard: (id, data) => api.post(`/invoices/${id}/toggle_privilege_card/`, data),
+  // Factures voisines, pour les boutons precedent / suivant du detail
+  neighbors: (id) => api.get(`/invoices/${id}/neighbors/`),
 };
 
 // Products API

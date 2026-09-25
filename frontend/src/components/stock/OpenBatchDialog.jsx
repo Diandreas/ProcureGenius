@@ -50,6 +50,7 @@ export const imprimerEtiquetteOuverture = async (batchId, enqueueSnackbar) => {
 const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
     const { enqueueSnackbar } = useSnackbar();
     const [dateOuverture, setDateOuverture] = useState('');
+    const [peremption, setPeremption] = useState('');
     const [stabilite, setStabilite] = useState('');
     const [memoriser, setMemoriser] = useState(false);
     const [conservation, setConservation] = useState('');
@@ -62,6 +63,10 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
         if (!open) return;
         // Volontairement vide : la date doit etre choisie, pas acceptee par defaut.
         setDateOuverture('');
+        // La peremption imprimee est pre-remplie avec ce qui est en base, mais
+        // reste modifiable : on la relit sur le flacon au moment de l'ouvrir,
+        // et elle a parfois ete saisie de travers a la reception.
+        setPeremption((batch?.expiry_date || '').slice(0, 10));
         setStabilite(
             String(batch?.shelf_life_after_opening_days
                 ?? product?.default_shelf_life_after_opening
@@ -77,19 +82,22 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
     const jours = parseInt(stabilite, 10);
     const limite = useMemo(() => {
         const ouverture = versDate(dateOuverture);
-        const peremption = versDate(batch?.expiry_date);
+        const dateParPeremption = versDate(peremption);
         const parStabilite = ouverture && jours > 0
             ? new Date(ouverture.getTime() + jours * 86400000)
             : null;
-        const candidates = [peremption, parStabilite].filter(Boolean);
+        const candidates = [dateParPeremption, parStabilite].filter(Boolean);
         if (!ouverture || candidates.length === 0) return null;
         const plusProche = new Date(Math.min(...candidates.map((d) => d.getTime())));
         return {
             date: plusProche,
-            parPeremption: peremption && plusProche.getTime() === peremption.getTime() && parStabilite
-                && peremption < parStabilite,
+            parPeremption: dateParPeremption && plusProche.getTime() === dateParPeremption.getTime()
+                && parStabilite && dateParPeremption < parStabilite,
         };
-    }, [dateOuverture, jours, batch]);
+    }, [dateOuverture, jours, peremption]);
+
+    const peremptionInitiale = (batch?.expiry_date || '').slice(0, 10);
+    const peremptionChangee = peremption && peremption !== peremptionInitiale;
 
     const dejaDepasse = limite && limite.date < versDate(aujourdhuiISO());
 
@@ -97,6 +105,10 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
         setTentative(true);
         if (!dateOuverture) {
             enqueueSnackbar("Saisissez la date d'ouverture", { variant: 'warning' });
+            return;
+        }
+        if (!peremption) {
+            enqueueSnackbar('La date de péremption est obligatoire', { variant: 'warning' });
             return;
         }
         if (stabilite && !(jours > 0)) {
@@ -112,6 +124,8 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
         try {
             const ouvert = await batchAPI.openBatch(batch.id, {
                 opened_at: dateOuverture,
+                // Corrige la peremption imprimee si elle a ete rectifiee ici
+                expiry_date: peremption,
                 shelf_life_after_opening_days: jours > 0 ? jours : null,
                 save_as_product_default: memoriser && jours > 0,
                 storage_conditions: conservation,
@@ -149,6 +163,17 @@ const OpenBatchDialog = ({ open, batch, product, onClose, onOpened }) => {
                         helperText={tentative && !dateOuverture
                             ? "Obligatoire : indiquez le jour où le flacon a été réellement ouvert"
                             : "Le jour où le flacon a été réellement ouvert (pas forcément aujourd'hui)"}
+                    />
+
+                    <TextField
+                        label="Date de péremption imprimée" type="date" required fullWidth
+                        value={peremption}
+                        onChange={(e) => setPeremption(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        error={tentative && !peremption}
+                        helperText={peremptionChangee
+                            ? `Corrigée (était le ${formater(versDate(peremptionInitiale))}) — la correction sera enregistrée et tracée`
+                            : 'Celle qui figure sur le flacon. Corrigez-la ici si elle a été mal saisie.'}
                     />
 
                     <TextField

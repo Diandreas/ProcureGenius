@@ -51,6 +51,8 @@ import {
   Warning,
   Block,
   ArrowBack,
+  NavigateBefore,
+  NavigateNext,
   MoreVert,
   AttachMoney,
   Business,
@@ -146,11 +148,47 @@ function InvoiceDetail() {
     product_reference: ''
   });
 
+  // Factures voisines, pour passer de l'une a l'autre sans revenir a la liste
+  const [voisines, setVoisines] = useState({ previous: null, next: null });
+
   useEffect(() => {
     if (id) {
       fetchInvoice();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    let annule = false;
+    invoicesAPI.neighbors(id)
+      .then((res) => { if (!annule) setVoisines(res.data || { previous: null, next: null }); })
+      .catch(() => { if (!annule) setVoisines({ previous: null, next: null }); });
+    return () => { annule = true; };
+  }, [id]);
+
+  // La liste va de la plus recente a la plus ancienne : « precedent » remonte
+  // vers la plus recente, « suivant » descend vers la plus ancienne.
+  const boutonNav = (sens, taille = 'medium') => {
+    const voisine = sens === 'precedent' ? voisines.previous : voisines.next;
+    const vide = sens === 'precedent' ? 'Aucune facture plus récente' : 'Aucune facture plus ancienne';
+    const titre = voisine
+      ? `Facture ${sens === 'precedent' ? 'précédente' : 'suivante'} — ${voisine.invoice_number}`
+      : vide;
+    return (
+      <Tooltip title={titre}>
+        <span>
+          <IconButton
+            size={taille}
+            onClick={() => voisine && navigate(`/invoices/${voisine.id}`)}
+            disabled={!voisine}
+            sx={{ bgcolor: 'grey.100', '&:hover': { bgcolor: 'grey.200' } }}
+          >
+            {sens === 'precedent' ? <NavigateBefore /> : <NavigateNext />}
+          </IconButton>
+        </span>
+      </Tooltip>
+    );
+  };
 
   // Ouvrir le modal d'email si demandé depuis la navigation
   useEffect(() => {
@@ -616,6 +654,18 @@ function InvoiceDetail() {
 
   return (
     <Box p={{ xs: 1.5, sm: 2, md: 3 }}>
+      {/* Navigation entre factures sur mobile : l'en-tête ci-dessous est masqué */}
+      <Box sx={{
+        mb: 1.5, display: { xs: 'flex', md: 'none' },
+        alignItems: 'center', justifyContent: 'space-between', gap: 1,
+      }}>
+        {boutonNav('precedent', 'small')}
+        <Typography variant="body2" color="text.secondary" noWrap sx={{ flex: 1, textAlign: 'center' }}>
+          {invoice.invoice_number}
+        </Typography>
+        {boutonNav('suivant', 'small')}
+      </Box>
+
       {/* Header - Caché sur mobile (géré par top navbar) */}
       <Box sx={{ mb: 3, display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -628,6 +678,8 @@ function InvoiceDetail() {
           >
             <ArrowBack />
           </IconButton>
+          {boutonNav('precedent')}
+          {boutonNav('suivant')}
           <Typography variant="h4" sx={{ fontSize: '2rem', fontWeight: 600 }}>
             {invoice.invoice_number}
           </Typography>
