@@ -45,6 +45,7 @@ class ActivityLog(models.Model):
         ('organization', _('Organisation')),
         ('report', _('Rapport')),
         ('dashboard', _('Dashboard')),
+        ('hospitalization', _('Hospitalisation')),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

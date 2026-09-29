@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Button, Card, CardContent, Chip, CircularProgress, Divider,
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
   IconButton, InputAdornment, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, TextField, ToggleButton,
   ToggleButtonGroup, Tooltip, Typography, useMediaQuery, useTheme
 } from '@mui/material';
 import {
   Add as AddIcon,
+  Delete as DeleteIcon,
   Download as DownloadIcon,
   LocalHospital as HospitalIcon,
   Search as SearchIcon
@@ -15,6 +17,7 @@ import {
 import { useSnackbar } from 'notistack';
 import hospitalizationAPI from '../../../services/hospitalizationAPI';
 import BackButton from '../../../components/navigation/BackButton';
+import useCurrentUser from '../../../hooks/useCurrentUser';
 
 const STATUS_CONFIG = {
   admitted:    { label: 'Admis',     color: 'primary' },
@@ -60,6 +63,31 @@ export default function HospitalizationList() {
     const timer = setTimeout(fetchHospitalizations, 300);
     return () => clearTimeout(timer);
   }, [fetchHospitalizations]);
+
+  // Suppression : administrateurs uniquement (le serveur refuse les autres)
+  const { isAdmin } = useCurrentUser();
+  const [aSupprimer, setASupprimer] = useState(null);
+  const [suppression, setSuppression] = useState(false);
+
+  const confirmerSuppression = async () => {
+    setSuppression(true);
+    try {
+      await hospitalizationAPI.remove(aSupprimer.id);
+      enqueueSnackbar(
+        `Hospitalisation de ${aSupprimer.patient_details?.name || 'ce patient'} supprimée`,
+        { variant: 'success' }
+      );
+      setASupprimer(null);
+      fetchHospitalizations();
+    } catch (e) {
+      enqueueSnackbar(
+        e.response?.data?.detail || 'Échec de la suppression',
+        { variant: 'error' }
+      );
+    } finally {
+      setSuppression(false);
+    }
+  };
 
   const handleDownloadPDF = async (id, patientName) => {
     setDownloadingId(id);
@@ -114,16 +142,28 @@ export default function HospitalizationList() {
             Dr. {h.admitting_doctor_details.first_name} {h.admitting_doctor_details.last_name}
           </Typography>
         )}
-        {h.status === 'discharged' && (
-          <Box sx={{ mt: 1, textAlign: 'right' }}>
-            <Button
-              size="small"
-              startIcon={downloadingId === h.id ? <CircularProgress size={14} /> : <DownloadIcon />}
-              onClick={(e) => { e.stopPropagation(); handleDownloadPDF(h.id, h.patient_details?.name || 'patient'); }}
-              disabled={downloadingId === h.id}
-            >
-              Fiche de sortie
-            </Button>
+        {(h.status === 'discharged' || isAdmin) && (
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            {h.status === 'discharged' && (
+              <Button
+                size="small"
+                startIcon={downloadingId === h.id ? <CircularProgress size={14} /> : <DownloadIcon />}
+                onClick={(e) => { e.stopPropagation(); handleDownloadPDF(h.id, h.patient_details?.name || 'patient'); }}
+                disabled={downloadingId === h.id}
+              >
+                Fiche de sortie
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                size="small"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={(e) => { e.stopPropagation(); setASupprimer(h); }}
+              >
+                Supprimer
+              </Button>
+            )}
           </Box>
         )}
       </CardContent>
@@ -238,6 +278,13 @@ export default function HospitalizationList() {
                         </IconButton>
                       </Tooltip>
                     )}
+                    {isAdmin && (
+                      <Tooltip title="Supprimer ce dossier d'hospitalisation">
+                        <IconButton size="small" color="error" onClick={() => setASupprimer(h)}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -245,6 +292,36 @@ export default function HospitalizationList() {
           </Table>
         </TableContainer>
       )}
+
+      {/* Confirmation de suppression */}
+      <Dialog open={Boolean(aSupprimer)} onClose={() => !suppression && setASupprimer(null)}
+        maxWidth="xs" fullWidth>
+        <DialogTitle>Supprimer cette hospitalisation ?</DialogTitle>
+        <DialogContent>
+          <DialogContentText component="div">
+            Le dossier d&apos;hospitalisation de{' '}
+            <strong>{aSupprimer?.patient_details?.name || 'ce patient'}</strong>
+            {aSupprimer?.admission_date && ` (admis le ${formatDate(aSupprimer.admission_date)})`}
+            {' '}sera définitivement supprimé.
+            <Box sx={{ mt: 1.5 }}>
+              Les <strong>factures du séjour ne sont pas concernées</strong> : elles restent
+              en place. La suppression est enregistrée dans le journal d&apos;activité.
+            </Box>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setASupprimer(null)} disabled={suppression}>Annuler</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={confirmerSuppression}
+            disabled={suppression}
+            startIcon={suppression ? <CircularProgress size={16} /> : <DeleteIcon />}
+          >
+            Supprimer
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

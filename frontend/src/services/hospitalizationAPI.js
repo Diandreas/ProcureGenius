@@ -26,6 +26,12 @@ const hospitalizationAPI = {
         return response.data;
     },
 
+    // Reserve aux administrateurs cote serveur (403 sinon)
+    remove: async (id) => {
+        const response = await api.delete(`/healthcare/hospitalizations/${id}/`);
+        return response.data;
+    },
+
     getDischargePDF: async (id) => {
         const response = await api.get(`/healthcare/hospitalizations/${id}/discharge-pdf/`, {
             responseType: 'blob'

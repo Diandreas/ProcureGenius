@@ -6,9 +6,51 @@ from .models import Hospitalization
 from .serializers import HospitalizationSerializer
 from apps.healthcare.pdf_helpers import HealthcarePDFMixin
 
+# Memes roles que ceux qui voient le bouton a l'ecran (useCurrentUser.isAdmin),
+# pour qu'un bouton visible soit toujours autorise.
+HOSPI_ADMIN_ROLES = ('admin', 'manager', 'owner')
+
+
 class HospitalizationViewSet(viewsets.ModelViewSet, HealthcarePDFMixin):
     serializer_class = HospitalizationSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        """Supprime un dossier d'hospitalisation.
+
+        Reserve aux administrateurs : un dossier supprime emporte l'historique
+        du sejour. La suppression est journalisee (qui, quand, quel patient),
+        pour qu'il reste une trace meme apres disparition de la ligne.
+        """
+        if not (request.user.is_superuser
+                or getattr(request.user, 'role', '') in HOSPI_ADMIN_ROLES):
+            return Response(
+                {"detail": "Seuls les administrateurs peuvent supprimer une hospitalisation."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        sejour = self.get_object()
+        patient = getattr(sejour.patient, 'name', '') or 'patient inconnu'
+        identifiant = str(sejour.id)
+        admission = sejour.admission_date.strftime('%d/%m/%Y') if sejour.admission_date else '?'
+
+        reponse = super().destroy(request, *args, **kwargs)
+
+        # La journalisation ne doit jamais faire echouer la suppression elle-meme.
+        try:
+            from apps.analytics.activity_logger import log_delete
+            log_delete(
+                entity_type='hospitalization',
+                entity_id=identifiant,
+                entity_name='Hospitalisation de %s (admis le %s)' % (patient, admission),
+                user=request.user,
+                organization=getattr(request.user, 'organization', None),
+                request=request,
+            )
+        except Exception:
+            pass
+
+        return reponse
 
     def get_queryset(self):
         # Admin voit tout, le personnel voit par organisation
