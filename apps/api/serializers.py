@@ -796,16 +796,24 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         if self.instance is None or items_data is None:
             return attrs
 
-        # Une facture non active n'a pas encore bougé le stock : rien n'est acquis.
-        deja_sorti = {}
+        # Ce qui est deja sorti du stock par cette facture, et qui redeviendra
+        # disponible quand ses lignes seront remplacees. Deux niveaux : par
+        # produit (les lignes retirees rendent tout au produit) et par lot
+        # precis (pour une demande visant ce meme lot).
+        credit_produit, credit_lot = {}, {}
         if self.instance.status in ('paid', 'sent', 'overdue'):
             anciennes = self.instance.items.filter(
                 product__isnull=False, product__product_type='physical'
             ).select_related('product', 'batch')
             for ligne in anciennes:
-                cle = (ligne.product_id, ligne.batch_id)
-                deja_sorti[cle] = deja_sorti.get(cle, 0) + ligne.quantity
+                credit_produit[ligne.product_id] = (
+                    credit_produit.get(ligne.product_id, 0) + ligne.quantity)
+                if ligne.batch_id:
+                    cle_lot = (ligne.product_id, ligne.batch_id)
+                    credit_lot[cle_lot] = credit_lot.get(cle_lot, 0) + ligne.quantity
 
+        # Ce que la facture demandera apres modification, regroupe par produit
+        # (et par lot quand la ligne en precise un).
         demande, references = {}, {}
         for donnees in items_data:
             produit = donnees.get('product')
@@ -818,20 +826,21 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
 
         erreurs = []
         for cle, quantite in demande.items():
-            ecart = quantite - deja_sorti.get(cle, 0)
-            if ecart <= 0:
-                continue  # on retire ou on ne change rien : jamais bloquant
             produit, lot = references[cle]
-            if lot is not None and lot.quantity_remaining < ecart:
-                erreurs.append(
-                    "%s (lot %s) : il manque %s unité(s), disponible %s."
-                    % (produit.name, lot.batch_number, ecart, lot.quantity_remaining)
-                )
-            elif lot is None and produit.total_stock < ecart:
-                erreurs.append(
-                    "%s : il manque %s unité(s), disponible %s."
-                    % (produit.name, ecart, produit.total_stock)
-                )
+            if lot is not None:
+                disponible = lot.quantity_remaining + credit_lot.get((produit.id, lot.id), 0)
+                if quantite > disponible:
+                    erreurs.append(
+                        "%s (lot %s) : il manque %s unité(s), disponible %s."
+                        % (produit.name, lot.batch_number, quantite - disponible, disponible)
+                    )
+            else:
+                disponible = produit.total_stock + credit_produit.get(produit.id, 0)
+                if quantite > disponible:
+                    erreurs.append(
+                        "%s : il manque %s unité(s), disponible %s."
+                        % (produit.name, quantite - disponible, disponible)
+                    )
         if erreurs:
             raise serializers.ValidationError({'items': erreurs})
 
