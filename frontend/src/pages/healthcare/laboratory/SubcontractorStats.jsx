@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box, Grid, Typography, Paper, CircularProgress, Chip,
+    Alert, Box, Grid, Typography, Paper, CircularProgress, Chip,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     Select, MenuItem, FormControl, InputLabel, Divider, Stack, Card, CardContent,
 } from '@mui/material';
@@ -114,12 +114,22 @@ const SubcontractorStats = () => {
                             <StatCard title="Patients" value={summary.total_patients || 0} icon={<PeopleIcon />} color="#10b981" />
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                            <StatCard title="CA encaissé" value={fmt(summary.revenue_paid)} icon={<RevenueIcon />} color="#f59e0b" />
+                            <StatCard title="Encaissé sur la période" value={fmt(summary.revenue_paid)} icon={<RevenueIcon />} color="#f59e0b" />
                         </Grid>
                         <Grid item xs={6} sm={3}>
-                            <StatCard title="En attente paiement" value={fmt(summary.revenue_pending)} icon={<RevenueIcon />} color="#ef4444" />
+                            {/* Une dette n'est pas un chiffre de période : ce montant couvre
+                                tout l'historique, acomptes déduits. */}
+                            <StatCard title="Reste dû (tout l'historique)" value={fmt(summary.revenue_pending)} icon={<RevenueIcon />} color="#ef4444" />
                         </Grid>
                     </Grid>
+
+                    {summary.revenue_credit > 0 && (
+                        <Alert severity="info" sx={{ mb: 3 }}>
+                            <strong>{fmt(summary.revenue_credit)}</strong> encaissé(s) au-delà du montant
+                            facturé sur une ou plusieurs factures. À vérifier : soit un trop-perçu à
+                            rendre, soit une facture à compléter.
+                        </Alert>
+                    )}
 
                     {bySub.length === 0 ? (
                         <Paper elevation={0} sx={{ p: 4, textAlign: 'center', border: '1px dashed', borderColor: 'divider' }}>
@@ -140,7 +150,8 @@ const SubcontractorStats = () => {
                                                     <TableCell>Laboratoire</TableCell>
                                                     <TableCell align="center">Commandes</TableCell>
                                                     <TableCell align="center">Patients</TableCell>
-                                                    <TableCell align="right">CA payé</TableCell>
+                                                    <TableCell align="right">Encaissé</TableCell>
+                                                    <TableCell align="right">Reste dû</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
@@ -155,6 +166,15 @@ const SubcontractorStats = () => {
                                                         <TableCell align="center">{s.orders_count}</TableCell>
                                                         <TableCell align="center">{s.patients_count}</TableCell>
                                                         <TableCell align="right">{fmt(s.revenue_paid)}</TableCell>
+                                                        <TableCell align="right">
+                                                            {s.amount_due > 0 ? (
+                                                                <Typography variant="body2" fontWeight={700} color="error.main">
+                                                                    {fmt(s.amount_due)}
+                                                                </Typography>
+                                                            ) : (
+                                                                <Typography variant="body2" color="text.disabled">—</Typography>
+                                                            )}
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>

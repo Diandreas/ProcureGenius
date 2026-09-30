@@ -1969,14 +1969,29 @@ class SubcontractorStatsView(APIView):
             .distinct()
         )
         batch_invoices = Invoice.objects.filter(id__in=invoice_ids)
-        paid_revenue = float(
-            batch_invoices.filter(status='paid')
-            .aggregate(total=Sum('total_amount'))['total'] or 0
-        )
-        pending_revenue = float(
-            batch_invoices.exclude(status='paid')
-            .aggregate(total=Sum('total_amount'))['total'] or 0
-        )
+        # Ce qui a REELLEMENT ete encaisse sur ces factures : total facture moins
+        # le solde restant. Une facture reglee a moitie compte donc pour sa moitie,
+        # alors qu'avant elle comptait pour zero tant qu'elle n'etait pas soldee.
+        paid_revenue = float(sum(
+            float(f.total_amount or 0) - float(f.get_balance_due() or 0)
+            for f in batch_invoices
+        ))
+
+        # Ce que les sous-traitants nous doivent. Une dette n'est pas un chiffre de
+        # periode : on la calcule sur TOUT l'historique, sinon un impaye de juillet
+        # disparait de l'ecran alors qu'il est toujours du. On additionne les soldes
+        # positifs ; les trop-percus sont comptes a part pour ne pas masquer une dette.
+        toutes_factures = Invoice.objects.filter(id__in=LabOrder.objects.filter(
+            organization=organization, subcontractor__isnull=False
+        ).exclude(lab_invoice__isnull=True).values_list('lab_invoice_id', flat=True).distinct())
+        if subcontractor_id:
+            toutes_factures = Invoice.objects.filter(id__in=LabOrder.objects.filter(
+                organization=organization, subcontractor_id=subcontractor_id
+            ).exclude(lab_invoice__isnull=True).values_list('lab_invoice_id', flat=True).distinct())
+
+        soldes = [float(f.get_balance_due() or 0) for f in toutes_factures]
+        pending_revenue = float(sum(s for s in soldes if s > 0))
+        credit_revenue = float(-sum(s for s in soldes if s < 0))
 
         # Stats par sous-traitant
         per_sub = []
@@ -1990,7 +2005,17 @@ class SubcontractorStatsView(APIView):
         for sub in subcontractors:
             sub_orders = orders.filter(subcontractor=sub)
             sub_count = sub_orders.count()
-            if sub_count == 0:
+            # Reste du par ce sous-traitant, sur tout l'historique : calcule AVANT
+            # le filtre ci-dessous, pour qu'un sous-traitant sans commande recente
+            # mais avec une dette reste visible.
+            sub_due = float(sum(
+                max(float(f.get_balance_due() or 0), 0.0)
+                for f in Invoice.objects.filter(id__in=LabOrder.objects.filter(
+                    organization=organization, subcontractor=sub
+                ).exclude(lab_invoice__isnull=True)
+                 .values_list('lab_invoice_id', flat=True).distinct())
+            ))
+            if sub_count == 0 and sub_due == 0:
                 continue
             sub_invoice_ids = list(
                 sub_orders.exclude(lab_invoice__isnull=True)
@@ -1998,10 +2023,11 @@ class SubcontractorStatsView(APIView):
                 .distinct()
             )
             sub_invoices = Invoice.objects.filter(id__in=sub_invoice_ids)
-            sub_revenue = float(
-                sub_invoices.filter(status='paid')
-                .aggregate(total=Sum('total_amount'))['total'] or 0
-            )
+            # Encaisse reellement sur la periode, acomptes compris.
+            sub_revenue = float(sum(
+                float(f.total_amount or 0) - float(f.get_balance_due() or 0)
+                for f in sub_invoices
+            ))
             sub_patients = sub_orders.values('patient').distinct().count()
 
             # Top examens pour ce sous-traitant
@@ -2025,6 +2051,7 @@ class SubcontractorStatsView(APIView):
                 'orders_count': sub_count,
                 'patients_count': sub_patients,
                 'revenue_paid': sub_revenue,
+                'amount_due': sub_due,
                 'status_breakdown': status_breakdown,
                 'top_tests': [
                     {'name': t['lab_test__name'], 'code': t['lab_test__test_code'], 'count': t['count']}
@@ -2041,6 +2068,7 @@ class SubcontractorStatsView(APIView):
                 'total_patients': total_patients,
                 'revenue_paid': paid_revenue,
                 'revenue_pending': pending_revenue,
+                'revenue_credit': credit_revenue,
             },
             'by_subcontractor': per_sub,
         })
