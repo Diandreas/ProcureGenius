@@ -598,11 +598,29 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'total_price', 'product_name', 'batch_number']
     
+    def _facture_en_modification(self):
+        """La facture en cours de modification, quand cette ligne est validée
+        comme élément imbriqué d'une mise à jour de facture. None sinon."""
+        parent = self.parent
+        while parent is not None:
+            candidate = getattr(parent, 'instance', None)
+            if isinstance(candidate, Invoice) and candidate.pk:
+                return candidate
+            parent = getattr(parent, 'parent', None)
+        return None
+
     def validate(self, attrs):
         """Valider la disponibilité du stock pour les produits physiques"""
         product = attrs.get('product')
         batch = attrs.get('batch')
         quantity = attrs.get('quantity', 1)
+
+        # Modification d'une facture existante : ses lignes sont supprimées puis
+        # recréées, donc chacune arrive ici comme neuve alors que sa quantité est
+        # déjà sortie du stock. Le contrôle ne peut pas se faire ligne par ligne :
+        # il est fait sur l'ensemble, dans InvoiceSerializer.validate().
+        if self._facture_en_modification() is not None:
+            return attrs
         
         # Vérifier le stock uniquement si un produit est lié
         if product and product.product_type == 'physical':
@@ -764,6 +782,60 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         invoice.recalculate_totals()
 
         return invoice
+
+    def validate(self, attrs):
+        """Contrôle du stock sur la facture entière, à la modification.
+
+        Ce qui compte n'est pas la quantité de chaque ligne mais l'ÉCART avec ce
+        que la facture porte déjà : ces quantités sont déjà sorties du stock.
+        Sur une facture encore en brouillon, rien n'est sorti, donc l'écart est
+        la quantité complète.
+        """
+        attrs = super().validate(attrs)
+        items_data = attrs.get('items')
+        if self.instance is None or items_data is None:
+            return attrs
+
+        # Une facture non active n'a pas encore bougé le stock : rien n'est acquis.
+        deja_sorti = {}
+        if self.instance.status in ('paid', 'sent', 'overdue'):
+            anciennes = self.instance.items.filter(
+                product__isnull=False, product__product_type='physical'
+            ).select_related('product', 'batch')
+            for ligne in anciennes:
+                cle = (ligne.product_id, ligne.batch_id)
+                deja_sorti[cle] = deja_sorti.get(cle, 0) + ligne.quantity
+
+        demande, references = {}, {}
+        for donnees in items_data:
+            produit = donnees.get('product')
+            if not produit or produit.product_type != 'physical':
+                continue
+            lot = donnees.get('batch')
+            cle = (produit.id, lot.id if lot else None)
+            demande[cle] = demande.get(cle, 0) + int(donnees.get('quantity') or 0)
+            references[cle] = (produit, lot)
+
+        erreurs = []
+        for cle, quantite in demande.items():
+            ecart = quantite - deja_sorti.get(cle, 0)
+            if ecart <= 0:
+                continue  # on retire ou on ne change rien : jamais bloquant
+            produit, lot = references[cle]
+            if lot is not None and lot.quantity_remaining < ecart:
+                erreurs.append(
+                    "%s (lot %s) : il manque %s unité(s), disponible %s."
+                    % (produit.name, lot.batch_number, ecart, lot.quantity_remaining)
+                )
+            elif lot is None and produit.total_stock < ecart:
+                erreurs.append(
+                    "%s : il manque %s unité(s), disponible %s."
+                    % (produit.name, ecart, produit.total_stock)
+                )
+        if erreurs:
+            raise serializers.ValidationError({'items': erreurs})
+
+        return attrs
 
     def update(self, instance, validated_data):
         from django.db import transaction
