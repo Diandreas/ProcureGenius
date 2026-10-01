@@ -73,25 +73,43 @@ class PrenatalVisitViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """
-        Crée automatiquement une Consultation liée — même principe que
-        DeliveryViewSet.perform_create pour Hospitalization : la CPN doit
-        apparaître dans l'historique de consultations centralisé du patient,
-        pas rester isolée dans un dossier maternité à part.
+        Rattache la CPN à une Consultation, pour qu'elle apparaisse dans
+        l'historique centralisé du patient plutôt que de rester isolée dans le
+        dossier maternité — même principe que DeliveryViewSet pour
+        Hospitalization.
+
+        On réutilise la consultation du jour si elle existe (la patiente est
+        généralement reçue et facturée à l'accueil avant de voir la sage-femme)
+        et on n'en crée une que s'il n'y en a aucune.
         """
         pregnancy = serializer.validated_data['pregnancy']
         doctor = serializer.validated_data.get('doctor')
-        consultation = Consultation.objects.create(
+        quand = serializer.validated_data.get('visit_date') or timezone.now()
+        jour = quand.date() if hasattr(quand, 'date') else quand
+
+        # La patiente a le plus souvent deja ete recue et FACTUREE a l'accueil
+        # le meme jour. On rattache alors la CPN a cette consultation-la : en
+        # creer une seconde la ferait ressortir partout comme un acte a
+        # facturer, alors qu'elle est deja payee.
+        consultation = Consultation.objects.filter(
             organization=pregnancy.organization,
             patient=pregnancy.patient,
-            doctor=doctor if doctor else (self.request.user if getattr(self.request.user, 'role', None) == 'doctor' else None),
-            created_by=self.request.user,
-            chief_complaint="Consultation prénatale (CPN)",
-            status='completed',
-            consultation_date=serializer.validated_data.get('visit_date') or timezone.now(),
-            weight=serializer.validated_data.get('weight'),
-            blood_pressure_systolic=serializer.validated_data.get('blood_pressure_systolic'),
-            blood_pressure_diastolic=serializer.validated_data.get('blood_pressure_diastolic'),
-        )
+            consultation_date__date=jour,
+        ).order_by('consultation_date').first()
+
+        if consultation is None:
+            consultation = Consultation.objects.create(
+                organization=pregnancy.organization,
+                patient=pregnancy.patient,
+                doctor=doctor if doctor else (self.request.user if getattr(self.request.user, 'role', None) == 'doctor' else None),
+                created_by=self.request.user,
+                chief_complaint="Consultation prénatale (CPN)",
+                status='completed',
+                consultation_date=quand,
+                weight=serializer.validated_data.get('weight'),
+                blood_pressure_systolic=serializer.validated_data.get('blood_pressure_systolic'),
+                blood_pressure_diastolic=serializer.validated_data.get('blood_pressure_diastolic'),
+            )
         serializer.save(consultation=consultation)
 
     @action(detail=True, methods=['post'], url_path='generate-invoice')
