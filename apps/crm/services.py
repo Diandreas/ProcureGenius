@@ -66,6 +66,7 @@ SEGMENTS = [
     ('vaccine_due', 'Vaccin à rappeler'),
     ('birthday_week', 'Anniversaire cette semaine'),
     ('never_billed', 'Jamais facturés'),
+    ('no_origin', 'Sans provenance'),
 ]
 
 JOURS_SANS_VISITE = 60
@@ -159,6 +160,8 @@ def appliquer_segment(qs, segment, organization, aujourdhui=None):
         return qs.filter(id__in=_ids_anniversaire(qs, aujourdhui))
     if segment == 'never_billed':
         return qs.filter(crm_visits=0)
+    if segment == 'no_origin':
+        return qs.exclude(crm_profile__origin__isnull=False).exclude(crm_profile__unknown=True)
     return qs
 
 
@@ -267,3 +270,36 @@ def age_en_annees(naissance, aujourdhui=None):
     aujourdhui = aujourdhui or date.today()
     return aujourdhui.year - naissance.year - (
         (aujourdhui.month, aujourdhui.day) < (naissance.month, naissance.day))
+
+
+# ── Provenance ──────────────────────────────────────────────────────────────
+
+def origines_de(organization):
+    """Provenances actives de l'organisation, creees a la premiere demande.
+
+    Triees par usage reel (les plus utilisees en premier) ; « Autre » reste en
+    dernier et « Laboratoire partenaire » n'est jamais propose a la main
+    (il est pose automatiquement).
+    """
+    from django.db.models import Count
+    from .models import PatientOrigin
+
+    if not PatientOrigin.objects.filter(organization=organization).exists():
+        PatientOrigin.objects.bulk_create([
+            PatientOrigin(organization=organization, code=code, label=label, position=i)
+            for i, (code, label) in enumerate(PatientOrigin.DEFAULTS)
+        ])
+    liste = list(PatientOrigin.objects.filter(organization=organization, is_active=True)
+                 .annotate(n=Count('profiles')))
+    liste.sort(key=lambda o: (o.code == 'other', -o.n, o.position))
+    return liste
+
+
+def origine_automatique(patient):
+    """Code de provenance qu'on peut deduire sans demander, ou None."""
+    if getattr(patient, 'registration_source', '') == 'external':
+        return 'partner_lab'
+    from apps.laboratory.models import LabOrder
+    if LabOrder.objects.filter(patient=patient, prescriber__isnull=False).exists():
+        return 'doctor'
+    return None

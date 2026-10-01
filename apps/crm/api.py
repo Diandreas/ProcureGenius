@@ -79,6 +79,9 @@ class CrmPatientListView(_CrmView):
         lot = list(qs[debut:debut + taille])
 
         services_lot = services.services_par_patient([c.id for c in lot])
+        from .models import PatientCRMProfile
+        origines_lot = {p.patient_id: p for p in PatientCRMProfile.objects
+                        .filter(patient_id__in=[c.id for c in lot]).select_related('origin')}
 
         # Numeros partages par plusieurs fiches (famille) : le bouton WhatsApp
         # reste utilisable, mais l'ecran le signale pour ne pas envoyer N fois
@@ -109,6 +112,8 @@ class CrmPatientListView(_CrmView):
                 'last_visit': c.crm_last_visit,
                 'days_since_last_visit': (maintenant - c.crm_last_visit).days if c.crm_last_visit else None,
                 'services': services_lot.get(c.id, []),
+                'origin': (origines_lot[c.id].origin.label if c.id in origines_lot and origines_lot[c.id].origin_id
+                           else ('Inconnue' if c.id in origines_lot and origines_lot[c.id].unknown else None)),
                 'last_passage': ({
                     'at': c.crm_last_passage,
                     'days': (maintenant - c.crm_last_passage).days,
@@ -336,3 +341,179 @@ class CrmPassageDetailView(_CrmView):
         passage.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+
+# ── Provenance ──────────────────────────────────────────────────────────────
+
+class _ProvenanceView(APIView):
+    """Provenance posee depuis la creation de patient, la facture ou la fiche.
+
+    Accessible a quiconque a l'un de ces ecrans : on ne demande pas le module
+    Suivi patients a une secretaire qui facture. Ce n'est pas une donnee de
+    sante, et tout reste borne a l'organisation.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _autorise(self, request, ecriture=False):
+        u = request.user
+        if not getattr(u, 'organization_id', None):
+            return False
+        # Les autres organisations ne voient rien tant que le module n'est pas active chez elles.
+        if Modules.CRM not in (u.organization.enabled_modules or []) and not u.is_superuser:
+            return False
+        modules = (Modules.CRM, Modules.PATIENTS, Modules.INVOICES)
+        return any(user_can(u, m, 'create' if ecriture else 'view') for m in modules)
+
+
+def _origine_dict(o):
+    return {'id': str(o.id), 'code': o.code, 'label': o.label}
+
+
+def _profil_dict(patient, profil, organization):
+    auto_code = None
+    if not (profil and (profil.origin_id or profil.unknown)):
+        auto_code = services.origine_automatique(patient)
+    auto = None
+    if auto_code:
+        from .models import PatientOrigin
+        auto = PatientOrigin.objects.filter(organization=organization, code=auto_code, is_active=True).first()
+    return {
+        'patient_id': str(patient.id),
+        'origin': _origine_dict(profil.origin) if profil and profil.origin_id else None,
+        'unknown': bool(profil and profil.unknown),
+        'detail': profil.detail if profil else '',
+        'do_not_contact': bool(profil and profil.do_not_contact),
+        # Provenance deduite (labo partenaire, prescripteur) : le composant ne pose pas la question.
+        'suggested': _origine_dict(auto) if auto else None,
+    }
+
+
+class CrmOriginListView(_ProvenanceView):
+    def get(self, request):
+        if not self._autorise(request):
+            return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+        liste = services.origines_de(request.user.organization)
+        # « Laboratoire partenaire » est pose automatiquement, pas choisi a la main.
+        return Response({'results': [_origine_dict(o) for o in liste if o.code != 'partner_lab']})
+
+
+class CrmPatientProfileView(_ProvenanceView):
+    def _patient(self, request, pk):
+        return get_object_or_404(services.patients_du_centre(request.user.organization, True), pk=pk)
+
+    def get(self, request, pk):
+        if not self._autorise(request):
+            return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+        from .models import PatientCRMProfile
+        patient = self._patient(request, pk)
+        profil = (PatientCRMProfile.objects.select_related('origin')
+                  .filter(patient=patient, organization=request.user.organization).first())
+        return Response(_profil_dict(patient, profil, request.user.organization))
+
+    def patch(self, request, pk):
+        if not self._autorise(request, ecriture=True):
+            return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+        from .models import PatientCRMProfile, PatientOrigin
+        organization = request.user.organization
+        patient = self._patient(request, pk)
+        donnees = request.data
+        profil, _ = PatientCRMProfile.objects.get_or_create(
+            patient=patient, defaults={'organization': organization})
+        if profil.organization_id != organization.id:
+            return Response({'error': 'Introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if 'origin_id' in donnees:
+            if donnees['origin_id']:
+                origine = PatientOrigin.objects.filter(
+                    organization=organization, pk=donnees['origin_id'], is_active=True).first()
+                if not origine:
+                    return Response({'error': 'Provenance inconnue.'}, status=status.HTTP_400_BAD_REQUEST)
+                profil.origin, profil.unknown = origine, False
+            else:
+                profil.origin = None
+        if 'unknown' in donnees:
+            profil.unknown = bool(donnees['unknown'])
+            if profil.unknown:
+                profil.origin = None
+        if 'detail' in donnees:
+            profil.detail = str(donnees['detail'] or '')[:200]
+        if 'do_not_contact' in donnees:
+            profil.do_not_contact = bool(donnees['do_not_contact'])
+        profil.filled_by = PatientCRMProfile.SOURCE_MANUAL
+        profil.recorded_by = request.user
+        profil.save()
+        return Response(_profil_dict(patient, profil, organization))
+
+
+# ── Rapport mensuel « patients financiers » ─────────────────────────────────
+
+def _peut_rapport(user):
+    """Montants reserves aux roles admin ; module CRM (export) ou page Patients | Financier."""
+    if not services.peut_voir_montants(user):
+        return False
+    return user_can(user, Modules.CRM, 'export') or user_can(user, Modules.CLIENTS, 'view')
+
+
+class CrmFinancialReportView(APIView):
+    """Excel du mois : par patient, montant depense a chaque passage et services achetes."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from . import rapport
+        if not _peut_rapport(request.user):
+            return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            debut, fin = (rapport.bornes_du_mois(request.query_params['month'])
+                          if request.query_params.get('month') else rapport.mois_precedent())
+        except (ValueError, TypeError):
+            return Response({'error': 'Mois invalide (AAAA-MM).'}, status=status.HTTP_400_BAD_REQUEST)
+        org = request.user.organization
+        tampon, _ = rapport.construire_classeur(org, debut, fin)
+        rep = HttpResponse(tampon.read(),
+                           content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        rep['Content-Disposition'] = 'attachment; filename="%s"' % rapport.nom_fichier(org, debut)
+        return rep
+
+
+class CrmReportScheduleView(APIView):
+    """Reglage de l'envoi mensuel par e-mail (administrateurs)."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    @staticmethod
+    def _dict(p):
+        return {
+            'enabled': p.enabled, 'recipients': p.recipients, 'day_of_month': p.day_of_month,
+            'last_sent_for': p.last_sent_for, 'last_sent_at': p.last_sent_at, 'last_error': p.last_error,
+        }
+
+    def get(self, request):
+        from .models import MonthlyReportSchedule
+        if not _peut_rapport(request.user):
+            return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+        plan, _ = MonthlyReportSchedule.objects.get_or_create(organization=request.user.organization)
+        return Response(self._dict(plan))
+
+    def put(self, request):
+        import re
+        from .models import MonthlyReportSchedule
+        if not _peut_rapport(request.user):
+            return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+        plan, _ = MonthlyReportSchedule.objects.get_or_create(organization=request.user.organization)
+        d = request.data
+        if 'recipients' in d:
+            adresses = [a.strip() for a in str(d['recipients']).replace(';', ',').split(',') if a.strip()]
+            if any(not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', a) for a in adresses):
+                return Response({'error': 'Une adresse e-mail est invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+            plan.recipients = ', '.join(adresses)
+        if 'day_of_month' in d:
+            try:
+                plan.day_of_month = min(max(int(d['day_of_month']), 1), 28)
+            except (TypeError, ValueError):
+                return Response({'error': 'Jour invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+        if 'enabled' in d:
+            plan.enabled = bool(d['enabled'])
+        if plan.enabled and not plan.liste_destinataires():
+            return Response({'error': "Indiquez au moins un destinataire pour activer l'envoi."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        plan.save()
+        return Response(self._dict(plan))

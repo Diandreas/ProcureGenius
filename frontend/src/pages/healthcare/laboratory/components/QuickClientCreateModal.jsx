@@ -15,6 +15,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../../services/patientAPI';
+import crmAPI from '../../../../services/crmAPI';
+import ProvenanceChips from '../../../../components/crm/ProvenanceChips';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -28,6 +30,7 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
     const { t } = useTranslation();
     const { enqueueSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
+    const [provenance, setProvenance] = useState('');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -60,11 +63,13 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
         setLoading(true);
         try {
             const response = await patientAPI.createPatient(formData);
+            await crmAPI.saveProvenanceAfterCreate(response.id, provenance);
             enqueueSnackbar('Patient créé avec succès', { variant: 'success' });
             if (onSuccess) {
                 onSuccess(response);
             }
             onClose();
+            setProvenance('');
             // Reset form
             setFormData({
                 name: '',
@@ -163,6 +168,9 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
                                 multiline
                                 rows={2}
                             />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <ProvenanceChips value={provenance} onChange={setProvenance} dense />
                         </Grid>
                     </Grid>
                 </Box>

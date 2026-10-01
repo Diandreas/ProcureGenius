@@ -16,6 +16,7 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import MonthlyReportButton from '../../components/crm/MonthlyReportButton';
 import crmAPI from '../../services/crmAPI';
 import useCurrentUser from '../../hooks/useCurrentUser';
 import PassagesPanel from './PassagesPanel';
@@ -339,6 +340,8 @@ export default function SuiviPatients() {
           <GroupsIcon color="primary" />
           <Typography variant="h5" fontWeight={700}>Suivi patients</Typography>
         </Box>
+        <Box display="flex" gap={1} flexWrap="wrap">
+        <MonthlyReportButton />
         {onglet !== 'passages' && donnees?.can_export && (
           <Button
             size="small" variant="outlined" onClick={exporter} disabled={export_}
@@ -347,6 +350,7 @@ export default function SuiviPatients() {
             Exporter en Excel
           </Button>
         )}
+        </Box>
       </Box>
 
       <Tabs value={onglet} onChange={changerOnglet} sx={{ mb: 1.5 }}>

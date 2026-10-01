@@ -60,6 +60,7 @@ import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import QuickClientCreateModal from '../healthcare/laboratory/components/QuickClientCreateModal';
 import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
+import ProvenanceChips from '../../components/crm/ProvenanceChips';
 import dayjs from 'dayjs';
 
 const UNIT_LABELS = {
@@ -804,6 +805,11 @@ function InvoiceForm() {
                       </Typography>
                     </Box>
                   )}
+                  {formData.client?.id && (
+                    <Box sx={{ mt: 1.5 }}>
+                      <ProvenanceChips patientId={formData.client.id} masquerSiRenseigne dense />
+                    </Box>
+                  )}
                   {formData.client?.has_privilege_card && (
                     <Alert severity="success" sx={{ mt: 1.5, fontSize: '0.8rem' }}>
                       Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur les médicaments de la facture.
@@ -1325,6 +1331,11 @@ function InvoiceForm() {
                             {formData.client.phone}
                           </Typography>
                         )}
+                      </Box>
+                    )}
+                    {formData.client?.id && (
+                      <Box sx={{ mt: 1.5 }}>
+                        <ProvenanceChips patientId={formData.client.id} masquerSiRenseigne dense />
                       </Box>
                     )}
                     {formData.client?.has_privilege_card && (

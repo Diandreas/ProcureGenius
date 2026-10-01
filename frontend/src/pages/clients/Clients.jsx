@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import MonthlyReportButton from '../../components/crm/MonthlyReportButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSharedElement } from '../../contexts/SharedElementContext';
 import {
@@ -512,6 +513,10 @@ function Clients() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1.5 }}>
+        <MonthlyReportButton />
+      </Box>
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>

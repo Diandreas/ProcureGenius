@@ -26,6 +26,7 @@ import { Accordion, AccordionSummary, AccordionDetails, Table, TableBody, TableC
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
+import ProvenanceChips from '../../../components/crm/ProvenanceChips';
 import maternityAPI from '../../../services/maternityAPI';
 import LabOrderHistory from './components/LabOrderHistory';
 import PharmacyHistory from './components/PharmacyHistory';
@@ -386,6 +387,9 @@ const PatientDetail = () => {
                                             onClick={() => navigate(`/healthcare/patients/${patient.id}/privilege-card-usages`)}
                                         />
                                     )}
+                                </Box>
+                                <Box sx={{ mt: 0.75 }}>
+                                    <ProvenanceChips patientId={patient.id} dense />
                                 </Box>
                             </Box>
                         </Box>

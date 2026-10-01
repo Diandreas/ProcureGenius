@@ -26,6 +26,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import patientAPI from '../../../services/patientAPI';
+import crmAPI from '../../../services/crmAPI';
+import ProvenanceChips from '../../../components/crm/ProvenanceChips';
 import { formatDate } from '../../../utils/formatters';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -44,6 +46,7 @@ const PatientForm = () => {
 
     const isEdit = Boolean(id);
     const [loading, setLoading] = useState(false);
+    const [provenance, setProvenance] = useState('');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -133,6 +136,7 @@ const PatientForm = () => {
                 navigate(`/healthcare/patients/${id}`);
             } else {
                 const response = await patientAPI.createPatient(formData);
+                await crmAPI.saveProvenanceAfterCreate(response.id, provenance);
                 enqueueSnackbar(t('patients.create_success', 'Patient créé avec succès'), { variant: 'success' });
                 navigate(`/healthcare/patients/${response.id}`);
             }
@@ -289,6 +293,11 @@ const PatientForm = () => {
                                 rows={2}
                             />
                         </Grid>
+                        {!isEdit && (
+                            <Grid item xs={12}>
+                                <ProvenanceChips value={provenance} onChange={setProvenance} />
+                            </Grid>
+                        )}
                         <Grid item xs={12} sm={6}>
                             <FormControlLabel
                                 control={
