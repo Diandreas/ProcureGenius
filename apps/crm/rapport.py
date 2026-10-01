@@ -18,8 +18,8 @@ from apps.invoicing.models import Invoice, InvoiceItem
 
 from . import services
 
-# Panier moyen vise par le centre : au-dela, la ligne est surlignee en vert.
-SEUIL_PANIER = 20000
+# Depense minimale visee par patient sur le mois : en dessous, la ligne est surlignee en rouge.
+SEUIL_DEPENSE = 20000
 
 STATUTS = {'paid': 'Payée', 'sent': 'Non réglée', 'overdue': 'En retard'}
 
@@ -99,32 +99,29 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
     resume = []
     for fiche in sorted(par_patient.values(), key=lambda x: -x['paye']):
         c = fiche['client']
-        panier = float(fiche['paye']) / fiche['passages'] if fiche['passages'] else 0
         resume.append([c.patient_number or '', c.name, c.phone or '', fiche['passages'],
-                       float(fiche['paye']), round(panier), float(fiche['non_regle']),
+                       float(fiche['paye']), float(fiche['non_regle']),
                        ' ; '.join(fiche['articles'].keys())])
     ws = classeur.active
     ws.title = 'Par patient'
     feuille(ws, ['N° patient', 'Patient', 'Téléphone', 'Passages', 'Total payé (FCFA)',
-                 'Panier moyen (FCFA)', 'Non réglé (FCFA)', 'Services / produits'],
-            resume, [13, 30, 15, 10, 16, 16, 15, 80])
-    vert = PatternFill('solid', fgColor='C6EFCE')
+                 'Non réglé (FCFA)', 'Services / produits'],
+            resume, [13, 30, 15, 10, 16, 15, 80])
+    rouge = PatternFill('solid', fgColor='FFC7CE')
     for row in ws.iter_rows(min_row=2, max_row=1 + len(resume)):
-        if row[5].value and row[5].value > SEUIL_PANIER:
+        if (row[4].value or 0) < SEUIL_DEPENSE:
             for c in row:
-                c.fill = vert
-            row[5].font = Font(bold=True, color='006100')
+                c.fill = rouge
+            row[4].font = Font(bold=True, color='9C0006')
     total_paye = float(sum(f['paye'] for f in par_patient.values()))
-    passages_payes = sum(1 for f in factures if f.status == 'paid')
     ws.append([])
     ws.append(['', 'TOTAL', '', len(factures), total_paye,
-               round(total_paye / passages_payes) if passages_payes else 0,
                float(sum(f['non_regle'] for f in par_patient.values())), ''])
     for c in ws[ws.max_row]:
         c.font = Font(bold=True)
-    au_dessus = sum(1 for r in resume if r[5] > SEUIL_PANIER)
-    ws.append(['', 'Surlignés en vert : panier moyen supérieur à {:,} FCFA ({} patient(s))'.format(
-        SEUIL_PANIER, au_dessus).replace(',', ' ')])
+    en_dessous = sum(1 for r in resume if r[4] < SEUIL_DEPENSE)
+    ws.append(['', 'En rouge : moins de {:,} FCFA dépensés ({} patient(s) sur {})'.format(
+        SEUIL_DEPENSE, en_dessous, len(resume)).replace(',', ' ')])
 
     # 2. Detail : une ligne par passage (facture)
     detail = []
@@ -139,16 +136,12 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
     ws2 = classeur.create_sheet('Détail des passages')
     feuille(ws2, ['Date', 'N° facture', 'N° patient', 'Patient', 'Montant (FCFA)', 'Statut',
                   'Mode de paiement', 'Services / produits'], detail, [12, 18, 13, 30, 15, 13, 16, 80])
-    for row in ws2.iter_rows(min_row=2):
-        if row[4].value and row[4].value > SEUIL_PANIER:
-            for c in row:
-                c.fill = vert
 
     tampon = io.BytesIO()
     classeur.save(tampon)
     tampon.seek(0)
     return tampon, {'patients': len(par_patient), 'passages': len(factures), 'paye': total_paye,
-                    'au_dessus_seuil': au_dessus}
+                    'sous_seuil': en_dessous}
 
 
 def nom_fichier(organization, debut):
