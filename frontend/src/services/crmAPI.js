@@ -70,6 +70,7 @@ const crmAPI = {
     const response = await api.get('/crm/reports/financial-patients/', { params: { month }, responseType: 'blob' });
     return response.data;
   },
+  getSpendingProfile: async (month) => (await api.get('/crm/reports/spending-profile/', { params: { month } })).data,
   getReportSchedule: async () => (await api.get('/crm/reports/schedule/')).data,
   saveReportSchedule: async (data) => (await api.put('/crm/reports/schedule/', data)).data,
 };

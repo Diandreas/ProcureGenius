@@ -20,6 +20,7 @@ import MonthlyReportButton from '../../components/crm/MonthlyReportButton';
 import crmAPI from '../../services/crmAPI';
 import useCurrentUser from '../../hooks/useCurrentUser';
 import PassagesPanel from './PassagesPanel';
+import ProfilDepensesPanel from './ProfilDepensesPanel';
 import { useModules } from '../../contexts/ModuleContext';
 
 const TAILLE_PAGE = 30;
@@ -36,6 +37,13 @@ const ONGLETS = {
     label: 'Patients',
     segments: ['all', 'never_billed'],
     defaut: 'all',
+  },
+  // Montants : réservé aux administrateurs (l'onglet est masqué pour les autres).
+  profil: {
+    label: 'Qui dépense ?',
+    segments: [],
+    defaut: 'all',
+    admin: true,
   },
   // Pas une liste de patients : les gens passés au centre, avec ou sans facture.
   passages: {
@@ -144,12 +152,12 @@ export default function SuiviPatients() {
     }
   }, [parametres, enqueueSnackbar]);
 
-  useEffect(() => { if (onglet !== 'passages') charger(); }, [charger, onglet]);
+  useEffect(() => { if (onglet !== 'passages' && onglet !== 'profil') charger(); }, [charger, onglet]);
 
   // Un passage vient d'être enregistré (bouton flottant) : la pastille « dernier
   // passage » des lignes doit se mettre à jour sans recharger la page.
   useEffect(() => {
-    const recharger = () => { if (onglet !== 'passages') charger(); };
+    const recharger = () => { if (onglet !== 'passages' && onglet !== 'profil') charger(); };
     window.addEventListener('crm-passage-created', recharger);
     return () => window.removeEventListener('crm-passage-created', recharger);
   }, [charger, onglet]);
@@ -342,7 +350,7 @@ export default function SuiviPatients() {
         </Box>
         <Box display="flex" gap={1} flexWrap="wrap">
         <MonthlyReportButton />
-        {onglet !== 'passages' && donnees?.can_export && (
+        {onglet !== 'passages' && onglet !== 'profil' && donnees?.can_export && (
           <Button
             size="small" variant="outlined" onClick={exporter} disabled={export_}
             startIcon={export_ ? <CircularProgress size={14} /> : <DownloadIcon />}
@@ -354,10 +362,14 @@ export default function SuiviPatients() {
       </Box>
 
       <Tabs value={onglet} onChange={changerOnglet} sx={{ mb: 1.5 }}>
-        {Object.entries(ONGLETS).map(([cle, o]) => <Tab key={cle} value={cle} label={o.label} />)}
+        {Object.entries(ONGLETS)
+          .filter(([, o]) => !o.admin || donnees?.can_see_amounts)
+          .map(([cle, o]) => <Tab key={cle} value={cle} label={o.label} />)}
       </Tabs>
 
-      {onglet === 'passages' ? (
+      {onglet === 'profil' ? (
+        <ProfilDepensesPanel />
+      ) : onglet === 'passages' ? (
         <PassagesPanel
           peutOuvrirDossier={peutOuvrirDossier}
           onOuvrirPatient={(id) => navigate(`/healthcare/patients/${id}`)}

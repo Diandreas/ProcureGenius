@@ -56,14 +56,7 @@ def factures_du_mois(organization, debut, fin, inclure_externes=False):
             .order_by('created_at'))
 
 
-def construire_classeur(organization, debut, fin, inclure_externes=False):
-    """Classeur Excel (BytesIO) + totaux {patients, passages, paye}."""
-    from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Font, PatternFill
-    from openpyxl.utils import get_column_letter
-
-    factures = list(factures_du_mois(organization, debut, fin, inclure_externes))
-
+def agreger_par_patient(factures):
     par_patient = OrderedDict()
     for f in factures:
         fiche = par_patient.setdefault(f.client_id, {
@@ -76,6 +69,78 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
             fiche['non_regle'] += f.total_amount or 0
         for item in f.items.all():
             fiche['articles'][_libelle_item(item)] = True
+    return par_patient
+
+
+TRANCHES_AGE = [(0, 4, '0-4 ans'), (5, 14, '5-14 ans'), (15, 24, '15-24 ans'), (25, 34, '25-34 ans'),
+                (35, 44, '35-44 ans'), (45, 59, '45-59 ans'), (60, 200, '60 ans et plus')]
+SEXES = {'M': 'Hommes', 'F': 'Femmes'}
+
+
+def _tranche(age):
+    if age is None:
+        return 'Âge non renseigné'
+    for bas, haut, libelle in TRANCHES_AGE:
+        if bas <= age <= haut:
+            return libelle
+    return 'Âge non renseigné'
+
+
+def profil_depenses(par_patient, aujourdhui=None):
+    """Qui depense : par sexe, par tranche d'age, et les plus gros depensiers.
+
+    Seul le montant paye est compte. Un patient du mois qui n'a rien paye reste
+    dans les effectifs (il fait baisser la depense moyenne, c'est voulu).
+    """
+    total = float(sum(f['paye'] for f in par_patient.values())) or 0
+
+    def bloc(cle, ordre):
+        groupes = OrderedDict((lib, {'label': lib, 'patients': 0, 'passages': 0, 'paye': 0.0}) for lib in ordre)
+        for fiche in par_patient.values():
+            g = groupes.setdefault(cle(fiche['client']), {'label': cle(fiche['client']), 'patients': 0,
+                                                            'passages': 0, 'paye': 0.0})
+            g['patients'] += 1
+            g['passages'] += fiche['passages']
+            g['paye'] += float(fiche['paye'])
+        sortie = []
+        for g in groupes.values():
+            if not g['patients']:
+                continue
+            g['moyenne_par_patient'] = round(g['paye'] / g['patients'])
+            g['part'] = round(100 * g['paye'] / total, 1) if total else 0
+            sortie.append(g)
+        return sortie
+
+    def sexe(c):
+        return SEXES.get(c.gender, 'Sexe non renseigné')
+
+    def age(c):
+        return _tranche(services.age_en_annees(c.date_of_birth, aujourdhui))
+
+    classes = sorted(par_patient.values(), key=lambda f: -f['paye'])[:10]
+    return {
+        'by_gender': bloc(sexe, SEXES.values()),
+        'by_age': bloc(age, [lib for _, _, lib in TRANCHES_AGE]),
+        'top': [{
+            'name': f['client'].name, 'patient_number': f['client'].patient_number,
+            'age': services.age_en_annees(f['client'].date_of_birth, aujourdhui),
+            'gender': SEXES.get(f['client'].gender, ''),
+            'passages': f['passages'], 'paye': float(f['paye']),
+        } for f in classes],
+        'total_paye': total,
+        'patients': len(par_patient),
+    }
+
+
+def construire_classeur(organization, debut, fin, inclure_externes=False):
+    """Classeur Excel (BytesIO) + totaux {patients, passages, paye}."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    factures = list(factures_du_mois(organization, debut, fin, inclure_externes))
+
+    par_patient = agreger_par_patient(factures)
 
     classeur = Workbook()
     en_tete = Font(bold=True, color='FFFFFF')
@@ -99,27 +164,29 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
     resume = []
     for fiche in sorted(par_patient.values(), key=lambda x: -x['paye']):
         c = fiche['client']
-        resume.append([c.patient_number or '', c.name, c.phone or '', fiche['passages'],
+        age = services.age_en_annees(c.date_of_birth)
+        resume.append([c.patient_number or '', c.name, c.phone or '',
+                       age if age is not None else '', SEXES.get(c.gender, ''), fiche['passages'],
                        float(fiche['paye']), float(fiche['non_regle']),
                        ' ; '.join(fiche['articles'].keys())])
     ws = classeur.active
     ws.title = 'Par patient'
-    feuille(ws, ['N° patient', 'Patient', 'Téléphone', 'Passages', 'Total payé (FCFA)',
+    feuille(ws, ['N° patient', 'Patient', 'Téléphone', 'Âge', 'Sexe', 'Passages', 'Total payé (FCFA)',
                  'Non réglé (FCFA)', 'Services / produits'],
-            resume, [13, 30, 15, 10, 16, 15, 80])
+            resume, [13, 30, 15, 7, 10, 10, 16, 15, 80])
     rouge = PatternFill('solid', fgColor='FFC7CE')
     for row in ws.iter_rows(min_row=2, max_row=1 + len(resume)):
-        if (row[4].value or 0) < SEUIL_DEPENSE:
+        if (row[6].value or 0) < SEUIL_DEPENSE:
             for c in row:
                 c.fill = rouge
-            row[4].font = Font(bold=True, color='9C0006')
+            row[6].font = Font(bold=True, color='9C0006')
     total_paye = float(sum(f['paye'] for f in par_patient.values()))
     ws.append([])
-    ws.append(['', 'TOTAL', '', len(factures), total_paye,
+    ws.append(['', 'TOTAL', '', '', '', len(factures), total_paye,
                float(sum(f['non_regle'] for f in par_patient.values())), ''])
     for c in ws[ws.max_row]:
         c.font = Font(bold=True)
-    en_dessous = sum(1 for r in resume if r[4] < SEUIL_DEPENSE)
+    en_dessous = sum(1 for r in resume if r[6] < SEUIL_DEPENSE)
     ws.append(['', 'En rouge : moins de {:,} FCFA dépensés ({} patient(s) sur {})'.format(
         SEUIL_DEPENSE, en_dessous, len(resume)).replace(',', ' ')])
 
@@ -133,6 +200,27 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
             f.get_payment_method_display() if getattr(f, 'payment_method', '') else '',
             ' ; '.join(_libelle_item(i) for i in f.items.all()),
         ])
+    profil = profil_depenses(par_patient)
+    wp = classeur.create_sheet('Profil des dépenses')
+    wp.append(['Qui dépense ?'])
+    wp['A1'].font = Font(bold=True, size=13)
+    for titre_bloc, cle in (('Par sexe', 'by_gender'), ('Par tranche d\'âge', 'by_age')):
+        wp.append([])
+        wp.append([titre_bloc, 'Patients', 'Passages', 'Total payé (FCFA)', 'Part du total (%)',
+                   'Dépense moyenne par patient (FCFA)'])
+        for c in wp[wp.max_row]:
+            c.font, c.fill = en_tete, fond
+        for g in profil[cle]:
+            wp.append([g['label'], g['patients'], g['passages'], g['paye'], g['part'], g['moyenne_par_patient']])
+    wp.append([])
+    wp.append(['10 plus gros dépensiers', 'Âge', 'Sexe', 'Total payé (FCFA)', 'Passages'])
+    for c in wp[wp.max_row]:
+        c.font, c.fill = en_tete, fond
+    for x in profil['top']:
+        wp.append([x['name'], x['age'] if x['age'] is not None else '', x['gender'], x['paye'], x['passages']])
+    for i, l in enumerate([34, 12, 12, 18, 16, 30], 1):
+        wp.column_dimensions[get_column_letter(i)].width = l
+
     ws2 = classeur.create_sheet('Détail des passages')
     feuille(ws2, ['Date', 'N° facture', 'N° patient', 'Patient', 'Montant (FCFA)', 'Statut',
                   'Mode de paiement', 'Services / produits'], detail, [12, 18, 13, 30, 15, 13, 16, 80])

@@ -15,4 +15,5 @@ urlpatterns = [
     path('patients/<uuid:pk>/profile/', api.CrmPatientProfileView.as_view(), name='patient-profile'),
     path('reports/financial-patients/', api.CrmFinancialReportView.as_view(), name='report-financial'),
     path('reports/schedule/', api.CrmReportScheduleView.as_view(), name='report-schedule'),
+    path('reports/spending-profile/', api.CrmSpendingProfileView.as_view(), name='report-spending-profile'),
 ]

@@ -517,3 +517,22 @@ class CrmReportScheduleView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
         plan.save()
         return Response(self._dict(plan))
+
+
+class CrmSpendingProfileView(APIView):
+    """Qui depense le plus : par sexe, par tranche d'age, plus gros depensiers (administrateurs)."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from . import rapport
+        if not _peut_rapport(request.user):
+            return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            debut, fin = (rapport.bornes_du_mois(request.query_params['month'])
+                          if request.query_params.get('month') else rapport.mois_precedent())
+        except (ValueError, TypeError):
+            return Response({'error': 'Mois invalide (AAAA-MM).'}, status=status.HTTP_400_BAD_REQUEST)
+        factures = rapport.factures_du_mois(request.user.organization, debut, fin)
+        donnees = rapport.profil_depenses(rapport.agreger_par_patient(list(factures)))
+        donnees['month'] = debut.strftime('%Y-%m')
+        return Response(donnees)
