@@ -18,6 +18,7 @@ import {
 import { useSnackbar } from 'notistack';
 import crmAPI from '../../services/crmAPI';
 import useCurrentUser from '../../hooks/useCurrentUser';
+import PassagesPanel from './PassagesPanel';
 import { useModules } from '../../contexts/ModuleContext';
 
 const TAILLE_PAGE = 30;
@@ -33,6 +34,12 @@ const ONGLETS = {
   patients: {
     label: 'Patients',
     segments: ['all', 'never_billed'],
+    defaut: 'all',
+  },
+  // Pas une liste de patients : les gens passés au centre, avec ou sans facture.
+  passages: {
+    label: 'Passages',
+    segments: [],
     defaut: 'all',
   },
 };
@@ -136,7 +143,15 @@ export default function SuiviPatients() {
     }
   }, [parametres, enqueueSnackbar]);
 
-  useEffect(() => { charger(); }, [charger]);
+  useEffect(() => { if (onglet !== 'passages') charger(); }, [charger, onglet]);
+
+  // Un passage vient d'être enregistré (bouton flottant) : la pastille « dernier
+  // passage » des lignes doit se mettre à jour sans recharger la page.
+  useEffect(() => {
+    const recharger = () => { if (onglet !== 'passages') charger(); };
+    window.addEventListener('crm-passage-created', recharger);
+    return () => window.removeEventListener('crm-passage-created', recharger);
+  }, [charger, onglet]);
 
   const changerOnglet = (_, valeur) => {
     setOnglet(valeur);
@@ -249,6 +264,15 @@ export default function SuiviPatients() {
         {[p.age != null ? `${p.age} ans` : null, p.gender === 'F' ? 'Femme' : p.gender === 'M' ? 'Homme' : null,
           p.address ? p.address.split('\n')[0].slice(0, 28) : null].filter(Boolean).join(' · ')}
       </Typography>
+      {p.last_passage && (
+        <Box mt={0.5}>
+          <Chip
+            size="small" variant="outlined" color="info"
+            label={`Passage ${p.last_passage.days < 1 ? "aujourd'hui" : `il y a ${p.last_passage.days} j`} · ${p.last_passage.reason}`}
+            sx={{ height: 20, fontSize: '0.68rem' }}
+          />
+        </Box>
+      )}
     </Box>
   );
 
@@ -315,7 +339,7 @@ export default function SuiviPatients() {
           <GroupsIcon color="primary" />
           <Typography variant="h5" fontWeight={700}>Suivi patients</Typography>
         </Box>
-        {donnees?.can_export && (
+        {onglet !== 'passages' && donnees?.can_export && (
           <Button
             size="small" variant="outlined" onClick={exporter} disabled={export_}
             startIcon={export_ ? <CircularProgress size={14} /> : <DownloadIcon />}
@@ -329,6 +353,15 @@ export default function SuiviPatients() {
         {Object.entries(ONGLETS).map(([cle, o]) => <Tab key={cle} value={cle} label={o.label} />)}
       </Tabs>
 
+      {onglet === 'passages' ? (
+        <PassagesPanel
+          peutOuvrirDossier={peutOuvrirDossier}
+          onOuvrirPatient={(id) => navigate(`/healthcare/patients/${id}`)}
+          estAdmin={['admin', 'manager', 'owner'].includes(user?.role) || Boolean(user?.is_superuser)}
+          monNom={`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || ''}
+        />
+      ) : (
+        <>
       {/* Segments : un tap pour changer de liste */}
       <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 1, mb: 1 }}>
         {ONGLETS[onglet].segments.map((code) => {
@@ -395,6 +428,8 @@ export default function SuiviPatients() {
             </Box>
           )}
         </Box>
+      )}
+        </>
       )}
 
       {/* Filtres avancés */}

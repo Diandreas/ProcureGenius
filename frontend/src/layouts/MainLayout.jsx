@@ -53,6 +53,7 @@ import AINotificationProvider from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
 import OfflineIndicator from '../components/OfflineIndicator';
 import SupportFAB from '../components/support/SupportFAB';
+import PassageFab from '../components/crm/PassageFab';
 import { useNotification } from '../contexts/NotificationContext';
 import { useTranslation } from 'react-i18next';
 import useKeyboardShortcuts from '../hooks/useKeyboardShortcuts';
@@ -1315,6 +1316,9 @@ function MainLayout() {
 
         {/* Support / SAV floating button */}
         <SupportFAB />
+
+        {/* « Un patient est passé » : visible seulement avec le module Suivi patients */}
+        <PassageFab />
       </Box>
     </AINotificationProvider>
   );

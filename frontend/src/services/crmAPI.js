@@ -9,6 +9,28 @@ const crmAPI = {
     return response.data;
   },
 
+  // Recherche rapide d'un patient (nom, téléphone ou numéro) — 2 lettres minimum
+  searchPatients: async (q) => {
+    const response = await api.get('/crm/patients/search/', { params: { q } });
+    return response.data.results || [];
+  },
+
+  // Passages : { days, reason, patient, page, page_size }
+  listPassages: async (params = {}) => {
+    const response = await api.get('/crm/passages/', { params });
+    return response.data;
+  },
+
+  // { patient_id | person_name + person_phone, reason, text }
+  createPassage: async (data) => {
+    const response = await api.post('/crm/passages/', data);
+    return response.data;
+  },
+
+  deletePassage: async (id) => {
+    await api.delete(`/crm/passages/${id}/`);
+  },
+
   // Même liste au format Excel (mêmes filtres)
   exportPatients: async (params = {}) => {
     const response = await api.get('/crm/patients/export/', { params, responseType: 'blob' });
