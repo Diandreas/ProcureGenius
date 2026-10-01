@@ -60,7 +60,12 @@ class TokenLoginRequiredMixin:
         # 3. Tentative d'authentification via les headers API (DRF)
         # Utile si l'appel vient du frontend avec un header Authorization
         try:
-            from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+            # Versions avec garde-fou : les PDF de rapports (resultats d'examens,
+            # fiches de sortie...) sont des donnees de sante comme le reste de l'API.
+            from apps.core.authentication import (
+                ModuleAwareTokenAuthentication as TokenAuthentication,
+                ModuleAwareSessionAuthentication as SessionAuthentication,
+            )
             from rest_framework.request import Request as DRFRequest
 
             # Wrap Django request in DRF Request so authenticators can read headers properly

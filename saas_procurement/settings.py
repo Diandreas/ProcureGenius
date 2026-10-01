@@ -233,8 +233,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        # Memes classes que celles de DRF, plus un garde-fou : un compte sans aucun
+        # module de sante/facturation/clients/analyse n'atteint pas les donnees de
+        # sante (voir apps/core/authentication.py).
+        'apps.core.authentication.ModuleAwareTokenAuthentication',
+        'apps.core.authentication.ModuleAwareSessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
