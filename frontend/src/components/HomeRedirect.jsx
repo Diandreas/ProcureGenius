@@ -37,6 +37,9 @@ const HomeRedirect = () => {
                 'consultations': '/healthcare/consultations',
                 'laboratory': '/healthcare/laboratory/orders',
                 'pharmacy': '/products',
+                // Compte limité au Suivi patients (ex. la commerciale) : sans cette
+                // entrée il restait sur l'écran de chargement après la connexion.
+                'crm': '/crm',
             };
 
             // Find the first enabled module that has a mapped route

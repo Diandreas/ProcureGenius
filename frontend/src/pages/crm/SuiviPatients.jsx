@@ -18,6 +18,7 @@ import {
 import { useSnackbar } from 'notistack';
 import crmAPI from '../../services/crmAPI';
 import useCurrentUser from '../../hooks/useCurrentUser';
+import { useModules } from '../../contexts/ModuleContext';
 
 const TAILLE_PAGE = 30;
 
@@ -86,6 +87,10 @@ export default function SuiviPatients() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useCurrentUser();
+  const { hasModule } = useModules();
+  // Le dossier médical n'est ouvert que par ceux qui ont le module Patients :
+  // un compte limité au suivi (commerciale) voit la liste, pas les dossiers.
+  const peutOuvrirDossier = hasModule('patients');
 
   const [onglet, setOnglet] = useState('suivre');
   const [segment, setSegment] = useState(ONGLETS.suivre.defaut);
@@ -235,8 +240,8 @@ export default function SuiviPatients() {
   const identite = (p) => (
     <Box>
       <Typography
-        variant="body2" fontWeight={700} sx={{ cursor: 'pointer' }}
-        onClick={() => navigate(`/healthcare/patients/${p.id}`)}
+        variant="body2" fontWeight={700} sx={{ cursor: peutOuvrirDossier ? 'pointer' : 'default' }}
+        onClick={peutOuvrirDossier ? () => navigate(`/healthcare/patients/${p.id}`) : undefined}
       >
         {titre(p.name)}
       </Typography>

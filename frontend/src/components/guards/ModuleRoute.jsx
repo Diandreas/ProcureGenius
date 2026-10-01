@@ -21,7 +21,10 @@ const ModuleRoute = ({ module, children, redirectTo = '/dashboard' }) => {
 
     // Check if user has access to the module
     if (!hasModule(module)) {
-        return <Navigate to={redirectTo} replace />;
+        // Le tableau de bord se renvoyait lui-même (redirectTo = '/dashboard') :
+        // pour un compte sans ce module, c'était une boucle de redirection.
+        // On passe par la racine, qui choisit le premier module disponible.
+        return <Navigate to={module === 'dashboard' ? '/' : redirectTo} replace />;
     }
 
     return children;
