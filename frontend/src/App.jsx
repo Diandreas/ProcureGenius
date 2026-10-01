@@ -128,6 +128,7 @@ import PregnancyList from './pages/healthcare/maternity/PregnancyList';
 import PregnancyForm from './pages/healthcare/maternity/PregnancyForm';
 import PregnancyDetail from './pages/healthcare/maternity/PregnancyDetail';
 import VaccineTypeCatalog from './pages/healthcare/vaccination/VaccineTypeCatalog';
+import SuiviPatients from './pages/crm/SuiviPatients';
 import DispensingList from './pages/healthcare/pharmacy/DispensingList';
 import DispensingForm from './pages/healthcare/pharmacy/DispensingForm';
 import DispensingDetail from './pages/healthcare/pharmacy/DispensingDetail';
@@ -906,6 +907,7 @@ function App() {
                               <Route path="/healthcare/maternity/new" element={<ModuleRoute module="maternity"><PregnancyForm /></ModuleRoute>} />
                               <Route path="/healthcare/maternity/:id" element={<ModuleRoute module="maternity"><PregnancyDetail /></ModuleRoute>} />
                               <Route path="/healthcare/vaccination/catalog" element={<ModuleRoute module="vaccination"><VaccineTypeCatalog /></ModuleRoute>} />
+                              <Route path="/crm" element={<ModuleRoute module="crm"><SuiviPatients /></ModuleRoute>} />
 
                               {/* Pharmacy */}
                               <Route path="/healthcare/pharmacy/dispensing" element={<ModuleRoute module="pharmacy"><DispensingList /></ModuleRoute>} />

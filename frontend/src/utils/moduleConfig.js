@@ -22,6 +22,7 @@ export const Modules = {
     MATERNITY: 'maternity',
     VACCINATION: 'vaccination',
     PHARMACY: 'pharmacy',
+    CRM: 'crm',
 
     // Always available to admins
     AI_ASSISTANT: 'ai-assistant',
@@ -69,6 +70,7 @@ export const ModuleIcons = {
     [Modules.MATERNITY]: 'PregnantWomanIcon',
     [Modules.VACCINATION]: 'VaccinesIcon',
     [Modules.PHARMACY]: 'LocalPharmacyIcon',
+    [Modules.CRM]: 'GroupsIcon',
 
     // Admin modules
     [Modules.AI_ASSISTANT]: 'SmartToyIcon',

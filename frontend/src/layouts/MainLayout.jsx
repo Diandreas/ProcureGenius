@@ -139,6 +139,7 @@ function MainLayout() {
 
     // Healthcare
     { text: 'Patients', iconSrc: '/icon/user.png', path: '/healthcare/patients', moduleId: 'patients', isCore: false },
+    { text: 'Suivi patients', iconSrc: '/icon/support.png', path: '/crm', moduleId: 'crm', isCore: false },
     { text: 'Visites', iconSrc: '/icon/support.png', path: '/healthcare/visits', moduleId: 'visits', isCore: false },
     { text: 'Laboratoire', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory', moduleId: 'laboratory', isCore: false },
     { text: 'Catalogue Examens', iconSrc: '/icon/analysis.png', path: '/healthcare/laboratory/catalog', moduleId: 'laboratory', isCore: false },

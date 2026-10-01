@@ -27,7 +27,8 @@ class Modules:
     MATERNITY = 'maternity'
     VACCINATION = 'vaccination'
     PHARMACY = 'pharmacy'
-    
+    CRM = 'crm'  # « Suivi patients » : provenance, campagnes, relances
+
     # Always available to admins (not controllable by profiles)
     AI_ASSISTANT = 'ai-assistant'
     INTEGRATIONS = 'integrations'
@@ -131,6 +132,12 @@ MODULE_METADATA = {
         'name': _('Pharmacie'),
         'description': _('Dispensation de médicaments'),
         'icon': 'local_pharmacy',
+        'always_enabled': False,
+    },
+    Modules.CRM: {
+        'name': _('Suivi patients'),
+        'description': _('Provenance des patients, campagnes, porte-à-porte et relances'),
+        'icon': 'groups',
         'always_enabled': False,
     },
 }
@@ -291,6 +298,7 @@ PROFILE_METADATA = {
 # Module Dependencies (if module A requires module B to be enabled)
 MODULE_DEPENDENCIES = {
     Modules.PURCHASE_ORDERS: [Modules.SUPPLIERS],
+    Modules.CRM: [Modules.PATIENTS],
     # Modules.E_SOURCING: [Modules.SUPPLIERS],
     # Modules.CONTRACTS: [Modules.SUPPLIERS],
 }
@@ -418,6 +426,7 @@ MODULE_ACTIONS = {
     Modules.IMAGING: ['view', 'create', 'edit', 'delete', 'validate'],
     Modules.PHARMACY: ['view', 'create', 'edit', 'dispense', 'adjust_stock'],
     Modules.MATERNITY: ['view', 'create', 'edit', 'delete'],
+    Modules.CRM: ['view', 'create', 'edit', 'export'],
     Modules.VACCINATION: ['view', 'create', 'edit', 'delete'],
     # 'visits' est utilise comme identifiant de module (il figure bien dans
     # enabled_modules) mais n'a pas de constante dans Modules : on le cite en clair.

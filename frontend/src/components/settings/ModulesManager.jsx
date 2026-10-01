@@ -33,6 +33,7 @@ import {
   Vaccines as VaccinationIcon, // Vaccination
   LocalPharmacy as PharmacyIcon, // Pharmacy
   MedicalServices as MedicalServicesIcon, // Consultations
+  Groups as CrmIcon, // Suivi patients
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
@@ -55,6 +56,7 @@ const AVAILABLE_MODULES = [
   { code: 'vaccination', name: 'Vaccination', description: 'Catalogue de vaccins, historique patient et vaccination anténatale', IconComponent: VaccinationIcon },
   { code: 'pharmacy', name: 'Pharmacie', description: 'Stocks et délivrance', IconComponent: PharmacyIcon },
   { code: 'consultations', name: 'Consultations', description: 'Dossiers médicaux', IconComponent: MedicalServicesIcon },
+  { code: 'crm', name: 'Suivi patients', description: 'Provenance des patients, campagnes, porte-à-porte et relances', IconComponent: CrmIcon },
 ];
 
 const ModulesManager = () => {

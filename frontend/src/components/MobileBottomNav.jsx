@@ -87,6 +87,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'] }) {
     { label: t('navigation:mobile.clients'), value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
     // Healthcare
     { label: 'Patients', value: '/healthcare/patients', icon: '/icon/user.png', moduleId: 'patients', isCore: false },
+    { label: 'Suivi patients', value: '/crm', icon: '/icon/support.png', moduleId: 'crm', isCore: false },
     { label: 'Visites', value: '/healthcare/visits', icon: '/icon/support.png', moduleId: 'visits', isCore: false },
     { label: 'Laboratoire', value: '/healthcare/laboratory', icon: '/icon/analysis.png', moduleId: 'laboratory', isCore: false },
     { label: 'Maternité', value: '/healthcare/maternity', icon: '/icon/contract.png', moduleId: 'maternity', isCore: false },
