@@ -2699,8 +2699,9 @@ class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         
         # Montants
         total_sales = invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        total_paid = invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        total_outstanding = invoices.filter(status__in=['sent', 'overdue']).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        # Payé et reste dû d'après les paiements reçus (acomptes compris), voir apps/invoicing/balances.py.
+        from apps.invoicing.balances import montants_factures
+        total_paid, total_outstanding = montants_factures(invoices)
         
         # Produits les plus achetés (avec gestion FK product ou champs texte)
         from apps.invoicing.models import InvoiceItem

@@ -412,15 +412,21 @@ class ClientSerializer(serializers.ModelSerializer):
         total = obj.invoices.aggregate(Sum('total_amount'))['total_amount__sum']
         return float(total) if total else 0
         
+    def _montants(self, obj):
+        # Un seul calcul par client et par requete (paye et reste du viennent du meme passage).
+        if not hasattr(obj, '_montants_cache'):
+            from apps.invoicing.balances import montants_factures
+            obj._montants_cache = montants_factures(obj.invoices.all())
+        return obj._montants_cache
+
     def get_total_paid_amount(self, obj):
-        from django.db.models import Sum
-        total = obj.invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum']
-        return float(total) if total else 0
+        # Factures soldees + acomptes recus sur les factures non soldees.
+        return float(self._montants(obj)[0])
         
     def get_total_outstanding(self, obj):
-        from django.db.models import Sum
-        total = obj.invoices.filter(status__in=['sent', 'overdue']).aggregate(Sum('total_amount'))['total_amount__sum']
-        return float(total) if total else 0
+        # Reste reellement du (total - paiements recus), comme la liste des factures
+        # et l'ecran Sous-traitance : une facture reglee en partie ne compte que pour son solde.
+        return float(self._montants(obj)[1])
         
     def get_last_invoice_date(self, obj):
         last_invoice = obj.invoices.order_by('-created_at').first()
