@@ -85,24 +85,42 @@ class SuggestionMatcher:
     @staticmethod
     def _create_notification(user, insight):
         """Crée une notification push pour un insight important"""
+        from django.db import IntegrityError, transaction
+        from django.db.models import Q
+        from apps.core.text_utils import strip_emojis
+
         try:
-            # Vérifier si notification similaire n'existe pas déjà (même titre dans les 24h)
+            # IMPORTANT : save() retire les emojis du titre, il faut donc
+            # comparer avec le titre nettoyé, sinon le test ne matche jamais
+            # et la même notification est recréée à chaque passage.
+            clean_title = strip_emojis(insight['title'])
+
+            # Pas de doublon : même titre non lu (quel que soit l'âge),
+            # ou déjà émis dans les dernières 24h.
             recent_notif = AINotification.objects.filter(
+                Q(is_read=False) | Q(created_at__gte=timezone.now() - timedelta(days=1)),
                 user=user,
-                title=insight['title'],
-                created_at__gte=timezone.now() - timedelta(days=1)
+                title=clean_title,
             ).exists()
 
             if not recent_notif:
-                AINotification.objects.create(
-                    user=user,
-                    notification_type=insight.get('type', 'suggestion'),
-                    title=insight['title'],
-                    message=insight['message'],
-                    action_label=insight.get('action_label', ''),
-                    action_url=insight.get('action_url', ''),
-                    data=insight.get('data', {})
-                )
+                try:
+                    # Savepoint : l'IntegrityError ne doit pas casser la
+                    # transaction en cours (PostgreSQL).
+                    with transaction.atomic():
+                        AINotification.objects.create(
+                            user=user,
+                            notification_type=insight.get('type', 'suggestion'),
+                            title=insight['title'],
+                            message=insight['message'],
+                            action_label=insight.get('action_label', ''),
+                            action_url=insight.get('action_url', ''),
+                            data=insight.get('data', {})
+                        )
+                except IntegrityError:
+                    # Un appel concurrent a créé la même notification entre le
+                    # exists() et le create() : la contrainte d'unicité a joué.
+                    return
                 logger.info(f"Created push notification for {user.username}: {insight['title']}")
 
                 # Envoyer aussi en push natif navigateur

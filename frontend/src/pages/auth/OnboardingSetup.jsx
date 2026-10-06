@@ -198,8 +198,13 @@ function OnboardingSetup() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      // Modules déduits des cas d'usage choisis.
+      // Modules déduits des cas d'usage choisis. L'assistant IA n'est rattaché
+      // à aucun cas d'usage : sans cet ajout, l'étape 4 ci-dessous écrasait le
+      // module que l'essai venait d'ouvrir, et un plan payant arrivait sans IA.
       const enabledModules = modulesFromUseCases(selectedUseCases);
+      if (selectedPlan !== 'free' && !enabledModules.includes('ai-assistant')) {
+        enabledModules.push('ai-assistant');
+      }
 
       // Langue choisie : appliquée tout de suite + enregistrée comme préférence.
       try { i18n.changeLanguage(formData.language); } catch { /* ignore */ }

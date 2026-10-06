@@ -344,6 +344,18 @@ class AINotification(models.Model):
         indexes = [
             models.Index(fields=['user', 'is_read', '-created_at']),
         ]
+        constraints = [
+            # Jamais deux notifications NON LUES identiques pour un utilisateur.
+            # Les créateurs font "vérifier puis créer" : en cas d'appels
+            # concurrents, tous passent le exists() avant le premier create()
+            # -> rafales de doublons au même horodatage. La contrainte est le
+            # garde-fou final ; les créateurs attrapent IntegrityError.
+            models.UniqueConstraint(
+                fields=['user', 'title'],
+                condition=models.Q(is_read=False),
+                name='uniq_unread_ainotif_user_title',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.title}"

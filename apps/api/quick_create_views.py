@@ -5,8 +5,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+import logging
+
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from apps.suppliers.models import Supplier
 from apps.invoicing.models import Product
@@ -15,6 +18,7 @@ from apps.ai_assistant.entity_matcher import entity_matcher
 from .serializers import SupplierSerializer, ProductSerializer, ClientSerializer
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
@@ -34,8 +38,9 @@ def quick_create_client(request):
     data = request.data
     force_create = data.get('force_create', False)
 
-    # Validation des champs requis
-    name = data.get('name', '').strip()
+    # Validation des champs requis. `or ''` : le formulaire peut envoyer null,
+    # et Client.save() lance full_clean() (un None ferait échouer la création).
+    name = (data.get('name') or '').strip()
     if not name:
         return Response(
             {'error': 'Le nom est requis'},
@@ -78,10 +83,10 @@ def quick_create_client(request):
             client = Client.objects.create(
                 organization=organization,
                 name=name,
-                email=data.get('email', ''),
-                phone=data.get('phone', ''),
-                address=data.get('address', ''),
-                contact_person=data.get('contact_person', ''),
+                email=(data.get('email') or '').strip(),
+                phone=(data.get('phone') or '').strip(),
+                address=(data.get('address') or '').strip(),
+                contact_person=(data.get('contact_person') or '').strip(),
             )
 
             serializer = ClientSerializer(client)
@@ -91,7 +96,16 @@ def quick_create_client(request):
                 'message': f'Client {client.name} créé avec succès'
             }, status=status.HTTP_201_CREATED)
 
+    except DjangoValidationError as e:
+        # Saisie invalide (email mal formé, téléphone trop long...) : c'est une
+        # erreur de l'utilisateur, pas du serveur.
+        return Response(
+            {'error': ' '.join(e.messages),
+             'details': getattr(e, 'message_dict', None) or {}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     except Exception as e:
+        logger.exception("Création rapide de client impossible")
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

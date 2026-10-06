@@ -13,6 +13,7 @@ from typing import Optional
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext as _
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -165,22 +166,33 @@ def send_push_to_user(user, push_type: str, title: str, body: str,
                 'resume_hebdo': 'insight',
             }
             notif_type = notif_type_map.get(push_type, 'suggestion')
-            
-            AINotification.objects.create(
-                user=user,
-                organization=getattr(user, 'organization', None),
-                notification_type=notif_type,
-                title=title,
-                message=body,
-                action_url=url,
-                action_label=_("Voir") if url != '/' else "",
-                data={'tag': tag, **(data or {})}
-            )
+
+            from django.db import IntegrityError, transaction
+            try:
+                # Savepoint : sous PostgreSQL, une IntegrityError non isolée
+                # rendrait inutilisable la transaction de l'appelant.
+                with transaction.atomic():
+                    AINotification.objects.create(
+                        user=user,
+                        organization=getattr(user, 'organization', None),
+                        notification_type=notif_type,
+                        title=title,
+                        message=body,
+                        action_url=url,
+                        action_label=_("Voir") if url != '/' else "",
+                        data={'tag': tag, **(data or {})}
+                    )
+            except IntegrityError:
+                # Doublon non lu créé par un appel concurrent : la contrainte
+                # d'unicité (user, title, is_read=False) a joué — on ignore.
+                pass
     except Exception as e:
         logger.error(f"Erreur création AINotification dans send_push_to_user: {e}")
 
     # 2. Vérifier les préférences pour le push native
-    pref_field, _ = PUSH_TYPE_TO_PREF.get(push_type, ('', ''))
+    # Ne pas déballer dans `_` : cela en ferait une variable locale de toute la
+    # fonction et casserait l'appel `_("Voir")` plus haut (UnboundLocalError).
+    pref_field = PUSH_TYPE_TO_PREF.get(push_type, ('', ''))[0]
     if pref_field:
         try:
             prefs = NotificationPreferences.get_or_create_for_user(user)

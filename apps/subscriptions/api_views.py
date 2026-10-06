@@ -1,6 +1,8 @@
 """
 API Views for Subscription Management
 """
+import logging
+
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -19,6 +21,8 @@ from .serializers import (
     SubscriptionPaymentSerializer,
 )
 from .quota_service import QuotaService
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['GET'])
@@ -587,6 +591,9 @@ def stripe_create_checkout(request):
     except ValueError as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
+        # Sans cette trace, le journal ne montrait que « Internal Server Error »
+        # et la cause renvoyée par Stripe était perdue.
+        logger.exception("Création de la session Stripe impossible (plan %s, %s)", plan_code, billing_period)
         return Response({'error': _('Stripe error: ') + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

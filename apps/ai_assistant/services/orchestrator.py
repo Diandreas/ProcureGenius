@@ -622,9 +622,9 @@ class Orchestrator:
         try:
             from asgiref.sync import sync_to_async
             from apps.ai_assistant.services.stats_response_service import StatsResponseService
-            if not StatsResponseService.is_stats_request(message):
+            if not StatsResponseService.is_pure_stats_request(message):
                 return None
-            return await sync_to_async(StatsResponseService.generate_stats_response)(message, user)
+            return await sync_to_async(StatsResponseService.generate_stats_response)(user, message)
         except Exception as exc:  # pragma: no cover - robustesse
             logger.warning("Court-circuit stats indisponible : %s", exc)
             return None
@@ -635,9 +635,9 @@ class Orchestrator:
             return None
         try:
             from apps.ai_assistant.services.stats_response_service import StatsResponseService
-            if not StatsResponseService.is_stats_request(message):
+            if not StatsResponseService.is_pure_stats_request(message):
                 return None
-            return StatsResponseService.generate_stats_response(message, user)
+            return StatsResponseService.generate_stats_response(user, message)
         except Exception as exc:  # pragma: no cover - robustesse
             logger.warning("Court-circuit stats indisponible : %s", exc)
             return None

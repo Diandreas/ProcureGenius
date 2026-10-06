@@ -54,6 +54,45 @@ class StatsResponseService:
         
         return has_stats_keyword or has_pattern
 
+    # Demande explicite de statistiques / de vue d'ensemble.
+    PURE_STATS_PATTERNS = [
+        r'\b(statistiques?|stats)\b',
+        r'\b(tableau de bord|dashboard)\b',
+        r'\b(aper[çc]u|r[ée]sum[ée]) (g[ée]n[ée]ral|global|de (mon|mes|l\'|la) (activit[ée]|entreprise|chiffres))',
+        r'\bmes chiffres\b',
+    ]
+    # Verbes d'action : la demande doit aller à l'assistant complet (outils).
+    ACTION_PATTERN = (
+        r'\b(cr[ée]e[rsz]?|g[ée]n[èée]re[rsz]?|envoie|envoyer|ajoute[rsz]?|modifie[rsz]?|supprime[rsz]?|'
+        r'relance[rsz]?|v[ée]rifie[rsz]?|analyse[rsz]?|pr[ée]pare[rsz]?|r[ée]dige[rsz]?|compare[rsz]?|'
+        r'aide[rsz]?|explique[rsz]?|pourquoi|pr[ée]vision|pr[ée]dis|recommande)\b'
+    )
+    # Une période précise : le résumé du tableau de bord n'y répond pas.
+    PERIOD_PATTERN = (
+        r"\b(aujourd'hui|hier|demain|semaine|mois|trimestre|ann[ée]e|an|depuis|entre|jusqu|"
+        r'janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre|'
+        r'20\d\d)\b'
+    )
+
+    @staticmethod
+    def is_pure_stats_request(message: str) -> bool:
+        """Vraie seulement pour une demande explicite de statistiques générales.
+
+        `is_stats_request` est trop large pour court-circuiter l'assistant : un
+        simple « facture » ou « client » dans la phrase suffit. « Génère une
+        relance pour une facture impayée » recevrait alors un résumé de tableau
+        de bord au lieu de l'action demandée. Ici on exige un vocabulaire
+        statistique explicite, sans verbe d'action ni période précise.
+        """
+        m = (message or '').lower()
+        if not any(re.search(p, m) for p in StatsResponseService.PURE_STATS_PATTERNS):
+            return False
+        if re.search(StatsResponseService.ACTION_PATTERN, m):
+            return False
+        if re.search(StatsResponseService.PERIOD_PATTERN, m):
+            return False
+        return True
+
     @staticmethod
     def detect_stats_type(message: str) -> Optional[str]:
         """
