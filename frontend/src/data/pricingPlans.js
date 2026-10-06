@@ -69,3 +69,7 @@ export const PLANS = [
     missing: [],
   },
 ];
+
+// Plan choisi sur la page Tarifs avant l'inscription, repris par l'écran
+// d'accueil (OnboardingSetup) pour présélectionner la bonne formule.
+export const PLAN_CHOISI_KEY = 'procura_plan_choisi';

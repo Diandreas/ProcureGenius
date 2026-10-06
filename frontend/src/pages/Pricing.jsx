@@ -9,8 +9,9 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import subscriptionAPI from '../services/subscriptionAPI';
-import { PLANS } from '../data/pricingPlans';
+import { PLANS, PLAN_CHOISI_KEY } from '../data/pricingPlans';
 import usePageMeta from '../hooks/usePageMeta';
+import { usePricingCurrency } from '../utils/visitorCurrency';
 
 // ── Direction artistique : éditorial premium, dans la charte Procura ──────────
 // Charte : bleu #2563eb (primaire) + doré #f59e0b (accent) + ardoise.
@@ -56,6 +57,8 @@ const Pricing = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [billing, setBilling] = useState('monthly');
   const [loading, setLoading] = useState(null);
+  const { currency, formatPrice } = usePricingCurrency();
+  const enDevise = currency !== 'EUR';
 
   usePageMeta({
     title: 'Tarifs',
@@ -70,13 +73,18 @@ const Pricing = () => {
   };
 
   const handleCTA = async (plan) => {
-    if (plan.code === 'free') { navigate('/register'); return; }
+    const token = localStorage.getItem('authToken') || localStorage.getItem('access_token');
+    if (plan.code === 'free' || (!token && plan.code !== 'enterprise')) {
+      // Visiteur sans compte : on l'envoie créer son compte (pas vers la
+      // connexion, qu'il ne peut pas utiliser), en retenant le plan choisi.
+      try { sessionStorage.setItem(PLAN_CHOISI_KEY, plan.code); } catch (_) { /* mode privé */ }
+      navigate('/register');
+      return;
+    }
     if (plan.code === 'enterprise') {
       window.open('https://wa.me/237693427913?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20le%20plan%20Enterprise%20de%20Procura.', '_blank');
       return;
     }
-    const token = localStorage.getItem('authToken') || localStorage.getItem('access_token');
-    if (!token) { navigate('/login?next=/pricing'); return; }
     setLoading(plan.code);
     try {
       await subscriptionAPI.createStripeCheckout(plan.code, billing);
@@ -113,6 +121,11 @@ const Pricing = () => {
             <Typography sx={{ ...sans, fontSize: 17, lineHeight: 1.6, color: 'rgba(20,17,14,0.66)' }}>
               Commencez gratuitement. Un mois d&apos;essai offert sur les formules payantes — sans carte bancaire.
             </Typography>
+            {currency !== 'EUR' && (
+              <Typography sx={{ ...sans, fontSize: 13, mt: 1, color: 'rgba(20,17,14,0.5)' }}>
+                Prix affichés en {currency === 'XAF' || currency === 'XOF' ? 'FCFA' : currency} à titre indicatif ; l&apos;abonnement est facturé en euros.
+              </Typography>
+            )}
 
             {/* Bascule mensuel / annuel */}
             <Box sx={{ display: 'inline-flex', mt: 3, p: '4px', border: `1px solid ${LINE}`, borderRadius: 999, bgcolor: 'rgba(255,255,255,0.5)' }}>
@@ -179,7 +192,7 @@ const Pricing = () => {
                     <Typography sx={{ ...serif, fontSize: 34, fontWeight: 500 }}>Gratuit</Typography>
                   ) : (
                     <>
-                      <Typography sx={{ ...serif, fontSize: 46, fontWeight: 500, lineHeight: 1 }}>{price}€</Typography>
+                      <Typography sx={{ ...serif, fontSize: enDevise ? 30 : 46, fontWeight: 500, lineHeight: 1, whiteSpace: 'nowrap' }}>{formatPrice(price)}</Typography>
                       <Typography sx={{ ...sans, fontSize: 14, color: featured ? 'rgba(255,255,255,0.6)' : 'rgba(20,17,14,0.5)' }}>
                         /{billing === 'monthly' ? 'mois' : 'an'}
                       </Typography>
@@ -189,7 +202,12 @@ const Pricing = () => {
                 <Box sx={{ minHeight: 18, mb: 2 }}>
                   {billing === 'yearly' && price !== null && price > 0 && (
                     <Typography sx={{ ...sans, fontSize: 12.5, color: GOLD, fontWeight: 600 }}>
-                      soit {(price / 12).toFixed(0)}€/mois · {Math.round(plan.priceMonthly * 12 - price)}€ économisés
+                      soit {formatPrice(price / 12)}/mois · {formatPrice(plan.priceMonthly * 12 - price)} économisés
+                    </Typography>
+                  )}
+                  {enDevise && price !== null && price > 0 && (
+                    <Typography sx={{ ...sans, fontSize: 12, mt: 0.5, color: featured ? 'rgba(255,255,255,0.6)' : 'rgba(20,17,14,0.5)' }}>
+                      Facturé {price} € par {billing === 'monthly' ? 'mois' : 'an'}
                     </Typography>
                   )}
                 </Box>

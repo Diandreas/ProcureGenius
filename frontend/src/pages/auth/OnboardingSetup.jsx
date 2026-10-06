@@ -16,6 +16,7 @@ import {
 import { CloudUpload, LocationOn, CheckCircle, Receipt, ShoppingCart, Inventory, Business, People, ExpandMore, Tune } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
+import { PLAN_CHOISI_KEY } from '../../data/pricingPlans';
 import i18n from '../../i18n/config';
 
 const steps = ['Votre entreprise', 'Votre activité', 'Votre formule'];
@@ -121,7 +122,15 @@ function OnboardingSetup() {
 
   const [activeStep, setActiveStep] = useState(0);
   const [selectedUseCases, setSelectedUseCases] = useState(['sell']); // au moins un
-  const [selectedPlan, setSelectedPlan] = useState('pro');
+  // Formule choisie sur la page Tarifs avant l'inscription, sinon Pro.
+  const [selectedPlan, setSelectedPlan] = useState(() => {
+    try {
+      const choisi = sessionStorage.getItem(PLAN_CHOISI_KEY);
+      return PLANS.some((p) => p.code === choisi) ? choisi : 'pro';
+    } catch (_) {
+      return 'pro';
+    }
+  });
   const [submitting, setSubmitting] = useState(false);
 
   const toggleUseCase = (id) => {

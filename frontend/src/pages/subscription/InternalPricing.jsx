@@ -9,6 +9,7 @@ import { alpha } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
 import subscriptionAPI from '../../services/subscriptionAPI';
 import { PLANS } from '../../data/pricingPlans';
+import { usePricingCurrency } from '../../utils/visitorCurrency';
 
 const BLUE = '#2563eb';
 const NAVY = '#0b1f4d';
@@ -20,6 +21,7 @@ export default function InternalPricing() {
   const { enqueueSnackbar } = useSnackbar();
   const [current, setCurrent] = useState('free');
   const [billing, setBilling] = useState('monthly');
+  const { currency, formatPrice } = usePricingCurrency();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
   const [confirmPlan, setConfirmPlan] = useState(null); // downgrade a confirmer
@@ -188,11 +190,16 @@ export default function InternalPricing() {
                     <Typography sx={{ fontFamily: '"Fraunces", serif', fontSize: 30, fontWeight: 600 }}>Gratuit</Typography>
                   ) : (
                     <>
-                      <Typography sx={{ fontFamily: '"Fraunces", serif', fontSize: 40, fontWeight: 600, lineHeight: 1 }}>{fmt(price)}€</Typography>
+                      <Typography sx={{ fontFamily: '"Fraunces", serif', fontSize: currency !== 'EUR' ? 28 : 40, fontWeight: 600, lineHeight: 1, whiteSpace: 'nowrap' }}>{formatPrice(price)}</Typography>
                       <Typography sx={{ fontSize: 13, color: featured ? 'rgba(255,255,255,0.6)' : 'text.secondary' }}>/{billing === 'monthly' ? 'mois' : 'an'}</Typography>
                     </>
                   )}
                 </Box>
+                {currency !== 'EUR' && price !== null && price > 0 && (
+                  <Typography sx={{ fontSize: 12, mt: -0.5, mb: 1, color: featured ? 'rgba(255,255,255,0.6)' : 'text.secondary' }}>
+                    Facturé {fmt(price)} € par {billing === 'monthly' ? 'mois' : 'an'}
+                  </Typography>
+                )}
 
                 <Typography sx={{ fontSize: 13.5, lineHeight: 1.5, color: featured ? 'rgba(255,255,255,0.72)' : 'text.secondary', mb: 2.5, minHeight: 44 }}>
                   {plan.tagline}

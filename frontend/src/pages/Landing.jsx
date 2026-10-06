@@ -45,6 +45,7 @@ import {
 } from '@mui/icons-material';
 import { useColorMode } from '../App';
 import { trackVisit } from '../services/tracking';
+import { usePricingCurrency, formatPriceCurrency } from '../utils/visitorCurrency';
 import usePageMeta from '../hooks/usePageMeta';
 
 // Enregistrer les plugins GSAP une seule fois (côté client).
@@ -209,59 +210,7 @@ const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
   );
 };
 
-// ─── Country → Currency mapping ──────────────────────────────────
-const COUNTRY_CURRENCY_MAP = {
-  SN: 'XOF', ML: 'XOF', BF: 'XOF', CI: 'XOF', TG: 'XOF', BJ: 'XOF', GW: 'XOF', NE: 'XOF',
-  CM: 'XAF', CG: 'XAF', GA: 'XAF', CF: 'XAF', TD: 'XAF', GQ: 'XAF',
-  MA: 'MAD', TN: 'TND', DZ: 'DZD',
-  NG: 'NGN', ZA: 'ZAR', GH: 'GHS', KE: 'KES', EG: 'EGP',
-  GB: 'GBP', CH: 'CHF',
-  US: 'USD', CA: 'CAD', BR: 'BRL', MX: 'MXN',
-  JP: 'JPY', IN: 'INR', SG: 'SGD', HK: 'HKD', CN: 'CNY',
-  AE: 'AED', SA: 'SAR',
-};
-const EUR_RATES = {
-  EUR: 1, USD: 1.08, GBP: 0.86, CHF: 0.96, CAD: 1.47,
-  XOF: 655.96, XAF: 655.96, MAD: 10.8, TND: 3.35, DZD: 144,
-  NGN: 1780, ZAR: 20, GHS: 16, KES: 140, EGP: 52,
-  JPY: 163, INR: 91, SGD: 1.45, HKD: 8.4, CNY: 7.8,
-  AED: 3.97, SAR: 4.05, BRL: 5.5, MXN: 18.5,
-};
-const CURRENCY_SYMBOLS_SIMPLE = {
-  EUR: '€', USD: '$', GBP: '£', CHF: 'CHF', CAD: 'C$',
-  XOF: 'FCFA', XAF: 'FCFA', MAD: 'DH', TND: 'TND', DZD: 'DZD',
-  NGN: '₦', ZAR: 'R', GHS: 'GH₵', KES: 'KSh', EGP: 'E£',
-  JPY: '¥', INR: '₹', SGD: 'S$', HKD: 'HK$', CNY: '¥',
-  AED: 'AED', SAR: 'SR', BRL: 'R$', MXN: 'MX$',
-};
-const SYMBOL_AFTER = ['EUR', 'XOF', 'XAF', 'MAD', 'TND', 'DZD', 'CHF', 'AED', 'SAR'];
-const formatPriceCurrency = (amount, currency) => {
-  const sym = CURRENCY_SYMBOLS_SIMPLE[currency] || currency;
-  const formatted = amount.toLocaleString('fr-FR');
-  return SYMBOL_AFTER.includes(currency) ? `${formatted} ${sym}` : `${sym}${formatted}`;
-};
-
-const usePricingCurrency = () => {
-  const [currency, setCurrency] = useState('EUR');
-  useEffect(() => {
-    const cached = sessionStorage.getItem('pricingCurrency');
-    if (cached) { setCurrency(cached); return; }
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then(data => {
-        const detected = COUNTRY_CURRENCY_MAP[data.country_code] || 'EUR';
-        setCurrency(detected);
-        sessionStorage.setItem('pricingCurrency', detected);
-      })
-      .catch(() => { });
-  }, []);
-  const convertPrice = (eurAmount) => {
-    if (currency === 'EUR') return null;
-    const rate = EUR_RATES[currency] || 1;
-    return Math.round(eurAmount * rate);
-  };
-  return { currency, convertPrice };
-};
+// Monnaie du visiteur : voir utils/visitorCurrency.js (partagé avec la page Tarifs).
 
 // ═════════════════════════════════════════════════════════════════
 // MAIN LANDING COMPONENT
