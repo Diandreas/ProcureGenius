@@ -109,3 +109,24 @@ def test_question_trop_longue(demo):
 def test_demo_absente_503(db):
     r = APIClient().post(URL, {'message': 'Bonjour'}, format='json')
     assert r.status_code == 503
+
+
+@pytest.mark.django_db
+async def test_synthese_sans_message_assistant_vide():
+    """L'appel 2 ne doit pas contenir de message assistant vide (refusé par Mistral)."""
+    from apps.ai_assistant.services.orchestrator import Orchestrator
+
+    vus = []
+
+    class Provider:
+        def complete(self, messages, tools=None, tool_choice='auto', temperature=0.7, max_tokens=2500):
+            vus.append(messages)
+            return {'success': True, 'content': 'Deux produits sont en rupture.', 'tool_calls': None,
+                    'usage': {'total_tokens': 5}, 'circuit_open': False}
+
+    orch = Orchestrator(provider=Provider(), tool_registry=mock.Mock())
+    texte, _ = await orch._synthesize([{'role': 'user', 'content': 'Ruptures ?'}],
+                                      {'content': '', 'tool_calls': [{'id': '1'}]},
+                                      [{'function': 'get_stock_alerts', 'result': {'success': True}}])
+    assert texte == 'Deux produits sont en rupture.'
+    assert not any(m['role'] == 'assistant' and not m.get('content') for m in vus[0])

@@ -676,10 +676,11 @@ class Orchestrator:
         """Appel 2 : produire la réponse finale à partir des données récupérées."""
         # Construire le contexte : message assistant (tool_calls) + messages 'tool'.
         synthesis_messages = list(base_messages)
-        synthesis_messages.append({
-            "role": "assistant",
-            "content": first.get("content") or "",
-        })
+        # Un message assistant vide (ni texte ni tool_calls) est refusé par Mistral
+        # (400 « must have either content or tool_calls ») : c'est le cas quand
+        # l'appel 1 n'a fait qu'appeler des outils. On ne le transmet que s'il a du texte.
+        if first.get("content"):
+            synthesis_messages.append({"role": "assistant", "content": first["content"]})
         # Résumé compact et lisible des résultats pour le LLM.
         results_blob = _format_results_for_llm(tool_results)
         synthesis_messages.append({
