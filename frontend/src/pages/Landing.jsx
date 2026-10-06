@@ -47,129 +47,10 @@ import { useColorMode } from '../App';
 import { trackVisit } from '../services/tracking';
 import { usePricingCurrency, formatPriceCurrency } from '../utils/visitorCurrency';
 import usePageMeta from '../hooks/usePageMeta';
+import LiveAIDemo from '../components/landing/LiveAIDemo';
 
 // Enregistrer les plugins GSAP une seule fois (côté client).
 gsap.registerPlugin(ScrollTrigger, useGSAP);
-
-// ─── AI Chat Demo ────────────────────────────────────────────────
-const AIChatDemo = () => {
-  const [visibleMessages, setVisibleMessages] = useState(0);
-  const messages = [
-    { role: 'user', text: 'Quels produits sont bientôt en rupture ?' },
-    { role: 'ai', text: ' 3 produits critiques détectés :', detail: '• Écran LED 27" — 4 restants (~2 jours)\n• Câble HDMI 2.1 — 8 restants (~5 jours)\n• Souris ergonomique — 2 restants (~1 jour)' },
-    { role: 'ai', text: ' Je peux créer automatiquement un bon de commande pour réapprovisionner ces 3 produits. Voulez-vous que je le fasse ?', action: 'Créer le bon de commande' },
-  ];
-
-  useEffect(() => {
-    const timers = messages.map((_, i) =>
-      setTimeout(() => setVisibleMessages(i + 1), (i + 1) * 1200)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  const theme = useTheme();
-  // Suit le thème de l'app, comme le reste de la landing.
-  const isDark = theme.palette.mode === 'dark';
-
-  return (
-    <Box
-      className="gsap-reveal"
-      sx={{
-        bgcolor: isDark ? '#16223b' : '#ffffff',
-        borderRadius: 4,
-        p: 2.5,
-        maxWidth: 480,
-        mx: 'auto',
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-        boxShadow: isDark
-          ? '0 30px 60px rgba(0,0,0,0.6)'
-          : '0 20px 40px rgba(0,0,0,0.08)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, pb: 1.5, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` }}>
-        <Avatar sx={{ width: 28, height: 28, bgcolor: '#2563eb', fontSize: '0.8rem' }}>
-          <SmartToy sx={{ fontSize: 16 }} />
-        </Avatar>
-        <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 600, fontSize: '0.85rem' }}>Procura IA</Typography>
-        <Box sx={{ ml: 'auto', display: 'flex', gap: 0.5, alignItems: 'center' }}>
-          <Box sx={{
-            width: 8, height: 8, borderRadius: '50%', bgcolor: '#10b981',
-            animation: 'pulse 2s infinite',
-            '@keyframes pulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.4 } }
-          }} />
-          <Typography sx={{ color: '#10b981', fontSize: '0.65rem', fontWeight: 500 }}>En ligne</Typography>
-        </Box>
-      </Box>
-
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minHeight: 220 }}>
-        {messages.slice(0, visibleMessages).map((msg, i) => (
-          <Box
-            key={i}
-            sx={{
-              alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              maxWidth: '85%',
-              animation: 'msgIn 0.35s cubic-bezier(0.16,1,0.3,1) both',
-              '@keyframes msgIn': {
-                from: { opacity: 0, transform: 'scale(0.92) translateY(16px)' },
-                to: { opacity: 1, transform: 'scale(1) translateY(0)' },
-              },
-            }}
-          >
-            <Box sx={{
-              p: 1.5,
-              borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-              bgcolor: msg.role === 'user' ? '#2563eb' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
-              border: msg.role === 'ai' ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'}` : 'none',
-            }}>
-              <Typography sx={{ color: msg.role === 'user' ? '#fff' : (isDark ? '#fff' : '#0f172a'), fontSize: '0.85rem', lineHeight: 1.5 }}>
-                {msg.text}
-              </Typography>
-              {msg.detail && (
-                <Typography sx={{
-                  color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)',
-                  fontSize: '0.75rem',
-                  mt: 1.5,
-                  whiteSpace: 'pre-line',
-                  fontFamily: 'monospace',
-                  bgcolor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
-                  p: 1.5,
-                  borderRadius: 1,
-                  borderLeft: '2px solid #f59e0b'
-                }}>
-                  {msg.detail}
-                </Typography>
-              )}
-              {msg.action && (
-                <Button size="small" variant="contained" sx={{
-                  mt: 1.5, bgcolor: '#f59e0b', color: '#0f172a',
-                  textTransform: 'none', fontSize: '0.75rem', borderRadius: 2,
-                  fontWeight: 700, boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
-                  '&:hover': { bgcolor: '#d97706' }
-                }}>
-                  {msg.action}
-                </Button>
-              )}
-            </Box>
-          </Box>
-        ))}
-        {visibleMessages < messages.length && (
-          <Box sx={{ display: 'flex', gap: '4px', pl: 1, animation: 'fadeIn 0.3s ease both', '@keyframes fadeIn': { from: { opacity: 0 }, to: { opacity: 1 } } }}>
-            {[0, 1, 2].map((i) => (
-              <Box key={i} sx={{
-                width: 6, height: 6, borderRadius: '50%', bgcolor: '#2563eb',
-                animation: 'blink 1.4s infinite',
-                animationDelay: `${i * 0.2}s`,
-                '@keyframes blink': { '0%,80%,100%': { opacity: 0.2 }, '40%': { opacity: 1 } }
-              }} />
-            ))}
-          </Box>
-        )}
-      </Box>
-    </Box>
-  );
-};
 
 // ─── Feature Card ─────────────────────────────────────────────────
 const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
@@ -816,7 +697,7 @@ export default function Landing() {
             </Grid>
             <Grid item xs={12} md={7}>
               <div className="gsap-reveal">
-                <AIChatDemo />
+                <LiveAIDemo />
               </div>
             </Grid>
           </Grid>

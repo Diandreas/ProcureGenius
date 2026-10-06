@@ -24,7 +24,7 @@ def test_entonnoir_compte_les_visiteurs_par_etape():
     _ping(c, 'v0', '/register')
 
     funnel = {e['step']: e['visitors'] for e in get_admin_stats(days=30)['acquisition']['funnel']}
-    assert funnel == {'landing': 4, 'pricing': 2, 'register': 1, 'signup': 0}
+    assert funnel == {'landing': 4, 'demo_ai': 0, 'pricing': 2, 'register': 1, 'signup': 0}
     assert Visit.objects.filter(path='/pricing').count() == 4
 
 

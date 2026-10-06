@@ -206,5 +206,26 @@
     "subtitle": "Create your account in 2 minutes. One month free, no card.",
     "start": "Start for free",
     "login": "Log in"
+  },
+  "liveDemo": {
+    "title": "Procura Assistant — live trial",
+    "company": "Sample data: Fournitures Wouri SARL, Douala",
+    "live": "Live",
+    "intro": "Hi! I'm Procura's assistant. Ask me a real question about this demo company: stock, invoices, customers, cash flow…",
+    "suggestions": [
+      "Which products are about to run out?",
+      "Which invoices are overdue?",
+      "Who are my best customers?",
+      "What cash flow should I expect next month?"
+    ],
+    "placeholder": "Ask your question…",
+    "send": "Send",
+    "thinking": "The assistant is thinking",
+    "cta": "Try it on your own data — free account",
+    "remaining_one": "{{count}} free question left today",
+    "remaining_other": "{{count}} free questions left today",
+    "disclaimer": "Demo on sample data, no account needed.",
+    "error": "The demo is temporarily unavailable. Please try again in a moment.",
+    "limit": "You've used today's free questions. Create a free account to keep going with your own data."
   }
 }

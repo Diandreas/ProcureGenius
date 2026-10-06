@@ -71,6 +71,15 @@ PAGE_HINTS = {
     "/products": "L'utilisateur est sur la page Produits / Stock.",
     "/clients": "L'utilisateur est sur la page Clients.",
     "/suppliers": "L'utilisateur est sur la page Fournisseurs.",
+    # Démonstration publique (page d'accueil, visiteur sans compte) : voir public_demo.py.
+    "/public-demo": (
+        "MODE DÉMONSTRATION : tu réponds à un visiteur du site qui n'a pas encore de compte. "
+        "Les données sont celles d'une entreprise FICTIVE de démonstration (fournitures de bureau "
+        "à Douala, montants en FCFA) : présente-les comme telles. Tu peux seulement consulter et "
+        "analyser. Si on te demande de créer, modifier, supprimer ou envoyer quelque chose, explique "
+        "en une phrase que c'est possible après la création d'un compte gratuit. Réponds en 120 mots "
+        "au plus, de façon concrète, avec des chiffres tirés des données."
+    ),
 }
 
 # Descriptions de repli pour la synthèse déterministe (réutilise l'esprit des

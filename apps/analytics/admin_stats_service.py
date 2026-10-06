@@ -93,6 +93,7 @@ def get_admin_stats(days=30):
 
         funnel = [
             {'step': 'landing', 'label': 'Accueil', 'visitors': _visiteurs('/')},
+            {'step': 'demo_ai', 'label': "A essayé l'IA", 'visitors': _visiteurs('/demo-ia')},
             {'step': 'pricing', 'label': 'Tarifs', 'visitors': _visiteurs('/pricing')},
             {'step': 'register', 'label': 'Inscription', 'visitors': _visiteurs('/register')},
             {'step': 'signup', 'label': 'Compte créé', 'visitors': converted},

@@ -206,5 +206,26 @@
     "subtitle": "Créez votre compte en 2 minutes. Un mois offert, sans carte.",
     "start": "Commencer gratuitement",
     "login": "Se connecter"
+  },
+  "liveDemo": {
+    "title": "Assistant Procura — essai en direct",
+    "company": "Données fictives : Fournitures Wouri SARL, Douala",
+    "live": "En direct",
+    "intro": "Bonjour ! Je suis l'assistant de Procura. Posez-moi une vraie question sur cette entreprise de démonstration : stock, factures, clients, trésorerie…",
+    "suggestions": [
+      "Quels produits sont bientôt en rupture ?",
+      "Quelles factures sont en retard ?",
+      "Qui sont mes meilleurs clients ?",
+      "Quelle trésorerie prévoir le mois prochain ?"
+    ],
+    "placeholder": "Posez votre question…",
+    "send": "Envoyer",
+    "thinking": "L'assistant réfléchit",
+    "cta": "Essayez-le sur vos propres données — compte gratuit",
+    "remaining_one": "Encore {{count}} question gratuite aujourd'hui",
+    "remaining_other": "Encore {{count}} questions gratuites aujourd'hui",
+    "disclaimer": "Démonstration sur des données fictives, sans compte.",
+    "error": "La démonstration est momentanément indisponible. Réessayez dans un instant.",
+    "limit": "Vous avez utilisé vos questions d'essai pour aujourd'hui. Créez un compte gratuit pour continuer sur vos propres données."
   }
 }
