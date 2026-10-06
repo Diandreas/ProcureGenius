@@ -130,3 +130,14 @@ async def test_synthese_sans_message_assistant_vide():
                                       [{'function': 'get_stock_alerts', 'result': {'success': True}}])
     assert texte == 'Deux produits sont en rupture.'
     assert not any(m['role'] == 'assistant' and not m.get('content') for m in vus[0])
+
+
+@pytest.mark.django_db(transaction=True)
+def test_prevision_tresorerie_fonctionne_sur_la_demo(demo):
+    """predict_cashflow plantait : Client n'a pas de champ company_name."""
+    from asgiref.sync import async_to_sync
+    from apps.ai_assistant._services_core import AsyncSafeUserContext
+    from apps.ai_assistant.services.registry.tool_registry import registry
+
+    res = async_to_sync(registry.call)('predict_cashflow', {}, AsyncSafeUserContext.from_user(demo))
+    assert res.get('success') is True, res

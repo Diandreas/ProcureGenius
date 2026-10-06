@@ -78,7 +78,15 @@ PAGE_HINTS = {
         "à Douala, montants en FCFA) : présente-les comme telles. Tu peux seulement consulter et "
         "analyser. Si on te demande de créer, modifier, supprimer ou envoyer quelque chose, explique "
         "en une phrase que c'est possible après la création d'un compte gratuit. Réponds en 120 mots "
-        "au plus, de façon concrète, avec des chiffres tirés des données."
+        "au plus, de façon concrète, avec des chiffres tirés des données. "
+        "RÈGLE ABSOLUE : ne cite JAMAIS un nom de client, de produit ou de fournisseur, un numéro de "
+        "facture, un montant ou une date qui ne figure pas dans les résultats des outils. Si les "
+        "résultats ne contiennent qu'un total, donne ce total sans inventer de détail. Si un outil "
+        "renvoie une erreur, dis seulement que cette information n'est pas disponible pour le moment, "
+        "sans AUCUN chiffre. Outils à utiliser : produits en rupture ou stock bas -> get_stock_alerts ; factures en retard "
+        "ou impayées -> search_invoice avec status (overdue, sent) et limit 10 ; meilleurs clients -> "
+        "get_client_stats (top_clients donne noms et montants) ; trésorerie à venir -> "
+        "predict_cashflow ; chiffre d'affaires -> get_invoice_stats (totaux seulement, sans clients)."
     ),
 }
 
@@ -690,7 +698,10 @@ class Orchestrator:
                 "UNIQUEMENT pour ton usage interne. Réponds à ma demande précédente "
                 "en langage naturel, de façon claire et concise, avec un tableau "
                 "Markdown si les données s'y prêtent. Ne recopie JAMAIS ce JSON brut "
-                "ni ses clés techniques dans ta réponse :\n\n" + results_blob
+                "ni ses clés techniques dans ta réponse. N'invente AUCUN nom, numéro, "
+                "montant ou date absent de ces données : si elles ne donnent qu'un "
+                "total, donne le total sans détail inventé ; si un outil a échoué, "
+                "dis que l'information n'est pas disponible, sans chiffre :\n\n" + results_blob
             ),
         })
 
