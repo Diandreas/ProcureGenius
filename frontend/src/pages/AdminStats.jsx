@@ -213,6 +213,14 @@ export default function AdminStats() {
                           <Typography variant="caption" color="text.secondary">visite → inscription</Typography>
                         </Box>
                       </Stack>
+                      {acq.funnel?.length > 0 && (
+                        <Box mb={2}>
+                          {/* Barres rapportées à l'accueil : on voit d'un coup d'œil où ils partent. */}
+                          <ListPanel title="Parcours des visiteurs" rows={acq.funnel}
+                            labelKey="label" valueKey="visitors"
+                            total={Math.max(...acq.funnel.map((e) => e.visitors), 1)} />
+                        </Box>
+                      )}
                       <ListPanel title="Sources de trafic" rows={acq.top_sources}
                         labelKey="referrer_domain" valueKey="c" />
                     </>

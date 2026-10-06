@@ -46,18 +46,51 @@ function readUtm() {
   }
 }
 
+// Provenance d'entrée de la session : le site extérieur d'où vient le visiteur
+// et ses paramètres UTM. Sans cela, ils étaient perdus dès la deuxième page
+// (l'URL n'a plus les utm_*, et le référent devient le site lui-même).
+const ENTRY_KEY = 'procura_entry_source';
+
+function isExternal(referrer) {
+  try {
+    return !!referrer && new URL(referrer).host !== window.location.host;
+  } catch (_) {
+    return false;
+  }
+}
+
+function getEntrySource() {
+  const current = { referrer: document.referrer || '', ...readUtm() };
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(ENTRY_KEY) || 'null');
+    if (saved) return saved;
+    const entry = {
+      ...current,
+      referrer: isExternal(current.referrer) ? current.referrer : '',
+    };
+    sessionStorage.setItem(ENTRY_KEY, JSON.stringify(entry));
+    return entry;
+  } catch (_) {
+    return current;
+  }
+}
+
 /**
  * Envoie une vue de page. Best-effort : n'échoue jamais visiblement,
  * ne bloque pas le rendu. À appeler une fois par page publique.
  */
 export function trackVisit(path) {
   try {
+    const entry = getEntrySource();
+    const utm = readUtm();
     const payload = {
       anon_id: getAnonId(),
       path: path || window.location.pathname,
-      referrer: document.referrer || '',
+      referrer: entry.referrer || document.referrer || '',
       language: navigator.language || '',
-      ...readUtm(),
+      utm_source: utm.utm_source || entry.utm_source || '',
+      utm_medium: utm.utm_medium || entry.utm_medium || '',
+      utm_campaign: utm.utm_campaign || entry.utm_campaign || '',
     };
     // fire-and-forget
     api.post('/track/', payload).catch(() => {});

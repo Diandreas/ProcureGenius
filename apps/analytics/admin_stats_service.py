@@ -87,6 +87,17 @@ def get_admin_stats(days=30):
         converted = period_visits.filter(converted_user__isnull=False)\
             .values('anon_id').distinct().count()
 
+        # Entonnoir : visiteurs distincts ayant vu chaque étape du parcours.
+        def _visiteurs(path):
+            return period_visits.filter(path=path).values('anon_id').distinct().count()
+
+        funnel = [
+            {'step': 'landing', 'label': 'Accueil', 'visitors': _visiteurs('/')},
+            {'step': 'pricing', 'label': 'Tarifs', 'visitors': _visiteurs('/pricing')},
+            {'step': 'register', 'label': 'Inscription', 'visitors': _visiteurs('/register')},
+            {'step': 'signup', 'label': 'Compte créé', 'visitors': converted},
+        ]
+
         acquisition = {
             'available': True,
             'total_visits': period_visits.count(),
@@ -97,6 +108,7 @@ def get_admin_stats(days=30):
             'devices': devices,
             'converted_visitors': converted,
             'visit_to_signup_rate': round(100 * converted / uniques, 1) if uniques else 0,
+            'funnel': funnel,
             'daily': _daily_series(visits, 'created_at', days, now),
         }
     except Exception as e:
