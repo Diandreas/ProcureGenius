@@ -14,12 +14,21 @@ class StockAlertService:
     """Service pour gérer les alertes de stock bas"""
 
     @staticmethod
-    def check_low_stock_products():
-        """
-        Vérifie tous les produits physiques avec stock bas
+    def _perimetre(qs, organization):
+        # Sans organisation, seul un traitement interne (envoi des alertes par
+        # e-mail, qui traite chaque produit pour SA propre organisation) peut
+        # parcourir tous les produits. Tout appel au nom d'un utilisateur DOIT
+        # passer son organisation : sinon il voyait les produits des autres clients.
+        return qs if organization is None else qs.filter(organization=organization)
 
-        Returns:
-            list: Liste des produits avec stock bas
+    @staticmethod
+    def check_low_stock_products(organization=None):
+        """
+        Produits physiques en stock bas.
+
+        Args:
+            organization: limite aux produits de cette organisation (obligatoire
+                pour tout appel fait au nom d'un utilisateur).
         """
         low_stock_products = Product.objects.filter(
             product_type='physical',
@@ -27,21 +36,16 @@ class StockAlertService:
             stock_quantity__lte=F('low_stock_threshold')
         )
 
-        return list(low_stock_products)
+        return list(StockAlertService._perimetre(low_stock_products, organization))
 
     @staticmethod
-    def get_out_of_stock_products():
-        """
-        Retourne tous les produits en rupture de stock
-
-        Returns:
-            list: Liste des produits en rupture
-        """
-        return list(Product.objects.filter(
+    def get_out_of_stock_products(organization=None):
+        """Produits physiques en rupture (voir check_low_stock_products pour `organization`)."""
+        return list(StockAlertService._perimetre(Product.objects.filter(
             product_type='physical',
             stock_quantity=0,
             is_active=True
-        ))
+        ), organization))
 
     @staticmethod
     def send_low_stock_alert(product, recipients=None):

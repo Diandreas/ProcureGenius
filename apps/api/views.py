@@ -683,8 +683,14 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         """Liste des produits nécessitant une attention (stock bas/rupture)"""
         from apps.invoicing.stock_alerts import StockAlertService
 
-        low_stock = StockAlertService.check_low_stock_products()
-        out_of_stock = StockAlertService.get_out_of_stock_products()
+        # Limité à l'organisation de l'utilisateur : sans ce filtre, tout
+        # utilisateur connecté recevait les produits de toutes les organisations.
+        org = getattr(request.user, 'organization', None)
+        if org is None:
+            low_stock, out_of_stock = [], []
+        else:
+            low_stock = StockAlertService.check_low_stock_products(org)
+            out_of_stock = StockAlertService.get_out_of_stock_products(org)
 
         return Response({
             'low_stock': self.get_serializer(low_stock, many=True).data,

@@ -5883,16 +5883,21 @@ ProcureGenius
         @sync_to_async
         def get_alerts_sync():
             alert_type = params.get('alert_type', 'all')  # 'all', 'low_stock', 'out_of_stock'
+            # Uniquement les produits de l'organisation de l'utilisateur (avant :
+            # ceux de tous les clients de la plateforme).
+            org = user_context.get('organization')
+            if org is None:
+                return []
 
             if alert_type == 'out_of_stock':
-                products = StockAlertService.get_out_of_stock_products()
+                products = StockAlertService.get_out_of_stock_products(org)
             elif alert_type == 'low_stock':
                 # Produits en stock bas mais pas rupture
-                all_low = StockAlertService.check_low_stock_products()
+                all_low = StockAlertService.check_low_stock_products(org)
                 products = [p for p in all_low if p.stock_quantity > 0]
             else:  # 'all'
-                out_of_stock = StockAlertService.get_out_of_stock_products()
-                low_stock = [p for p in StockAlertService.check_low_stock_products()
+                out_of_stock = StockAlertService.get_out_of_stock_products(org)
+                low_stock = [p for p in StockAlertService.check_low_stock_products(org)
                             if p.stock_quantity > 0]
                 products = list(out_of_stock) + list(low_stock)
 

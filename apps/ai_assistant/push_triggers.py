@@ -227,7 +227,7 @@ def send_weekly_summary(user):
         # Alertes stock
         try:
             from apps.invoicing.stock_alerts import StockAlertService
-            alerts = StockAlertService.check_low_stock_products()
+            alerts = StockAlertService.check_low_stock_products(org)
             alertes_stock = len(alerts)
         except Exception:
             alertes_stock = 0
