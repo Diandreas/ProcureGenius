@@ -58,13 +58,13 @@ class AdvancedAIActions:
                     if similar:
                         client = similar[0][0]
                     else:
+                        # Client n'a qu'un champ `name` (company_name, first_name et
+                        # last_name n'existent pas : la création échouait en silence).
                         client = Client.objects.create(
                             organization=organization,
-                            company_name=client_name,
-                            first_name=client_name.split()[0] if client_name else '',
-                            last_name=' '.join(client_name.split()[1:]) if len(client_name.split()) > 1 else '',
-                            email=params.get('client_email', ''),
-                            phone=params.get('client_phone', ''),
+                            name=client_name,
+                            email=params.get('client_email', '') or '',
+                            phone=params.get('client_phone', '') or '',
                         )
                         client_created = True
 
@@ -240,7 +240,7 @@ class AdvancedAIActions:
                         f"✅ Devis **{old_number}** converti en facture **{quote.invoice_number}** !\n\n"
                         f"📋 Status : Brouillon (tu peux encore modifier avant d'envoyer)\n"
                         f"💰 Montant : **{quote.total_amount} {quote.currency}**\n"
-                        f"👤 Client : **{quote.client.company_name if quote.client else 'N/A'}**\n\n"
+                        f"👤 Client : **{quote.client.name if quote.client else 'N/A'}**\n\n"
                         f"Dis-moi « **envoie la facture {quote.invoice_number}** » quand tu es prêt."
                     ),
                     'data': {
@@ -326,7 +326,7 @@ class AdvancedAIActions:
                     sale_prices.append({
                         'date': item.invoice.created_at.strftime('%d/%m/%Y'),
                         'price': float(item.unit_price),
-                        'client': item.invoice.client.company_name if item.invoice.client else 'N/A',
+                        'client': item.invoice.client.name if item.invoice.client else 'N/A',
                     })
 
                 # ── Analyse ──
@@ -507,7 +507,7 @@ class AdvancedAIActions:
                     if balance > 0:
                         entry = {
                             'invoice': inv.invoice_number,
-                            'client': inv.client.company_name if inv.client else 'N/A',
+                            'client': inv.client.name if inv.client else 'N/A',
                             'amount': float(balance),
                             'due_date': inv.due_date.strftime('%d/%m/%Y') if inv.due_date else 'N/A',
                             'days_overdue': (today - inv.due_date).days if inv.due_date and inv.due_date < today else 0,
@@ -903,7 +903,7 @@ class AdvancedAIActions:
 
                     invoices_data.append({
                         'invoice_number': inv.invoice_number,
-                        'client': inv.client.company_name if inv.client else 'N/A',
+                        'client': inv.client.name if inv.client else 'N/A',
                         'client_email': inv.client.email if inv.client else '',
                         'amount': float(balance),
                         'due_date': inv.due_date.strftime('%d/%m/%Y') if inv.due_date else 'N/A',

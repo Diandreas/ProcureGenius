@@ -429,7 +429,7 @@ class CashFlowWidgetView(APIView):
                 total_receivable += balance
                 income_items.append({
                     'invoice': inv.invoice_number,
-                    'client': inv.client.company_name if inv.client else 'N/A',
+                    'client': inv.client.name if inv.client else 'N/A',
                     'amount': float(balance),
                     'due_date': inv.due_date.isoformat() if inv.due_date else None,
                 })
