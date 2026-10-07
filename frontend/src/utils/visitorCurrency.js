@@ -60,7 +60,11 @@ export const memeMonnaie = (a, b) => a === b || (FAMILLE_CFA.includes(a) && FAMI
 
 export const formatPriceCurrency = (amount, currency) => {
   const sym = SYMBOLS[currency] || currency;
-  const formatted = Number(amount).toLocaleString('fr-FR');
+  const n = Number(amount);
+  // 5,30 € plutôt que 5,3 € ; montants entiers sans décimales (3 500 FCFA).
+  const formatted = Number.isInteger(n)
+    ? n.toLocaleString('fr-FR')
+    : n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return SYMBOL_AFTER.includes(currency) ? `${formatted} ${sym}` : `${sym}${formatted}`;
 };
 

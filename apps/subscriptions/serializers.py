@@ -12,12 +12,14 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     features = serializers.SerializerMethodField()
     quotas = serializers.SerializerMethodField()
     savings_yearly = serializers.SerializerMethodField()
+    # L'option annuelle n'existe que si Stripe a un prix annuel actif (sync_stripe_prices).
+    yearly_available = serializers.SerializerMethodField()
 
     class Meta:
         model = SubscriptionPlan
         fields = [
             'id', 'code', 'name', 'description',
-            'price_monthly', 'price_yearly', 'currency',
+            'price_monthly', 'price_yearly', 'currency', 'extra_user_price', 'yearly_available',
             'trial_days', 'features', 'quotas', 'savings_yearly'
         ]
 
@@ -45,6 +47,9 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             'storage_mb': obj.max_storage_mb,
             'ai_requests_per_month': obj.max_ai_requests_per_month,
         }
+
+    def get_yearly_available(self, obj):
+        return bool(obj.stripe_price_id_yearly and obj.price_yearly and obj.price_yearly > 0)
 
     def get_savings_yearly(self, obj):
         """Calculate yearly savings"""

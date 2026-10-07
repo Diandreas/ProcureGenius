@@ -1,4 +1,4 @@
-// Dialog de gestion des sièges supplémentaires (+1 500 FCFA/siège, proratisé via Stripe).
+// Dialog de gestion des sièges supplémentaires (prix lu dans Stripe, proratisé).
 // - Plan payant : stepper pour choisir le total de sièges supplémentaires.
 // - Plan gratuit / sans abonnement payant : invite à passer à un plan payant.
 
@@ -11,11 +11,10 @@ import {
 import { Add, Remove, Person } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import subscriptionAPI from '../../services/subscriptionAPI';
-import { SEAT_PRICE_MONTHLY } from '../../data/pricingPlans';
+import usePlansTarifs from '../../hooks/usePlansTarifs';
+import { formatPriceCurrency } from '../../utils/visitorCurrency';
 
-// Prix mensuel d'un siège supplémentaire, en FCFA (monnaie de facturation).
-const SEAT_PRICE = SEAT_PRICE_MONTHLY;
-const fcfa = (n) => `${Number(n).toLocaleString('fr-FR')} FCFA`;
+
 
 export default function SeatManagerDialog({ open, onClose, status, onUpdated }) {
   const navigate = useNavigate();
@@ -30,6 +29,10 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
   const minExtra = Math.max(0, activeUsers - included);
   const [extra, setExtra] = useState(Math.max(currentExtra, minExtra));
   const [saving, setSaving] = useState(false);
+  // Prix d'un siège lu dans Stripe (via le serveur), dans la devise de facturation.
+  const { siege } = usePlansTarifs();
+  const SEAT_PRICE = siege.prix || 0;
+  const prixSiege = (n) => formatPriceCurrency(n, siege.devise);
 
   const totalSeats = included + extra;
   const monthlyCost = extra * SEAT_PRICE;
@@ -61,7 +64,7 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
           <DialogContent>
             <Alert severity="info" sx={{ borderRadius: 2 }}>
               L'ajout de sièges nécessite un plan payant. Passez à <strong>Pro</strong> ou
-              <strong> Business</strong> pour inviter votre équipe (puis ajoutez des sièges à 1 500 FCFA/utilisateur).
+              <strong> Business</strong> pour inviter votre équipe (puis ajoutez des sièges à {prixSiege(SEAT_PRICE)}/utilisateur).
             </Alert>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -76,7 +79,7 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
           <DialogContent>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Votre formule inclut <strong>{included}</strong> utilisateur(s). Ajoutez des sièges
-              supplémentaires à <strong>{fcfa(SEAT_PRICE)}/mois</strong> chacun (facturation proratisée).
+              supplémentaires à <strong>{prixSiege(SEAT_PRICE)}/mois</strong> chacun (facturation proratisée).
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, my: 2 }}>
@@ -106,7 +109,7 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
               </Box>
               <Box sx={{ textAlign: 'right' }}>
                 <Typography variant="caption" color="text.secondary">Coût des sièges</Typography>
-                <Typography sx={{ fontWeight: 700 }}>+{fcfa(monthlyCost)}/mois</Typography>
+                <Typography sx={{ fontWeight: 700 }}>+{prixSiege(monthlyCost)}/mois</Typography>
               </Box>
             </Box>
 

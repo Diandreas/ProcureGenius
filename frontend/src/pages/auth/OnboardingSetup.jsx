@@ -16,7 +16,9 @@ import {
 import { CloudUpload, LocationOn, CheckCircle, Receipt, ShoppingCart, Inventory, Business, People, ExpandMore, Tune } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
-import { PLAN_CHOISI_KEY } from '../../data/pricingPlans';
+import { PLAN_CHOISI_KEY, avecPrixSiege } from '../../data/pricingPlans';
+import usePlansTarifs from '../../hooks/usePlansTarifs';
+import { usePricingCurrency } from '../../utils/visitorCurrency';
 import i18n from '../../i18n/config';
 
 const steps = ['Votre entreprise', 'Votre activité', 'Votre formule'];
@@ -92,7 +94,7 @@ const PLANS = [
     tag: '30 jours offerts',
     tagColor: 'success.main',
     popular: true,
-    seats: '2 utilisateurs inclus (+1 500 FCFA/utilisateur)',
+    seats: '2 utilisateurs inclus (+{siege}/utilisateur)',
     features: ['Tout le Gratuit', 'Fournisseurs & bons de commande', 'Compta de base, IA & contrats'],
     cta: "Démarrer l'essai Pro",
   },
@@ -101,7 +103,7 @@ const PLANS = [
     name: 'Business',
     tag: '30 jours offerts',
     tagColor: 'success.main',
-    seats: '10 utilisateurs inclus (+1 500 FCFA/utilisateur)',
+    seats: '10 utilisateurs inclus (+{siege}/utilisateur)',
     features: ['Compta complète + marges & réappro', "E-Sourcing (appels d'offres)", 'Support prioritaire'],
     cta: "Démarrer l'essai Business",
   },
@@ -122,6 +124,9 @@ function OnboardingSetup() {
 
   const [activeStep, setActiveStep] = useState(0);
   const [selectedUseCases, setSelectedUseCases] = useState(['sell']); // au moins un
+  // Prix d'un utilisateur supplémentaire lu dans Stripe, dans la monnaie du visiteur.
+  const { siege } = usePlansTarifs();
+  const { formatPrice } = usePricingCurrency();
   // Formule choisie sur la page Tarifs avant l'inscription, sinon Pro.
   const [selectedPlan, setSelectedPlan] = useState(() => {
     try {
@@ -533,7 +538,7 @@ function OnboardingSetup() {
                           <Typography variant="caption" sx={{ color: p.tagColor, fontWeight: 700 }}>{p.tag}</Typography>
                           <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 0.5, color: sel ? 'primary.main' : 'text.secondary' }}>
                             <People sx={{ fontSize: 16 }} />
-                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{p.seats}</Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{avecPrixSiege(p.seats, formatPrice(siege.prix, siege.devise))}</Typography>
                           </Box>
                           <Box sx={{ mt: 1.25, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                             {p.features.map((f, i) => (

@@ -46,7 +46,7 @@ import {
 import { useColorMode } from '../App';
 import { trackVisit } from '../services/tracking';
 import { usePricingCurrency, memeMonnaie } from '../utils/visitorCurrency';
-import { PLANS, BILLING_CURRENCY } from '../data/pricingPlans';
+import usePlansTarifs from '../hooks/usePlansTarifs';
 import usePageMeta from '../hooks/usePageMeta';
 import LiveAIDemo from '../components/landing/LiveAIDemo';
 
@@ -104,7 +104,8 @@ export default function Landing() {
   const theme = useTheme();
   const { toggleColorMode } = useColorMode();
   const { currency, formatPrice } = usePricingCurrency();
-  const prixPro = PLANS.find((p) => p.code === 'pro')?.priceMonthly;
+  const { plans: formules } = usePlansTarifs();
+  const planPro = formules.find((p) => p.code === 'pro') || {};
 
   // Direction « clair éditorial premium » : landing toujours en clair lumineux
   // (charte bleu #2563eb + doré #f59e0b), indépendamment du thème de l'app.
@@ -724,9 +725,9 @@ export default function Landing() {
               </Typography>
               <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', maxWidth: 560, mx: 'auto', fontSize: '1.08rem', lineHeight: 1.65 }}>
                 {/* Prix Pro en FCFA, ou équivalent indicatif hors zone CFA */}
-                {t('pricingTeaser.subtitle', { price: formatPrice(prixPro, BILLING_CURRENCY) })}
+                {t('pricingTeaser.subtitle', { price: formatPrice(planPro.priceMonthly, planPro.currency) })}
               </Typography>
-              {!memeMonnaie(currency, BILLING_CURRENCY) && (
+              {!memeMonnaie(currency, planPro.currency) && (
                 <Typography sx={{ mt: 1.5, color: pal.faint, fontSize: '0.82rem' }}>
                   {t('pricingTeaser.currencyNote', { currency })}
                 </Typography>

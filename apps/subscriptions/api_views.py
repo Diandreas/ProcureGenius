@@ -4,7 +4,7 @@ API Views for Subscription Management
 import logging
 
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.utils.translation import gettext as _
@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 @api_view(['GET'])
+@authentication_classes([])  # public : un vieux jeton expiré ne doit pas renvoyer vers /login
 @permission_classes([AllowAny])
 def list_plans(request):
     """

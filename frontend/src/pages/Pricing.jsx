@@ -9,9 +9,10 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import subscriptionAPI from '../services/subscriptionAPI';
-import { PLANS, PLAN_CHOISI_KEY, BILLING_CURRENCY } from '../data/pricingPlans';
+import { PLAN_CHOISI_KEY, avecPrixSiege, nomDevise } from '../data/pricingPlans';
+import usePlansTarifs from '../hooks/usePlansTarifs';
 import usePageMeta from '../hooks/usePageMeta';
-import { usePricingCurrency, memeMonnaie } from '../utils/visitorCurrency';
+import { usePricingCurrency, memeMonnaie, formatPriceCurrency } from '../utils/visitorCurrency';
 
 // ── Direction artistique : éditorial premium, dans la charte Procura ──────────
 // Charte : bleu #2563eb (primaire) + doré #f59e0b (accent) + ardoise.
@@ -55,13 +56,17 @@ const Pricing = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [billing, setBilling] = useState('monthly');
+  const [choixPeriode, setBilling] = useState('monthly');
   const [loading, setLoading] = useState(null);
   const { currency, formatPrice } = usePricingCurrency();
-  // Visiteur hors zone CFA : on montre un équivalent indicatif dans sa monnaie.
-  const enDevise = !memeMonnaie(currency, BILLING_CURRENCY);
-  const prix = (montant) => formatPrice(montant, BILLING_CURRENCY);
-  const fcfa = (montant) => `${Number(montant).toLocaleString('fr-FR')} FCFA`;
+  // Prix lus dans Stripe (via le serveur) ; l'annuel n'existe que si Stripe en a un.
+  const { plans: PLANS, annuelDisponible, siege } = usePlansTarifs();
+  const billing = annuelDisponible ? choixPeriode : 'monthly';
+  const deviseFacturation = siege.devise;
+  // Visiteur dont la monnaie diffère de celle de facturation : équivalent indicatif.
+  const enDevise = !memeMonnaie(currency, deviseFacturation);
+  const prix = (montant, devise = deviseFacturation) => formatPrice(montant, devise);
+  const facture = (montant, devise = deviseFacturation) => formatPriceCurrency(montant, devise);
 
   usePageMeta({
     title: 'Tarifs',
@@ -126,11 +131,12 @@ const Pricing = () => {
             </Typography>
             {enDevise && (
               <Typography sx={{ ...sans, fontSize: 13, mt: 1, color: 'rgba(20,17,14,0.5)' }}>
-                Prix affichés en {currency} à titre indicatif ; l&apos;abonnement est facturé en francs CFA.
+                Prix affichés en {currency === 'XAF' || currency === 'XOF' ? 'FCFA' : currency} à titre indicatif ; l&apos;abonnement est facturé en {nomDevise(deviseFacturation)}.
               </Typography>
             )}
 
-            {/* Bascule mensuel / annuel */}
+            {/* Bascule mensuel / annuel (seulement si Stripe a des prix annuels) */}
+            {annuelDisponible && (
             <Box sx={{ display: 'inline-flex', mt: 3, p: '4px', border: `1px solid ${LINE}`, borderRadius: 999, bgcolor: 'rgba(255,255,255,0.5)' }}>
               {[['monthly', 'Mensuel'], ['yearly', 'Annuel']].map(([val, label]) => (
                 <Box
@@ -147,6 +153,7 @@ const Pricing = () => {
                 </Box>
               ))}
             </Box>
+            )}
           </Grid>
         </Grid>
       </Container>
@@ -195,7 +202,7 @@ const Pricing = () => {
                     <Typography sx={{ ...serif, fontSize: 34, fontWeight: 500 }}>Gratuit</Typography>
                   ) : (
                     <>
-                      <Typography sx={{ ...serif, fontSize: enDevise ? 30 : 46, fontWeight: 500, lineHeight: 1, whiteSpace: 'nowrap' }}>{prix(price)}</Typography>
+                      <Typography sx={{ ...serif, fontSize: enDevise ? 30 : 46, fontWeight: 500, lineHeight: 1, whiteSpace: 'nowrap' }}>{prix(price, plan.currency)}</Typography>
                       <Typography sx={{ ...sans, fontSize: 14, color: featured ? 'rgba(255,255,255,0.6)' : 'rgba(20,17,14,0.5)' }}>
                         /{billing === 'monthly' ? 'mois' : 'an'}
                       </Typography>
@@ -205,12 +212,12 @@ const Pricing = () => {
                 <Box sx={{ minHeight: 18, mb: 2 }}>
                   {billing === 'yearly' && price !== null && price > 0 && (
                     <Typography sx={{ ...sans, fontSize: 12.5, color: GOLD, fontWeight: 600 }}>
-                      soit {prix(price / 12)}/mois · {prix(plan.priceMonthly * 12 - price)} économisés
+                      soit {prix(price / 12, plan.currency)}/mois · {prix(plan.priceMonthly * 12 - price, plan.currency)} économisés
                     </Typography>
                   )}
                   {enDevise && price !== null && price > 0 && (
                     <Typography sx={{ ...sans, fontSize: 12, mt: 0.5, color: featured ? 'rgba(255,255,255,0.6)' : 'rgba(20,17,14,0.5)' }}>
-                      Facturé {fcfa(price)} par {billing === 'monthly' ? 'mois' : 'an'}
+                      Facturé {facture(price, plan.currency)} par {billing === 'monthly' ? 'mois' : 'an'}
                     </Typography>
                   )}
                 </Box>
@@ -240,7 +247,7 @@ const Pricing = () => {
                   {plan.features.map((f, i) => (
                     <Box key={i} sx={{ display: 'flex', gap: 1.25, alignItems: 'flex-start' }}>
                       <Check sx={{ fontSize: 17, color: GOLD, mt: '1px', flexShrink: 0 }} />
-                      <Typography sx={{ ...sans, fontSize: 13.5, lineHeight: 1.4 }}>{f}</Typography>
+                      <Typography sx={{ ...sans, fontSize: 13.5, lineHeight: 1.4 }}>{avecPrixSiege(f, prix(plan.seatPrice, plan.currency))}</Typography>
                     </Box>
                   ))}
                   {plan.missing.map((f, i) => (
