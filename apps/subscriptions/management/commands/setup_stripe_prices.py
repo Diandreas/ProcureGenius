@@ -42,7 +42,9 @@ class Command(BaseCommand):
         stripe.api_key = key
 
         force = options['force']
-        plans = SubscriptionPlan.objects.filter(code__in=PAID_PLAN_CODES)
+        # Formules actives seulement : les anciennes (standard, premium) ne sont
+        # plus vendues et ne doivent pas créer de produits dans le compte Stripe.
+        plans = SubscriptionPlan.objects.filter(code__in=PAID_PLAN_CODES, is_active=True)
 
         for plan in plans:
             currency = (plan.currency or 'EUR').lower()
