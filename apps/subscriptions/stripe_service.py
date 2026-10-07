@@ -20,6 +20,20 @@ logger = logging.getLogger(__name__)
 
 stripe.api_key = getattr(settings, 'STRIPE_SECRET_KEY', '')
 
+# Devises sans centimes chez Stripe : le montant est déjà en unités entières
+# (3 500 FCFA = 3500, alors que 9 € = 900). Les diviser par 100 enregistrait
+# un paiement de 3 500 FCFA comme 35.
+DEVISES_SANS_CENTIMES = {
+    'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF',
+    'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF',
+}
+
+
+def montant_stripe(montant, devise):
+    """Montant Stripe (plus petite unité) -> montant réel dans la devise."""
+    montant = montant or 0
+    return montant if (devise or '').upper() in DEVISES_SANS_CENTIMES else montant / 100
+
 
 class StripeNotConfigured(ValueError):
     """Levée quand aucune clé Stripe n'est configurée (mode local / paiement off)."""
@@ -331,7 +345,8 @@ class StripeService:
 
         stripe_sub_id = session.get('subscription', '')
         customer_id = session.get('customer', '')
-        amount = session.get('amount_total', 0) / 100
+        devise = (session.get('currency') or 'eur').upper()
+        amount = montant_stripe(session.get('amount_total', 0), devise)
 
         # Determine period dates from Stripe subscription
         period_start = timezone.now()
@@ -389,7 +404,7 @@ class StripeService:
         txn_id = invoice_id or session.get('id') or ''
         payment_defaults = dict(
             amount=amount,
-            currency='EUR',
+            currency=devise,
             status='completed',
             payment_method='stripe',
             stripe_payment_intent_id=session.get('payment_intent') or '',
@@ -432,7 +447,7 @@ class StripeService:
             invoice_pdf_url = invoice.get('invoice_pdf') or ''
             invoice_hosted_url = invoice.get('hosted_invoice_url') or ''
             payment_defaults = dict(
-                amount=invoice.get('amount_paid', 0) / 100,
+                amount=montant_stripe(invoice.get('amount_paid', 0), invoice.get('currency', 'eur')),
                 currency=invoice.get('currency', 'eur').upper(),
                 status='completed',
                 payment_method='stripe',
@@ -502,7 +517,7 @@ class StripeService:
                 subscription=sub,
                 transaction_id=f"{txn_id}#fail{attempt}",
                 defaults=dict(
-                    amount=invoice.get('amount_due', 0) / 100,
+                    amount=montant_stripe(invoice.get('amount_due', 0), invoice.get('currency', 'eur')),
                     currency=invoice.get('currency', 'eur').upper(),
                     status='failed',
                     payment_method='stripe',

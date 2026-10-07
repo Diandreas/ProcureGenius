@@ -179,7 +179,7 @@
     "titleStart": "Start for free,",
     "titleHighlight": "grow at your own pace",
     "subtitle": "A free plan to get started, the Pro plan at {{price}}/month with one free month (no card), and everything unlimited from the Business plan.",
-    "currencyNote": "Indicative price converted to {{currency}} · Billed in EUR",
+    "currencyNote": "Indicative price converted to {{currency}} · Billed in CFA francs (XAF)",
     "viewPricing": "See pricing",
     "tryFree": "Try it free"
   },

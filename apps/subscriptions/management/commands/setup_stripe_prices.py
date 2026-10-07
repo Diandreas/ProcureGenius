@@ -12,6 +12,13 @@ Usage:
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from apps.subscriptions.models import SubscriptionPlan
+from apps.subscriptions.stripe_service import DEVISES_SANS_CENTIMES
+
+
+def unite_stripe(montant, devise):
+    """Montant réel -> plus petite unité Stripe (pas de centimes en FCFA)."""
+    montant = float(montant or 0)
+    return int(round(montant if devise.upper() in DEVISES_SANS_CENTIMES else montant * 100))
 
 
 # Plans payants à configurer dans Stripe (les autres : free=gratuit,
@@ -66,12 +73,12 @@ class Command(BaseCommand):
                     metadata={'plan_code': plan.code},
                 )
                 price_monthly = stripe.Price.create(
-                    product=product.id, unit_amount=int(plan.price_monthly * 100),
+                    product=product.id, unit_amount=unite_stripe(plan.price_monthly, currency),
                     currency=currency, recurring={'interval': 'month'},
                     metadata={'plan_code': plan.code, 'period': 'monthly'},
                 )
                 price_yearly = stripe.Price.create(
-                    product=product.id, unit_amount=int(plan.price_yearly * 100),
+                    product=product.id, unit_amount=unite_stripe(plan.price_yearly, currency),
                     currency=currency, recurring={'interval': 'year'},
                     metadata={'plan_code': plan.code, 'period': 'yearly'},
                 )
@@ -86,12 +93,13 @@ class Command(BaseCommand):
                     metadata={'plan_code': plan.code, 'kind': 'seat'},
                 )
                 seat_monthly = stripe.Price.create(
-                    product=seat_product.id, unit_amount=int(seat_unit * 100),
+                    product=seat_product.id, unit_amount=unite_stripe(seat_unit, currency),
                     currency=currency, recurring={'interval': 'month'},
                     metadata={'plan_code': plan.code, 'kind': 'seat', 'period': 'monthly'},
                 )
                 seat_yearly = stripe.Price.create(
-                    product=seat_product.id, unit_amount=int(seat_unit * 12 * 100),
+                    # Annuel = 10 mois (2 mois offerts), comme les formules.
+                    product=seat_product.id, unit_amount=unite_stripe(seat_unit * 10, currency),
                     currency=currency, recurring={'interval': 'year'},
                     metadata={'plan_code': plan.code, 'kind': 'seat', 'period': 'yearly'},
                 )

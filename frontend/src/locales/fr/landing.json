@@ -179,7 +179,7 @@
     "titleStart": "Commencez gratuitement,",
     "titleHighlight": "évoluez à votre rythme",
     "subtitle": "Un plan gratuit pour démarrer, le plan Pro à {{price}}/mois avec un mois d'essai offert (sans carte), et tout illimité dès le plan Business.",
-    "currencyNote": "Prix indicatif converti en {{currency}} · Facturation en EUR",
+    "currencyNote": "Prix indicatif converti en {{currency}} · Facturation en FCFA",
     "viewPricing": "Voir les tarifs",
     "tryFree": "Essayer gratuitement"
   },

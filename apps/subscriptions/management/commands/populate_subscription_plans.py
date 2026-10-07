@@ -14,7 +14,7 @@ PLANS = [
             'description': 'Plan gratuit pour démarrer. Clients, produits et facturation de base.',
             'price_monthly': 0,
             'price_yearly': 0,
-            'currency': 'EUR',
+            'currency': 'XAF',
             'max_invoices_per_month': 30,
             'max_clients': 20,
             'max_products': 50,
@@ -31,7 +31,7 @@ PLANS = [
             'has_analytics': False,
             'has_accounting': False,
             'included_users': 1,
-            'extra_user_price': 5,
+            'extra_user_price': 1500,
             'trial_days': 0,
             'is_active': True,
             'sort_order': 1,
@@ -42,9 +42,9 @@ PLANS = [
         'defaults': {
             'name': 'Pro',
             'description': 'Pour les PME qui veulent gagner en efficacité. IA, contrats, analytics inclus.',
-            'price_monthly': 9,
-            'price_yearly': 79,
-            'currency': 'EUR',
+            'price_monthly': 3500,
+            'price_yearly': 35000,
+            'currency': 'XAF',
             'max_invoices_per_month': None,  # illimité
             'max_clients': None,             # illimité
             'max_products': None,            # illimité
@@ -61,7 +61,7 @@ PLANS = [
             'has_analytics': True,
             'has_accounting': True,
             'included_users': 2,
-            'extra_user_price': 5,
+            'extra_user_price': 1500,
             'trial_days': 30,  # 1 mois d'essai gratuit (sans carte)
             'is_active': True,
             'sort_order': 2,
@@ -72,9 +72,9 @@ PLANS = [
         'defaults': {
             'name': 'Business',
             'description': 'Pour les équipes qui ont besoin de tout sans limites. E-Sourcing et support prioritaire inclus.',
-            'price_monthly': 29,
-            'price_yearly': 249,
-            'currency': 'EUR',
+            'price_monthly': 10000,
+            'price_yearly': 100000,
+            'currency': 'XAF',
             'max_invoices_per_month': None,  # illimité
             'max_clients': None,
             'max_products': None,
@@ -91,7 +91,7 @@ PLANS = [
             'has_analytics': True,
             'has_accounting': True,
             'included_users': 10,
-            'extra_user_price': 5,
+            'extra_user_price': 1500,
             'trial_days': 30,  # 1 mois d'essai gratuit (sans carte)
             'is_active': True,
             'sort_order': 3,
@@ -104,7 +104,7 @@ PLANS = [
             'description': 'Déploiement sur mesure, intégrations personnalisées, SLA garanti et compte manager dédié.',
             'price_monthly': 0,
             'price_yearly': 0,
-            'currency': 'EUR',
+            'currency': 'XAF',
             'max_invoices_per_month': None,
             'max_clients': None,
             'max_products': None,

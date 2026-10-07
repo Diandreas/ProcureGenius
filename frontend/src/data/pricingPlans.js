@@ -1,6 +1,12 @@
 // Source unique des plans tarifaires — partagée par la page publique (/pricing)
 // et le pricing interne (/subscription/plans) pour rester synchronisées.
 // Charte : free / pro / business / enterprise.
+//
+// Prix en FCFA (XAF) : c'est la monnaie de facturation Stripe. Pour un visiteur
+// hors zone CFA, utils/visitorCurrency.js affiche un équivalent indicatif.
+
+export const BILLING_CURRENCY = 'XAF';
+export const SEAT_PRICE_MONTHLY = 1500;
 
 export const PLANS = [
   {
@@ -18,14 +24,14 @@ export const PLANS = [
   {
     code: 'pro',
     name: 'Pro',
-    priceMonthly: 9,
-    priceYearly: 79,
+    priceMonthly: 3500,
+    priceYearly: 35000,
     badge: 'Le plus choisi',
     tagline: 'Pour les PME qui veulent travailler vite et bien.',
     cta: 'Choisir Pro',
     includedUsers: 2,
     features: [
-      '2 utilisateurs inclus (+5€/utilisateur)',
+      '2 utilisateurs inclus (+1 500 FCFA/utilisateur)',
       'Factures, clients & produits illimités',
       'Bons de commande & fournisseurs illimités',
       'Comptabilité de base (journal, écritures)',
@@ -38,14 +44,14 @@ export const PLANS = [
   {
     code: 'business',
     name: 'Business',
-    priceMonthly: 29,
-    priceYearly: 249,
+    priceMonthly: 10000,
+    priceYearly: 100000,
     badge: 'Le plus complet',
     tagline: 'Pour les équipes qui pilotent leur activité de bout en bout.',
     cta: 'Choisir Business',
     includedUsers: 10,
     features: [
-      '10 utilisateurs inclus (+5€/utilisateur)',
+      '10 utilisateurs inclus (+1 500 FCFA/utilisateur)',
       'Tout le plan Pro, sans limites',
       'Comptabilité complète (SIG, bilan, compte de résultat)',
       'Analyse des marges & bénéfice brut',

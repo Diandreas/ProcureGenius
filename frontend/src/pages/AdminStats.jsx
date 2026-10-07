@@ -129,6 +129,7 @@ export default function AdminStats() {
   const eng = data?.engagement || {};
   const feat = data?.feature_usage || {};
   const sub = data?.subscriptions || {};
+  const devise = !sub.currency || sub.currency === 'EUR' ? '€' : (sub.currency === 'XAF' || sub.currency === 'XOF' ? 'FCFA' : sub.currency);
   const vol = feat.volumes || {};
   const fb = data?.ai_feedback || {};
 
@@ -186,7 +187,7 @@ export default function AdminStats() {
             </Grid>
             <Grid item xs={6} md={3}>
               <KpiCard icon={<Paid />} label="MRR estimé"
-                value={`${fmt(sub.mrr_estimate)} €`}
+                value={`${fmt(sub.mrr_estimate)} ${devise}`}
                 sub={`${fmt(sub.active)} actifs · churn ${pct(sub.churn_rate_pct)}`}
                 color={theme.palette.info.main} />
             </Grid>
@@ -317,11 +318,11 @@ export default function AdminStats() {
                   <Divider sx={{ my: 1.5 }} />
                   <Stack direction="row" justifyContent="space-between">
                     <Typography variant="body2" color="text.secondary">MRR estimé</Typography>
-                    <Typography variant="body2" fontWeight={700}>{fmt(sub.mrr_estimate)} €</Typography>
+                    <Typography variant="body2" fontWeight={700}>{fmt(sub.mrr_estimate)} {devise}</Typography>
                   </Stack>
                   <Stack direction="row" justifyContent="space-between">
                     <Typography variant="body2" color="text.secondary">ARR estimé</Typography>
-                    <Typography variant="body2" fontWeight={700}>{fmt(sub.arr_estimate)} €</Typography>
+                    <Typography variant="body2" fontWeight={700}>{fmt(sub.arr_estimate)} {devise}</Typography>
                   </Stack>
                   <Stack direction="row" justifyContent="space-between">
                     <Typography variant="body2" color="text.secondary">Essais finissant sous 7 j</Typography>

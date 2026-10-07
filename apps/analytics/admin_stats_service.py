@@ -252,6 +252,7 @@ def get_admin_stats(days=30):
     subscriptions = {}
     try:
         from apps.subscriptions.models import Subscription
+        from apps.subscriptions.models import SubscriptionPlan
         subs = Subscription.objects.select_related('plan')
         by_status = list(subs.values('status').annotate(c=Count('id')).order_by('-c'))
         by_plan = list(
@@ -282,6 +283,9 @@ def get_admin_stats(days=30):
             'trial': trial.count(),
             'cancelled': cancelled.count(),
             'mrr_estimate': float(round(mrr, 2)),
+            # Monnaie des tarifs (FCFA depuis octobre 2026) pour libeller MRR / ARR.
+            'currency': SubscriptionPlan.objects.filter(price_monthly__gt=0, is_active=True)
+                        .values_list('currency', flat=True).first() or 'EUR',
             'arr_estimate': float(round(mrr * 12, 2)),
             'churn_rate_pct': round(100 * cancelled.count() / churn_base, 1) if churn_base else 0,
             'trials_ending_7d': trial.filter(

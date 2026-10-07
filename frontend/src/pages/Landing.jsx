@@ -45,7 +45,8 @@ import {
 } from '@mui/icons-material';
 import { useColorMode } from '../App';
 import { trackVisit } from '../services/tracking';
-import { usePricingCurrency, formatPriceCurrency } from '../utils/visitorCurrency';
+import { usePricingCurrency, memeMonnaie } from '../utils/visitorCurrency';
+import { PLANS, BILLING_CURRENCY } from '../data/pricingPlans';
 import usePageMeta from '../hooks/usePageMeta';
 import LiveAIDemo from '../components/landing/LiveAIDemo';
 
@@ -102,7 +103,8 @@ export default function Landing() {
   const location = useLocation();
   const theme = useTheme();
   const { toggleColorMode } = useColorMode();
-  const { currency, convertPrice } = usePricingCurrency();
+  const { currency, formatPrice } = usePricingCurrency();
+  const prixPro = PLANS.find((p) => p.code === 'pro')?.priceMonthly;
 
   // Direction « clair éditorial premium » : landing toujours en clair lumineux
   // (charte bleu #2563eb + doré #f59e0b), indépendamment du thème de l'app.
@@ -721,12 +723,10 @@ export default function Landing() {
                 <Box component="span" sx={{ color: '#2563eb' }}>{t('pricingTeaser.titleHighlight')}</Box>
               </Typography>
               <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', maxWidth: 560, mx: 'auto', fontSize: '1.08rem', lineHeight: 1.65 }}>
-                {/* Prix Pro affiché dans la devise détectée du visiteur (FCFA…) */}
-                {t('pricingTeaser.subtitle', {
-                  price: convertPrice(9) !== null ? formatPriceCurrency(convertPrice(9), currency) : '9 €',
-                })}
+                {/* Prix Pro en FCFA, ou équivalent indicatif hors zone CFA */}
+                {t('pricingTeaser.subtitle', { price: formatPrice(prixPro, BILLING_CURRENCY) })}
               </Typography>
-              {currency !== 'EUR' && (
+              {!memeMonnaie(currency, BILLING_CURRENCY) && (
                 <Typography sx={{ mt: 1.5, color: pal.faint, fontSize: '0.82rem' }}>
                   {t('pricingTeaser.currencyNote', { currency })}
                 </Typography>

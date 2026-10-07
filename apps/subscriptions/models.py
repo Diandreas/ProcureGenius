@@ -203,7 +203,7 @@ class SubscriptionPlan(models.Model):
         ordering = ['sort_order', 'price_monthly']
 
     def __str__(self):
-        return f"{self.name} - {self.price_monthly}€/mois"
+        return f"{self.name} - {self.price_monthly} {self.currency}/mois"
 
 
 class Subscription(models.Model):

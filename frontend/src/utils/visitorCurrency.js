@@ -49,8 +49,14 @@ const CACHE_KEY = 'pricingCurrency';
 export const roundForDisplay = (amount) => {
   if (amount >= 1000) return Math.round(amount / 100) * 100;
   if (amount >= 100) return Math.round(amount / 10) * 10;
-  return Math.round(amount);
+  if (amount >= 20) return Math.round(amount);
+  return Math.round(amount * 10) / 10; // 5,3 € plutôt que 5 €
 };
+
+// Les deux francs CFA (Afrique de l'Ouest et Afrique centrale) ont la même
+// valeur : pour l'affichage, c'est la même monnaie (« FCFA »).
+const FAMILLE_CFA = ['XAF', 'XOF'];
+export const memeMonnaie = (a, b) => a === b || (FAMILLE_CFA.includes(a) && FAMILLE_CFA.includes(b));
 
 export const formatPriceCurrency = (amount, currency) => {
   const sym = SYMBOLS[currency] || currency;
@@ -78,8 +84,11 @@ const writeCache = (c) => {
 };
 
 /**
- * { currency, convertPrice(eur) -> montant arrondi ou null si EUR,
- *   formatPrice(eur) -> « 5 900 FCFA » / « 9 € » }
+ * { currency,
+ *   convertPrice(montant, base) -> montant arrondi dans la monnaie du visiteur,
+ *                                  ou null si c'est déjà la même monnaie,
+ *   formatPrice(montant, base)  -> « 3 500 FCFA » / « 5,3 € » }
+ * `base` = monnaie du montant fourni (EUR par défaut ; les tarifs sont en XAF).
  */
 export const usePricingCurrency = () => {
   const [currency, setCurrency] = useState(() => readCache() || guessCurrencyFromLocale());
@@ -100,13 +109,14 @@ export const usePricingCurrency = () => {
     return () => { clearTimeout(delai); ctrl?.abort(); };
   }, []);
 
-  const convertPrice = (eurAmount) => {
-    if (currency === 'EUR' || eurAmount == null) return null;
-    return roundForDisplay(eurAmount * (EUR_RATES[currency] || 1));
+  const convertPrice = (montant, base = 'EUR') => {
+    if (montant == null || memeMonnaie(currency, base)) return null;
+    const enEuros = montant / (EUR_RATES[base] || 1);
+    return roundForDisplay(enEuros * (EUR_RATES[currency] || 1));
   };
-  const formatPrice = (eurAmount) => {
-    const local = convertPrice(eurAmount);
-    return local === null ? formatPriceCurrency(eurAmount, 'EUR') : formatPriceCurrency(local, currency);
+  const formatPrice = (montant, base = 'EUR') => {
+    const local = convertPrice(montant, base);
+    return local === null ? formatPriceCurrency(montant, base) : formatPriceCurrency(local, currency);
   };
 
   return { currency, convertPrice, formatPrice };
