@@ -75,6 +75,8 @@ import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { invoicesAPI } from '../../services/api';
 import ProvenanceChips from '../../components/crm/ProvenanceChips';
+import RelancesEnAttente from '../../components/crm/RelancesEnAttente';
+import InvoiceCrmPanel from '../../components/crm/InvoiceCrmPanel';
 import { getStatusColor, getStatusLabel, formatDate, formatTime } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
@@ -826,6 +828,12 @@ Cordialement`
                     <ProvenanceChips patientId={invoice.client.id} dense />
                   </Box>
                 )}
+                {!invoice.is_subcontractor_invoice && (
+                  <Stack spacing={1.5} sx={{ mb: 1.5 }}>
+                    <RelancesEnAttente patientId={invoice.client.id} invoiceId={invoice.id} />
+                    <InvoiceCrmPanel invoiceId={invoice.id} total={invoice.total_amount} />
+                  </Stack>
+                )}
                 <Button
                   fullWidth
                   variant="outlined"
@@ -1251,6 +1259,12 @@ Cordialement`
                     <Box sx={{ mb: 1.5 }}>
                       <ProvenanceChips patientId={invoice.client.id} dense />
                     </Box>
+                  )}
+                  {!invoice.is_subcontractor_invoice && (
+                    <Stack spacing={1.5} sx={{ mb: 1.5 }}>
+                      <RelancesEnAttente patientId={invoice.client.id} invoiceId={invoice.id} />
+                      <InvoiceCrmPanel invoiceId={invoice.id} total={invoice.total_amount} />
+                    </Stack>
                   )}
                   <Button
                     fullWidth

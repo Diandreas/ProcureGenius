@@ -137,6 +137,11 @@ class PatientCRMProfile(models.Model):
         related_name='profiles', verbose_name='Provenance',
     )
     detail = models.CharField(max_length=200, blank=True, verbose_name='Précision')
+    # Campagne qui a amené ce patient (facultatif).
+    campaign = models.ForeignKey(
+        'crm.CRMCampaign', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='profiles', verbose_name='Campagne',
+    )
     unknown = models.BooleanField(default=False, verbose_name='Provenance inconnue')
     do_not_contact = models.BooleanField(default=False, verbose_name='Ne plus relancer')
     filled_by = models.CharField(max_length=10, default=SOURCE_MANUAL)
@@ -177,3 +182,181 @@ class MonthlyReportSchedule(models.Model):
 
     def liste_destinataires(self):
         return [a.strip() for a in self.recipients.replace(';', ',').split(',') if a.strip()]
+
+
+class ContactReason(models.Model):
+    """Motif d'une relance (« Dépistage hépatite B », « Rappel de suivi »...).
+
+    Liste propre à chaque organisation, créée à la première utilisation puis
+    modifiable. Les `keywords` servent à savoir si le patient est vraiment venu :
+    une facture dont une ligne contient l'un de ces mots, après la relance, vaut
+    « venu pour ce motif ». Sans mot-clé, n'importe quelle facture vaut « revenu ».
+    """
+    # (libellé, mots-clés séparés par des virgules)
+    DEFAULTS = [
+        ('Rappel de suivi', ''),
+        ('Bilan de santé', 'bilan'),
+        ('Vaccination', 'vaccin'),
+        ('Dépistage hépatite B', 'hépatite b, hepatite b, aghbs, hbs'),
+        ('Résultats disponibles', ''),
+        ('Rendez-vous', ''),
+        ('Vœux / anniversaire', ''),
+        ('Autre', ''),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='crm_reasons', verbose_name='Organisation',
+    )
+    label = models.CharField(max_length=80, verbose_name='Libellé')
+    keywords = models.CharField(max_length=300, blank=True, verbose_name='Mots-clés (facture)')
+    position = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Motif de contact'
+        verbose_name_plural = 'Motifs de contact'
+        ordering = ['position', 'label']
+
+    def __str__(self):
+        return self.label
+
+
+class CRMCampaign(models.Model):
+    """Une action de terrain ou de communication dont on veut mesurer le résultat."""
+    KIND_CHOICES = [
+        ('door_to_door', 'Porte-à-porte'),
+        ('social', 'Facebook / réseaux sociaux'),
+        ('onsite', 'Dépistage / soins sur place'),
+        ('flyers', 'Affiches / flyers'),
+        ('partner', 'Partenariat'),
+        ('other', 'Autre'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='crm_campaigns', verbose_name='Organisation',
+    )
+    name = models.CharField(max_length=120, verbose_name='Nom')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES, default='other')
+    reason = models.ForeignKey(
+        ContactReason, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='campaigns', verbose_name='Motif',
+    )
+    zone = models.CharField(max_length=120, blank=True, verbose_name='Quartier / zone')
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    budget = models.DecimalField(max_digits=12, decimal_places=0, null=True, blank=True)
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        'accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='crm_campaigns',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Campagne'
+        verbose_name_plural = 'Campagnes'
+        ordering = ['-is_active', '-start_date', 'name']
+
+    def __str__(self):
+        return self.name
+
+
+class ContactLog(models.Model):
+    """Une relance : on a contacté un patient (WhatsApp, appel...) pour un motif.
+
+    La suite — est-il vraiment venu ? — n'est pas saisie : elle se déduit des
+    factures qui suivent (voir services.calculer_venues), ou se confirme d'un
+    clic à la facturation (`came_invoice`).
+    """
+    CHANNEL_CHOICES = [
+        ('whatsapp', 'WhatsApp'),
+        ('call', 'Appel'),
+        ('visit', 'Visite'),
+        ('other', 'Autre'),
+    ]
+    OUTCOME_CHOICES = [
+        ('sent', 'Contacté, sans réponse précise'),
+        ('agreed', "D'accord pour venir"),
+        ('callback', 'À rappeler'),
+        ('no_answer', 'Pas de réponse'),
+        ('declined', 'Pas intéressé'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='crm_contact_logs', verbose_name='Organisation',
+    )
+    patient = models.ForeignKey(
+        'accounts.Client', on_delete=models.CASCADE,
+        related_name='crm_contacts', verbose_name='Patient',
+    )
+    channel = models.CharField(max_length=10, choices=CHANNEL_CHOICES, default='whatsapp')
+    reason = models.ForeignKey(
+        ContactReason, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='contacts', verbose_name='Motif',
+    )
+    campaign = models.ForeignKey(
+        CRMCampaign, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='contacts', verbose_name='Campagne',
+    )
+    outcome = models.CharField(max_length=10, choices=OUTCOME_CHOICES, default='sent')
+    note = models.CharField(max_length=300, blank=True)
+    contacted_at = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        'accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='crm_contact_logs',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Confirmation manuelle (à la facturation) : cette facture est la suite de cette relance.
+    came_invoice = models.ForeignKey(
+        'invoicing.Invoice', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='+',
+    )
+
+    class Meta:
+        verbose_name = 'Relance'
+        verbose_name_plural = 'Relances'
+        ordering = ['-contacted_at']
+        indexes = [
+            models.Index(fields=['organization', '-contacted_at']),
+            models.Index(fields=['patient', '-contacted_at']),
+        ]
+
+    def __str__(self):
+        return '%s — %s (%s)' % (self.patient_id, self.get_outcome_display(), self.contacted_at.strftime('%d/%m/%Y'))
+
+
+class InvoiceCRMInfo(models.Model):
+    """Ce qu'il faut retenir d'une facture pour le suivi : montée en gamme, etc.
+
+    « Venu pour un bilan à 5 000 F, convaincu d'en prendre un à 15 000 F » :
+    `came_for` + `planned_amount` permettent de mesurer le gain.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey(
+        'accounts.Organization', on_delete=models.CASCADE,
+        related_name='crm_invoice_infos', verbose_name='Organisation',
+    )
+    invoice = models.OneToOneField(
+        'invoicing.Invoice', on_delete=models.CASCADE,
+        related_name='crm_info', verbose_name='Facture',
+    )
+    upsold = models.BooleanField(default=False, verbose_name='Montée en gamme')
+    came_for = models.CharField(max_length=200, blank=True, verbose_name='Venu pour')
+    planned_amount = models.DecimalField(max_digits=12, decimal_places=0, null=True, blank=True)
+    note = models.CharField(max_length=300, blank=True)
+    recorded_by = models.ForeignKey(
+        'accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='crm_invoice_infos',
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Info CRM de facture'
+        verbose_name_plural = 'Infos CRM de factures'

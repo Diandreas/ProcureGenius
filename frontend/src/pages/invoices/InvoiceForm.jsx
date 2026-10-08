@@ -61,6 +61,9 @@ import QuickClientCreateModal from '../healthcare/laboratory/components/QuickCli
 import { clientFields, getProductFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
 import ProvenanceChips from '../../components/crm/ProvenanceChips';
+import RelancesEnAttente from '../../components/crm/RelancesEnAttente';
+import InvoiceCrmPanel, { INFO_VIDE } from '../../components/crm/InvoiceCrmPanel';
+import crmAPI from '../../services/crmAPI';
 import dayjs from 'dayjs';
 
 const UNIT_LABELS = {
@@ -97,6 +100,8 @@ function InvoiceForm() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isEdit = Boolean(id);
+  const [crmInfo, setCrmInfo] = useState(INFO_VIDE);
+  const [relanceLiee, setRelanceLiee] = useState('');
   const clientIdFromUrl = searchParams.get('clientId');
 
   const [loading, setLoading] = useState(false);
@@ -506,6 +511,14 @@ function InvoiceForm() {
       } else {
         const response = await invoicesAPI.create(payload);
         const invoiceId = response.data.id;
+        // Suivi patients : n'empêche jamais la facture si l'enregistrement échoue.
+        if (crmInfo.upsold || crmInfo.came_for || crmInfo.note) {
+          await crmAPI.saveInvoiceInfoAfterCreate(invoiceId, {
+            upsold: crmInfo.upsold, came_for: crmInfo.came_for, note: crmInfo.note,
+            planned_amount: crmInfo.planned_amount === '' ? null : crmInfo.planned_amount,
+          });
+        }
+        if (relanceLiee) await crmAPI.linkContactToInvoice(relanceLiee, invoiceId);
         enqueueSnackbar(t('invoices:messages.invoiceCreatedSuccess'), { variant: 'success' });
         navigate(`/invoices/${invoiceId}`);
       }
@@ -806,9 +819,17 @@ function InvoiceForm() {
                     </Box>
                   )}
                   {formData.client?.id && (
+                    <>
                     <Box sx={{ mt: 1.5 }}>
-                      <ProvenanceChips patientId={formData.client.id} masquerSiRenseigne dense />
-                    </Box>
+                        <ProvenanceChips patientId={formData.client.id} masquerSiRenseigne dense />
+                      </Box>
+                      <Box sx={{ mt: 1.5 }}>
+                        <RelancesEnAttente patientId={formData.client.id} value={relanceLiee} onChange={setRelanceLiee} invoiceId={isEdit ? id : undefined} />
+                      </Box>
+                      <Box sx={{ mt: 1.5 }}>
+                          <InvoiceCrmPanel invoiceId={isEdit ? id : undefined} value={crmInfo} onChange={setCrmInfo} total={calculateTotal()} />
+                      </Box>
+                    </>
                   )}
                   {formData.client?.has_privilege_card && (
                     <Alert severity="success" sx={{ mt: 1.5, fontSize: '0.8rem' }}>
@@ -1334,9 +1355,17 @@ function InvoiceForm() {
                       </Box>
                     )}
                     {formData.client?.id && (
+                      <>
                       <Box sx={{ mt: 1.5 }}>
-                        <ProvenanceChips patientId={formData.client.id} masquerSiRenseigne dense />
-                      </Box>
+                          <ProvenanceChips patientId={formData.client.id} masquerSiRenseigne dense />
+                        </Box>
+                        <Box sx={{ mt: 1.5 }}>
+                          <RelancesEnAttente patientId={formData.client.id} value={relanceLiee} onChange={setRelanceLiee} invoiceId={isEdit ? id : undefined} />
+                        </Box>
+                        <Box sx={{ mt: 1.5 }}>
+                            <InvoiceCrmPanel invoiceId={isEdit ? id : undefined} value={crmInfo} onChange={setCrmInfo} total={calculateTotal()} />
+                        </Box>
+                      </>
                     )}
                     {formData.client?.has_privilege_card && (
                       <Alert severity="success" sx={{ mt: 2 }}>

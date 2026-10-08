@@ -31,6 +31,7 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
     const { enqueueSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
     const [provenance, setProvenance] = useState('');
+    const [campagne, setCampagne] = useState('');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -63,13 +64,14 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
         setLoading(true);
         try {
             const response = await patientAPI.createPatient(formData);
-            await crmAPI.saveProvenanceAfterCreate(response.id, provenance);
+            await crmAPI.saveProvenanceAfterCreate(response.id, provenance, campagne);
             enqueueSnackbar('Patient créé avec succès', { variant: 'success' });
             if (onSuccess) {
                 onSuccess(response);
             }
             onClose();
             setProvenance('');
+            setCampagne('');
             // Reset form
             setFormData({
                 name: '',
@@ -170,7 +172,7 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <ProvenanceChips value={provenance} onChange={setProvenance} dense />
+                            <ProvenanceChips value={provenance} onChange={setProvenance} dense campaign={campagne} onCampaignChange={setCampagne} />
                         </Grid>
                     </Grid>
                 </Box>

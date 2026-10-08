@@ -33,15 +33,66 @@ const crmAPI = {
   },
 
   // Après création d'un patient : enregistre la provenance choisie sans jamais gêner la création.
-  saveProvenanceAfterCreate: async (patientId, valeur) => {
-    if (!patientId || !valeur) return;
+  saveProvenanceAfterCreate: async (patientId, valeur, campagne) => {
+    if (!patientId || (!valeur && !campagne)) return;
+    const corps = {};
+    if (valeur === 'unknown') corps.unknown = true;
+    else if (valeur) corps.origin_id = valeur;
+    if (campagne) corps.campaign_id = campagne;
     try {
-      await api.patch(`/crm/patients/${patientId}/profile/`,
-        valeur === 'unknown' ? { unknown: true } : { origin_id: valeur });
+      await api.patch(`/crm/patients/${patientId}/profile/`, corps);
     } catch (e) {
       // La fiche est créée ; la provenance pourra être complétée plus tard.
     }
   },
+
+  // Campagnes : actives seulement (pastilles) ou toutes avec leurs compteurs (écran)
+  listCampaigns: async (params = {}) => (await api.get('/crm/campaigns/', { params })).data,
+  createCampaign: async (data) => (await api.post('/crm/campaigns/', data)).data,
+  updateCampaign: async (id, data) => (await api.patch(`/crm/campaigns/${id}/`, data)).data,
+  deleteCampaign: async (id) => (await api.delete(`/crm/campaigns/${id}/`)).data,
+
+  // Motifs de relance (pastilles) et réglage (administrateurs)
+  listReasons: async () => (await api.get('/crm/reasons/')).data.results || [],
+  listReasonSettings: async () => (await api.get('/crm/settings/reasons/')).data.results || [],
+  createReason: async (data) => (await api.post('/crm/settings/reasons/', data)).data,
+  updateReason: async (id, data) => (await api.patch(`/crm/settings/reasons/${id}/`, data)).data,
+  deleteReason: async (id) => (await api.delete(`/crm/settings/reasons/${id}/`)).data,
+  listOriginSettings: async () => (await api.get('/crm/settings/origins/')).data.results || [],
+  createOrigin: async (data) => (await api.post('/crm/settings/origins/', data)).data,
+  updateOrigin: async (id, data) => (await api.patch(`/crm/settings/origins/${id}/`, data)).data,
+  deleteOrigin: async (id) => (await api.delete(`/crm/settings/origins/${id}/`)).data,
+
+  // Relances : { patient, pending }
+  listContacts: async (params) => (await api.get('/crm/contacts/', { params })).data.results || [],
+  // { patient_id, channel, reason_id, campaign_id, outcome, note, do_not_contact }
+  createContact: async (data) => (await api.post('/crm/contacts/', data)).data,
+  updateContact: async (id, data) => (await api.patch(`/crm/contacts/${id}/`, data)).data,
+  deleteContact: async (id) => (await api.delete(`/crm/contacts/${id}/`)).data,
+
+  // Montée en gamme sur une facture : { upsold, came_for, planned_amount, note }
+  getInvoiceInfo: async (invoiceId) => (await api.get(`/crm/invoices/${invoiceId}/info/`)).data,
+  saveInvoiceInfo: async (invoiceId, data) => (await api.put(`/crm/invoices/${invoiceId}/info/`, data)).data,
+  // Après création d'une facture : n'empêche jamais la facture si l'enregistrement échoue.
+  saveInvoiceInfoAfterCreate: async (invoiceId, data) => {
+    if (!invoiceId || !data) return;
+    try {
+      await api.put(`/crm/invoices/${invoiceId}/info/`, data);
+    } catch (e) {
+      // la facture est créée ; l'info pourra être ajoutée depuis son détail
+    }
+  },
+  linkContactToInvoice: async (contactId, invoiceId) => {
+    if (!contactId || !invoiceId) return;
+    try {
+      await api.patch(`/crm/contacts/${contactId}/`, { came_invoice_id: invoiceId });
+    } catch (e) {
+      // sans gravité : la détection automatique prend le relais
+    }
+  },
+
+  // Statistiques : { start, end } (AAAA-MM-JJ)
+  getStats: async (params) => (await api.get('/crm/stats/', { params })).data,
 
   // Passages : { days, reason, patient, page, page_size }
   listPassages: async (params = {}) => {

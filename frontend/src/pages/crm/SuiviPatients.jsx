@@ -14,13 +14,19 @@ import {
   Phone as PhoneIcon,
   FilterList as FilterIcon,
   Download as DownloadIcon,
+  Settings as SettingsIcon,
+  ChatBubbleOutline as RelanceIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import MonthlyReportButton from '../../components/crm/MonthlyReportButton';
 import crmAPI from '../../services/crmAPI';
 import useCurrentUser from '../../hooks/useCurrentUser';
 import PassagesPanel from './PassagesPanel';
-import ProfilDepensesPanel from './ProfilDepensesPanel';
+import StatsPanel from './StatsPanel';
+import CampagnesPanel from './CampagnesPanel';
+import ReglagesDialog from './ReglagesDialog';
+import RelanceDialog from '../../components/crm/RelanceDialog';
+import { chargerMotifs, ilYa } from '../../components/crm/crmData';
 import { useModules } from '../../contexts/ModuleContext';
 
 const TAILLE_PAGE = 30;
@@ -30,20 +36,25 @@ const TAILLE_PAGE = 30;
 const ONGLETS = {
   suivre: {
     label: 'À suivre',
-    segments: ['not_back_60', 'new_month', 'vaccine_due', 'birthday_week', 'loyal'],
+    segments: ['not_back_60', 'awaited', 'promised_missing', 'new_month', 'vaccine_due', 'birthday_week', 'loyal'],
     defaut: 'not_back_60',
   },
   patients: {
     label: 'Patients',
-    segments: ['all', 'never_billed'],
+    segments: ['all', 'never_billed', 'no_origin'],
     defaut: 'all',
   },
-  // Montants : réservé aux administrateurs (l'onglet est masqué pour les autres).
-  profil: {
-    label: 'Qui dépense ?',
+  // Les actions de terrain et leurs résultats.
+  campagnes: {
+    label: 'Campagnes',
     segments: [],
     defaut: 'all',
-    admin: true,
+  },
+  // Relances, campagnes, provenance, montée en gamme (montants réservés aux administrateurs).
+  stats: {
+    label: 'Statistiques',
+    segments: [],
+    defaut: 'all',
   },
   // Pas une liste de patients : les gens passés au centre, avec ou sans facture.
   passages: {
@@ -52,6 +63,20 @@ const ONGLETS = {
     defaut: 'all',
   },
 };
+
+// Onglets qui affichent la liste des patients (les autres ont leur propre écran).
+const ONGLETS_LISTE = ['suivre', 'patients'];
+
+// Motif de relance proposé d'office selon la liste dans laquelle on travaille.
+const MOTIF_PAR_SEGMENT = {
+  not_back_60: 'Rappel de suivi',
+  new_month: 'Rappel de suivi',
+  vaccine_due: 'Vaccination',
+  birthday_week: 'Vœux / anniversaire',
+};
+
+const COULEUR_ETAT = { came: 'success', waiting: 'info', missed: 'warning' };
+const TEXTE_ETAT = { came: 'venu', waiting: 'attendu', missed: 'pas venu' };
 
 const MODELES_MESSAGE = {
   not_back_60: "Bonjour {nom}, ici {centre}. Cela fait un moment que nous ne vous avons pas vu. Comment allez-vous ? N'hésitez pas à passer nous voir.",
@@ -101,7 +126,7 @@ export default function SuiviPatients() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const { user } = useCurrentUser();
   const { hasModule } = useModules();
   // Le dossier médical n'est ouvert que par ceux qui ont le module Patients :
@@ -122,9 +147,15 @@ export default function SuiviPatients() {
   const [chargement, setChargement] = useState(false);
   const [export_, setExport] = useState(false);
 
-  const [message, setMessage] = useState(null); // { patient, texte }
+  const [message, setMessage] = useState(null); // { patient, texte, motifId }
+  const [relance, setRelance] = useState(null); // patient pour qui on note une relance
+  const [reglages, setReglages] = useState(false);
+  const [motifs, setMotifs] = useState([]);
+  const estAdmin = ['admin', 'manager', 'owner'].includes(user?.role) || Boolean(user?.is_superuser);
 
   const nomCentre = user?.organization?.name || user?.organization_name || 'le centre';
+
+  useEffect(() => { chargerMotifs().then(setMotifs).catch(() => {}); }, []);
 
   useEffect(() => {
     const t = setTimeout(() => { setRechercheDiff(recherche); setPage(1); }, 300);
@@ -152,14 +183,18 @@ export default function SuiviPatients() {
     }
   }, [parametres, enqueueSnackbar]);
 
-  useEffect(() => { if (onglet !== 'passages' && onglet !== 'profil') charger(); }, [charger, onglet]);
+  useEffect(() => { if (ONGLETS_LISTE.includes(onglet)) charger(); }, [charger, onglet]);
 
   // Un passage vient d'être enregistré (bouton flottant) : la pastille « dernier
   // passage » des lignes doit se mettre à jour sans recharger la page.
   useEffect(() => {
-    const recharger = () => { if (onglet !== 'passages' && onglet !== 'profil') charger(); };
+    const recharger = () => { if (ONGLETS_LISTE.includes(onglet)) charger(); };
     window.addEventListener('crm-passage-created', recharger);
-    return () => window.removeEventListener('crm-passage-created', recharger);
+    window.addEventListener('crm-relance-saved', recharger);
+    return () => {
+      window.removeEventListener('crm-passage-created', recharger);
+      window.removeEventListener('crm-relance-saved', recharger);
+    };
   }, [charger, onglet]);
 
   const changerOnglet = (_, valeur) => {
@@ -199,17 +234,42 @@ export default function SuiviPatients() {
   const ouvrirMessage = (patient) => {
     const cle = `crm-modele-${segment}`;
     const base = lireMemoire(cle) || MODELES_MESSAGE[segment] || MODELES_MESSAGE.defaut;
-    setMessage({ patient, cle, texte: base });
+    const motifDefaut = motifs.find((m) => m.label === MOTIF_PAR_SEGMENT[segment]);
+    setMessage({ patient, cle, texte: base, motifId: motifDefaut ? motifDefaut.id : '' });
   };
 
   const texteFinal = (m) => m.texte
     .split('{nom}').join(titre(m.patient.name))
     .split('{centre}').join(nomCentre);
 
-  const envoyerWhatsApp = () => {
+  const envoyerWhatsApp = async () => {
     ecrireMemoire(message.cle, message.texte);
     window.open(`${message.patient.whatsapp_url}?text=${encodeURIComponent(texteFinal(message))}`, '_blank');
+    const { patient, motifId } = message;
     setMessage(null);
+    // On note la relance d'office : c'est elle qui permettra de savoir s'il est venu ensuite.
+    try {
+      const cree = await crmAPI.createContact({
+        patient_id: patient.id, channel: 'whatsapp', reason_id: motifId || null, outcome: 'sent',
+      });
+      charger();
+      enqueueSnackbar('Relance notée', {
+        variant: 'success', autoHideDuration: 10000,
+        action: (key) => (
+          <>
+            <Button color="inherit" size="small" onClick={async () => {
+              closeSnackbar(key);
+              try { await crmAPI.updateContact(cree.id, { outcome: 'agreed' }); charger(); } catch (e) { /* sans gravité */ }
+            }}>
+              Il est d'accord
+            </Button>
+            <Button color="inherit" size="small" onClick={() => closeSnackbar(key)}>OK</Button>
+          </>
+        ),
+      });
+    } catch (e) {
+      enqueueSnackbar("Le message est parti, mais la relance n'a pas pu être notée", { variant: 'warning' });
+    }
   };
 
   // ── Éléments d'affichage ──────────────────────────────────────────────────
@@ -222,6 +282,11 @@ export default function SuiviPatients() {
           </IconButton>
         </Tooltip>
       ) : null}
+      <Tooltip title="Noter une relance (appel, message…)">
+        <IconButton onClick={() => setRelance(p)} aria-label="Noter une relance" sx={{ width: { xs: 44, md: 36 }, height: { xs: 44, md: 36 } }}>
+          <RelanceIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
       {p.phone ? (
         <Tooltip title={p.phone}>
           <IconButton component="a" href={`tel:${p.phone.split('/')[0].trim()}`} aria-label="Appeler" sx={{ width: { xs: 44, md: 36 }, height: { xs: 44, md: 36 } }}>
@@ -273,6 +338,20 @@ export default function SuiviPatients() {
         {[p.age != null ? `${p.age} ans` : null, p.gender === 'F' ? 'Femme' : p.gender === 'M' ? 'Homme' : null,
           p.address ? p.address.split('\n')[0].slice(0, 28) : null].filter(Boolean).join(' · ')}
       </Typography>
+      {(p.last_contact || p.do_not_contact) && (
+        <Box mt={0.5} display="flex" gap={0.5} flexWrap="wrap">
+          {p.last_contact && (
+            <Chip
+              size="small" clickable onClick={() => setRelance(p)}
+              color={COULEUR_ETAT[p.last_contact.status] || 'default'}
+              variant={p.last_contact.status === 'came' ? 'filled' : 'outlined'}
+              label={`Relancé ${ilYa(p.last_contact.days)} · ${p.last_contact.channel}${p.last_contact.reason ? ` · ${p.last_contact.reason}` : ''} · ${p.last_contact.outcome_label.toLowerCase()}${TEXTE_ETAT[p.last_contact.status] ? ` · ${TEXTE_ETAT[p.last_contact.status]}` : ''}`}
+              sx={{ height: 20, fontSize: '0.68rem', maxWidth: '100%' }}
+            />
+          )}
+          {p.do_not_contact && <Chip size="small" color="error" label="Ne plus relancer" sx={{ height: 20, fontSize: '0.68rem' }} />}
+        </Box>
+      )}
       {p.last_passage && (
         <Box mt={0.5}>
           <Chip
@@ -349,8 +428,13 @@ export default function SuiviPatients() {
           <Typography variant="h5" fontWeight={700}>Suivi patients</Typography>
         </Box>
         <Box display="flex" gap={1} flexWrap="wrap">
+        {estAdmin && (
+          <Button size="small" variant="outlined" startIcon={<SettingsIcon />} onClick={() => setReglages(true)}>
+            Réglages
+          </Button>
+        )}
         <MonthlyReportButton />
-        {onglet !== 'passages' && onglet !== 'profil' && donnees?.can_export && (
+        {ONGLETS_LISTE.includes(onglet) && donnees?.can_export && (
           <Button
             size="small" variant="outlined" onClick={exporter} disabled={export_}
             startIcon={export_ ? <CircularProgress size={14} /> : <DownloadIcon />}
@@ -367,8 +451,10 @@ export default function SuiviPatients() {
           .map(([cle, o]) => <Tab key={cle} value={cle} label={o.label} />)}
       </Tabs>
 
-      {onglet === 'profil' ? (
-        <ProfilDepensesPanel />
+      {onglet === 'stats' ? (
+        <StatsPanel peutVoirMontants={estAdmin} />
+      ) : onglet === 'campagnes' ? (
+        <CampagnesPanel estAdmin={estAdmin} />
       ) : onglet === 'passages' ? (
         <PassagesPanel
           peutOuvrirDossier={peutOuvrirDossier}
@@ -507,6 +593,23 @@ export default function SuiviPatients() {
             onChange={(e) => setMessage({ ...message, texte: e.target.value })}
             helperText="{nom} et {centre} sont remplacés à l'envoi. Votre modification est retenue pour cette liste."
           />
+          {message && motifs.length > 0 && (
+            <Box mt={2}>
+              <Typography variant="caption" color="text.secondary">
+                Pour quoi ? <span style={{ opacity: 0.7 }}>(la relance sera notée avec ce motif)</span>
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5 }}>
+                {motifs.map((m) => {
+                  const actif = message.motifId === m.id;
+                  return (
+                    <Chip key={m.id} clickable size="small" label={m.label}
+                      onClick={() => setMessage({ ...message, motifId: actif ? '' : m.id })}
+                      color={actif ? 'primary' : 'default'} variant={actif ? 'filled' : 'outlined'} />
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
           {message && (
             <Paper variant="outlined" sx={{ p: 1.5, mt: 2, bgcolor: 'action.hover' }}>
               <Typography variant="caption" color="text.secondary">Aperçu</Typography>
@@ -521,6 +624,12 @@ export default function SuiviPatients() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <RelanceDialog
+        open={Boolean(relance)} patient={relance} estAdmin={estAdmin}
+        onClose={() => setRelance(null)} onSaved={() => charger()}
+      />
+      <ReglagesDialog open={reglages} onClose={() => setReglages(false)} />
     </Box>
   );
 }

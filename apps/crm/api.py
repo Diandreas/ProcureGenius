@@ -83,6 +83,16 @@ class CrmPatientListView(_CrmView):
         origines_lot = {p.patient_id: p for p in PatientCRMProfile.objects
                         .filter(patient_id__in=[c.id for c in lot]).select_related('origin')}
 
+        # Dernière relance de chaque patient de la page, et sa suite (venu ? attendu ?).
+        from .models import ContactLog
+        dernieres = {}
+        for log in (ContactLog.objects.filter(patient_id__in=[c.id for c in lot])
+                    .select_related('reason', 'campaign', 'created_by').order_by('-contacted_at')):
+            dernieres.setdefault(log.patient_id, log)
+        etats_relances = services.calculer_venues(dernieres.values())
+        nb_relances = Counter(ContactLog.objects.filter(patient_id__in=[c.id for c in lot])
+                              .values_list('patient_id', flat=True))
+
         # Numeros partages par plusieurs fiches (famille) : le bouton WhatsApp
         # reste utilisable, mais l'ecran le signale pour ne pas envoyer N fois
         # le meme message a la meme personne.
@@ -114,6 +124,20 @@ class CrmPatientListView(_CrmView):
                 'services': services_lot.get(c.id, []),
                 'origin': (origines_lot[c.id].origin.label if c.id in origines_lot and origines_lot[c.id].origin_id
                            else ('Inconnue' if c.id in origines_lot and origines_lot[c.id].unknown else None)),
+                'do_not_contact': bool(c.id in origines_lot and origines_lot[c.id].do_not_contact),
+                'contacts_count': nb_relances.get(c.id, 0),
+                'last_contact': ({
+                    'id': str(dernieres[c.id].id),
+                    'at': dernieres[c.id].contacted_at,
+                    'days': (maintenant - dernieres[c.id].contacted_at).days,
+                    'channel': dernieres[c.id].get_channel_display(),
+                    'outcome': dernieres[c.id].outcome,
+                    'outcome_label': dernieres[c.id].get_outcome_display(),
+                    'reason': dernieres[c.id].reason.label if dernieres[c.id].reason_id else '',
+                    'status': etats_relances[dernieres[c.id].id]['status'],
+                    'invoice_number': (etats_relances[dernieres[c.id].id]['invoice'].invoice_number
+                                       if etats_relances[dernieres[c.id].id]['invoice'] else ''),
+                } if c.id in dernieres else None),
                 'last_passage': ({
                     'at': c.crm_last_passage,
                     'days': (maintenant - c.crm_last_passage).days,
@@ -383,6 +407,8 @@ def _profil_dict(patient, profil, organization):
         'unknown': bool(profil and profil.unknown),
         'detail': profil.detail if profil else '',
         'do_not_contact': bool(profil and profil.do_not_contact),
+        'campaign': ({'id': str(profil.campaign_id), 'name': profil.campaign.name}
+                     if profil and profil.campaign_id else None),
         # Provenance deduite (labo partenaire, prescripteur) : le composant ne pose pas la question.
         'suggested': _origine_dict(auto) if auto else None,
     }
@@ -435,6 +461,19 @@ class CrmPatientProfileView(_ProvenanceView):
             profil.unknown = bool(donnees['unknown'])
             if profil.unknown:
                 profil.origin = None
+        if 'campaign_id' in donnees:
+            if donnees['campaign_id']:
+                from .models import CRMCampaign
+                campagne = CRMCampaign.objects.filter(organization=organization, pk=donnees['campaign_id']).first()
+                if not campagne:
+                    return Response({'error': 'Campagne inconnue.'}, status=status.HTTP_400_BAD_REQUEST)
+                profil.campaign = campagne
+                # Un patient venu d'une campagne sans provenance saisie : on la déduit.
+                if not profil.origin_id and not profil.unknown:
+                    profil.origin = PatientOrigin.objects.filter(
+                        organization=organization, code='campaign', is_active=True).first()
+            else:
+                profil.campaign = None
         if 'detail' in donnees:
             profil.detail = str(donnees['detail'] or '')[:200]
         if 'do_not_contact' in donnees:

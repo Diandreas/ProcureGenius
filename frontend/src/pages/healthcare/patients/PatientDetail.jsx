@@ -27,6 +27,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import patientAPI from '../../../services/patientAPI';
 import ProvenanceChips from '../../../components/crm/ProvenanceChips';
+import RelancesPatient from '../../../components/crm/RelancesPatient';
 import maternityAPI from '../../../services/maternityAPI';
 import LabOrderHistory from './components/LabOrderHistory';
 import PharmacyHistory from './components/PharmacyHistory';
@@ -390,6 +391,9 @@ const PatientDetail = () => {
                                 </Box>
                                 <Box sx={{ mt: 0.75 }}>
                                     <ProvenanceChips patientId={patient.id} dense />
+                                </Box>
+                                <Box sx={{ mt: 0.75 }}>
+                                    <RelancesPatient patient={{ id: patient.id, name: patient.name }} />
                                 </Box>
                             </Box>
                         </Box>

@@ -47,6 +47,7 @@ const PatientForm = () => {
     const isEdit = Boolean(id);
     const [loading, setLoading] = useState(false);
     const [provenance, setProvenance] = useState('');
+    const [campagne, setCampagne] = useState('');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -136,7 +137,7 @@ const PatientForm = () => {
                 navigate(`/healthcare/patients/${id}`);
             } else {
                 const response = await patientAPI.createPatient(formData);
-                await crmAPI.saveProvenanceAfterCreate(response.id, provenance);
+                await crmAPI.saveProvenanceAfterCreate(response.id, provenance, campagne);
                 enqueueSnackbar(t('patients.create_success', 'Patient créé avec succès'), { variant: 'success' });
                 navigate(`/healthcare/patients/${response.id}`);
             }
@@ -295,7 +296,7 @@ const PatientForm = () => {
                         </Grid>
                         {!isEdit && (
                             <Grid item xs={12}>
-                                <ProvenanceChips value={provenance} onChange={setProvenance} />
+                                <ProvenanceChips value={provenance} onChange={setProvenance} campaign={campagne} onCampaignChange={setCampagne} />
                             </Grid>
                         )}
                         <Grid item xs={12} sm={6}>

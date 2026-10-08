@@ -67,6 +67,8 @@ SEGMENTS = [
     ('birthday_week', 'Anniversaire cette semaine'),
     ('never_billed', 'Jamais facturés'),
     ('no_origin', 'Sans provenance'),
+    ('awaited', "Attendus (d'accord pour venir)"),
+    ('promised_missing', 'Promis, pas venus'),
 ]
 
 JOURS_SANS_VISITE = 60
@@ -160,6 +162,10 @@ def appliquer_segment(qs, segment, organization, aujourdhui=None):
         return qs.filter(id__in=_ids_anniversaire(qs, aujourdhui))
     if segment == 'never_billed':
         return qs.filter(crm_visits=0)
+    if segment == 'awaited':
+        return qs.filter(id__in=ids_relances_en_attente(organization, ('waiting',)))
+    if segment == 'promised_missing':
+        return qs.filter(id__in=ids_relances_en_attente(organization, ('missed',)))
     if segment == 'no_origin':
         return qs.exclude(crm_profile__origin__isnull=False).exclude(crm_profile__unknown=True)
     return qs
@@ -303,3 +309,120 @@ def origine_automatique(patient):
     if LabOrder.objects.filter(patient=patient, prescriber__isnull=False).exists():
         return 'doctor'
     return None
+
+
+# ── Relances : motifs et « est-il vraiment venu ? » ─────────────────────────
+
+FENETRE_RELANCE_JOURS = 30   # une relance attend le patient pendant ce délai
+RELANCES_ATTENDUES = ('sent', 'agreed', 'callback')  # sinon : rien n'est attendu
+
+
+def normaliser(texte):
+    """Minuscules sans accents, pour comparer « Hépatite B » et « hepatite b »."""
+    import unicodedata
+    decompose = unicodedata.normalize('NFKD', texte or '')
+    return ''.join(c for c in decompose if not unicodedata.combining(c)).lower().strip()
+
+
+def motifs_de(organization):
+    """Motifs de relance actifs, créés à la première demande, les plus utilisés d'abord."""
+    from .models import ContactReason
+
+    if not ContactReason.objects.filter(organization=organization).exists():
+        ContactReason.objects.bulk_create([
+            ContactReason(organization=organization, label=label, keywords=mots, position=i)
+            for i, (label, mots) in enumerate(ContactReason.DEFAULTS)
+        ])
+    liste = list(ContactReason.objects.filter(organization=organization, is_active=True)
+                 .annotate(n=Count('contacts')))
+    liste.sort(key=lambda m: (m.label == 'Autre', -m.n, m.position))
+    return liste
+
+
+def mots_cles(motif):
+    if not motif or not motif.keywords:
+        return []
+    return [normaliser(m) for m in motif.keywords.replace(';', ',').split(',') if normaliser(m)]
+
+
+def _fin_de_fenetre(log):
+    from datetime import datetime, time
+    fin = log.contacted_at + timedelta(days=FENETRE_RELANCE_JOURS)
+    campagne = log.campaign
+    if campagne and campagne.end_date:
+        fin_campagne = timezone.make_aware(datetime.combine(campagne.end_date, time.max))
+        fin = max(fin, fin_campagne)
+    return fin
+
+
+def calculer_venues(logs, maintenant=None):
+    """Pour chaque relance : le patient est-il venu depuis ?
+
+    Retourne {id_relance: {'status', 'invoice', 'source', 'window_end'}} avec
+    status = came (venu) | waiting (attendu, délai non écoulé) | missed (promis ou
+    attendu, délai écoulé, pas venu) | none (pas de réponse / refus : rien d'attendu).
+
+    Règle : une facture (ni brouillon, ni annulée, ni avoir) créée APRÈS la relance
+    et dans la fenêtre vaut « venu » si une de ses lignes contient un mot-clé du
+    motif — ou, sans mot-clé, si c'est simplement une facture. Une facture ne sert
+    qu'à une seule relance. Une confirmation manuelle (`came_invoice`) l'emporte.
+    """
+    from collections import defaultdict
+
+    logs = list(logs)
+    if not logs:
+        return {}
+    maintenant = maintenant or timezone.now()
+
+    manuelles = {l.came_invoice_id for l in logs if l.came_invoice_id}
+    debut = min(l.contacted_at for l in logs)
+    patients = {l.patient_id for l in logs}
+    factures = (Invoice.objects.filter(client_id__in=patients, created_at__gte=debut)
+                .exclude(status__in=['draft', 'cancelled']).exclude(invoice_type='credit_note')
+                .prefetch_related('items').order_by('created_at'))
+    par_patient = defaultdict(list)
+    for f in factures:
+        par_patient[f.client_id].append(f)
+    deja_liees = {}
+    if manuelles:
+        for f in Invoice.objects.filter(id__in=manuelles):
+            deja_liees[f.id] = f
+
+    pris = set(manuelles)
+    resultat = {}
+    for log in sorted(logs, key=lambda l: l.contacted_at):
+        fin = _fin_de_fenetre(log)
+        trouvee, source = None, None
+        if log.came_invoice_id and log.came_invoice_id in deja_liees:
+            trouvee, source = deja_liees[log.came_invoice_id], 'manual'
+        else:
+            mots = mots_cles(log.reason)
+            for f in par_patient.get(log.patient_id, []):
+                if f.id in pris or f.created_at < log.contacted_at or f.created_at > fin:
+                    continue
+                if mots and not any(m in normaliser(i.description) for i in f.items.all() for m in mots):
+                    continue
+                trouvee, source = f, 'auto'
+                pris.add(f.id)
+                break
+        if trouvee:
+            statut = 'came'
+        elif log.outcome not in RELANCES_ATTENDUES:
+            statut = 'none'
+        else:
+            statut = 'waiting' if maintenant <= fin else 'missed'
+        resultat[log.id] = {'status': statut, 'invoice': trouvee, 'source': source, 'window_end': fin}
+    return resultat
+
+
+def ids_relances_en_attente(organization, statuts=('waiting',), seulement_accord=True):
+    """Patients ayant une relance « d'accord pour venir » dans l'état demandé."""
+    from .models import ContactLog
+
+    depuis = timezone.now() - timedelta(days=FENETRE_RELANCE_JOURS + 120)
+    logs = ContactLog.objects.filter(organization=organization, contacted_at__gte=depuis)
+    if seulement_accord:
+        logs = logs.filter(outcome='agreed')
+    logs = logs.select_related('reason', 'campaign')
+    etats = calculer_venues(logs)
+    return {l.patient_id for l in logs if etats[l.id]['status'] in statuts}
