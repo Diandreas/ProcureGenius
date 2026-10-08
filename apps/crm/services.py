@@ -5,7 +5,7 @@ Aucun acces en ecriture : ce module ne fait que lire les patients, les
 factures et les vaccinations deja presents.
 """
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.db.models import Count, Exists, Max, OuterRef, Q, Sum
 from django.utils import timezone
@@ -67,6 +67,8 @@ SEGMENTS = [
     ('birthday_week', 'Anniversaire cette semaine'),
     ('never_billed', 'Jamais facturés'),
     ('no_origin', 'Sans provenance'),
+    ('golden', 'À relancer maintenant (3 à 6 semaines)'),
+    ('to_call_back', 'À rappeler'),
     ('awaited', "Attendus (d'accord pour venir)"),
     ('promised_missing', 'Promis, pas venus'),
 ]
@@ -74,6 +76,8 @@ SEGMENTS = [
 JOURS_SANS_VISITE = 60
 VISITES_FIDELES = 4
 JOURS_VACCIN = 14
+FENETRE_OR_DEBUT = 21   # « fenêtre d'or » : dernière prise en charge il y a 21 à 42 jours
+FENETRE_OR_FIN = 42
 
 
 def patients_du_centre(organization, inclure_externes=False):
@@ -151,7 +155,19 @@ def appliquer_segment(qs, segment, organization, aujourdhui=None):
 
     if segment == 'not_back_60':
         return qs.filter(crm_visits__gte=1,
-                         crm_last_visit__lt=maintenant - timedelta(days=JOURS_SANS_VISITE))
+                         crm_last_visit__lt=maintenant - timedelta(days=JOURS_SANS_VISITE)
+                         ).exclude(crm_profile__do_not_contact=True)
+    if segment == 'golden':
+        # Leur dernière prise en charge date de 3 à 6 semaines : c'est là qu'ils reviennent
+        # (délai médian de retour : 34 jours). Pas déjà relancés ce mois-ci, pas « ne plus relancer ».
+        from .models import ContactLog
+        recent = ContactLog.objects.filter(patient=OuterRef('pk'), contacted_at__gte=maintenant - timedelta(days=30))
+        return (qs.filter(crm_visits__gte=1,
+                          crm_last_visit__gte=maintenant - timedelta(days=FENETRE_OR_FIN),
+                          crm_last_visit__lte=maintenant - timedelta(days=FENETRE_OR_DEBUT))
+                .filter(~Exists(recent)).exclude(crm_profile__do_not_contact=True))
+    if segment == 'to_call_back':
+        return qs.filter(id__in=ids_a_rappeler(organization))
     if segment == 'new_month':
         return qs.filter(created_at__date__gte=aujourdhui.replace(day=1))
     if segment == 'loyal':
@@ -346,8 +362,10 @@ def mots_cles(motif):
 
 
 def _fin_de_fenetre(log):
-    from datetime import datetime, time
     fin = log.contacted_at + timedelta(days=FENETRE_RELANCE_JOURS)
+    if log.outcome == 'agreed' and log.follow_up_date:
+        # Il a dit quand il comptait venir : on lui laisse deux semaines de plus.
+        fin = max(fin, timezone.make_aware(datetime.combine(log.follow_up_date, time.max)) + timedelta(days=14))
     campagne = log.campaign
     if campagne and campagne.end_date:
         fin_campagne = timezone.make_aware(datetime.combine(campagne.end_date, time.max))
@@ -426,3 +444,134 @@ def ids_relances_en_attente(organization, statuts=('waiting',), seulement_accord
     logs = logs.select_related('reason', 'campaign')
     etats = calculer_venues(logs)
     return {l.patient_id for l in logs if etats[l.id]['status'] in statuts}
+
+
+def ids_a_rappeler(organization):
+    """Patients dont la dernière relance est « à rappeler » et dont la date de rappel est venue.
+
+    Sans date précisée, on les remet dans la liste après deux jours.
+    """
+    from .models import ContactLog
+
+    maintenant = timezone.now()
+    aujourdhui = timezone.localdate()
+    dernieres = {}
+    for log in (ContactLog.objects.filter(organization=organization,
+                                          contacted_at__gte=maintenant - timedelta(days=150))
+                .order_by('-contacted_at')):
+        dernieres.setdefault(log.patient_id, log)
+    ids = set()
+    for pid, log in dernieres.items():
+        if log.outcome != 'callback':
+            continue
+        if log.follow_up_date:
+            if log.follow_up_date <= aujourdhui:
+                ids.add(pid)
+        elif maintenant - log.contacted_at >= timedelta(days=2):
+            ids.add(pid)
+    return ids
+
+
+# ── Modèles de message par motif ────────────────────────────────────────────
+
+MODELES_MESSAGE = {
+    'Rappel de suivi': "Bonjour {nom}, ici {centre}. Cela fait un moment que nous ne vous avons pas vu. Comment allez-vous ? N'hésitez pas à passer nous voir.",
+    'Bilan de santé': "Bonjour {nom}, ici {centre}. Un bilan de santé régulier permet de repérer tôt les problèmes. Passez nous voir pour faire le point.",
+    'Vaccination': "Bonjour {nom}, ici {centre}. Nous vous rappelons que votre prochain vaccin approche. Passez nous voir pour le faire.",
+    'Dépistage hépatite B': "Bonjour {nom}, ici {centre}. Nous proposons le dépistage de l'hépatite B : c'est rapide et simple. Quel jour pouvez-vous passer ?",
+    'Résultats disponibles': "Bonjour {nom}, ici {centre}. Vos résultats sont disponibles. Vous pouvez passer les récupérer au centre.",
+    'Rendez-vous': "Bonjour {nom}, ici {centre}. Nous vous rappelons votre rendez-vous. Merci de nous confirmer votre venue.",
+    'Vœux / anniversaire': "Bonjour {nom}, toute l'équipe de {centre} vous souhaite un joyeux anniversaire !",
+}
+
+
+def modele_message(motif):
+    """Message proposé pour ce motif : celui de l'administrateur, sinon le modèle par défaut."""
+    if not motif:
+        return ''
+    return (motif.message_template or '').strip() or MODELES_MESSAGE.get(motif.label, '')
+
+
+# ── Étiquettes automatiques et résumé d'un patient ──────────────────────────
+
+def etiquettes(visites, jours_derniere_visite, jours_depuis_creation, numero_partage,
+               nb_relances, derniere_relance, carte_privilege, gros_depensier=False):
+    """Étiquettes déduites des données, sans aucune saisie : de quoi comprendre un patient d'un coup d'œil.
+
+    `derniere_relance` : {'outcome', 'status'} ou None.
+    """
+    tags = []
+
+    def ajouter(code, label, couleur):
+        tags.append({'code': code, 'label': label, 'color': couleur})
+
+    if jours_depuis_creation is not None and jours_depuis_creation <= 30:
+        ajouter('new', 'Nouveau', 'info')
+    if visites >= VISITES_FIDELES:
+        ajouter('loyal', 'Fidèle', 'success')
+    dormant = visites >= 1 and jours_derniere_visite is not None and jours_derniere_visite >= JOURS_SANS_VISITE
+    if dormant:
+        ajouter('dormant', 'Dormant', 'warning')
+    if gros_depensier:
+        ajouter('big', 'Gros dépensier', 'secondary')
+    if numero_partage and numero_partage > 1:
+        ajouter('family', 'Famille', 'default')
+    if carte_privilege:
+        ajouter('card', 'Carte privilège', 'default')
+    if derniere_relance and derniere_relance.get('outcome') == 'agreed' and derniere_relance.get('status') == 'missed':
+        ajouter('promised_missing', 'Promis, pas venu', 'warning')
+    elif derniere_relance and derniere_relance.get('outcome') == 'agreed' and derniere_relance.get('status') == 'waiting':
+        ajouter('awaited', 'Attendu', 'info')
+    elif dormant and nb_relances == 0:
+        ajouter('never_contacted', 'Jamais relancé', 'default')
+    return tags
+
+
+def seuil_gros_depensier(qs_annote):
+    """Dépense totale au-dessus de laquelle un patient est dans les 10 % qui dépensent le plus."""
+    valeurs = sorted(float(v) for v in qs_annote.values_list('crm_paid_total', flat=True) if v and v > 0)
+    if len(valeurs) < 10:
+        return None
+    return valeurs[int(len(valeurs) * 0.9)]
+
+
+def resume_patient(patient, organization, avec_montants):
+    """Chiffres clés d'un patient pour sa fiche : visites, panier moyen, ce qu'il achète d'habitude."""
+    from collections import Counter
+    from .models import ContactLog, PatientCRMProfile
+
+    maintenant = timezone.now()
+    factures = list(Invoice.objects.filter(client=patient).exclude(status__in=['draft', 'cancelled'])
+                    .exclude(invoice_type='credit_note').prefetch_related('items').order_by('created_at'))
+    payees = [f for f in factures if f.status == 'paid']
+    total_paye = float(sum(f.total_amount or 0 for f in payees))
+    habitudes = Counter()
+    for f in factures:
+        for ligne in f.items.all():
+            nom = (ligne.description or '').strip()
+            if nom:
+                habitudes[nom[:50]] += 1
+
+    numero_partage = 0
+    numeros = normaliser_telephones(patient.phone)
+    if numeros:
+        numero_partage = patients_du_centre(organization, True).filter(phone__icontains=numeros[0]).count()
+    relances = list(ContactLog.objects.filter(patient=patient).select_related('reason', 'campaign').order_by('-contacted_at')[:1])
+    etat = calculer_venues(relances).get(relances[0].id) if relances else None
+    derniere = {'outcome': relances[0].outcome, 'status': etat['status']} if relances else None
+    nb_relances = ContactLog.objects.filter(patient=patient).count()
+    jours_derniere = (maintenant - factures[-1].created_at).days if factures else None
+    profil = PatientCRMProfile.objects.filter(patient=patient).first()
+
+    return {
+        'visits': len(factures),
+        'first_visit': factures[0].created_at if factures else None,
+        'last_visit_days': jours_derniere,
+        'paid_total': round(total_paye) if avec_montants else None,
+        'average_basket': round(total_paye / len(payees)) if (avec_montants and payees) else None,
+        'usual': [{'label': k, 'count': v} for k, v in habitudes.most_common(4)],
+        'contacts_count': nb_relances,
+        'do_not_contact': bool(profil and profil.do_not_contact),
+        'tags': etiquettes(len(factures), jours_derniere, (maintenant - patient.created_at).days,
+                           numero_partage, nb_relances, derniere, patient.has_privilege_card),
+    }

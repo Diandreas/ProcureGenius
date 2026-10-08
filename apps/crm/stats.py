@@ -53,6 +53,100 @@ def _finir(g, libelle, avec_montants, **extra):
     return sortie
 
 
+def calculer_fidelite(organization, avec_montants):
+    """Qui revient vraiment après une prise en charge terminée.
+
+    Une « prise en charge » regroupe les visites espacées de 14 jours au plus (les injections
+    de plusieurs jours de suite ne sont pas des retours). Un « retour » = une nouvelle prise en
+    charge après une pause. Seuls comptent les patients dont la première prise en charge est
+    finie depuis au moins 45 jours (les autres n'ont pas encore eu le temps de revenir).
+    """
+    base = services.patients_du_centre(organization)
+    clients = {c.id: c for c in base}
+    factures = list(Invoice.objects.filter(organization=organization, client_id__in=clients.keys())
+                    .exclude(status__in=['draft', 'cancelled']).exclude(invoice_type='credit_note')
+                    .values('client_id', 'created_at', 'invoice_type', 'total_amount', 'status').order_by('created_at'))
+    aujourdhui = timezone.localdate()
+    jours = defaultdict(set)
+    entree = {}
+    for f in factures:
+        jours[f['client_id']].add(timezone.localtime(f['created_at']).date())
+        entree.setdefault(f['client_id'], f['invoice_type'])
+    episodes = {}
+    for cid, js in jours.items():
+        js = sorted(js)
+        eps = [[js[0], js[0]]]
+        for j in js[1:]:
+            if (j - eps[-1][1]).days <= 14:
+                eps[-1][1] = j
+            else:
+                eps.append([j, j])
+        episodes[cid] = eps
+    mures = {cid: e for cid, e in episodes.items() if (aujourdhui - e[0][1]).days >= 45}
+    revenus = {cid for cid, e in mures.items() if len(e) >= 2}
+    ecarts = [(b[0] - a[1]).days for e in episodes.values() for a, b in zip(e, e[1:])]
+    libelles_type = dict(Invoice.INVOICE_TYPES)
+
+    def tableau(cle, minimum=8, ordre=None):
+        g = defaultdict(lambda: [0, 0])
+        for cid, e in mures.items():
+            k = cle(cid)
+            g[k][0] += 1
+            g[k][1] += 1 if cid in revenus else 0
+        lignes = [{'label': k, 'patients': n, 'returned': r, 'rate': _pct(r, n)}
+                  for k, (n, r) in g.items() if n >= minimum]
+        if ordre:
+            return sorted(lignes, key=lambda x: ordre.index(x['label']) if x['label'] in ordre else 99)
+        return sorted(lignes, key=lambda x: -x['patients'])
+
+    def tranche(cid):
+        a = services.age_en_annees(clients[cid].date_of_birth)
+        return ('Âge inconnu' if a is None else '0-14 ans' if a < 15 else '15-24 ans' if a < 25
+                else '25-34 ans' if a < 35 else '35-44 ans' if a < 45 else '45 ans et plus')
+
+    cohortes = defaultdict(lambda: [0, 0])
+    for cid, e in mures.items():
+        m = e[0][0].strftime('%Y-%m')
+        cohortes[m][0] += 1
+        cohortes[m][1] += 1 if cid in revenus else 0
+
+    valeur_premiere, valeur_suivante = [], []
+    if avec_montants:
+        payees = defaultdict(list)
+        for f in factures:
+            if f['status'] == 'paid':
+                payees[f['client_id']].append((timezone.localtime(f['created_at']).date(), float(f['total_amount'] or 0)))
+        for cid, e in episodes.items():
+            totaux = [0.0] * len(e)
+            for jour, montant in payees.get(cid, []):
+                for i, (d0, d1) in enumerate(e):
+                    if d0 <= jour <= d1:
+                        totaux[i] += montant
+            valeur_premiere.append(totaux[0])
+            valeur_suivante.extend(totaux[1:])
+
+    ages = ['0-14 ans', '15-24 ans', '25-34 ans', '35-44 ans', '45 ans et plus']
+    return {
+        'patients': len(episodes), 'mature': len(mures), 'returned': len(revenus),
+        'rate': _pct(len(revenus), len(mures)),
+        'single_day_share': _pct(sum(1 for e in episodes.values() if e[0][0] == e[0][1]), len(episodes)),
+        'median_gap_days': round(median(ecarts), 1) if ecarts else None,
+        'gap_buckets': [
+            {'label': '15 à 30 jours', 'count': sum(1 for x in ecarts if x <= 30)},
+            {'label': '31 à 60 jours', 'count': sum(1 for x in ecarts if 30 < x <= 60)},
+            {'label': '61 à 90 jours', 'count': sum(1 for x in ecarts if 60 < x <= 90)},
+            {'label': 'Plus de 90 jours', 'count': sum(1 for x in ecarts if x > 90)},
+        ],
+        'cohorts': [{'month': m, 'patients': n, 'returned': r, 'rate': _pct(r, n)}
+                    for m, (n, r) in sorted(cohortes.items())][-12:],
+        'by_entry': tableau(lambda cid: str(libelles_type.get(entree.get(cid), entree.get(cid) or '?'))),
+        'by_age': tableau(tranche, ordre=ages),
+        'by_gender': tableau(lambda cid: {'M': 'Hommes', 'F': 'Femmes'}.get(clients[cid].gender, 'Sexe inconnu')),
+        'avg_first_episode': round(sum(valeur_premiere) / len(valeur_premiere)) if valeur_premiere else None,
+        'avg_next_episode': round(sum(valeur_suivante) / len(valeur_suivante)) if valeur_suivante else None,
+    }
+
+
 def calculer_statistiques(organization, debut, fin, avec_montants):
     d0, d1 = _bornes(debut, fin)
     maintenant = timezone.now()
@@ -252,4 +346,5 @@ def calculer_statistiques(organization, debut, fin, avec_montants):
         'provenance': provenance,
         'provenance_coverage': couverture,
         'upsell': montee,
+        'retention': calculer_fidelite(organization, avec_montants),
     }

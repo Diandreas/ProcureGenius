@@ -91,6 +91,9 @@ const crmAPI = {
     }
   },
 
+  // Chiffres clés et étiquettes d'un patient (fiche)
+  getPatientSummary: async (patientId) => (await api.get(`/crm/patients/${patientId}/summary/`)).data,
+
   // Statistiques : { start, end } (AAAA-MM-JJ)
   getStats: async (params) => (await api.get('/crm/stats/', { params })).data,
 

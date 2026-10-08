@@ -13,7 +13,10 @@ import { viderCacheOrigines } from '../../components/crm/ProvenanceChips';
 function Ligne({ element, avecMotsCles, onChange, onDelete }) {
   const [label, setLabel] = useState(element.label);
   const [mots, setMots] = useState(element.keywords || '');
-  useEffect(() => { setLabel(element.label); setMots(element.keywords || ''); }, [element.label, element.keywords]);
+  const [message, setMessage] = useState(element.message_template || '');
+  useEffect(() => {
+    setLabel(element.label); setMots(element.keywords || ''); setMessage(element.message_template || '');
+  }, [element.label, element.keywords, element.message_template]);
 
   return (
     <Box sx={{ py: 1, borderBottom: '1px solid', borderColor: 'divider', opacity: element.is_active ? 1 : 0.55 }}>
@@ -37,6 +40,17 @@ function Ligne({ element, avecMotsCles, onChange, onDelete }) {
           label="Mots qui reconnaissent un achat (séparés par une virgule)" placeholder="ex. hépatite b, aghbs"
           helperText={mots.trim() ? 'Quand il vient, une ligne de sa facture contenant un de ces mots montre qu\'il est venu pour ça.' : 'Sans mot : toute nouvelle facture après la relance compte comme « revenu ».'}
           inputProps={{ maxLength: 300 }}
+        />
+      )}
+      {avecMotsCles && (
+        <TextField
+          size="small" fullWidth multiline minRows={2} sx={{ mt: 0.75 }} value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onBlur={() => message !== (element.message_template || '') && onChange({ message_template: message })}
+          label="Message WhatsApp proposé pour ce motif"
+          placeholder={element.template || 'Bonjour {nom}, ici {centre}. …'}
+          helperText="{nom} et {centre} sont remplacés à l'envoi. Laissez vide pour garder le modèle par défaut."
+          inputProps={{ maxLength: 1000 }}
         />
       )}
       {element.usage > 0 && (

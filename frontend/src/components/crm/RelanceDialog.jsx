@@ -7,7 +7,7 @@ import { DeleteOutline as DeleteIcon, ChatBubbleOutline as RelanceIcon } from '@
 import { useSnackbar } from 'notistack';
 import crmAPI from '../../services/crmAPI';
 import {
-  chargerMotifs, chargerCampagnesActives, CANAUX, ISSUES, ETATS, libelleIssue, jourCourt, ilYa,
+  chargerMotifs, chargerCampagnesActives, CANAUX, ISSUES, ETATS, libelleIssue, jourCourt, ilYa, dansJours, RACCOURCIS_DATE,
 } from './crmData';
 
 const titre = (nom) => (nom || '')
@@ -42,6 +42,10 @@ export function LigneRelance({ relance, peutSupprimer, onChange, onSupprimer }) 
           size="small" clickable label={libelleIssue(relance.outcome)} onClick={() => setEdition(!edition)}
           sx={{ height: 20, fontSize: '0.7rem' }}
         />
+        {relance.follow_up_date && ['callback', 'agreed'].includes(relance.outcome) && (
+          <Chip size="small" variant="outlined" label={`${relance.outcome === 'callback' ? 'à rappeler' : 'prévu'} le ${jourCourt(relance.follow_up_date)}`}
+            sx={{ height: 20, fontSize: '0.7rem' }} />
+        )}
         {etat.label && (
           <Chip
             size="small" color={etat.color} variant={relance.status === 'came' ? 'filled' : 'outlined'}
@@ -91,6 +95,7 @@ export default function RelanceDialog({
   const [campagne, setCampagne] = useState('');
   const [issue, setIssue] = useState(defaultOutcome);
   const [note, setNote] = useState('');
+  const [prevue, setPrevue] = useState('');
   const [nePlusRelancer, setNePlusRelancer] = useState(false);
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState('');
@@ -103,7 +108,7 @@ export default function RelanceDialog({
   useEffect(() => {
     if (!open) return;
     setCanal(defaultChannel); setMotif(defaultReasonId); setCampagne(''); setIssue(defaultOutcome);
-    setNote(''); setNePlusRelancer(false); setErreur('');
+    setNote(''); setPrevue(''); setNePlusRelancer(false); setErreur('');
     chargerMotifs().then(setMotifs).catch(() => setMotifs([]));
     chargerCampagnesActives().then(setCampagnes).catch(() => setCampagnes([]));
     chargerHistorique();
@@ -123,6 +128,7 @@ export default function RelanceDialog({
       const cree = await crmAPI.createContact({
         patient_id: patient.id, channel: canal, reason_id: motif || null, campaign_id: campagne || null,
         outcome: issue, note: note.trim(), do_not_contact: issue === 'declined' && nePlusRelancer,
+        follow_up_date: (issue === 'callback' || issue === 'agreed') && prevue ? prevue : null,
       });
       enqueueSnackbar('Relance notée', { variant: 'success' });
       window.dispatchEvent(new CustomEvent('crm-relance-saved', { detail: { patientId: patient.id } }));
@@ -202,6 +208,25 @@ export default function RelanceDialog({
                   variant={issue === i.value ? 'filled' : 'outlined'} sx={pastille(issue === i.value)} />
               ))}
             </Box>
+            {(issue === 'callback' || issue === 'agreed') && (
+              <Box mt={1}>
+                <Typography variant="caption" color="text.secondary">
+                  {issue === 'callback' ? 'À rappeler le…' : 'Il compte venir le…'} <span style={{ opacity: 0.7 }}>(facultatif)</span>
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.5, alignItems: 'center' }}>
+                  {RACCOURCIS_DATE.map((r) => {
+                    const valeur = dansJours(r.jours);
+                    const actif = prevue === valeur;
+                    return (
+                      <Chip key={r.label} clickable size="small" label={r.label} onClick={() => setPrevue(actif ? '' : valeur)}
+                        color={actif ? 'primary' : 'default'} variant={actif ? 'filled' : 'outlined'} />
+                    );
+                  })}
+                  <TextField size="small" type="date" value={prevue} onChange={(e) => setPrevue(e.target.value)}
+                    inputProps={{ min: dansJours(0) }} sx={{ width: 150 }} />
+                </Box>
+              </Box>
+            )}
             {issue === 'agreed' && (
               <Typography variant="caption" color="text.secondary" display="block" mt={0.75}>
                 On verra automatiquement s'il est vraiment venu : sa prochaine facture{motifs.find((m) => m.id === motif) ? ` « ${motifs.find((m) => m.id === motif).label.toLowerCase()} »` : ''} le dira.

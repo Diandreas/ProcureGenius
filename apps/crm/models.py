@@ -211,6 +211,8 @@ class ContactReason(models.Model):
     )
     label = models.CharField(max_length=80, verbose_name='Libellé')
     keywords = models.CharField(max_length=300, blank=True, verbose_name='Mots-clés (facture)')
+    # Message WhatsApp proposé pour ce motif ({nom} et {centre} sont remplacés). Vide : modèle par défaut.
+    message_template = models.TextField(blank=True, verbose_name='Message proposé')
     position = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
@@ -307,6 +309,8 @@ class ContactLog(models.Model):
     )
     outcome = models.CharField(max_length=10, choices=OUTCOME_CHOICES, default='sent')
     note = models.CharField(max_length=300, blank=True)
+    # « À rappeler le … » (réponse « à rappeler ») ou « il compte venir le … » (réponse « d'accord »).
+    follow_up_date = models.DateField(null=True, blank=True, verbose_name='Date prévue')
     contacted_at = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(
         'accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True,

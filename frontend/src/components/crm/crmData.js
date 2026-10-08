@@ -45,6 +45,20 @@ export const ETATS = {
   none: { label: '', color: 'default' },
 };
 
+// Date locale AAAA-MM-JJ dans n jours (sans décalage de fuseau).
+export const dansJours = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+export const RACCOURCIS_DATE = [
+  { label: 'Demain', jours: 1 },
+  { label: 'Dans 3 jours', jours: 3 },
+  { label: 'Dans 1 semaine', jours: 7 },
+  { label: 'Dans 1 mois', jours: 30 },
+];
+
 export const jourCourt = (iso) => {
   try {
     return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });

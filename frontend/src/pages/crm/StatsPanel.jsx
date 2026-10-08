@@ -18,6 +18,7 @@ const SECTIONS = [
   { value: 'campagnes', label: 'Campagnes' },
   { value: 'provenance', label: 'Provenance' },
   { value: 'montee', label: 'Montée en gamme' },
+  { value: 'fidelite', label: 'Fidélité' },
   { value: 'depenses', label: 'Qui dépense ?', montants: true },
 ];
 
@@ -323,6 +324,65 @@ export default function StatsPanel({ peutVoirMontants }) {
     </Stack>
   );
 
+  const r = donnees?.retention;
+  const tauxBarre = (lignes, vide) => (lignes.length === 0 ? (
+    <Typography variant="body2" color="text.secondary">{vide || 'Pas assez de patients pour comparer.'}</Typography>
+  ) : (
+    <Stack spacing={0.75}>
+      {lignes.map((l) => (
+        <Box key={l.label} display="flex" alignItems="center" gap={1}>
+          <Typography variant="body2" sx={{ width: 150, flexShrink: 0 }}>{l.label}</Typography>
+          <LinearProgress variant="determinate" value={Math.min(l.rate || 0, 100)} color={(l.rate || 0) >= 40 ? 'success' : (l.rate || 0) >= 25 ? 'warning' : 'error'}
+            sx={{ flex: 1, height: 10, borderRadius: 5 }} />
+          <Typography variant="body2" fontWeight={700} sx={{ width: 120, textAlign: 'right', flexShrink: 0 }}>
+            {pc(l.rate)} <Typography component="span" variant="caption" color="text.secondary">({l.returned}/{l.patients})</Typography>
+          </Typography>
+        </Box>
+      ))}
+    </Stack>
+  ));
+
+  const fidelite = donnees && r && (
+    <Stack spacing={1.5}>
+      <Alert severity="info" sx={{ alignItems: 'center' }}>
+        Une <strong>prise en charge</strong> regroupe les visites espacées de 14 jours au plus (les injections de plusieurs jours
+        de suite ne sont pas des retours). Un <strong>retour</strong> est une nouvelle prise en charge après une pause.
+        Seuls comptent les patients dont la première prise en charge est finie depuis plus de 45 jours.
+      </Alert>
+      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Kpi valeur={pc(r.rate)} libelle="reviennent après une prise en charge" couleur={r.rate >= 40 ? 'success.main' : 'warning.main'}
+          aide={`${r.returned} patients sur ${r.mature} analysés`} />
+        <Kpi valeur={r.median_gap_days === null ? '—' : `${r.median_gap_days} j`} libelle="délai médian avant le retour" />
+        <Kpi valeur={pc(r.single_day_share)} libelle="des prises en charge durent un seul jour" />
+        <Kpi valeur={r.patients} libelle="patients dans l'analyse" />
+        {montants && <Kpi valeur={fmt(r.avg_first_episode)} libelle="payés en moyenne à la 1re prise en charge" />}
+        {montants && <Kpi valeur={fmt(r.avg_next_episode)} libelle="payés en moyenne aux suivantes" />}
+      </Box>
+      <Carte titre="Quand reviennent ceux qui reviennent ?" note="Pause entre la fin d'une prise en charge et le début de la suivante. C'est avant 60 jours que ça se joue : relancez à 3-4 semaines.">
+        {(() => {
+          const total = r.gap_buckets.reduce((s, b) => s + b.count, 0);
+          return total === 0 ? <Typography variant="body2" color="text.secondary">Pas encore de retour observé.</Typography> : (
+            <Stack spacing={0.75}>
+              {r.gap_buckets.map((b) => (
+                <Box key={b.label} display="flex" alignItems="center" gap={1}>
+                  <Typography variant="body2" sx={{ width: 150, flexShrink: 0 }}>{b.label}</Typography>
+                  <LinearProgress variant="determinate" value={(100 * b.count) / total} sx={{ flex: 1, height: 10, borderRadius: 5 }} />
+                  <Typography variant="body2" fontWeight={700} sx={{ width: 90, textAlign: 'right', flexShrink: 0 }}>{b.count} ({Math.round((100 * b.count) / total)} %)</Typography>
+                </Box>
+              ))}
+            </Stack>
+          );
+        })()}
+      </Carte>
+      <Carte titre="Selon le mois de la première visite" note="Les plus récents ont eu moins de temps pour revenir : comparez surtout les mois éloignés.">
+        {tauxBarre(r.cohorts.map((c) => ({ ...c, label: new Date(`${c.month}-01`).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) })), 'Pas encore assez de recul.')}
+      </Carte>
+      <Carte titre="Selon la porte d'entrée" note="Par quoi le patient est entré la première fois.">{tauxBarre(r.by_entry)}</Carte>
+      <Carte titre="Selon l'âge">{tauxBarre(r.by_age)}</Carte>
+      <Carte titre="Selon le sexe">{tauxBarre(r.by_gender)}</Carte>
+    </Stack>
+  );
+
   return (
     <Box>
       <Box display="flex" gap={1} flexWrap="wrap" alignItems="center" mb={1}>
@@ -332,7 +392,7 @@ export default function StatsPanel({ peutVoirMontants }) {
             sx={{ fontWeight: section === s.value ? 700 : 400 }} />
         ))}
       </Box>
-      {section !== 'depenses' && (
+      {!['depenses', 'fidelite'].includes(section) && (
         <Box display="flex" gap={1} flexWrap="wrap" alignItems="center" mb={1.5}>
           <Typography variant="caption" color="text.secondary">Période :</Typography>
           {PERIODES.map((p) => (
@@ -354,6 +414,7 @@ export default function StatsPanel({ peutVoirMontants }) {
               {section === 'campagnes' && campagnes}
               {section === 'provenance' && provenance}
               {section === 'montee' && montee}
+              {section === 'fidelite' && fidelite}
             </>
           )}
         </>

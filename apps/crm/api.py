@@ -92,6 +92,8 @@ class CrmPatientListView(_CrmView):
         etats_relances = services.calculer_venues(dernieres.values())
         nb_relances = Counter(ContactLog.objects.filter(patient_id__in=[c.id for c in lot])
                               .values_list('patient_id', flat=True))
+        # Seuil des « gros dépensiers » : calculé sur toute la base, visible des administrateurs seulement.
+        seuil_gros = services.seuil_gros_depensier(services.avec_activite(base)) if montants else None
 
         # Numeros partages par plusieurs fiches (famille) : le bouton WhatsApp
         # reste utilisable, mais l'ecran le signale pour ne pas envoyer N fois
@@ -126,6 +128,19 @@ class CrmPatientListView(_CrmView):
                            else ('Inconnue' if c.id in origines_lot and origines_lot[c.id].unknown else None)),
                 'do_not_contact': bool(c.id in origines_lot and origines_lot[c.id].do_not_contact),
                 'contacts_count': nb_relances.get(c.id, 0),
+                'tags': services.etiquettes(
+                    c.crm_visits,
+                    (maintenant - c.crm_last_visit).days if c.crm_last_visit else None,
+                    (maintenant - c.created_at).days,
+                    compte_numeros[numeros[0]] if numeros else 0,
+                    nb_relances.get(c.id, 0),
+                    ({'outcome': dernieres[c.id].outcome, 'status': etats_relances[dernieres[c.id].id]['status']}
+                     if c.id in dernieres else None),
+                    c.has_privilege_card,
+                    bool(seuil_gros and c.crm_paid_total and float(c.crm_paid_total) >= seuil_gros),
+                ),
+                'follow_up_date': (dernieres[c.id].follow_up_date
+                                   if c.id in dernieres and dernieres[c.id].outcome in ('callback', 'agreed') else None),
                 'last_contact': ({
                     'id': str(dernieres[c.id].id),
                     'at': dernieres[c.id].contacted_at,

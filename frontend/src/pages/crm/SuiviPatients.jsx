@@ -26,7 +26,8 @@ import StatsPanel from './StatsPanel';
 import CampagnesPanel from './CampagnesPanel';
 import ReglagesDialog from './ReglagesDialog';
 import RelanceDialog from '../../components/crm/RelanceDialog';
-import { chargerMotifs, ilYa } from '../../components/crm/crmData';
+import Etiquettes from '../../components/crm/Etiquettes';
+import { chargerMotifs, ilYa, jourCourt } from '../../components/crm/crmData';
 import { useModules } from '../../contexts/ModuleContext';
 
 const TAILLE_PAGE = 30;
@@ -36,8 +37,8 @@ const TAILLE_PAGE = 30;
 const ONGLETS = {
   suivre: {
     label: 'À suivre',
-    segments: ['not_back_60', 'awaited', 'promised_missing', 'new_month', 'vaccine_due', 'birthday_week', 'loyal'],
-    defaut: 'not_back_60',
+    segments: ['golden', 'not_back_60', 'to_call_back', 'awaited', 'promised_missing', 'new_month', 'vaccine_due', 'birthday_week', 'loyal'],
+    defaut: 'golden',
   },
   patients: {
     label: 'Patients',
@@ -69,6 +70,9 @@ const ONGLETS_LISTE = ['suivre', 'patients'];
 
 // Motif de relance proposé d'office selon la liste dans laquelle on travaille.
 const MOTIF_PAR_SEGMENT = {
+  golden: 'Rappel de suivi',
+  to_call_back: 'Rappel de suivi',
+  promised_missing: 'Rappel de suivi',
   not_back_60: 'Rappel de suivi',
   new_month: 'Rappel de suivi',
   vaccine_due: 'Vaccination',
@@ -79,6 +83,9 @@ const COULEUR_ETAT = { came: 'success', waiting: 'info', missed: 'warning' };
 const TEXTE_ETAT = { came: 'venu', waiting: 'attendu', missed: 'pas venu' };
 
 const MODELES_MESSAGE = {
+  golden: "Bonjour {nom}, ici {centre}. Comment allez-vous depuis votre passage chez nous ? Si vous avez besoin d'un suivi ou d'un contrôle, nous sommes là.",
+  awaited: "Bonjour {nom}, ici {centre}. Nous vous attendons comme convenu. N'hésitez pas à nous prévenir si vous avez un empêchement.",
+  promised_missing: "Bonjour {nom}, ici {centre}. Vous deviez passer nous voir et nous vous attendons toujours. Quel jour vous conviendrait ?",
   not_back_60: "Bonjour {nom}, ici {centre}. Cela fait un moment que nous ne vous avons pas vu. Comment allez-vous ? N'hésitez pas à passer nous voir.",
   new_month: "Bonjour {nom}, merci d'avoir choisi {centre}. Comment vous sentez-vous depuis votre visite ?",
   vaccine_due: "Bonjour {nom}, ici {centre}. Nous vous rappelons que votre prochain vaccin approche. Passez nous voir pour le faire.",
@@ -233,8 +240,8 @@ export default function SuiviPatients() {
   // ── Message WhatsApp : modèle selon le segment, modifiable, mémorisé ──────
   const ouvrirMessage = (patient) => {
     const cle = `crm-modele-${segment}`;
-    const base = lireMemoire(cle) || MODELES_MESSAGE[segment] || MODELES_MESSAGE.defaut;
     const motifDefaut = motifs.find((m) => m.label === MOTIF_PAR_SEGMENT[segment]);
+    const base = lireMemoire(cle) || MODELES_MESSAGE[segment] || (motifDefaut && motifDefaut.template) || MODELES_MESSAGE.defaut;
     setMessage({ patient, cle, texte: base, motifId: motifDefaut ? motifDefaut.id : '' });
   };
 
@@ -334,6 +341,7 @@ export default function SuiviPatients() {
       >
         {titre(p.name)}
       </Typography>
+      {p.tags && p.tags.length > 0 && <Box sx={{ my: 0.25 }}><Etiquettes tags={p.tags} max={4} /></Box>}
       <Typography variant="caption" color="text.secondary">
         {[p.age != null ? `${p.age} ans` : null, p.gender === 'F' ? 'Femme' : p.gender === 'M' ? 'Homme' : null,
           p.address ? p.address.split('\n')[0].slice(0, 28) : null].filter(Boolean).join(' · ')}
@@ -345,7 +353,7 @@ export default function SuiviPatients() {
               size="small" clickable onClick={() => setRelance(p)}
               color={COULEUR_ETAT[p.last_contact.status] || 'default'}
               variant={p.last_contact.status === 'came' ? 'filled' : 'outlined'}
-              label={`Relancé ${ilYa(p.last_contact.days)} · ${p.last_contact.channel}${p.last_contact.reason ? ` · ${p.last_contact.reason}` : ''} · ${p.last_contact.outcome_label.toLowerCase()}${TEXTE_ETAT[p.last_contact.status] ? ` · ${TEXTE_ETAT[p.last_contact.status]}` : ''}`}
+              label={`Relancé ${ilYa(p.last_contact.days)} · ${p.last_contact.channel}${p.last_contact.reason ? ` · ${p.last_contact.reason}` : ''} · ${p.last_contact.outcome_label.toLowerCase()}${p.follow_up_date && ['callback', 'agreed'].includes(p.last_contact.outcome) ? ` (${p.last_contact.outcome === 'callback' ? 'rappeler' : 'prévu'} le ${jourCourt(p.follow_up_date)})` : ''}${TEXTE_ETAT[p.last_contact.status] ? ` · ${TEXTE_ETAT[p.last_contact.status]}` : ''}`}
               sx={{ height: 20, fontSize: '0.68rem', maxWidth: '100%' }}
             />
           )}
@@ -495,7 +503,8 @@ export default function SuiviPatients() {
           select size="small" value={tri} onChange={(e) => { setTri(e.target.value); setPage(1); }}
           sx={{ minWidth: 200 }} label="Trier par"
         >
-          {TRIS.map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
+          {[...TRIS, ...(donnees?.can_see_amounts ? [{ value: '-paid_total', label: "Plus gros dépensiers d'abord" }] : [])]
+            .map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
         </TextField>
         <Badge color="primary" badgeContent={nbFiltres} invisible={!nbFiltres}>
           <Button size="small" variant="outlined" startIcon={<FilterIcon />}
@@ -603,7 +612,7 @@ export default function SuiviPatients() {
                   const actif = message.motifId === m.id;
                   return (
                     <Chip key={m.id} clickable size="small" label={m.label}
-                      onClick={() => setMessage({ ...message, motifId: actif ? '' : m.id })}
+                      onClick={() => setMessage({ ...message, motifId: actif ? '' : m.id, texte: !actif && m.template ? m.template : message.texte })}
                       color={actif ? 'primary' : 'default'} variant={actif ? 'filled' : 'outlined'} />
                   );
                 })}

@@ -25,6 +25,7 @@ urlpatterns = [
     path('campaigns/<uuid:pk>/', api_suivi.CrmCampaignDetailView.as_view(), name='campaign-detail'),
     path('contacts/', api_suivi.CrmRelanceListCreateView.as_view(), name='contact-list'),
     path('contacts/<uuid:pk>/', api_suivi.CrmRelanceDetailView.as_view(), name='contact-detail'),
+    path('patients/<uuid:pk>/summary/', api_suivi.CrmPatientSummaryView.as_view(), name='patient-summary'),
     path('invoices/<uuid:pk>/info/', api_suivi.CrmInvoiceInfoView.as_view(), name='invoice-info'),
     path('stats/', api_suivi.CrmStatsView.as_view(), name='stats'),
 ]

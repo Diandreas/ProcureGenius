@@ -48,10 +48,10 @@ def _nom_agent(u):
 # ── Dictionnaires de sortie ────────────────────────────────────────────────
 
 def _motif_dict(m, avec_reglages=False):
-    d = {'id': str(m.id), 'label': m.label}
+    d = {'id': str(m.id), 'label': m.label, 'template': services.modele_message(m)}
     if avec_reglages:
         d.update({'keywords': m.keywords, 'is_active': m.is_active, 'position': m.position,
-                  'usage': getattr(m, 'n', None)})
+                  'usage': getattr(m, 'n', None), 'message_template': m.message_template})
     return d
 
 
@@ -66,6 +66,7 @@ def _relance_dict(log, etat=None):
         'reason': _motif_dict(log.reason) if log.reason_id else None,
         'campaign': {'id': str(log.campaign_id), 'name': log.campaign.name} if log.campaign_id else None,
         'note': log.note,
+        'follow_up_date': log.follow_up_date,
         'contacted_at': log.contacted_at,
         'days': (timezone.now() - log.contacted_at).days,
         'created_by': _nom_agent(log.created_by) if log.created_by_id else '',
@@ -128,7 +129,8 @@ class CrmReasonSettingsView(_ProvenanceView):
             return _invalide('Ce motif existe déjà.')
         position = ContactReason.objects.filter(organization=org).count()
         m = ContactReason.objects.create(organization=org, label=label, position=position,
-                                         keywords=str(request.data.get('keywords') or '')[:300])
+                                         keywords=str(request.data.get('keywords') or '')[:300],
+                                         message_template=str(request.data.get('message_template') or '')[:1000])
         return Response(_motif_dict(m, True), status=status.HTTP_201_CREATED)
 
 
@@ -150,6 +152,8 @@ class CrmReasonSettingsDetailView(_ProvenanceView):
             m.label = label
         if 'keywords' in d:
             m.keywords = str(d['keywords'] or '')[:300]
+        if 'message_template' in d:
+            m.message_template = str(d['message_template'] or '')[:1000]
         if 'is_active' in d:
             m.is_active = bool(d['is_active'])
         if 'position' in d:
@@ -424,9 +428,13 @@ class CrmRelanceListCreateView(_ProvenanceView):
                 return _invalide('Campagne inconnue.')
             if not motif and campagne.reason_id:
                 motif = campagne.reason
+        try:
+            prevue = _date(d.get('follow_up_date'))
+        except ValueError as e:
+            return _invalide(str(e))
         log = ContactLog.objects.create(
             organization=org, patient=patient, channel=canal, outcome=issue, reason=motif, campaign=campagne,
-            note=str(d.get('note') or '').strip()[:300], created_by=request.user,
+            note=str(d.get('note') or '').strip()[:300], follow_up_date=prevue, created_by=request.user,
         )
         if d.get('do_not_contact'):
             profil, _ = PatientCRMProfile.objects.get_or_create(patient=patient, defaults={'organization': org})
@@ -460,6 +468,11 @@ class CrmRelanceDetailView(_ProvenanceView):
             log.channel = d['channel']
         if 'note' in d:
             log.note = str(d['note'] or '').strip()[:300]
+        if 'follow_up_date' in d:
+            try:
+                log.follow_up_date = _date(d['follow_up_date'])
+            except ValueError as e:
+                return _invalide(str(e))
         if 'reason_id' in d:
             log.reason = ContactReason.objects.filter(organization=org, pk=d['reason_id']).first() if d['reason_id'] else None
         if 'campaign_id' in d:
@@ -488,6 +501,19 @@ class CrmRelanceDetailView(_ProvenanceView):
                             status=status.HTTP_403_FORBIDDEN)
         log.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CrmPatientSummaryView(_ProvenanceView):
+    """Chiffres clés et étiquettes d'un patient, pour sa fiche."""
+
+    def get(self, request, pk):
+        if not self._autorise(request):
+            return _refus()
+        org = request.user.organization
+        patient = services.patients_du_centre(org, True).filter(pk=pk).first()
+        if not patient:
+            return _introuvable()
+        return Response(services.resume_patient(patient, org, _admin(request.user)))
 
 
 # ── Info de facture : montée en gamme ─────────────────────────────────────
