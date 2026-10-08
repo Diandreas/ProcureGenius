@@ -17,6 +17,7 @@ import { useSnackbar } from 'notistack';
 import patientAPI from '../../../../services/patientAPI';
 import crmAPI from '../../../../services/crmAPI';
 import ProvenanceChips from '../../../../components/crm/ProvenanceChips';
+import QuartierChips from '../../../../components/crm/QuartierChips';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -32,6 +33,8 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [provenance, setProvenance] = useState('');
     const [campagne, setCampagne] = useState('');
+    const [quartier, setQuartier] = useState('');
+    const [parrain, setParrain] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -64,7 +67,8 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
         setLoading(true);
         try {
             const response = await patientAPI.createPatient(formData);
-            await crmAPI.saveProvenanceAfterCreate(response.id, provenance, campagne);
+            await crmAPI.saveProvenanceAfterCreate(response.id, provenance, campagne,
+                { quartier, referred_by_id: parrain ? parrain.id : '' });
             enqueueSnackbar('Patient créé avec succès', { variant: 'success' });
             if (onSuccess) {
                 onSuccess(response);
@@ -72,6 +76,8 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
             onClose();
             setProvenance('');
             setCampagne('');
+            setQuartier('');
+            setParrain(null);
             // Reset form
             setFormData({
                 name: '',
@@ -172,7 +178,11 @@ const QuickClientCreateModal = ({ open, onClose, onSuccess }) => {
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <ProvenanceChips value={provenance} onChange={setProvenance} dense campaign={campagne} onCampaignChange={setCampagne} />
+                            <ProvenanceChips value={provenance} onChange={setProvenance} dense campaign={campagne} onCampaignChange={setCampagne}
+                                referrer={parrain} onReferrerChange={setParrain} />
+                            <Box sx={{ mt: 1.5 }}>
+                                <QuartierChips value={quartier} onChange={setQuartier} dense />
+                            </Box>
                         </Grid>
                     </Grid>
                 </Box>

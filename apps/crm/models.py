@@ -52,6 +52,17 @@ class PatientInteraction(models.Model):
     reason = models.CharField(max_length=20, choices=REASON_CHOICES, blank=True)
     text = models.TextField(blank=True, verbose_name='Détail')
 
+    # Reparti sans rien acheter : pourquoi ? (facultatif) — mesure ce que le centre perd.
+    LOST_CHOICES = [
+        ('price', 'Trop cher'),
+        ('stock', 'Produit ou examen indisponible'),
+        ('wait', 'Attente trop longue'),
+        ('doctor', 'Médecin absent'),
+        ('other', 'Autre raison'),
+    ]
+    lost_reason = models.CharField(max_length=10, choices=LOST_CHOICES, blank=True,
+                                   verbose_name='Reparti sans acheter')
+
     occurred_at = models.DateTimeField(default=timezone.now, verbose_name='Date du passage')
     created_by = models.ForeignKey(
         'accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True,
@@ -143,6 +154,13 @@ class PatientCRMProfile(models.Model):
         related_name='profiles', verbose_name='Campagne',
     )
     unknown = models.BooleanField(default=False, verbose_name='Provenance inconnue')
+    # Bouche-à-oreille : le patient qui l'a envoyé (facultatif).
+    referred_by = models.ForeignKey(
+        'accounts.Client', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='crm_referrals', verbose_name='Envoyé par',
+    )
+    # Quartier choisi en pastille (l'adresse libre de la fiche reste inchangée).
+    quartier = models.CharField(max_length=80, blank=True, verbose_name='Quartier')
     do_not_contact = models.BooleanField(default=False, verbose_name='Ne plus relancer')
     filled_by = models.CharField(max_length=10, default=SOURCE_MANUAL)
     recorded_by = models.ForeignKey(
@@ -354,6 +372,9 @@ class InvoiceCRMInfo(models.Model):
     upsold = models.BooleanField(default=False, verbose_name='Montée en gamme')
     came_for = models.CharField(max_length=200, blank=True, verbose_name='Venu pour')
     planned_amount = models.DecimalField(max_digits=12, decimal_places=0, null=True, blank=True)
+    # « À revoir dans … » : contrôle prévu par le soignant. Passé cette date sans nouvelle
+    # facture, le patient apparaît dans la liste « Contrôle prévu, pas revenu ».
+    revisit_date = models.DateField(null=True, blank=True, verbose_name='À revoir le')
     note = models.CharField(max_length=300, blank=True)
     recorded_by = models.ForeignKey(
         'accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True,

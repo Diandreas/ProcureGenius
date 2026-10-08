@@ -19,6 +19,7 @@ const SECTIONS = [
   { value: 'provenance', label: 'Provenance' },
   { value: 'montee', label: 'Montée en gamme' },
   { value: 'fidelite', label: 'Fidélité' },
+  { value: 'pertes', label: 'Ventes perdues' },
   { value: 'depenses', label: 'Qui dépense ?', montants: true },
 ];
 
@@ -249,6 +250,57 @@ export default function StatsPanel({ peutVoirMontants }) {
           Nouveaux patients sur la période : {donnees.provenance_coverage.new_patients}, dont {donnees.provenance_coverage.new_with_origin} avec une provenance.
         </Typography>
       </Carte>
+      <Carte titre="Par quartier" note={`Quartier choisi en pastille, sinon reconnu dans l'adresse. ${donnees.quartiers_unknown} patient(s) sans quartier reconnu.`}>
+        {donnees.quartiers.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">Aucun quartier reconnu.</Typography>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Quartier</TableCell>
+                <TableCell align="right">Patients</TableCell>
+                <TableCell align="right">Nouveaux (période)</TableCell>
+                <TableCell align="right">Actifs (période)</TableCell>
+                <TableCell align="right">Reviennent</TableCell>
+                {montants && <TableCell align="right">CA (période)</TableCell>}
+                {montants && <TableCell align="right">Moyenne / actif</TableCell>}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {donnees.quartiers.slice(0, 15).map((q) => (
+                <TableRow key={q.label}>
+                  <TableCell>{q.label}</TableCell>
+                  <TableCell align="right"><strong>{q.patients}</strong></TableCell>
+                  <TableCell align="right">{q.new_patients}</TableCell>
+                  <TableCell align="right">{q.active_patients}</TableCell>
+                  <TableCell align="right">{pc(q.repeat_rate)}</TableCell>
+                  {montants && <TableCell align="right">{fmt(q.revenue)}</TableCell>}
+                  {montants && <TableCell align="right">{fmt(q.avg_per_active)}</TableCell>}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Carte>
+      <Carte titre="Les patients qui vous en amènent d'autres" note="Saisi à la création du patient quand la provenance est « Bouche-à-oreille ». Pensez à les remercier.">
+        {donnees.referrers.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            Personne pour l'instant. Quand un patient vient par bouche-à-oreille, notez qui l'a envoyé.
+          </Typography>
+        ) : (
+          <Table size="small">
+            <TableBody>
+              {donnees.referrers.map((p) => (
+                <TableRow key={p.patient_id}>
+                  <TableCell>{(p.name || '').toLowerCase().replace(/(^|\s)(\S)/g, (_, a, b) => a + b.toUpperCase())}</TableCell>
+                  <TableCell align="right"><strong>{p.referrals}</strong> patient{p.referrals > 1 ? 's' : ''} envoyé{p.referrals > 1 ? 's' : ''}</TableCell>
+                  {montants && <TableCell align="right">{fmt(p.revenue_referred)} payés par eux</TableCell>}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Carte>
       <Carte titre="D'où viennent les patients, et ce qu'ils rapportent" note="« Reviennent » : au moins deux jours de visite depuis le début de l'historique.">
         {donnees.provenance.length === 0 ? (
           <Typography variant="body2" color="text.secondary">Aucune provenance saisie pour l'instant.</Typography>
@@ -358,6 +410,21 @@ export default function StatsPanel({ peutVoirMontants }) {
         {montants && <Kpi valeur={fmt(r.avg_first_episode)} libelle="payés en moyenne à la 1re prise en charge" />}
         {montants && <Kpi valeur={fmt(r.avg_next_episode)} libelle="payés en moyenne aux suivantes" />}
       </Box>
+      <Carte titre="Contrôles prévus sur la facture (« À revoir dans … »)" note="Contrôles prévus sur la période choisie dans l'onglet Relances. Honoré = revenu au plus tard 10 jours après la date prévue.">
+        {donnees.revisits.planned === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            Aucun contrôle prévu. Sur la facture, « À revoir dans : 1 semaine » met le patient dans la liste « Contrôle prévu » s'il ne revient pas.
+          </Typography>
+        ) : (
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Kpi valeur={donnees.revisits.planned} libelle="contrôles prévus" />
+            <Kpi valeur={donnees.revisits.honored} libelle="revenus à temps" couleur="success.main" />
+            <Kpi valeur={donnees.revisits.late} libelle="pas revenus" couleur="warning.main" />
+            <Kpi valeur={donnees.revisits.upcoming} libelle="à venir" couleur="info.main" />
+            <Kpi valeur={pc(donnees.revisits.rate)} libelle="tenus" couleur="success.main" />
+          </Box>
+        )}
+      </Carte>
       <Carte titre="Quand reviennent ceux qui reviennent ?" note="Pause entre la fin d'une prise en charge et le début de la suivante. C'est avant 60 jours que ça se joue : relancez à 3-4 semaines.">
         {(() => {
           const total = r.gap_buckets.reduce((s, b) => s + b.count, 0);
@@ -380,6 +447,52 @@ export default function StatsPanel({ peutVoirMontants }) {
       <Carte titre="Selon la porte d'entrée" note="Par quoi le patient est entré la première fois.">{tauxBarre(r.by_entry)}</Carte>
       <Carte titre="Selon l'âge">{tauxBarre(r.by_age)}</Carte>
       <Carte titre="Selon le sexe">{tauxBarre(r.by_gender)}</Carte>
+    </Stack>
+  );
+
+  const vp = donnees?.lost_sales;
+  const pertes = donnees && vp && (
+    <Stack spacing={1.5}>
+      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Kpi valeur={vp.lost} libelle="repartis sans acheter" couleur="warning.main" />
+        <Kpi valeur={vp.passages} libelle="passages notés" />
+        <Kpi valeur={pc(vp.rate)} libelle="des passages" />
+      </Box>
+      <Carte titre="Pourquoi sont-ils repartis sans acheter ?" note="Noté avec le bouton vert « Un patient est passé ».">
+        {vp.lost === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            Rien de noté sur la période. Quand quelqu'un repart sans rien, un tap sur la raison suffit.
+          </Typography>
+        ) : (
+          <Stack spacing={0.75}>
+            {vp.by_reason.map((r) => (
+              <Box key={r.code} display="flex" alignItems="center" gap={1}>
+                <Typography variant="body2" sx={{ width: 230, flexShrink: 0 }}>{r.label}</Typography>
+                <LinearProgress variant="determinate" value={vp.lost ? (100 * r.count) / vp.lost : 0} color="warning"
+                  sx={{ flex: 1, height: 10, borderRadius: 5 }} />
+                <Typography variant="body2" fontWeight={700} sx={{ width: 40, textAlign: 'right' }}>{r.count}</Typography>
+              </Box>
+            ))}
+          </Stack>
+        )}
+      </Carte>
+      <Carte titre="Ce qui manquait" note="Produits ou examens indisponibles, tels qu'écrits au comptoir : de quoi décider d'une commande.">
+        {vp.missing.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">Rien de noté.</Typography>
+        ) : (
+          <Table size="small">
+            <TableBody>
+              {vp.missing.map((m, i) => (
+                <TableRow key={i}>
+                  <TableCell>{new Date(m.date).toLocaleDateString('fr-FR')}</TableCell>
+                  <TableCell>{m.text}</TableCell>
+                  <TableCell align="right"><Typography variant="caption" color="text.secondary">{m.came_for}</Typography></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Carte>
     </Stack>
   );
 
@@ -415,6 +528,7 @@ export default function StatsPanel({ peutVoirMontants }) {
               {section === 'provenance' && provenance}
               {section === 'montee' && montee}
               {section === 'fidelite' && fidelite}
+              {section === 'pertes' && pertes}
             </>
           )}
         </>

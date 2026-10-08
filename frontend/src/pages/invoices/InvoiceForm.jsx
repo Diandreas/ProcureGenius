@@ -512,9 +512,10 @@ function InvoiceForm() {
         const response = await invoicesAPI.create(payload);
         const invoiceId = response.data.id;
         // Suivi patients : n'empêche jamais la facture si l'enregistrement échoue.
-        if (crmInfo.upsold || crmInfo.came_for || crmInfo.note) {
+        if (crmInfo.upsold || crmInfo.came_for || crmInfo.note || crmInfo.revisit_date) {
           await crmAPI.saveInvoiceInfoAfterCreate(invoiceId, {
             upsold: crmInfo.upsold, came_for: crmInfo.came_for, note: crmInfo.note,
+            revisit_date: crmInfo.revisit_date || null,
             planned_amount: crmInfo.planned_amount === '' ? null : crmInfo.planned_amount,
           });
         }

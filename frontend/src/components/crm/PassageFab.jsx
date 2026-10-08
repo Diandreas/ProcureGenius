@@ -32,7 +32,16 @@ const MOTIFS = [
 const titre = (nom) => (nom || '')
   .toLowerCase().replace(/(^|\s|-)(\S)/g, (_, a, b) => a + b.toUpperCase());
 
-const VIDE = { patient: null, nom: '', telephone: '', motif: '', texte: '' };
+const VIDE = { patient: null, nom: '', telephone: '', motif: '', texte: '', perte: '' };
+
+// Reparti sans rien acheter : pourquoi ? (apps/crm/models.py, PatientInteraction.LOST_CHOICES)
+const PERTES = [
+  { value: 'price', label: 'Trop cher' },
+  { value: 'stock', label: 'Produit ou examen indisponible' },
+  { value: 'wait', label: 'Attente trop longue' },
+  { value: 'doctor', label: 'Médecin absent' },
+  { value: 'other', label: 'Autre raison' },
+];
 
 /**
  * Bouton flottant « un patient est passé » : on choisit la personne, on touche ce
@@ -96,7 +105,7 @@ export default function PassageFab() {
     setEnvoi(true);
     setErreur('');
     try {
-      const corps = { reason: saisie.motif, text: saisie.texte.trim() };
+      const corps = { reason: saisie.motif, text: saisie.texte.trim(), lost_reason: saisie.perte };
       if (sansFiche) {
         corps.person_name = saisie.nom.trim();
         corps.person_phone = saisie.telephone.trim();
@@ -250,7 +259,30 @@ export default function PassageFab() {
               </Box>
             </Box>
 
-            {/* 3. Détail, facultatif */}
+            {/* 3. Reparti sans acheter ? facultatif */}
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Reparti sans acheter ? <span style={{ opacity: 0.7 }}>(facultatif — dites pourquoi)</span>
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.75 }}>
+                {PERTES.map((p) => {
+                  const actif = saisie.perte === p.value;
+                  return (
+                    <Chip key={p.value} clickable label={p.label} size="small"
+                      color={actif ? 'warning' : 'default'} variant={actif ? 'filled' : 'outlined'}
+                      onClick={() => setSaisie({ ...saisie, perte: actif ? '' : p.value })}
+                      sx={{ height: 34, fontWeight: actif ? 700 : 400 }} />
+                  );
+                })}
+              </Box>
+              {saisie.perte === 'stock' && (
+                <Typography variant="caption" color="warning.main" display="block" mt={0.5}>
+                  Écrivez ce qui manquait dans le détail : la liste servira aux commandes.
+                </Typography>
+              )}
+            </Box>
+
+            {/* 4. Détail, facultatif */}
             <TextField
               size="small" fullWidth multiline minRows={2} label="Détail (facultatif)"
               placeholder="Ce qu'il voulait savoir, ce qui a été répondu…"

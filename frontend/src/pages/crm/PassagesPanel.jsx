@@ -168,6 +168,10 @@ export default function PassagesPanel({ peutOuvrirDossier, onOuvrirPatient, estA
                       )}
                       <Chip size="small" color="primary" variant="outlined" label={p.reason_label}
                         sx={{ height: 22, fontSize: '0.72rem' }} />
+                      {p.lost_reason_label && (
+                        <Chip size="small" color="warning" label={`Reparti sans acheter : ${p.lost_reason_label.toLowerCase()}`}
+                          sx={{ height: 22, fontSize: '0.72rem' }} />
+                      )}
                     </Box>
                     {p.text && (
                       <Typography variant="body2" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>{p.text}</Typography>

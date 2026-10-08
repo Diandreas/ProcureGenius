@@ -4,8 +4,16 @@ import { TrendingUp as UpIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import crmAPI from '../../services/crmAPI';
 import useCrmDisponible from './useCrmDisponible';
+import { dansJours, jourCourt } from './crmData';
 
-export const INFO_VIDE = { upsold: false, came_for: '', planned_amount: '', note: '' };
+export const INFO_VIDE = { upsold: false, came_for: '', planned_amount: '', note: '', revisit_date: '' };
+
+const REVOIR = [
+  { label: '3 jours', jours: 3 },
+  { label: '1 semaine', jours: 7 },
+  { label: '2 semaines', jours: 14 },
+  { label: '1 mois', jours: 30 },
+];
 
 const fmt = (n) => `${Math.round(n || 0).toLocaleString('fr-FR')} F`;
 
@@ -35,6 +43,7 @@ export default function InvoiceCrmPanel({ invoiceId, value, onChange, total }) {
       setInfo({
         upsold: d.upsold, came_for: d.came_for || '', note: d.note || '',
         planned_amount: d.planned_amount === null || d.planned_amount === undefined ? '' : String(d.planned_amount),
+        revisit_date: d.revisit_date || '',
       });
       setOuvert(d.upsold || Boolean(d.came_for) || Boolean(d.note));
       setCharge(true);
@@ -66,18 +75,54 @@ export default function InvoiceCrmPanel({ invoiceId, value, onChange, total }) {
 
   const gain = courant.planned_amount !== '' && total ? Number(total) - Number(courant.planned_amount) : null;
 
+  // « À revoir dans … » : un tap suffit ; sur une facture existante, enregistré tout de suite.
+  const choisirRevoir = async (jours) => {
+    const date = jours === null ? '' : dansJours(jours);
+    const valeur = jours === null || courant.revisit_date === date ? '' : date;
+    modifier({ revisit_date: valeur });
+    if (live) {
+      try {
+        await crmAPI.saveInvoiceInfo(invoiceId, { revisit_date: valeur || null });
+        enqueueSnackbar(valeur ? `Contrôle prévu le ${jourCourt(valeur)}` : 'Contrôle retiré', { variant: 'success' });
+      } catch (e) {
+        enqueueSnackbar("Impossible d'enregistrer le contrôle", { variant: 'error' });
+      }
+    }
+  };
+
+  const revoir = (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+      <Typography variant="caption" color="text.secondary">À revoir dans :</Typography>
+      {REVOIR.map((r) => {
+        const actif = courant.revisit_date === dansJours(r.jours);
+        return (
+          <Chip key={r.jours} size="small" clickable label={r.label} onClick={() => choisirRevoir(r.jours)}
+            color={actif ? 'primary' : 'default'} variant={actif ? 'filled' : 'outlined'} />
+        );
+      })}
+      {courant.revisit_date && !REVOIR.some((r) => dansJours(r.jours) === courant.revisit_date) && (
+        <Chip size="small" color="primary" label={`le ${jourCourt(courant.revisit_date)}`}
+          onDelete={() => choisirRevoir(null)} />
+      )}
+    </Box>
+  );
+
   if (!ouvert) {
     return (
-      <Typography variant="caption" color="text.secondary">
-        <Link component="button" type="button" underline="always" onClick={() => setOuvert(true)}>
-          + Info de suivi (venu pour…, montée en gamme)
-        </Link>
-      </Typography>
+      <Box>
+        {revoir}
+        <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+          <Link component="button" type="button" underline="always" onClick={() => setOuvert(true)}>
+            + Info de suivi (venu pour…, montée en gamme)
+          </Link>
+        </Typography>
+      </Box>
     );
   }
 
   return (
     <Box sx={{ p: 1.25, border: '1px dashed', borderColor: 'divider', borderRadius: 1.5 }}>
+      <Box mb={1}>{revoir}</Box>
       <Typography variant="caption" color="text.secondary">
         Info de suivi <span style={{ opacity: 0.7 }}>(facultatif)</span>
       </Typography>

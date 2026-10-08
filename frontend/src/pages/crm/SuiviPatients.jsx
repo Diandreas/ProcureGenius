@@ -37,7 +37,7 @@ const TAILLE_PAGE = 30;
 const ONGLETS = {
   suivre: {
     label: 'À suivre',
-    segments: ['golden', 'not_back_60', 'to_call_back', 'awaited', 'promised_missing', 'new_month', 'vaccine_due', 'birthday_week', 'loyal'],
+    segments: ['golden', 'not_back_60', 'to_call_back', 'revisit_due', 'awaited', 'promised_missing', 'new_month', 'vaccine_due', 'birthday_week', 'loyal'],
     defaut: 'golden',
   },
   patients: {
@@ -72,6 +72,7 @@ const ONGLETS_LISTE = ['suivre', 'patients'];
 const MOTIF_PAR_SEGMENT = {
   golden: 'Rappel de suivi',
   to_call_back: 'Rappel de suivi',
+  revisit_due: 'Rappel de suivi',
   promised_missing: 'Rappel de suivi',
   not_back_60: 'Rappel de suivi',
   new_month: 'Rappel de suivi',
@@ -83,6 +84,7 @@ const COULEUR_ETAT = { came: 'success', waiting: 'info', missed: 'warning' };
 const TEXTE_ETAT = { came: 'venu', waiting: 'attendu', missed: 'pas venu' };
 
 const MODELES_MESSAGE = {
+  revisit_due: "Bonjour {nom}, ici {centre}. Votre contrôle était prévu ces jours-ci. Quand pouvez-vous passer nous voir ?",
   golden: "Bonjour {nom}, ici {centre}. Comment allez-vous depuis votre passage chez nous ? Si vous avez besoin d'un suivi ou d'un contrôle, nous sommes là.",
   awaited: "Bonjour {nom}, ici {centre}. Nous vous attendons comme convenu. N'hésitez pas à nous prévenir si vous avez un empêchement.",
   promised_missing: "Bonjour {nom}, ici {centre}. Vous deviez passer nous voir et nous vous attendons toujours. Quel jour vous conviendrait ?",
@@ -344,7 +346,7 @@ export default function SuiviPatients() {
       {p.tags && p.tags.length > 0 && <Box sx={{ my: 0.25 }}><Etiquettes tags={p.tags} max={4} /></Box>}
       <Typography variant="caption" color="text.secondary">
         {[p.age != null ? `${p.age} ans` : null, p.gender === 'F' ? 'Femme' : p.gender === 'M' ? 'Homme' : null,
-          p.address ? p.address.split('\n')[0].slice(0, 28) : null].filter(Boolean).join(' · ')}
+          p.quartier || (p.address ? p.address.split('\n')[0].slice(0, 28) : null)].filter(Boolean).join(' · ')}
       </Typography>
       {(p.last_contact || p.do_not_contact) && (
         <Box mt={0.5} display="flex" gap={0.5} flexWrap="wrap">

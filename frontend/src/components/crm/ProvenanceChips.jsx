@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Chip, Typography, Link, CircularProgress } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Chip, Typography, Link, CircularProgress, Autocomplete, TextField } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import crmAPI from '../../services/crmAPI';
 import { chargerCampagnesActives } from './crmData';
@@ -14,6 +14,57 @@ const chargerOrigines = async () => {
 export const viderCacheOrigines = () => { cacheOrigines = null; };
 
 const INCONNUE = 'unknown';
+const BOUCHE_A_OREILLE = 'word_of_mouth';
+
+const titreNom = (nom) => (nom || '')
+  .toLowerCase().replace(/(^|\s|-)(\S)/g, (_, a, b) => a + b.toUpperCase());
+
+/** « Envoyé par quel patient ? » : recherche par nom, téléphone ou numéro. */
+function ParrainPicker({ valeur, onChoisir, desactive }) {
+  const [recherche, setRecherche] = useState('');
+  const [options, setOptions] = useState([]);
+  const [chargement, setChargement] = useState(false);
+  const dernier = useRef(0);
+
+  useEffect(() => {
+    if (recherche.trim().length < 2) { setOptions([]); return undefined; }
+    const numero = ++dernier.current;
+    setChargement(true);
+    const t = setTimeout(async () => {
+      try {
+        const liste = await crmAPI.searchReferrers(recherche.trim());
+        if (numero === dernier.current) setOptions(liste);
+      } catch (e) {
+        if (numero === dernier.current) setOptions([]);
+      } finally {
+        if (numero === dernier.current) setChargement(false);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [recherche]);
+
+  return (
+    <Autocomplete
+      size="small" options={options} loading={chargement} value={valeur || null} disabled={desactive}
+      onChange={(_, v) => onChoisir(v)} inputValue={recherche} onInputChange={(_, v) => setRecherche(v)}
+      filterOptions={(x) => x} getOptionLabel={(o) => titreNom(o.name)}
+      isOptionEqualToValue={(a, b) => a.id === b.id}
+      noOptionsText={recherche.trim().length < 2 ? 'Écrivez au moins 2 lettres' : 'Aucun patient trouvé'}
+      renderOption={(props, o) => (
+        <li {...props} key={o.id}>
+          <Box>
+            <Typography variant="body2" fontWeight={600}>{titreNom(o.name)}</Typography>
+            <Typography variant="caption" color="text.secondary">{[o.phone, o.patient_number].filter(Boolean).join(' · ')}</Typography>
+          </Box>
+        </li>
+      )}
+      renderInput={(params) => (
+        <TextField {...params} label="Envoyé par quel patient ? (facultatif)" placeholder="Nom ou téléphone" />
+      )}
+      sx={{ maxWidth: 380, mt: 1 }}
+    />
+  );
+}
 
 /**
  * « Comment a-t-il connu le centre ? » — des pastilles à toucher, rien d'obligatoire.
@@ -22,12 +73,13 @@ const INCONNUE = 'unknown';
  *  - avec `patientId` : le patient existe ; un tap enregistre aussitôt (facture, fiche).
  *    `masquerSiRenseigne` : sur la facture, on ne dérange pas pour un patient dont la
  *    provenance est connue (ou déduite : labo partenaire, prescripteur).
- *  - sans `patientId` : création du patient ; le parent garde `value` et l'envoie après
- *    la création (`value` = id de provenance, 'unknown' ou '').
+ *  - sans `patientId` : création du patient ; le parent garde `value` (id de provenance,
+ *    'unknown' ou ''), `campaign` et `referrer`, et les envoie après la création.
+ * Bouche-à-oreille : on peut désigner le patient qui l'a envoyé (parrain).
  */
 export default function ProvenanceChips({
   patientId, value, onChange, masquerSiRenseigne = false, titre = 'Comment a-t-il connu le centre ?',
-  dense = false, campaign = '', onCampaignChange,
+  dense = false, campaign = '', onCampaignChange, referrer = null, onReferrerChange,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [origines, setOrigines] = useState([]);
@@ -74,35 +126,45 @@ export default function ProvenanceChips({
     return charge ? null : (patientId ? <CircularProgress size={14} /> : null);
   }
 
-  const choisir = async (valeur) => {
-    if (!patientId) { onChange?.(valeur === value ? '' : valeur); return; }
+  const enregistrer = async (corps, messageErreur) => {
     setEnvoi(true);
     try {
-      const corps = valeur === INCONNUE ? { unknown: true } : { origin_id: valeur };
       const maj = await crmAPI.saveProfile(patientId, corps);
       setProfil(maj);
-      setModifier(false);
-      onChange?.(valeur);
+      return maj;
     } catch (e) {
-      enqueueSnackbar("Impossible d'enregistrer la provenance", { variant: 'error' });
+      enqueueSnackbar(messageErreur, { variant: 'error' });
+      return null;
     } finally {
       setEnvoi(false);
     }
   };
 
-  const choisirCampagne = async (id) => {
-    if (!patientId) { onCampaignChange?.(campaign === id ? '' : id); return; }
-    setEnvoi(true);
-    try {
-      const maj = await crmAPI.saveProfile(patientId, { campaign_id: profil?.campaign?.id === id ? null : id });
-      setProfil(maj);
-      onChange?.(maj.origin ? maj.origin.id : '');
-    } catch (e) {
-      enqueueSnackbar("Impossible d'enregistrer la campagne", { variant: 'error' });
-    } finally {
-      setEnvoi(false);
+  const choisir = async (valeur) => {
+    if (!patientId) { onChange?.(valeur === value ? '' : valeur); return; }
+    const maj = await enregistrer(valeur === INCONNUE ? { unknown: true } : { origin_id: valeur },
+      "Impossible d'enregistrer la provenance");
+    if (maj) {
+      const code = maj.origin?.code;
+      // Bouche-à-oreille : on laisse le champ « envoyé par » ouvert juste en dessous.
+      if (code !== BOUCHE_A_OREILLE) setModifier(false);
+      onChange?.(valeur);
     }
   };
+
+  const choisirCampagne = async (id) => {
+    if (!patientId) { onCampaignChange?.(campaign === id ? '' : id); return; }
+    const maj = await enregistrer({ campaign_id: profil?.campaign?.id === id ? null : id },
+      "Impossible d'enregistrer la campagne");
+    if (maj) onChange?.(maj.origin ? maj.origin.id : '');
+  };
+
+  const choisirParrain = async (p) => {
+    if (!patientId) { onReferrerChange?.(p); return; }
+    const maj = await enregistrer({ referred_by_id: p ? p.id : null }, "Impossible d'enregistrer le parrain");
+    if (maj && p) setModifier(false);
+  };
+
   const campagneCourante = patientId ? (profil?.campaign?.id || '') : (campaign || '');
 
   // Valeur actuellement affichée comme choisie.
@@ -112,7 +174,11 @@ export default function ProvenanceChips({
   const etiquetteCourante = patientId
     ? (profil?.origin?.label || (profil?.unknown ? 'Inconnue' : profil?.suggested?.label || ''))
     : (value === INCONNUE ? 'Inconnue' : origines.find((o) => o.id === value)?.label || '');
+  const codeCourant = patientId
+    ? profil?.origin?.code
+    : origines.find((o) => o.id === value)?.code;
   const renseigne = !!patientId && !!courante;
+  const parrainCourant = patientId ? profil?.referred_by : referrer;
 
   if (patientId && renseigne && !modifier) {
     if (masquerSiRenseigne) return null;
@@ -120,10 +186,17 @@ export default function ProvenanceChips({
       <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
         Connu par : <strong>{etiquetteCourante}</strong>
         {profil?.suggested && !profil?.origin && !profil?.unknown && ' (déduit)'}
+        {profil?.referred_by && <> · envoyé par <strong>{titreNom(profil.referred_by.name)}</strong></>}
         {profil?.campaign && <> · campagne <strong>{profil.campaign.name}</strong></>}
-        <Link component="button" type="button" underline="always" onClick={() => setModifier(true)}>
-          modifier
-        </Link>
+        {codeCourant === BOUCHE_A_OREILLE && !profil?.referred_by ? (
+          <Link component="button" type="button" underline="always" onClick={() => setModifier(true)}>
+            qui l'a envoyé ?
+          </Link>
+        ) : (
+          <Link component="button" type="button" underline="always" onClick={() => setModifier(true)}>
+            modifier
+          </Link>
+        )}
       </Typography>
     );
   }
@@ -153,6 +226,9 @@ export default function ProvenanceChips({
           sx={{ height: dense ? 32 : 40, fontSize: '0.875rem', fontStyle: 'italic' }}
         />
       </Box>
+      {codeCourant === BOUCHE_A_OREILLE && (
+        <ParrainPicker valeur={parrainCourant} onChoisir={choisirParrain} desactive={envoi} />
+      )}
       {campagnes.length > 0 && (
         <Box sx={{ mt: 1 }}>
           <Typography variant="caption" color="text.secondary">

@@ -28,6 +28,7 @@ import { useSnackbar } from 'notistack';
 import patientAPI from '../../../services/patientAPI';
 import crmAPI from '../../../services/crmAPI';
 import ProvenanceChips from '../../../components/crm/ProvenanceChips';
+import QuartierChips from '../../../components/crm/QuartierChips';
 import { formatDate } from '../../../utils/formatters';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -48,6 +49,8 @@ const PatientForm = () => {
     const [loading, setLoading] = useState(false);
     const [provenance, setProvenance] = useState('');
     const [campagne, setCampagne] = useState('');
+    const [quartier, setQuartier] = useState('');
+    const [parrain, setParrain] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -137,7 +140,8 @@ const PatientForm = () => {
                 navigate(`/healthcare/patients/${id}`);
             } else {
                 const response = await patientAPI.createPatient(formData);
-                await crmAPI.saveProvenanceAfterCreate(response.id, provenance, campagne);
+                await crmAPI.saveProvenanceAfterCreate(response.id, provenance, campagne,
+                    { quartier, referred_by_id: parrain ? parrain.id : '' });
                 enqueueSnackbar(t('patients.create_success', 'Patient créé avec succès'), { variant: 'success' });
                 navigate(`/healthcare/patients/${response.id}`);
             }
@@ -296,7 +300,11 @@ const PatientForm = () => {
                         </Grid>
                         {!isEdit && (
                             <Grid item xs={12}>
-                                <ProvenanceChips value={provenance} onChange={setProvenance} campaign={campagne} onCampaignChange={setCampagne} />
+                                <ProvenanceChips value={provenance} onChange={setProvenance} campaign={campagne} onCampaignChange={setCampagne}
+                                    referrer={parrain} onReferrerChange={setParrain} />
+                                <Box sx={{ mt: 1.5 }}>
+                                    <QuartierChips value={quartier} onChange={setQuartier} />
+                                </Box>
                             </Grid>
                         )}
                         <Grid item xs={12} sm={6}>

@@ -33,9 +33,10 @@ const crmAPI = {
   },
 
   // Après création d'un patient : enregistre la provenance choisie sans jamais gêner la création.
-  saveProvenanceAfterCreate: async (patientId, valeur, campagne) => {
-    if (!patientId || (!valeur && !campagne)) return;
-    const corps = {};
+  saveProvenanceAfterCreate: async (patientId, valeur, campagne, extra = {}) => {
+    const complements = Object.fromEntries(Object.entries(extra).filter(([, v]) => v));
+    if (!patientId || (!valeur && !campagne && !Object.keys(complements).length)) return;
+    const corps = { ...complements };
     if (valeur === 'unknown') corps.unknown = true;
     else if (valeur) corps.origin_id = valeur;
     if (campagne) corps.campaign_id = campagne;
@@ -90,6 +91,10 @@ const crmAPI = {
       // sans gravité : la détection automatique prend le relais
     }
   },
+
+  // Quartiers proposés en pastilles, et recherche du patient qui en a envoyé un autre
+  listQuartiers: async () => (await api.get('/crm/quartiers/')).data.results || [],
+  searchReferrers: async (q) => (await api.get('/crm/referrers/search/', { params: { q } })).data.results || [],
 
   // Chiffres clés et étiquettes d'un patient (fiche)
   getPatientSummary: async (patientId) => (await api.get(`/crm/patients/${patientId}/summary/`)).data,

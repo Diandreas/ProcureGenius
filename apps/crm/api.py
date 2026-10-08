@@ -92,6 +92,10 @@ class CrmPatientListView(_CrmView):
         etats_relances = services.calculer_venues(dernieres.values())
         nb_relances = Counter(ContactLog.objects.filter(patient_id__in=[c.id for c in lot])
                               .values_list('patient_id', flat=True))
+        ids_lot = [c.id for c in lot]
+        filleuls = Counter(PatientCRMProfile.objects.filter(referred_by_id__in=ids_lot)
+                           .values_list('referred_by_id', flat=True))
+        controles = services.controles_en_attente(ids_lot)
         # Seuil des « gros dépensiers » : calculé sur toute la base, visible des administrateurs seulement.
         seuil_gros = services.seuil_gros_depensier(services.avec_activite(base)) if montants else None
 
@@ -138,7 +142,10 @@ class CrmPatientListView(_CrmView):
                      if c.id in dernieres else None),
                     c.has_privilege_card,
                     bool(seuil_gros and c.crm_paid_total and float(c.crm_paid_total) >= seuil_gros),
+                    nb_filleuls=filleuls.get(c.id, 0),
+                    controle_le=controles.get(c.id),
                 ),
+                'quartier': services.quartier_de(c, origines_lot.get(c.id)),
                 'follow_up_date': (dernieres[c.id].follow_up_date
                                    if c.id in dernieres and dernieres[c.id].outcome in ('callback', 'agreed') else None),
                 'last_contact': ({
@@ -281,6 +288,8 @@ def _passage_dict(i):
         'reason': i.reason,
         'reason_label': i.get_reason_display(),
         'text': i.text,
+        'lost_reason': i.lost_reason,
+        'lost_reason_label': i.get_lost_reason_display() if i.lost_reason else '',
         'occurred_at': i.occurred_at,
         'created_by': (i.created_by.get_full_name() or i.created_by.username) if i.created_by_id else '',
     }
@@ -308,6 +317,7 @@ class CrmPassageListCreateView(_CrmView):
 
         # Le decompte par motif ignore le filtre de motif : il sert justement a choisir.
         compte = dict(qs.values_list('reason').annotate(n=Count('id')))
+        perdus = dict(qs.exclude(lost_reason='').values_list('lost_reason').annotate(n=Count('id')))
         if params.get('reason'):
             qs = qs.filter(reason=params['reason'])
 
@@ -325,8 +335,11 @@ class CrmPassageListCreateView(_CrmView):
                     occurred_at__date=aujourdhui).count(),
                 'by_reason': [{'value': v, 'label': l, 'count': compte.get(v, 0)}
                               for v, l in PatientInteraction.REASON_CHOICES],
+                'by_lost': [{'value': v, 'label': l, 'count': perdus.get(v, 0)}
+                            for v, l in PatientInteraction.LOST_CHOICES],
             },
             'reasons': [{'value': v, 'label': l} for v, l in PatientInteraction.REASON_CHOICES],
+            'lost_reasons': [{'value': v, 'label': l} for v, l in PatientInteraction.LOST_CHOICES],
         })
 
     def post(self, request):
@@ -356,10 +369,14 @@ class CrmPassageListCreateView(_CrmView):
             return Response({'error': 'Choisissez un patient ou indiquez un nom.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        perte = data.get('lost_reason') or ''
+        if perte and perte not in dict(PatientInteraction.LOST_CHOICES):
+            return Response({'error': 'Raison inconnue.'}, status=status.HTTP_400_BAD_REQUEST)
+
         passage = PatientInteraction.objects.create(
             organization=organization, patient=patient,
             person_name='' if patient else nom, person_phone='' if patient else telephone,
-            kind=PatientInteraction.KIND_PASSAGE, reason=raison,
+            kind=PatientInteraction.KIND_PASSAGE, reason=raison, lost_reason=perte,
             text=(data.get('text') or '').strip()[:500],
             created_by=request.user,
         )
@@ -422,6 +439,10 @@ def _profil_dict(patient, profil, organization):
         'unknown': bool(profil and profil.unknown),
         'detail': profil.detail if profil else '',
         'do_not_contact': bool(profil and profil.do_not_contact),
+        'quartier': profil.quartier if profil else '',
+        'quartier_guess': services.deviner_quartier(patient.address),
+        'referred_by': ({'id': str(profil.referred_by_id), 'name': profil.referred_by.name}
+                        if profil and profil.referred_by_id else None),
         'campaign': ({'id': str(profil.campaign_id), 'name': profil.campaign.name}
                      if profil and profil.campaign_id else None),
         # Provenance deduite (labo partenaire, prescripteur) : le composant ne pose pas la question.
@@ -476,6 +497,20 @@ class CrmPatientProfileView(_ProvenanceView):
             profil.unknown = bool(donnees['unknown'])
             if profil.unknown:
                 profil.origin = None
+        if 'quartier' in donnees:
+            profil.quartier = services.normaliser_quartier(donnees['quartier'], organization)
+        if 'referred_by_id' in donnees:
+            if donnees['referred_by_id']:
+                parrain = services.patients_du_centre(organization, True).filter(pk=donnees['referred_by_id']).first()
+                if not parrain or parrain.pk == patient.pk:
+                    return Response({'error': 'Patient introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+                profil.referred_by = parrain
+                # Envoyé par un patient = bouche-à-oreille, si rien d'autre n'est saisi.
+                if not profil.origin_id and not profil.unknown:
+                    profil.origin = PatientOrigin.objects.filter(
+                        organization=organization, code='word_of_mouth', is_active=True).first()
+            else:
+                profil.referred_by = None
         if 'campaign_id' in donnees:
             if donnees['campaign_id']:
                 from .models import CRMCampaign

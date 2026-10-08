@@ -18,7 +18,14 @@ export const chargerCampagnesActives = () => {
   return campagnes;
 };
 
-export const viderCacheCrm = () => { motifs = null; campagnes = null; };
+let quartiers = null;
+export const chargerQuartiers = () => {
+  if (!quartiers) quartiers = crmAPI.listQuartiers().catch((e) => { quartiers = null; throw e; });
+  return quartiers;
+};
+export const viderCacheQuartiers = () => { quartiers = null; };
+
+export const viderCacheCrm = () => { motifs = null; campagnes = null; quartiers = null; };
 
 export const CANAUX = [
   { value: 'whatsapp', label: 'WhatsApp' },

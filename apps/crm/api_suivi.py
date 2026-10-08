@@ -516,6 +516,30 @@ class CrmPatientSummaryView(_ProvenanceView):
         return Response(services.resume_patient(patient, org, _admin(request.user)))
 
 
+class CrmQuartierListView(_ProvenanceView):
+    """Quartiers proposés en pastilles (les plus fréquents d'abord)."""
+
+    def get(self, request):
+        if not self._autorise(request):
+            return _refus()
+        return Response({'results': services.quartiers_suggeres(request.user.organization)})
+
+
+class CrmReferrerSearchView(_ProvenanceView):
+    """Recherche du patient qui en a envoyé un autre (bouche-à-oreille). Nom, numéro et téléphone seulement."""
+
+    def get(self, request):
+        if not self._autorise(request):
+            return _refus()
+        q = (request.query_params.get('q') or '').strip()
+        if len(q) < 2:
+            return Response({'results': []})
+        base = services.patients_du_centre(request.user.organization)
+        lot = services.appliquer_filtres(base, {'q': q}).order_by('name')[:8]
+        return Response({'results': [{'id': str(c.id), 'name': c.name, 'patient_number': c.patient_number,
+                                      'phone': c.phone} for c in lot]})
+
+
 # ── Info de facture : montée en gamme ─────────────────────────────────────
 
 class CrmInvoiceInfoView(_ProvenanceView):
@@ -531,6 +555,7 @@ class CrmInvoiceInfoView(_ProvenanceView):
             'came_for': info.came_for if info else '',
             'planned_amount': float(info.planned_amount) if (info and info.planned_amount is not None) else None,
             'note': info.note if info else '',
+            'revisit_date': info.revisit_date if info else None,
         }
 
     def get(self, request, pk):
@@ -558,6 +583,8 @@ class CrmInvoiceInfoView(_ProvenanceView):
                 info.planned_amount = _decimal(d['planned_amount'])
             if 'note' in d:
                 info.note = str(d['note'] or '').strip()[:300]
+            if 'revisit_date' in d:
+                info.revisit_date = _date(d['revisit_date'])
         except ValueError as e:
             return _invalide(str(e))
         info.recorded_by = request.user

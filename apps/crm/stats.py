@@ -147,6 +147,101 @@ def calculer_fidelite(organization, avec_montants):
     }
 
 
+def calculer_complements(organization, debut, fin, avec_montants, base, visites, paye_periode,
+                         actifs_periode, nouveaux_ids, factures_par_id):
+    """Ventes perdues, quartiers, parrains et contrôles prévus."""
+    from .models import PatientInteraction
+    d0, d1 = _bornes(debut, fin)
+    aujourdhui = timezone.localdate()
+
+    # ── Repartis sans acheter (bouton « un patient est passé »)
+    passages = list(PatientInteraction.objects.filter(
+        organization=organization, kind=PatientInteraction.KIND_PASSAGE,
+        occurred_at__gte=d0, occurred_at__lte=d1).select_related('patient'))
+    perdus = [p for p in passages if p.lost_reason]
+    libelles_perte = dict(PatientInteraction.LOST_CHOICES)
+    libelles_motif = dict(PatientInteraction.REASON_CHOICES)
+    par_raison = Counter(p.lost_reason for p in perdus)
+    ventes_perdues = {
+        'passages': len(passages), 'lost': len(perdus), 'rate': _pct(len(perdus), len(passages)),
+        'by_reason': [{'code': c, 'label': libelles_perte[c], 'count': par_raison.get(c, 0)}
+                      for c, _ in PatientInteraction.LOST_CHOICES],
+        # Ce qui manquait : de quoi décider d'un réapprovisionnement.
+        'missing': [{'text': p.text, 'came_for': libelles_motif.get(p.reason, ''),
+                     'date': p.occurred_at} for p in sorted(perdus, key=lambda x: x.occurred_at, reverse=True)
+                    if p.lost_reason == 'stock' and p.text.strip()][:20],
+    }
+
+    # ── Quartiers (pastille choisie, sinon reconnu dans l'adresse)
+    profils = {p.patient_id: p for p in PatientCRMProfile.objects.filter(organization=organization)}
+    groupes = defaultdict(lambda: {'patients': 0, 'new': 0, 'actifs': 0, 'paye': 0.0, 'reviennent': 0, 'avec_visite': 0})
+    sans = 0
+    for c in base:
+        q = services.quartier_de(c, profils.get(c.id))
+        if not q:
+            sans += 1
+            continue
+        g = groupes[q]
+        g['patients'] += 1
+        if c.id in nouveaux_ids:
+            g['new'] += 1
+        if c.id in actifs_periode:
+            g['actifs'] += 1
+            g['paye'] += paye_periode.get(c.id, 0.0)
+        if visites.get(c.id):
+            g['avec_visite'] += 1
+            if len(visites[c.id]) >= 2:
+                g['reviennent'] += 1
+    quartiers = sorted([{
+        'label': k, 'patients': g['patients'], 'new_patients': g['new'], 'active_patients': g['actifs'],
+        'revenue': round(g['paye']) if avec_montants else None,
+        'avg_per_active': round(g['paye'] / g['actifs']) if (avec_montants and g['actifs']) else None,
+        'repeat_rate': _pct(g['reviennent'], g['avec_visite']),
+    } for k, g in groupes.items()], key=lambda x: -x['patients'])
+
+    # ── Parrains (bouche-à-oreille)
+    filleuls = defaultdict(list)
+    for p in profils.values():
+        if p.referred_by_id:
+            filleuls[p.referred_by_id].append(p.patient_id)
+    noms = dict(base.filter(id__in=list(filleuls.keys())).values_list('id', 'name')) if filleuls else {}
+    ca_par_patient = defaultdict(float)
+    if avec_montants:
+        for f in factures_par_id.values():
+            if f['status'] == 'paid':
+                ca_par_patient[f['client_id']] += float(f['total_amount'] or 0)
+    parrains = sorted([{
+        'name': noms.get(pid, '?'), 'patient_id': str(pid), 'referrals': len(ids),
+        'revenue_referred': round(sum(ca_par_patient.get(i, 0.0) for i in ids)) if avec_montants else None,
+    } for pid, ids in filleuls.items()], key=lambda x: -x['referrals'])[:15]
+
+    # ── Contrôles prévus sur la facture (« À revoir dans … »)
+    from .models import InvoiceCRMInfo
+    infos = list(InvoiceCRMInfo.objects.filter(organization=organization, revisit_date__isnull=False,
+                                               revisit_date__gte=debut, revisit_date__lte=fin)
+                 .select_related('invoice'))
+    suivantes = defaultdict(list)
+    for f in factures_par_id.values():
+        suivantes[f['client_id']].append(f['created_at'])
+    honores = en_retard = a_venir = 0
+    for i in infos:
+        apres = [d for d in suivantes.get(i.invoice.client_id, []) if d > i.invoice.created_at]
+        limite = i.revisit_date + timedelta(days=10)
+        if any(timezone.localtime(d).date() <= limite for d in apres):
+            honores += 1
+        elif i.revisit_date > aujourdhui:
+            a_venir += 1
+        else:
+            en_retard += 1
+    controles = {
+        'planned': len(infos), 'honored': honores, 'late': en_retard, 'upcoming': a_venir,
+        'rate': _pct(honores, honores + en_retard),
+    }
+    return {'lost_sales': ventes_perdues, 'quartiers': quartiers, 'quartiers_unknown': sans,
+            'referrers': parrains, 'referred_total': sum(len(v) for v in filleuls.values()),
+            'revisits': controles}
+
+
 def calculer_statistiques(organization, debut, fin, avec_montants):
     d0, d1 = _bornes(debut, fin)
     maintenant = timezone.now()
@@ -347,4 +442,6 @@ def calculer_statistiques(organization, debut, fin, avec_montants):
         'provenance_coverage': couverture,
         'upsell': montee,
         'retention': calculer_fidelite(organization, avec_montants),
+        **calculer_complements(organization, debut, fin, avec_montants, base, visites, paye_periode,
+                               actifs_periode, nouveaux_ids, factures_par_id),
     }

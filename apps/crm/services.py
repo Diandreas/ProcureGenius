@@ -69,6 +69,7 @@ SEGMENTS = [
     ('no_origin', 'Sans provenance'),
     ('golden', 'À relancer maintenant (3 à 6 semaines)'),
     ('to_call_back', 'À rappeler'),
+    ('revisit_due', 'Contrôle prévu, pas revenus'),
     ('awaited', "Attendus (d'accord pour venir)"),
     ('promised_missing', 'Promis, pas venus'),
 ]
@@ -168,6 +169,8 @@ def appliquer_segment(qs, segment, organization, aujourdhui=None):
                 .filter(~Exists(recent)).exclude(crm_profile__do_not_contact=True))
     if segment == 'to_call_back':
         return qs.filter(id__in=ids_a_rappeler(organization))
+    if segment == 'revisit_due':
+        return qs.filter(id__in=ids_controle_en_retard(organization))
     if segment == 'new_month':
         return qs.filter(created_at__date__gte=aujourdhui.replace(day=1))
     if segment == 'loyal':
@@ -495,7 +498,8 @@ def modele_message(motif):
 # ── Étiquettes automatiques et résumé d'un patient ──────────────────────────
 
 def etiquettes(visites, jours_derniere_visite, jours_depuis_creation, numero_partage,
-               nb_relances, derniere_relance, carte_privilege, gros_depensier=False):
+               nb_relances, derniere_relance, carte_privilege, gros_depensier=False,
+               nb_filleuls=0, controle_le=None):
     """Étiquettes déduites des données, sans aucune saisie : de quoi comprendre un patient d'un coup d'œil.
 
     `derniere_relance` : {'outcome', 'status'} ou None.
@@ -518,6 +522,13 @@ def etiquettes(visites, jours_derniere_visite, jours_depuis_creation, numero_par
         ajouter('family', 'Famille', 'default')
     if carte_privilege:
         ajouter('card', 'Carte privilège', 'default')
+    if nb_filleuls:
+        ajouter('referrer', 'A envoyé %s patient%s' % (nb_filleuls, 's' if nb_filleuls > 1 else ''), 'success')
+    if controle_le:
+        if controle_le <= timezone.localdate():
+            ajouter('revisit_due', 'Contrôle prévu le %s' % controle_le.strftime('%d/%m'), 'warning')
+        else:
+            ajouter('revisit', 'À revoir le %s' % controle_le.strftime('%d/%m'), 'info')
     if derniere_relance and derniere_relance.get('outcome') == 'agreed' and derniere_relance.get('status') == 'missed':
         ajouter('promised_missing', 'Promis, pas venu', 'warning')
     elif derniere_relance and derniere_relance.get('outcome') == 'agreed' and derniere_relance.get('status') == 'waiting':
@@ -561,7 +572,9 @@ def resume_patient(patient, organization, avec_montants):
     derniere = {'outcome': relances[0].outcome, 'status': etat['status']} if relances else None
     nb_relances = ContactLog.objects.filter(patient=patient).count()
     jours_derniere = (maintenant - factures[-1].created_at).days if factures else None
-    profil = PatientCRMProfile.objects.filter(patient=patient).first()
+    profil = PatientCRMProfile.objects.filter(patient=patient).select_related('referred_by').first()
+    nb_filleuls = PatientCRMProfile.objects.filter(referred_by=patient).count()
+    controles = controles_en_attente([patient.id])
 
     return {
         'visits': len(factures),
@@ -573,5 +586,128 @@ def resume_patient(patient, organization, avec_montants):
         'contacts_count': nb_relances,
         'do_not_contact': bool(profil and profil.do_not_contact),
         'tags': etiquettes(len(factures), jours_derniere, (maintenant - patient.created_at).days,
-                           numero_partage, nb_relances, derniere, patient.has_privilege_card),
+                           numero_partage, nb_relances, derniere, patient.has_privilege_card,
+                           nb_filleuls=nb_filleuls, controle_le=controles.get(patient.id)),
+        'quartier': quartier_de(patient, profil),
+        'referred_by': ({'id': str(profil.referred_by_id), 'name': profil.referred_by.name}
+                        if profil and profil.referred_by_id else None),
+        'referrals': nb_filleuls,
     }
+
+
+# ── Contrôles prévus (« À revoir dans … » sur la facture) ───────────────────
+
+def controles_en_attente(patient_ids=None, organization=None):
+    """{patient_id: date du contrôle} pour les contrôles prévus pas encore honorés.
+
+    Un contrôle est honoré dès qu'une nouvelle facture (ni brouillon, ni annulée, ni avoir)
+    suit la facture où il a été prévu. On ne garde que le plus récent par patient.
+    """
+    from .models import InvoiceCRMInfo
+
+    infos = InvoiceCRMInfo.objects.filter(revisit_date__isnull=False).select_related('invoice')
+    if patient_ids is not None:
+        infos = infos.filter(invoice__client_id__in=list(patient_ids))
+    if organization is not None:
+        infos = infos.filter(organization=organization)
+    infos = list(infos.order_by('-invoice__created_at'))
+    if not infos:
+        return {}
+    clients = {i.invoice.client_id for i in infos}
+    dernieres = {}
+    for cid, quand in (Invoice.objects.filter(client_id__in=clients)
+                       .exclude(status__in=['draft', 'cancelled']).exclude(invoice_type='credit_note')
+                       .values_list('client_id', 'created_at')):
+        if cid not in dernieres or quand > dernieres[cid]:
+            dernieres[cid] = quand
+    resultat = {}
+    for info in infos:
+        cid = info.invoice.client_id
+        if cid in resultat:
+            continue
+        revenu = dernieres.get(cid) and dernieres[cid] > info.invoice.created_at
+        if not revenu:
+            resultat[cid] = info.revisit_date
+    return resultat
+
+
+def ids_controle_en_retard(organization, jours_max=90):
+    """Patients dont le contrôle prévu est passé (depuis 90 jours au plus) sans nouvelle facture."""
+    aujourdhui = timezone.localdate()
+    return {cid for cid, d in controles_en_attente(organization=organization).items()
+            if d <= aujourdhui and (aujourdhui - d).days <= jours_max}
+
+
+# ── Quartiers ──────────────────────────────────────────────────────────────
+
+# (nom affiché, morceaux reconnus dans une adresse libre, sans accents ni majuscules)
+QUARTIERS_CONNUS = [
+    ('Makepè', ['makep']),
+    ('Bepanda', ['bepanda']),
+    ('Bonamoussadi', ['bonamoussadi', 'bonamousadi']),
+    ('Logpom', ['logpom']),
+    ('Nyalla', ['nyalla']),
+    ('Logbessou', ['logbessou']),
+    ('Bonabéri', ['bonaberi', 'bonaberie']),
+    ('Ange Raphaël', ['ange raphael', 'ange-raphael', 'angeraphael']),
+    ('Beedi', ['beedi']),
+    ('Ndogbong', ['ndogbong']),
+    ('Deïdo', ['deido']),
+    ('Ndokoti', ['ndokoti']),
+    ('Kotto', ['kotto']),
+    ('Akwa', ['akwa']),
+    ('Bonapriso', ['bonapriso']),
+    ('Village', ['village']),
+]
+
+
+def deviner_quartier(adresse):
+    """Quartier reconnu dans une adresse libre (« face pharmacie MAKEPE » -> Makepè), ou ''."""
+    texte = normaliser(adresse)
+    if not texte:
+        return ''
+    for nom, morceaux in QUARTIERS_CONNUS:
+        if any(m in texte for m in morceaux):
+            return nom
+    return ''
+
+
+def quartier_de(patient, profil=None):
+    """Quartier choisi en pastille, sinon reconnu dans l'adresse."""
+    if profil is not None and profil.quartier:
+        return profil.quartier
+    return deviner_quartier(getattr(patient, 'address', ''))
+
+
+def quartiers_suggeres(organization, limite=14):
+    """Quartiers proposés en pastilles, les plus fréquents chez les patients d'abord."""
+    from collections import Counter
+    from .models import PatientCRMProfile
+
+    choisis = dict(PatientCRMProfile.objects.filter(organization=organization)
+                   .exclude(quartier='').values_list('patient_id', 'quartier'))
+    compte = Counter()
+    for pid, adresse in patients_du_centre(organization).values_list('id', 'address'):
+        q = choisis.get(pid) or deviner_quartier(adresse)
+        if q:
+            compte[q] += 1
+    noms = [q for q, _ in compte.most_common()]
+    for nom, _ in QUARTIERS_CONNUS:
+        if nom not in noms:
+            noms.append(nom)
+    return noms[:limite]
+
+
+def normaliser_quartier(saisie, organization):
+    """Réutilise l'orthographe déjà connue (« makepe » -> « Makepè ») pour éviter les doublons."""
+    saisie = (saisie or '').strip()[:80]
+    if not saisie:
+        return ''
+    cle = normaliser(saisie)
+    for nom in quartiers_suggeres(organization, limite=200):
+        if normaliser(nom) == cle:
+            return nom
+    devine = deviner_quartier(saisie)
+    if devine and normaliser(devine) == cle:
+        return devine
+    return saisie[:1].upper() + saisie[1:]
