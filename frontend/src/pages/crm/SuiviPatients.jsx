@@ -24,6 +24,7 @@ import useCurrentUser from '../../hooks/useCurrentUser';
 import PassagesPanel from './PassagesPanel';
 import StatsPanel from './StatsPanel';
 import CampagnesPanel from './CampagnesPanel';
+import QualitePanel from './QualitePanel';
 import ReglagesDialog from './ReglagesDialog';
 import RelanceDialog from '../../components/crm/RelanceDialog';
 import Etiquettes from '../../components/crm/Etiquettes';
@@ -43,6 +44,12 @@ const ONGLETS = {
   patients: {
     label: 'Patients',
     segments: ['all', 'never_billed', 'no_origin'],
+    defaut: 'all',
+  },
+  // Fiches bien ou mal renseignées, et par qui (administrateurs).
+  qualite: {
+    label: 'Qualité des fiches',
+    segments: [],
     defaut: 'all',
   },
   // Les actions de terrain et leurs résultats.
@@ -465,6 +472,8 @@ export default function SuiviPatients() {
         <StatsPanel peutVoirMontants={estAdmin} />
       ) : onglet === 'campagnes' ? (
         <CampagnesPanel estAdmin={estAdmin} />
+      ) : onglet === 'qualite' ? (
+        <QualitePanel peutOuvrirDossier={peutOuvrirDossier} onOuvrirPatient={(id) => navigate(`/healthcare/patients/${id}`)} />
       ) : onglet === 'passages' ? (
         <PassagesPanel
           peutOuvrirDossier={peutOuvrirDossier}

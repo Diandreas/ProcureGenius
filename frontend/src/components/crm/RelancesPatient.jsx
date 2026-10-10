@@ -56,6 +56,12 @@ export default function RelancesPatient({ patient }) {
             {resume.paid_total !== null ? ` · ${fmt(resume.paid_total)} payés` : ''}
             {resume.average_basket ? ` · panier moyen ${fmt(resume.average_basket)}` : ''}
           </Typography>
+          {resume.quality && resume.quality.missing.length > 0 && (
+            <Typography variant="caption" display="block" sx={{ color: 'warning.main', fontWeight: 600 }}>
+              Fiche à compléter ({resume.quality.score}/{resume.quality.max}) : {resume.quality.missing
+                .map((m) => (m.state === 'invalid' ? `${m.label.toLowerCase()} invalide` : m.label.toLowerCase())).join(', ')}
+            </Typography>
+          )}
           {resume.usual.length > 0 && (
             <Typography variant="caption" color="text.secondary" display="block">
               Prend souvent : {resume.usual.map((u) => u.label).join(' · ')}

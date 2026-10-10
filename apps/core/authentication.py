@@ -53,6 +53,14 @@ def doit_refuser(user, chemin):
 def _controler(resultat, requete):
     if resultat is not None:
         user, _ = resultat
+        # Retient l'utilisateur de la requête pour les journaux (auteur d'une fiche patient,
+        # audit du laboratoire). Remis à zéro avant chaque requête par
+        # ClearThreadLocalUserMiddleware.
+        try:
+            from apps.laboratory.signals import set_current_user
+            set_current_user(user)
+        except Exception:  # noqa: BLE001 — ne doit jamais bloquer l'authentification
+            pass
         if doit_refuser(user, requete.path):
             raise exceptions.PermissionDenied(
                 "Votre compte n'a pas accès aux données de santé.")

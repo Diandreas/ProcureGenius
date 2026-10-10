@@ -29,5 +29,6 @@ urlpatterns = [
     path('invoices/<uuid:pk>/info/', api_suivi.CrmInvoiceInfoView.as_view(), name='invoice-info'),
     path('stats/', api_suivi.CrmStatsView.as_view(), name='stats'),
     path('quartiers/', api_suivi.CrmQuartierListView.as_view(), name='quartier-list'),
+    path('quality/', api_suivi.CrmQualityView.as_view(), name='quality'),
     path('referrers/search/', api_suivi.CrmReferrerSearchView.as_view(), name='referrer-search'),
 ]

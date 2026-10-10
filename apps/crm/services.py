@@ -550,6 +550,7 @@ def resume_patient(patient, organization, avec_montants):
     """Chiffres clés d'un patient pour sa fiche : visites, panier moyen, ce qu'il achète d'habitude."""
     from collections import Counter
     from .models import ContactLog, PatientCRMProfile
+    from .qualite import qualite_patient
 
     maintenant = timezone.now()
     factures = list(Invoice.objects.filter(client=patient).exclude(status__in=['draft', 'cancelled'])
@@ -589,6 +590,7 @@ def resume_patient(patient, organization, avec_montants):
                            numero_partage, nb_relances, derniere, patient.has_privilege_card,
                            nb_filleuls=nb_filleuls, controle_le=controles.get(patient.id)),
         'quartier': quartier_de(patient, profil),
+        'quality': qualite_patient(patient, profil),
         'referred_by': ({'id': str(profil.referred_by_id), 'name': profil.referred_by.name}
                         if profil and profil.referred_by_id else None),
         'referrals': nb_filleuls,

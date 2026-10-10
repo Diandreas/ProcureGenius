@@ -96,6 +96,9 @@ const crmAPI = {
   listQuartiers: async () => (await api.get('/crm/quartiers/')).data.results || [],
   searchReferrers: async (q) => (await api.get('/crm/referrers/search/', { params: { q } })).data.results || [],
 
+  // Qualité des fiches : { days, criterion, agent, page }
+  getQuality: async (params) => (await api.get('/crm/quality/', { params })).data,
+
   // Chiffres clés et étiquettes d'un patient (fiche)
   getPatientSummary: async (patientId) => (await api.get(`/crm/patients/${patientId}/summary/`)).data,
 

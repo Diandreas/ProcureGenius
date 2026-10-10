@@ -614,3 +614,31 @@ class CrmStatsView(APIView):
         if (fin - debut).days > 800:
             return _invalide('Période trop longue.')
         return Response(stats.calculer_statistiques(user.organization, debut, fin, _admin(user)))
+
+
+# ── Qualité des fiches ────────────────────────────────────────────────────
+
+class CrmQualityView(APIView):
+    """Fiches bien ou mal renseignées. « Par qui » : administrateurs seulement."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from . import qualite
+        user = request.user
+        if not getattr(user, 'organization_id', None) or not user_can(user, Modules.CRM, 'view'):
+            return _refus()
+        if Modules.CRM not in (user.organization.enabled_modules or []) and not user.is_superuser:
+            return _refus()
+        p = request.query_params
+        try:
+            jours = min(max(int(p.get('days', 90)), 0), 3650)
+            page = max(int(p.get('page', 1)), 1)
+        except (TypeError, ValueError):
+            return _invalide('Paramètre invalide.')
+        critere = p.get('criterion') or None
+        if critere and critere not in qualite.LIBELLES:
+            return _invalide('Information inconnue.')
+        admin = _admin(user)
+        return Response(qualite.analyser(user.organization, jours=jours,
+                                         agent=(p.get('agent') or None) if admin else None,
+                                         critere=critere, page=page, avec_auteurs=admin))

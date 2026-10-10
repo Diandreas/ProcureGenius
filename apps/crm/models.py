@@ -161,6 +161,11 @@ class PatientCRMProfile(models.Model):
     )
     # Quartier choisi en pastille (l'adresse libre de la fiche reste inchangée).
     quartier = models.CharField(max_length=80, blank=True, verbose_name='Quartier')
+    # Qui a créé la fiche patient (enregistré à la création, voir apps/crm/signals.py).
+    created_by = models.ForeignKey(
+        'accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='crm_patients_created', verbose_name='Fiche créée par',
+    )
     do_not_contact = models.BooleanField(default=False, verbose_name='Ne plus relancer')
     filled_by = models.CharField(max_length=10, default=SOURCE_MANUAL)
     recorded_by = models.ForeignKey(
