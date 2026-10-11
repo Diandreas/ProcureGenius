@@ -54,6 +54,7 @@ import { modalBackdrop, modalContent } from '../../animations/variants/modal';
 import { fadeInUp, scaleIn } from '../../animations/variants/scroll-reveal';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import api from '../../services/api';
+import useCurrency from '../../hooks/useCurrency';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Zoom ref={ref} {...props} />;
@@ -64,6 +65,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
  * Modal de confirmation universelle pour création d'entités avec un design de haut calibre.
  */
 const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) => {
+  const { format: fmt, symbol } = useCurrency();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [formData, setFormData] = useState(draftData || {});
@@ -414,10 +416,10 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                             <TableRow key={index} hover sx={{ '&:last-child td': { border: 0 } }}>
                               <TableCell sx={{ fontWeight: 500 }}>{item.description}</TableCell>
                               <TableCell align="right">{item.quantity}</TableCell>
-                              <TableCell align="right">{item.unit_price?.toFixed(2)} €</TableCell>
+                              <TableCell align="right">{fmt(item.unit_price || 0)}</TableCell>
                               <TableCell align="right">
                                 <Typography sx={{ fontWeight: 700, color: entityColor }}>
-                                  {(item.quantity * item.unit_price).toFixed(2)} €
+                                  {fmt(item.quantity * item.unit_price)}
                                 </Typography>
                               </TableCell>
                               <TableCell align="center">
@@ -436,7 +438,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                       <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', bgcolor: alpha(entityColor, 0.03), borderTop: `1px solid ${theme.palette.divider}` }}>
                         <Typography variant="subtitle2" sx={{ mr: 2, fontWeight: 600 }}>Total HT :</Typography>
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: entityColor, fontSize: '1.1rem' }}>
-                          {items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toFixed(2)} €
+                          {fmt(items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0))}
                         </Typography>
                       </Box>
                     </Paper>
@@ -491,7 +493,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                             <li {...props}>
                               <Box>
                                 <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
-                                <Typography variant="caption" color="text.secondary">Ref: {option.reference} - {option.price}€</Typography>
+                                <Typography variant="caption" color="text.secondary">Ref: {option.reference} - {fmt(option.price || 0)}</Typography>
                               </Box>
                             </li>
                           )}
@@ -513,7 +515,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                         <TextField
                           fullWidth
                           size="small"
-                          label="Prix (€)"
+                          label={`Prix (${symbol})`}
                           type="number"
                           value={newItem.unit_price}
                           onChange={(e) => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}

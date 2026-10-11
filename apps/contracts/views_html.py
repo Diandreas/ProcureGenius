@@ -202,7 +202,7 @@ def contract_save(request):
         contract.start_date = request.POST.get('start_date') or None
         contract.end_date = request.POST.get('end_date') or None
         contract.total_value = request.POST.get('total_value') or 0
-        contract.currency = request.POST.get('currency', 'CAD')
+        contract.currency = request.POST.get('currency', '')
         contract.auto_renewal = request.POST.get('auto_renewal') == 'on'
         contract.renewal_notice_days = int(request.POST.get('renewal_notice_days', 30))
         contract.alert_days_before_expiry = int(request.POST.get('alert_days_before_expiry', 30))

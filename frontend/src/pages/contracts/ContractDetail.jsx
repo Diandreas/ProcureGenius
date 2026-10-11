@@ -1149,7 +1149,7 @@ function ContractDetail() {
                           <TableCell>{formatDate(milestone.due_date)}</TableCell>
                           <TableCell>
                             {milestone.payment_amount
-                              ? `${parseFloat(milestone.payment_amount).toLocaleString()} $`
+                              ? `${parseFloat(milestone.payment_amount).toLocaleString('fr-FR')} ${currentContract.currency || ''}`
                               : '-'}
                           </TableCell>
                           <TableCell>

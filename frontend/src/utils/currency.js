@@ -44,7 +44,7 @@ export const getCurrencySymbol = (currencyCode) => {
  * @param {number} decimals - Nombre de décimales (défaut: 2)
  * @returns {string} Montant formaté avec symbole
  */
-export const formatCurrency = (amount, currencyCode = 'CAD', decimals = 2) => {
+export const formatCurrency = (amount, currencyCode = 'XAF', decimals = 2) => {
   if (amount === null || amount === undefined || isNaN(amount)) {
     return '-';
   }
@@ -72,7 +72,7 @@ export const formatCurrency = (amount, currencyCode = 'CAD', decimals = 2) => {
  * @param {string} currencyCode - Code de la devise
  * @returns {string} Montant formaté de manière compacte
  */
-export const formatCurrencyCompact = (amount, currencyCode = 'CAD') => {
+export const formatCurrencyCompact = (amount, currencyCode = 'XAF') => {
   if (amount === null || amount === undefined || isNaN(amount)) {
     return '-';
   }

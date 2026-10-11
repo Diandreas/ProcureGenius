@@ -248,7 +248,7 @@ ProcureGenius
                             </div>''' if hasattr(invoice, 'due_date') and invoice.due_date else ''}
                             <div class="detail-row">
                                 <span class="label">{_('Total amount')}:</span>
-                                <span class="value total">{invoice.total_amount:.2f} {getattr(invoice, 'currency', 'CAD')}</span>
+                                <span class="value total">{invoice.total_amount:.2f} {getattr(invoice, 'currency', '') or 'XAF'}</span>
                             </div>
                         </div>
 
@@ -292,7 +292,7 @@ ProcureGenius
 - {invoice_number_label}: {invoice.invoice_number}
 - {issue_date_label}: {(getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)).strftime('%d/%m/%Y') if (getattr(invoice, 'issue_date', None) or getattr(invoice, 'created_at', None)) else 'N/A'}
 {'- ' + due_date_label + ': ' + invoice.due_date.strftime('%d/%m/%Y') if hasattr(invoice, 'due_date') and invoice.due_date else ''}
-- {total_amount_label}: {invoice.total_amount:.2f} {getattr(invoice, 'currency', 'CAD')}
+- {total_amount_label}: {invoice.total_amount:.2f} {getattr(invoice, 'currency', '') or 'XAF'}
 
 {f'{description_label}: {invoice.description}' if invoice.description else ''}
 
@@ -632,7 +632,7 @@ ProcureGenius
                                 </div>''' if hasattr(po, 'required_date') and po.required_date else ''}
                                 <div class="detail-row">
                                     <span class="label">{_('Total amount')}:</span>
-                                    <span class="value total">{po.total_amount:.2f} {getattr(po, 'currency', 'CAD')}</span>
+                                    <span class="value total">{po.total_amount:.2f} {getattr(po, 'currency', '') or 'XAF'}</span>
                                 </div>
                             </div>
 
@@ -675,7 +675,7 @@ ProcureGenius
 - {po_number_label}: {po.po_number}
 - {creation_date_label}: {po.created_at.strftime('%d/%m/%Y') if po.created_at else 'N/A'}
 {'- ' + required_date_label + ': ' + po.required_date.strftime('%d/%m/%Y') if hasattr(po, 'required_date') and po.required_date else ''}
-- {total_amount_label}: {po.total_amount:.2f} {getattr(po, 'currency', 'CAD')}
+- {total_amount_label}: {po.total_amount:.2f} {getattr(po, 'currency', '') or 'XAF'}
 
 {f'{description_label}: {po.description}' if po.description else ''}
 

@@ -80,7 +80,7 @@ class ProductMarginsView(APIView):
         start, end = _parse_period(request)
 
         # Devise de l'organisation (cohérence avec le reste de l'app).
-        currency = 'CAD'
+        currency = 'XAF'
         settings_obj = getattr(org, 'settings', None)
         if settings_obj is not None:
             currency = getattr(settings_obj, 'default_currency', None) or currency

@@ -50,7 +50,7 @@ class ReportPDFGenerator:
             'email': None,
             'website': None,
             'logo': None,
-            'currency': 'CAD',
+            'currency': 'XAF',
             'tax_region': 'international',
             # Identifiants légaux et fiscaux
             'niu': None,

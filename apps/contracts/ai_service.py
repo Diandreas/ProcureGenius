@@ -332,7 +332,7 @@ class ContractAIService:
         if context.get('counterpart_contact_person'):
             lines.append(f"Contact contrepartie: {context['counterpart_contact_person']}")
         if context.get('total_value'):
-            currency = context.get('currency', 'CAD')
+            currency = context.get('currency') or 'XAF'
             lines.append(f"Montant: {context['total_value']} {currency}")
         if context.get('start_date'):
             lines.append(f"Début: {context['start_date']}")

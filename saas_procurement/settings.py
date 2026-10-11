@@ -201,7 +201,7 @@ CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'America/Toronto'
+CELERY_TIMEZONE = 'Africa/Douala'  # même fuseau que TIME_ZONE
 
 # Celery Beat — tâches périodiques push notifications
 from celery.schedules import crontab  # noqa: E402

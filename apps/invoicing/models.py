@@ -66,7 +66,7 @@ class Warehouse(models.Model):
     city = models.CharField(max_length=100, blank=True, verbose_name=_("Ville"))
     province = models.CharField(max_length=100, blank=True, verbose_name=_("Province"))
     postal_code = models.CharField(max_length=20, blank=True, verbose_name=_("Code postal"))
-    country = models.CharField(max_length=100, default='Canada', verbose_name=_("Pays"))
+    country = models.CharField(max_length=100, blank=True, default='', verbose_name=_("Pays"))
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
     is_default = models.BooleanField(default=False, verbose_name=_("Entrepôt par défaut"))
     created_at = models.DateTimeField(auto_now_add=True)
@@ -257,12 +257,10 @@ class Product(models.Model):
         return 0
 
     def format_price(self):
-        """Formate le prix selon la devise de l'organisation (défaut CAD)."""
-        currency = 'CAD'
-        settings_obj = getattr(self.organization, 'settings', None) if self.organization_id else None
-        if settings_obj is not None:
-            currency = getattr(settings_obj, 'default_currency', None) or currency
-        return f"{self.price:,.2f} {currency}"
+        """Formate le prix selon la devise de l'organisation."""
+        from apps.core.countries import org_currency
+        from apps.core.currencies import format_currency
+        return format_currency(self.price, org_currency(self.organization if self.organization_id else None))
 
     def sync_stock_from_batches(self):
         """Recalcule stock_quantity comme somme des lots actifs."""
@@ -518,7 +516,8 @@ class Invoice(models.Model):
     billing_address = models.TextField(blank=True, verbose_name=_("Adresse de facturation"))
     payment_terms = models.CharField(max_length=100, default="Net 30", verbose_name=_("Conditions de paiement"))
     payment_method = models.CharField(max_length=50, blank=True, verbose_name=_("Mode de paiement"))
-    currency = models.CharField(max_length=3, default="CAD", verbose_name=_("Devise"))
+    # Vide = devise de l'organisation, appliquée à la création (save)
+    currency = models.CharField(max_length=3, blank=True, default='', verbose_name=_("Devise"))
 
     # Champs Devis
     valid_until = models.DateField(null=True, blank=True, verbose_name=_("Devis valable jusqu'au"))
@@ -566,6 +565,10 @@ class Invoice(models.Model):
                 self.organization = self.client.organization
             elif self.created_by_id:
                 self.organization = self.created_by.organization
+
+        if not self.currency:
+            from apps.core.countries import org_currency
+            self.currency = org_currency(self.organization)
 
         if not self.invoice_number:
             self.invoice_number = self.generate_invoice_number()
@@ -1087,15 +1090,9 @@ class Invoice(models.Model):
         return self.items.filter(service_code=service_code)
 
     def format_amount(self, amount):
-        """Formate un montant selon la devise"""
-        if self.currency == 'CAD':
-            return f"{amount:,.2f} $ CAD"
-        elif self.currency == 'USD':
-            return f"${amount:,.2f} USD"
-        elif self.currency == 'EUR':
-            return f"{amount:,.2f} € EUR"
-        else:
-            return f"{amount:,.2f} {self.currency}"
+        """Formate un montant selon la devise de la facture (FCFA sans décimales, etc.)"""
+        from apps.core.currencies import format_currency
+        return format_currency(amount, self.currency or 'XAF')
     
     def can_be_edited(self):
         """Vérifie si la facture peut être modifiée"""
@@ -1601,6 +1598,10 @@ class Payment(models.Model):
         max_length=50,
         choices=[
             ('cash', _('Comptant')),
+            ('orange_money', 'Orange Money'),
+            ('mtn_momo', 'MTN Mobile Money'),
+            ('wave', 'Wave'),
+            ('mobile_money', _('Mobile Money (autre)')),
             ('check', _('Chèque')),
             ('credit_card', _('Carte de crédit')),
             ('bank_transfer', _('Virement bancaire')),

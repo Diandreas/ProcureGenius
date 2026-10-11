@@ -37,6 +37,9 @@ INVOICE_TYPE_TO_ACCOUNT = {
 PAYMENT_METHOD_TO_ACCOUNT = {
     'cash':          '5100',  # Caisse
     'mobile_money':  '5100',  # Caisse (assimilé)
+    'orange_money':  '5100',
+    'mtn_momo':      '5100',
+    'wave':          '5100',
     'bank_transfer': '5200',  # Banque
     'check':         '5200',  # Banque
     'credit_card':   '5200',  # Banque
@@ -82,7 +85,7 @@ def _get_or_create_sales_journal(organization):
 def _get_or_create_cash_journal(organization, method='cash'):
     """Récupère le journal de caisse ou banque selon le mode de paiement"""
     from .models import AccountingJournal
-    if method in ('cash', 'mobile_money', 'other'):
+    if method in ('cash', 'mobile_money', 'orange_money', 'mtn_momo', 'wave', 'other'):
         code, name, jtype = 'CAI', 'Journal de Caisse', 'cash'
     else:
         code, name, jtype = 'BNQ', 'Journal de Banque', 'bank'

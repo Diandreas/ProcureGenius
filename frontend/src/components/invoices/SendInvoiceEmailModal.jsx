@@ -124,7 +124,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
               {t('invoices:invoiceNumber')}: {invoice.invoice_number || 'N/A'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t('invoices:labels.total')}: {invoice.total_amount?.toFixed(2) || '0.00'} {invoice.currency || 'CAD'}
+              {t('invoices:labels.total')}: {invoice.total_amount?.toFixed(2) || '0.00'} {invoice.currency || 'XAF'}
             </Typography>
             {invoice.client && (
               <Typography variant="body2" color="text.secondary">

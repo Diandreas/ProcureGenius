@@ -72,6 +72,7 @@ import {
 import { fetchSuppliers } from '../../store/slices/suppliersSlice';
 import { fetchClients } from '../../store/slices/clientsSlice';
 import { aiChatAPI, contractsAPI } from '../../services/api';
+import { useCurrency } from '../../hooks/useCurrency';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -220,7 +221,7 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
             fullWidth
             value={description}
             onChange={e => setDescription(e.target.value)}
-            placeholder="Ex: Contrat de développement d'application mobile entre Joel Computech Solution et un client, montant 4541 USD, paiement échelonné sur 3 mois, livraison en 10-14 semaines..."
+            placeholder="Ex : maintenance du parc informatique d'une pharmacie à Douala, 600 000 FCFA par an, 4 visites, paiement trimestriel..."
             sx={{ mb: 1.5 }}
           />
           <Button
@@ -247,6 +248,7 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
 // Étape 3 : Sections du contrat (cœur de la refonte)
 // ===================================================================
 function SectionsStep({ formData, sections, setSections, isEditMode }) {
+  const { currency: orgCurrency } = useCurrency();
   const [generating, setGenerating] = useState(false);
   const [generatingSection, setGeneratingSection] = useState(null);
   const [totalTokens, setTotalTokens] = useState(0);
@@ -262,7 +264,13 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
 
   const loadSectionDefinitions = async () => {
     try {
-      const res = await contractsAPI.sectionDefinitions(formData.contract_type);
+      const ctx = buildContext();
+      // le texte standard reprend la contrepartie, les dates et le montant saisis à l'étape 2
+      const res = await contractsAPI.sectionDefinitions(formData.contract_type, {
+        counterpart_name: ctx.counterpart_name, client_id: ctx.client_id, supplier_id: ctx.supplier_id,
+        start_date: ctx.start_date, end_date: ctx.end_date, total_value: ctx.total_value,
+        currency: ctx.currency, payment_terms: ctx.payment_terms, description: ctx.description,
+      });
       const defs = res.data.sections || [];
       setSections(defs.map((d, i) => ({
         section_type: d.type,
@@ -290,7 +298,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
     supplier_id: formData.party_type === 'supplier' ? formData.supplier?.id : undefined,
     client_id: formData.party_type === 'client' ? formData.client?.id : undefined,
     total_value: formData.total_value || '',
-    currency: formData.currency || 'CAD',
+    currency: formData.currency || orgCurrency,
     start_date: formData.start_date || '',
     end_date: formData.end_date || '',
     payment_terms: formData.payment_terms || '',
@@ -716,6 +724,7 @@ function ContractForm() {
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const [activeStep, setActiveStep] = useState(0);
+  const { currency: orgCurrency } = useCurrency();
   const [sections, setSections] = useState([]);
 
   const { currentContract, loading } = useSelector((state) => state.contracts);
@@ -740,7 +749,7 @@ function ContractForm() {
     start_date: '',
     end_date: '',
     total_value: '',
-    currency: 'CAD',
+    currency: '',
     language: 'fr',
     auto_renewal: false,
     renewal_notice_days: 30,
@@ -781,7 +790,7 @@ function ContractForm() {
         start_date: currentContract.start_date || '',
         end_date: currentContract.end_date || '',
         total_value: currentContract.total_value || '',
-        currency: currentContract.currency || 'CAD',
+        currency: currentContract.currency || '',
         auto_renewal: currentContract.auto_renewal || false,
         renewal_notice_days: currentContract.renewal_notice_days || 30,
         alert_days_before_expiry: currentContract.alert_days_before_expiry || 30,
@@ -1023,17 +1032,16 @@ function ContractForm() {
                   endAdornment: (
                     <InputAdornment position="end">
                       <Select
-                        value={formData.currency}
+                        value={formData.currency || orgCurrency}
                         onChange={e => setFormData(prev => ({ ...prev, currency: e.target.value }))}
                         size="small"
                         variant="standard"
                         disableUnderline
                         sx={{ '& .MuiSelect-select': { py: 0, fontSize: '0.875rem' } }}
                       >
-                        <MenuItem value="CAD">CAD</MenuItem>
-                        <MenuItem value="USD">USD</MenuItem>
-                        <MenuItem value="EUR">EUR</MenuItem>
-                        <MenuItem value="XAF">XAF</MenuItem>
+                        {[...new Set([orgCurrency, 'XAF', 'XOF', 'EUR', 'USD', 'CAD'])].map(c => (
+                          <MenuItem key={c} value={c}>{c}</MenuItem>
+                        ))}
                       </Select>
                     </InputAdornment>
                   ),
@@ -1142,7 +1150,7 @@ function ContractForm() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Valeur</Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {formData.total_value ? `${Number(formData.total_value).toLocaleString()} ${formData.currency}` : '—'}
+                    {formData.total_value ? `${Number(formData.total_value).toLocaleString()} ${formData.currency || orgCurrency}` : '—'}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

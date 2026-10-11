@@ -159,7 +159,7 @@ class InvoiceWeasyPDFGenerator:
             'paper_size': 'A4',  # Format de papier par défaut
             'paper_orientation': 'portrait',
             'tax_region': 'international',
-            'currency': 'CAD',
+            'currency': 'XAF',
             'niu': None,
             'rc_number': None,
             'rccm_number': None,

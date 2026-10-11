@@ -445,6 +445,15 @@ def api_profile_types(request):
     return Response({'profiles': profiles})
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_countries(request):
+    """Pays proposés à l'onboarding, avec la devise, la TVA, le fuseau et le plan comptable par défaut."""
+    from apps.core.countries import COUNTRIES, country_profile, ACCOUNTING_STANDARDS
+    pays = sorted((country_profile(c) for c in COUNTRIES), key=lambda p: p['name'])
+    return Response({'countries': pays, 'accounting_standards': ACCOUNTING_STANDARDS})
+
+
 @api_view(['GET', 'POST', 'PUT'])
 @permission_classes([IsAuthenticated])
 def api_organization_settings(request):
@@ -484,6 +493,9 @@ def api_organization_settings(request):
             'company_neq': org_settings.company_neq,
             'default_currency': org_settings.default_currency,
             'default_tax_rate': float(org_settings.default_tax_rate),
+            'country': org_settings.country,
+            'timezone': org_settings.timezone,
+            'accounting_standard': org_settings.accounting_standard,
             'enabled_modules': user.organization.enabled_modules or [],
             'subscription_type': user.organization.subscription_type,
         })
@@ -507,6 +519,26 @@ def api_organization_settings(request):
             # Handle numeric fields
             if 'default_tax_rate' in request.data:
                 org_settings.default_tax_rate = float(request.data['default_tax_rate'])
+
+            # Pays : enregistré tel quel ; devise, TVA, région fiscale et fuseau en découlent
+            # sauf s'ils sont envoyés explicitement dans la même requête.
+            if 'country' in request.data:
+                from apps.core.countries import country_profile
+                profil = country_profile(request.data.get('country'))
+                if profil:
+                    changed = profil['code'] != org_settings.country
+                    org_settings.country = profil['code']
+                    if changed or not org_settings.timezone:
+                        org_settings.timezone = request.data.get('timezone') or profil['timezone']
+                    if changed:
+                        if 'default_currency' not in request.data:
+                            org_settings.default_currency = profil['currency']
+                        if 'default_tax_rate' not in request.data:
+                            org_settings.default_tax_rate = profil['vat_rate']
+                        if 'tax_region' not in request.data:
+                            org_settings.tax_region = profil['tax_region']
+            elif 'timezone' in request.data:
+                org_settings.timezone = request.data['timezone']
 
             # Handle logo upload
             if 'company_logo' in request.FILES:

@@ -7,14 +7,14 @@ import { formatCurrency, formatCurrencyCompact, getCurrencySymbol } from '../uti
  * Récupère automatiquement la devise depuis les paramètres
  */
 export const useCurrency = () => {
-  const [currency, setCurrency] = useState('CAD'); // Devise par défaut
+  const [currency, setCurrency] = useState('XAF'); // Devise par défaut (marché Afrique)
   const [loading, setLoading] = useState(true);
 
   const loadCurrency = useCallback(async () => {
     try {
       const response = await api.get('/accounts/organization/settings/');
       // Support both camelCase and snake_case formats
-      const defaultCurrency = response.data.defaultCurrency || response.data.default_currency || 'CAD';
+      const defaultCurrency = response.data.defaultCurrency || response.data.default_currency || 'XAF';
       
       if (defaultCurrency) {
         setCurrency(prevCurrency => {
@@ -26,11 +26,11 @@ export const useCurrency = () => {
         });
       } else {
         console.warn('Aucune devise trouvée dans les paramètres, utilisation de CAD par défaut');
-        setCurrency('CAD');
+        setCurrency('XAF');
       }
     } catch (error) {
       console.warn('Erreur lors du chargement de la devise, utilisation de CAD par défaut:', error);
-      setCurrency('CAD');
+      setCurrency('XAF');
     } finally {
       setLoading(false);
     }

@@ -543,13 +543,47 @@ class ContractViewSet(viewsets.ModelViewSet):
 
         # Construire le contexte pour la substitution des variables dans les templates
         from .static_templates import get_section_default_content
+        from django.utils.html import strip_tags
+        from apps.core.countries import org_currency
         org = request.user.organization
+        q = request.query_params
         context = {}
         if org:
-            context['organization_name'] = org.name or ''
-            if hasattr(org, 'address') and org.address:
-                from django.utils.html import strip_tags
-                context['organization_address'] = strip_tags(org.address)
+            reglages = getattr(org, 'settings', None)
+            context['organization_name'] = (getattr(reglages, 'company_name', '') or org.name or '')
+            adresse = getattr(reglages, 'company_address', '') or getattr(org, 'address', '') or ''
+            if adresse:
+                context['organization_address'] = strip_tags(adresse)
+
+        # Ce que l'utilisateur a saisi à l'étape « Informations » : le texte standard le reprend
+        def date_fr(v):
+            try:
+                from datetime import date
+                return date.fromisoformat(v).strftime('%d/%m/%Y')
+            except (TypeError, ValueError):
+                return v or ''
+        contrepartie = None
+        if q.get('client_id') and org:
+            from apps.accounts.models import Client
+            contrepartie = Client.objects.filter(pk=q['client_id'], organization=org).first()
+        elif q.get('supplier_id') and org:
+            from apps.suppliers.models import Supplier
+            contrepartie = Supplier.objects.filter(pk=q['supplier_id'], organization=org).first()
+        context['counterpart_name'] = q.get('counterpart_name') or (contrepartie.name if contrepartie else '')
+        if contrepartie is not None and getattr(contrepartie, 'address', ''):
+            context['counterpart_address'] = strip_tags(contrepartie.address)
+        devise = q.get('currency') or org_currency(org)
+        context['currency'] = 'FCFA' if devise in ('XAF', 'XOF') else devise
+        if q.get('total_value'):
+            try:
+                context['total_value'] = f"{float(q['total_value']):,.0f}".replace(',', ' ')
+            except ValueError:
+                pass
+        context['start_date'] = date_fr(q.get('start_date'))
+        context['end_date'] = date_fr(q.get('end_date'))
+        for cle in ('description', 'payment_terms'):
+            if q.get(cle):
+                context[cle] = q[cle]
 
         # Enrichir chaque définition avec le contenu par défaut
         enriched = []

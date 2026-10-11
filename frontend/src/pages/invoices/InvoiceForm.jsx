@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PAYMENT_METHODS } from '../../constants/paymentMethods';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -888,11 +889,9 @@ function InvoiceForm() {
                       sx={{ borderRadius: 2 }}
                     >
                       <MenuItem value="">{t('invoices:paymentMethods.none')}</MenuItem>
-                      <MenuItem value="cash">{t('invoices:paymentMethods.cash')}</MenuItem>
-                      <MenuItem value="card">{t('invoices:paymentMethods.card')}</MenuItem>
-                      <MenuItem value="transfer">{t('invoices:paymentMethods.transfer')}</MenuItem>
-                      <MenuItem value="cheque">{t('invoices:paymentMethods.cheque')}</MenuItem>
-                      <MenuItem value="interac">{t('invoices:paymentMethods.interac')}</MenuItem>
+                      {PAYMENT_METHODS.map((m) => (
+                        <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                   )}
@@ -1293,11 +1292,9 @@ function InvoiceForm() {
                         sx={{ borderRadius: 2 }}
                       >
                         <MenuItem value="">— Non spécifiée —</MenuItem>
-                        <MenuItem value="cash">Comptant</MenuItem>
-                        <MenuItem value="card">Carte</MenuItem>
-                        <MenuItem value="transfer">Virement</MenuItem>
-                        <MenuItem value="cheque">Chèque</MenuItem>
-                        <MenuItem value="interac">Interac</MenuItem>
+                        {PAYMENT_METHODS.map((m) => (
+                          <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
                     )}

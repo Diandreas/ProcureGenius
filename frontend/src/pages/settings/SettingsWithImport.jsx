@@ -138,7 +138,7 @@ function Settings() {
     invoicePrefix: 'FAC-',
     poPrefix: 'BC-',
     invoiceTerms: 'Net 30',
-    defaultCurrency: 'CAD',
+    defaultCurrency: 'XAF',
 
     // Paramètres de notification
     emailNotifications: true,

@@ -380,7 +380,7 @@ export const contractsAPI = {
   statistics: () => api.get('/contracts/statistics/'),
 
   // Sections (génération IA section par section)
-  sectionDefinitions: (contractType) => api.get('/contracts/section-definitions/', { params: { contract_type: contractType } }),
+  sectionDefinitions: (contractType, context = {}) => api.get('/contracts/section-definitions/', { params: { contract_type: contractType, ...context } }),
   generateSection: (data) => api.post('/contracts/generate-section/', data),
   generateAllSections: (data) => api.post('/contracts/generate-all-sections/', data),
   sections: {

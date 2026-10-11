@@ -3,8 +3,10 @@ import { Box, Paper, Typography, Button, CircularProgress, Alert } from '@mui/ma
 import { CloudUpload, CheckCircle } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { aiChatAPI } from '../services/api';
+import useCurrency from '../hooks/useCurrency';
 
 const SmartInvoiceUpload = () => {
+  const { format: fmt } = useCurrency();
   const [dragging, setDragging] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
@@ -103,7 +105,7 @@ const SmartInvoiceUpload = () => {
               Facture: {extractedData.invoice_number || 'N/A'}
             </Typography>
             <Typography variant="body2">
-              Montant: {extractedData.total || 0}€
+              Montant: {fmt(extractedData.total || 0)}
             </Typography>
             <Typography variant="caption" display="block" mt={2} color="text.secondary">
               Redirection vers le formulaire pré-rempli...
@@ -157,7 +159,7 @@ const SmartInvoiceUpload = () => {
               <strong>Date:</strong> {extractedData.date || 'N/A'}
             </Typography>
             <Typography variant="body2">
-              <strong>Total:</strong> {extractedData.total || 0}€
+              <strong>Total:</strong> {fmt(extractedData.total || 0)}
             </Typography>
             <Typography variant="body2">
               <strong>Articles:</strong> {extractedData.items?.length || 0}

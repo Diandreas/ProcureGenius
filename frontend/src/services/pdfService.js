@@ -69,12 +69,12 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
     console.log('Generating invoice PDF for:', invoiceData);
 
     // Récupérer la devise de l'organisation
-    let organizationCurrency = 'CAD'; // Devise par défaut
+    let organizationCurrency = 'XAF'; // Devise par défaut
     try {
       const settingsResponse = await api.get('/accounts/organization/settings/');
       organizationCurrency = settingsResponse.data.defaultCurrency ||
                             settingsResponse.data.default_currency ||
-                            'CAD';
+                            'XAF';
       console.log(' Devise de l\'organisation pour PDF:', organizationCurrency);
     } catch (error) {
       console.warn('Impossible de récupérer la devise, utilisation de CAD par défaut:', error);
@@ -196,13 +196,13 @@ export const generatePurchaseOrderPDF = async (purchaseOrderData, selectedTempla
     console.log('Generating purchase order PDF for:', purchaseOrderData);
 
     // Récupérer la devise de l'organisation
-    let organizationCurrency = 'CAD'; // Devise par défaut
+    let organizationCurrency = 'XAF'; // Devise par défaut
     try {
       const settingsResponse = await api.get('/accounts/organization/settings/');
       organizationCurrency = settingsResponse.data.defaultCurrency ||
                             settingsResponse.data.default_currency ||
                             purchaseOrderData.currency ||
-                            'CAD';
+                            'XAF';
       console.log(' Devise de l\'organisation pour PDF:', organizationCurrency);
     } catch (error) {
       console.warn('Impossible de récupérer la devise, utilisation de CAD par défaut:', error);

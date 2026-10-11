@@ -6,7 +6,7 @@
  * Le plan choisi débloque les modules côté backend (start-trial).
  * Le fiscal détaillé (NIU, TVA, NEQ…) est désormais dans les Paramètres.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
   Box, Container, Button, Typography, TextField, Card, CardContent, Grid,
@@ -151,6 +151,7 @@ function OnboardingSetup() {
     address: '',
     logo: null,
     defaultCurrency: 'XAF',
+    country: 'CM',
     language: (i18n.language || 'fr').startsWith('en') ? 'en' : 'fr',
     // Champs optionnels (section repliee) — non bloquants.
     email: '',
@@ -164,6 +165,22 @@ function OnboardingSetup() {
   });
 
   const handleChange = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
+
+  // Pays : fixe la devise, la TVA, le fuseau et le plan comptable (apps/core/countries.py).
+  const [countries, setCountries] = useState([]);
+  useEffect(() => {
+    api.get('/accounts/countries/')
+      .then((r) => setCountries(r.data.countries || []))
+      .catch(() => setCountries([]));
+  }, []);
+  const countryInfo = countries.find((c) => c.code === formData.country);
+  const handleCountry = (code) => {
+    const c = countries.find((x) => x.code === code);
+    setFormData((p) => ({
+      ...p, country: code,
+      ...(c ? { defaultCurrency: c.currency, taxRegion: c.tax_region } : {}),
+    }));
+  };
 
   const handleLogoUpload = (event) => {
     const file = event.target.files[0];
@@ -200,6 +217,7 @@ function OnboardingSetup() {
       const settings = new FormData();
       settings.append('company_name', formData.companyName);
       settings.append('default_currency', formData.defaultCurrency);
+      if (formData.country) settings.append('country', formData.country);
       if (formData.logo) settings.append('company_logo', formData.logo);
       // Champs optionnels (section repliee) : envoyes seulement si renseignes.
       if (formData.address) settings.append('company_address', formData.address);
@@ -356,11 +374,26 @@ function OnboardingSetup() {
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Pays</InputLabel>
+                      <Select value={formData.country} label="Pays" onChange={(e) => handleCountry(e.target.value)}>
+                        {(countries.length ? countries : [{ code: 'CM', name: 'Cameroun' }]).map((c) => (
+                          <MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>
+                        ))}
+                      </Select>
+                      {countryInfo && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.5 }}>
+                          TVA {String(countryInfo.vat_rate).replace('.', ',')} % · comptabilité {countryInfo.accounting_standard === 'syscohada' ? 'SYSCOHADA (OHADA)' : countryInfo.accounting_standard === 'pcg' ? 'plan comptable français' : countryInfo.accounting_standard === 'us_gaap' ? 'US GAAP' : 'canadienne'} — modifiable ensuite
+                        </Typography>
+                      )}
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
                     <TextField
-                      fullWidth label="Ville / Pays (optionnel)"
+                      fullWidth label="Ville / adresse (optionnel)"
                       value={formData.address}
                       onChange={(e) => handleChange('address', e.target.value)}
-                      placeholder="Ex : Douala, Cameroun"
+                      placeholder="Ex : Akwa, Douala"
                       InputProps={{ startAdornment: <LocationOn sx={{ color: 'text.disabled', mr: 0.5, fontSize: 20 }} /> }}
                     />
                   </Grid>
@@ -370,6 +403,9 @@ function OnboardingSetup() {
                       <Select value={formData.defaultCurrency} label="Devise" onChange={(e) => handleChange('defaultCurrency', e.target.value)}>
                         <MenuItem value="XAF">XAF — Franc CFA (Afrique centrale)</MenuItem>
                         <MenuItem value="XOF">XOF — Franc CFA (Afrique de l'Ouest)</MenuItem>
+                        {countryInfo && !['XAF', 'XOF', 'EUR', 'USD', 'CAD'].includes(countryInfo.currency) && (
+                          <MenuItem value={countryInfo.currency}>{countryInfo.currency}</MenuItem>
+                        )}
                         <MenuItem value="EUR">EUR — Euro</MenuItem>
                         <MenuItem value="USD">USD — Dollar américain</MenuItem>
                         <MenuItem value="CAD">CAD — Dollar canadien</MenuItem>

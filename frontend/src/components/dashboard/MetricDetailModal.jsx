@@ -4,14 +4,14 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import useCurrency from '../../hooks/useCurrency';
 
 const MetricDetailModal = ({ metric, onClose, generateDetailedData }) => {
-  const { format: formatCurrency } = useCurrency();
+  const { format: formatCurrency, symbol } = useCurrency();
 
   if (!metric) return null;
 
   const formatYAxis = (value) => {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M€`;
-    if (value >= 1000) return `${(value / 1000).toFixed(0)}k€`;
-    return `${value}€`;
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M ${symbol}`;
+    if (value >= 1000) return `${(value / 1000).toFixed(0)}k ${symbol}`;
+    return `${value} ${symbol}`;
   };
 
   const detailedData = generateDetailedData(metric);

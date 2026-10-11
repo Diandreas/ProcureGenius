@@ -53,7 +53,7 @@ const settingsSlice = createSlice({
     data: {
       organization_name: '',
       language: 'fr',
-      currency: 'CAD',
+      currency: 'XAF',
       tax_rate: 0,
       logo: null,
       address: '',

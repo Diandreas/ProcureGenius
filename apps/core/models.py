@@ -57,6 +57,17 @@ class OrganizationSettings(models.Model):
     )
 
     # Région fiscale (pour adapter l'affichage des champs obligatoires)
+    # Pays (ISO 3166-1 alpha-2) : fixe devise, TVA, fuseau et plan comptable par défaut (apps/core/countries.py)
+    country = models.CharField(max_length=2, blank=True, default='', verbose_name=_("Pays"))
+    timezone = models.CharField(max_length=50, blank=True, default='', verbose_name=_("Fuseau horaire"))
+    accounting_standard = models.CharField(
+        max_length=20, blank=True, default='',
+        choices=[('syscohada', 'SYSCOHADA (OHADA)'), ('pcg', 'PCG (France / Europe)'),
+                 ('us_gaap', 'US GAAP'), ('ca', 'Canada (ASPE)')],
+        verbose_name=_("Référentiel comptable"),
+        help_text=_("Vide = plan comptable historique de Procura (organisations créées avant octobre 2026)"),
+    )
+
     tax_region = models.CharField(
         max_length=20,
         default='international',
@@ -156,7 +167,7 @@ class OrganizationSettings(models.Model):
     default_tax_rate = models.DecimalField(
         max_digits=5,
         decimal_places=3,
-        default=15.000,
+        default=19.250,
         verbose_name=_("Taux de taxe par défaut (%)")
     )
     gst_hst_rate = models.DecimalField(
@@ -195,7 +206,7 @@ class OrganizationSettings(models.Model):
     )
     default_currency = models.CharField(
         max_length=3,
-        default='CAD',
+        default='XAF',
         choices=[
             ('CAD', 'CAD - Dollar canadien'),
             ('USD', 'USD - Dollar américain'),
@@ -215,6 +226,9 @@ class OrganizationSettings(models.Model):
             ('MAD', 'MAD - Dirham marocain'),
             ('TND', 'TND - Dinar tunisien'),
             ('DZD', 'DZD - Dinar algérien'),
+            ('GNF', 'GNF - Franc guinéen'),
+            ('CDF', 'CDF - Franc congolais'),
+            ('KMF', 'KMF - Franc comorien'),
             ('NGN', 'NGN - Naira nigérian'),
             ('KES', 'KES - Shilling kényan'),
             ('GHS', 'GHS - Cedi ghanéen'),

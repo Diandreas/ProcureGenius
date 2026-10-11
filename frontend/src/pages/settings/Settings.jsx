@@ -74,7 +74,7 @@ import {
   CreditCard as CreditCardIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
+import api, { suppliersAPI, clientsAPI, productsAPI } from '../../services/api';
 import subscriptionAPI from '../../services/subscriptionAPI';
 import SubscriptionStatus from '../../components/SubscriptionStatus';
 import BillingPanel from '../../components/settings/BillingPanel';
@@ -922,6 +922,19 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={{ xs: 1.25, md: 2 }}>
             <Grid item xs={12} md={6}>
+              <CountrySelect
+                value={settings.country || ''}
+                onChange={(c) => {
+                  onUpdate('country', c.code);
+                  // le pays propose sa devise, sa TVA, sa région fiscale et son fuseau ; tout reste modifiable
+                  onUpdate('defaultCurrency', c.currency);
+                  onUpdate('defaultTaxRate', c.vat_rate);
+                  onUpdate('taxRegion', c.tax_region);
+                  onUpdate('timezone', c.timezone);
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
               <FormControl fullWidth size="small">
                 <InputLabel>{t('settings:general.taxRegion')}</InputLabel>
                 <Select
@@ -942,7 +955,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
               <FormControl fullWidth size="small">
                 <InputLabel>{t('settings:general.defaultCurrency')}</InputLabel>
                 <Select
-                  value={settings.defaultCurrency || 'CAD'}
+                  value={settings.defaultCurrency || 'XAF'}
                   onChange={(e) => onUpdate('defaultCurrency', e.target.value)}
                   label={t('settings:general.defaultCurrency')}
                 >
@@ -955,6 +968,10 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                   <MenuItem value="MAD">MAD - Dirham marocain</MenuItem>
                   <MenuItem value="TND">TND - Dinar tunisien</MenuItem>
                   <MenuItem value="NGN">NGN - Naira nigérian</MenuItem>
+                  <MenuItem value="GNF">GNF - Franc guinéen</MenuItem>
+                  <MenuItem value="CDF">CDF - Franc congolais</MenuItem>
+                  <MenuItem value="DZD">DZD - Dinar algérien</MenuItem>
+                  <MenuItem value="CHF">CHF - Franc suisse</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -1135,7 +1152,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                 size="small"
                 label={t('settings:billing.defaultTaxRate')}
                 type="number"
-                value={settings.defaultTaxRate || 15}
+                value={settings.defaultTaxRate ?? 0}
                 onChange={(e) => onUpdate('defaultTaxRate', parseFloat(e.target.value))}
               />
             </Grid>
@@ -2089,5 +2106,25 @@ const EmailSection = ({ settings, showSnackbar }) => {
     </Box>
   );
 };
+
+// Pays de l'organisation : liste servie par l'API (apps/core/countries.py)
+function CountrySelect({ value, onChange }) {
+  const [countries, setCountries] = useState([]);
+  useEffect(() => {
+    api.get('/accounts/countries/').then((r) => setCountries(r.data.countries || [])).catch(() => {});
+  }, []);
+  return (
+    <FormControl fullWidth size="small">
+      <InputLabel>Pays</InputLabel>
+      <Select
+        value={countries.some((c) => c.code === value) ? value : ''}
+        label="Pays"
+        onChange={(e) => { const c = countries.find((x) => x.code === e.target.value); if (c) onChange(c); }}
+      >
+        {countries.map((c) => <MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>)}
+      </Select>
+    </FormControl>
+  );
+}
 
 export default Settings;

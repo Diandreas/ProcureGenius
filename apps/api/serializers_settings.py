@@ -26,6 +26,9 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'companyLogo',
             # Région fiscale
             'tax_region',
+            'country',
+            'timezone',
+            'accounting_standard',
             # Identifiants fiscaux (Cameroun/OHADA)
             'company_niu',
             'company_rc_number',

@@ -52,6 +52,7 @@ urlpatterns = [
     path('accounts/modules/', accounts_api_views.api_user_modules, name='api_user_modules'),
     path('accounts/profile-types/', accounts_api_views.api_profile_types, name='api_profile_types'),
     path('accounts/organization/settings/', accounts_api_views.api_organization_settings, name='api_organization_settings'),
+    path('accounts/countries/', accounts_api_views.api_countries, name='api_countries'),
     path('accounts/organization/users/', accounts_api_views.api_organization_users, name='api_organization_users'),
     path('accounts/organization/users/<uuid:user_id>/', accounts_api_views.api_organization_user_detail, name='api_organization_user_detail'),
     path('accounts/organization/users/<uuid:user_id>/permissions/', accounts_api_views.api_user_permissions, name='api_user_permissions'),

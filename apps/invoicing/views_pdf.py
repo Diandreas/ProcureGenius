@@ -235,7 +235,7 @@ else:
                 'print_margins': 12,
                 # Région fiscale et devise
                 'tax_region': 'international',
-                'currency': 'CAD',  # Devise par défaut
+                'currency': 'XAF',  # Devise par défaut
                 # Identifiants légaux et fiscaux
                 'niu': None,
                 'tax_number': None,

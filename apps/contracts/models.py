@@ -71,7 +71,8 @@ class Contract(models.Model):
 
     # Montants
     total_value = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)], verbose_name=_("Valeur totale"))
-    currency = models.CharField(max_length=3, default='CAD', verbose_name=_("Devise"))
+    # Vide = devise de l'organisation, appliquée à la création (save)
+    currency = models.CharField(max_length=3, blank=True, default='', verbose_name=_("Devise"))
 
     # Renouvellement
     auto_renewal = models.BooleanField(default=False, verbose_name=_("Renouvellement automatique"))
@@ -122,6 +123,9 @@ class Contract(models.Model):
     def save(self, *args, **kwargs):
         if not self.contract_number:
             self.contract_number = self.generate_contract_number()
+        if not self.currency:
+            from apps.core.countries import org_currency
+            self.currency = org_currency(self.organization)
         super().save(*args, **kwargs)
 
     def generate_contract_number(self):

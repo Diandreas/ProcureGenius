@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PAYMENT_METHODS, paymentMethodLabel } from '../../constants/paymentMethods';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -251,17 +252,6 @@ function InvoiceDetail() {
     }
   };
 
-  const paymentMethodLabel = (method) => {
-    const labels = {
-      cash: 'Espèces',
-      check: 'Chèque',
-      credit_card: 'Carte de crédit',
-      bank_transfer: 'Virement',
-      interac: 'Interac',
-      other: 'Autre',
-    };
-    return labels[method] || method;
-  };
 
   const handleEdit = () => {
     navigate(`/invoices/${id}/edit`);
@@ -1377,12 +1367,9 @@ Cordialement`
                   onChange={(e) => setNewPayment({ ...newPayment, payment_method: e.target.value })}
                   label="Méthode de paiement"
                 >
-                  <MenuItem value="cash">Espèces</MenuItem>
-                  <MenuItem value="check">Chèque</MenuItem>
-                  <MenuItem value="bank_transfer">Virement bancaire</MenuItem>
-                  <MenuItem value="credit_card">Carte de crédit</MenuItem>
-                  <MenuItem value="interac">Interac</MenuItem>
-                  <MenuItem value="other">Autre</MenuItem>
+                  {PAYMENT_METHODS.map((m) => (
+                    <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>

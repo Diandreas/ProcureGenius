@@ -136,7 +136,7 @@ class AdvancedAIActions:
                     created_by=user,
                     client=client,
                     payment_terms=params.get('payment_terms', 'Net 30'),
-                    currency=params.get('currency', 'CAD'),
+                    currency=params.get('currency') or '',  # vide = devise de l'organisation (Invoice.save)
                     valid_until=valid_until,
                     quote_terms=params.get('quote_terms', ''),
                     quote_discount_percent=discount,

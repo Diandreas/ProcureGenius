@@ -152,7 +152,7 @@ CURRENCY_NAMES = {
 }
 
 # Currencies that don't use decimal places (0 decimal digits)
-ZERO_DECIMAL_CURRENCIES = ['JPY', 'KRW', 'VND', 'CLP', 'XOF', 'XAF', 'KMF', 'UGX']
+ZERO_DECIMAL_CURRENCIES = ['JPY', 'KRW', 'VND', 'CLP', 'XOF', 'XAF', 'KMF', 'UGX', 'GNF']
 
 # Symbol position (before or after amount)
 SYMBOL_POSITION = {
@@ -214,7 +214,7 @@ def format_currency(amount, currency_code):
     # Determine decimal places
     if currency_code in ZERO_DECIMAL_CURRENCIES:
         decimals = 0
-        formatted_amount = f"{int(amount):,}"
+        formatted_amount = f"{int(round(amount)):,}"
     else:
         decimals = 2
         formatted_amount = f"{amount:,.{decimals}f}"

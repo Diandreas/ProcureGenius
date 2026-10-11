@@ -51,7 +51,7 @@ class Command(BaseCommand):
                             'onboarding_data': {},
                             'dashboard_layout': {},
                             'notification_settings': {},
-                            'preferred_currency': 'CAD',
+                            'preferred_currency': 'XAF',
                             'preferred_language': 'fr',
                         }
                     )

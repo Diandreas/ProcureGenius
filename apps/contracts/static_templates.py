@@ -251,17 +251,19 @@ def get_section_default_content(section_type: str, context: dict = None) -> str:
     content = DEFAULT_SECTION_CONTENT.get(section_type, DEFAULT_SECTION_CONTENT['custom'])
 
     if context:
+        blanc = '_______________'
+        # `or` : une valeur vide reçue du formulaire laisse la ligne à compléter à la main
         replacements = {
-            '{{organization_name}}': context.get('organization_name', '_______________'),
-            '{{organization_address}}': context.get('organization_address', '_______________'),
-            '{{counterpart_name}}': context.get('counterpart_name', '_______________'),
-            '{{counterpart_address}}': context.get('counterpart_address', '_______________'),
-            '{{description}}': context.get('description', '(Description des prestations à définir)'),
-            '{{start_date}}': context.get('start_date', '_______________'),
-            '{{end_date}}': context.get('end_date', '_______________'),
-            '{{total_value}}': str(context.get('total_value', '_______________')),
-            '{{currency}}': context.get('currency', 'CAD'),
-            '{{payment_terms}}': context.get('payment_terms', '(Modalités de paiement à définir)'),
+            '{{organization_name}}': context.get('organization_name') or blanc,
+            '{{organization_address}}': context.get('organization_address') or blanc,
+            '{{counterpart_name}}': context.get('counterpart_name') or blanc,
+            '{{counterpart_address}}': context.get('counterpart_address') or blanc,
+            '{{description}}': context.get('description') or '(Description des prestations à définir)',
+            '{{start_date}}': context.get('start_date') or blanc,
+            '{{end_date}}': context.get('end_date') or blanc,
+            '{{total_value}}': str(context.get('total_value') or blanc),
+            '{{currency}}': context.get('currency') or '',
+            '{{payment_terms}}': context.get('payment_terms') or '(Modalités de paiement à définir)',
         }
         for key, value in replacements.items():
             content = content.replace(key, value)
