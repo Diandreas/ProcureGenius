@@ -34,4 +34,5 @@ urlpatterns = [
 
     # Initialisation du plan comptable par défaut
     path('setup/', views.SetupAccountingView.as_view(), name='setup-accounting'),
+    path('chart-standard/', views.ChartStandardView.as_view(), name='chart-standard'),
 ]

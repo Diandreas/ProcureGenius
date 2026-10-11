@@ -566,81 +566,46 @@ class SIGView(APIView):
             return Response({'error': 'Comptabilité avancée réservée au plan Business.', 'feature': 'accounting_statements'}, status=403)
         start, end = _parse_date_range(request, default_days=365)
 
-        def net_by_codes(prefixes_revenue=None, prefixes_expense=None):
-            """Calcule (crédit - débit) pour les produits et (débit - crédit) pour les charges
-            sur les comptes dont le code commence par un des préfixes donnés."""
-            total = Decimal('0')
-            lines = []
+        # Chaque compte de charge ou de produit est classé dans une rubrique selon le référentiel
+        # de l'organisation (apps/accounting/charts.py) : SYSCOHADA, PCG, US, Canada ou plan historique.
+        from .charts import org_standard, sig_bucket
+        standard = org_standard(org)
+        rows = (
+            JournalEntryLine.objects
+            .filter(entry__organization=org, entry__status='posted',
+                    entry__date__gte=start, entry__date__lte=end,
+                    account__account_type__in=('revenue', 'expense'))
+            .values('account__code', 'account__name', 'account__account_type')
+            .annotate(d=Sum('debit'), c=Sum('credit'))
+            .order_by('account__code')
+        )
+        buckets = {k: [Decimal('0'), []] for k in ('ca', 'achats', 'services', 'personnel', 'autres',
+                                                   'dotations', 'fin_ch', 'fin_pr', 'exc_ch', 'exc_pr')}
+        for r in rows:
+            d, c = r['d'] or Decimal('0'), r['c'] or Decimal('0')
+            # produits : crédit − débit ; charges : en négatif (débit − crédit), comme le reste du rapport
+            amt = (c - d) if r['account__account_type'] == 'revenue' else -(d - c)
+            b = sig_bucket(standard, r['account__code'], r['account__account_type'])
+            buckets[b][0] += amt
+            buckets[b][1].append({'code': r['account__code'], 'name': r['account__name'], 'amount': str(amt)})
 
-            if prefixes_revenue:
-                q = Q()
-                for p in prefixes_revenue:
-                    q |= Q(account__code__startswith=p)
-                qs = (
-                    JournalEntryLine.objects
-                    .filter(q, entry__organization=org, entry__status='posted',
-                            entry__date__gte=start, entry__date__lte=end,
-                            account__account_type='revenue')
-                    .values('account__code', 'account__name')
-                    .annotate(d=Sum('debit'), c=Sum('credit'))
-                    .order_by('account__code')
-                )
-                for r in qs:
-                    amt = (r['c'] or Decimal('0')) - (r['d'] or Decimal('0'))
-                    lines.append({'code': r['account__code'], 'name': r['account__name'], 'amount': str(amt)})
-                    total += amt
+        ca, ca_lines = buckets['ca']
+        achats, achats_lines = buckets['achats']
+        services, services_lines = buckets['services']
+        personnel, personnel_lines = buckets['personnel']
+        autres_charges, autres_lines = buckets['autres']
+        dotations, dotations_lines = buckets['dotations']
+        ch_fin, ch_fin_lines = buckets['fin_ch']
+        pr_fin, pr_fin_lines = buckets['fin_pr']
+        ch_exc, ch_exc_lines = buckets['exc_ch']
+        pr_exc, pr_exc_lines = buckets['exc_pr']
 
-            if prefixes_expense:
-                q = Q()
-                for p in prefixes_expense:
-                    q |= Q(account__code__startswith=p)
-                qs = (
-                    JournalEntryLine.objects
-                    .filter(q, entry__organization=org, entry__status='posted',
-                            entry__date__gte=start, entry__date__lte=end,
-                            account__account_type='expense')
-                    .values('account__code', 'account__name')
-                    .annotate(d=Sum('debit'), c=Sum('credit'))
-                    .order_by('account__code')
-                )
-                for r in qs:
-                    amt = (r['d'] or Decimal('0')) - (r['c'] or Decimal('0'))
-                    lines.append({'code': r['account__code'], 'name': r['account__name'], 'amount': str(-amt)})
-                    total -= amt
-
-            return total, lines
-
-        # ── 1. Chiffre d'affaires (70-75) ──────────────────────────────
-        ca, ca_lines = net_by_codes(prefixes_revenue=['70', '71', '72', '73', '74', '75'])
-
-        # ── 2. Coût des ventes / Achats consommés (60) ─────────────────
-        achats, achats_lines = net_by_codes(prefixes_expense=['60'])
-        marge_brute = ca + achats  # achats est négatif dans total
-
-        # ── 3. Services extérieurs (61, 62) ────────────────────────────
-        services, services_lines = net_by_codes(prefixes_expense=['61', '62'])
+        marge_brute = ca + achats
         valeur_ajoutee = marge_brute + services
-
-        # ── 4. Charges de personnel (63, 64) ───────────────────────────
-        personnel, personnel_lines = net_by_codes(prefixes_expense=['63', '64'])
-        ebe = valeur_ajoutee + personnel  # EBE = VA - charges personnel
-
-        # ── 5. Autres charges d'exploitation (65) ──────────────────────
-        autres_charges, autres_lines = net_by_codes(prefixes_expense=['65'])
-
-        # ── 6. Dotations aux amortissements (68) ───────────────────────
-        dotations, dotations_lines = net_by_codes(prefixes_expense=['68'])
+        ebe = valeur_ajoutee + personnel
         resultat_exploitation = ebe + autres_charges + dotations
-
-        # ── 7. Résultat financier (66 charges / 76 produits) ───────────
-        ch_fin, ch_fin_lines = net_by_codes(prefixes_expense=['66'])
-        pr_fin, pr_fin_lines = net_by_codes(prefixes_revenue=['76'])
         resultat_financier = pr_fin + ch_fin
         resultat_courant = resultat_exploitation + resultat_financier
-
-        # ── 8. Résultat exceptionnel (67 charges / 77 produits) ────────
-        ch_exc, ch_exc_lines = net_by_codes(prefixes_expense=['67'])
-        pr_exc, pr_exc_lines = net_by_codes(prefixes_revenue=['77'])
         resultat_exceptionnel = pr_exc + ch_exc
         resultat_net = resultat_courant + resultat_exceptionnel
 
@@ -649,44 +614,45 @@ class SIGView(APIView):
         return Response({
             'start_date': str(start),
             'end_date': str(end),
+            'standard': standard,
             'soldes': [
                 {
                     'label': "Chiffre d'affaires",
-                    'description': 'Comptes 70 à 75',
+                    'description': 'Ventes de marchandises, de produits et de services',
                     'montant': s(ca),
                     'lines': ca_lines,
                 },
                 {
                     'label': 'Marge brute',
-                    'description': 'CA − Achats consommés (60)',
+                    'description': "CA − Achats consommés",
                     'montant': s(marge_brute),
                     'lines': achats_lines,
                     'sous_total': True,
                 },
                 {
                     'label': 'Valeur ajoutée',
-                    'description': 'Marge brute − Services extérieurs (61, 62)',
+                    'description': 'Marge brute − Services extérieurs (loyer, transport, énergie…)',
                     'montant': s(valeur_ajoutee),
                     'lines': services_lines,
                     'sous_total': True,
                 },
                 {
                     'label': 'EBE (Excédent Brut d\'Exploitation)',
-                    'description': 'VA − Charges de personnel (63, 64)',
+                    'description': 'VA − Charges de personnel, impôts et taxes',
                     'montant': s(ebe),
                     'lines': personnel_lines,
                     'sous_total': True,
                 },
                 {
                     'label': 'Résultat d\'exploitation',
-                    'description': 'EBE − Autres charges (65) − Dotations amort. (68)',
+                    'description': 'EBE − Autres charges − Dotations aux amortissements',
                     'montant': s(resultat_exploitation),
                     'lines': autres_lines + dotations_lines,
                     'sous_total': True,
                 },
                 {
                     'label': 'Résultat financier',
-                    'description': 'Produits fin. (76) − Charges fin. (66)',
+                    'description': 'Produits financiers − Charges financières',
                     'montant': s(resultat_financier),
                     'lines': pr_fin_lines + ch_fin_lines,
                 },
@@ -699,7 +665,7 @@ class SIGView(APIView):
                 },
                 {
                     'label': 'Résultat exceptionnel',
-                    'description': 'Produits excep. (77) − Charges excep. (67)',
+                    'description': 'Produits exceptionnels (HAO) − Charges exceptionnelles',
                     'montant': s(resultat_exceptionnel),
                     'lines': pr_exc_lines + ch_exc_lines,
                 },
@@ -861,3 +827,52 @@ class SetupAccountingView(APIView):
             return Response({'has_chart': False})
         count = Account.objects.filter(organization=org, is_active=True).count()
         return Response({'has_chart': count > 0, 'account_count': count})
+
+
+class ChartStandardView(APIView):
+    """
+    GET  /accounting/chart-standard/              référentiel actuel, celui du pays, et l'aperçu du passage
+    POST /accounting/chart-standard/ {"target"}   passe au référentiel demandé (administrateur)
+
+    Le passage recode les comptes existants (même compte, nouveau numéro et intitulé) : les écritures
+    déjà passées restent attachées à leurs comptes, l'historique reste équilibré. Rien n'est supprimé.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _context(self, org):
+        from .charts import org_standard, plan_switch, ACCOUNTING_STANDARD_LABELS
+        from apps.core.countries import country_profile
+        reglages = getattr(org, 'settings', None)
+        pays = country_profile(getattr(reglages, 'country', '')) if reglages else None
+        actuel = org_standard(org)
+        cible = pays['accounting_standard'] if pays else None
+        return {
+            'current': actuel,
+            'current_label': ACCOUNTING_STANDARD_LABELS.get(actuel),
+            'country': pays['name'] if pays else None,
+            'country_standard': cible,
+            'country_standard_label': ACCOUNTING_STANDARD_LABELS.get(cible),
+            'switch_available': bool(cible and cible != actuel),
+            'preview': plan_switch(org, cible) if cible and cible != actuel else None,
+            'standards': ACCOUNTING_STANDARD_LABELS,
+        }
+
+    def get(self, request):
+        org = getattr(request.user, 'organization', None)
+        if not org:
+            return Response({'error': 'Aucune organisation associée'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(self._context(org))
+
+    def post(self, request):
+        from .charts import CHARTS, LEGACY, apply_switch
+        org = getattr(request.user, 'organization', None)
+        if not org:
+            return Response({'error': 'Aucune organisation associée'}, status=status.HTTP_400_BAD_REQUEST)
+        if getattr(request.user, 'role', None) not in ('admin', 'owner', 'manager') and not request.user.is_superuser:
+            return Response({'error': "Seul un administrateur peut changer le plan comptable."}, status=status.HTTP_403_FORBIDDEN)
+        target = request.data.get('target')
+        if target not in CHARTS or target == LEGACY:
+            return Response({'error': 'Référentiel inconnu.'}, status=status.HTTP_400_BAD_REQUEST)
+        plan = apply_switch(org, target)
+        return Response({'message': 'Plan comptable mis à jour', 'renamed': len(plan['renames']),
+                         'moved': len(plan['moves']), **self._context(org)})

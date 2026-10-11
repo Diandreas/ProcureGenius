@@ -4,44 +4,34 @@ Utilisé par :
   - la commande management setup_accounting
   - le signal post_save Organization (première création)
   - l'endpoint API /accounting/setup/
+  - le choix du pays (Paramètres / onboarding) pour une organisation sans écriture
 """
-from apps.accounting.management.commands.setup_accounting import (
-    DEFAULT_ACCOUNTS,
-    DEFAULT_JOURNALS,
-)
+from apps.accounting.charts import install_chart, org_standard, CHARTS
 
 
 def setup_accounting_for_org(organization):
     """
-    Crée les comptes et journaux par défaut pour une organisation.
-    Idempotent : utilise get_or_create, n'écrase rien d'existant.
-    Retourne (accounts_created, journals_created).
+    Crée les comptes et journaux du référentiel de l'organisation (plan historique Procura si
+    aucun référentiel n'est choisi). Idempotent : n'écrase rien d'existant.
+    Retourne (accounts_created, journals_created) ; journals_created vaut 0 (non compté).
     """
-    from apps.accounting.models import Account, AccountingJournal
+    return install_chart(organization, org_standard(organization)), 0
 
-    accounts_created = 0
-    for code, name, atype in DEFAULT_ACCOUNTS:
-        _, created = Account.objects.get_or_create(
-            organization=organization,
-            code=code,
-            defaults={
-                'name': name,
-                'account_type': atype,
-                'is_system': False,
-                'is_active': True,
-            }
-        )
-        if created:
-            accounts_created += 1
 
-    journals_created = 0
-    for code, name, jtype in DEFAULT_JOURNALS:
-        _, created = AccountingJournal.objects.get_or_create(
-            organization=organization,
-            code=code,
-            defaults={'name': name, 'journal_type': jtype, 'is_active': True}
-        )
-        if created:
-            journals_created += 1
-
-    return accounts_created, journals_created
+def adopt_country_chart(organization, standard):
+    """
+    Pays choisi alors que l'organisation n'a encore aucune écriture : on passe directement au plan
+    de son pays (comptes recodés, rien à reprendre). Sinon on laisse le plan en place ; le passage
+    reste proposé dans Comptabilité (apps.accounting.charts.apply_switch).
+    Retourne True si le plan a été changé.
+    """
+    from apps.accounting.models import JournalEntry
+    from apps.accounting.charts import apply_switch
+    if standard not in CHARTS or org_standard(organization) == standard:
+        return False
+    if organization.settings.accounting_standard:
+        return False
+    if JournalEntry.objects.filter(organization=organization).exists():
+        return False
+    apply_switch(organization, standard)
+    return True

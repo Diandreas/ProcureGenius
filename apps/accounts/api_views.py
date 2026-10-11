@@ -546,6 +546,17 @@ def api_organization_settings(request):
 
             org_settings.save()
 
+            # Organisation encore sans écriture : elle prend directement le plan comptable de son pays
+            if org_settings.country and not org_settings.accounting_standard:
+                from apps.core.countries import country_profile
+                from apps.accounting.setup_utils import adopt_country_chart
+                profil_pays = country_profile(org_settings.country)
+                if profil_pays:
+                    try:
+                        adopt_country_chart(user.organization, profil_pays['accounting_standard'])
+                    except Exception:
+                        logger.exception("Plan comptable du pays non installé pour %s", user.organization.pk)
+
             # Update Organization model fields (subscription_type, enabled_modules)
             organization = user.organization
             if organization:

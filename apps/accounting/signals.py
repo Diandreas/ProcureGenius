@@ -3,10 +3,13 @@ Génération automatique des écritures comptables depuis les factures, paiement
 et bons de commande.
 
 Flux couverts :
-  1. Facture validée (sent/paid/overdue) → écriture vente (4100 / 7xxx)
-  2. Paiement encaissé                   → écriture trésorerie (5xxx / 4100)
+  1. Facture validée (sent/paid/overdue) → écriture vente (clients / ventes [+ TVA collectée])
+  2. Paiement encaissé                   → écriture trésorerie (caisse, banque ou Mobile Money / clients)
   3. Facture annulée                     → extourne de l'écriture de vente
-  4. BC reçu                             → écriture charge achat (6900 / 4010)
+  4. BC reçu                             → écriture achat (achats [+ TVA récupérable] / fournisseurs)
+
+Les comptes viennent du référentiel de l'organisation (apps/accounting/charts.py) ; le plan
+historique Procura garde ses codes et son comportement d'origine.
 """
 import logging
 from decimal import Decimal
@@ -21,6 +24,8 @@ logger = logging.getLogger(__name__)
 from apps.invoicing.models import Invoice, Payment
 from apps.purchase_orders.models import PurchaseOrder
 from apps.accounts.models import Organization
+
+from .charts import LEGACY, PAYMENT_ROLE, account_for_role, org_standard, split_amount
 
 
 # Mapping invoice_type → code compte produit
@@ -97,50 +102,101 @@ def _get_or_create_cash_journal(organization, method='cash'):
     return journal
 
 
+def _invoice_org(invoice):
+    return invoice.organization or (getattr(invoice.created_by, 'organization', None) if invoice.created_by else None)
+
+
+def _sales_lines(org, invoice, amount_ttc, tax_amount):
+    """
+    Lignes d'une écriture de vente pour un montant TTC donné.
+
+    Plan historique Procura : tout le TTC au compte de produit du type de facture (comportement
+    inchangé, pour que les livres existants restent cohérents).
+    Autres référentiels : clients au débit (TTC) ; au crédit la TVA collectée et le HT réparti entre
+    ventes de marchandises et services selon les lignes de la facture.
+    Retourne [(compte, débit, crédit)] ou None si un compte manque.
+    """
+    zero = Decimal('0')
+    if org_standard(org) == LEGACY:
+        code = INVOICE_TYPE_TO_ACCOUNT.get(getattr(invoice, 'invoice_type', 'standard'), '7500')
+        client, revenue = _get_account(org, '4100'), _get_account(org, code)
+        if not client or not revenue:
+            return None
+        return [(client, amount_ttc, zero), (revenue, zero, amount_ttc)]
+
+    client = account_for_role(org, 'customers')
+    if not client:
+        return None
+    tax = min(Decimal(tax_amount or 0), amount_ttc)
+    vat = account_for_role(org, 'vat_collected') if tax > 0 else None
+    if tax > 0 and not vat:
+        tax = zero
+    ht = amount_ttc - tax
+
+    # part des marchandises dans le HT (lignes de produits physiques), le reste en services
+    goods = services = zero
+    for item in invoice.items.select_related('product').all():
+        line_total = Decimal(item.total_price or 0)
+        if item.product_id and getattr(item.product, 'product_type', 'physical') == 'physical':
+            goods += line_total
+        else:
+            services += line_total
+    if goods + services > 0:
+        ratio = goods / (goods + services)
+    else:
+        ratio = Decimal('1')
+    if str(getattr(invoice, 'invoice_type', '')).startswith('healthcare'):
+        ratio = Decimal('0')
+    part_goods, part_services = split_amount(ht, ratio)
+
+    lines = [(client, amount_ttc, zero)]
+    for role, amt in (('sales_goods', part_goods), ('sales_services', part_services)):
+        if amt > 0:
+            acc = account_for_role(org, role)
+            if not acc:
+                return None
+            lines.append((acc, zero, amt))
+    if tax > 0:
+        lines.append((vat, zero, tax))
+    return lines
+
+
+def _write_lines(entry, lines, label, reverse=False):
+    from .models import JournalEntryLine
+    for acc, debit, credit in lines:
+        if reverse:
+            debit, credit = credit, debit
+        JournalEntryLine.objects.create(entry=entry, account=acc, description=label, debit=debit, credit=credit)
+
+
 def create_invoice_entry(invoice, user=None):
     """
-    Crée l'écriture comptable pour une facture validée.
-    Débit 4100 (Clients) / Crédit 7xxx (Produit selon type)
-    Retourne l'écriture créée ou None si les comptes manquent.
+    Écriture de vente d'une facture validée (clients / ventes [+ TVA collectée]).
+    Si l'écriture existe déjà et que le montant a changé (lignes ajoutées après validation),
+    elle est reconstruite au nouveau montant.
     """
-    from .models import JournalEntry, JournalEntryLine
+    from .models import JournalEntry
 
-    org = getattr(invoice.created_by, 'organization', None) if invoice.created_by else None
+    org = _invoice_org(invoice)
     if not org:
         return None
-
-    invoice_type = getattr(invoice, 'invoice_type', 'standard')
-    revenue_code = INVOICE_TYPE_TO_ACCOUNT.get(invoice_type, '7500')
-    client_account = _get_account(org, '4100')
-    revenue_account = _get_account(org, revenue_code)
-
-    if not client_account or not revenue_account:
-        return None
-
-    journal = _get_or_create_sales_journal(org)
     amount = invoice.total_amount or Decimal('0')
     if amount <= 0:
         return None
+    lines = _sales_lines(org, invoice, amount, invoice.tax_amount)
+    if not lines:
+        return None
 
-    # Écriture déjà présente : on RESYNCHRONISE son montant au lieu de l'ignorer.
-    # Indispensable car le signal peut se déclencher une première fois alors que
-    # la facture n'a pas encore toutes ses lignes (total partiel) ; sans cette
-    # resynchro l'écriture reste figée sur un montant incomplet (ex : produit
-    # seul, sans le service ajouté ensuite).
     existing = JournalEntry.objects.filter(source_invoice=invoice, source='invoice').first()
     if existing:
         if existing.status != 'cancelled':
-            current = sum((l.credit or Decimal('0')) for l in existing.lines.all())
+            current = sum((l.debit or Decimal('0')) for l in existing.lines.all())
             if current != amount:
-                for line in existing.lines.all():
-                    if line.debit and line.debit > 0:        # ligne client (débit)
-                        line.debit = amount
-                        line.save(update_fields=['debit'])
-                    elif line.credit and line.credit > 0:    # ligne produit (crédit)
-                        line.credit = amount
-                        line.save(update_fields=['credit'])
+                existing.lines.all().delete()
+                _write_lines(existing, lines, invoice.invoice_number)
         return existing
 
+    journal = _get_or_create_sales_journal(org)
     entry = JournalEntry.objects.create(
         organization=org,
         journal=journal,
@@ -153,22 +209,24 @@ def create_invoice_entry(invoice, user=None):
         source_invoice=invoice,
         created_by=user,
     )
-    JournalEntryLine.objects.create(entry=entry, account=client_account,
-                                    description=invoice.invoice_number, debit=amount, credit=Decimal('0'))
-    JournalEntryLine.objects.create(entry=entry, account=revenue_account,
-                                    description=invoice.invoice_number, debit=Decimal('0'), credit=amount)
+    _write_lines(entry, lines, invoice.invoice_number)
     return entry
 
 
+def _treasury_account(org, method):
+    """Caisse, banque ou Mobile Money selon le mode de paiement."""
+    if org_standard(org) == LEGACY:
+        code = PAYMENT_METHOD_TO_ACCOUNT.get(method, '5100')
+        return _get_account(org, code) or _get_account(org, '5100')
+    return account_for_role(org, PAYMENT_ROLE.get(method, 'cash')) or account_for_role(org, 'cash')
+
+
 def create_payment_entry(payment, user=None):
-    """
-    Crée l'écriture comptable pour un paiement.
-    Débit 5100/5200 (Caisse/Banque) / Crédit 4100 (Clients)
-    """
+    """Écriture d'encaissement : trésorerie (caisse / banque / Mobile Money) au débit, clients au crédit."""
     from .models import JournalEntry, JournalEntryLine
 
     invoice = payment.invoice
-    org = (getattr(invoice.created_by, 'organization', None) if invoice and invoice.created_by else None)
+    org = _invoice_org(invoice) if invoice else None
     if not org:
         return None
 
@@ -177,10 +235,8 @@ def create_payment_entry(payment, user=None):
         return None
 
     method = payment.payment_method or 'cash'
-    cash_code = PAYMENT_METHOD_TO_ACCOUNT.get(method, '5100')
-    cash_account = _get_account(org, cash_code)
-    client_account = _get_account(org, '4100')
-
+    cash_account = _treasury_account(org, method)
+    client_account = _get_account(org, '4100') if org_standard(org) == LEGACY else account_for_role(org, 'customers')
     if not cash_account or not client_account:
         return None
 
@@ -258,31 +314,26 @@ def create_invoice_reversal(invoice):
 
 def create_credit_note_entry(credit_note, user=None):
     """
-    Crée l'écriture comptable pour un avoir PARTIEL (la facture reste active).
-    Débit 7xxx (Produit) / Crédit 4100 (Clients) — réduit le CA et la créance
-    client à hauteur du montant crédité, sans toucher à l'écriture de vente
-    d'origine (contrairement à `create_invoice_reversal`, réservée à
-    l'annulation totale de la facture).
+    Écriture d'un avoir PARTIEL (la facture reste active) : l'inverse d'une vente pour le montant
+    de l'avoir (ventes [+ TVA] au débit, clients au crédit), au prorata de la TVA de la facture.
     """
-    from .models import JournalEntry, JournalEntryLine
+    from .models import JournalEntry
 
     invoice = credit_note.invoice
-    org = credit_note.organization or (getattr(invoice.created_by, 'organization', None) if invoice.created_by else None)
+    org = credit_note.organization or _invoice_org(invoice)
     if not org:
         return None
 
-    if JournalEntry.objects.filter(reference=credit_note.credit_note_number, source='credit_note').exists():
-        return None
-
-    invoice_type = getattr(invoice, 'invoice_type', 'standard')
-    revenue_code = INVOICE_TYPE_TO_ACCOUNT.get(invoice_type, '7500')
-    client_account = _get_account(org, '4100')
-    revenue_account = _get_account(org, revenue_code)
-    if not client_account or not revenue_account:
+    if JournalEntry.objects.filter(organization=org, reference=credit_note.credit_note_number, source='credit_note').exists():
         return None
 
     amount = credit_note.amount or Decimal('0')
     if amount <= 0:
+        return None
+    total = invoice.total_amount or Decimal('0')
+    tax = ((invoice.tax_amount or Decimal('0')) * amount / total).quantize(Decimal('0.01')) if total > 0 else Decimal('0')
+    lines = _sales_lines(org, invoice, amount, tax)
+    if not lines:
         return None
 
     journal = _get_or_create_sales_journal(org)
@@ -298,38 +349,46 @@ def create_credit_note_entry(credit_note, user=None):
         source_invoice=invoice,
         created_by=user,
     )
-    JournalEntryLine.objects.create(entry=entry, account=revenue_account,
-                                    description=credit_note.credit_note_number, debit=amount, credit=Decimal('0'))
-    JournalEntryLine.objects.create(entry=entry, account=client_account,
-                                    description=credit_note.credit_note_number, debit=Decimal('0'), credit=amount)
+    _write_lines(entry, lines, credit_note.credit_note_number, reverse=True)
     return entry
 
 
 def create_purchase_order_entry(po, user=None):
     """
-    Crée l'écriture comptable quand un BC est reçu.
-    Débit 6900 (Autres charges / Achats) / Crédit 4010 (Fournisseurs)
-    Utilise 6900 par défaut — suffisant pour un plan comptable générique.
+    Écriture d'achat quand un BC est reçu.
+    Plan historique : 6900 au débit (TTC) / 4010 au crédit.
+    Autres référentiels : achats de marchandises (HT) + TVA récupérable au débit / fournisseurs (TTC) au crédit.
     """
-    from .models import JournalEntry, JournalEntryLine
+    from .models import JournalEntry
 
     org = getattr(po.created_by, 'organization', None)
     if not org:
         return None
 
-    if JournalEntry.objects.filter(
-        reference=po.po_number, source='purchase_order'
-    ).exists():
-        return None
-
-    expense_account = _get_account(org, '6900')
-    supplier_account = _get_account(org, '4010')
-    if not expense_account or not supplier_account:
+    if JournalEntry.objects.filter(organization=org, reference=po.po_number, source='purchase_order').exists():
         return None
 
     amount = po.total_amount or Decimal('0')
     if amount <= 0:
         return None
+    zero = Decimal('0')
+
+    if org_standard(org) == LEGACY:
+        expense_account, supplier_account = _get_account(org, '6900'), _get_account(org, '4010')
+        if not expense_account or not supplier_account:
+            return None
+        lines = [(expense_account, amount, zero), (supplier_account, zero, amount)]
+    else:
+        supplier_account = account_for_role(org, 'suppliers')
+        expense_account = account_for_role(org, 'exp_goods')
+        if not expense_account or not supplier_account:
+            return None
+        tax = Decimal(getattr(po, 'tax_gst_hst', 0) or 0) + Decimal(getattr(po, 'tax_qst', 0) or 0)
+        vat = account_for_role(org, 'vat_deductible') if 0 < tax < amount else None
+        lines = [(expense_account, amount - tax if vat else amount, zero)]
+        if vat:
+            lines.append((vat, tax, zero))
+        lines.append((supplier_account, zero, amount))
 
     journal = _get_or_create_purchase_journal(org)
     entry = JournalEntry.objects.create(
@@ -343,14 +402,7 @@ def create_purchase_order_entry(po, user=None):
         source='purchase_order',
         created_by=user,
     )
-    JournalEntryLine.objects.create(
-        entry=entry, account=expense_account,
-        description=po.po_number, debit=amount, credit=Decimal('0')
-    )
-    JournalEntryLine.objects.create(
-        entry=entry, account=supplier_account,
-        description=po.po_number, debit=Decimal('0'), credit=amount
-    )
+    _write_lines(entry, lines, po.po_number)
     return entry
 
 
@@ -422,4 +474,4 @@ def on_organization_created(sender, instance, created, **kwargs):
         from .setup_utils import setup_accounting_for_org
         setup_accounting_for_org(instance)
     except Exception:
-        pass
+        logger.exception("Plan comptable non initialisé pour l'organisation %s", instance.pk)

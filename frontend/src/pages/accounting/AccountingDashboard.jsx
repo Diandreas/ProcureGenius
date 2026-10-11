@@ -14,6 +14,7 @@ import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
+import ChartStandardBanner from '../../components/accounting/ChartStandardBanner';
 
 const KpiCard = ({ label, value, icon, color, subtitle, neu }) => (
   <Card
@@ -97,6 +98,8 @@ export default function AccountingDashboard() {
   if (loading) return (
     <Box p={{ xs: 2, sm: 3 }}>
       <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
+
+      <ChartStandardBanner />
       <Box display="flex" justifyContent="center" p={6}><CircularProgress /></Box>
     </Box>
   );

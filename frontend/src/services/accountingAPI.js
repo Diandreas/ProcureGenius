@@ -42,6 +42,10 @@ const accountingAPI = {
   // ── Setup plan comptable ─────────────────────────────────────────
   checkSetup: () => api.get(`${BASE}/setup/`),
   initSetup: () => api.post(`${BASE}/setup/`),
+
+  // ── Référentiel comptable (plan du pays) ─────────────────────────
+  getChartStandard: () => api.get(`${BASE}/chart-standard/`),
+  switchChartStandard: (target) => api.post(`${BASE}/chart-standard/`, { target }),
 };
 
 export default accountingAPI;

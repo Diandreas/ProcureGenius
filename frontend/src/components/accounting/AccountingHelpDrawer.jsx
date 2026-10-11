@@ -5,7 +5,8 @@ import {
   TableContainer, Paper, List, ListItem, ListItemText, Chip,
 } from '@mui/material';
 import { Close, Lightbulb } from '@mui/icons-material';
-import { ACCOUNTING_HELP_CONTENT, ACCOUNTING_TERMS } from '../../constants/accountingHelp';
+import { getAccountingHelp } from '../../constants/accountingHelp';
+import accountingAPI from '../../services/accountingAPI';
 
 function TabPanel({ children, value, index }) {
   return value === index ? <Box sx={{ pt: 2 }}>{children}</Box> : null;
@@ -13,7 +14,15 @@ function TabPanel({ children, value, index }) {
 
 const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
   const [tab, setTab] = React.useState(0);
-  const content = ACCOUNTING_HELP_CONTENT[context] || ACCOUNTING_HELP_CONTENT.journal_entry;
+  const [standard, setStandard] = React.useState('syscohada');
+  React.useEffect(() => {
+    if (!open) return;
+    accountingAPI.getChartStandard().then((r) => setStandard(r.data.current)).catch(() => {});
+  }, [open]);
+  // exemples avec les comptes et la devise du plan de l'organisation
+  const help = React.useMemo(() => getAccountingHelp(standard), [standard]);
+  const ACCOUNTING_TERMS = help.terms;
+  const content = help.content[context] || help.content.journal_entry;
 
   return (
     <Drawer
@@ -94,8 +103,8 @@ const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
                     <TableHead>
                       <TableRow sx={{ bgcolor: 'grey.50' }}>
                         <TableCell sx={{ fontSize: '0.7rem', fontWeight: 700 }}>Compte</TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'primary.main' }}>Débit €</TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'error.main' }}>Crédit €</TableCell>
+                        <TableCell align="right" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'primary.main' }}>Débit {help.currency}</TableCell>
+                        <TableCell align="right" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'error.main' }}>Crédit {help.currency}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
