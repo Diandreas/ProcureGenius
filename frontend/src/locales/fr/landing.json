@@ -15,7 +15,7 @@
     ],
     "subtitle": "Centralisez vos achats, factures et stocks. Laissez l'IA de Procura automatiser les tâches répétitives et vous fournir des analyses stratégiques proactifs.",
     "ctaPrimary": "Démarrer l'essai",
-    "ctaSecondary": "Voir l'IA en action",
+    "ctaSecondary": "Faire une facture avec l'IA",
     "trust1": "1 mois offert, sans carte",
     "trust2": "Données sécurisées",
     "trust3": "Conforme OHADA",
@@ -211,14 +211,14 @@
     "title": "Assistant Procura — essai en direct",
     "company": "Données fictives : Fournitures Wouri SARL, Douala",
     "live": "En direct",
-    "intro": "Bonjour ! Je suis l'assistant de Procura. Posez-moi une vraie question sur cette entreprise de démonstration : stock, factures, clients, trésorerie…",
+    "intro": "Bonjour ! Je suis l'assistant de Procura. Demandez-moi une facture et je la prépare devant vous, ou posez une question sur cette entreprise de démonstration : stock, impayés, clients, trésorerie…",
     "suggestions": [
+      "Fais une facture pour l'Hôtel Akwa Plaza : 10 ramettes A4 et 2 chaises de bureau",
       "Quels produits sont bientôt en rupture ?",
       "Quelles factures sont en retard ?",
-      "Qui sont mes meilleurs clients ?",
-      "Quelle trésorerie prévoir le mois prochain ?"
+      "Qui sont mes meilleurs clients ?"
     ],
-    "placeholder": "Posez votre question…",
+    "placeholder": "Ex. : facture de 5 cartouches HP pour la Clinique Les Palmiers",
     "send": "Envoyer",
     "thinking": "L'assistant réfléchit",
     "cta": "Essayez-le sur vos propres données — compte gratuit",
@@ -226,6 +226,41 @@
     "remaining_other": "Encore {{count}} questions gratuites aujourd'hui",
     "disclaimer": "Démonstration sur des données fictives, sans compte.",
     "error": "La démonstration est momentanément indisponible. Réessayez dans un instant.",
-    "limit": "Vous avez utilisé vos questions d'essai pour aujourd'hui. Créez un compte gratuit pour continuer sur vos propres données."
+    "limit": "Vous avez utilisé vos questions d'essai pour aujourd'hui. Créez un compte gratuit pour continuer sur vos propres données.",
+    "ctaInvoice": "Récupérer cette facture — compte gratuit",
+    "invoice": {
+      "watermark": "APERÇU",
+      "title": "FACTURE",
+      "issued": "Émise le {{date}}",
+      "due": "Échéance {{date}}",
+      "billedTo": "Facturé à",
+      "item": "Désignation",
+      "qty": "Qté",
+      "unitPrice": "Prix unit. HT",
+      "total": "Total HT",
+      "subtotal": "Sous-total HT",
+      "tax": "TVA {{rate}} %",
+      "totalDue": "Total TTC",
+      "download": "Télécharger le PDF",
+      "whatsapp": "Envoyer par WhatsApp",
+      "save": "Garder cette facture",
+      "unknown": "Pas de prix trouvé pour : {{items}} (précisez-le à l'IA)"
+    },
+    "gate": {
+      "title_pdf": "Votre PDF est prêt",
+      "title_whatsapp": "Prête à partir sur WhatsApp",
+      "title_save": "Votre facture est prête",
+      "subtitle": "Facture pour {{client}}, {{total}}. Créez votre compte gratuit : elle vous attend dedans, il ne reste qu'à valider.",
+      "points": [
+        "PDF à votre logo, numéro de facture officiel",
+        "Envoi au client par WhatsApp ou e-mail en un clic",
+        "Suivi des paiements : espèces, Orange Money, MTN MoMo",
+        "L'IA sur vos propres clients, produits et stock"
+      ],
+      "primary": "Créer mon compte et récupérer ma facture",
+      "reassure": "1 minute · 1 mois offert · sans carte bancaire",
+      "login": "J'ai déjà un compte — me connecter",
+      "close": "Fermer"
+    }
   }
 }

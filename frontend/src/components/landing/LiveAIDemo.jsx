@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  Avatar, Box, Button, Chip, IconButton, InputBase, Typography, useTheme,
+  Avatar, Box, Button, Chip, Dialog, DialogContent, IconButton, InputBase, Stack, Typography, useTheme,
 } from '@mui/material';
-import { ArrowForward, Send, SmartToy } from '@mui/icons-material';
+import { ArrowForward, CheckCircle, Close, Send, SmartToy } from '@mui/icons-material';
 import api from '../../services/api';
 import { getAnonId, trackVisit } from '../../services/tracking';
+import { saveDemoInvoice } from '../../utils/demoInvoiceDraft';
+import DemoInvoiceCard from './DemoInvoiceCard';
 
 /**
  * Démo interactive de l'assistant, sans compte : le visiteur interroge l'IA sur
@@ -27,6 +29,8 @@ export default function LiveAIDemo() {
   const [restant, setRestant] = useState(null);
   const [bloque, setBloque] = useState(false);
   const [suites, setSuites] = useState([]);
+  const [facture, setFacture] = useState(null); // dernière facture préparée
+  const [porte, setPorte] = useState(null); // action demandée -> fenêtre « créez votre compte »
   const fil = useRef(null);
   const premiereQuestion = useRef(true);
 
@@ -55,7 +59,12 @@ export default function LiveAIDemo() {
       const { data } = await api.post('/ai/public-demo/', {
         message: question, anon_id: getAnonId(), history: historique,
       });
-      setMessages((m) => [...m, { role: 'assistant', text: data.reply }]);
+      setMessages((m) => [...m, { role: 'assistant', text: data.reply, invoice: data.invoice_preview || null }]);
+      if (data.invoice_preview) {
+        setFacture(data.invoice_preview);
+        saveDemoInvoice(data.invoice_preview); // retrouvée dans le compte après l'inscription
+        trackVisit('/demo-ia/facture');
+      }
       setSuites(Array.isArray(data.suggested_followups) ? data.suggested_followups : []);
       if (typeof data.remaining === 'number') {
         setRestant(data.remaining);
@@ -90,6 +99,18 @@ export default function LiveAIDemo() {
 
   const aRepondu = messages.some((m) => m.role === 'assistant');
 
+  const ouvrirPorte = (action) => {
+    setPorte(action);
+    trackVisit(`/demo-ia/facture/${action}`);
+  };
+  const versCompte = (chemin) => {
+    if (facture) saveDemoInvoice(facture);
+    navigate(`${chemin}?from=demo-invoice`);
+  };
+  const montantTotal = facture
+    ? `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(Math.round(facture.total))} ${['XAF', 'XOF'].includes(facture.currency) ? 'FCFA' : facture.currency}`
+    : '';
+
   return (
     <Box sx={{
       bgcolor: isDark ? '#16223b' : '#ffffff',
@@ -118,17 +139,24 @@ export default function LiveAIDemo() {
       </Box>
 
       {/* Fil de la conversation */}
-      <Box ref={fil} sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, minHeight: 220, maxHeight: 360, overflowY: 'auto', pr: 0.5 }}>
+      <Box ref={fil} sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, minHeight: 220, maxHeight: facture ? 560 : 360, overflowY: 'auto', pr: 0.5 }}>
         <Box sx={{ alignSelf: 'flex-start', maxWidth: '90%' }}>
           <Box sx={bulle('assistant')}>{t('liveDemo.intro')}</Box>
         </Box>
 
         {messages.map((m, i) => (
-          <Box key={i} sx={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '90%' }}>
+          <Box key={i} sx={{ alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: m.invoice ? '100%' : '90%', width: m.invoice ? '100%' : 'auto' }}>
             {m.role === 'assistant' ? (
-              <Box sx={bulle('assistant')}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
-              </Box>
+              <>
+                <Box sx={bulle('assistant')}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+                </Box>
+                {m.invoice && (
+                  <Box sx={{ mt: 1 }}>
+                    <DemoInvoiceCard invoice={m.invoice} onLocked={ouvrirPorte} />
+                  </Box>
+                )}
+              </>
             ) : m.role === 'info' ? (
               <Box sx={{ ...bulle('assistant'), borderLeft: '3px solid #f59e0b' }}>{m.text}</Box>
             ) : (
@@ -172,13 +200,13 @@ export default function LiveAIDemo() {
       {(aRepondu || bloque) && (
         <Button
           fullWidth variant="contained" disableElevation endIcon={<ArrowForward />}
-          onClick={() => navigate('/register')}
+          onClick={() => (facture ? ouvrirPorte('cta') : navigate('/register'))}
           sx={{
             mt: 1.5, textTransform: 'none', fontWeight: 700, borderRadius: 2,
             bgcolor: '#f59e0b', color: '#0f172a', '&:hover': { bgcolor: '#d97706' },
           }}
         >
-          {t('liveDemo.cta')}
+          {facture ? t('liveDemo.ctaInvoice') : t('liveDemo.cta')}
         </Button>
       )}
 
@@ -211,6 +239,41 @@ export default function LiveAIDemo() {
           ? t('liveDemo.remaining', { count: restant })
           : t('liveDemo.disclaimer')}
       </Typography>
+
+      {/* Fenêtre « votre facture est prête » : créer son compte pour la récupérer */}
+      <Dialog open={Boolean(porte)} onClose={() => setPorte(null)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: 3, m: 2 } }}>
+        <DialogContent sx={{ p: { xs: 2.5, sm: 3 }, position: 'relative' }}>
+          <IconButton onClick={() => setPorte(null)} size="small" sx={{ position: 'absolute', top: 8, right: 8 }} aria-label={t('liveDemo.gate.close')}>
+            <Close fontSize="small" />
+          </IconButton>
+          <Typography sx={{ fontWeight: 900, fontSize: '1.25rem', pr: 3, mb: 0.5 }}>
+            {t(`liveDemo.gate.title_${porte === 'whatsapp' ? 'whatsapp' : porte === 'pdf' ? 'pdf' : 'save'}`)}
+          </Typography>
+          <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem', mb: 2 }}>
+            {t('liveDemo.gate.subtitle', { client: facture?.client?.name || '', total: montantTotal })}
+          </Typography>
+          <Stack spacing={1} mb={2.5}>
+            {(t('liveDemo.gate.points', { returnObjects: true }) || []).map((p) => (
+              <Stack key={p} direction="row" spacing={1} alignItems="flex-start">
+                <CheckCircle sx={{ fontSize: 18, color: '#10b981', mt: '2px' }} />
+                <Typography sx={{ fontSize: '0.88rem' }}>{p}</Typography>
+              </Stack>
+            ))}
+          </Stack>
+          <Button fullWidth size="large" variant="contained" disableElevation endIcon={<ArrowForward />}
+            onClick={() => versCompte('/register')}
+            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2, py: 1.3, bgcolor: '#f59e0b', color: '#0f172a', '&:hover': { bgcolor: '#d97706' } }}>
+            {t('liveDemo.gate.primary')}
+          </Button>
+          <Typography sx={{ textAlign: 'center', fontSize: '0.75rem', color: 'text.secondary', mt: 1 }}>
+            {t('liveDemo.gate.reassure')}
+          </Typography>
+          <Button fullWidth onClick={() => versCompte('/login')} sx={{ mt: 1, textTransform: 'none', fontWeight: 600 }}>
+            {t('liveDemo.gate.login')}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

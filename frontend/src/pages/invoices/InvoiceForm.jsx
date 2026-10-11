@@ -57,6 +57,7 @@ import { useTranslation } from 'react-i18next';
 import { invoicesAPI, clientsAPI, productsAPI, contractsAPI } from '../../services/api';
 import { offlineData } from '../../services/offline/entities';
 import { queueSettleInvoice } from '../../services/offline';
+import { clearDemoInvoice, loadDemoInvoice } from '../../utils/demoInvoiceDraft';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
@@ -126,6 +127,30 @@ function InvoiceForm() {
       fetchInvoice();
     }
   }, [id, isEdit]);
+
+  // Facture préparée dans la démo IA de la page d'accueil (avant l'inscription) : pré-remplissage
+  const fromDemo = searchParams.get('from') === 'demo';
+  useEffect(() => {
+    if (!fromDemo || isEdit) return;
+    const demo = loadDemoInvoice();
+    if (!demo) return;
+    setItems((demo.items || []).map((l) => ({
+      product: null,
+      batch: null,
+      description: l.description,
+      product_reference: '',
+      quantity: l.quantity,
+      unit_price: l.unit_price,
+      total_price: l.total,
+    })));
+    setFormData((prev) => ({
+      ...prev,
+      title: prev.title || `Facture ${demo.client?.name || ''}`.trim(),
+      tax_rate: demo.tax_rate ?? prev.tax_rate,
+      status: 'sent',
+    }));
+    enqueueSnackbar('Votre facture de la démo est pré-remplie : vérifiez-la puis enregistrez', { variant: 'info' });
+  }, [fromDemo, isEdit]);
 
   // Pre-select client from URL
   useEffect(() => {
@@ -401,6 +426,8 @@ function InvoiceForm() {
           window.dispatchEvent(new CustomEvent('first-invoice-created'));
         }
       }
+
+      if (fromDemo && !isEdit) clearDemoInvoice(); // la facture de la démo est maintenant dans le compte
 
       // Rediriger vers le détail de la facture (et non l'index)
       navigate(targetId ? `/invoices/${targetId}` : '/invoices');

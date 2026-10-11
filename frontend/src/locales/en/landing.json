@@ -15,7 +15,7 @@
     ],
     "subtitle": "Centralize your purchases, invoices, and inventory. Let Procura's AI automate repetitive tasks and provide you with proactive strategic insights.",
     "ctaPrimary": "Start Trial",
-    "ctaSecondary": "See AI in action",
+    "ctaSecondary": "Make an invoice with AI",
     "trust1": "1 month free, no card",
     "trust2": "Secure data",
     "trust3": "OHADA compliant",
@@ -211,14 +211,14 @@
     "title": "Procura Assistant — live trial",
     "company": "Sample data: Fournitures Wouri SARL, Douala",
     "live": "Live",
-    "intro": "Hi! I'm Procura's assistant. Ask me a real question about this demo company: stock, invoices, customers, cash flow…",
+    "intro": "Hi! I'm the Procura assistant. Ask me for an invoice and I'll prepare it in front of you, or ask a question about this demo company: stock, unpaid invoices, customers, cash flow…",
     "suggestions": [
+      "Make an invoice for Hôtel Akwa Plaza: 10 A4 paper reams and 2 office chairs",
       "Which products are about to run out?",
       "Which invoices are overdue?",
-      "Who are my best customers?",
-      "What cash flow should I expect next month?"
+      "Who are my best customers?"
     ],
-    "placeholder": "Ask your question…",
+    "placeholder": "e.g. invoice 5 HP cartridges to Clinique Les Palmiers",
     "send": "Send",
     "thinking": "The assistant is thinking",
     "cta": "Try it on your own data — free account",
@@ -226,6 +226,41 @@
     "remaining_other": "{{count}} free questions left today",
     "disclaimer": "Demo on sample data, no account needed.",
     "error": "The demo is temporarily unavailable. Please try again in a moment.",
-    "limit": "You've used today's free questions. Create a free account to keep going with your own data."
+    "limit": "You've used today's free questions. Create a free account to keep going with your own data.",
+    "ctaInvoice": "Get this invoice — free account",
+    "invoice": {
+      "watermark": "PREVIEW",
+      "title": "INVOICE",
+      "issued": "Issued {{date}}",
+      "due": "Due {{date}}",
+      "billedTo": "Billed to",
+      "item": "Item",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "total": "Total",
+      "subtotal": "Subtotal",
+      "tax": "VAT {{rate}}%",
+      "totalDue": "Total due",
+      "download": "Download PDF",
+      "whatsapp": "Send on WhatsApp",
+      "save": "Keep this invoice",
+      "unknown": "No price found for: {{items}} (tell the AI the price)"
+    },
+    "gate": {
+      "title_pdf": "Your PDF is ready",
+      "title_whatsapp": "Ready to send on WhatsApp",
+      "title_save": "Your invoice is ready",
+      "subtitle": "Invoice for {{client}}, {{total}}. Create your free account: it's waiting for you inside, just confirm it.",
+      "points": [
+        "PDF with your logo and an official invoice number",
+        "Send it to your customer by WhatsApp or email in one click",
+        "Payment tracking: cash, Orange Money, MTN MoMo",
+        "The AI on your own customers, products and stock"
+      ],
+      "primary": "Create my account and get my invoice",
+      "reassure": "1 minute · 1 month free · no card needed",
+      "login": "I already have an account — sign in",
+      "close": "Close"
+    }
   }
 }

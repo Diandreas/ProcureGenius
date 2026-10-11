@@ -70,6 +70,7 @@ import { useModules } from '../contexts/ModuleContext';
 import Mascot from '../components/Mascot';
 import LoadingState from '../components/LoadingState';
 import SubscriptionStatus from '../components/SubscriptionStatus';
+import DemoInvoiceRestore from '../components/dashboard/DemoInvoiceRestore';
 
 ChartJS.register(
   CategoryScale,
@@ -741,6 +742,9 @@ function DashboardEnhanced() {
 
       {/* Bandeau d'essai / alertes de quota (s'affiche seulement si pertinent) */}
       <SubscriptionStatus compact />
+
+      {/* Facture préparée dans la démo IA de la page d'accueil, avant l'inscription */}
+      <DemoInvoiceRestore />
 
       {/* Tabs Navigation */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>

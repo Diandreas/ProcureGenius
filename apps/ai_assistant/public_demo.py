@@ -5,7 +5,9 @@ Garde-fous, du plus important au moins important :
      (`seed_public_demo`), jamais sur un client réel.
   2. Outils : seulement une liste explicite d'outils de LECTURE. Aucun outil
      qui crée, modifie, supprime ou envoie n'est proposé au modèle, et un appel
-     à un outil hors liste est refusé même si le modèle l'invente.
+     à un outil hors liste est refusé même si le modèle l'invente. Seule
+     exception : `preview_invoice`, propre à la démo, qui CALCULE un aperçu de
+     facture (rien n'est enregistré) ; le visiteur crée un compte pour la garder.
   3. Coût : plafonds par visiteur, par adresse IP et global par jour (Redis),
      questions courtes, historique tronqué, rien n'est enregistré en base.
 """
@@ -44,6 +46,149 @@ def _limite(nom, defaut):
     return int(getattr(settings, nom, defaut))
 
 
+# Aperçu de facture : calculé à partir des données de la démo, jamais enregistré.
+OUTIL_APERCU = 'preview_invoice'
+APERCU_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": OUTIL_APERCU,
+        "description": (
+            "Prépare une facture pour un client et l'affiche au visiteur (aperçu de démonstration, "
+            "rien n'est enregistré). À utiliser dès qu'on demande de faire, créer ou préparer une "
+            "facture. Les prix des produits du catalogue sont retrouvés automatiquement : ne donne "
+            "unit_price que si le visiteur l'indique."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "client_name": {"type": "string", "description": "Nom du client"},
+                "items": {
+                    "type": "array",
+                    "description": "Articles facturés",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "description": {"type": "string", "description": "Produit ou service"},
+                            "quantity": {"type": "number"},
+                            "unit_price": {"type": "number", "description": "Prix unitaire HT en FCFA, si connu"},
+                        },
+                        "required": ["description"],
+                    },
+                },
+            },
+            "required": ["client_name", "items"],
+        },
+    },
+}
+MAX_LIGNES = 10
+
+
+def _arrondi(montant):
+    from decimal import Decimal, ROUND_HALF_UP
+    return Decimal(montant).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+
+
+def _produit(organization, libelle):
+    """Produit du catalogue de la démo correspondant au libellé (nom complet, puis premier mot)."""
+    from apps.invoicing.models import Product
+    qs = Product.objects.filter(organization=organization, is_active=True)
+    trouve = qs.filter(name__icontains=libelle).first()
+    if trouve or not libelle.split():
+        return trouve
+    mots = [m for m in libelle.split() if len(m) > 3]
+    for mot in mots:
+        trouve = qs.filter(name__icontains=mot).first()
+        if trouve:
+            return trouve
+    return None
+
+
+def build_invoice_preview(organization, arguments):
+    """Calcule un aperçu de facture (client, lignes, TVA, totaux) sans rien écrire en base."""
+    from datetime import timedelta
+    from decimal import Decimal, InvalidOperation
+    from apps.accounts.models import Client
+    from apps.core.countries import org_currency, org_tax_rate
+
+    nom_client = str(arguments.get('client_name') or '').strip()[:120]
+    lignes_brutes = arguments.get('items') or []
+    if not nom_client or not isinstance(lignes_brutes, list) or not lignes_brutes:
+        return {'success': False, 'error': "Indiquez le client et au moins un article."}
+
+    client = Client.objects.filter(organization=organization, name__icontains=nom_client).first()
+    lignes, inconnus = [], []
+    for brut in lignes_brutes[:MAX_LIGNES]:
+        if not isinstance(brut, dict):
+            continue
+        libelle = str(brut.get('description') or '').strip()[:150]
+        if not libelle:
+            continue
+        try:
+            quantite = Decimal(str(brut.get('quantity') or 1))
+        except (InvalidOperation, ValueError):
+            quantite = Decimal('1')
+        quantite = min(max(quantite, Decimal('1')), Decimal('10000'))
+        prix_donne = None
+        if brut.get('unit_price') not in (None, ''):
+            try:
+                prix_donne = Decimal(str(brut['unit_price']))
+            except (InvalidOperation, ValueError):
+                prix_donne = None
+        produit = None if prix_donne is not None else _produit(organization, libelle)
+        prix = prix_donne if prix_donne is not None else (produit.price if produit else None)
+        if prix is None or prix < 0:
+            inconnus.append(libelle)
+            continue
+        prix = min(prix, Decimal('100000000'))
+        lignes.append({
+            'reference': produit.reference if produit else '',
+            'description': produit.name if produit else libelle,
+            'quantity': float(quantite),
+            'unit_price': float(_arrondi(prix)),
+            'total': float(_arrondi(prix * quantite)),
+        })
+    if not lignes:
+        return {'success': False, 'unknown_items': inconnus,
+                'error': "Prix introuvable pour : " + ", ".join(inconnus[:3]) + ". Demandez le prix unitaire."}
+
+    taux = Decimal(str(org_tax_rate(organization) or 0))
+    sous_total = sum(Decimal(str(l['total'])) for l in lignes)
+    tva = _arrondi(sous_total * taux / Decimal('100'))
+    aujourd_hui = timezone.localdate()
+    reglages = getattr(organization, 'settings', None)
+    facture = {
+        'number': 'APERÇU',
+        'issue_date': aujourd_hui.isoformat(),
+        'due_date': (aujourd_hui + timedelta(days=30)).isoformat(),
+        'currency': org_currency(organization),
+        'company': {
+            'name': getattr(reglages, 'company_name', '') or organization.name,
+            'address': getattr(reglages, 'company_address', '') or 'Douala, Cameroun',
+            'phone': getattr(reglages, 'company_phone', '') or '',
+        },
+        'client': {
+            'name': client.name if client else nom_client,
+            'address': (getattr(client, 'address', '') or '') if client else '',
+        },
+        'items': lignes,
+        'subtotal': float(sous_total),
+        'tax_rate': float(taux),
+        'tax_amount': float(tva),
+        'total': float(sous_total + tva),
+        'unknown_items': inconnus,
+    }
+    return {
+        'success': True,
+        'preview': True,
+        'invoice': facture,
+        'message': (f"Aperçu de facture prêt pour {facture['client']['name']} : {len(lignes)} ligne(s), "
+                    f"total TTC {facture['total']:.0f} {facture['currency']}. Rien n'est enregistré : "
+                    "le visiteur doit créer un compte gratuit pour la télécharger en PDF, l'envoyer "
+                    "par WhatsApp et la garder."
+                    + (f" Prix inconnu pour : {', '.join(inconnus)}." if inconnus else "")),
+    }
+
+
 class DemoToolRegistry:
     """Vue en lecture seule du registre global (seules méthodes utilisées par l'orchestrateur)."""
 
@@ -53,9 +198,21 @@ class DemoToolRegistry:
         self._base = base
 
     def to_mistral_tools(self):
-        return [s.to_mistral_tool() for s in self._base.all() if s.name in OUTILS_AUTORISES]
+        return [s.to_mistral_tool() for s in self._base.all() if s.name in OUTILS_AUTORISES] + [APERCU_SCHEMA]
 
     async def call(self, name, arguments, user_ctx):
+        if name == OUTIL_APERCU:
+            from asgiref.sync import sync_to_async
+            from apps.accounts.models import Organization
+
+            def apercu():
+                org = Organization.objects.get(pk=user_ctx.get('organization_id'))
+                return build_invoice_preview(org, arguments or {})
+            try:
+                return await sync_to_async(apercu, thread_sensitive=True)()
+            except Exception:
+                logger.exception("Démo IA publique : aperçu de facture impossible")
+                return {'success': False, 'error': "L'aperçu de facture n'est pas disponible pour le moment."}
         nom = self._base.resolve_name(name, OUTILS_AUTORISES)
         if nom is None:
             return {
@@ -172,8 +329,12 @@ def public_demo_chat(request):
             restant = max(par_visiteur - cache.get(f"demo_ia:{timezone.now():%Y%m%d}:v:{visiteur}", 0), 0)
         except Exception:
             restant = None
+    apercu = next((tr['result']['invoice'] for tr in (resultat.tool_results or [])
+                   if tr.get('function') == OUTIL_APERCU and isinstance(tr.get('result'), dict)
+                   and tr['result'].get('success')), None)
     return Response({
         'reply': resultat.reply,
-        'suggested_followups': list(resultat.suggested_followups or [])[:3],
+        'suggested_followups': [] if apercu else list(resultat.suggested_followups or [])[:3],
         'remaining': restant,
+        'invoice_preview': apercu,
     })

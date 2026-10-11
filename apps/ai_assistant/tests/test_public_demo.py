@@ -9,7 +9,7 @@ from django.test import override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.ai_assistant.public_demo import DEMO_ORG_NAME, DEMO_USERNAME, OUTILS_AUTORISES, DemoToolRegistry
+from apps.ai_assistant.public_demo import DEMO_ORG_NAME, DEMO_USERNAME, OUTIL_APERCU, OUTILS_AUTORISES, DemoToolRegistry
 
 URL = '/api/v1/ai/public-demo/'
 
@@ -52,7 +52,7 @@ def test_seed_relance_ne_duplique_pas_et_rafraichit(demo):
 
 def test_registre_ne_propose_que_la_lecture():
     noms = {t['function']['name'] for t in DemoToolRegistry().to_mistral_tools()}
-    assert noms <= OUTILS_AUTORISES
+    assert noms <= OUTILS_AUTORISES | {OUTIL_APERCU}
     assert not any(n.startswith(('create_', 'update_', 'delete_', 'send_', 'adjust_')) for n in noms)
 
 
@@ -141,3 +141,54 @@ def test_prevision_tresorerie_fonctionne_sur_la_demo(demo):
 
     res = async_to_sync(registry.call)('predict_cashflow', {}, AsyncSafeUserContext.from_user(demo))
     assert res.get('success') is True, res
+
+
+class _ProviderFacture:
+    """Faux modèle : demande un aperçu de facture, puis rédige la réponse."""
+
+    def __init__(self):
+        self.appels = 0
+
+    def complete(self, messages, tools=None, tool_choice='auto', temperature=0.7, max_tokens=2500):
+        self.appels += 1
+        if self.appels == 1:
+            assert OUTIL_APERCU in {t['function']['name'] for t in tools}
+            return {'success': True, 'content': '', 'circuit_open': False, 'usage': {'total_tokens': 5},
+                    'tool_calls': [{'id': 't1', 'function': OUTIL_APERCU, 'arguments': {
+                        'client_name': 'Akwa', 'items': [{'description': 'Ramette papier A4', 'quantity': 10},
+                                                         {'description': 'Livraison', 'quantity': 1, 'unit_price': 5000}]}}]}
+        return {'success': True, 'content': 'Votre facture est prête.', 'tool_calls': None,
+                'usage': {'total_tokens': 5}, 'circuit_open': False}
+
+
+@pytest.mark.django_db(transaction=True)
+def test_facture_d_apercu_affichee_sans_rien_enregistrer(demo):
+    from apps.invoicing.models import Invoice
+    from apps.accounts.models import Client
+    from apps.ai_assistant.services.orchestrator import Orchestrator
+
+    avant = (Invoice.objects.count(), Client.objects.count())
+    vrai_init = Orchestrator.__init__
+
+    def init(self, provider=None, tool_registry=None):
+        vrai_init(self, provider=_ProviderFacture(), tool_registry=tool_registry)
+
+    with mock.patch.object(Orchestrator, '__init__', init):
+        r = APIClient().post(URL, {'message': "Fais une facture pour l'Hôtel Akwa Plaza", 'anon_id': 'f1'}, format='json')
+    assert r.status_code == 200, r.data
+    f = r.data['invoice_preview']
+    assert f['client']['name'] == 'Hôtel Akwa Plaza'
+    assert [l['description'] for l in f['items']] == ['Ramette papier A4 80 g', 'Livraison']
+    assert f['subtotal'] == 40000 and f['tax_rate'] == 19.25 and f['total'] == 47700
+    assert r.data['suggested_followups'] == []
+    assert (Invoice.objects.count(), Client.objects.count()) == avant
+
+
+@pytest.mark.django_db
+def test_apercu_sans_prix_connu(demo):
+    from apps.ai_assistant.public_demo import build_invoice_preview
+    r = build_invoice_preview(demo.organization, {'client_name': 'Nouveau client', 'items': [{'description': 'licorne'}]})
+    assert r['success'] is False and 'licorne' in r['error']
+    r = build_invoice_preview(demo.organization, {'client_name': 'Nouveau client',
+                                                  'items': [{'description': 'Conseil', 'quantity': 2, 'unit_price': 25000}]})
+    assert r['success'] and r['invoice']['client']['name'] == 'Nouveau client' and r['invoice']['subtotal'] == 50000
