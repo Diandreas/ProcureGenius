@@ -253,7 +253,7 @@ export default function Landing() {
         minHeight: { xs: 'auto', md: '100vh' },
         display: 'flex',
         alignItems: 'center',
-        pt: { xs: 11, sm: 20 },
+        pt: { xs: 10, sm: 20 },
         pb: { xs: 6, sm: 12 },
         position: 'relative',
         overflow: 'hidden',
@@ -281,12 +281,12 @@ export default function Landing() {
         }} />
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={{ xs: 4, md: 8 }} alignItems="center">
-            <Grid item xs={12} md={6}>
+          <Grid container spacing={{ xs: 2.5, md: 6 }} alignItems="center">
+            <Grid item xs={12} md={5}>
               <Box className="hero-left">
                 {/* Badge */}
                 <Box sx={{
-                  display: 'inline-flex', alignItems: 'center', gap: 1, mb: { xs: 2.5, sm: 4 },
+                  display: 'inline-flex', alignItems: 'center', gap: 1, mb: { xs: 1.5, sm: 4 },
                   bgcolor: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.08)',
                   border: '1px solid rgba(16,185,129,0.25)',
                   color: '#10b981', fontWeight: 700, fontSize: '0.82rem',
@@ -300,7 +300,7 @@ export default function Landing() {
                 <Typography variant="h1" sx={{
                   fontFamily: '"Fraunces", Georgia, serif',
                   fontWeight: 500,
-                  fontSize: { xs: '2.2rem', sm: '3.4rem', md: '4.2rem' },
+                  fontSize: { xs: '2rem', sm: '3.2rem', md: '3.6rem' },
                   lineHeight: 1.04,
                   mb: 0.5,
                   letterSpacing: '-0.02em',
@@ -311,9 +311,9 @@ export default function Landing() {
                 <Typography variant="h1" sx={{
                   fontFamily: '"Fraunces", Georgia, serif',
                   fontWeight: 500,
-                  fontSize: { xs: '2.2rem', sm: '3.4rem', md: '4.2rem' },
+                  fontSize: { xs: '2rem', sm: '3.2rem', md: '3.6rem' },
                   lineHeight: 1.04,
-                  mb: 3,
+                  mb: { xs: 1.5, sm: 3 },
                   letterSpacing: '-0.02em',
                 }}>
                   <Box component="span" sx={{
@@ -334,14 +334,16 @@ export default function Landing() {
 
                 <Typography sx={{
                   color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
-                  fontSize: { xs: '1.05rem', sm: '1.15rem' },
-                  lineHeight: 1.65,
-                  mb: { xs: 3, sm: 5 },
+                  display: { xs: 'none', sm: 'block' }, // sur téléphone, la démo parle d'elle-même
+                  fontSize: { xs: '0.98rem', sm: '1.15rem' },
+                  lineHeight: 1.6,
+                  mb: { xs: 0, md: 5 },
                   maxWidth: 500,
                 }}>
                   {t('hero.subtitle')}
                 </Typography>
 
+                <Box sx={{ display: { xs: 'none', md: 'block' } }}>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: { xs: 3, sm: 5 } }}>
                   <Button
                     variant="contained"
@@ -403,10 +405,11 @@ export default function Landing() {
                     </Box>
                   ))}
                 </Box>
+                </Box>
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={7}>
               <Box className="hero-right" id="essai-ia" sx={{ position: 'relative', scrollMarginTop: '96px' }}>
                 {/* Mascotte Procura — accent de marque */}
                 <Box
@@ -421,9 +424,30 @@ export default function Landing() {
                     display: { xs: 'none', lg: 'block' },
                   }}
                 />
-                {/* La démo en direct : le visiteur fait une facture avec l'IA, sans compte */}
-                <Box sx={{ position: 'relative', zIndex: 1 }}>
+                {/* La démo en direct : le visiteur fait une facture avec l'IA, sans compte.
+                    Sur téléphone, elle occupe toute la largeur de l'écran. */}
+                <Box sx={{ position: 'relative', zIndex: 1, mx: { xs: -1, sm: 0 } }}>
                   <LiveAIDemo variant="hero" />
+                </Box>
+
+                {/* Téléphone : bouton d'inscription et réassurance sous la démo */}
+                <Box sx={{ display: { xs: 'block', md: 'none' }, mt: 2.5 }}>
+                  <Button fullWidth variant="contained" size="large" endIcon={<ArrowForward />} disableElevation
+                    onClick={() => navigate('/register')}
+                    sx={{ bgcolor: '#2563eb', textTransform: 'none', fontWeight: 700, fontSize: '1rem', borderRadius: 3, py: 1.5, color: '#fff', '&:hover': { bgcolor: '#1d4ed8' } }}>
+                    {t('hero.ctaPrimary')}
+                  </Button>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', mt: 1.5 }}>
+                    {[
+                      { icon: <CreditCardOff sx={{ fontSize: 16 }} />, text: t('hero.trust1') },
+                      { icon: <Lock sx={{ fontSize: 16 }} />, text: t('hero.trust2') },
+                    ].map((it, i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.6)' }}>
+                        <Box sx={{ color: '#2563eb', display: 'flex' }}>{it.icon}</Box>
+                        <Typography sx={{ fontSize: '0.78rem', fontWeight: 600 }}>{it.text}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
                 </Box>
               </Box>
             </Grid>

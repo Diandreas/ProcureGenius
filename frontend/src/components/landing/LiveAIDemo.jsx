@@ -115,7 +115,7 @@ export default function LiveAIDemo({ variant = 'section' }) {
   return (
     <Box sx={{
       bgcolor: isDark ? '#16223b' : '#ffffff',
-      borderRadius: 4, p: { xs: 2, sm: 2.5 }, maxWidth: enHaut ? 580 : 520, mx: 'auto',
+      borderRadius: enHaut ? { xs: 3, sm: 4 } : 4, p: { xs: enHaut ? 1.5 : 2, sm: 2.5 }, maxWidth: enHaut ? 760 : 520, mx: 'auto',
       border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
       boxShadow: isDark ? '0 30px 60px rgba(0,0,0,0.6)' : '0 20px 40px rgba(0,0,0,0.08)',
       display: 'flex', flexDirection: 'column',
@@ -140,7 +140,8 @@ export default function LiveAIDemo({ variant = 'section' }) {
       </Box>
 
       {/* Fil de la conversation */}
-      <Box ref={fil} sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, minHeight: enHaut ? 240 : 220, maxHeight: facture ? 560 : (enHaut ? 400 : 360), overflowY: 'auto', pr: 0.5 }}>
+      <Box ref={fil} sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, minHeight: enHaut ? { xs: '38vh', md: 360 } : 220,
+        maxHeight: facture ? { xs: '78vh', md: 640 } : (enHaut ? { xs: '60vh', md: 500 } : 360), overflowY: 'auto', pr: 0.5 }}>
         <Box sx={{ alignSelf: 'flex-start', maxWidth: '90%' }}>
           <Box sx={bulle('assistant')}>{t('liveDemo.intro')}</Box>
         </Box>
@@ -235,7 +236,7 @@ export default function LiveAIDemo({ variant = 'section' }) {
             onChange={(e) => setSaisie(e.target.value.slice(0, 300))}
             placeholder={t('liveDemo.placeholder')}
             disabled={enCours}
-            sx={{ flex: 1, fontSize: '0.85rem', color: isDark ? '#fff' : '#0f172a' }}
+            sx={{ flex: 1, fontSize: { xs: '16px', sm: '0.85rem' }, color: isDark ? '#fff' : '#0f172a', py: { xs: 0.5, sm: 0 } }}
             inputProps={{ 'aria-label': t('liveDemo.placeholder'), maxLength: 300 }}
           />
           <IconButton type="submit" size="small" disabled={enCours || !saisie.trim()} sx={{ color: '#2563eb' }} aria-label={t('liveDemo.send')}>
