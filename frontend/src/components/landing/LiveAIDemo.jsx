@@ -17,7 +17,8 @@ import DemoInvoiceCard from './DemoInvoiceCard';
  * les données d'une entreprise fictive (voir apps/ai_assistant/public_demo.py).
  * Quelques questions par jour ; ensuite, invitation à créer un compte.
  */
-export default function LiveAIDemo() {
+export default function LiveAIDemo({ variant = 'section' }) {
+  const enHaut = variant === 'hero'; // en haut de la page d'accueil
   const { t } = useTranslation('landing');
   const navigate = useNavigate();
   const theme = useTheme();
@@ -114,7 +115,7 @@ export default function LiveAIDemo() {
   return (
     <Box sx={{
       bgcolor: isDark ? '#16223b' : '#ffffff',
-      borderRadius: 4, p: 2.5, maxWidth: 520, mx: 'auto',
+      borderRadius: 4, p: { xs: 2, sm: 2.5 }, maxWidth: enHaut ? 580 : 520, mx: 'auto',
       border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
       boxShadow: isDark ? '0 30px 60px rgba(0,0,0,0.6)' : '0 20px 40px rgba(0,0,0,0.08)',
       display: 'flex', flexDirection: 'column',
@@ -139,7 +140,7 @@ export default function LiveAIDemo() {
       </Box>
 
       {/* Fil de la conversation */}
-      <Box ref={fil} sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, minHeight: 220, maxHeight: facture ? 560 : 360, overflowY: 'auto', pr: 0.5 }}>
+      <Box ref={fil} sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, minHeight: enHaut ? 240 : 220, maxHeight: facture ? 560 : (enHaut ? 400 : 360), overflowY: 'auto', pr: 0.5 }}>
         <Box sx={{ alignSelf: 'flex-start', maxWidth: '90%' }}>
           <Box sx={bulle('assistant')}>{t('liveDemo.intro')}</Box>
         </Box>
@@ -181,18 +182,27 @@ export default function LiveAIDemo() {
       {/* Questions suggérées (au départ) ou de relance (après une réponse) */}
       {!bloque && !enCours && (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1.5 }}>
-          {(aRepondu && suites.length ? suites : (aRepondu ? [] : listeSuggestions)).map((s) => (
-            <Chip
-              key={s} label={s} size="small" clickable onClick={() => poser(s)}
-              sx={{
-                fontSize: '0.75rem', height: 'auto', py: 0.5,
-                '& .MuiChip-label': { whiteSpace: 'normal' },
-                bgcolor: isDark ? 'rgba(37,99,235,0.18)' : 'rgba(37,99,235,0.07)',
-                color: isDark ? '#93c5fd' : '#1d4ed8',
-                border: `1px solid ${isDark ? 'rgba(37,99,235,0.35)' : 'rgba(37,99,235,0.2)'}`,
-              }}
-            />
-          ))}
+          {(aRepondu && suites.length ? suites : (aRepondu ? [] : listeSuggestions)).map((s, i) => {
+            // Au départ, la première suggestion (faire une facture) est mise en avant
+            const vedette = !aRepondu && i === 0;
+            return (
+              <Chip
+                key={s} label={s} size="small" clickable onClick={() => poser(s)}
+                sx={{
+                  fontSize: vedette ? '0.8rem' : '0.75rem', height: 'auto', py: vedette ? 0.75 : 0.5,
+                  fontWeight: vedette ? 700 : 400, width: vedette ? '100%' : 'auto',
+                  '& .MuiChip-label': { whiteSpace: 'normal' },
+                  ...(vedette
+                    ? { bgcolor: '#2563eb', color: '#fff', border: '1px solid #2563eb', '&:hover': { bgcolor: '#1d4ed8 !important' } }
+                    : {
+                      bgcolor: isDark ? 'rgba(37,99,235,0.18)' : 'rgba(37,99,235,0.07)',
+                      color: isDark ? '#93c5fd' : '#1d4ed8',
+                      border: `1px solid ${isDark ? 'rgba(37,99,235,0.35)' : 'rgba(37,99,235,0.2)'}`,
+                    }),
+                }}
+              />
+            );
+          })}
         </Box>
       )}
 

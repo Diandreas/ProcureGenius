@@ -155,7 +155,7 @@ class _ProviderFacture:
             assert OUTIL_APERCU in {t['function']['name'] for t in tools}
             return {'success': True, 'content': '', 'circuit_open': False, 'usage': {'total_tokens': 5},
                     'tool_calls': [{'id': 't1', 'function': OUTIL_APERCU, 'arguments': {
-                        'client_name': 'Akwa', 'items': [{'description': 'Ramette papier A4', 'quantity': 10},
+                        'client_name': 'Hotel akwa plaza', 'items': [{'description': 'ramettes papier A4', 'quantity': 10},
                                                          {'description': 'Livraison', 'quantity': 1, 'unit_price': 5000}]}}]}
         return {'success': True, 'content': 'Votre facture est prête.', 'tool_calls': None,
                 'usage': {'total_tokens': 5}, 'circuit_open': False}
@@ -181,6 +181,8 @@ def test_facture_d_apercu_affichee_sans_rien_enregistrer(demo):
     assert [l['description'] for l in f['items']] == ['Ramette papier A4 80 g', 'Livraison']
     assert f['subtotal'] == 40000 and f['tax_rate'] == 19.25 and f['total'] == 47700
     assert r.data['suggested_followups'] == []
+    # Le texte vient des montants calculés, jamais du modèle
+    assert '47 700 FCFA TTC' in r.data['reply'] and 'Votre facture est prête.' not in r.data['reply']
     assert (Invoice.objects.count(), Client.objects.count()) == avant
 
 

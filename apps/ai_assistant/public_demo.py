@@ -88,19 +88,33 @@ def _arrondi(montant):
     return Decimal(montant).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
 
 
-def _produit(organization, libelle):
-    """Produit du catalogue de la démo correspondant au libellé (nom complet, puis premier mot)."""
-    from apps.invoicing.models import Product
-    qs = Product.objects.filter(organization=organization, is_active=True)
-    trouve = qs.filter(name__icontains=libelle).first()
-    if trouve or not libelle.split():
-        return trouve
-    mots = [m for m in libelle.split() if len(m) > 3]
-    for mot in mots:
-        trouve = qs.filter(name__icontains=mot).first()
-        if trouve:
-            return trouve
+def _simple(texte):
+    """Minuscules, sans accents ni pluriel simple : « Hôtel » = « hotel », « ramettes » = « ramette »."""
+    import unicodedata
+    t = unicodedata.normalize('NFKD', str(texte or '')).encode('ascii', 'ignore').decode().lower()
+    return ' '.join(m[:-1] if len(m) > 3 and m.endswith('s') else m for m in t.split())
+
+
+def _trouver(objets, libelle):
+    """Objet dont le nom contient le libellé, puis le premier mot significatif commun."""
+    cible = _simple(libelle)
+    if not cible:
+        return None
+    noms = [(o, _simple(o.name)) for o in objets]
+    for o, nom in noms:
+        if cible in nom or nom in cible:
+            return o
+    for mot in [m for m in cible.split() if len(m) > 3]:
+        for o, nom in noms:
+            if mot in nom.split():
+                return o
     return None
+
+
+def _produit(organization, libelle):
+    """Produit du catalogue de la démo correspondant au libellé."""
+    from apps.invoicing.models import Product
+    return _trouver(Product.objects.filter(organization=organization, is_active=True), libelle)
 
 
 def build_invoice_preview(organization, arguments):
@@ -115,7 +129,7 @@ def build_invoice_preview(organization, arguments):
     if not nom_client or not isinstance(lignes_brutes, list) or not lignes_brutes:
         return {'success': False, 'error': "Indiquez le client et au moins un article."}
 
-    client = Client.objects.filter(organization=organization, name__icontains=nom_client).first()
+    client = _trouver(Client.objects.filter(organization=organization), nom_client)
     lignes, inconnus = [], []
     for brut in lignes_brutes[:MAX_LIGNES]:
         if not isinstance(brut, dict):
@@ -187,6 +201,20 @@ def build_invoice_preview(organization, arguments):
                     "par WhatsApp et la garder."
                     + (f" Prix inconnu pour : {', '.join(inconnus)}." if inconnus else "")),
     }
+
+
+def reponse_facture(facture):
+    """Texte qui accompagne la facture d'aperçu, écrit à partir des montants calculés."""
+    devise = 'FCFA' if facture['currency'] in ('XAF', 'XOF') else facture['currency']
+    total = f"{round(facture['total']):,}".replace(',', '\u202f')
+    lignes = len(facture['items'])
+    texte = (f"Voilà, la facture pour **{facture['client']['name']}** est prête : {lignes} ligne"
+             f"{'s' if lignes > 1 else ''}, **{total} {devise} TTC**, TVA comprise. "
+             "Pour la télécharger en PDF, l'envoyer à votre client par WhatsApp et la garder, "
+             "créez votre compte gratuit : une minute, un mois offert.")
+    if facture.get('unknown_items'):
+        texte += f" Je n'ai pas trouvé le prix de : {', '.join(facture['unknown_items'])} — donnez-le-moi."
+    return texte
 
 
 class DemoToolRegistry:
@@ -333,7 +361,7 @@ def public_demo_chat(request):
                    if tr.get('function') == OUTIL_APERCU and isinstance(tr.get('result'), dict)
                    and tr['result'].get('success')), None)
     return Response({
-        'reply': resultat.reply,
+        'reply': reponse_facture(apercu) if apercu else resultat.reply,
         'suggested_followups': [] if apercu else list(resultat.suggested_followups or [])[:3],
         'remaining': restant,
         'invoice_preview': apercu,

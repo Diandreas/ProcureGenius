@@ -102,6 +102,10 @@ class Command(BaseCommand):
             reglages, _ = OrganizationSettings.objects.get_or_create(organization=org)
             reglages.company_name = DEMO_ORG_NAME
             reglages.default_currency = 'XAF'
+            # Entreprise de Douala : TVA camerounaise, plan SYSCOHADA
+            reglages.country = 'CM'
+            reglages.default_tax_rate = 19.25
+            reglages.tax_region = 'cameroon'
             reglages.save()
         except Exception as exc:  # réglages facultatifs pour la démo
             self.stderr.write(f'Réglages non appliqués : {exc}')

@@ -5,7 +5,7 @@
     "freeTrial": "Free Trial"
   },
   "hero": {
-    "badge": "Artificial Intelligence at your service",
+    "badge": "Try it right here, no account",
     "titleStart": "Artificial Intelligence powering your ",
     "words": [
       "business",
@@ -13,7 +13,7 @@
       "startup",
       "growth"
     ],
-    "subtitle": "Centralize your purchases, invoices, and inventory. Let Procura's AI automate repetitive tasks and provide you with proactive strategic insights.",
+    "subtitle": "Ask the AI for an invoice right here: it prepares it in seconds, in your currency, VAT included. Invoices, stock, purchasing and Mobile Money in one app.",
     "ctaPrimary": "Start Trial",
     "ctaSecondary": "Make an invoice with AI",
     "trust1": "1 month free, no card",

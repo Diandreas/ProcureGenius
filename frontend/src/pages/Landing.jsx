@@ -219,7 +219,6 @@ export default function Landing() {
       // Halo doré : monte (couche opposée → profondeur accentuée)
       gsap.to('.hero-glow-2', { yPercent: -45, ease: 'none', scrollTrigger: paraTrigger });
       // Carte visuelle : remonte (couche rapide, premier plan)
-      gsap.to('.hero-right', { yPercent: -22, ease: 'none', scrollTrigger: paraTrigger });
       // Bloc texte : léger décalage vers le bas (profondeur intermédiaire)
       gsap.to('.hero-left', { yPercent: 14, ease: 'none', scrollTrigger: paraTrigger });
 
@@ -251,11 +250,11 @@ export default function Landing() {
 
       {/* ─── Hero ────────────────────────────────────────────── */}
       <Box className="hero-section" sx={{
-        minHeight: '100vh',
+        minHeight: { xs: 'auto', md: '100vh' },
         display: 'flex',
         alignItems: 'center',
-        pt: { xs: 14, sm: 20 },
-        pb: { xs: 8, sm: 12 },
+        pt: { xs: 11, sm: 20 },
+        pb: { xs: 6, sm: 12 },
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -282,12 +281,12 @@ export default function Landing() {
         }} />
 
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={8} alignItems="center">
+          <Grid container spacing={{ xs: 4, md: 8 }} alignItems="center">
             <Grid item xs={12} md={6}>
               <Box className="hero-left">
                 {/* Badge */}
                 <Box sx={{
-                  display: 'inline-flex', alignItems: 'center', gap: 1, mb: 4,
+                  display: 'inline-flex', alignItems: 'center', gap: 1, mb: { xs: 2.5, sm: 4 },
                   bgcolor: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.08)',
                   border: '1px solid rgba(16,185,129,0.25)',
                   color: '#10b981', fontWeight: 700, fontSize: '0.82rem',
@@ -301,7 +300,7 @@ export default function Landing() {
                 <Typography variant="h1" sx={{
                   fontFamily: '"Fraunces", Georgia, serif',
                   fontWeight: 500,
-                  fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem' },
+                  fontSize: { xs: '2.2rem', sm: '3.4rem', md: '4.2rem' },
                   lineHeight: 1.04,
                   mb: 0.5,
                   letterSpacing: '-0.02em',
@@ -312,7 +311,7 @@ export default function Landing() {
                 <Typography variant="h1" sx={{
                   fontFamily: '"Fraunces", Georgia, serif',
                   fontWeight: 500,
-                  fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.2rem' },
+                  fontSize: { xs: '2.2rem', sm: '3.4rem', md: '4.2rem' },
                   lineHeight: 1.04,
                   mb: 3,
                   letterSpacing: '-0.02em',
@@ -337,13 +336,13 @@ export default function Landing() {
                   color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)',
                   fontSize: { xs: '1.05rem', sm: '1.15rem' },
                   lineHeight: 1.65,
-                  mb: 5,
+                  mb: { xs: 3, sm: 5 },
                   maxWidth: 500,
                 }}>
                   {t('hero.subtitle')}
                 </Typography>
 
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 5 }}>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: { xs: 3, sm: 5 } }}>
                   <Button
                     variant="contained"
                     size="large"
@@ -369,8 +368,13 @@ export default function Landing() {
                     variant="outlined"
                     size="large"
                     startIcon={<PlayArrow />}
-                    onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="hero-cta-demo"
+                    onClick={() => {
+                      document.getElementById('essai-ia')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      setTimeout(() => document.querySelector('#essai-ia input')?.focus({ preventScroll: true }), 600);
+                    }}
                     sx={{
+                      display: { xs: 'none', md: 'inline-flex' },
                       borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
                       color: isDark ? '#fff' : '#0f172a',
                       textTransform: 'none', fontWeight: 600,
@@ -403,53 +407,23 @@ export default function Landing() {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Box className="hero-right" sx={{ willChange: 'transform', position: 'relative' }}>
-                {/* Carte visuelle principale (Lottie) */}
-                <Box sx={{
-                  borderRadius: 5,
-                  overflow: 'hidden',
-                  border: '1px solid rgba(37,99,235,0.10)',
-                  boxShadow: '0 40px 90px -30px rgba(37,99,235,0.28)',
-                  bgcolor: 'rgba(37,99,235,0.025)',
-                  position: 'relative',
-                  zIndex: 1,
-                }}>
-                  <dotlottie-wc
-                    src="https://lottie.host/ea0ff272-a2d1-4a4d-a09d-b9d190ae1244/nTY70f1Nfx.lottie"
-                    style={{ width: '100%', height: '520px' }}
-                    autoplay loop
-                  />
-                </Box>
-
-                {/* Mascotte Procura — accent de marque flottant */}
+              <Box className="hero-right" id="essai-ia" sx={{ position: 'relative', scrollMarginTop: '96px' }}>
+                {/* Mascotte Procura — accent de marque */}
                 <Box
                   component="img"
                   src="/mascote/Procura_thumbup.png"
-                  alt="Procura"
+                  alt=""
                   className="hero-float"
                   sx={{
-                    position: 'absolute', bottom: -28, left: -34, width: { xs: 120, sm: 168 },
+                    position: 'absolute', top: -58, left: -46, width: 112,
                     zIndex: 2, pointerEvents: 'none',
-                    filter: 'drop-shadow(0 18px 30px rgba(15,23,42,0.18))',
-                    display: { xs: 'none', sm: 'block' },
+                    filter: 'drop-shadow(0 14px 24px rgba(15,23,42,0.18))',
+                    display: { xs: 'none', lg: 'block' },
                   }}
                 />
-
-                {/* Carte flottante "preuve" — chiffre clé */}
-                <Box className="hero-chip" sx={{
-                  position: 'absolute', top: 28, right: -18, zIndex: 3,
-                  bgcolor: pal.card, borderRadius: 3, px: 2, py: 1.25,
-                  border: `1px solid ${pal.border}`,
-                  boxShadow: '0 16px 40px -12px rgba(15,23,42,0.2)',
-                  display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1.25,
-                }}>
-                  <Box sx={{ width: 34, height: 34, borderRadius: 2, bgcolor: 'rgba(16,185,129,0.12)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <TrendingUp sx={{ fontSize: 20 }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 600, fontSize: '1.1rem', lineHeight: 1, color: pal.title }}>{t('hero.statChipValue')}</Typography>
-                    <Typography sx={{ fontSize: '0.68rem', color: pal.faint, fontWeight: 600 }}>{t('hero.statChipLabel')}</Typography>
-                  </Box>
+                {/* La démo en direct : le visiteur fait une facture avec l'IA, sans compte */}
+                <Box sx={{ position: 'relative', zIndex: 1 }}>
+                  <LiveAIDemo variant="hero" />
                 </Box>
               </Box>
             </Grid>
@@ -700,7 +674,28 @@ export default function Landing() {
             </Grid>
             <Grid item xs={12} md={7}>
               <div className="gsap-reveal">
-                <LiveAIDemo />
+                <Box sx={{
+                  borderRadius: 5, overflow: 'hidden',
+                  border: '1px solid rgba(37,99,235,0.10)',
+                  boxShadow: '0 40px 90px -30px rgba(37,99,235,0.28)',
+                  bgcolor: 'rgba(37,99,235,0.025)',
+                }}>
+                  <dotlottie-wc
+                    src="https://lottie.host/ea0ff272-a2d1-4a4d-a09d-b9d190ae1244/nTY70f1Nfx.lottie"
+                    style={{ width: '100%', height: '440px' }}
+                    autoplay loop
+                  />
+                </Box>
+                <Box sx={{ textAlign: 'center', mt: 3 }}>
+                  <Button variant="contained" disableElevation endIcon={<ArrowForward />}
+                    onClick={() => {
+                      document.getElementById('essai-ia')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      setTimeout(() => document.querySelector('#essai-ia input')?.focus({ preventScroll: true }), 700);
+                    }}
+                    sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 3, px: 3, py: 1.2, bgcolor: '#f59e0b', color: '#0f172a', '&:hover': { bgcolor: '#d97706' } }}>
+                    {t('hero.ctaSecondary')}
+                  </Button>
+                </Box>
               </div>
             </Grid>
           </Grid>
