@@ -747,6 +747,8 @@ class DocumentAnalysisView(APIView):
         
         # Mapper les types de documents du frontend vers les types acceptés par le backend
         document_type_mapping = {
+            'expense': 'expense',  # reçu, ticket, facture fournisseur reçue -> dépense
+            'receipt': 'expense',
             'invoice': 'invoice',
             'purchase_order': 'purchase_order',
             'supplier_list': 'supplier',
@@ -781,6 +783,16 @@ class DocumentAnalysisView(APIView):
                     'error': 'User has no organization assigned'
                 }
             
+            if mapped_type == 'expense' and image_file is not None:
+                from django.core.files.storage import default_storage
+                try:
+                    image_file.seek(0)
+                    saved = default_storage.save(
+                        f"expenses/{user.organization_id}/import_{timezone.now():%Y%m%d%H%M%S}_{image_file.name}", image_file)
+                    data = {**(data or {}), '_receipt_path': saved}
+                except Exception:
+                    logger.exception("Reçu non conservé pour l'import de dépense")
+
             # Créer l'ImportReview avec le type mappé
             review = ImportReview.objects.create(
                 user=user,
@@ -1942,6 +1954,35 @@ class ImportReviewApproveView(APIView):
                     'success': True,
                     'entity_id': po.id,
                     'message': f'Bon de commande {po.po_number} créé avec succès'
+                }
+
+            elif entity_type == 'expense':
+                from datetime import date as date_type
+                from apps.accounting.expenses import create_expense, to_decimal
+                from apps.core.currencies import format_currency
+                org = getattr(user, 'organization', None)
+                total = to_decimal(data.get('total') or data.get('total_amount'))
+                tax = to_decimal(data.get('tax'))
+                try:
+                    when = date_type.fromisoformat(str(data.get('date'))[:10]) if data.get('date') else None
+                except ValueError:
+                    when = None
+                expense, err = create_expense(
+                    org, user, amount=total, tax_amount=tax, date=when,
+                    description=data.get('description') or data.get('supplier_name') or 'Dépense',
+                    category=data.get('category'), supplier_name=data.get('supplier_name') or '',
+                    reference=data.get('document_number') or '',
+                    payment_method=data.get('payment_method') if data.get('payment_method') not in (None, 'unknown') else 'cash',
+                    is_paid=data.get('paid') is not False, source='ai_import',
+                )
+                if err:
+                    return {'success': False, 'error': err}
+                if data.get('_receipt_path'):
+                    type(expense).objects.filter(pk=expense.pk).update(receipt=data['_receipt_path'])
+                return {
+                    'success': True,
+                    'entity_id': expense.id,
+                    'message': f"Dépense de {format_currency(expense.amount, expense.currency)} enregistrée ({expense.description})",
                 }
 
             else:

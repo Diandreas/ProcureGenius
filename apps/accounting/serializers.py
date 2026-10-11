@@ -1,6 +1,6 @@
 from decimal import Decimal
 from rest_framework import serializers
-from .models import Account, AccountingJournal, JournalEntry, JournalEntryLine
+from .models import Account, AccountingJournal, JournalEntry, JournalEntryLine, Expense
 
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -115,3 +115,55 @@ class JournalEntryListSerializer(serializers.ModelSerializer):
             'journal', 'journal_code', 'status', 'status_display',
             'source', 'total_debit', 'created_at',
         ]
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    category_display = serializers.SerializerMethodField()
+    payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
+    account_code = serializers.SerializerMethodField()
+    entry_number = serializers.CharField(source='journal_entry.entry_number', read_only=True, default=None)
+    receipt_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Expense
+        fields = [
+            'id', 'date', 'category', 'category_display', 'account_code', 'description', 'supplier',
+            'supplier_name', 'reference', 'amount', 'tax_amount', 'currency', 'is_paid', 'payment_method',
+            'payment_method_display', 'receipt', 'receipt_url', 'source', 'notes', 'journal_entry',
+            'entry_number', 'created_at',
+        ]
+        read_only_fields = ['id', 'currency', 'journal_entry', 'entry_number', 'created_at', 'source']
+        extra_kwargs = {'receipt': {'write_only': True, 'required': False}}
+
+    def get_category_display(self, obj):
+        from .charts import EXPENSE_CATEGORIES
+        return dict(EXPENSE_CATEGORIES).get(obj.category, obj.category)
+
+    def get_account_code(self, obj):
+        from .charts import org_standard, role_code
+        return role_code(org_standard(obj.organization), obj.category)
+
+    def get_receipt_url(self, obj):
+        if not obj.receipt:
+            return None
+        req = self.context.get('request')
+        return req.build_absolute_uri(obj.receipt.url) if req else obj.receipt.url
+
+    def validate_category(self, value):
+        from .charts import EXPENSE_CATEGORIES
+        if value not in dict(EXPENSE_CATEGORIES):
+            raise serializers.ValidationError("Catégorie inconnue.")
+        return value
+
+    def validate(self, attrs):
+        amount = attrs.get('amount', getattr(self.instance, 'amount', None))
+        tax = attrs.get('tax_amount', getattr(self.instance, 'tax_amount', Decimal('0'))) or Decimal('0')
+        if amount is None or amount <= 0:
+            raise serializers.ValidationError({'amount': "Le montant doit être positif."})
+        if tax < 0 or tax >= amount:
+            raise serializers.ValidationError({'tax_amount': "La TVA doit être positive et inférieure au montant TTC."})
+        supplier = attrs.get('supplier')
+        org = self.context['request'].user.organization
+        if supplier is not None and supplier.organization_id != org.pk:
+            raise serializers.ValidationError({'supplier': "Fournisseur inconnu."})
+        return attrs

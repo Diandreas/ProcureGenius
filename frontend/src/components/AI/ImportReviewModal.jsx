@@ -17,6 +17,12 @@ import {
   alpha,
   IconButton,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -30,8 +36,11 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { aiChatAPI } from '../../services/api';
+import accountingAPI from '../../services/accountingAPI';
+import { PAYMENT_METHODS } from '../../constants/paymentMethods';
 
 const ENTITY_TYPE_ICONS = {
+  expense: <Receipt />,
   invoice: <Receipt />,
   purchase_order: <ShoppingCart />,
   supplier: <Business />,
@@ -250,10 +259,79 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
     );
   };
 
+  // Dépense (reçu, ticket, facture fournisseur) : catégories avec le compte de charge du plan de l'organisation
+  const [expenseCategories, setExpenseCategories] = useState([]);
+  useEffect(() => {
+    if (open && review?.entity_type === 'expense' && expenseCategories.length === 0) {
+      accountingAPI.getExpenseCategories().then((r) => setExpenseCategories(r.data)).catch(() => {});
+    }
+  }, [open, review?.entity_type, expenseCategories.length]);
+
+  const renderExpenseFields = () => {
+    if (!modifiedData) return null;
+    const paid = modifiedData.paid !== false;
+    const method = modifiedData.payment_method && modifiedData.payment_method !== 'unknown' ? modifiedData.payment_method : 'cash';
+    return (
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <TextField fullWidth size="small" label="Libellé" value={modifiedData.description || ''}
+            onChange={(e) => handleFieldChange('description', e.target.value)} />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField fullWidth size="small" label="Fournisseur" value={modifiedData.supplier_name || ''}
+            onChange={(e) => handleFieldChange('supplier_name', e.target.value)} />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField fullWidth size="small" label="Date" type="date" InputLabelProps={{ shrink: true }}
+            value={(modifiedData.date || '').slice(0, 10)} onChange={(e) => handleFieldChange('date', e.target.value)} />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField fullWidth size="small" label="Montant total (TTC)" type="number" value={modifiedData.total ?? ''}
+            onChange={(e) => handleFieldChange('total', parseFloat(e.target.value) || 0)} />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField fullWidth size="small" label="dont TVA récupérable" type="number" value={modifiedData.tax ?? ''}
+            onChange={(e) => handleFieldChange('tax', parseFloat(e.target.value) || 0)} />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Catégorie</InputLabel>
+            <Select label="Catégorie" value={modifiedData.category || 'exp_other'}
+              onChange={(e) => handleFieldChange('category', e.target.value)}>
+              {(expenseCategories.length ? expenseCategories : [{ value: modifiedData.category || 'exp_other', label: modifiedData.category || 'Autres dépenses' }])
+                .map((c) => <MenuItem key={c.value} value={c.value}>{c.label}{c.account_code ? ` (${c.account_code})` : ''}</MenuItem>)}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <FormControlLabel control={<Switch checked={paid} onChange={(e) => handleFieldChange('paid', e.target.checked)} />}
+            label={paid ? 'Déjà payée' : 'À payer'} />
+        </Grid>
+        {paid && (
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Payée par</InputLabel>
+              <Select label="Payée par" value={method} onChange={(e) => handleFieldChange('payment_method', e.target.value)}>
+                {PAYMENT_METHODS.map((m) => <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>)}
+              </Select>
+            </FormControl>
+          </Grid>
+        )}
+        <Grid item xs={12}>
+          <Alert severity="info">
+            En validant, la dépense est enregistrée avec la photo du reçu et l'écriture comptable est passée.
+          </Alert>
+        </Grid>
+      </Grid>
+    );
+  };
+
   const renderFields = () => {
     if (!review) return null;
 
     switch (review.entity_type) {
+      case 'expense':
+        return renderExpenseFields();
       case 'invoice':
         return renderInvoiceFields();
       case 'purchase_order':
@@ -299,7 +377,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography variant="h6">
-              Révision d'import - {review.entity_type === 'invoice' ? 'Facture' : review.entity_type === 'purchase_order' ? 'Bon de commande' : review.entity_type}
+              Révision d'import - {review.entity_type === 'expense' ? 'Dépense' : review.entity_type === 'invoice' ? 'Facture client' : review.entity_type === 'purchase_order' ? 'Bon de commande' : review.entity_type}
             </Typography>
             <Chip
               label={review.status === 'pending' ? 'En attente' : review.status === 'modified' ? 'Modifié' : review.status === 'approved' ? 'Approuvé' : 'Rejeté'}

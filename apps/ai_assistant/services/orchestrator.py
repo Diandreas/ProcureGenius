@@ -153,6 +153,7 @@ _FOLLOWUP_SUGGESTIONS = {
 
     # Comptabilité
     "create_journal_entry": ["Voir le plan comptable ?"],
+    "create_expense": ["Voir mes dépenses du mois ?"],
     "get_account_list": ["Créer une nouvelle écriture ?"],
 
     # Rapports
@@ -220,6 +221,7 @@ _TOOL_LABELS = {
     "search_entity": "Recherche dans la base",
     "get_account_list": "Lecture du plan comptable",
     "create_journal_entry": "Création de l'écriture comptable",
+    "create_expense": "Enregistrement de la dépense",
     "three_way_match": "Rapprochement facture / commande / réception",
 }
 

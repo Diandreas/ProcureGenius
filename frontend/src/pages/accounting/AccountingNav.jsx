@@ -13,6 +13,7 @@ import {
   AccountBalance as BilanIcon,
   Insights as SIGIcon,
   HelpOutline as HelpIcon,
+  Payments as ExpensesIcon,
   Lock as LockIcon,
 } from '@mui/icons-material';
 import BackButton from '../../components/navigation/BackButton';
@@ -30,6 +31,7 @@ const PATH_TO_CONTEXT = {
 
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/accounting', icon: <DashboardIcon />, exact: true },
+  { label: 'Dépenses', path: '/accounting/expenses', icon: <ExpensesIcon /> },
   { label: 'Plan comptable', path: '/accounting/chart-of-accounts', icon: <PlanIcon /> },
   { label: 'Écritures', path: '/accounting/entries', icon: <EntriesIcon /> },
   { label: 'Balance', path: '/accounting/reports/trial-balance', icon: <BalanceIcon /> },
@@ -76,6 +78,8 @@ export default function AccountingNav({ title, subtitle, action }) {
           sx={{
             display: 'flex',
             gap: 0.5,
+            flex: 1,
+            minWidth: 0, // sans cela la barre garde la largeur de ses icônes et élargit toute la page sur téléphone
             overflowX: 'auto',
             pb: 0.5,
             '&::-webkit-scrollbar': { height: 4 },

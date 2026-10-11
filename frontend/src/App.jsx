@@ -109,6 +109,7 @@ const GeneralLedger       = React.lazy(() => import('./pages/accounting/GeneralL
 const IncomeStatement     = React.lazy(() => import('./pages/accounting/IncomeStatement'));
 const BalanceSheet        = React.lazy(() => import('./pages/accounting/BalanceSheet'));
 const SIG                 = React.lazy(() => import('./pages/accounting/SIG'));
+const Expenses            = React.lazy(() => import('./pages/accounting/Expenses'));
 
 // Guards
 import PrivateRoute from './components/guards/PrivateRoute';
@@ -956,6 +957,7 @@ function App() {
 
                             {/* Comptabilité */}
                             <Route path="/accounting" element={<AccountingDashboard />} />
+                            <Route path="/accounting/expenses" element={<Expenses />} />
                             <Route path="/accounting/chart-of-accounts" element={<ChartOfAccounts />} />
                             <Route path="/accounting/entries" element={<JournalEntries />} />
                             <Route path="/accounting/entries/new" element={<JournalEntryForm />} />

@@ -1,4 +1,5 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from . import views
 from .fec_export import FECExportView
 
@@ -36,3 +37,7 @@ urlpatterns = [
     path('setup/', views.SetupAccountingView.as_view(), name='setup-accounting'),
     path('chart-standard/', views.ChartStandardView.as_view(), name='chart-standard'),
 ]
+
+_router = DefaultRouter()
+_router.register('expenses', views.ExpenseViewSet, basename='expense')
+urlpatterns += _router.urls

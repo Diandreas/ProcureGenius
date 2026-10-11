@@ -50,7 +50,8 @@ const ENTITY_TYPE_ICONS = {
 };
 
 const ENTITY_TYPE_LABELS = {
-  invoice: 'Facture',
+  expense: 'Dépense',
+  invoice: 'Facture client',
   purchase_order: 'Bon de commande',
   supplier: 'Fournisseur',
   product: 'Produit',
@@ -132,7 +133,9 @@ function ImportReviews() {
 
   const getPreviewText = (review) => {
     const data = review.modified_data || review.extracted_data;
-    if (review.entity_type === 'invoice') {
+    if (review.entity_type === 'expense') {
+      return `${data.description || 'Dépense'} - ${data.supplier_name || ''} - ${data.total ?? ''}`;
+    } else if (review.entity_type === 'invoice') {
       return `Facture ${data.invoice_number || 'N/A'} - ${data.client_name || 'Client inconnu'}`;
     } else if (review.entity_type === 'purchase_order') {
       return `BC ${data.po_number || 'N/A'} - ${data.supplier_name || 'Fournisseur inconnu'}`;

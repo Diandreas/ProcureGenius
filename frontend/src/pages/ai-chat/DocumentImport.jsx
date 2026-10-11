@@ -16,7 +16,7 @@ import {
   alpha,
   Divider,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CloudUpload,
   DocumentScanner,
@@ -40,10 +40,17 @@ import Mascot from '../../components/Mascot';
 
 const DOCUMENT_TYPES = [
   {
-    id: 'invoice',
-    label: 'Facture',
+    id: 'expense',
+    label: 'Reçu / dépense',
     icon: <Receipt sx={{ fontSize: 32 }} />,
-    description: 'Facture fournisseur ou client',
+    description: "Ticket, reçu ou facture d'un fournisseur (loyer, électricité, carburant…) : enregistré en dépense",
+    color: '#ef4444'
+  },
+  {
+    id: 'invoice',
+    label: 'Facture client',
+    icon: <Receipt sx={{ fontSize: 32 }} />,
+    description: 'Facture que vous avez émise (vente)',
     color: '#10b981'
   },
   {
@@ -98,7 +105,11 @@ function DocumentImport() {
   const isDark = theme.palette.mode === 'dark';
   const fileInputRef = useRef(null);
 
-  const [selectedType, setSelectedType] = useState(null);
+  const [searchParams] = useSearchParams();
+  // ?type=expense (depuis la page Dépenses) présélectionne le type de document
+  const [selectedType, setSelectedType] = useState(
+    DOCUMENT_TYPES.some((t) => t.id === searchParams.get('type')) ? searchParams.get('type') : null
+  );
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);

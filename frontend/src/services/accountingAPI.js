@@ -43,6 +43,14 @@ const accountingAPI = {
   checkSetup: () => api.get(`${BASE}/setup/`),
   initSetup: () => api.post(`${BASE}/setup/`),
 
+  // ── Dépenses ────────────────────────────────────────────────────
+  getExpenses: (params = {}) => api.get(`${BASE}/expenses/`, { params }),
+  getExpenseSummary: (params = {}) => api.get(`${BASE}/expenses/summary/`, { params }),
+  getExpenseCategories: () => api.get(`${BASE}/expenses/categories/`),
+  createExpense: (formData) => api.post(`${BASE}/expenses/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateExpense: (id, formData) => api.patch(`${BASE}/expenses/${id}/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteExpense: (id) => api.delete(`${BASE}/expenses/${id}/`),
+
   // ── Référentiel comptable (plan du pays) ─────────────────────────
   getChartStandard: () => api.get(`${BASE}/chart-standard/`),
   switchChartStandard: (target) => api.post(`${BASE}/chart-standard/`, { target }),

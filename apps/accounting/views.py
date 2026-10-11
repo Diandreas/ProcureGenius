@@ -11,7 +11,9 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from .models import Account, AccountingJournal, JournalEntry, JournalEntryLine
 from .serializers import (
@@ -876,3 +878,78 @@ class ChartStandardView(APIView):
         plan = apply_switch(org, target)
         return Response({'message': 'Plan comptable mis à jour', 'renamed': len(plan['renames']),
                          'moved': len(plan['moves']), **self._context(org)})
+
+
+class ExpenseViewSet(viewsets.ModelViewSet):
+    """
+    /accounting/expenses/ — dépenses de l'organisation (loyer, transport, reçus…).
+    Création, modification : l'écriture comptable est passée / mise à jour aussitôt.
+    Suppression : l'écriture est annulée (elle reste visible, marquée annulée).
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_serializer_class(self):
+        from .serializers import ExpenseSerializer
+        return ExpenseSerializer
+
+    def get_queryset(self):
+        from .models import Expense
+        qs = Expense.objects.filter(organization=self.request.user.organization).select_related('journal_entry', 'organization')
+        p = self.request.query_params
+        if p.get('category'):
+            qs = qs.filter(category=p['category'])
+        if p.get('start_date'):
+            qs = qs.filter(date__gte=p['start_date'])
+        if p.get('end_date'):
+            qs = qs.filter(date__lte=p['end_date'])
+        if p.get('search'):
+            qs = qs.filter(Q(description__icontains=p['search']) | Q(supplier_name__icontains=p['search']) |
+                           Q(reference__icontains=p['search']))
+        return qs
+
+    def _post(self, expense):
+        from rest_framework.exceptions import ValidationError as DRFValidationError
+        from .expenses import post_expense_entry
+        _entry, err = post_expense_entry(expense, self.request.user)
+        if err:
+            raise DRFValidationError({'detail': err})
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            expense = serializer.save(organization=self.request.user.organization, created_by=self.request.user,
+                                      source='manual')
+            self._post(expense)
+
+    def perform_update(self, serializer):
+        with transaction.atomic():
+            self._post(serializer.save())
+
+    def perform_destroy(self, instance):
+        from .expenses import cancel_expense_entry
+        with transaction.atomic():
+            cancel_expense_entry(instance)
+            instance.delete()
+
+    @action(detail=False, methods=['get'])
+    def categories(self, request):
+        """Catégories proposées, avec le compte de charge correspondant dans le plan de l'organisation."""
+        from .charts import EXPENSE_CATEGORIES, org_standard, role_code
+        std = org_standard(request.user.organization)
+        return Response([{'value': k, 'label': lbl, 'account_code': role_code(std, k)} for k, lbl in EXPENSE_CATEGORIES])
+
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Total des dépenses par catégorie sur la période (par défaut : mois en cours)."""
+        from .charts import EXPENSE_CATEGORIES
+        today = timezone.localdate()
+        qs = self.get_queryset()
+        if not request.query_params.get('start_date'):
+            qs = qs.filter(date__gte=today.replace(day=1))
+        rows = list(qs.values('category').annotate(total=Sum('amount')).order_by('-total'))
+        labels = dict(EXPENSE_CATEGORIES)
+        return Response({
+            'total': str(sum((r['total'] for r in rows), Decimal('0'))),
+            'by_category': [{'category': r['category'], 'label': labels.get(r['category'], r['category']),
+                             'total': str(r['total'])} for r in rows],
+        })

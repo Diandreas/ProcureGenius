@@ -315,6 +315,29 @@ Retourne UNIQUEMENT le JSON, sans texte avant/après.""",
 
 Retourne UNIQUEMENT le JSON.""",
 
+            'expense': """Analyse ce document de DÉPENSE (reçu, ticket de caisse, facture d'un fournisseur reçue par
+l'entreprise : loyer, électricité, eau, téléphone, carburant, transport, fournitures, réparation, marchandises…).
+Extrais au format JSON strict :
+
+{
+  "supplier_name": "nom du fournisseur / commerçant qui a émis le document",
+  "supplier_phone": "téléphone si présent",
+  "document_number": "numéro du reçu ou de la facture si présent",
+  "date": "date YYYY-MM-DD",
+  "description": "résumé court de la dépense (ex: Loyer octobre, Carburant, Facture ENEO septembre)",
+  "category": "UNE valeur parmi : exp_goods (marchandises à revendre), exp_supplies (fournitures, consommables), exp_rent (loyer), exp_utilities (électricité, eau), exp_telecom (téléphone, internet), exp_transport (transport, carburant, taxi), exp_salaries (salaires), exp_social (cotisations sociales), exp_office (fournitures de bureau), exp_repairs (entretien, réparation), exp_insurance (assurance), exp_advertising (publicité), exp_fees (honoraires), exp_bank_fees (frais bancaires ou Mobile Money), exp_taxes (impôts et taxes), exp_other (autre)",
+  "items": [{"description": "article", "quantity": nombre, "unit_price": prix, "total": total}],
+  "subtotal": montant_hors_taxe_ou_null,
+  "tax": montant_tva_ou_0,
+  "total": montant_total_paye,
+  "currency": "code devise (XAF, XOF, EUR…)",
+  "payment_method": "cash | orange_money | mtn_momo | wave | bank_transfer | check | credit_card | unknown",
+  "paid": true si le document montre que c'est payé (ticket, reçu, mention payé), false si c'est une facture à payer
+}
+
+Les montants sont des nombres sans espaces ni symbole. Si une information est absente, mets null.
+Retourne UNIQUEMENT le JSON.""",
+
             'receipt': """Analyse ce REÇU/TICKET (image) et extrais:
 
 {

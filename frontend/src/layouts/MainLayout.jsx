@@ -1174,6 +1174,9 @@ function MainLayout() {
           component="main"
           sx={{
             flexGrow: 1,
+            // élément flex : sans minWidth 0 il s'élargit au contenu le plus large et la page
+            // déborde horizontalement sur téléphone (ex. pages Comptabilité)
+            minWidth: 0,
             p: { xs: 2, sm: 2.5 },
             pb: { xs: 10, sm: 2.5 },
             width: { md: `calc(100% - ${sidebarWidth}px)` },

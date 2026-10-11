@@ -91,6 +91,7 @@ ANALYSE ET VISUALISATION :
 
 COMPTABILITÉ :
 - **get_account_list** — Liste les comptes du plan comptable
+- **create_expense** — Enregistre une dépense payée ou à payer (loyer, carburant, salaire…) : l'écriture est passée automatiquement
 - **create_journal_entry** — Crée une écriture en partie double (total_débit = total_crédit)
 
 IMPORTANT - Isolation des données :
@@ -200,6 +201,7 @@ ANALYSIS AND VISUALIZATION:
 
 ACCOUNTING:
 - **get_account_list** — Lists chart of accounts
+- **create_expense** — Records a paid or unpaid expense (rent, fuel, salary…); the journal entry is posted automatically
 - **create_journal_entry** — Creates a double-entry journal entry (total_debit = total_credit)
 
 IMPORTANT - Data isolation:

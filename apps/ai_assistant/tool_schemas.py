@@ -90,6 +90,16 @@ TOOL_PARAM_SCHEMAS = {
         'filter': {'type': 'string', 'required': False},
         'search': {'type': 'string', 'required': False},
     },
+    'create_expense': {
+        'amount': {'type': 'number', 'required': True},
+        'description': {'type': 'string', 'required': True},
+        'category': {'type': 'string', 'required': False},
+        'payment_method': {'type': 'string', 'required': False},
+        'paid': {'type': 'boolean', 'required': False},
+        'supplier_name': {'type': 'string', 'required': False},
+        'date': {'type': 'string', 'required': False},
+        'tax_amount': {'type': 'number', 'required': False},
+    },
     'create_journal_entry': {
         'journal_code': {'type': 'string', 'required': True},
         'date': {'type': 'string', 'required': False},
