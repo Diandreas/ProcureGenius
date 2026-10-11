@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App.jsx'
 import './index.css'
-import { initNativeApp, patchFetchForNative } from './services/nativeInit';
+import { initNativeApp, initOffline, patchFetchForNative } from './services/nativeInit';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -12,6 +12,9 @@ patchFetchForNative();
 
 // Initialise l'experience native (status bar, splash, bouton retour, BDD offline).
 initNativeApp();
+
+// Mode hors ligne : cache local, file des enregistrements et synchro.
+initOffline();
 
 // Enregistrement du Service Worker pour la PWA (web uniquement).
 // En natif (Capacitor), on n'enregistre pas le SW : il pourrait intercepter
@@ -22,7 +25,10 @@ if (!isNativeApp && 'serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('/service-worker.js')
       .then((registration) => {
-        console.log('Service Worker enregistré avec succès:', registration.scope);
+        // Verifie les mises a jour a chaque retour sur l'onglet
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') registration.update().catch(() => {});
+        });
       })
       .catch((error) => {
         console.log('Échec de l\'enregistrement du Service Worker:', error);

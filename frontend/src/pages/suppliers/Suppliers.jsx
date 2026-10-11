@@ -57,6 +57,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 import { getStatusColor, getStatusLabel, parseRating } from '../../utils/formatters';
 import { useHeader } from '../../contexts/HeaderContext';
 import { NeumorphicKpis, NeumorphicSearch, NeumorphicCard } from '../../components/neumorphic/NeumorphicList';
@@ -105,7 +106,7 @@ function Suppliers() {
   const fetchSuppliers = async () => {
     try {
       setLoading(true);
-      const response = await suppliersAPI.list();
+      const response = await offlineData.suppliers.list();
       setSuppliers(response.data.results || response.data);
     } catch (error) {
       enqueueSnackbar(t('suppliers:messages.loadingError'), { variant: 'error' });

@@ -72,6 +72,7 @@ import i18n from '../../i18n/config';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import { invoicesAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import { generateInvoicePDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
@@ -181,7 +182,7 @@ function InvoiceDetail() {
   const fetchInvoice = async () => {
     setLoading(true);
     try {
-      const response = await invoicesAPI.get(id);
+      const response = await offlineData.invoices.get(id);
       setInvoice(response.data);
     } catch (error) {
       enqueueSnackbar(t('invoices:messages.loadInvoiceError'), { variant: 'error' });

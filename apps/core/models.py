@@ -435,3 +435,22 @@ class OrganizationSettings(models.Model):
 
     def __str__(self):
         return f"Paramètres de {self.organization.name}"
+
+
+class IdempotencyKey(models.Model):
+    """
+    Clé d'idempotence d'une création faite depuis l'app (en-tête Idempotency-Key).
+    Une création rejouée par la file hors ligne (réponse perdue, deuxième onglet…) renvoie
+    l'objet déjà créé au lieu d'en créer un second.
+    """
+    user = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE, related_name='+')
+    key = models.CharField(max_length=64)
+    scope = models.CharField(max_length=50, blank=True)
+    object_id = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['user', 'key'], name='uniq_idempotency_user_key')]
+
+    def __str__(self):
+        return f"{self.scope}:{self.key}"

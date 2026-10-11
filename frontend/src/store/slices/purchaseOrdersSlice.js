@@ -1,47 +1,40 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { purchaseOrdersAPI } from '../../services/api';
-import { readListWithCache, readOneWithCache, createWithQueue, updateWithQueue, deleteWithQueue, newUuid } from '../../services/offline';
+import { offlineData } from '../../services/offline/entities';
 
 // Async thunks
 export const fetchPurchaseOrders = createAsyncThunk(
   'purchaseOrders/fetchPurchaseOrders',
   async (params = {}) => {
-    return await readListWithCache('purchaseOrders', () => purchaseOrdersAPI.list(params));
+    return (await offlineData.purchaseOrders.list(params)).data;
   }
 );
 
 export const fetchPurchaseOrder = createAsyncThunk(
   'purchaseOrders/fetchPurchaseOrder',
   async (id) => {
-    return await readOneWithCache('purchaseOrders', id, () => purchaseOrdersAPI.get(id));
+    return (await offlineData.purchaseOrders.get(id)).data;
   }
 );
 
 export const createPurchaseOrder = createAsyncThunk(
   'purchaseOrders/createPurchaseOrder',
   async (data) => {
-    // Offline : numero de BC provisoire (le serveur attribuera le definitif).
-    const withProvisional = data.po_number
-      ? data
-      : { ...data, po_number: `BROUILLON-${newUuid().slice(0, 6).toUpperCase()}` };
-    return await createWithQueue('purchaseOrders', withProvisional, (d) => {
-      const { po_number, ...online } = d;
-      return purchaseOrdersAPI.create(online);
-    });
+    return (await offlineData.purchaseOrders.create(data)).data;
   }
 );
 
 export const updatePurchaseOrder = createAsyncThunk(
   'purchaseOrders/updatePurchaseOrder',
   async ({ id, data }) => {
-    return await updateWithQueue('purchaseOrders', id, data, (i, d) => purchaseOrdersAPI.update(i, d));
+    return (await offlineData.purchaseOrders.update(id, data)).data;
   }
 );
 
 export const deletePurchaseOrder = createAsyncThunk(
   'purchaseOrders/deletePurchaseOrder',
   async (id) => {
-    await deleteWithQueue('purchaseOrders', id, (i) => purchaseOrdersAPI.delete(i));
+    await offlineData.purchaseOrders.delete(id);
     return id;
   }
 );

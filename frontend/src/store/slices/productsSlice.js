@@ -1,40 +1,40 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { productsAPI } from '../../services/api';
-import { readListWithCache, readOneWithCache, createWithQueue, updateWithQueue, deleteWithQueue } from '../../services/offline';
+import { offlineData } from '../../services/offline/entities';
 
 // Async thunks
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (params = {}) => {
-    return await readListWithCache('products', () => productsAPI.list(params));
+    return (await offlineData.products.list(params)).data;
   }
 );
 
 export const fetchProduct = createAsyncThunk(
   'products/fetchProduct',
   async (id) => {
-    return await readOneWithCache('products', id, () => productsAPI.get(id));
+    return (await offlineData.products.get(id)).data;
   }
 );
 
 export const createProduct = createAsyncThunk(
   'products/createProduct',
   async (data) => {
-    return await createWithQueue('products', data, (d) => productsAPI.create(d));
+    return (await offlineData.products.create(data)).data;
   }
 );
 
 export const updateProduct = createAsyncThunk(
   'products/updateProduct',
   async ({ id, data }) => {
-    return await updateWithQueue('products', id, data, (i, d) => productsAPI.update(i, d));
+    return (await offlineData.products.update(id, data)).data;
   }
 );
 
 export const deleteProduct = createAsyncThunk(
   'products/deleteProduct',
   async (id) => {
-    await deleteWithQueue('products', id, (i) => productsAPI.delete(i));
+    await offlineData.products.delete(id);
     return id;
   }
 );

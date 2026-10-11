@@ -50,6 +50,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { purchaseOrdersAPI, suppliersAPI, warehousesAPI, aiChatAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { supplierFields } from '../../config/quickCreateFields';
@@ -179,7 +180,7 @@ function PurchaseOrderForm() {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await suppliersAPI.list();
+      const response = await offlineData.suppliers.list();
       setSuppliers(response.data.results || response.data);
     } catch (error) {
       enqueueSnackbar(t('purchaseOrders:messages.suppliersLoadError'), { variant: 'error' });
@@ -210,7 +211,7 @@ function PurchaseOrderForm() {
   const fetchPurchaseOrder = async () => {
     setLoading(true);
     try {
-      const response = await purchaseOrdersAPI.get(id);
+      const response = await offlineData.purchaseOrders.get(id);
       const po = response.data;
       setFormData({
         po_number: po.po_number,
@@ -326,10 +327,10 @@ function PurchaseOrderForm() {
       };
 
       if (isEdit) {
-        await purchaseOrdersAPI.update(id, payload);
+        await offlineData.purchaseOrders.update(id, payload);
         enqueueSnackbar(t('purchaseOrders:messages.poUpdatedSuccess'), { variant: 'success' });
       } else {
-        const response = await purchaseOrdersAPI.create(payload);
+        const response = await offlineData.purchaseOrders.create(payload);
         enqueueSnackbar(t('purchaseOrders:messages.poCreatedSuccess'), { variant: 'success' });
         navigate(`/purchase-orders/${response.data.id}`);
         return;

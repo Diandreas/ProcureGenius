@@ -60,6 +60,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 import reportsAPI from '../../services/reportsAPI';
 import { getStatusColor, getStatusLabel, formatDate, parseRating } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
@@ -138,7 +139,7 @@ function SupplierDetail() {
   const fetchSupplier = async () => {
     setLoading(true);
     try {
-      const response = await suppliersAPI.get(id);
+      const response = await offlineData.suppliers.get(id);
       setSupplier(response.data);
     } catch (error) {
       enqueueSnackbar(t('suppliers:messages.loadingError'), { variant: 'error' });

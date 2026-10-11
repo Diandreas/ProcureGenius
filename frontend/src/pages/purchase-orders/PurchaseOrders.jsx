@@ -25,6 +25,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import { purchaseOrdersAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import PullToRefresh from '../../components/mobile/PullToRefresh';
@@ -69,7 +70,7 @@ function PurchaseOrders() {
   const fetchPurchaseOrders = async () => {
     try {
       setLoading(true);
-      const response = await purchaseOrdersAPI.list();
+      const response = await offlineData.purchaseOrders.list();
       setPurchaseOrders(response.data.results || response.data);
     } catch (err) {
       console.error('Error fetching purchase orders:', err);

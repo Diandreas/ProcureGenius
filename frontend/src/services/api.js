@@ -107,6 +107,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Redirect to login if unauthorized
       localStorage.removeItem('authToken');
+      localStorage.removeItem('procura_offline_scope'); // donnees hors ligne : utilisateur oublie
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -118,6 +119,8 @@ export const authAPI = {
   login: (credentials) => api.post('/auth/token/', credentials),
   logout: () => {
     localStorage.removeItem('authToken');
+    // Les donnees hors ligne restent rangees sous l'utilisateur, pour son retour
+    localStorage.removeItem('procura_offline_scope');
     return Promise.resolve();
   },
   getProfile: () => api.get('/auth/profile/'),
@@ -141,7 +144,7 @@ export const authAPI = {
 export const suppliersAPI = {
   list: (params) => api.get('/suppliers/', { params }),
   get: (id) => api.get(`/suppliers/${id}/`),
-  create: (data) => api.post('/suppliers/', data),
+  create: (data, config) => api.post('/suppliers/', data, config),
   update: (id, data) => api.patch(`/suppliers/${id}/`, data),
   delete: (id) => api.delete(`/suppliers/${id}/`),
   toggleStatus: (id) => api.post(`/suppliers/${id}/toggle_status/`),
@@ -154,7 +157,7 @@ export const suppliersAPI = {
 export const purchaseOrdersAPI = {
   list: (params) => api.get('/purchase-orders/', { params }),
   get: (id) => api.get(`/purchase-orders/${id}/`),
-  create: (data) => api.post('/purchase-orders/', data),
+  create: (data, config) => api.post('/purchase-orders/', data, config),
   update: (id, data) => api.patch(`/purchase-orders/${id}/`, data),
   delete: (id) => api.delete(`/purchase-orders/${id}/`),
   addItem: (id, item) => api.post(`/purchase-orders/${id}/add_item/`, item),
@@ -169,7 +172,7 @@ export const purchaseOrdersAPI = {
 export const invoicesAPI = {
   list: (params) => api.get('/invoices/', { params }),
   get: (id) => api.get(`/invoices/${id}/`),
-  create: (data) => api.post('/invoices/', data),
+  create: (data, config) => api.post('/invoices/', data, config),
   update: (id, data) => api.patch(`/invoices/${id}/`, data),
   delete: (id) => api.delete(`/invoices/${id}/`),
   addItem: (id, item) => api.post(`/invoices/${id}/add_item/`, item),
@@ -199,7 +202,7 @@ export const stockAPI = {
 export const productsAPI = {
   list: (params) => api.get('/products/', { params }),
   get: (id) => api.get(`/products/${id}/`),
-  create: (data) => api.post('/products/', data),
+  create: (data, config) => api.post('/products/', data, config),
   update: (id, data) => api.patch(`/products/${id}/`, data),
   delete: (id) => api.delete(`/products/${id}/`),
   lowStock: () => api.get('/products/low_stock/'),
@@ -243,7 +246,7 @@ export const warehousesAPI = {
 export const clientsAPI = {
   list: (params) => api.get('/clients/', { params }),
   get: (id) => api.get(`/clients/${id}/`),
-  create: (data) => api.post('/clients/', data),
+  create: (data, config) => api.post('/clients/', data, config),
   update: (id, data) => api.patch(`/clients/${id}/`, data),
   delete: (id) => api.delete(`/clients/${id}/`),
   getStatistics: (id) => api.get(`/clients/${id}/statistics/`),

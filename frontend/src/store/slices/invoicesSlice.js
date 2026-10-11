@@ -1,49 +1,40 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { invoicesAPI } from '../../services/api';
-import { readListWithCache, readOneWithCache, createWithQueue, updateWithQueue, deleteWithQueue, newUuid } from '../../services/offline';
+import { offlineData } from '../../services/offline/entities';
 
 // Async thunks
 export const fetchInvoices = createAsyncThunk(
   'invoices/fetchInvoices',
   async (params = {}) => {
-    return await readListWithCache('invoices', () => invoicesAPI.list(params));
+    return (await offlineData.invoices.list(params)).data;
   }
 );
 
 export const fetchInvoice = createAsyncThunk(
   'invoices/fetchInvoice',
   async (id) => {
-    return await readOneWithCache('invoices', id, () => invoicesAPI.get(id));
+    return (await offlineData.invoices.get(id)).data;
   }
 );
 
 export const createInvoice = createAsyncThunk(
   'invoices/createInvoice',
   async (data) => {
-    // Offline : numero provisoire affichable (le serveur attribuera le numero
-    // definitif a la synchro, invoice_number etant read-only cote backend).
-    const withProvisional = data.invoice_number
-      ? data
-      : { ...data, invoice_number: `BROUILLON-${newUuid().slice(0, 6).toUpperCase()}` };
-    return await createWithQueue('invoices', withProvisional, (d) => {
-      // En ligne : on n'envoie pas le numero provisoire (le serveur le genere).
-      const { invoice_number, ...online } = d;
-      return invoicesAPI.create(online);
-    });
+    return (await offlineData.invoices.create(data)).data;
   }
 );
 
 export const updateInvoice = createAsyncThunk(
   'invoices/updateInvoice',
   async ({ id, data }) => {
-    return await updateWithQueue('invoices', id, data, (i, d) => invoicesAPI.update(i, d));
+    return (await offlineData.invoices.update(id, data)).data;
   }
 );
 
 export const deleteInvoice = createAsyncThunk(
   'invoices/deleteInvoice',
   async (id) => {
-    await deleteWithQueue('invoices', id, (i) => invoicesAPI.delete(i));
+    await offlineData.invoices.delete(id);
     return id;
   }
 );

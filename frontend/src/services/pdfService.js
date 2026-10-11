@@ -48,13 +48,13 @@ export const TEMPLATE_TYPES = {
 
 // Generate Invoice PDF
 export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classic') => {
-  // Hors-ligne (natif) ou facture BROUILLON non synchronisee : le PDF backend
+  // Hors ligne (natif ou navigateur) ou facture BROUILLON non synchronisee : le PDF backend
   // n'est pas joignable -> on genere un PDF local epure cote client (version
   // rapide / provisoire). On evite ainsi de bloquer l'utilisateur.
   const isDraft = !invoiceData?.invoice_number
     || String(invoiceData?.invoice_number).startsWith('BROUILLON')
     || invoiceData?._offline;
-  if (isNativePlatform() && (isOffline() || isDraft)) {
+  if (isOffline() || isDraft) {
     const { buildOfflineInvoicePdf } = await import('./offlineInvoicePdf.jsx');
     let currency = 'FCFA';
     try {

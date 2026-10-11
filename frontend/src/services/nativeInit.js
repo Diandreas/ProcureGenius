@@ -42,18 +42,18 @@ export async function hideSplash() {
   } catch { /* ignore */ }
 }
 
+// Mode hors ligne (natif et navigateur) : detection fiable de la connectivite
+// (ping backend), base locale, et synchro automatique au retour du reseau.
+export function initOffline() {
+  startConnectivityWatch();
+  const ready = isNativePlatform() ? initOfflineDb() : Promise.resolve(true);
+  ready.then(() => startSyncEngine()).catch(() => {});
+}
+
 export async function initNativeApp() {
   if (!isNativePlatform()) return;
 
-  // (patchFetchForNative est appele tres tot depuis main.jsx)
-
-  // --- Detection fiable de la connectivite (ping backend) ---
-  startConnectivityWatch();
-
-  // --- Base locale hors-ligne (cache + file de mutations) ---
-  initOfflineDb()
-    .then(() => startSyncEngine()) // rejoue la file au retour reseau
-    .catch(() => {});
+  // (patchFetchForNative et initOffline sont appeles tres tot depuis main.jsx)
 
   // --- Status bar : texte sombre sur fond clair, assortie au theme ---
   try {

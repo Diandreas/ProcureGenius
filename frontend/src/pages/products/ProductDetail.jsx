@@ -49,6 +49,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { productsAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import LoadingState from '../../components/LoadingState';
@@ -133,7 +134,7 @@ function ProductDetail() {
   const fetchProduct = async () => {
     setLoading(true);
     try {
-      const response = await productsAPI.get(id);
+      const response = await offlineData.products.get(id);
       setProduct(response.data);
     } catch (error) {
       enqueueSnackbar(t('products:messages.loadProductError'), { variant: 'error' });

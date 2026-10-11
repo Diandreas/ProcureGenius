@@ -86,6 +86,7 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n/config';
 import { purchaseOrdersAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 import { settingsAPI } from '../../services/settingsAPI';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
@@ -229,7 +230,7 @@ function PurchaseOrderDetail() {
   const fetchPurchaseOrder = async () => {
     setLoading(true);
     try {
-      const response = await purchaseOrdersAPI.get(id);
+      const response = await offlineData.purchaseOrders.get(id);
       setPurchaseOrder(response.data);
       if (response.data.ai_insights) {
         setAiResults(response.data.ai_insights.results || {});

@@ -32,6 +32,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { suppliersAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 
 function SupplierForm() {
   const navigate = useNavigate();
@@ -97,7 +98,7 @@ function SupplierForm() {
   const fetchSupplier = async () => {
     setLoading(true);
     try {
-      const response = await suppliersAPI.get(id);
+      const response = await offlineData.suppliers.get(id);
       const supplier = response.data;
       setInitialValues({
         ...supplier,
@@ -114,10 +115,10 @@ function SupplierForm() {
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
       if (isEdit) {
-        await suppliersAPI.update(id, values);
+        await offlineData.suppliers.update(id, values);
         enqueueSnackbar(t('suppliers:messages.updateSuccess'), { variant: 'success' });
       } else {
-        await suppliersAPI.create(values);
+        await offlineData.suppliers.create(values);
         enqueueSnackbar(t('suppliers:messages.createSuccess'), { variant: 'success' });
       }
       navigate('/suppliers');

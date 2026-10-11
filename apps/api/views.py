@@ -14,6 +14,7 @@ from apps.accounts.models import Client
 from apps.core.permissions import HasModuleAccess
 from apps.core.modules import Modules
 from apps.core.organization_mixin import OrganizationFilterMixin, OrganizationClientFilterMixin
+from apps.core.idempotency import IdempotentCreateMixin
 
 from .serializers import (
     SupplierSerializer, SupplierCategorySerializer, SupplierProductSerializer,
@@ -35,7 +36,7 @@ class SupplierCategoryViewSet(viewsets.ModelViewSet):
     # No organization filter needed
 
 
-class SupplierViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
+class SupplierViewSet(IdempotentCreateMixin, OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les fournisseurs"""
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
@@ -310,7 +311,7 @@ class ProductBatchViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         serializer.instance.product.sync_stock_from_batches()
 
 
-class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
+class ProductViewSet(IdempotentCreateMixin, OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les produits"""
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -844,7 +845,7 @@ class ProductViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
         })
 
 
-class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
+class ClientViewSet(IdempotentCreateMixin, OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les clients"""
     queryset = Client.objects.all().distinct()
     serializer_class = ClientSerializer
@@ -1145,7 +1146,7 @@ class ClientViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
             )
 
 
-class PurchaseOrderViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
+class PurchaseOrderViewSet(IdempotentCreateMixin, OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les bons de commande"""
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
@@ -1469,7 +1470,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         serializer.save(created_by=self.request.user)
 
 
-class InvoiceViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
+class InvoiceViewSet(IdempotentCreateMixin, OrganizationFilterMixin, viewsets.ModelViewSet):
     """ViewSet pour les factures"""
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer

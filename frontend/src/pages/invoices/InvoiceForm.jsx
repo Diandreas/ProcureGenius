@@ -55,6 +55,8 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { invoicesAPI, clientsAPI, productsAPI, contractsAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
+import { queueSettleInvoice } from '../../services/offline';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
@@ -149,7 +151,7 @@ function InvoiceForm() {
 
   const fetchClients = async () => {
     try {
-      const response = await clientsAPI.list();
+      const response = await offlineData.clients.list();
       const raw = response.data.results || response.data || [];
       // Déduplique par id au cas où l'API renverrait des doublons
       const seen = new Set();
@@ -162,7 +164,7 @@ function InvoiceForm() {
 
   const fetchProducts = async () => {
     try {
-      const response = await productsAPI.list();
+      const response = await offlineData.products.list();
       // Supporter réponse paginée (results) ou tableau direct
       const data = response.data;
       setProducts(Array.isArray(data) ? data : (data.results || []));
@@ -185,7 +187,7 @@ function InvoiceForm() {
   const fetchInvoice = async () => {
     setLoading(true);
     try {
-      const response = await invoicesAPI.get(id);
+      const response = await offlineData.invoices.get(id);
       const invoice = response.data;
       setFormData({
         title: invoice.title || '',
@@ -363,16 +365,25 @@ function InvoiceForm() {
 
       let targetId = id;
       if (isEdit) {
-        await invoicesAPI.update(id, payload);
+        await offlineData.invoices.update(id, payload);
         enqueueSnackbar(t('invoices:messages.invoiceUpdatedSuccess'), { variant: 'success' });
       } else {
-        const res = await invoicesAPI.create(payload);
+        const res = await offlineData.invoices.create(payload);
         targetId = res?.data?.id || null;
         enqueueSnackbar(t('invoices:messages.invoiceCreatedSuccess'), { variant: 'success' });
 
         // Facture creee en "Payee" -> on enregistre automatiquement le paiement
         // du montant total (encaissement au comptant), sauf si deja paye cote serveur.
-        if (targetId && formData.status === 'paid' && (totalAmount || 0) > 0) {
+        if (targetId && res?.data?._offline) {
+          // Enregistree sur l'appareil (pas de reseau) : envoi et paiement a la synchro
+          if (formData.status === 'paid' && (totalAmount || 0) > 0) {
+            await queueSettleInvoice(targetId, {
+              payment_date: new Date().toISOString().split('T')[0],
+              payment_method: formData.payment_method || 'cash',
+            });
+          }
+          enqueueSnackbar('Hors ligne : facture enregistrée sur cet appareil, elle partira dès le retour du réseau', { variant: 'info' });
+        } else if (targetId && formData.status === 'paid' && (totalAmount || 0) > 0) {
           try {
             await invoicesAPI.addPayment(targetId, {
               amount: totalAmount,

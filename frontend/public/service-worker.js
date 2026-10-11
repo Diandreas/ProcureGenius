@@ -1,18 +1,21 @@
 // Service Worker pour PWA
-// NB: incrementer la version a chaque deploiement important pour forcer la
-// mise a jour du cache chez les utilisateurs (sinon ils gardent l'ancienne app).
-const CACHE_NAME = 'gestion-app-v3';
-const API_CACHE_NAME = 'gestion-app-api-v3';
+// La liste PRECACHE et BUILD_ID sont injectees a chaque build (vite.config.js,
+// plugin « precache ») : le fichier change a chaque deploiement, le navigateur
+// installe donc la nouvelle version et telecharge les nouveaux ecrans.
+const BUILD_ID = 'dev';
+const PRECACHE = [];
+const CACHE_NAME = `procura-app-${BUILD_ID}`;
 const DEBUG = false; // Mettre à true pour activer les logs de debug
 
-// URLs à mettre en cache lors de l'installation.
-// NB: ne PAS lister d'assets hashés (Vite -> /assets/*.js) ici : ils sont
-// mis en cache à la volée (cacheFirst). Les anciennes entrées /static/js/main.js
-// faisaient échouer addAll() (404) et avortaient toute l'installation du SW.
+// Coquille de l'app + tous les ecrans (fichiers JS/CSS du build) : l'app
+// s'ouvre et navigue hors ligne, meme sur un ecran jamais visite.
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/offline.html',
+  '/icon-192.png',
+  ...PRECACHE,
 ];
 
 // Installation du Service Worker
@@ -21,8 +24,15 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         if (DEBUG) console.log('Cache ouvert');
-        // addAll échoue en bloc si une URL 404 -> on tolère les absences.
-        return Promise.allSettled(urlsToCache.map((u) => cache.add(u)));
+        // Un fichier deja present dans l'ancienne version (meme nom = meme
+        // contenu, noms hashes) est recopie au lieu d'etre retelecharge.
+        // Une URL absente (404) ne bloque pas l'installation.
+        return Promise.allSettled(urlsToCache.map(async (u) => {
+          const hashed = u.startsWith('/assets/');
+          const old = hashed ? await caches.match(u) : null;
+          if (old) return cache.put(u, old);
+          return cache.add(new Request(u, { cache: 'reload' }));
+        }));
       })
       .then(() => self.skipWaiting())
   );
@@ -34,7 +44,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
+          if (cacheName !== CACHE_NAME) {
             if (DEBUG) console.log('Suppression du cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -63,16 +73,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stratégie pour l'API
-  // Ne pas intercepter les requêtes POST/PUT/DELETE/PATCH - laisser passer directement au réseau
-  if (url.pathname.startsWith('/api/')) {
-    // Pour les requêtes de modification (POST, PUT, DELETE, PATCH), ne pas intercepter
-    // Laisser le navigateur gérer directement pour éviter les problèmes de cache
-    if (request.method !== 'GET') {
-      return; // Laisser passer la requête sans interception
-    }
-    // Pour les GET, utiliser la stratégie network-first avec cache
-    event.respondWith(networkFirstStrategy(request));
+  // API : jamais interceptee ni mise en cache ici. Les donnees hors ligne sont
+  // gerees par l'app (IndexedDB, une base par utilisateur) : un cache HTTP
+  // partage melangerait les comptes sur un poste partage.
+  if (url.pathname.startsWith('/api/') || url.origin !== self.location.origin) {
     return;
   }
 
@@ -101,7 +105,11 @@ self.addEventListener('fetch', (event) => {
 async function navigationStrategy(request) {
   const cache = await caches.open(CACHE_NAME);
   try {
-    const networkResponse = await fetch(request);
+    // Wifi sans internet : on n'attend pas indefiniment le reseau.
+    const networkResponse = await Promise.race([
+      fetch(request),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000)),
+    ]);
     if (networkResponse.ok) {
       // Mettre à jour le shell pour les prochains démarrages hors-ligne.
       cache.put('/index.html', networkResponse.clone());
@@ -141,7 +149,7 @@ async function cacheFirstStrategy(request) {
 
 // Stratégie Network First (pour l'API et les pages HTML)
 async function networkFirstStrategy(request) {
-  const cache = await caches.open(request.url.includes('/api/') ? API_CACHE_NAME : CACHE_NAME);
+  const cache = await caches.open(CACHE_NAME);
 
   try {
     const networkResponse = await fetch(request);
@@ -185,6 +193,11 @@ async function networkFirstStrategy(request) {
     return offlineResponse || new Response('Offline', { status: 503 });
   }
 }
+
+// Mise a jour demandee par la page (bouton « Mettre a jour »).
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
 
 // ─── Gestion des Push Notifications ─────────────────────────────
 self.addEventListener('push', (event) => {

@@ -1,20 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { clientsAPI } from '../../services/api';
-import { readListWithCache, readOneWithCache, createWithQueue, updateWithQueue, deleteWithQueue } from '../../services/offline';
+import { offlineData } from '../../services/offline/entities';
 
 // Async thunks
 export const fetchClients = createAsyncThunk(
   'clients/fetchClients',
   async (params = {}) => {
     // Lecture avec cache hors-ligne (natif) ; en web, appel direct.
-    return await readListWithCache('clients', () => clientsAPI.list(params));
+    return (await offlineData.clients.list(params)).data;
   }
 );
 
 export const fetchClient = createAsyncThunk(
   'clients/fetchClient',
   async (id) => {
-    return await readOneWithCache('clients', id, () => clientsAPI.get(id));
+    return (await offlineData.clients.get(id)).data;
   }
 );
 
@@ -22,21 +22,21 @@ export const createClient = createAsyncThunk(
   'clients/createClient',
   async (data) => {
     // Offline (natif) : ecrit en local + file de synchro ; online : API directe.
-    return await createWithQueue('clients', data, (d) => clientsAPI.create(d));
+    return (await offlineData.clients.create(data)).data;
   }
 );
 
 export const updateClient = createAsyncThunk(
   'clients/updateClient',
   async ({ id, data }) => {
-    return await updateWithQueue('clients', id, data, (i, d) => clientsAPI.update(i, d));
+    return (await offlineData.clients.update(id, data)).data;
   }
 );
 
 export const deleteClient = createAsyncThunk(
   'clients/deleteClient',
   async (id) => {
-    await deleteWithQueue('clients', id, (i) => clientsAPI.delete(i));
+    await offlineData.clients.delete(id);
     return id;
   }
 );

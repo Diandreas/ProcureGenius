@@ -32,6 +32,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { clientsAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 
 const PAYMENT_TERMS = [
     { value: 'CASH', label: 'Comptant' },
@@ -78,7 +79,7 @@ function ClientForm() {
     const fetchClient = async () => {
         setLoading(true);
         try {
-            const response = await clientsAPI.get(id);
+            const response = await offlineData.clients.get(id);
             const client = response.data;
             setInitialValues({ ...client });
             if (client.tax_id || client.payment_terms !== 'CASH') {
@@ -103,10 +104,10 @@ function ClientForm() {
                 tax_id: values.tax_id || '',
             };
             if (isEdit) {
-                await clientsAPI.update(id, payload);
+                await offlineData.clients.update(id, payload);
                 enqueueSnackbar(t('clients:messages.updateSuccess'), { variant: 'success' });
             } else {
-                await clientsAPI.create(payload);
+                await offlineData.clients.create(payload);
                 enqueueSnackbar(t('clients:messages.createSuccess'), { variant: 'success' });
             }
             navigate('/clients');

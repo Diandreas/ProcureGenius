@@ -88,6 +88,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { productsAPI, suppliersAPI, productCategoriesAPI, warehousesAPI } from '../../services/api';
+import { offlineData } from '../../services/offline/entities';
 
 function ProductForm() {
     const { t } = useTranslation(['products', 'common']);
@@ -200,7 +201,7 @@ function ProductForm() {
             // Charger les données de manière indépendante pour gérer les erreurs 403
             // Suppliers (optionnel si module désactivé)
             try {
-                const suppliersRes = await suppliersAPI.list();
+                const suppliersRes = await offlineData.suppliers.list();
                 setSuppliers(suppliersRes.data.results || suppliersRes.data);
             } catch (error) {
                 if (error.response?.status === 403) {
@@ -237,7 +238,7 @@ function ProductForm() {
 
             // Charger le produit si en mode édition
             if (isEdit) {
-                const response = await productsAPI.get(id);
+                const response = await offlineData.products.get(id);
                 const productData = response.data;
                 setInitialValues({
                     ...initialValues,
@@ -499,10 +500,10 @@ function ProductForm() {
             }
 
             if (isEdit) {
-                await productsAPI.update(id, cleanedValues);
+                await offlineData.products.update(id, cleanedValues);
                 enqueueSnackbar(t('products:messages.updateSuccess'), { variant: 'success' });
             } else {
-                const createdProduct = await productsAPI.create(cleanedValues);
+                const createdProduct = await offlineData.products.create(cleanedValues);
                 const productId = createdProduct.data.id;
                 enqueueSnackbar(t('products:messages.createSuccess'), { variant: 'success' });
 
