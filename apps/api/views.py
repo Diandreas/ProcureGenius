@@ -285,6 +285,14 @@ class ProductBatchViewSet(OrganizationFilterMixin, viewsets.ModelViewSet):
     ordering = ['expiration_date']
 
     def perform_create(self, serializer):
+        from django.db import transaction
+        from apps.invoicing.stock_tools import keep_unbatched_stock
+        with transaction.atomic():
+            # Premier lot d'un produit déjà en stock : le stock existant n'est pas perdu
+            keep_unbatched_stock(serializer.validated_data['product'])
+            self._create_batch(serializer)
+
+    def _create_batch(self, serializer):
         batch = serializer.save()
         # current_quantity = initial_quantity à la création
         batch.current_quantity = batch.initial_quantity

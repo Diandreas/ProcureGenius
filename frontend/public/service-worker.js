@@ -29,7 +29,7 @@ self.addEventListener('install', (event) => {
         // Une URL absente (404) ne bloque pas l'installation.
         return Promise.allSettled(urlsToCache.map(async (u) => {
           const hashed = u.startsWith('/assets/');
-          const old = hashed ? await caches.match(u) : null;
+          const old = hashed ? await caches.match(u, { ignoreVary: true }) : null;
           if (old) return cache.put(u, old);
           return cache.add(new Request(u, { cache: 'reload' }));
         }));
@@ -81,7 +81,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Stratégie pour les assets statiques
-  if (request.destination === 'image' ||
+  if (url.pathname.startsWith('/assets/') ||
+    request.destination === 'image' ||
     request.destination === 'style' ||
     request.destination === 'script' ||
     request.destination === 'font') {
@@ -117,7 +118,7 @@ async function navigationStrategy(request) {
     return networkResponse;
   } catch (error) {
     // Hors-ligne : servir le shell SPA (le routeur React affichera la page).
-    const shell = await cache.match('/index.html') || await cache.match('/');
+    const shell = await cache.match('/index.html', { ignoreVary: true }) || await cache.match('/', { ignoreVary: true });
     if (shell) return shell;
     const offlineResponse = await cache.match('/offline.html');
     return offlineResponse || new Response('Offline', { status: 503 });
@@ -127,7 +128,7 @@ async function navigationStrategy(request) {
 // Stratégie Cache First (pour les assets statiques)
 async function cacheFirstStrategy(request) {
   const cache = await caches.open(CACHE_NAME);
-  const cachedResponse = await cache.match(request);
+  const cachedResponse = await cache.match(request.url, { ignoreVary: true, ignoreSearch: false });
 
   if (cachedResponse) {
     return cachedResponse;
@@ -141,9 +142,8 @@ async function cacheFirstStrategy(request) {
     return networkResponse;
   } catch (error) {
     if (DEBUG) console.warn('Erreur réseau:', error.message);
-    // Retourner une page offline si disponible
-    const offlineResponse = await cache.match('/offline.html');
-    return offlineResponse || new Response('Offline', { status: 503 });
+    // Script ou style absent hors ligne : jamais de page HTML a la place
+    return new Response('', { status: 503, statusText: 'Offline' });
   }
 }
 
@@ -171,7 +171,7 @@ async function networkFirstStrategy(request) {
 
     // Ne chercher dans le cache que pour les requêtes GET
     if (request.method === 'GET') {
-      const cachedResponse = await cache.match(request);
+      const cachedResponse = await cache.match(request.url, { ignoreVary: true, ignoreSearch: false });
       if (cachedResponse) {
         return cachedResponse;
       }

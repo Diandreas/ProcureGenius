@@ -670,6 +670,8 @@ def product_batch_add(request, pk):
                 if qty <= 0:
                     messages.error(request, 'La quantité doit être supérieure à 0.')
                 else:
+                    from .stock_tools import keep_unbatched_stock
+                    keep_unbatched_stock(product)  # premier lot : le stock hors lot n'est pas perdu
                     batch = ProductBatch.objects.create(
                         product=product,
                         batch_number=batch_number,

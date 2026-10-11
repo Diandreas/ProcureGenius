@@ -561,18 +561,27 @@ def api_organization_settings(request):
             organization = user.organization
             if organization:
                 org_updated = False
-                if 'subscription_type' in request.data:
+                # Le type d'abonnement suit le forfait payé (apps.subscriptions) : seul un
+                # superutilisateur peut le forcer ici.
+                if 'subscription_type' in request.data and user.is_superuser:
                     organization.subscription_type = request.data['subscription_type']
-                    # Auto-update modules based on profile if not explicitly provided
                     if 'enabled_modules' not in request.data:
                         organization.update_modules_from_profile()
                     org_updated = True
-                
+
                 if 'enabled_modules' in request.data:
                     import json
+                    from apps.core.modules import PLAN_MODULES, get_modules_for_plan
                     # FormData sends as string, need to parse JSON
                     modules_data = request.data['enabled_modules']
                     modules = json.loads(modules_data) if isinstance(modules_data, str) else modules_data
+                    if not isinstance(modules, list):
+                        modules = []
+                    if not user.is_superuser:
+                        # On peut masquer des modules, pas débloquer ceux d'un forfait supérieur.
+                        gated = {m for plan in PLAN_MODULES.values() for m in plan}
+                        allowed = set(get_modules_for_plan(organization.subscription_type)) | set(organization.enabled_modules or [])
+                        modules = [m for m in modules if m not in gated or m in allowed]
                     organization.enabled_modules = modules
                     org_updated = True
                 

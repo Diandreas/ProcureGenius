@@ -8,7 +8,7 @@ import crypto from 'node:crypto'
 // un identifiant de version : l'app entiere s'ouvre hors ligne, et chaque
 // deploiement installe la nouvelle version du service worker.
 // Exclus : les gros modules rarement utilises hors ligne (lecteur PDF, landing).
-const PRECACHE_SKIP = /(pdf\.worker|Landing|Help|Blog)/;
+const PRECACHE_SKIP = /^assets\/(pdf\.worker|Landing|Help|Blog)[-.]/;
 function precacheServiceWorker() {
   let outDir = 'build';
   return {

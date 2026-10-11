@@ -11,6 +11,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# Statuts qui ne sont pas du chiffre d'affaires
+NOT_BILLED = ['quote', 'draft', 'cancelled']
+
 class DashboardStatsService:
     """Service centralisé pour toutes les statistiques du dashboard"""
 
@@ -392,10 +395,12 @@ class DashboardStatsService:
             created_at__lte=self.end_date
         )
 
-        new_count = period_invoices.count()
-        total_amount = period_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        # Montants facturés : ni devis, ni brouillons, ni factures annulées
+        billed = period_invoices.exclude(status__in=NOT_BILLED)
+        new_count = billed.count()
+        total_amount = billed.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
         paid_amount = period_invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        pending_amount = period_invoices.filter(status='sent').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        pending_amount = period_invoices.filter(status__in=['sent', 'overdue']).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
         # Tendance quotidienne
         daily_trend = []
@@ -404,8 +409,8 @@ class DashboardStatsService:
 
         while current_date <= end_date_only:
             next_date = current_date + timedelta(days=1)
-            day_count = period_invoices.filter(created_at__date=current_date).count()
-            day_amount = period_invoices.filter(created_at__date=current_date).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            day_count = billed.filter(created_at__date=current_date).count()
+            day_amount = billed.filter(created_at__date=current_date).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             day_paid = period_invoices.filter(
                 payments__payment_date=current_date,
                 status='paid'
@@ -442,8 +447,8 @@ class DashboardStatsService:
                 created_at__gte=self.compare_start_date,
                 created_at__lt=self.compare_end_date
             )
-            previous_count = previous_invoices.count()
-            previous_amount = previous_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            previous_count = previous_invoices.exclude(status__in=NOT_BILLED).count()
+            previous_amount = previous_invoices.exclude(status__in=NOT_BILLED).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
             previous_paid = previous_invoices.filter(status='paid').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
             stats['comparison'] = {
@@ -641,7 +646,7 @@ class DashboardStatsService:
         # Revenus en attente
         pending_revenue = Invoice.objects.filter(
             created_by__organization=self.organization,
-            status='sent'
+            status__in=['sent', 'overdue']
         ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
 
         stats = {
@@ -656,7 +661,7 @@ class DashboardStatsService:
         if self.compare_previous:
             previous_revenue = Invoice.objects.filter(
                 created_by__organization=self.organization,
-                status='paid',
+                status__in=['paid', 'sent', 'overdue'],
                 created_at__gte=self.compare_start_date,
                 created_at__lt=self.compare_end_date
             ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
@@ -691,6 +696,7 @@ class DashboardStatsService:
         # Délai moyen de paiement des factures
         # Annoter chaque facture avec sa date de paiement la plus récente
         paid_invoices = Invoice.objects.filter(
+            created_by__organization=self.organization,
             status='paid',
             payments__payment_date__gte=self.start_date,
             payments__payment_date__lte=self.end_date
@@ -710,12 +716,14 @@ class DashboardStatsService:
         # Taux de conversion devis -> factures (si module e-sourcing actif)
         # Pour l'instant, on utilise draft -> paid
         draft_invoices = Invoice.objects.filter(
+            created_by__organization=self.organization,
             created_at__gte=self.start_date,
             created_at__lte=self.end_date,
             status='draft'
         ).count()
 
         paid_from_period = Invoice.objects.filter(
+            created_by__organization=self.organization,
             created_at__gte=self.start_date,
             created_at__lte=self.end_date,
             status='paid'

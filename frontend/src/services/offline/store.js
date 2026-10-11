@@ -1,7 +1,8 @@
 // Stockage local du mode hors ligne, derriere une interface unique :
-// - app native : SQLite (db.js, inchange) ;
-// - navigateur : IndexedDB (Dexie), une base par utilisateur pour ne jamais
-//   melanger les donnees de deux comptes sur le meme poste.
+// - app native : SQLite (db.js) ;
+// - navigateur : IndexedDB (Dexie).
+// Une base par utilisateur dans les deux cas, pour ne jamais melanger les
+// donnees de deux comptes sur le meme appareil.
 //
 // Tables : cache (un enregistrement par entite/id), meta (date de derniere
 // synchro), mutations (file des ecritures faites hors ligne).
@@ -130,8 +131,8 @@ async function currentScope() {
   if (scope) return scope;
   try {
     if (!localStorage.getItem('authToken')) return null;
-    const { authAPI } = await import('../api');
-    const id = (await authAPI.getProfile())?.data?.id;
+    const { default: api } = await import('../api');
+    const id = (await api.get('/accounts/profile/'))?.data?.id;
     if (!id) return null;
     localStorage.setItem(SCOPE_KEY, String(id));
     return String(id);
@@ -145,16 +146,17 @@ let opening = null;
 
 /** Stockage pret a l'emploi, ou null (pas d'utilisateur connu, IndexedDB bloque...). */
 export async function getStore() {
-  if (isNativePlatform()) {
-    if (opened) return opened.store;
-    const db = await getDb();
-    if (!db) return null;
-    opened = { scope: 'native', store: sqliteStore(db) };
-    return opened.store;
-  }
-  if (typeof indexedDB === 'undefined') return null;
+  const native = isNativePlatform();
+  if (!native && typeof indexedDB === 'undefined') return null;
   const scope = await currentScope();
   if (!scope) return null;
+  if (native) {
+    if (opened?.scope === scope) return opened.store;
+    const db = await getDb(scope);
+    if (!db) return null;
+    opened = { scope, store: sqliteStore(db) };
+    return opened.store;
+  }
   if (opened?.scope === scope) return opened.store;
   if (opening?.scope === scope) return opening.promise;
   const promise = (async () => {
@@ -183,7 +185,7 @@ export async function getStore() {
 /** A la deconnexion : on oublie l'utilisateur (ses donnees restent pour son retour). */
 export function forgetOfflineUser() {
   try { localStorage.removeItem(SCOPE_KEY); } catch { /* ignore */ }
-  opened = isNativePlatform() ? opened : null;
+  opened = null;
 }
 
 /** Memorise l'utilisateur connecte (appele quand le profil est connu). */

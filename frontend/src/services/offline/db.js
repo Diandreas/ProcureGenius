@@ -2,7 +2,9 @@
 // Phase 1 : cache de lecture. Tables generiques extensibles (Phase 2/3 :
 // table `mutations` pour la file de synchro).
 //
-// Web : pas de SQLite -> les fonctions no-op (offline = natif uniquement).
+// Web : pas de SQLite (le navigateur utilise IndexedDB, voir store.js).
+// Une base par utilisateur : deux comptes sur le meme telephone ne voient
+// jamais les donnees l'un de l'autre.
 
 import { isNativePlatform } from '../../utils/platform';
 
@@ -10,8 +12,9 @@ const DB_NAME = 'procura_offline';
 const DB_VERSION = 2;
 
 let sqlite = null;        // connexion plugin
-let db = null;            // handle base
-let initPromise = null;   // garde-fou init unique
+let db = null;            // handle base ouverte
+let dbName = null;        // nom de la base ouverte
+let initPromise = null;   // garde-fou init unique (par nom)
 
 // Schema initial : un cache generique (une ligne par enregistrement d'entite)
 // + une table de meta (date de derniere synchro par entite).
@@ -45,38 +48,46 @@ CREATE TABLE IF NOT EXISTS mutations (
 CREATE INDEX IF NOT EXISTS idx_mutations_status ON mutations (status, created_at);
 `;
 
-/** Initialise la base (idempotent). Retourne true si la base est prete. */
-export async function initOfflineDb() {
+/** Initialise la base de l'utilisateur (idempotent). Retourne true si la base est prete. */
+export async function initOfflineDb(scope) {
   if (!isNativePlatform()) return false;
-  if (db) return true;
-  if (initPromise) return initPromise;
+  if (!scope) return false;
+  const name = `${DB_NAME}_${scope}`;
+  if (db && dbName === name) return true;
+  if (initPromise && initPromise.name === name) return initPromise.promise;
 
-  initPromise = (async () => {
+  const promise = (async () => {
     const { CapacitorSQLite, SQLiteConnection } = await import('@capacitor-community/sqlite');
-    sqlite = new SQLiteConnection(CapacitorSQLite);
-
+    if (!sqlite) sqlite = new SQLiteConnection(CapacitorSQLite);
+    // Changement d'utilisateur : on ferme la base du precedent
+    if (db && dbName !== name) {
+      try { await sqlite.closeConnection(dbName, false); } catch { /* ignore */ }
+      db = null;
+    }
     // Reutilise une connexion existante si presente (hot reload, navigation).
     const retCC = (await sqlite.checkConnectionsConsistency()).result;
-    const isConn = (await sqlite.isConnection(DB_NAME, false)).result;
-    if (retCC && isConn) {
-      db = await sqlite.retrieveConnection(DB_NAME, false);
-    } else {
-      db = await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false);
-    }
-    await db.open();
-    await db.execute(SCHEMA);
+    const isConn = (await sqlite.isConnection(name, false)).result;
+    const conn = (retCC && isConn)
+      ? await sqlite.retrieveConnection(name, false)
+      : await sqlite.createConnection(name, false, 'no-encryption', DB_VERSION, false);
+    await conn.open();
+    await conn.execute(SCHEMA);
+    db = conn;
+    dbName = name;
     return true;
   })().catch((e) => {
     console.warn('[offline] init DB echouee:', e?.message || e);
     db = null;
+    dbName = null;
     return false;
-  });
+  }).finally(() => { initPromise = null; });
 
-  return initPromise;
+  initPromise = { name, promise };
+  return promise;
 }
 
-/** Handle base ; null si indisponible (web ou erreur). */
-export async function getDb() {
-  const ok = await initOfflineDb();
+/** Handle base de l'utilisateur ; null si indisponible (web ou erreur). */
+export async function getDb(scope) {
+  const ok = await initOfflineDb(scope);
   return ok ? db : null;
 }

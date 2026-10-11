@@ -199,6 +199,29 @@ def apply_inventory(session, user):
 
 # ------------------------------------------------------------------ réception
 
+def keep_unbatched_stock(product):
+    """
+    Premier lot d'un produit déjà en stock sans lot : range ce stock dans un lot « INITIAL ».
+    À appeler AVANT de créer le nouveau lot : la création d'un lot recalcule le stock du produit
+    comme la somme de ses lots (signal), ce qui effacerait le stock existant.
+    """
+    product.refresh_from_db(fields=['stock_quantity'])
+    if (product.product_type != 'physical' or product.stock_quantity <= 0
+            or product.batches.filter(is_active=True).exists()):
+        return None
+    batch, _ = ProductBatch.objects.get_or_create(
+        product=product, batch_number='INITIAL',
+        defaults={'initial_quantity': product.stock_quantity, 'current_quantity': product.stock_quantity,
+                  'warehouse': product.warehouse, 'is_active': True})
+    if not batch.is_active or batch.current_quantity != product.stock_quantity:
+        # Ancien lot INITIAL vidé/désactivé : on y remet le stock hors lot
+        batch.current_quantity = product.stock_quantity
+        batch.initial_quantity = max(batch.initial_quantity, product.stock_quantity)
+        batch.is_active = True
+        batch.save()
+    return batch
+
+
 def receive_goods(organization, user, product, quantity, batch_number='', expiration_date=None, warehouse=None,
                   unit_cost=None, reference=''):
     """
@@ -216,12 +239,8 @@ def receive_goods(organization, user, product, quantity, batch_number='', expira
             # Premier lot d'un produit déjà en stock sans lot : le stock existant est d'abord rangé dans un
             # lot « INITIAL ». À faire AVANT de créer le nouveau lot : la création d'un lot recalcule le stock
             # du produit comme la somme de ses lots (signal), ce qui effacerait ce stock.
-            if (product.stock_quantity > 0 and not product.batches.filter(is_active=True).exists()
-                    and not product.batches.filter(batch_number=batch_number).exists()):
-                ProductBatch.objects.get_or_create(
-                    product=product, batch_number='INITIAL',
-                    defaults={'initial_quantity': product.stock_quantity, 'current_quantity': product.stock_quantity,
-                              'warehouse': product.warehouse, 'is_active': True})
+            if not product.batches.filter(batch_number=batch_number).exists():
+                keep_unbatched_stock(product)
             lot, created = ProductBatch.objects.get_or_create(
                 product=product, batch_number=batch_number,
                 defaults={'expiration_date': expiration_date, 'initial_quantity': 0, 'current_quantity': 0,

@@ -2,7 +2,6 @@
 // bouton retour Android. Appele une fois au demarrage (main.jsx), no-op en web.
 
 import { isNativePlatform } from '../utils/platform';
-import { initOfflineDb } from './offline/db';
 import { startSyncEngine } from './offline/syncEngine';
 import { startConnectivityWatch } from './offline/connectivity';
 import { BACKEND_ROOT } from './api';
@@ -46,8 +45,8 @@ export async function hideSplash() {
 // (ping backend), base locale, et synchro automatique au retour du reseau.
 export function initOffline() {
   startConnectivityWatch();
-  const ready = isNativePlatform() ? initOfflineDb() : Promise.resolve(true);
-  ready.then(() => startSyncEngine()).catch(() => {});
+  // La base locale s'ouvre a la demande, une fois l'utilisateur connu (store.js)
+  startSyncEngine();
 }
 
 export async function initNativeApp() {

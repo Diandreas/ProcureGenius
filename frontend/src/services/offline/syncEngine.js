@@ -149,6 +149,7 @@ export function startSyncEngine() {
   // initiale au lancement si on est en ligne.
   onConnectivityChange((online) => { if (online) syncNow(); });
   window.addEventListener('online', () => { syncNow(); });
+  window.addEventListener('procura-offline-queue', () => { notifyPending(); });
   // Filet de securite : nouvel essai toutes les 2 minutes s'il reste des envois
   setInterval(() => { syncNow(); }, 120000);
   notifyPending();

@@ -31,6 +31,8 @@ export async function enqueueMutation({ entity, op, recordId, payload, mutationI
       mutation_id: id, entity, op, record_id: String(recordId),
       payload: payload || null, created_at: new Date().toISOString(),
     });
+    // Previent l'indicateur (bandeau) qu'un envoi attend
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('procura-offline-queue'));
     return id;
   } catch (e) {
     console.warn('[offline] enqueueMutation', e?.message || e);

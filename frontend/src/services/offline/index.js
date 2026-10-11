@@ -119,13 +119,27 @@ export async function readOneWithCache(entity, id, apiCall) {
 // ECRITURE avec file hors ligne
 // ─────────────────────────────────────────────────────────────────────────
 
+// Pour l'affichage local : le client / fournisseur reference par son id est
+// remplace par sa fiche en cache (le serveur, lui, recoit toujours l'id).
+const LINKS = { invoices: ['client', 'clients'], purchaseOrders: ['supplier', 'suppliers'] };
+async function forDisplay(entity, record) {
+  const link = LINKS[entity];
+  if (!link) return record;
+  const [field, linked] = link;
+  const ref = record[field];
+  if (!ref || typeof ref === 'object') return record;
+  const full = await readOne(linked, ref);
+  return full ? { ...record, [field]: full, [`${field}_name`]: full.name } : record;
+}
+
 async function queueCreate(entity, data, key) {
   const id = data.id || newUuid();
   const now = new Date().toISOString();
   const record = { ...data, id, _offline: true, _pending: 'create', created_at: now, updated_at: now };
-  await cacheOne(entity, record);
+  const shown = await forDisplay(entity, record);
+  await cacheOne(entity, shown);
   await enqueueMutation({ entity, op: 'create', recordId: id, payload: record, mutationId: key });
-  return record;
+  return shown;
 }
 
 /**
@@ -160,7 +174,7 @@ export async function createWithQueue(entity, data, apiCall) {
 async function queueUpdate(entity, id, data) {
   const store = await getStore();
   const prev = (await readOne(entity, id)) || {};
-  const record = { ...prev, ...data, id, _offline: true, _pending: prev._pending || 'update', updated_at: new Date().toISOString() };
+  const record = await forDisplay(entity, { ...prev, ...data, id, _offline: true, _pending: prev._pending || 'update', updated_at: new Date().toISOString() });
   await cacheOne(entity, record);
   // Enregistrement cree hors ligne et pas encore envoye : on complete sa creation
   const create = (await store.mutForRecord(entity, id)).find((m) => m.op === 'create' && m.status !== 'failed');
