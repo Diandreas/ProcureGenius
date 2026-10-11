@@ -61,6 +61,10 @@ import {
   Delete,
   LocalShipping,
   MoreVert,
+  QrCodeScanner,
+  FactCheck,
+  MoveToInbox,
+  LocalPrintshop,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
@@ -106,12 +110,21 @@ const TYPE_CONFIG = {
 // Desktop : boutons complets. Mobile : un menu overflow (⋮) regroupe
 // « Marges & bénéfices » et « Restockage » pour ne pas saturer le top nav,
 // et « Nouveau produit » devient un bouton icône.
+// Outils de stock (scan, inventaire, réception, étiquettes) : pages /products/scan|inventory|reception|labels
+const STOCK_TOOLS = [
+  { path: '/products/scan', label: 'Scanner un produit', icon: <QrCodeScanner fontSize="small" color="primary" /> },
+  { path: '/products/inventory', label: 'Inventaire', icon: <FactCheck fontSize="small" color="primary" /> },
+  { path: '/products/reception', label: 'Réception de marchandise', icon: <MoveToInbox fontSize="small" color="primary" /> },
+  { path: '/products/labels', label: 'Étiquettes QR', icon: <LocalPrintshop fontSize="small" color="primary" /> },
+];
+
 function ProductsHeaderActions() {
   const { t } = useTranslation(['products', 'common']);
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [anchorEl, setAnchorEl] = useState(null);
+  const [stockEl, setStockEl] = useState(null);
 
   if (isMobile) {
     return (
@@ -125,6 +138,12 @@ function ProductsHeaderActions() {
           <MoreVert />
         </IconButton>
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+          {STOCK_TOOLS.map((tool) => (
+            <MenuItem key={tool.path} onClick={() => { setAnchorEl(null); navigate(tool.path); }}>
+              <ListItemIcon>{tool.icon}</ListItemIcon>
+              <ListItemText>{tool.label}</ListItemText>
+            </MenuItem>
+          ))}
           <MenuItem onClick={() => { setAnchorEl(null); navigate('/products/margins'); }}>
             <ListItemIcon><TrendingUp fontSize="small" color="primary" /></ListItemIcon>
             <ListItemText>{t('products:margins', 'Marges & bénéfices')}</ListItemText>
@@ -152,6 +171,21 @@ function ProductsHeaderActions() {
 
   return (
     <Box display="flex" gap={1}>
+      <Button
+        variant="outlined" color="primary" startIcon={<QrCodeScanner />}
+        onClick={(e) => setStockEl(e.currentTarget)}
+        sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 2.5 }}
+      >
+        Stock
+      </Button>
+      <Menu anchorEl={stockEl} open={Boolean(stockEl)} onClose={() => setStockEl(null)}>
+        {STOCK_TOOLS.map((tool) => (
+          <MenuItem key={tool.path} onClick={() => { setStockEl(null); navigate(tool.path); }}>
+            <ListItemIcon>{tool.icon}</ListItemIcon>
+            <ListItemText>{tool.label}</ListItemText>
+          </MenuItem>
+        ))}
+      </Menu>
       <Button
         variant="outlined" color="primary" startIcon={<TrendingUp />}
         onClick={() => navigate('/products/margins')}

@@ -71,6 +71,10 @@ const ProductDetail = React.lazy(() => import('./pages/products/ProductDetail'))
 const ProductForm   = React.lazy(() => import('./pages/products/ProductForm'));
 const ProductMargins = React.lazy(() => import('./pages/products/ProductMargins'));
 const RestockForecast = React.lazy(() => import('./pages/products/RestockForecast'));
+const StockInventory = React.lazy(() => import('./pages/products/StockInventory'));
+const StockScan = React.lazy(() => import('./pages/products/StockScan'));
+const StockReception = React.lazy(() => import('./pages/products/StockReception'));
+const StockLabels = React.lazy(() => import('./pages/products/StockLabels'));
 
 const Clients      = React.lazy(() => import('./pages/clients/Clients'));
 const ClientDetail = React.lazy(() => import('./pages/clients/ClientDetail'));
@@ -931,6 +935,11 @@ function App() {
                             <Route path="/products/new" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
                             <Route path="/products/margins" element={<ModuleRoute module="products"><FeatureGate feature="analytics_margins" title="Analyse des marges" description="L'analyse des marges et du bénéfice brut est incluse dans le plan Business. Passez à Business pour la débloquer."><ProductMargins /></FeatureGate></ModuleRoute>} />
                             <Route path="/products/restock" element={<ModuleRoute module="products"><FeatureGate feature="analytics_restock" title="Prévision de réapprovisionnement" description="La prévision de réapprovisionnement est incluse dans le plan Business. Passez à Business pour la débloquer."><RestockForecast /></FeatureGate></ModuleRoute>} />
+                            <Route path="/products/inventory" element={<ModuleRoute module="products"><StockInventory /></ModuleRoute>} />
+                            <Route path="/products/inventory/:id" element={<ModuleRoute module="products"><StockInventory /></ModuleRoute>} />
+                            <Route path="/products/scan" element={<ModuleRoute module="products"><StockScan /></ModuleRoute>} />
+                            <Route path="/products/reception" element={<ModuleRoute module="products"><StockReception /></ModuleRoute>} />
+                            <Route path="/products/labels" element={<ModuleRoute module="products"><StockLabels /></ModuleRoute>} />
                             <Route path="/products/:id" element={<ModuleRoute module="products"><ProductDetail /></ModuleRoute>} />
                             <Route path="/products/:id/edit" element={<ModuleRoute module="products"><ProductForm /></ModuleRoute>} />
 

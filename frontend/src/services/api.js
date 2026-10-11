@@ -183,6 +183,19 @@ export const invoicesAPI = {
 };
 
 // Products API
+// Outils de stock : scan, inventaires physiques, réception (apps/api/views_stock.py)
+export const stockAPI = {
+  scan: (code) => api.get('/stock/scan/', { params: { code } }),
+  assignBarcode: (productId, barcode) => api.post('/stock/assign-barcode/', { product_id: productId, barcode }),
+  inventories: () => api.get('/stock/inventories/'),
+  startInventory: (data = {}) => api.post('/stock/inventories/', data),
+  inventory: (id) => api.get(`/stock/inventories/${id}/`),
+  count: (id, counts) => api.post(`/stock/inventories/${id}/count/`, { counts }),
+  applyInventory: (id) => api.post(`/stock/inventories/${id}/apply/`),
+  cancelInventory: (id) => api.post(`/stock/inventories/${id}/cancel/`),
+  receive: (data) => api.post('/stock/receive/', data),
+};
+
 export const productsAPI = {
   list: (params) => api.get('/products/', { params }),
   get: (id) => api.get(`/products/${id}/`),

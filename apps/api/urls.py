@@ -1,4 +1,5 @@
 from django.urls import path, include
+from . import views_stock
 from rest_framework.routers import DefaultRouter
 from apps.accounts.auth_api_views import ThrottledObtainAuthToken
 from . import views
@@ -53,6 +54,15 @@ urlpatterns = [
     path('accounts/profile-types/', accounts_api_views.api_profile_types, name='api_profile_types'),
     path('accounts/organization/settings/', accounts_api_views.api_organization_settings, name='api_organization_settings'),
     path('accounts/countries/', accounts_api_views.api_countries, name='api_countries'),
+    # Outils de stock : scan, inventaires physiques, réception
+    path('stock/scan/', views_stock.scan, name='stock_scan'),
+    path('stock/assign-barcode/', views_stock.assign_barcode, name='stock_assign_barcode'),
+    path('stock/inventories/', views_stock.inventories, name='stock_inventories'),
+    path('stock/inventories/<uuid:pk>/', views_stock.inventory_detail, name='stock_inventory_detail'),
+    path('stock/inventories/<uuid:pk>/count/', views_stock.inventory_count, name='stock_inventory_count'),
+    path('stock/inventories/<uuid:pk>/apply/', views_stock.inventory_apply, name='stock_inventory_apply'),
+    path('stock/inventories/<uuid:pk>/cancel/', views_stock.inventory_cancel, name='stock_inventory_cancel'),
+    path('stock/receive/', views_stock.receive, name='stock_receive'),
     path('accounts/organization/users/', accounts_api_views.api_organization_users, name='api_organization_users'),
     path('accounts/organization/users/<uuid:user_id>/', accounts_api_views.api_organization_user_detail, name='api_organization_user_detail'),
     path('accounts/organization/users/<uuid:user_id>/permissions/', accounts_api_views.api_user_permissions, name='api_user_permissions'),

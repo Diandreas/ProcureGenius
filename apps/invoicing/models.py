@@ -108,7 +108,8 @@ class Product(models.Model):
     name = models.CharField(max_length=200, verbose_name="Nom")
     description = models.TextField(blank=True, verbose_name="Description")
     reference = models.CharField(max_length=50, unique=True, blank=True, verbose_name="Référence")
-    barcode = models.CharField(max_length=50, blank=True, null=True, unique=True, verbose_name="Code-barres")
+    # unique par organisation (contrainte en Meta) : deux boutiques peuvent vendre le même article EAN
+    barcode = models.CharField(max_length=50, blank=True, null=True, db_index=True, verbose_name="Code-barres")
 
     product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='physical', verbose_name="Type")
     source_type = models.CharField(max_length=20, choices=SOURCE_TYPES, default='purchased', verbose_name="Source")
@@ -152,6 +153,10 @@ class Product(models.Model):
         verbose_name = "Produit"
         verbose_name_plural = "Produits"
         ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(fields=['organization', 'barcode'], condition=models.Q(barcode__isnull=False),
+                                    name='product_barcode_unique_per_org'),
+        ]
     
     def __str__(self):
         return self.name
@@ -1663,3 +1668,50 @@ class Payment(models.Model):
         # Mettre à jour le statut de la facture après le paiement
         if self.invoice_id:
             self.invoice.update_status_from_payments()
+
+
+class InventorySession(models.Model):
+    """
+    Inventaire physique : on compte le stock réel, l'écart avec le stock théorique devient un
+    ajustement tracé (mouvement « adjustment » portant la référence de l'inventaire).
+    Un inventaire se compte en plusieurs fois (brouillon), puis s'applique en une seule transaction.
+    """
+    STATUS = [('draft', 'En cours de comptage'), ('applied', 'Appliqué'), ('cancelled', 'Annulé')]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization = models.ForeignKey('accounts.Organization', on_delete=models.CASCADE, related_name='inventory_sessions')
+    reference = models.CharField(max_length=50, verbose_name="Référence")
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.SET_NULL, null=True, blank=True, related_name='inventories',
+                                  verbose_name="Entrepôt (vide = tout le stock)")
+    status = models.CharField(max_length=20, choices=STATUS, default='draft')
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='inventories_created')
+    applied_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='inventories_applied')
+    created_at = models.DateTimeField(auto_now_add=True)
+    applied_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = [('organization', 'reference')]
+        verbose_name = "Inventaire"
+        verbose_name_plural = "Inventaires"
+
+    def __str__(self):
+        return self.reference
+
+
+class InventoryLine(models.Model):
+    """Une ligne d'inventaire : un produit (ou un lot précis), stock attendu au départ et quantité comptée."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(InventorySession, on_delete=models.CASCADE, related_name='lines')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='inventory_lines')
+    batch = models.ForeignKey(ProductBatch, on_delete=models.SET_NULL, null=True, blank=True, related_name='inventory_lines')
+    expected = models.IntegerField(verbose_name="Stock attendu (au début)")
+    counted = models.IntegerField(null=True, blank=True, verbose_name="Quantité comptée")
+    applied_delta = models.IntegerField(null=True, blank=True, verbose_name="Écart appliqué")
+    counted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    counted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['product__name']
+        unique_together = [('session', 'product', 'batch')]
