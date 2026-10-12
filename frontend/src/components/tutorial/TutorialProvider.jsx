@@ -45,32 +45,32 @@ export const useTutorial = () => {
 const DEFAULT_TUTORIAL_STEPS = [
   {
     id: 'welcome',
-    title: 'Bienvenue sur ProcureGenius ! ',
-    description: 'Je suis Procury, votre assistant. Je vais vous faire découvrir les principales fonctionnalités de la plateforme.',
+    titleKey: 'onboarding:tutorial.provider.welcome.title',
+    descriptionKey: 'onboarding:tutorial.provider.welcome.description',
     target: null, // Pas de cible spécifique
     route: '/dashboard',
     position: 'center',
   },
   {
     id: 'dashboard',
-    title: 'Le Tableau de bord',
-    description: 'C\'est votre centre de commande. Vous y trouverez un aperçu de votre activité, vos alertes et vos statistiques en temps réel.',
+    titleKey: 'onboarding:tutorial.provider.dashboard.title',
+    descriptionKey: 'onboarding:tutorial.provider.dashboard.description',
     target: '[data-tutorial="dashboard"]',
     route: '/dashboard',
     position: 'bottom',
   },
   {
     id: 'sidebar',
-    title: 'Le Menu latéral',
-    description: 'Naviguez facilement entre les différents modules de l\'application. Les modules affichés dépendent de votre configuration.',
+    titleKey: 'onboarding:tutorial.provider.sidebar.title',
+    descriptionKey: 'onboarding:tutorial.provider.sidebar.description',
     target: '[data-tutorial="sidebar"]',
     route: '/dashboard',
     position: 'right',
   },
   {
     id: 'suppliers',
-    title: 'Gestion des Fournisseurs',
-    description: 'Ajoutez et gérez vos fournisseurs. Vous pouvez importer depuis Excel, scanner des cartes de visite, et suivre leurs performances.',
+    titleKey: 'onboarding:tutorial.provider.suppliers.title',
+    descriptionKey: 'onboarding:tutorial.provider.suppliers.description',
     target: '[data-tutorial="menu-suppliers"]',
     route: '/suppliers',
     position: 'right',
@@ -78,8 +78,8 @@ const DEFAULT_TUTORIAL_STEPS = [
   },
   {
     id: 'purchase-orders',
-    title: 'Bons de Commande',
-    description: 'Créez des bons de commande professionnels en quelques clics. L\'IA peut vous aider à rédiger le contenu.',
+    titleKey: 'onboarding:tutorial.provider.purchaseOrders.title',
+    descriptionKey: 'onboarding:tutorial.provider.purchaseOrders.description',
     target: '[data-tutorial="menu-purchase-orders"]',
     route: '/purchase-orders',
     position: 'right',
@@ -87,8 +87,8 @@ const DEFAULT_TUTORIAL_STEPS = [
   },
   {
     id: 'invoices',
-    title: 'Facturation',
-    description: 'Gérez vos factures clients. Envoyez-les par email et suivez les paiements en temps réel.',
+    titleKey: 'onboarding:tutorial.provider.invoices.title',
+    descriptionKey: 'onboarding:tutorial.provider.invoices.description',
     target: '[data-tutorial="menu-invoices"]',
     route: '/invoices',
     position: 'right',
@@ -96,8 +96,8 @@ const DEFAULT_TUTORIAL_STEPS = [
   },
   {
     id: 'clients',
-    title: 'Gestion des Clients',
-    description: 'Suivez vos clients, leur historique d\'achats et leurs soldes impayés.',
+    titleKey: 'onboarding:tutorial.provider.clients.title',
+    descriptionKey: 'onboarding:tutorial.provider.clients.description',
     target: '[data-tutorial="menu-clients"]',
     route: '/clients',
     position: 'right',
@@ -105,8 +105,8 @@ const DEFAULT_TUTORIAL_STEPS = [
   },
   {
     id: 'products',
-    title: 'Produits & Stock',
-    description: 'Gérez votre catalogue de produits, suivez vos stocks et recevez des alertes de réapprovisionnement.',
+    titleKey: 'onboarding:tutorial.provider.products.title',
+    descriptionKey: 'onboarding:tutorial.provider.products.description',
     target: '[data-tutorial="menu-products"]',
     route: '/products',
     position: 'right',
@@ -114,24 +114,24 @@ const DEFAULT_TUTORIAL_STEPS = [
   },
   {
     id: 'settings',
-    title: 'Paramètres',
-    description: 'Personnalisez votre expérience : informations entreprise, modules, impression, notifications et plus encore.',
+    titleKey: 'onboarding:tutorial.provider.settings.title',
+    descriptionKey: 'onboarding:tutorial.provider.settings.description',
     target: '[data-tutorial="menu-settings"]',
     route: '/settings',
     position: 'right',
   },
   {
     id: 'ai-assistant',
-    title: 'Assistant IA ',
-    description: 'Votre assistant intelligent peut répondre à vos questions, générer des documents et vous aider dans vos tâches quotidiennes.',
+    titleKey: 'onboarding:tutorial.provider.aiAssistant.title',
+    descriptionKey: 'onboarding:tutorial.provider.aiAssistant.description',
     target: '[data-tutorial="ai-button"]',
     route: '/dashboard',
     position: 'left',
   },
   {
     id: 'complete',
-    title: 'Vous êtes prêt ! ',
-    description: 'Vous connaissez maintenant les bases de ProcureGenius. N\'hésitez pas à explorer et à relancer ce tutoriel depuis le menu d\'aide si besoin.',
+    titleKey: 'onboarding:tutorial.provider.complete.title',
+    descriptionKey: 'onboarding:tutorial.provider.complete.description',
     target: null,
     route: '/dashboard',
     position: 'center',
@@ -149,6 +149,7 @@ const TutorialTooltip = ({
   onSkip,
   position 
 }) => {
+  const { t } = useTranslation(['onboarding', 'common']);
   const getPositionStyles = () => {
     switch (position) {
       case 'center':
@@ -238,10 +239,10 @@ const TutorialTooltip = ({
 
       {/* Content */}
       <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
-        {step.title}
+        {step.titleKey ? t(step.titleKey) : step.title}
       </Typography>
       <Typography variant="body2" color="text.secondary" paragraph>
-        {step.description}
+        {step.descriptionKey ? t(step.descriptionKey) : step.description}
       </Typography>
 
       {/* Actions */}
@@ -253,7 +254,7 @@ const TutorialTooltip = ({
               onClick={onSkip}
               sx={{ color: 'text.secondary' }}
             >
-              Passer le tutoriel
+              {t('onboarding:tutorial.skipTutorial')}
             </Button>
           )}
         </Box>
@@ -265,7 +266,7 @@ const TutorialTooltip = ({
               startIcon={<NavigateBefore />}
               onClick={onPrev}
             >
-              Précédent
+              {t('onboarding:actions.previous')}
             </Button>
           )}
           {isLast ? (
@@ -276,7 +277,7 @@ const TutorialTooltip = ({
               onClick={onClose}
               color="success"
             >
-              Terminer
+              {t('onboarding:actions.finish')}
             </Button>
           ) : (
             <Button
@@ -285,7 +286,7 @@ const TutorialTooltip = ({
               endIcon={<NavigateNext />}
               onClick={onNext}
             >
-              {isFirst ? 'Commencer' : 'Suivant'}
+              {isFirst ? t('onboarding:actions.start') : t('onboarding:actions.next')}
             </Button>
           )}
         </Stack>
@@ -298,7 +299,7 @@ const TutorialTooltip = ({
 export const TutorialProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useTranslation(['onboarding', 'common']);
   
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);

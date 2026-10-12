@@ -14,12 +14,14 @@ import {
   Send,
   Close,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Composant d'enregistrement vocal avec transcription en temps réel
  * Utilise Web Speech API pour la reconnaissance vocale en temps réel
  */
 function VoiceRecorder({ onVoiceMessage, onClose }) {
+  const { t, i18n } = useTranslation('aiChat');
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
@@ -34,7 +36,7 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
 
     if (!SpeechRecognition) {
       setIsSupported(false);
-      setError('La reconnaissance vocale n\'est pas supportée par votre navigateur. Utilisez Chrome, Edge ou Safari.');
+      setError(t('aiChat:voiceRecorder.notSupported'));
       return;
     }
 
@@ -42,7 +44,7 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
     const recognition = new SpeechRecognition();
     recognition.continuous = true; // Continue d'écouter
     recognition.interimResults = true; // Résultats en temps réel
-    recognition.lang = 'fr-FR'; // Français
+    recognition.lang = (i18n.language || 'fr').startsWith('en') ? 'en-US' : 'fr-FR'; // langue de l'interface
     recognition.maxAlternatives = 1;
 
     // Événement: résultat de la transcription
@@ -69,11 +71,11 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
     recognition.onerror = (event) => {
       console.error('Erreur de reconnaissance vocale:', event.error);
       if (event.error === 'no-speech') {
-        setError('Aucune parole détectée. Parlez plus fort.');
+        setError(t('aiChat:voiceRecorder.noSpeech'));
       } else if (event.error === 'not-allowed') {
-        setError('Permission d\'accès au microphone refusée.');
+        setError(t('aiChat:voiceRecorder.micDenied'));
       } else {
-        setError(`Erreur: ${event.error}`);
+        setError(t('aiChat:voiceRecorder.errorGeneric', { error: event.error }));
       }
       setIsListening(false);
     };
@@ -106,7 +108,7 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
       recognitionRef.current.start();
     } catch (err) {
       console.error('Erreur au démarrage:', err);
-      setError('Impossible de démarrer l\'écoute.');
+      setError(t('aiChat:voiceRecorder.startFailed'));
       setIsListening(false);
     }
   };
@@ -156,7 +158,7 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
         >
           <Box sx={{ p: 2, bgcolor: 'error.main', color: 'white' }}>
             <Typography variant="body2" fontWeight={600}>
-               Fonctionnalité non supportée
+               {t('aiChat:voiceRecorder.notSupportedTitle')}
             </Typography>
           </Box>
           <Box sx={{ p: 2 }}>
@@ -218,7 +220,7 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
               />
             )}
             <Typography variant="body2" fontWeight={600}>
-              {isListening ? ' Écoute en cours...' : ' Message vocal'}
+              {isListening ? t('aiChat:voiceRecorder.listening') : t('aiChat:voiceRecorder.title')}
             </Typography>
           </Box>
           <IconButton size="small" onClick={handleCancel} sx={{ color: 'white' }}>
@@ -262,8 +264,8 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
               sx={{ textAlign: 'center', py: 4 }}
             >
               {isListening
-                ? 'Parlez maintenant...'
-                : 'Appuyez sur le micro pour commencer'}
+                ? t('aiChat:voiceRecorder.speakNow')
+                : t('aiChat:voiceRecorder.pressMic')}
             </Typography>
           )}
         </Box>
@@ -343,10 +345,10 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
         <Box sx={{ px: 2, pb: 2 }}>
           <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', display: 'block' }}>
             {isListening
-              ? 'La transcription se fait en temps réel'
+              ? t('aiChat:voiceRecorder.realtime')
               : transcript
-              ? 'Cliquez sur Envoyer pour utiliser ce texte'
-              : 'Reconnaissance vocale en temps réel - Chrome, Edge, Safari'}
+              ? t('aiChat:voiceRecorder.clickSend')
+              : t('aiChat:voiceRecorder.browserHint')}
           </Typography>
         </Box>
       </Paper>

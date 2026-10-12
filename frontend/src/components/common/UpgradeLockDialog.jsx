@@ -7,9 +7,11 @@ import {
   Dialog, DialogContent, DialogActions, Button, Box, Typography,
 } from '@mui/material';
 import { Lock, ArrowForward } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 export default function UpgradeLockDialog({ open, moduleName, onClose }) {
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth
       PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}>
@@ -24,13 +26,12 @@ export default function UpgradeLockDialog({ open, moduleName, onClose }) {
           <Lock sx={{ fontSize: 28 }} />
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 800 }}>
-          {moduleName ? `Débloquez ${moduleName}` : 'Fonctionnalité premium'}
+          {moduleName ? t('common:upgradeLock.unlockModule', { moduleName }) : t('common:upgradeLock.premiumFeature')}
         </Typography>
       </Box>
       <DialogContent sx={{ textAlign: 'center', py: 3 }}>
         <Typography variant="body2" color="text.secondary">
-          Ce module n'est pas inclus dans votre formule actuelle. Passez à un plan
-          supérieur pour en profiter — essai 30 jours offert, sans carte.
+          {t('common:upgradeLock.description')}
         </Typography>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3, flexDirection: 'column', gap: 1 }}>
@@ -39,10 +40,10 @@ export default function UpgradeLockDialog({ open, moduleName, onClose }) {
           onClick={() => { onClose?.(); navigate('/subscription/plans'); }}
           sx={{ fontWeight: 700, textTransform: 'none', py: 1.2 }}
         >
-          Voir les formules
+          {t('common:upgradeLock.seePlans')}
         </Button>
         <Button fullWidth onClick={onClose} sx={{ color: 'text.secondary', textTransform: 'none' }}>
-          Plus tard
+          {t('common:upgradeLock.later')}
         </Button>
       </DialogActions>
     </Dialog>

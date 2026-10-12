@@ -44,7 +44,7 @@ const POOverviewWidget = ({ period = 'last_30_days' }) => {
   const statuses = [
     {
       key: 'pending',
-      label: t('widgets.po_status_pending', { ns: 'dashboard', defaultValue: 'En attente' }),
+      label: t('dashboard:widgets.po_status_pending'),
       count: data.by_status?.pending || 0,
       amount: data.amounts?.pending || 0,
       icon: Clock,
@@ -53,7 +53,7 @@ const POOverviewWidget = ({ period = 'last_30_days' }) => {
     },
     {
       key: 'approved',
-      label: t('widgets.po_status_approved', { ns: 'dashboard', defaultValue: 'Approuvés' }),
+      label: t('dashboard:widgets.po_status_approved'),
       count: data.by_status?.approved || 0,
       amount: data.amounts?.approved || 0,
       icon: CheckCircle,
@@ -62,7 +62,7 @@ const POOverviewWidget = ({ period = 'last_30_days' }) => {
     },
     {
       key: 'received',
-      label: t('widgets.po_status_received', { ns: 'dashboard', defaultValue: 'Reçus' }),
+      label: t('dashboard:widgets.po_status_received'),
       count: data.by_status?.received || 0,
       amount: data.amounts?.received || 0,
       icon: Truck,
@@ -71,7 +71,7 @@ const POOverviewWidget = ({ period = 'last_30_days' }) => {
     },
     {
       key: 'cancelled',
-      label: t('widgets.po_status_cancelled', { ns: 'dashboard', defaultValue: 'Annulés' }),
+      label: t('dashboard:widgets.po_status_cancelled'),
       count: data.by_status?.cancelled || 0,
       amount: data.amounts?.cancelled || 0,
       icon: XCircle,
@@ -91,7 +91,7 @@ const POOverviewWidget = ({ period = 'last_30_days' }) => {
           <div className="header-info">
             <span className="header-count">{totalCount}</span>
             <span className="header-label">
-              {t('widgets.po_total', { ns: 'dashboard', defaultValue: 'commandes' })}
+              {t('dashboard:widgets.po_total')}
             </span>
           </div>
         </div>

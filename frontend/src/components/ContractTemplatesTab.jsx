@@ -39,8 +39,10 @@ import {
 import { contractsAPI } from '../services/api';
 import EmptyState from './EmptyState';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
 function ContractTemplatesTab() {
+  const { t } = useTranslation(['contracts', 'common']);
   const { enqueueSnackbar } = useSnackbar();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ function ContractTemplatesTab() {
       setTemplates(response.data.results || response.data);
     } catch (err) {
       console.error('Error fetching templates:', err);
-      enqueueSnackbar('Erreur lors du chargement des modèles', { variant: 'error' });
+      enqueueSnackbar(t('contracts:templates.messages.loadError'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -108,48 +110,42 @@ function ContractTemplatesTab() {
 
   const handleSave = async () => {
     if (!formData.name || !formData.content) {
-      enqueueSnackbar('Le nom et le contenu sont requis', { variant: 'error' });
+      enqueueSnackbar(t('contracts:templates.messages.nameContentRequired'), { variant: 'error' });
       return;
       }
 
       try {
       if (currentTemplate) {
         await contractsAPI.templates.update(currentTemplate.id, formData);
-        enqueueSnackbar('Modèle mis à jour avec succès', { variant: 'success' });
+        enqueueSnackbar(t('contracts:templates.messages.updateSuccess'), { variant: 'success' });
       } else {
         await contractsAPI.templates.create(formData);
-        enqueueSnackbar('Modèle créé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('contracts:templates.messages.createSuccess'), { variant: 'success' });
       }
       handleCloseDialog();
       fetchTemplates();
       } catch (err) {
       console.error('Error saving template:', err);
-      enqueueSnackbar('Erreur lors de la sauvegarde du modèle', { variant: 'error' });
+      enqueueSnackbar(t('contracts:templates.messages.saveError'), { variant: 'error' });
       }
       };
 
       const handleDeleteTemplate = async (id) => {
-      if (window.confirm('Êtes-vous sûr de vouloir supprimer ce modèle ?')) {
+      if (window.confirm(t('contracts:templates.messages.deleteConfirm'))) {
       try {
         await contractsAPI.templates.delete(id);
-        enqueueSnackbar('Modèle supprimé avec succès', { variant: 'success' });
+        enqueueSnackbar(t('contracts:templates.messages.deleteSuccess'), { variant: 'success' });
         fetchTemplates();
       } catch (err) {
         console.error('Error deleting template:', err);
-        enqueueSnackbar('Erreur lors de la suppression du modèle', { variant: 'error' });
+        enqueueSnackbar(t('contracts:templates.messages.deleteError'), { variant: 'error' });
       }
       }
       };
 
   const getTemplateTypeLabel = (type) => {
-    const types = {
-      contract: 'Contrat standard',
-      payment: 'Contrat de paiement',
-      receipt: 'Reçu de paiement',
-      quote: 'Devis',
-      other: 'Autre',
-    };
-    return types[type] || type;
+    const types = ['contract', 'payment', 'receipt', 'quote', 'other'];
+    return types.includes(type) ? t(`contracts:templates.types.${type}`) : type;
   };
 
   if (loading) {
@@ -168,15 +164,15 @@ function ContractTemplatesTab() {
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
         >
-          Nouveau Modèle
+          {t('contracts:templates.newTemplate')}
         </Button>
       </Box>
 
       {templates.length === 0 ? (
         <EmptyState
-          title="Aucun modèle de contrat"
-          description="Vous n'avez pas encore créé de modèle de contrat, de paiement ou de devis."
-          actionLabel="Créer un modèle"
+          title={t('contracts:templates.empty.title')}
+          description={t('contracts:templates.empty.description')}
+          actionLabel={t('contracts:templates.empty.action')}
           onAction={() => handleOpenDialog()}
         />
       ) : isMobile ? (
@@ -193,7 +189,7 @@ function ContractTemplatesTab() {
                       </Typography>
                     </Box>
                     <Chip
-                      label={template.is_active ? 'Actif' : 'Inactif'}
+                      label={template.is_active ? t('contracts:templates.active') : t('contracts:templates.inactive')}
                       size="small"
                       color={template.is_active ? 'success' : 'default'}
                       sx={{ height: 20, fontSize: '0.65rem' }}
@@ -201,7 +197,7 @@ function ContractTemplatesTab() {
                   </Box>
 
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {template.description || 'Aucune description'}
+                    {template.description || t('contracts:templates.noDescription')}
                   </Typography>
 
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -213,7 +209,7 @@ function ContractTemplatesTab() {
                       <IconButton size="small" onClick={() => handleOpenDialog(template)} color="primary">
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(template.id)}>
+                      <IconButton size="small" color="error" onClick={() => handleDeleteTemplate(template.id)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>
@@ -228,11 +224,11 @@ function ContractTemplatesTab() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Nom du modèle</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Statut</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t('contracts:templates.fields.name')}</TableCell>
+                <TableCell>{t('contracts:templates.columns.type')}</TableCell>
+                <TableCell>{t('contracts:templates.fields.description')}</TableCell>
+                <TableCell>{t('contracts:templates.fields.status')}</TableCell>
+                <TableCell align="right">{t('contracts:templates.columns.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -250,24 +246,24 @@ function ContractTemplatesTab() {
                   <TableCell>{template.description}</TableCell>
                   <TableCell>
                     <Chip
-                      label={template.is_active ? 'Actif' : 'Inactif'}
+                      label={template.is_active ? t('contracts:templates.active') : t('contracts:templates.inactive')}
                       size="small"
                       color={template.is_active ? 'success' : 'default'}
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Aperçu / Voir">
+                    <Tooltip title={t('contracts:templates.tooltips.view')}>
                       <IconButton size="small" onClick={() => { setCurrentTemplate(template); setViewDialog(true); }}>
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Modifier">
+                    <Tooltip title={t('common:buttons.edit', 'Modifier')}>
                       <IconButton size="small" onClick={() => handleOpenDialog(template)} color="primary">
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer">
-                      <IconButton size="small" color="error" onClick={() => handleDelete(template.id)}>
+                    <Tooltip title={t('common:buttons.delete', 'Supprimer')}>
+                      <IconButton size="small" color="error" onClick={() => handleDeleteTemplate(template.id)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -282,33 +278,33 @@ function ContractTemplatesTab() {
       {/* Form Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {currentTemplate ? 'Modifier le modèle' : 'Nouveau modèle'}
+          {currentTemplate ? t('contracts:templates.dialog.editTitle') : t('contracts:templates.dialog.newTitle')}
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
-              label="Nom du modèle"
+              label={t('contracts:templates.fields.name')}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               fullWidth
               required
             />
             <FormControl fullWidth required>
-              <InputLabel>Type de document</InputLabel>
+              <InputLabel>{t('contracts:templates.fields.documentType')}</InputLabel>
               <Select
                 value={formData.template_type}
-                label="Type de document"
+                label={t('contracts:templates.fields.documentType')}
                 onChange={(e) => setFormData({ ...formData, template_type: e.target.value })}
               >
-                <MenuItem value="contract">Contrat standard</MenuItem>
-                <MenuItem value="payment">Contrat de paiement</MenuItem>
-                <MenuItem value="receipt">Reçu de paiement</MenuItem>
-                <MenuItem value="quote">Devis</MenuItem>
-                <MenuItem value="other">Autre</MenuItem>
+                <MenuItem value="contract">{t('contracts:templates.types.contract')}</MenuItem>
+                <MenuItem value="payment">{t('contracts:templates.types.payment')}</MenuItem>
+                <MenuItem value="receipt">{t('contracts:templates.types.receipt')}</MenuItem>
+                <MenuItem value="quote">{t('contracts:templates.types.quote')}</MenuItem>
+                <MenuItem value="other">{t('contracts:templates.types.other')}</MenuItem>
               </Select>
             </FormControl>
             <TextField
-              label="Description"
+              label={t('contracts:templates.fields.description')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               fullWidth
@@ -316,41 +312,41 @@ function ContractTemplatesTab() {
               rows={2}
             />
             <TextField
-              label="Contenu du modèle (HTML/Markdown)"
+              label={t('contracts:templates.fields.content')}
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               fullWidth
               multiline
               rows={10}
               required
-              helperText="Insérez le texte du modèle"
+              helperText={t('contracts:templates.fields.contentHelper')}
             />
             <TextField
-              label="Instructions pour l'IA (Optionnel)"
+              label={t('contracts:templates.fields.aiInstructions')}
               value={formData.ai_prompt_instructions}
               onChange={(e) => setFormData({ ...formData, ai_prompt_instructions: e.target.value })}
               fullWidth
               multiline
               rows={3}
-              helperText="Ex: 'Utilise le prénom et le nom du fournisseur pour générer la signature finale.'"
+              helperText={t('contracts:templates.fields.aiInstructionsHelper')}
             />
             <FormControl fullWidth>
-              <InputLabel>Statut</InputLabel>
+              <InputLabel>{t('contracts:templates.fields.status')}</InputLabel>
               <Select
                 value={formData.is_active ? 'active' : 'inactive'}
-                label="Statut"
+                label={t('contracts:templates.fields.status')}
                 onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })}
               >
-                <MenuItem value="active">Actif</MenuItem>
-                <MenuItem value="inactive">Inactif</MenuItem>
+                <MenuItem value="active">{t('contracts:templates.active')}</MenuItem>
+                <MenuItem value="inactive">{t('contracts:templates.inactive')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Annuler</Button>
+          <Button onClick={handleCloseDialog}>{t('common:buttons.cancel', 'Annuler')}</Button>
           <Button onClick={handleSave} variant="contained" color="primary">
-            Sauvegarder
+            {t('contracts:wizard.actions.save')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -361,13 +357,13 @@ function ContractTemplatesTab() {
           {currentTemplate?.name}
         </DialogTitle>
         <DialogContent dividers>
-          <Typography variant="overline" color="textSecondary">Contenu du modèle :</Typography>
+          <Typography variant="overline" color="textSecondary">{t('contracts:templates.view.content')}</Typography>
           <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, whiteSpace: 'pre-wrap', fontFamily: 'monospace', mb: 2 }}>
             {currentTemplate?.content}
           </Box>
           {currentTemplate?.ai_prompt_instructions && (
             <>
-              <Typography variant="overline" color="textSecondary">Instructions IA :</Typography>
+              <Typography variant="overline" color="textSecondary">{t('contracts:templates.view.aiInstructions')}</Typography>
               <Box sx={{ p: 2, bgcolor: 'primary.50', borderRadius: 1, whiteSpace: 'pre-wrap' }}>
                 {currentTemplate?.ai_prompt_instructions}
               </Box>
@@ -375,7 +371,7 @@ function ContractTemplatesTab() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setViewDialog(false)}>Fermer</Button>
+          <Button onClick={() => setViewDialog(false)}>{t('common:buttons.close', 'Fermer')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -385,8 +385,8 @@ function Contracts() {
         onChange={(e, val) => setActiveTab(val)}
         sx={{ mb: 3, '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}
       >
-        <Tab label="Contrats" />
-        <Tab label="Modèles" />
+        <Tab label={t('contracts:title', 'Contrats')} />
+        <Tab label={t('contracts:tabs.templates', 'Modèles')} />
       </Tabs>
 
       {activeTab === 0 && (
@@ -481,7 +481,7 @@ function Contracts() {
                     <MenuItem value="draft">{t('contracts:status.draft', 'Brouillon')}</MenuItem>
                     <MenuItem value="approved">{t('contracts:status.approved', 'Approuvé')}</MenuItem>
                     <MenuItem value="active">{t('contracts:status.active', 'Actif')}</MenuItem>
-                    <MenuItem value="expiring_soon">Expire bientôt</MenuItem>
+                    <MenuItem value="expiring_soon">{t('contracts:contractStatus.expiring_soon', 'Expire bientôt')}</MenuItem>
                     <MenuItem value="expired">{t('contracts:status.expired', 'Expiré')}</MenuItem>
                     <MenuItem value="terminated">{t('contracts:status.terminated', 'Résilié')}</MenuItem>
                   </Select>

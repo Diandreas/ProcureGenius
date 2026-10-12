@@ -20,6 +20,7 @@ import {
   Divider,
 } from '@mui/material';
 import { PictureAsPdf, CheckCircle, Receipt, Print, Download } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Dialog pour générer des rapports PDF avec filtres de période et sélection d'éléments
@@ -29,12 +30,16 @@ function ReportGenerationDialog({
   onClose,
   onGenerate,
   items = [],
-  title = 'Générer un Rapport PDF',
-  itemLabel = 'élément',
-  itemsLabel = 'éléments',
+  title: titleProp,
+  itemLabel: itemLabelProp,
+  itemsLabel: itemsLabelProp,
   showDateFilter = true,
   showItemSelection = true,
 }) {
+  const { t } = useTranslation('common');
+  const title = titleProp ?? t('common:reportDialog.defaultTitle');
+  const itemLabel = itemLabelProp ?? t('common:reportDialog.defaultItemLabel');
+  const itemsLabel = itemsLabelProp ?? t('common:reportDialog.defaultItemsLabel');
   const [selectedItems, setSelectedItems] = useState([]);
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
@@ -146,15 +151,15 @@ function ReportGenerationDialog({
         {showDateFilter && (
           <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-              Période
+              {t('common:reportDialog.period')}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-              Filtrer par période (optionnel - laisser vide pour tout inclure)
+              {t('common:reportDialog.periodHint')}
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
-                label="Date de début"
+                label={t('common:reportDialog.startDate')}
                 type="date"
                 value={dateStart}
                 onChange={(e) => setDateStart(e.target.value)}
@@ -168,7 +173,7 @@ function ReportGenerationDialog({
                 }}
               />
               <TextField
-                label="Date de fin"
+                label={t('common:reportDialog.endDate')}
                 type="date"
                 value={dateEnd}
                 onChange={(e) => setDateEnd(e.target.value)}
@@ -193,16 +198,16 @@ function ReportGenerationDialog({
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Box>
                 <Typography variant="subtitle2" fontWeight="bold">
-                  Sélection d'{itemsLabel}
+                  {t('common:reportDialog.itemSelection', { itemsLabel })}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {selectedItems.length > 0
-                    ? `${selectedItems.length} ${itemLabel}(s) sélectionné(s)`
-                    : `Tout sélectionner pour inclure tous les ${itemsLabel}`}
+                    ? t('common:reportDialog.selectedCount', { count: selectedItems.length, itemLabel })
+                    : t('common:reportDialog.selectAllHint', { itemsLabel })}
                 </Typography>
               </Box>
               <Chip
-                label={`${items.length} ${itemsLabel} disponibles`}
+                label={t('common:reportDialog.available', { count: items.length, itemsLabel })}
                 size="small"
                 color="primary"
                 variant="outlined"
@@ -219,7 +224,7 @@ function ReportGenerationDialog({
                       onChange={handleSelectAll}
                     />
                   }
-                  label={<strong>Tout sélectionner</strong>}
+                  label={<strong>{t('common:reportDialog.selectAll')}</strong>}
                 />
 
                 <Divider sx={{ my: 1 }} />
@@ -266,11 +271,11 @@ function ReportGenerationDialog({
         <Alert severity="info" sx={{ mt: 2 }}>
           <Typography variant="caption">
             {selectedItems.length > 0
-              ? `Un rapport sera généré avec ${selectedItems.length} ${itemLabel}(s) sélectionné(s)`
-              : `Un rapport sera généré avec tous les ${itemsLabel} correspondant aux filtres`}
-            {dateStart && dateEnd && ` pour la période du ${dateStart.toLocaleDateString()} au ${dateEnd.toLocaleDateString()}`}
-            {dateStart && !dateEnd && ` à partir du ${dateStart.toLocaleDateString()}`}
-            {!dateStart && dateEnd && ` jusqu'au ${dateEnd.toLocaleDateString()}`}
+              ? t('common:reportDialog.infoSelected', { count: selectedItems.length, itemLabel })
+              : t('common:reportDialog.infoAll', { itemsLabel })}
+            {dateStart && dateEnd && t('common:reportDialog.infoPeriod', { start: dateStart.toLocaleDateString(), end: dateEnd.toLocaleDateString() })}
+            {dateStart && !dateEnd && t('common:reportDialog.infoFrom', { start: dateStart.toLocaleDateString() })}
+            {!dateStart && dateEnd && t('common:reportDialog.infoUntil', { end: dateEnd.toLocaleDateString() })}
             .
           </Typography>
         </Alert>
@@ -278,7 +283,7 @@ function ReportGenerationDialog({
 
       <DialogActions>
         <Button onClick={handleClose} disabled={generating}>
-          Annuler
+          {t('common:buttons.cancel')}
         </Button>
         <Button
           onClick={handleGenerate}
@@ -287,7 +292,7 @@ function ReportGenerationDialog({
           startIcon={generating ? <CircularProgress size={16} /> : <CheckCircle />}
           disabled={generating}
         >
-          {generating ? 'Génération...' : 'Générer le Rapport'}
+          {generating ? t('common:reportDialog.generating') : t('common:reportDialog.generate')}
         </Button>
       </DialogActions>
     </Dialog>

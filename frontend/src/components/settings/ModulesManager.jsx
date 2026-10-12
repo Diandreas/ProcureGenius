@@ -22,23 +22,25 @@ import {
   BarChart,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { useModules } from '../../contexts/ModuleContext';
 
 const AVAILABLE_MODULES = [
-  { code: 'dashboard', name: 'Tableau de bord', always_enabled: true, IconComponent: AppsIcon },
-  { code: 'invoices', name: 'Facturation', IconComponent: Receipt },
-  { code: 'purchase-orders', name: 'Bons de commande', IconComponent: ShoppingCart },
-  { code: 'suppliers', name: 'Fournisseurs', IconComponent: Business },
-  { code: 'clients', name: 'Clients', IconComponent: People },
-  { code: 'products', name: 'Produits', IconComponent: Inventory },
-  { code: 'contracts', name: 'Contrats', IconComponent: Description },
+  { code: 'dashboard', nameKey: 'settings:modulesManager.modules.dashboard', always_enabled: true, IconComponent: AppsIcon },
+  { code: 'invoices', nameKey: 'settings:modulesManager.modules.invoices', IconComponent: Receipt },
+  { code: 'purchase-orders', nameKey: 'settings:modulesManager.modules.purchase-orders', IconComponent: ShoppingCart },
+  { code: 'suppliers', nameKey: 'settings:modulesManager.modules.suppliers', IconComponent: Business },
+  { code: 'clients', nameKey: 'settings:modulesManager.modules.clients', IconComponent: People },
+  { code: 'products', nameKey: 'settings:modulesManager.modules.products', IconComponent: Inventory },
+  { code: 'contracts', nameKey: 'settings:modulesManager.modules.contracts', IconComponent: Description },
   // { code: 'e-sourcing', name: 'E-Sourcing', IconComponent: Gavel },
-  { code: 'analytics', name: 'Analytics', IconComponent: BarChart },
+  { code: 'analytics', nameKey: 'settings:modulesManager.modules.analytics', IconComponent: BarChart },
 ];
 
 const ModulesManager = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['settings', 'common']);
   const { planModules } = useModules();
   // On ne propose que les modules disponibles dans le plan actif (+ dashboard).
   const visibleModules = (planModules && planModules.length > 0)
@@ -60,7 +62,7 @@ const ModulesManager = () => {
       setEnabledModules(response.data.enabled_modules || []);
     } catch (error) {
       console.error('Erreur chargement modules:', error);
-      enqueueSnackbar('Erreur lors du chargement des modules', { variant: 'error' });
+      enqueueSnackbar(t('settings:modulesManager.loadError'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -87,7 +89,7 @@ const ModulesManager = () => {
       });
 
       console.log('Réponse serveur:', response.data);
-      enqueueSnackbar('Modules mis à jour avec succès', { variant: 'success' });
+      enqueueSnackbar(t('settings:modulesManager.saveSuccess'), { variant: 'success' });
 
       // Force reload to update menu and ModuleContext
       setTimeout(() => {
@@ -96,7 +98,7 @@ const ModulesManager = () => {
     } catch (error) {
       console.error('Erreur sauvegarde modules:', error);
       console.error('Détails:', error.response?.data);
-      enqueueSnackbar('Erreur lors de la sauvegarde: ' + (error.response?.data?.error || error.message), { variant: 'error' });
+      enqueueSnackbar(t('settings:modulesManager.saveError', { error: error.response?.data?.error || error.message }), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -114,10 +116,10 @@ const ModulesManager = () => {
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
         <AppsIcon color="primary" />
-        <Typography variant="h6">Modules actifs</Typography>
+        <Typography variant="h6">{t('settings:modulesManager.title')}</Typography>
       </Box>
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-        Activez ou désactivez les modules de votre organisation. Un rechargement sera nécessaire.
+        {t('settings:modulesManager.description')}
       </Typography>
       <Divider sx={{ mb: 2 }} />
 
@@ -158,7 +160,7 @@ const ModulesManager = () => {
                   <module.IconComponent sx={{ fontSize: 16, flexShrink: 0, color: isEnabled ? 'primary.main' : 'text.secondary' }} />
                 )}
                 <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
-                  {module.name}
+                  {t(module.nameKey)}
                 </Typography>
               </Box>
             </Grid>
@@ -174,7 +176,7 @@ const ModulesManager = () => {
           disabled={saving}
           size="small"
         >
-          {saving ? 'Enregistrement...' : 'Enregistrer'}
+          {saving ? t('common:buttons.saving') : t('common:buttons.save')}
         </Button>
       </Box>
     </Box>

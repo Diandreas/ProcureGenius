@@ -30,6 +30,7 @@ import {
   Timeline,
   Refresh,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import ChartRenderer from './ChartRenderer';
 import html2canvas from 'html2canvas';
 
@@ -38,6 +39,7 @@ import html2canvas from 'html2canvas';
  * Permet de garder les graphiques accessibles pendant la conversation
  */
 const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshArtifact }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
   const [tabIndex, setTabIndex] = useState(0);
   const [fullscreenArtifact, setFullscreenArtifact] = useState(null);
 
@@ -112,13 +114,8 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
   };
 
   const getChartTypeLabel = (chartType) => {
-    const labels = {
-      line: 'Ligne',
-      bar: 'Barres',
-      pie: 'Camembert',
-      area: 'Aire',
-    };
-    return labels[chartType] || chartType;
+    const labels = ['line', 'bar', 'pie', 'area'];
+    return labels.includes(chartType) ? t(`aiChat:artifactsPanel.chartTypes.${chartType}`) : chartType;
   };
 
   const formatTimestamp = (timestamp) => {
@@ -127,9 +124,9 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return "À l'instant";
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffMins < 1440) return `Il y a ${Math.floor(diffMins / 60)} h`;
+    if (diffMins < 1) return t('aiChat:artifactsPanel.justNow');
+    if (diffMins < 60) return t('aiChat:artifactsPanel.minutesAgo', { n: diffMins });
+    if (diffMins < 1440) return t('aiChat:artifactsPanel.hoursAgo', { n: Math.floor(diffMins / 60) });
     return date.toLocaleDateString('fr-FR');
   };
 
@@ -166,7 +163,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
           <Box display="flex" alignItems="center" gap={1.5}>
             <BarChart sx={{ color: 'primary.main', fontSize: 22 }} />
             <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
-              Visualisations
+              {t('aiChat:artifactsPanel.title')}
             </Typography>
             <Chip
               label={activeArtifacts.length}
@@ -196,11 +193,11 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
           }}
         >
           <Tab
-            label={`Actifs (${activeArtifacts.length})`}
+            label={t('aiChat:artifactsPanel.tabActive', { n: activeArtifacts.length })}
             sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.875rem', px: 2 }}
           />
           <Tab
-            label={`Historique (${archivedArtifacts.length})`}
+            label={t('aiChat:artifactsPanel.tabHistory', { n: archivedArtifacts.length })}
             sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.875rem', px: 2 }}
           />
         </Tabs>
@@ -222,13 +219,13 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
               <BarChart sx={{ fontSize: 64, opacity: 0.3 }} />
               <Typography variant="body2">
                 {tabIndex === 0
-                  ? 'Aucune visualisation active'
-                  : "Aucun élément dans l'historique"}
+                  ? t('aiChat:artifactsPanel.emptyActive')
+                  : t('aiChat:artifactsPanel.emptyHistory')}
               </Typography>
               <Typography variant="caption" sx={{ textAlign: 'center', maxWidth: 300 }}>
                 {tabIndex === 0
-                  ? "Demandez à l'IA de générer des graphiques pour les voir apparaître ici"
-                  : 'Les visualisations supprimées apparaîtront ici'}
+                  ? t('aiChat:artifactsPanel.emptyActiveHint')
+                  : t('aiChat:artifactsPanel.emptyHistoryHint')}
               </Typography>
             </Box>
           ) : (
@@ -273,7 +270,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
                             WebkitBoxOrient: 'vertical',
                           }}
                         >
-                          {artifact.chart_title || 'Sans titre'}
+                          {artifact.chart_title || t('aiChat:artifactsPanel.untitled')}
                         </Typography>
                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
                           {getChartTypeLabel(artifact.chart_type)} • {formatTimestamp(artifact.timestamp)}
@@ -306,7 +303,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
                   <Divider />
 
                   <CardActions sx={{ justifyContent: 'flex-end', px: 2, py: 1, gap: 0.5 }}>
-                    <Tooltip title="Plein écran">
+                    <Tooltip title={t('aiChat:artifactsPanel.fullscreen')}>
                       <IconButton
                         size="small"
                         onClick={() => handleFullscreen(artifact)}
@@ -314,7 +311,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
                         <Fullscreen sx={{ fontSize: 20 }} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Rafraîchir">
+                    <Tooltip title={t('aiChat:artifactsPanel.refresh')}>
                       <IconButton
                         size="small"
                         onClick={() => onRefreshArtifact && onRefreshArtifact(artifact.id)}
@@ -322,7 +319,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
                         <Refresh sx={{ fontSize: 20 }} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Télécharger">
+                    <Tooltip title={t('common:buttons.download')}>
                       <IconButton
                         size="small"
                         onClick={() => handleDownload(artifact)}
@@ -330,7 +327,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
                         <Download sx={{ fontSize: 20 }} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Supprimer">
+                    <Tooltip title={t('common:buttons.delete')}>
                       <IconButton
                         size="small"
                         color="error"
@@ -389,7 +386,7 @@ const ArtifactsPanel = ({ open, onClose, artifacts, onRemoveArtifact, onRefreshA
                 },
               }}
             >
-              Fermer
+              {t('common:buttons.close')}
             </Button>
           </Box>
 

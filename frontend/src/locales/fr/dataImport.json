@@ -1,0 +1,350 @@
+{
+  "entities": {
+    "suppliers": "Fournisseurs",
+    "products": "Produits",
+    "clients": "Clients",
+    "purchase_orders": "Bons de commande",
+    "invoices": "Factures",
+    "default": "Données"
+  },
+  "entityDescriptions": {
+    "suppliers": "Importez votre liste de fournisseurs avec leurs coordonnées",
+    "products": "Importez votre catalogue de produits avec prix et stocks",
+    "clients": "Importez votre base de clients avec leurs informations",
+    "purchase_orders": "Importez vos bons de commande existants",
+    "invoices": "Importez vos factures clients"
+  },
+  "fields": {
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "city": "Ville",
+    "country": "Pays",
+    "contact_name": "Contact",
+    "payment_terms": "Conditions paiement",
+    "notes": "Notes",
+    "reference": "Référence",
+    "sku": "SKU",
+    "description": "Description",
+    "unit_price": "Prix unitaire",
+    "cost_price": "Prix d'achat",
+    "quantity_in_stock": "Stock",
+    "category": "Catégorie",
+    "unit": "Unité",
+    "credit_limit": "Limite de crédit"
+  },
+  "status": {
+    "pending": "En attente",
+    "running": "En cours",
+    "completed": "Terminé",
+    "failed": "Échoué",
+    "cancelled": "Annulé"
+  },
+  "results": {
+    "success": "Succès",
+    "errors": "Erreurs",
+    "skipped": "Ignorés"
+  },
+  "delimiters": {
+    "comma": "Virgule (,)",
+    "semicolon": "Point-virgule (;)",
+    "tab": "Tabulation"
+  },
+  "actions": {
+    "selected": "Sélectionné",
+    "changeFile": "Changer de fichier",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "startImport": "Lancer l'import",
+    "newImport": "Nouvel import",
+    "back": "Retour",
+    "cancel": "Annuler",
+    "close": "Fermer"
+  },
+  "defaultImportName": "Import {{entity}} - {{date}}",
+  "page": {
+    "breadcrumbSettings": "Paramètres",
+    "breadcrumbImport": "Import de données",
+    "title": "Import intelligent de données",
+    "subtitle": "Importez vos données depuis Excel ou CSV avec mapping automatique",
+    "history": "Historique",
+    "exportSuppliers": "Exporter Fournisseurs",
+    "backToSettings": "Retour aux paramètres",
+    "steps": {
+      "selection": "Sélection",
+      "file": "Fichier",
+      "mapping": "Mapping",
+      "preview": "Aperçu",
+      "import": "Import"
+    },
+    "dropzone": {
+      "fileSelected": "Fichier sélectionné !",
+      "sizeKb": "{{size}} Ko",
+      "dropHere": "Déposez votre fichier ici !",
+      "dragDrop": "Glissez-déposez votre fichier",
+      "orClick": "ou cliquez pour sélectionner un fichier",
+      "maxSize": "Max 10 Mo"
+    },
+    "step0": {
+      "title": "Quel type de données souhaitez-vous importer ?",
+      "subtitle": "Sélectionnez le type de données pour configurer l'import intelligemment"
+    },
+    "step1": {
+      "title": "Sélectionnez votre fichier source",
+      "configuration": "Configuration",
+      "importName": "Nom de l'import",
+      "firstRowHeaders": "Première ligne = en-têtes",
+      "separator": "Séparateur",
+      "downloadTemplate": "Télécharger un modèle"
+    },
+    "step2": {
+      "title": "Associez les colonnes",
+      "mappedColumns_one": "{{count}} colonnes mappées",
+      "mappedColumns_other": "{{count}} colonnes mappées",
+      "requiredColumns": "Colonnes requises",
+      "fileColumn": "Colonne du fichier",
+      "preview": "Aperçu",
+      "destField": "Champ de destination",
+      "ignore": "— Ignorer —",
+      "used": " (utilisé)"
+    },
+    "step3": {
+      "title": "Vérifiez et lancez l'import",
+      "rowsToImport": "lignes à importer",
+      "mappedColumns": "colonnes mappées",
+      "importOptions": "Options d'import",
+      "skipDuplicates": "Ignorer les doublons",
+      "updateExisting": "Mettre à jour les existants",
+      "dataPreview": "Aperçu des données"
+    },
+    "step4": {
+      "inProgress": "Import en cours...",
+      "rowsProgress": "{{processed}} / {{total}} lignes",
+      "completed": "Import terminé !",
+      "viewHistory": "Voir l'historique",
+      "failed": "Erreur lors de l'import",
+      "genericError": "Une erreur est survenue",
+      "retry": "Réessayer"
+    },
+    "template": {
+      "exampleValue": "Exemple"
+    },
+    "errors": {
+      "emptyFile": "Le fichier est vide",
+      "readError": "Erreur de lecture du fichier",
+      "parseError": "Erreur lors de la lecture du fichier",
+      "noJobId": "L'ID du job n'a pas été retourné par le serveur. Réponse: {{response}}",
+      "importFailed": "Erreur lors de l'import",
+      "serviceWorker": "Le service worker a intercepté la requête. Veuillez rafraîchir la page (Ctrl+F5) pour mettre à jour le service worker, ou désactivez-le temporairement dans les DevTools (Application > Service Workers > Unregister).",
+      "notFound": "Endpoint non trouvé. Vérifiez que le serveur backend est démarré et que l'URL est correcte.",
+      "invalidData": "Données invalides. Vérifiez le format du fichier.",
+      "unauthorized": "Non autorisé. Veuillez vous reconnecter.",
+      "unsupportedType": "Type non supporté",
+      "exportFailed": "Erreur lors de l'export"
+    }
+  },
+  "wizard": {
+    "title": "Import intelligent de données",
+    "steps": {
+      "dataType": "Type de données",
+      "sourceFile": "Fichier source",
+      "mapping": "Mapping",
+      "preview": "Aperçu",
+      "import": "Import"
+    },
+    "dropzone": {
+      "fileSelected": "Fichier sélectionné",
+      "sizeKb": "{{size}} KB",
+      "dropHere": "Déposez le fichier ici",
+      "dragDrop": "Glissez-déposez votre fichier",
+      "orClick": "ou cliquez pour sélectionner",
+      "maxSize": "Max 10 MB"
+    },
+    "step0": {
+      "title": "Quel type de données souhaitez-vous importer ?",
+      "subtitle": "Sélectionnez le type d'entité pour configurer l'import intelligemment"
+    },
+    "step1": {
+      "title": "Sélectionnez votre fichier source",
+      "importName": "Nom de l'import",
+      "hasHeaders": "Le fichier contient des en-têtes",
+      "delimiter": "Délimiteur CSV",
+      "downloadTemplate": "Télécharger template"
+    },
+    "step2": {
+      "title": "Associez les colonnes de votre fichier",
+      "smartMapping": "Mapping intelligent actif",
+      "requiredColumns": "Colonnes requises",
+      "sourceColumn": "Colonne source",
+      "sampleValue": "Exemple de valeur",
+      "destField": "Champ destination",
+      "ignoreColumn": "Ignorer cette colonne"
+    },
+    "step3": {
+      "title": "Aperçu de l'import",
+      "rowsToImport": "Lignes à importer",
+      "mappedFields": "Champs mappés",
+      "entityType": "Type d'entité",
+      "importOptions": "Options d'import",
+      "skipDuplicates": "Ignorer les doublons",
+      "updateExisting": "Mettre à jour les existants",
+      "dataPreview": "Aperçu des données (5 premières lignes)"
+    },
+    "step4": {
+      "inProgress": "Import en cours...",
+      "rowsProcessed": "{{processed}} / {{total}} lignes traitées",
+      "completed": "Import terminé avec succès !",
+      "failed": "Erreur lors de l'import",
+      "unexpectedError": "Une erreur inattendue est survenue",
+      "preparing": "Préparation de l'import..."
+    },
+    "template": {
+      "requiredValue": "valeur_requise"
+    }
+  },
+  "legacy": {
+    "steps": {
+      "upload": "Upload de fichier",
+      "mapping": "Mapping des colonnes",
+      "preview": "Aperçu",
+      "importing": "Importation"
+    },
+    "titles": {
+      "clients": "Importer des clients",
+      "products": "Importer des produits",
+      "contacts": "Importer des contacts téléphone"
+    },
+    "contacts": {
+      "title": "Importer des contacts depuis votre téléphone",
+      "description": "Accédez aux contacts de votre téléphone pour les importer directement.",
+      "accessing": "Accès aux contacts...",
+      "access": "Accéder aux contacts"
+    },
+    "dropHere": "Déposez le fichier ici",
+    "dragDrop": "Glissez-déposez votre fichier",
+    "supportedFormats": "Formats supportés: CSV, XLS, XLSX",
+    "chooseFile": "Choisir un fichier",
+    "requiredFieldsFor": "Champs requis pour {{type}}:",
+    "mapTitle": "Mappez les colonnes de votre fichier",
+    "mapInfo": "Associez chaque colonne de votre fichier avec les champs correspondants",
+    "columnLabel": "Colonne: {{column}}",
+    "ignoreColumn": "Ignorer cette colonne",
+    "preview": "Aperçu",
+    "previewTitle": "Aperçu des données à importer",
+    "recordsToImport_one": "{{count}} enregistrements seront importés",
+    "recordsToImport_other": "{{count}} enregistrements seront importés",
+    "startImport": "Commencer l'importation",
+    "inProgress": "Importation en cours...",
+    "percentDone": "{{percent}}% terminé",
+    "completed": "Importation terminée !",
+    "success": "Succès",
+    "failures": "Échecs",
+    "total": "Total",
+    "errorsEncountered": "Erreurs rencontrées:",
+    "finish": "Terminer",
+    "mockLineError": "Ligne 3: Email invalide"
+  },
+  "quickbooks": {
+    "connected": "Connecté",
+    "notConnected": "Non connecté",
+    "test": "Tester",
+    "disconnect": "Déconnecter",
+    "connect": "Connecter",
+    "company": "Entreprise:",
+    "loading": "Chargement...",
+    "connectedOn": "Connecté le:",
+    "lastSync": "Dernière sync:",
+    "info": "Connectez QuickBooks pour importer directement vos fournisseurs, clients, produits et factures sans passer par Excel/CSV.",
+    "disconnectTitle": "Déconnecter QuickBooks?",
+    "disconnectConfirm": "Êtes-vous sûr de vouloir déconnecter QuickBooks? Vous devrez vous reconnecter pour importer des données à nouveau.",
+    "errors": {
+      "connect": "Erreur lors de la connexion à QuickBooks",
+      "disconnect": "Erreur lors de la déconnexion",
+      "testFailed": "Test de connexion échoué"
+    },
+    "testOk": "Connexion QuickBooks OK!"
+  },
+  "jobs": {
+    "title": "Imports de données",
+    "searchPlaceholder": "Rechercher...",
+    "status": "Statut",
+    "entityType": "Type d'entité",
+    "all": "Tous",
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "status": "Statut",
+      "progress": "Progression",
+      "createdAt": "Date de création",
+      "actions": "Actions"
+    },
+    "empty": "Aucun import trouvé. Cliquez sur \"Nouvel import\" pour commencer.",
+    "viewDetails": "Voir les détails",
+    "total_one": "{{count}} import au total",
+    "total_other": "{{count}} imports au total"
+  },
+  "migration": {
+    "title": "Assistant d'import de données",
+    "errorTitle": "Erreur",
+    "steps": {
+      "upload": "Téléverser le fichier",
+      "previewMapping": "Aperçu et mapping",
+      "configuration": "Configuration",
+      "import": "Import"
+    },
+    "step1": {
+      "title": "Téléverser le fichier source",
+      "importName": "Nom de l'import",
+      "sourceType": "Type de source",
+      "quickbooksSoon": "QuickBooks (Bientôt disponible)",
+      "entityType": "Type d'entité",
+      "selectFile": "Sélectionner un fichier",
+      "hasHeaders": "Le fichier contient des en-têtes",
+      "delimiter": "Délimiteur (pour CSV)",
+      "generatePreview": "Générer l'aperçu"
+    },
+    "step2": {
+      "title": "Aperçu des données et mapping des champs",
+      "analyzing": "Analyse du fichier en cours...",
+      "rowsShown": "{{shown}} lignes affichées sur {{total}} total",
+      "fieldMapping": "Mapping des champs",
+      "sourceField": "Champ source",
+      "destField": "Champ destination",
+      "transformation": "Transformation",
+      "ignore": "-- Ignorer --",
+      "transforms": {
+        "none": "Aucune",
+        "uppercase": "MAJUSCULES",
+        "lowercase": "minuscules",
+        "capitalize": "Capitaliser",
+        "strip": "Enlever espaces"
+      },
+      "dataPreview": "Aperçu des données",
+      "configure": "Configurer"
+    },
+    "step3": {
+      "title": "Configuration de l'import",
+      "skipDuplicates": "Ignorer les doublons",
+      "updateExisting": "Mettre à jour les enregistrements existants",
+      "summary": "Résumé:",
+      "rowsToImport": "{{rows}} lignes à importer",
+      "mappedFields": "{{fields}} champs mappés",
+      "type": "Type: {{type}}",
+      "start": "Démarrer l'import"
+    },
+    "step4": {
+      "title": "Import en cours",
+      "progress": "Progression: {{processed}} / {{total}} lignes ({{percent}}%)",
+      "completed": "Import terminé avec succès!",
+      "failed": "Erreur lors de l'import: {{message}}",
+      "log": "Journal d'import",
+      "columns": {
+        "row": "Ligne",
+        "level": "Niveau",
+        "message": "Message"
+      },
+      "viewAll": "Voir tous les imports"
+    }
+  }
+}

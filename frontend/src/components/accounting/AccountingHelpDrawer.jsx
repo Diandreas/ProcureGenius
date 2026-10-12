@@ -5,7 +5,8 @@ import {
   TableContainer, Paper, List, ListItem, ListItemText, Chip,
 } from '@mui/material';
 import { Close, Lightbulb } from '@mui/icons-material';
-import { getAccountingHelp } from '../../constants/accountingHelp';
+import { useTranslation } from 'react-i18next';
+import { getAccountingHelp, ACCOUNTING_TERM_KEYS } from '../../constants/accountingHelp';
 import accountingAPI from '../../services/accountingAPI';
 
 function TabPanel({ children, value, index }) {
@@ -13,6 +14,7 @@ function TabPanel({ children, value, index }) {
 }
 
 const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
+  const { t, i18n } = useTranslation(['accounting', 'common']);
   const [tab, setTab] = React.useState(0);
   const [standard, setStandard] = React.useState('syscohada');
   React.useEffect(() => {
@@ -20,7 +22,7 @@ const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
     accountingAPI.getChartStandard().then((r) => setStandard(r.data.current)).catch(() => {});
   }, [open]);
   // exemples avec les comptes et la devise du plan de l'organisation
-  const help = React.useMemo(() => getAccountingHelp(standard), [standard]);
+  const help = React.useMemo(() => getAccountingHelp(standard, t, i18n.language), [standard, t, i18n.language]);
   const ACCOUNTING_TERMS = help.terms;
   const content = help.content[context] || help.content.journal_entry;
 
@@ -36,7 +38,7 @@ const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
         <Box display="flex" alignItems="center" gap={1}>
           <Lightbulb fontSize="small" />
           <Typography variant="subtitle1" fontWeight={700}>
-            Aide comptabilité
+            {t('accounting:help.drawer.title')}
           </Typography>
         </Box>
         <IconButton size="small" onClick={onClose} sx={{ color: 'white' }}>
@@ -55,9 +57,9 @@ const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
       </Box>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="fullWidth" sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label="Concepts" sx={{ fontSize: '0.75rem' }} />
-        {content.examples?.length > 0 && <Tab label="Exemples" sx={{ fontSize: '0.75rem' }} />}
-        <Tab label="Glossaire" sx={{ fontSize: '0.75rem' }} />
+        <Tab label={t('accounting:help.drawer.concepts')} sx={{ fontSize: '0.75rem' }} />
+        {content.examples?.length > 0 && <Tab label={t('accounting:help.drawer.examples')} sx={{ fontSize: '0.75rem' }} />}
+        <Tab label={t('accounting:help.drawer.glossary')} sx={{ fontSize: '0.75rem' }} />
       </Tabs>
 
       <Box sx={{ overflowY: 'auto', flex: 1, px: 2, pb: 3 }}>
@@ -79,7 +81,7 @@ const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
             <>
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-                Conseils pratiques
+                {t('accounting:help.drawer.tips')}
               </Typography>
               {content.tips.map((tip, i) => (
                 <Alert key={i} severity="info" icon={false} sx={{ mb: 1, py: 0.5, fontSize: '0.75rem' }}>
@@ -102,9 +104,9 @@ const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
                   <Table size="small">
                     <TableHead>
                       <TableRow sx={{ bgcolor: 'grey.50' }}>
-                        <TableCell sx={{ fontSize: '0.7rem', fontWeight: 700 }}>Compte</TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'primary.main' }}>Débit {help.currency}</TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'error.main' }}>Crédit {help.currency}</TableCell>
+                        <TableCell sx={{ fontSize: '0.7rem', fontWeight: 700 }}>{t('accounting:help.drawer.account')}</TableCell>
+                        <TableCell align="right" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'primary.main' }}>{t('accounting:help.drawer.debit', { currency: help.currency })}</TableCell>
+                        <TableCell align="right" sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'error.main' }}>{t('accounting:help.drawer.credit', { currency: help.currency })}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -130,13 +132,13 @@ const AccountingHelpDrawer = ({ open, onClose, context = 'journal_entry' }) => {
         {/* Glossaire tab — dernier tab */}
         <TabPanel value={tab} index={content.examples?.length > 0 ? 2 : 1}>
           <List dense disablePadding>
-            {Object.entries(ACCOUNTING_TERMS).map(([key, definition]) => (
+            {ACCOUNTING_TERM_KEYS.map((key) => [key, ACCOUNTING_TERMS[key]]).map(([key, definition]) => (
               <React.Fragment key={key}>
                 <ListItem alignItems="flex-start" sx={{ px: 0, py: 1 }}>
                   <ListItemText
                     primary={
                       <Chip
-                        label={key.replace(/_/g, ' ')}
+                        label={t(`accounting:help.termNames.${key}`)}
                         size="small"
                         color="primary"
                         variant="outlined"

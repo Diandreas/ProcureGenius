@@ -18,6 +18,8 @@ import {
   Paper,
   Divider,
   Stack,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { Save, Cancel, ArrowBack } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';

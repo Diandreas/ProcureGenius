@@ -163,6 +163,106 @@
       "later": "Later",
       "iosHint": "Tap ",
       "iosHint2": " then \"Add to Home Screen\""
+    },
+    "prompt": {
+      "snackbar": "Install the app for quick, offline access",
+      "dialogTitle": "Install the app",
+      "benefitsTitle": "Benefits of installing",
+      "benefitOffline": "Offline access to your data",
+      "benefitLaunch": "Quick launch from your home screen",
+      "benefitUpdates": "Automatic updates",
+      "installNow": "Install now",
+      "update": "Update",
+      "updateAvailable": "A new version of the app is available",
+      "offline": "You're offline - Some features may be limited"
     }
+  },
+  "back": "Back",
+  "guards": {
+    "lockedTitle": "Premium feature",
+    "lockedDescription": "This module is included in a higher plan (Business or Pro). Upgrade to access it — 30-day free trial, no card required.",
+    "viewPlans": "View plans"
+  },
+  "featureGate": {
+    "defaultTitle": "Business feature",
+    "defaultDescription": "This feature is included in the Business plan. Upgrade to Business to access it — 30-day free trial, no card required.",
+    "discover": "Discover Business"
+  },
+  "upgradeLock": {
+    "unlockModule": "Unlock {{moduleName}}",
+    "premiumFeature": "Premium feature",
+    "description": "This module isn't included in your current plan. Upgrade to a higher plan to use it — 30-day free trial, no card required.",
+    "seePlans": "See plans",
+    "later": "Later"
+  },
+  "priceHistory": {
+    "lastPurchase": "Last purchase:",
+    "onDate": " on {{date}}",
+    "average": "Avg:"
+  },
+  "quickCreate": {
+    "similarFound": "Similar records were found.",
+    "createError": "Error while creating",
+    "forceCreateError": "Error while force-creating",
+    "similarEntities": "Similar records found:",
+    "similarity": " ({{percent}}% similar)",
+    "createAnywayQuestion": "Do you want to create it anyway?",
+    "createAnyway": "Create anyway",
+    "creating": "Creating..."
+  },
+  "reportDialog": {
+    "defaultTitle": "Generate a PDF Report",
+    "defaultItemLabel": "item",
+    "defaultItemsLabel": "items",
+    "period": "Period",
+    "periodHint": "Filter by period (optional - leave empty to include everything)",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "itemSelection": "Select {{itemsLabel}}",
+    "selectedCount": "{{count}} {{itemLabel}}(s) selected",
+    "selectAllHint": "Select all to include all {{itemsLabel}}",
+    "available": "{{count}} {{itemsLabel}} available",
+    "selectAll": "Select all",
+    "infoSelected": "A report will be generated with {{count}} selected {{itemLabel}}(s)",
+    "infoAll": "A report will be generated with all {{itemsLabel}} matching the filters",
+    "infoPeriod": " for the period from {{start}} to {{end}}",
+    "infoFrom": " from {{start}}",
+    "infoUntil": " until {{end}}",
+    "generating": "Generating...",
+    "generate": "Generate Report"
+  },
+  "emptyState": {
+    "defaultTitle": "No data available",
+    "defaultDescription": "There's nothing to show yet."
+  },
+  "errorState": {
+    "defaultTitle": "Oops! Something went wrong",
+    "defaultMessage": "We're experiencing technical difficulties. Please try again.",
+    "retry": "Try again",
+    "backHome": "Back to home"
+  },
+  "errorBoundary": {
+    "newVersionTitle": "A new version is available",
+    "errorTitle": "Something went wrong",
+    "newVersionText": "The app has been updated. Reload the page to continue.",
+    "errorText": "An unexpected problem occurred. You can reload the page; if the problem persists, try again later.",
+    "reload": "Reload page",
+    "backHome": "Back to home"
+  },
+  "loadingState": {
+    "defaultMessage": "Loading..."
+  },
+  "moduleQuickActions": {
+    "title": "AI quick actions",
+    "smartChip": "Smart",
+    "hint": "AI can help you automate these tasks"
+  },
+  "mascot": {
+    "tip1": " Use the AI Assistant to create documents quickly",
+    "tip2": " Keyboard shortcuts speed up your work",
+    "tip3": " Check the dashboard to track your performance",
+    "tip4": " E-sourcing helps you compare supplier bids",
+    "tip5": " Easily import your data from other systems",
+    "clickForTip": "Click for a tip!"
   }
 }

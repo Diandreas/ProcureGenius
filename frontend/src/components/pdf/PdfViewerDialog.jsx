@@ -15,6 +15,7 @@ import {
 import {
   Close, Download, Share as ShareIcon, NavigateBefore, NavigateNext,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { isNativePlatform, savePdfToDevice, sharePdf } from '../../services/pdfNative';
 
 // Worker pdf.js.
@@ -30,6 +31,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = isNativePlatform()
 const BG = '#1e222d';
 
 export default function PdfViewerDialog({ open, blob, filename = 'document.pdf', title, onClose }) {
+  const { t } = useTranslation(['invoices', 'common']);
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(1);
   const [busy, setBusy] = useState(false);
@@ -86,17 +88,17 @@ export default function PdfViewerDialog({ open, blob, filename = 'document.pdf',
         bgcolor: 'rgba(0,0,0,0.35)', color: '#fff',
         position: 'sticky', top: 0, zIndex: 2,
       }}>
-        <IconButton onClick={onClose} sx={{ color: '#fff' }} aria-label="Fermer">
+        <IconButton onClick={onClose} sx={{ color: '#fff' }} aria-label={t('invoices:pdfViewer.close')}>
           <Close />
         </IconButton>
         <Typography sx={{ flex: 1, fontWeight: 600, fontSize: '0.95rem', noWrap: true,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {title || filename}
         </Typography>
-        <IconButton onClick={handleShare} disabled={busy} sx={{ color: '#fff' }} aria-label="Partager">
+        <IconButton onClick={handleShare} disabled={busy} sx={{ color: '#fff' }} aria-label={t('invoices:pdfViewer.share')}>
           <ShareIcon />
         </IconButton>
-        <IconButton onClick={handleDownload} disabled={busy} sx={{ color: '#fff' }} aria-label="Telecharger">
+        <IconButton onClick={handleDownload} disabled={busy} sx={{ color: '#fff' }} aria-label={t('invoices:pdfViewer.download')}>
           {busy ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : <Download />}
         </IconButton>
       </Box>
@@ -109,7 +111,7 @@ export default function PdfViewerDialog({ open, blob, filename = 'document.pdf',
             file={fileUrl}
             onLoadSuccess={onLoad}
             loading={<CircularProgress sx={{ color: '#fff', mt: 6 }} />}
-            error={<Typography sx={{ color: '#fff', mt: 6 }}>Impossible d'afficher le PDF.</Typography>}
+            error={<Typography sx={{ color: '#fff', mt: 6 }}>{t('invoices:pdfViewer.loadError')}</Typography>}
           >
             <Page
               pageNumber={page}
@@ -141,12 +143,12 @@ export default function PdfViewerDialog({ open, blob, filename = 'document.pdf',
       <Box sx={{ display: 'flex', gap: 1.5, p: 1.5, bgcolor: 'rgba(0,0,0,0.25)' }}>
         <Button fullWidth startIcon={<Download />} onClick={handleDownload} disabled={busy}
           variant="contained" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}>
-          Telecharger
+          {t('invoices:pdfViewer.download')}
         </Button>
         <Button fullWidth startIcon={<ShareIcon />} onClick={handleShare} disabled={busy}
           variant="outlined" sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700,
           color: '#fff', borderColor: 'rgba(255,255,255,0.4)' }}>
-          Partager
+          {t('invoices:pdfViewer.share')}
         </Button>
       </Box>
     </Dialog>

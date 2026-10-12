@@ -49,6 +49,7 @@ import {
   FileUpload,
   CloudUpload,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import ImportWizard from '../../components/ImportWizard';
 
 function TabPanel({ children, value, index, ...other }) {
@@ -69,6 +70,7 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 function Settings() {
+  const { t } = useTranslation(['settings', 'common']);
   const [activeTab, setActiveTab] = useState(0);
   const [openTaxDialog, setOpenTaxDialog] = useState(false);
   const [openHeaderDialog, setOpenHeaderDialog] = useState(false);
@@ -196,7 +198,7 @@ function Settings() {
   const handleSave = () => {
     // Ici vous pourriez ajouter la logique pour sauvegarder les paramètres
     console.log('Sauvegarde des paramètres:', settings);
-    alert('Paramètres sauvegardés avec succès!');
+    alert(t('settings:legacySettings.saveSuccess'));
   };
 
   const handleHeaderUpload = (event) => {
@@ -204,13 +206,13 @@ function Settings() {
     if (file) {
       // Vérifier le type de fichier
       if (!file.type.startsWith('image/')) {
-        alert('Veuillez sélectionner un fichier image valide');
+        alert(t('settings:legacySettings.invalidImage'));
         return;
       }
 
       // Vérifier la taille (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Le fichier est trop volumineux (max 5MB)');
+        alert(t('settings:legacySettings.fileTooLarge'));
         return;
       }
 
@@ -221,7 +223,7 @@ function Settings() {
           // Vérifier les proportions recommandées (ratio 2.6:1 pour A4)
           const ratio = img.width / img.height;
           if (ratio < 2.0 || ratio > 4.0) {
-            if (!confirm('Les proportions de votre image ne sont pas optimales pour un en-tête de facture (ratio recommandé: 2.6:1). Voulez-vous continuer?')) {
+            if (!confirm(t('settings:legacySettings.ratioConfirm'))) {
               return;
             }
           }
@@ -248,13 +250,13 @@ function Settings() {
   };
 
   const tabs = [
-    { label: 'Général', icon: <Business /> },
-    { label: 'Facturation', icon: <Print /> },
-    { label: 'Notifications', icon: <Notifications /> },
-    { label: 'Apparence', icon: <Palette /> },
-    { label: 'Sécurité', icon: <Security /> },
-    { label: 'Sauvegarde', icon: <Backup /> },
-    { label: 'Importation', icon: <CloudUpload /> },
+    { label: t('settings:tabs.general'), icon: <Business /> },
+    { label: t('settings:tabs.billing'), icon: <Print /> },
+    { label: t('settings:tabs.notifications'), icon: <Notifications /> },
+    { label: t('settings:tabs.appearance'), icon: <Palette /> },
+    { label: t('settings:tabs.security'), icon: <Security /> },
+    { label: t('settings:tabs.backup'), icon: <Backup /> },
+    { label: t('settings:legacySettings.importTab'), icon: <CloudUpload /> },
   ];
 
   return (
@@ -268,14 +270,14 @@ function Settings() {
           lineHeight: 1.2,
           color: 'text.primary'
         }}>
-          Paramètres
+          {t('settings:title')}
         </Typography>
         {!isMobile && (
           <Typography variant="body2" color="text.secondary" sx={{
             fontSize: '0.875rem',
             mt: 0.5
           }}>
-            Configurez votre application selon vos besoins
+            {t('settings:legacySettings.subtitle')}
           </Typography>
         )}
       </Box>
@@ -340,13 +342,13 @@ function Settings() {
             letterSpacing: '-0.01em',
             mb: isMobile ? 1 : 2
           }}>
-            Informations de l'entreprise
+            {t('settings:general.title')}
           </Typography>
           <Grid container spacing={isMobile ? 1.5 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Nom de l'entreprise"
+                label={t('settings:general.companyNameLabel')}
                 value={settings.companyName}
                 onChange={(e) => handleSettingChange('companyName', e.target.value)}
                 {...getTextFieldProps()}
@@ -355,7 +357,7 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Téléphone"
+                label={t('settings:general.phone')}
                 value={settings.companyPhone}
                 onChange={(e) => handleSettingChange('companyPhone', e.target.value)}
               />
@@ -363,7 +365,7 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Email"
+                label={t('settings:general.emailLabel')}
                 type="email"
                 value={settings.companyEmail}
                 onChange={(e) => handleSettingChange('companyEmail', e.target.value)}
@@ -372,7 +374,7 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Site web"
+                label={t('settings:general.website')}
                 value={settings.companyWebsite}
                 onChange={(e) => handleSettingChange('companyWebsite', e.target.value)}
               />
@@ -380,7 +382,7 @@ function Settings() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Adresse"
+                label={t('settings:general.address')}
                 multiline
                 rows={3}
                 value={settings.companyAddress}
@@ -394,11 +396,11 @@ function Settings() {
                   startIcon={<FileUpload />}
                   component="label"
                 >
-                  Télécharger le logo
+                  {t('settings:legacySettings.uploadLogo')}
                   <input type="file" hidden accept="image/*" />
                 </Button>
                 <Typography variant="body2" color="textSecondary">
-                  Formats acceptés: PNG, JPG, SVG (max 2MB)
+                  {t('settings:legacySettings.logoFormats')}
                 </Typography>
               </Box>
             </Grid>
@@ -407,24 +409,24 @@ function Settings() {
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            Paramètres de localisation
+            {t('settings:legacySettings.localization')}
           </Typography>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Langue</InputLabel>
+                <InputLabel>{t('settings:general.language')}</InputLabel>
                 <Select
                   value={settings.language}
                   onChange={(e) => handleSettingChange('language', e.target.value)}
                 >
-                  <MenuItem value="fr">Français</MenuItem>
-                  <MenuItem value="en">English</MenuItem>
+                  <MenuItem value="fr">{t('settings:general.languageFr')}</MenuItem>
+                  <MenuItem value="en">{t('settings:general.languageEn')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Format de date</InputLabel>
+                <InputLabel>{t('settings:appearance.dateFormat')}</InputLabel>
                 <Select
                   value={settings.dateFormat}
                   onChange={(e) => handleSettingChange('dateFormat', e.target.value)}
@@ -437,13 +439,13 @@ function Settings() {
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Format d'heure</InputLabel>
+                <InputLabel>{t('settings:appearance.timeFormat')}</InputLabel>
                 <Select
                   value={settings.timeFormat}
                   onChange={(e) => handleSettingChange('timeFormat', e.target.value)}
                 >
-                  <MenuItem value="24h">24 heures</MenuItem>
-                  <MenuItem value="12h">12 heures (AM/PM)</MenuItem>
+                  <MenuItem value="24h">{t('settings:appearance.timeFormat24')}</MenuItem>
+                  <MenuItem value="12h">{t('settings:appearance.timeFormat12')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -453,13 +455,13 @@ function Settings() {
         {/* Onglet Facturation */}
         <TabPanel value={activeTab} index={1}>
           <Typography variant="h6" gutterBottom>
-            Numérotation des documents
+            {t('settings:legacySettings.documentNumbering')}
           </Typography>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Préfixe des factures"
+                label={t('settings:billing.invoicePrefix')}
                 value={settings.invoicePrefix}
                 onChange={(e) => handleSettingChange('invoicePrefix', e.target.value)}
               />
@@ -467,7 +469,7 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Préfixe des bons de commande"
+                label={t('settings:billing.poPrefix')}
                 value={settings.poPrefix}
                 onChange={(e) => handleSettingChange('poPrefix', e.target.value)}
               />
@@ -475,21 +477,21 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Conditions de paiement par défaut"
+                label={t('settings:legacySettings.defaultPaymentTerms')}
                 value={settings.invoiceTerms}
                 onChange={(e) => handleSettingChange('invoiceTerms', e.target.value)}
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Devise par défaut</InputLabel>
+                <InputLabel>{t('settings:general.defaultCurrency')}</InputLabel>
                 <Select
                   value={settings.defaultCurrency}
                   onChange={(e) => handleSettingChange('defaultCurrency', e.target.value)}
                 >
-                  <MenuItem value="CAD">CAD - Dollar canadien</MenuItem>
-                  <MenuItem value="USD">USD - Dollar américain</MenuItem>
-                  <MenuItem value="EUR">EUR - Euro</MenuItem>
+                  <MenuItem value="CAD">CAD - {t('settings:currencies.CAD')}</MenuItem>
+                  <MenuItem value="USD">USD - {t('settings:currencies.USD')}</MenuItem>
+                  <MenuItem value="EUR">EUR - {t('settings:currencies.EUR')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -498,7 +500,7 @@ function Settings() {
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            Configuration des taxes
+            {t('settings:legacySettings.taxConfiguration')}
           </Typography>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12}>
@@ -509,13 +511,13 @@ function Settings() {
                     onChange={(e) => handleSettingChange('enableTaxCalculation', e.target.checked)}
                   />
                 }
-                label="Activer le calcul automatique des taxes"
+                label={t('settings:billing.enableTaxCalculation')}
               />
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label="Taux TPS/TVH (%)"
+                label={t('settings:billing.gstHstRate')}
                 type="number"
                 value={settings.gstHstRate}
                 onChange={(e) => handleSettingChange('gstHstRate', e.target.value)}
@@ -524,7 +526,7 @@ function Settings() {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label="Taux TVQ (%)"
+                label={t('settings:billing.qstRate')}
                 type="number"
                 value={settings.qstRate}
                 onChange={(e) => handleSettingChange('qstRate', e.target.value)}
@@ -533,7 +535,7 @@ function Settings() {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label="Taux par défaut (%)"
+                label={t('settings:legacySettings.defaultRate')}
                 type="number"
                 value={settings.defaultTaxRate}
                 onChange={(e) => handleSettingChange('defaultTaxRate', e.target.value)}
@@ -544,23 +546,23 @@ function Settings() {
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            En-tête de facture
+            {t('settings:legacySettings.invoiceHeader')}
           </Typography>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Configurez l'apparence de l'en-tête de vos factures. Ratio recommandé: 2.6:1 (210mm x 80mm pour A4).
+            {t('settings:legacySettings.invoiceHeaderInfo')}
           </Alert>
 
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12}>
               <FormControl fullWidth>
-                <InputLabel>Type d'en-tête</InputLabel>
+                <InputLabel>{t('settings:legacySettings.headerType')}</InputLabel>
                 <Select
                   value={settings.invoiceHeaderType}
                   onChange={(e) => handleSettingChange('invoiceHeaderType', e.target.value)}
                 >
-                  <MenuItem value="simple">Simple (texte uniquement)</MenuItem>
-                  <MenuItem value="custom">Personnalisé</MenuItem>
-                  <MenuItem value="uploaded">Image uploadée</MenuItem>
+                  <MenuItem value="simple">{t('settings:legacySettings.headerTypes.simple')}</MenuItem>
+                  <MenuItem value="custom">{t('settings:legacySettings.headerTypes.custom')}</MenuItem>
+                  <MenuItem value="uploaded">{t('settings:legacySettings.headerTypes.uploaded')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -574,7 +576,7 @@ function Settings() {
                       startIcon={<FileUpload />}
                       component="label"
                     >
-                      Télécharger en-tête
+                      {t('settings:legacySettings.uploadHeader')}
                       <input
                         type="file"
                         hidden
@@ -588,11 +590,11 @@ function Settings() {
                       onClick={resetHeader}
                       disabled={!settings.invoiceHeaderTemplate}
                     >
-                      Supprimer
+                      {t('common:buttons.delete')}
                     </Button>
                   </Box>
                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    Formats acceptés: PNG, JPG, SVG (max 5MB) - Ratio optimal: 2.6:1
+                    {t('settings:legacySettings.headerFormats')}
                   </Typography>
                 </Grid>
 
@@ -608,7 +610,7 @@ function Settings() {
                       }}
                     >
                       <Typography variant="subtitle2" gutterBottom>
-                        Aperçu de l'en-tête
+                        {t('settings:legacySettings.headerPreview')}
                       </Typography>
                       <Box
                         sx={{
@@ -627,7 +629,7 @@ function Settings() {
                       >
                         <img
                           src={headerPreview || settings.invoiceHeaderTemplate}
-                          alt="Aperçu en-tête"
+                          alt={t('settings:legacySettings.headerPreviewAlt')}
                           style={{
                             maxWidth: '100%',
                             maxHeight: '100%',
@@ -645,33 +647,33 @@ function Settings() {
               <>
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
-                    <InputLabel>Position du logo</InputLabel>
+                    <InputLabel>{t('settings:legacySettings.logoPosition')}</InputLabel>
                     <Select
                       value={settings.logoPosition}
                       onChange={(e) => handleSettingChange('logoPosition', e.target.value)}
                     >
-                      <MenuItem value="left">Gauche</MenuItem>
-                      <MenuItem value="center">Centre</MenuItem>
-                      <MenuItem value="right">Droite</MenuItem>
+                      <MenuItem value="left">{t('settings:legacySettings.positions.left')}</MenuItem>
+                      <MenuItem value="center">{t('settings:legacySettings.positions.center')}</MenuItem>
+                      <MenuItem value="right">{t('settings:legacySettings.positions.right')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth>
-                    <InputLabel>Taille du logo</InputLabel>
+                    <InputLabel>{t('settings:legacySettings.logoSize')}</InputLabel>
                     <Select
                       value={settings.logoSize}
                       onChange={(e) => handleSettingChange('logoSize', e.target.value)}
                     >
-                      <MenuItem value="small">Petit</MenuItem>
-                      <MenuItem value="medium">Moyen</MenuItem>
-                      <MenuItem value="large">Grand</MenuItem>
+                      <MenuItem value="small">{t('settings:legacySettings.sizes.small')}</MenuItem>
+                      <MenuItem value="medium">{t('settings:legacySettings.sizes.medium')}</MenuItem>
+                      <MenuItem value="large">{t('settings:legacySettings.sizes.large')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box display="flex" alignItems="center" gap={2}>
-                    <Typography variant="body2">Couleur de fond:</Typography>
+                    <Typography variant="body2">{t('settings:legacySettings.backgroundColor')}</Typography>
                     <input
                       type="color"
                       value={settings.headerBackground}
@@ -683,7 +685,7 @@ function Settings() {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Box display="flex" alignItems="center" gap={2}>
-                    <Typography variant="body2">Couleur du texte:</Typography>
+                    <Typography variant="body2">{t('settings:legacySettings.textColor')}</Typography>
                     <input
                       type="color"
                       value={settings.headerTextColor}
@@ -701,7 +703,7 @@ function Settings() {
                         onChange={(e) => handleSettingChange('showCompanyInfo', e.target.checked)}
                       />
                     }
-                    label="Afficher les informations de l'entreprise"
+                    label={t('settings:legacySettings.showCompanyInfo')}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -712,7 +714,7 @@ function Settings() {
                         onChange={(e) => handleSettingChange('showLogo', e.target.checked)}
                       />
                     }
-                    label="Afficher le logo"
+                    label={t('settings:legacySettings.showLogo')}
                   />
                 </Grid>
 
@@ -727,7 +729,7 @@ function Settings() {
                     }}
                   >
                     <Typography variant="subtitle2" gutterBottom textAlign="center">
-                      Aperçu de l'en-tête personnalisé
+                      {t('settings:legacySettings.customHeaderPreview')}
                     </Typography>
                     <Box
                       sx={{
@@ -788,21 +790,21 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Largeur (mm)"
+                label={t('settings:legacySettings.width')}
                 type="number"
                 value={settings.headerWidth}
                 onChange={(e) => handleSettingChange('headerWidth', e.target.value)}
-                helperText="Largeur recommandée: 210mm (A4)"
+                helperText={t('settings:legacySettings.widthHelper')}
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Hauteur (mm)"
+                label={t('settings:legacySettings.height')}
                 type="number"
                 value={settings.headerHeight}
                 onChange={(e) => handleSettingChange('headerHeight', e.target.value)}
-                helperText="Hauteur recommandée: 80mm"
+                helperText={t('settings:legacySettings.heightHelper')}
               />
             </Grid>
           </Grid>
@@ -810,12 +812,12 @@ function Settings() {
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            Paramètres d'impression
+            {t('settings:print.title')}
           </Typography>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Taille du papier</InputLabel>
+                <InputLabel>{t('settings:print.paperSize')}</InputLabel>
                 <Select
                   value={settings.paperSize}
                   onChange={(e) => handleSettingChange('paperSize', e.target.value)}
@@ -828,14 +830,14 @@ function Settings() {
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Marges</InputLabel>
+                <InputLabel>{t('settings:print.margins')}</InputLabel>
                 <Select
                   value={settings.printMargins}
                   onChange={(e) => handleSettingChange('printMargins', e.target.value)}
                 >
-                  <MenuItem value="narrow">Étroites</MenuItem>
-                  <MenuItem value="normal">Normales</MenuItem>
-                  <MenuItem value="wide">Larges</MenuItem>
+                  <MenuItem value="narrow">{t('settings:legacySettings.marginOptions.narrow')}</MenuItem>
+                  <MenuItem value="normal">{t('settings:legacySettings.marginOptions.normal')}</MenuItem>
+                  <MenuItem value="wide">{t('settings:legacySettings.marginOptions.wide')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -847,7 +849,7 @@ function Settings() {
                     onChange={(e) => handleSettingChange('includeQRCode', e.target.checked)}
                   />
                 }
-                label="Inclure le code QR sur les documents"
+                label={t('settings:legacySettings.includeQrCode')}
               />
             </Grid>
             <Grid item xs={12}>
@@ -858,7 +860,7 @@ function Settings() {
                     onChange={(e) => handleSettingChange('printColors', e.target.checked)}
                   />
                 }
-                label="Impression en couleur"
+                label={t('settings:legacySettings.printColors')}
               />
             </Grid>
           </Grid>
@@ -867,13 +869,13 @@ function Settings() {
         {/* Onglet Notifications */}
         <TabPanel value={activeTab} index={2}>
           <Typography variant="h6" gutterBottom>
-            Notifications par email
+            {t('settings:notificationsSection.emailNotifications')}
           </Typography>
           <List>
             <ListItem>
               <ListItemText
-                primary="Notifications générales"
-                secondary="Recevoir les notifications importantes par email"
+                primary={t('settings:legacySettings.notifications.general')}
+                secondary={t('settings:legacySettings.notifications.generalHelper')}
               />
               <ListItemSecondaryAction>
                 <Switch
@@ -884,8 +886,8 @@ function Settings() {
             </ListItem>
             <ListItem>
               <ListItemText
-                primary="Rappels de factures"
-                secondary="Rappels automatiques pour les factures en retard"
+                primary={t('settings:notificationsSection.invoiceReminders')}
+                secondary={t('settings:legacySettings.notifications.invoiceRemindersHelper')}
               />
               <ListItemSecondaryAction>
                 <Switch
@@ -896,8 +898,8 @@ function Settings() {
             </ListItem>
             <ListItem>
               <ListItemText
-                primary="Alertes de stock bas"
-                secondary="Notifications quand les produits sont en rupture"
+                primary={t('settings:notificationsSection.lowStockAlerts')}
+                secondary={t('settings:legacySettings.notifications.lowStockHelper')}
               />
               <ListItemSecondaryAction>
                 <Switch
@@ -908,8 +910,8 @@ function Settings() {
             </ListItem>
             <ListItem>
               <ListItemText
-                primary="Mises à jour des commandes"
-                secondary="Notifications sur les changements de statut des commandes"
+                primary={t('settings:legacySettings.notifications.orderUpdates')}
+                secondary={t('settings:legacySettings.notifications.orderUpdatesHelper')}
               />
               <ListItemSecondaryAction>
                 <Switch
@@ -923,23 +925,23 @@ function Settings() {
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            Configuration email
+            {t('settings:legacySettings.emailConfig')}
           </Typography>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Configurez vos paramètres SMTP pour envoyer des emails automatiques.
+            {t('settings:legacySettings.emailConfigInfo')}
           </Alert>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Serveur SMTP"
+                label={t('settings:emailConfig.smtpHost')}
                 placeholder="smtp.gmail.com"
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Port"
+                label={t('settings:legacySettings.port')}
                 type="number"
                 placeholder="587"
               />
@@ -947,7 +949,7 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Email d'expédition"
+                label={t('settings:legacySettings.senderEmail')}
                 type="email"
                 placeholder="noreply@procuregenius.com"
               />
@@ -955,14 +957,14 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Mot de passe"
+                label={t('settings:emailConfig.password')}
                 type="password"
               />
             </Grid>
             <Grid item xs={12}>
               <FormControlLabel
                 control={<Switch />}
-                label="Utiliser SSL/TLS"
+                label={t('settings:legacySettings.useSslTls')}
               />
             </Grid>
           </Grid>
@@ -971,19 +973,19 @@ function Settings() {
         {/* Onglet Apparence */}
         <TabPanel value={activeTab} index={3}>
           <Typography variant="h6" gutterBottom>
-            Thème et couleurs
+            {t('settings:legacySettings.themeAndColors')}
           </Typography>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Thème</InputLabel>
+                <InputLabel>{t('settings:appearance.theme')}</InputLabel>
                 <Select
                   value={settings.theme}
                   onChange={(e) => handleSettingChange('theme', e.target.value)}
                 >
-                  <MenuItem value="light">Clair</MenuItem>
-                  <MenuItem value="dark">Sombre</MenuItem>
-                  <MenuItem value="auto">Automatique</MenuItem>
+                  <MenuItem value="light">{t('settings:appearance.themeLight')}</MenuItem>
+                  <MenuItem value="dark">{t('settings:appearance.themeDark')}</MenuItem>
+                  <MenuItem value="auto">{t('settings:appearance.themeAuto')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -992,7 +994,7 @@ function Settings() {
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            Couleurs personnalisées
+            {t('settings:legacySettings.customColors')}
           </Typography>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={4}>
@@ -1007,7 +1009,7 @@ function Settings() {
                   }}
                 />
                 <Box>
-                  <Typography variant="body2">Couleur principale</Typography>
+                  <Typography variant="body2">{t('settings:print.primaryColor')}</Typography>
                   <Typography variant="caption" color="textSecondary">#4F46E5</Typography>
                 </Box>
               </Box>
@@ -1024,7 +1026,7 @@ function Settings() {
                   }}
                 />
                 <Box>
-                  <Typography variant="body2">Couleur secondaire</Typography>
+                  <Typography variant="body2">{t('settings:legacySettings.secondaryColor')}</Typography>
                   <Typography variant="caption" color="textSecondary">#10B981</Typography>
                 </Box>
               </Box>
@@ -1035,13 +1037,13 @@ function Settings() {
         {/* Onglet Sécurité */}
         <TabPanel value={activeTab} index={4}>
           <Typography variant="h6" gutterBottom>
-            Paramètres de sécurité
+            {t('settings:legacySettings.securitySettings')}
           </Typography>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Délai d'expiration de session (minutes)"
+                label={t('settings:security.sessionTimeoutLabel')}
                 type="number"
                 value={settings.sessionTimeout}
                 onChange={(e) => handleSettingChange('sessionTimeout', e.target.value)}
@@ -1050,7 +1052,7 @@ function Settings() {
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Tentatives de connexion maximales"
+                label={t('settings:legacySettings.loginAttempts')}
                 type="number"
                 value={settings.loginAttempts}
                 onChange={(e) => handleSettingChange('loginAttempts', e.target.value)}
@@ -1064,7 +1066,7 @@ function Settings() {
                     onChange={(e) => handleSettingChange('requireStrongPasswords', e.target.checked)}
                   />
                 }
-                label="Exiger des mots de passe forts"
+                label={t('settings:security.requireStrongPasswordsLabel')}
               />
             </Grid>
             <Grid item xs={12}>
@@ -1075,7 +1077,7 @@ function Settings() {
                     onChange={(e) => handleSettingChange('enableTwoFactor', e.target.checked)}
                   />
                 }
-                label="Activer l'authentification à deux facteurs"
+                label={t('settings:legacySettings.enableTwoFactor')}
               />
             </Grid>
           </Grid>
@@ -1083,17 +1085,17 @@ function Settings() {
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            Journal d'audit
+            {t('settings:security.auditLog')}
           </Typography>
           <Alert severity="info">
-            Le journal d'audit enregistre toutes les actions importantes effectuées dans le système.
+            {t('settings:legacySettings.auditLogInfo')}
           </Alert>
         </TabPanel>
 
         {/* Onglet Sauvegarde */}
         <TabPanel value={activeTab} index={5}>
           <Typography variant="h6" gutterBottom>
-            Sauvegarde automatique
+            {t('settings:legacySettings.autoBackup')}
           </Typography>
           <Grid container spacing={isMobile ? 2 : 2.5}>
             <Grid item xs={12}>
@@ -1104,27 +1106,27 @@ function Settings() {
                     onChange={(e) => handleSettingChange('autoBackup', e.target.checked)}
                   />
                 }
-                label="Activer la sauvegarde automatique"
+                label={t('settings:legacySettings.enableAutoBackup')}
               />
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Fréquence de sauvegarde</InputLabel>
+                <InputLabel>{t('settings:backup.frequencyLabel')}</InputLabel>
                 <Select
                   value={settings.backupFrequency}
                   onChange={(e) => handleSettingChange('backupFrequency', e.target.value)}
                 >
-                  <MenuItem value="hourly">Toutes les heures</MenuItem>
-                  <MenuItem value="daily">Quotidienne</MenuItem>
-                  <MenuItem value="weekly">Hebdomadaire</MenuItem>
-                  <MenuItem value="monthly">Mensuelle</MenuItem>
+                  <MenuItem value="hourly">{t('settings:backup.frequencies.hourly')}</MenuItem>
+                  <MenuItem value="daily">{t('settings:backup.frequencies.daily')}</MenuItem>
+                  <MenuItem value="weekly">{t('settings:backup.frequencies.weekly')}</MenuItem>
+                  <MenuItem value="monthly">{t('settings:backup.frequencies.monthly')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Rétention des sauvegardes (jours)"
+                label={t('settings:legacySettings.backupRetention')}
                 type="number"
                 value={settings.backupRetention}
                 onChange={(e) => handleSettingChange('backupRetention', e.target.value)}
@@ -1135,40 +1137,40 @@ function Settings() {
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            Sauvegarde manuelle
+            {t('settings:legacySettings.manualBackup')}
           </Typography>
           <Box display="flex" gap={2} flexWrap="wrap">
             <Button variant="outlined" startIcon={<Backup />}>
-              Créer une sauvegarde maintenant
+              {t('settings:legacySettings.createBackupNow')}
             </Button>
             <Button variant="outlined" startIcon={<Storage />}>
-              Gérer les sauvegardes
+              {t('settings:legacySettings.manageBackups')}
             </Button>
             <Button variant="outlined">
-              Restaurer depuis une sauvegarde
+              {t('settings:legacySettings.restoreFromBackup')}
             </Button>
           </Box>
 
           <Divider sx={{ my: isMobile ? 2 : 3 }} />
 
           <Typography variant="h6" gutterBottom>
-            Export des données
+            {t('settings:legacySettings.dataExport')}
           </Typography>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            L'export des données peut prendre plusieurs minutes selon la taille de votre base de données.
+            {t('settings:legacySettings.dataExportWarning')}
           </Alert>
           <Box display="flex" gap={2} flexWrap="wrap">
             <Button variant="outlined">
-              Exporter toutes les données
+              {t('settings:legacySettings.exportAll')}
             </Button>
             <Button variant="outlined">
-              Exporter les factures
+              {t('settings:legacySettings.exportInvoices')}
             </Button>
             <Button variant="outlined">
-              Exporter les bons de commande
+              {t('settings:legacySettings.exportPurchaseOrders')}
             </Button>
             <Button variant="outlined">
-              Exporter les fournisseurs
+              {t('settings:legacySettings.exportSuppliers')}
             </Button>
           </Box>
         </TabPanel>
@@ -1176,10 +1178,10 @@ function Settings() {
         {/* Onglet Importation */}
         <TabPanel value={activeTab} index={6}>
           <Typography variant="h6" gutterBottom>
-            Importer des données
+            {t('settings:data.importSection.title')}
           </Typography>
           <Alert severity="info" sx={{ mb: 3 }}>
-            Importez facilement vos données depuis des fichiers Excel, CSV ou depuis vos contacts téléphone.
+            {t('settings:legacySettings.importInfo')}
           </Alert>
 
           <Grid container spacing={isMobile ? 2 : 2.5}>
@@ -1207,10 +1209,10 @@ function Settings() {
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                   <Business sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
                   <Typography variant="h6" gutterBottom>
-                    Importer des clients
+                    {t('settings:legacySettings.importClients')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Importez votre liste de clients depuis un fichier Excel ou CSV
+                    {t('settings:legacySettings.importClientsDesc')}
                   </Typography>
                   <Chip
                     label="Excel, CSV"
@@ -1239,10 +1241,10 @@ function Settings() {
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                   <Storage sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
                   <Typography variant="h6" gutterBottom>
-                    Importer des produits
+                    {t('settings:legacySettings.importProducts')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Ajoutez vos produits en lot avec leurs références et prix
+                    {t('settings:legacySettings.importProductsDesc')}
                   </Typography>
                   <Chip
                     label="Excel, CSV"
@@ -1271,13 +1273,13 @@ function Settings() {
                 <CardContent sx={{ textAlign: 'center', py: 4 }}>
                   <Email sx={{ fontSize: 48, color: 'info.main', mb: 2 }} />
                   <Typography variant="h6" gutterBottom>
-                    Contacts téléphone
+                    {t('settings:legacySettings.phoneContacts')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Importez directement depuis vos contacts téléphone
+                    {t('settings:legacySettings.phoneContactsDesc')}
                   </Typography>
                   <Chip
-                    label="Téléphone"
+                    label={t('settings:general.phone')}
                     size="small"
                     color="info"
                     variant="outlined"
@@ -1291,10 +1293,10 @@ function Settings() {
           <Divider sx={{ my: 4 }} />
 
           <Typography variant="h6" gutterBottom>
-            Modèles d'importation
+            {t('settings:legacySettings.importTemplates')}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Téléchargez nos modèles Excel pour faciliter l'importation de vos données.
+            {t('settings:legacySettings.importTemplatesDesc')}
           </Typography>
 
           <Box display="flex" gap={2} flexWrap="wrap">
@@ -1315,7 +1317,7 @@ function Settings() {
                 window.URL.revokeObjectURL(url);
               }}
             >
-              Modèle Clients (CSV)
+              {t('settings:legacySettings.clientsTemplate')}
             </Button>
             <Button
               variant="outlined"
@@ -1334,17 +1336,17 @@ function Settings() {
                 window.URL.revokeObjectURL(url);
               }}
             >
-              Modèle Produits (CSV)
+              {t('settings:legacySettings.productsTemplate')}
             </Button>
           </Box>
 
           <Divider sx={{ my: 4 }} />
 
           <Typography variant="h6" gutterBottom>
-            Historique des importations
+            {t('settings:legacySettings.importHistory')}
           </Typography>
           <Alert severity="warning">
-            Fonctionnalité à venir - L'historique des importations sera disponible prochainement.
+            {t('settings:legacySettings.importHistoryComingSoon')}
           </Alert>
         </TabPanel>
 
@@ -1352,14 +1354,14 @@ function Settings() {
           <Divider sx={{ mb: 3 }} />
           <Box display="flex" justifyContent="flex-end" gap={2}>
             <Button variant="outlined">
-              Réinitialiser
+              {t('settings:buttons.reset')}
             </Button>
             <Button
               variant="contained"
               startIcon={<Save />}
               onClick={handleSave}
             >
-              Sauvegarder les paramètres
+              {t('settings:legacySettings.saveSettings')}
             </Button>
           </Box>
         </CardContent>

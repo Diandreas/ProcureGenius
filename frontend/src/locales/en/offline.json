@@ -1,0 +1,37 @@
+{
+  "badge": {
+    "pendingUpdate": "Update pending",
+    "toSync": "To sync",
+    "tooltip": "Will sync the next time you're online"
+  },
+  "banner": {
+    "offlinePending_one": "Offline — {{count}} record waiting to be sent",
+    "offlinePending_other": "Offline — {{count}} records waiting to be sent",
+    "offlineSaved": "Offline — your entries are saved on this device",
+    "pending_one": "{{count}} record to send — tap to retry",
+    "pending_other": "{{count}} records to send — tap to retry",
+    "failed_one": "{{count}} record rejected by the server — view",
+    "failed_other": "{{count}} records rejected by the server — view"
+  },
+  "failedDialog": {
+    "title": "Unsent records",
+    "description": "These were entered offline and rejected by the server. Fix them if needed and retry, or discard them.",
+    "retry": "Retry",
+    "discard": "Discard",
+    "item": "{{entity}} — {{op}}",
+    "itemWithName": "{{entity}} — {{op}} \"{{name}}\""
+  },
+  "entities": {
+    "clients": "Client",
+    "suppliers": "Supplier",
+    "products": "Product",
+    "invoices": "Invoice",
+    "purchaseOrders": "Purchase order"
+  },
+  "operations": {
+    "create": "creation",
+    "update": "update",
+    "delete": "deletion",
+    "settle": "payment"
+  }
+}

@@ -36,6 +36,7 @@ import {
   DocumentScanner,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../services/api';
 import { formatDateTime } from '../utils/formatters';
 import ChatMessage from './AI/ChatMessage';
@@ -51,6 +52,7 @@ function FloatingAIAssistant({
   contextData = null, // Données du contexte de la page actuelle
   onActionExecuted = null, // Callback quand une action est exécutée
 }) {
+  const { t } = useTranslation(['aiChat', 'common']);
   const { enqueueSnackbar } = useSnackbar();
   const messagesEndRef = useRef(null);
 
@@ -67,13 +69,13 @@ function FloatingAIAssistant({
   // Messages d'accueil contextuels
   const getWelcomeMessage = () => {
     if (contextData?.page === 'suppliers') {
-      return "Je peux vous aider à gérer vos fournisseurs : créer, rechercher, modifier ou analyser leurs performances.";
+      return t('aiChat:floatingAssistant.welcome.suppliers');
     } else if (contextData?.page === 'invoices') {
-      return "Je peux créer des factures, suivre les paiements, ou analyser vos revenus.";
+      return t('aiChat:floatingAssistant.welcome.invoices');
     } else if (contextData?.page === 'purchase-orders') {
-      return "Je peux créer des bons de commande, suivre les livraisons, ou analyser vos achats.";
+      return t('aiChat:floatingAssistant.welcome.purchaseOrders');
     }
-    return "Comment puis-je vous aider avec la gestion de votre entreprise ?";
+    return t('aiChat:floatingAssistant.welcome.default');
   };
 
   useEffect(() => {
@@ -127,7 +129,7 @@ function FloatingAIAssistant({
 
     try {
       setThinkingType('analyzing');
-      setProcessingStep('Envoi à l\'IA...');
+      setProcessingStep(t('aiChat:floatingAssistant.sendingToAI'));
 
       const response = await aiChatAPI.sendMessage({
         message: contextualMessage,
@@ -149,7 +151,7 @@ function FloatingAIAssistant({
         setThinkingType('celebration');
         setTimeout(() => {
           enqueueSnackbar(
-            response.data.action_result.message || 'Action exécutée avec succès',
+            response.data.action_result.message || t('aiChat:messages.actionExecutedSuccess'),
             { variant: 'success' }
           );
           if (onActionExecuted) {
@@ -158,12 +160,12 @@ function FloatingAIAssistant({
         }, 500);
       } else if (response.data.action_result && !response.data.action_result.success) {
         enqueueSnackbar(
-          response.data.action_result.error || 'Erreur lors de l\'exécution',
+          response.data.action_result.error || t('aiChat:floatingAssistant.executionError'),
           { variant: 'error' }
         );
       }
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'envoi du message', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:messages.sendMessageError'), { variant: 'error' });
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
@@ -272,9 +274,9 @@ function FloatingAIAssistant({
             />
           </Box>
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6">Assistant IA</Typography>
+            <Typography variant="h6">{t('aiChat:title')}</Typography>
             <Typography variant="caption" color="text.secondary">
-              {contextData?.page ? `Mode ${contextData.page}` : 'Mode général'}
+              {contextData?.page ? t('aiChat:floatingAssistant.modeContext', { page: contextData.page }) : t('aiChat:floatingAssistant.modeGeneral')}
             </Typography>
           </Box>
           <IconButton onClick={() => setIsMinimized(!isMinimized)} size="small">
@@ -363,7 +365,7 @@ function FloatingAIAssistant({
                 size="small"
                 multiline
                 maxRows={3}
-                placeholder="Tapez votre message..."
+                placeholder={t('aiChat:input.placeholder')}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={(e) => {

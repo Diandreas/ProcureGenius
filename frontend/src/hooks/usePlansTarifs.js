@@ -29,6 +29,36 @@ const fusionner = (serveur) => PLANS.map((p) => {
 });
 
 /**
+ * Textes d'une formule dans la langue de l'interface (namespace « subscription »,
+ * clé par code de formule), avec repli sur les textes de data/pricingPlans.
+ * Les prix et les autres champs ne changent pas.
+ */
+export const traduirePlan = (t, plan) => {
+  if (!plan?.code) return plan;
+  const base = `subscription:plans.${plan.code}`;
+  const liste = (champ) => {
+    const source = plan[champ] || [];
+    const v = t(`${base}.${champ}`, { returnObjects: true, defaultValue: source });
+    // Même nombre d'éléments que la source, sinon on garde la source.
+    return Array.isArray(v) && v.length === source.length ? v : plan[champ];
+  };
+  return {
+    ...plan,
+    name: t(`${base}.name`, { defaultValue: plan.name }),
+    badge: plan.badge ? t(`${base}.badge`, { defaultValue: plan.badge }) : plan.badge,
+    tagline: t(`${base}.tagline`, { defaultValue: plan.tagline }),
+    cta: t(`${base}.cta`, { defaultValue: plan.cta }),
+    features: liste('features'),
+    missing: liste('missing'),
+  };
+};
+
+/** Nom d'une formule (par son code) dans la langue de l'interface. */
+export const nomPlan = (t, code, nom) => (
+  code ? t(`subscription:plans.${code}.name`, { defaultValue: nom || code }) : nom
+);
+
+/**
  * Formules avec les prix de Stripe.
  * { plans, annuelDisponible, siege: { prix, devise } }
  */

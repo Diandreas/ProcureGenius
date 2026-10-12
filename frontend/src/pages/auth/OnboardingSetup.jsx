@@ -6,8 +6,9 @@
  * Le plan choisi débloque les modules côté backend (start-trial).
  * Le fiscal détaillé (NIU, TVA, NEQ…) est désormais dans les Paramètres.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { useTranslation, Trans } from 'react-i18next';
 import {
   Box, Container, Button, Typography, TextField, Card, CardContent, Grid,
   FormControl, InputLabel, Select, MenuItem, Paper, LinearProgress,
@@ -21,15 +22,15 @@ import usePlansTarifs from '../../hooks/usePlansTarifs';
 import { usePricingCurrency } from '../../utils/visitorCurrency';
 import i18n from '../../i18n/config';
 
-const steps = ['Votre entreprise', 'Votre activité', 'Votre formule'];
+const steps = ['onboarding:setup.steps.company', 'onboarding:setup.steps.activity', 'onboarding:setup.steps.plan'];
 
 const TAX_REGIONS = [
-  { value: 'international', label: 'International' },
-  { value: 'cameroon', label: 'Cameroun (OHADA)' },
-  { value: 'ohada', label: 'Zone OHADA' },
-  { value: 'eu', label: 'Union Européenne' },
-  { value: 'usa', label: 'États-Unis' },
-  { value: 'canada', label: 'Canada' },
+  { value: 'international', labelKey: 'onboarding:setup.taxRegions.international' },
+  { value: 'cameroon', labelKey: 'onboarding:setup.taxRegions.cameroon' },
+  { value: 'ohada', labelKey: 'onboarding:setup.taxRegions.ohada' },
+  { value: 'eu', labelKey: 'onboarding:setup.taxRegions.eu' },
+  { value: 'usa', labelKey: 'onboarding:setup.taxRegions.usa' },
+  { value: 'canada', labelKey: 'onboarding:setup.taxRegions.canada' },
 ];
 
 // Cas d'usage métier : on demande ce que l'utilisateur veut FAIRE (langage
@@ -37,32 +38,32 @@ const TAX_REGIONS = [
 const USE_CASES = [
   {
     id: 'sell',
-    title: 'Vendre & facturer',
-    desc: 'Clients, devis, factures, paiements',
+    titleKey: 'onboarding:setup.useCases.sell.title',
+    descKey: 'onboarding:setup.useCases.sell.desc',
     icon: <Receipt sx={{ fontSize: 24 }} />,
     color: '#2563eb',
     modules: ['clients', 'invoices', 'products'],
   },
   {
     id: 'buy',
-    title: 'Acheter & fournisseurs',
-    desc: 'Fournisseurs, bons de commande, contrats',
+    titleKey: 'onboarding:setup.useCases.buy.title',
+    descKey: 'onboarding:setup.useCases.buy.desc',
     icon: <ShoppingCart sx={{ fontSize: 24 }} />,
     color: '#7c3aed',
     modules: ['suppliers', 'purchase-orders', 'contracts'],
   },
   {
     id: 'stock',
-    title: 'Gérer mon stock',
-    desc: 'Catalogue produits et niveaux de stock',
+    titleKey: 'onboarding:setup.useCases.stock.title',
+    descKey: 'onboarding:setup.useCases.stock.desc',
     icon: <Inventory sx={{ fontSize: 24 }} />,
     color: '#059669',
     modules: ['products'],
   },
   {
     id: 'all',
-    title: 'Tout gérer',
-    desc: "L'entreprise complète : ventes, achats, stock, compta",
+    titleKey: 'onboarding:setup.useCases.all.title',
+    descKey: 'onboarding:setup.useCases.all.desc',
     icon: <Business sx={{ fontSize: 24 }} />,
     color: '#f59e0b',
     modules: ['clients', 'invoices', 'products', 'suppliers', 'purchase-orders', 'contracts', 'accounting', 'analytics'],
@@ -81,36 +82,38 @@ const modulesFromUseCases = (ids) => {
 const PLANS = [
   {
     code: 'free',
-    name: 'Gratuit',
-    tag: 'Pour démarrer',
+    nameKey: 'onboarding:setup.plans.free.name',
+    tagKey: 'onboarding:setup.plans.free.tag',
     tagColor: 'text.secondary',
-    seats: '1 utilisateur',
-    features: ['Clients & produits', 'Facturation de base', 'Tableau de bord'],
-    cta: 'Rester en gratuit (sans essai)',
+    seatsKey: 'onboarding:setup.plans.free.seats',
+    featureKeys: ['onboarding:setup.plans.free.features.clientsProducts', 'onboarding:setup.plans.free.features.basicInvoicing', 'onboarding:setup.plans.free.features.dashboard'],
+    ctaKey: 'onboarding:setup.plans.free.cta',
   },
   {
     code: 'pro',
-    name: 'Pro',
-    tag: '30 jours offerts',
+    nameKey: 'onboarding:setup.plans.pro.name',
+    tagKey: 'onboarding:setup.plans.pro.tag',
     tagColor: 'success.main',
     popular: true,
-    seats: '2 utilisateurs inclus (+{siege}/utilisateur)',
-    features: ['Tout le Gratuit', 'Fournisseurs & bons de commande', 'Compta de base, IA & contrats'],
-    cta: "Démarrer l'essai Pro",
+    seatsKey: 'onboarding:setup.plans.pro.seats',
+    featureKeys: ['onboarding:setup.plans.pro.features.allFree', 'onboarding:setup.plans.pro.features.suppliersPo', 'onboarding:setup.plans.pro.features.accountingAiContracts'],
+    ctaKey: 'onboarding:setup.plans.pro.cta',
   },
   {
     code: 'business',
-    name: 'Business',
-    tag: '30 jours offerts',
+    nameKey: 'onboarding:setup.plans.business.name',
+    tagKey: 'onboarding:setup.plans.business.tag',
     tagColor: 'success.main',
-    seats: '10 utilisateurs inclus (+{siege}/utilisateur)',
-    features: ['Compta complète + marges & réappro', "E-Sourcing (appels d'offres)", 'Support prioritaire'],
-    cta: "Démarrer l'essai Business",
+    seatsKey: 'onboarding:setup.plans.business.seats',
+    featureKeys: ['onboarding:setup.plans.business.features.fullAccounting', 'onboarding:setup.plans.business.features.eSourcing', 'onboarding:setup.plans.business.features.prioritySupport'],
+    ctaKey: 'onboarding:setup.plans.business.cta',
   },
 ];
 
 function OnboardingSetup() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t, i18n: i18nInstance } = useTranslation(['onboarding', 'common']);
+  const lang = i18nInstance.language || 'fr';
 
   const reduxCompanyName = useSelector(
     (state) =>
@@ -174,6 +177,21 @@ function OnboardingSetup() {
       .catch(() => setCountries([]));
   }, []);
   const countryInfo = countries.find((c) => c.code === formData.country);
+  // Les noms de pays de l'API sont en français : dans une autre langue, on
+  // affiche le nom localisé à partir du code ISO (repli sur le nom de l'API).
+  const regionNames = useMemo(() => {
+    try { return new Intl.DisplayNames([lang], { type: 'region' }); } catch { return null; }
+  }, [lang]);
+  const countryLabel = (c) => {
+    if (lang.startsWith('fr') || !regionNames) return c.name;
+    try { return regionNames.of(c.code) || c.name; } catch { return c.name; }
+  };
+  const ACCOUNTING_STANDARD_KEYS = {
+    syscohada: 'onboarding:setup.company.accountingStandards.syscohada',
+    pcg: 'onboarding:setup.company.accountingStandards.pcg',
+    us_gaap: 'onboarding:setup.company.accountingStandards.us_gaap',
+  };
+  const accountingStandardLabel = (std) => t(ACCOUNTING_STANDARD_KEYS[std] || 'onboarding:setup.company.accountingStandards.ca');
   const handleCountry = (code) => {
     const c = countries.find((x) => x.code === code);
     setFormData((p) => ({
@@ -193,7 +211,7 @@ function OnboardingSetup() {
 
   const goToActivity = () => {
     if (!formData.companyName.trim()) {
-      enqueueSnackbar("Le nom de l'entreprise est requis", { variant: 'error' });
+      enqueueSnackbar(t('onboarding:setup.errors.companyNameRequired'), { variant: 'error' });
       return;
     }
     setActiveStep(1);
@@ -201,7 +219,7 @@ function OnboardingSetup() {
 
   const goToPlan = () => {
     if (selectedUseCases.length === 0) {
-      enqueueSnackbar('Choisissez au moins une activité', { variant: 'error' });
+      enqueueSnackbar(t('onboarding:setup.errors.chooseActivity'), { variant: 'error' });
       return;
     }
     setActiveStep(2);
@@ -276,8 +294,8 @@ function OnboardingSetup() {
       localStorage.removeItem('onboarding_company_name');
       window.location.href = '/dashboard';
     } catch (error) {
-      const msg = error.response?.data?.error || error.response?.data?.detail || error.message || 'Erreur inconnue';
-      enqueueSnackbar(`Erreur : ${msg}`, { variant: 'error' });
+      const msg = error.response?.data?.error || error.response?.data?.detail || error.message || t('onboarding:setup.errors.unknown');
+      enqueueSnackbar(t('onboarding:setup.errors.generic', { message: msg }), { variant: 'error' });
       setSubmitting(false);
     }
   };
@@ -308,10 +326,10 @@ function OnboardingSetup() {
             fontWeight: 800, mb: 0.5,
             color: '#2563eb',
           }}>
-            Bienvenue sur Procura
+            {t('onboarding:setup.header.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Quelques étapes rapides pour configurer votre espace
+            {t('onboarding:setup.header.subtitle')}
           </Typography>
         </Box>
 
@@ -319,7 +337,7 @@ function OnboardingSetup() {
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-              Étape {activeStep + 1} sur {steps.length} — {steps[activeStep]}
+              {t('onboarding:setup.progress', { current: activeStep + 1, total: steps.length, label: t(steps[activeStep]) })}
             </Typography>
             <Typography variant="body2" color="primary" sx={{ fontWeight: 700 }}>
               {progressPercent}%
@@ -342,9 +360,9 @@ function OnboardingSetup() {
             {/* ── Étape 1 : Entreprise ── */}
             {activeStep === 0 && (
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Votre entreprise</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{t('onboarding:setup.company.title')}</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Ces informations apparaîtront sur vos factures et documents.
+                  {t('onboarding:setup.company.subtitle')}
                 </Typography>
 
                 <Grid container spacing={3}>
@@ -359,72 +377,75 @@ function OnboardingSetup() {
                       }}>
                         {logoPreview
                           ? <img src={logoPreview} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                          : <><CloudUpload sx={{ fontSize: 30, color: 'text.disabled', mb: 0.5 }} /><Typography variant="caption" color="text.secondary">Logo (optionnel)</Typography></>}
+                          : <><CloudUpload sx={{ fontSize: 30, color: 'text.disabled', mb: 0.5 }} /><Typography variant="caption" color="text.secondary">{t('onboarding:setup.company.logoOptional')}</Typography></>}
                       </Box>
                     </label>
                   </Grid>
 
                   <Grid item xs={12} md={6}>
                     <TextField
-                      required fullWidth label="Nom de l'entreprise"
+                      required fullWidth label={t('onboarding:setup.company.companyName')}
                       value={formData.companyName}
                       onChange={(e) => handleChange('companyName', e.target.value)}
-                      placeholder="Ex : ACME SARL"
-                      helperText={prefillName ? 'Pré-rempli depuis votre inscription' : ''}
+                      placeholder={t('onboarding:setup.company.companyNamePlaceholder')}
+                      helperText={prefillName ? t('onboarding:setup.company.prefilled') : ''}
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
-                      <InputLabel>Pays</InputLabel>
-                      <Select value={formData.country} label="Pays" onChange={(e) => handleCountry(e.target.value)}>
+                      <InputLabel>{t('onboarding:setup.company.country')}</InputLabel>
+                      <Select value={formData.country} label={t('onboarding:setup.company.country')} onChange={(e) => handleCountry(e.target.value)}>
                         {(countries.length ? countries : [{ code: 'CM', name: 'Cameroun' }]).map((c) => (
-                          <MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>
+                          <MenuItem key={c.code} value={c.code}>{countryLabel(c)}</MenuItem>
                         ))}
                       </Select>
                       {countryInfo && (
                         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.5 }}>
-                          TVA {String(countryInfo.vat_rate).replace('.', ',')} % · comptabilité {countryInfo.accounting_standard === 'syscohada' ? 'SYSCOHADA (OHADA)' : countryInfo.accounting_standard === 'pcg' ? 'plan comptable français' : countryInfo.accounting_standard === 'us_gaap' ? 'US GAAP' : 'canadienne'} — modifiable ensuite
+                          {t('onboarding:setup.company.countryHint', {
+                            rate: lang.startsWith('fr') ? String(countryInfo.vat_rate).replace('.', ',') : String(countryInfo.vat_rate),
+                            standard: accountingStandardLabel(countryInfo.accounting_standard),
+                          })}
                         </Typography>
                       )}
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <TextField
-                      fullWidth label="Ville / adresse (optionnel)"
+                      fullWidth label={t('onboarding:setup.company.address')}
                       value={formData.address}
                       onChange={(e) => handleChange('address', e.target.value)}
-                      placeholder="Ex : Akwa, Douala"
+                      placeholder={t('onboarding:setup.company.addressPlaceholder')}
                       InputProps={{ startAdornment: <LocationOn sx={{ color: 'text.disabled', mr: 0.5, fontSize: 20 }} /> }}
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
-                      <InputLabel>Devise</InputLabel>
-                      <Select value={formData.defaultCurrency} label="Devise" onChange={(e) => handleChange('defaultCurrency', e.target.value)}>
-                        <MenuItem value="XAF">XAF — Franc CFA (Afrique centrale)</MenuItem>
-                        <MenuItem value="XOF">XOF — Franc CFA (Afrique de l'Ouest)</MenuItem>
+                      <InputLabel>{t('onboarding:setup.company.currency')}</InputLabel>
+                      <Select value={formData.defaultCurrency} label={t('onboarding:setup.company.currency')} onChange={(e) => handleChange('defaultCurrency', e.target.value)}>
+                        <MenuItem value="XAF">{t('onboarding:setup.company.currencies.XAF')}</MenuItem>
+                        <MenuItem value="XOF">{t('onboarding:setup.company.currencies.XOF')}</MenuItem>
                         {countryInfo && !['XAF', 'XOF', 'EUR', 'USD', 'CAD'].includes(countryInfo.currency) && (
                           <MenuItem value={countryInfo.currency}>{countryInfo.currency}</MenuItem>
                         )}
-                        <MenuItem value="EUR">EUR — Euro</MenuItem>
-                        <MenuItem value="USD">USD — Dollar américain</MenuItem>
-                        <MenuItem value="CAD">CAD — Dollar canadien</MenuItem>
+                        <MenuItem value="EUR">{t('onboarding:setup.company.currencies.EUR')}</MenuItem>
+                        <MenuItem value="USD">{t('onboarding:setup.company.currencies.USD')}</MenuItem>
+                        <MenuItem value="CAD">{t('onboarding:setup.company.currencies.CAD')}</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
-                      <InputLabel>Langue</InputLabel>
+                      <InputLabel>{t('onboarding:setup.company.language')}</InputLabel>
                       <Select
                         value={formData.language}
-                        label="Langue"
+                        label={t('onboarding:setup.company.language')}
                         onChange={(e) => { handleChange('language', e.target.value); i18n.changeLanguage(e.target.value); }}
                       >
                         <MenuItem value="fr">Français</MenuItem>
                         <MenuItem value="en">English</MenuItem>
                       </Select>
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.5 }}>
-                        Langue de l'application et de vos documents.
+                        {t('onboarding:setup.company.languageHint')}
                       </Typography>
                     </FormControl>
                   </Grid>
@@ -445,42 +466,42 @@ function OnboardingSetup() {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Tune sx={{ fontSize: 18, color: 'text.secondary' }} />
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        Plus d'informations <Typography component="span" variant="caption" color="text.secondary">(optionnel)</Typography>
+                        {t('onboarding:setup.company.moreInfo')} <Typography component="span" variant="caption" color="text.secondary">{t('onboarding:setup.company.optional')}</Typography>
                       </Typography>
                     </Box>
                   </AccordionSummary>
                   <AccordionDetails sx={{ px: 2, pb: 2 }}>
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
-                        <TextField fullWidth size="small" label="Email" type="email"
+                        <TextField fullWidth size="small" label={t('onboarding:setup.company.email')} type="email"
                           value={formData.email} onChange={(e) => handleChange('email', e.target.value)}
-                          placeholder="contact@entreprise.com" />
+                          placeholder={t('onboarding:setup.company.emailPlaceholder')} />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField fullWidth size="small" label="Téléphone"
+                        <TextField fullWidth size="small" label={t('onboarding:setup.company.phone')}
                           value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)}
                           placeholder="+237 6XX XX XX XX" />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField fullWidth size="small" label="Site web"
+                        <TextField fullWidth size="small" label={t('onboarding:setup.company.website')}
                           value={formData.website} onChange={(e) => handleChange('website', e.target.value)}
                           placeholder="https://..." />
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <FormControl fullWidth size="small">
-                          <InputLabel>Région fiscale</InputLabel>
-                          <Select value={formData.taxRegion} label="Région fiscale" onChange={(e) => handleChange('taxRegion', e.target.value)}>
-                            {TAX_REGIONS.map((r) => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
+                          <InputLabel>{t('onboarding:setup.company.taxRegion')}</InputLabel>
+                          <Select value={formData.taxRegion} label={t('onboarding:setup.company.taxRegion')} onChange={(e) => handleChange('taxRegion', e.target.value)}>
+                            {TAX_REGIONS.map((r) => <MenuItem key={r.value} value={r.value}>{t(r.labelKey)}</MenuItem>)}
                           </Select>
                         </FormControl>
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField fullWidth size="small" label="Numéro fiscal (TIN)"
+                        <TextField fullWidth size="small" label={t('onboarding:setup.company.taxNumber')}
                           value={formData.taxNumber} onChange={(e) => handleChange('taxNumber', e.target.value)} />
                       </Grid>
                     </Grid>
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
-                      Tout ceci est modifiable à tout moment dans les Paramètres.
+                      {t('onboarding:setup.company.editableLater')}
                     </Typography>
                   </AccordionDetails>
                 </Accordion>
@@ -490,9 +511,9 @@ function OnboardingSetup() {
             {/* ── Étape 2 : Activité (cas d'usage → modules) ── */}
             {activeStep === 1 && (
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Qu'allez-vous gérer ?</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{t('onboarding:setup.activity.title')}</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Choisissez ce qui vous concerne — on active les bonnes fonctionnalités. Modifiable à tout moment.
+                  {t('onboarding:setup.activity.subtitle')}
                 </Typography>
 
                 <Grid container spacing={1.5}>
@@ -523,9 +544,9 @@ function OnboardingSetup() {
                             {u.icon}
                           </Box>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{u.title}</Typography>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{t(u.titleKey)}</Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
-                              {u.desc}
+                              {t(u.descKey)}
                             </Typography>
                           </Box>
                           {sel && <CheckCircle sx={{ color: u.color, fontSize: 20, position: 'absolute', top: 10, right: 10 }} />}
@@ -540,12 +561,11 @@ function OnboardingSetup() {
             {/* ── Étape 3 : Formule ── */}
             {activeStep === 2 && (
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Votre formule</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{t('onboarding:setup.plan.title')}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, p: 1.5, mb: 3, borderRadius: 2, bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
                   <CheckCircle sx={{ color: 'success.main', fontSize: 20, mt: 0.2 }} />
                   <Typography variant="body2" color="text.secondary">
-                    <strong>30 jours d'essai Pro offerts</strong>, sans carte bancaire. Vous pouvez aussi
-                    rester en <strong>Gratuit</strong> — changement possible à tout moment.
+                    <Trans t={t} i18nKey="onboarding:setup.plan.trialNotice" components={{ strong: <strong /> }} />
                   </Typography>
                 </Box>
 
@@ -567,20 +587,20 @@ function OnboardingSetup() {
                         >
                           {p.popular && (
                             <Box sx={{ position: 'absolute', top: -10, right: 12, bgcolor: '#f59e0b', color: '#0f172a', fontWeight: 800, fontSize: 11, px: 1, py: 0.25, borderRadius: 1 }}>
-                              Recommandé
+                              {t('onboarding:setup.plan.recommended')}
                             </Box>
                           )}
-                          <Typography sx={{ fontWeight: 800, fontSize: '1.05rem' }}>{p.name}</Typography>
-                          <Typography variant="caption" sx={{ color: p.tagColor, fontWeight: 700 }}>{p.tag}</Typography>
+                          <Typography sx={{ fontWeight: 800, fontSize: '1.05rem' }}>{t(p.nameKey)}</Typography>
+                          <Typography variant="caption" sx={{ color: p.tagColor, fontWeight: 700 }}>{t(p.tagKey)}</Typography>
                           <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 0.5, color: sel ? 'primary.main' : 'text.secondary' }}>
                             <People sx={{ fontSize: 16 }} />
-                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{avecPrixSiege(p.seats, formatPrice(siege.prix, siege.devise))}</Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{avecPrixSiege(t(p.seatsKey), formatPrice(siege.prix, siege.devise))}</Typography>
                           </Box>
                           <Box sx={{ mt: 1.25, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                            {p.features.map((f, i) => (
+                            {p.featureKeys.map((f, i) => (
                               <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                                 <CheckCircle sx={{ fontSize: 15, color: sel ? 'primary.main' : 'text.disabled' }} />
-                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>{f}</Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>{t(f)}</Typography>
                               </Box>
                             ))}
                           </Box>
@@ -599,37 +619,37 @@ function OnboardingSetup() {
           {activeStep === 0 && (
             <>
               <Button onClick={() => { setActiveStep(2); }} color="inherit" sx={{ color: 'text.secondary' }}>
-                Passer
+                {t('onboarding:actions.skip')}
               </Button>
               <Button variant="contained" onClick={goToActivity} sx={{ minWidth: 140 }}>
-                Continuer
+                {t('onboarding:actions.continue')}
               </Button>
             </>
           )}
           {activeStep === 1 && (
             <>
               <Button onClick={() => setActiveStep(0)} variant="outlined" sx={{ minWidth: 100 }}>
-                Retour
+                {t('onboarding:actions.back')}
               </Button>
               <Button variant="contained" onClick={goToPlan} sx={{ minWidth: 140 }}>
-                Continuer
+                {t('onboarding:actions.continue')}
               </Button>
             </>
           )}
           {activeStep === 2 && (
             <>
               <Button onClick={() => setActiveStep(1)} variant="outlined" disabled={submitting} sx={{ minWidth: 100 }}>
-                Retour
+                {t('onboarding:actions.back')}
               </Button>
               <Button variant="contained" size="large" onClick={handleFinish} disabled={submitting} sx={{ minWidth: 220, fontWeight: 700, textTransform: 'none' }}>
-                {submitting ? 'Activation…' : (PLANS.find((p) => p.code === selectedPlan)?.cta || 'Démarrer')}
+                {submitting ? t('onboarding:setup.activating') : t(PLANS.find((p) => p.code === selectedPlan)?.ctaKey || 'onboarding:setup.start')}
               </Button>
             </>
           )}
         </Box>
         {activeStep === 2 && (
           <Typography variant="caption" color="text.secondary" display="block" textAlign="center" sx={{ mt: 1.5 }}>
-            Aucune carte bancaire requise. Annulation à tout moment.
+            {t('onboarding:setup.noCardRequired')}
           </Typography>
         )}
       </Container>

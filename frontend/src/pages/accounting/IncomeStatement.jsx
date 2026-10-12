@@ -3,6 +3,7 @@ import {
   Box, Typography, TextField, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, Paper, CircularProgress, Alert, Button, Card, CardContent, useTheme,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
@@ -17,6 +18,7 @@ export default function IncomeStatement() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
@@ -25,7 +27,7 @@ export default function IncomeStatement() {
     setLoading(true);
     accountingAPI.getIncomeStatement({ start_date: start, end_date: end })
       .then((r) => { setData(r.data); setError(null); })
-      .catch(() => setError('Erreur chargement du compte de résultat'))
+      .catch(() => setError(t('accounting:incomeStatement.loadError')))
       .finally(() => setLoading(false));
   };
 
@@ -35,15 +37,15 @@ export default function IncomeStatement() {
 
   return (
     <Box p={{ xs: 2, sm: 3 }} maxWidth={720}>
-      <AccountingNav title="Compte de Résultat" subtitle="Produits vs Charges" />
+      <AccountingNav title={t('accounting:incomeStatement.title')} subtitle={t('accounting:incomeStatement.subtitle')} />
 
       <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
-        <TextField size="small" type="date" label="Du" InputLabelProps={{ shrink: true }}
+        <TextField size="small" type="date" label={t('accounting:common.from')} InputLabelProps={{ shrink: true }}
           value={start} onChange={(e) => setStart(e.target.value)} />
-        <TextField size="small" type="date" label="Au" InputLabelProps={{ shrink: true }}
+        <TextField size="small" type="date" label={t('accounting:common.to')} InputLabelProps={{ shrink: true }}
           value={end} onChange={(e) => setEnd(e.target.value)} />
         <Button variant="contained" onClick={load} disabled={loading}>
-          {loading ? <CircularProgress size={20} /> : 'Actualiser'}
+          {loading ? <CircularProgress size={20} /> : t('accounting:common.refresh')}
         </Button>
       </Box>
 
@@ -54,21 +56,21 @@ export default function IncomeStatement() {
           {/* Produits */}
           <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden', mb: 2 }}>
             <Box sx={{ bgcolor: 'success.main', color: 'white', px: 2, py: 1 }}>
-              <Typography variant="subtitle1" fontWeight={700}>Produits (Recettes)</Typography>
+              <Typography variant="subtitle1" fontWeight={700}>{t('accounting:incomeStatement.revenueSection')}</Typography>
             </Box>
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell><strong>Code</strong></TableCell>
-                  <TableCell><strong>Compte</strong></TableCell>
-                  <TableCell align="right"><strong>Montant</strong></TableCell>
+                  <TableCell><strong>{t('accounting:common.code')}</strong></TableCell>
+                  <TableCell><strong>{t('accounting:common.account')}</strong></TableCell>
+                  <TableCell align="right"><strong>{t('accounting:common.amount')}</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.revenue.lines.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} align="center">
-                      <Typography variant="body2" color="text.secondary" py={1}>Aucune recette pour la période</Typography>
+                      <Typography variant="body2" color="text.secondary" py={1}>{t('accounting:incomeStatement.noRevenue')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : data.revenue.lines.map((r) => (
@@ -81,7 +83,7 @@ export default function IncomeStatement() {
                   </TableRow>
                 ))}
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell colSpan={2}><strong>Total Produits</strong></TableCell>
+                  <TableCell colSpan={2}><strong>{t('accounting:incomeStatement.totalRevenue')}</strong></TableCell>
                   <TableCell align="right">
                     <Typography color="success.main" fontWeight={700} variant="subtitle2">
                       {format(parseFloat(data.revenue.total))}
@@ -95,21 +97,21 @@ export default function IncomeStatement() {
           {/* Charges */}
           <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden', mb: 3 }}>
             <Box sx={{ bgcolor: 'error.main', color: 'white', px: 2, py: 1 }}>
-              <Typography variant="subtitle1" fontWeight={700}>Charges</Typography>
+              <Typography variant="subtitle1" fontWeight={700}>{t('accounting:incomeStatement.expensesSection')}</Typography>
             </Box>
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell><strong>Code</strong></TableCell>
-                  <TableCell><strong>Compte</strong></TableCell>
-                  <TableCell align="right"><strong>Montant</strong></TableCell>
+                  <TableCell><strong>{t('accounting:common.code')}</strong></TableCell>
+                  <TableCell><strong>{t('accounting:common.account')}</strong></TableCell>
+                  <TableCell align="right"><strong>{t('accounting:common.amount')}</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.expenses.lines.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} align="center">
-                      <Typography variant="body2" color="text.secondary" py={1}>Aucune charge pour la période</Typography>
+                      <Typography variant="body2" color="text.secondary" py={1}>{t('accounting:incomeStatement.noExpenses')}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : data.expenses.lines.map((e) => (
@@ -122,7 +124,7 @@ export default function IncomeStatement() {
                   </TableRow>
                 ))}
                 <TableRow>
-                  <TableCell colSpan={2}><strong>Total Charges</strong></TableCell>
+                  <TableCell colSpan={2}><strong>{t('accounting:incomeStatement.totalExpenses')}</strong></TableCell>
                   <TableCell align="right">
                     <Typography color="error.main" fontWeight={700} variant="subtitle2">
                       {format(parseFloat(data.expenses.total))}
@@ -139,7 +141,7 @@ export default function IncomeStatement() {
               <Box display="flex" justifyContent="space-between" alignItems="center" gap={1} flexWrap="wrap">
                 <Box minWidth={0}>
                   <Typography variant="h6" fontWeight={700}>
-                    {isProfit ? 'Bénéfice net' : 'Déficit net'}
+                    {isProfit ? t('accounting:incomeStatement.netProfit') : t('accounting:incomeStatement.netLoss')}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {data.start_date} → {data.end_date}

@@ -15,6 +15,7 @@ import {
   Divider
 } from '@mui/material';
 import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Composant de création rapide générique
@@ -30,6 +31,7 @@ const QuickCreateDialog = ({
   title,
   contextData = {} // Données contextuelles (ex: fournisseur sélectionné pour un produit)
 }) => {
+  const { t } = useTranslation('common');
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -80,9 +82,9 @@ const QuickCreateDialog = ({
       // 409 = entités similaires trouvées
       if (err.response?.status === 409 && err.response?.data?.error === 'similar_entities_found') {
         setSimilarEntities(err.response.data.similar_entities || []);
-        setError(err.response.data.message || 'Des entités similaires ont été trouvées.');
+        setError(err.response.data.message || t('common:quickCreate.similarFound'));
       } else {
-        const msg = err.response?.data?.error || err.response?.data?.detail || err.message || "Erreur lors de la création";
+        const msg = err.response?.data?.error || err.response?.data?.detail || err.message || t('common:quickCreate.createError');
         setError(msg);
       }
     } finally {
@@ -108,7 +110,7 @@ const QuickCreateDialog = ({
       }
       handleClose();
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.detail || err.message || "Erreur lors de la création forcée";
+      const msg = err.response?.data?.error || err.response?.data?.detail || err.message || t('common:quickCreate.forceCreateError');
       setError(msg);
     } finally {
       setLoading(false);
@@ -184,7 +186,7 @@ const QuickCreateDialog = ({
         {similarEntities.length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="body2" fontWeight={600} gutterBottom>
-              Entités similaires trouvées :
+              {t('common:quickCreate.similarEntities')}
             </Typography>
             {similarEntities.map((entity, index) => (
               <Alert key={index} severity="info" sx={{ mb: 1, py: 0.5 }}>
@@ -192,12 +194,12 @@ const QuickCreateDialog = ({
                   <strong>{entity.name || entity.company || entity.product_name}</strong>
                   {entity.email && ` - ${entity.email}`}
                   {entity.phone && ` - ${entity.phone}`}
-                  {entity.similarity && ` (${Math.round(entity.similarity * 100)}% similaire)`}
+                  {entity.similarity && t('common:quickCreate.similarity', { percent: Math.round(entity.similarity * 100) })}
                 </Typography>
               </Alert>
             ))}
             <Typography variant="caption" color="text.secondary">
-              Voulez-vous créer quand même ?
+              {t('common:quickCreate.createAnywayQuestion')}
             </Typography>
           </Box>
         )}
@@ -215,7 +217,7 @@ const QuickCreateDialog = ({
 
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={handleClose} disabled={loading}>
-          Annuler
+          {t('common:buttons.cancel')}
         </Button>
 
         {similarEntities.length > 0 ? (
@@ -226,7 +228,7 @@ const QuickCreateDialog = ({
             disabled={loading}
             startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
           >
-            Créer quand même
+            {t('common:quickCreate.createAnyway')}
           </Button>
         ) : (
           <Button
@@ -235,7 +237,7 @@ const QuickCreateDialog = ({
             disabled={loading}
             startIcon={loading ? <CircularProgress size={16} /> : <AddIcon />}
           >
-            {loading ? 'Création...' : 'Créer'}
+            {loading ? t('common:quickCreate.creating') : t('common:buttons.create')}
           </Button>
         )}
       </DialogActions>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -47,6 +48,7 @@ import {
 import { useDropzone } from 'react-dropzone';
 
 const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
+  const { t } = useTranslation(['dataImport', 'common']);
   const [activeStep, setActiveStep] = useState(0);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [csvData, setCsvData] = useState([]);
@@ -55,12 +57,17 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
   const [importResults, setImportResults] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const steps = ['Upload de fichier', 'Mapping des colonnes', 'Aperçu', 'Importation'];
+  const steps = [
+    t('dataImport:legacy.steps.upload'),
+    t('dataImport:legacy.steps.mapping'),
+    t('dataImport:legacy.steps.preview'),
+    t('dataImport:legacy.steps.importing'),
+  ];
 
   // Configuration des types d'importation
   const importConfigs = {
     clients: {
-      title: 'Importer des clients',
+      title: t('dataImport:legacy.titles.clients'),
       icon: <People />,
       color: 'primary',
       requiredFields: ['name', 'email'],
@@ -71,7 +78,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
       ]
     },
     products: {
-      title: 'Importer des produits',
+      title: t('dataImport:legacy.titles.products'),
       icon: <Inventory />,
       color: 'success',
       requiredFields: ['name', 'reference'],
@@ -82,7 +89,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
       ]
     },
     contacts: {
-      title: 'Importer des contacts téléphone',
+      title: t('dataImport:legacy.titles.contacts'),
       icon: <Smartphone />,
       color: 'info',
       requiredFields: ['name', 'phone'],
@@ -183,7 +190,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
         successful: csvData.length - 1,
         failed: 1,
         total: csvData.length,
-        errors: ['Ligne 3: Email invalide']
+        errors: [t('dataImport:legacy.mockLineError')]
       };
 
       setImportResults(results);
@@ -214,10 +221,10 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
               <Box textAlign="center" py={4}>
                 <Smartphone sx={{ fontSize: 64, color: 'info.main', mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  Importer des contacts depuis votre téléphone
+                  {t('dataImport:legacy.contacts.title')}
                 </Typography>
                 <Typography color="text.secondary" paragraph>
-                  Accédez aux contacts de votre téléphone pour les importer directement.
+                  {t('dataImport:legacy.contacts.description')}
                 </Typography>
                 <Button
                   variant="contained"
@@ -227,7 +234,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
                   disabled={loading}
                   size="large"
                 >
-                  {loading ? 'Accès aux contacts...' : 'Accéder aux contacts'}
+                  {loading ? t('dataImport:legacy.contacts.accessing') : t('dataImport:legacy.contacts.access')}
                 </Button>
               </Box>
             ) : (
@@ -246,20 +253,20 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
                 <input {...getInputProps()} />
                 <CloudUpload sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  {isDragActive ? 'Déposez le fichier ici' : 'Glissez-déposez votre fichier'}
+                  {isDragActive ? t('dataImport:legacy.dropHere') : t('dataImport:legacy.dragDrop')}
                 </Typography>
                 <Typography color="text.secondary" paragraph>
-                  Formats supportés: CSV, XLS, XLSX
+                  {t('dataImport:legacy.supportedFormats')}
                 </Typography>
                 <Button variant="outlined" component="span">
-                  Choisir un fichier
+                  {t('dataImport:legacy.chooseFile')}
                 </Button>
               </Box>
             )}
 
             <Box mt={3}>
               <Typography variant="subtitle1" gutterBottom>
-                Champs requis pour {importType}:
+                {t('dataImport:legacy.requiredFieldsFor', { type: importType })}
               </Typography>
               <Box display="flex" gap={1} flexWrap="wrap">
                 {config.requiredFields.map(field => (
@@ -277,24 +284,24 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              Mappez les colonnes de votre fichier
+              {t('dataImport:legacy.mapTitle')}
             </Typography>
             <Alert severity="info" sx={{ mb: 3 }}>
-              Associez chaque colonne de votre fichier avec les champs correspondants
+              {t('dataImport:legacy.mapInfo')}
             </Alert>
 
             <Grid container spacing={2}>
               {csvData[0] && Object.keys(csvData[0]).map(csvColumn => (
                 <Grid item xs={12} sm={6} key={csvColumn}>
                   <FormControl fullWidth>
-                    <InputLabel>Colonne: {csvColumn}</InputLabel>
+                    <InputLabel>{t('dataImport:legacy.columnLabel', { column: csvColumn })}</InputLabel>
                     <Select
                       value={columnMapping[csvColumn] || ''}
                       onChange={(e) => handleColumnMapping(csvColumn, e.target.value)}
-                      label={`Colonne: ${csvColumn}`}
+                      label={t('dataImport:legacy.columnLabel', { column: csvColumn })}
                     >
                       <MenuItem value="">
-                        <em>Ignorer cette colonne</em>
+                        <em>{t('dataImport:legacy.ignoreColumn')}</em>
                       </MenuItem>
                       {[...config.requiredFields, ...config.optionalFields].map(field => (
                         <MenuItem key={field} value={field}>
@@ -309,7 +316,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
 
             <Box mt={3} display="flex" justifyContent="space-between">
               <Button onClick={() => setActiveStep(0)}>
-                Retour
+                {t('dataImport:actions.back')}
               </Button>
               <Button
                 variant="contained"
@@ -318,7 +325,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
                   Object.values(columnMapping).includes(field)
                 )}
               >
-                Aperçu
+                {t('dataImport:legacy.preview')}
               </Button>
             </Box>
           </Box>
@@ -328,10 +335,10 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              Aperçu des données à importer
+              {t('dataImport:legacy.previewTitle')}
             </Typography>
             <Alert severity="success" sx={{ mb: 3 }}>
-              {csvData.length} enregistrements seront importés
+              {t('dataImport:legacy.recordsToImport', { count: csvData.length })}
             </Alert>
 
             <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
@@ -364,10 +371,10 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
 
             <Box mt={3} display="flex" justifyContent="space-between">
               <Button onClick={() => setActiveStep(importType === 'contacts' ? 0 : 1)}>
-                Retour
+                {t('dataImport:actions.back')}
               </Button>
               <Button variant="contained" onClick={handleImport}>
-                Commencer l'importation
+                {t('dataImport:legacy.startImport')}
               </Button>
             </Box>
           </Box>
@@ -379,18 +386,18 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
             {!importResults ? (
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  Importation en cours...
+                  {t('dataImport:legacy.inProgress')}
                 </Typography>
                 <LinearProgress variant="determinate" value={importProgress} sx={{ mb: 2 }} />
                 <Typography color="text.secondary">
-                  {importProgress}% terminé
+                  {t('dataImport:legacy.percentDone', { percent: importProgress })}
                 </Typography>
               </Box>
             ) : (
               <Box>
                 <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
-                  Importation terminée !
+                  {t('dataImport:legacy.completed')}
                 </Typography>
                 <Grid container spacing={2} sx={{ mt: 2, mb: 3 }}>
                   <Grid item xs={4}>
@@ -400,7 +407,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
                           {importResults.successful}
                         </Typography>
                         <Typography variant="body2">
-                          Succès
+                          {t('dataImport:legacy.success')}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -412,7 +419,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
                           {importResults.failed}
                         </Typography>
                         <Typography variant="body2">
-                          Échecs
+                          {t('dataImport:legacy.failures')}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -424,7 +431,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
                           {importResults.total}
                         </Typography>
                         <Typography variant="body2">
-                          Total
+                          {t('dataImport:legacy.total')}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -434,7 +441,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
                 {importResults.errors.length > 0 && (
                   <Alert severity="warning" sx={{ mt: 2, textAlign: 'left' }}>
                     <Typography variant="subtitle2" gutterBottom>
-                      Erreurs rencontrées:
+                      {t('dataImport:legacy.errorsEncountered')}
                     </Typography>
                     {importResults.errors.map((error, index) => (
                       <Typography key={index} variant="body2">
@@ -449,7 +456,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
                   onClick={handleClose}
                   sx={{ mt: 3 }}
                 >
-                  Terminer
+                  {t('dataImport:legacy.finish')}
                 </Button>
               </Box>
             )}
@@ -484,7 +491,7 @@ const ImportWizard = ({ open, onClose, importType = 'clients' }) => {
 
       <DialogActions>
         <Button onClick={handleClose} disabled={loading}>
-          Annuler
+          {t('dataImport:actions.cancel')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Collapse, CircularProgress, alpha, useTheme } from '@mui/material';
 import { CheckCircle, ErrorOutline, ExpandMore, AutoAwesome } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { normalizeMarkdown } from './markdownUtils';
@@ -76,6 +77,7 @@ const timelineMarkdownComponents = {
  * (les étapes persistées en base portent `success` au lieu de `status`).
  */
 const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [expanded, setExpanded] = useState(false);
@@ -92,7 +94,7 @@ const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
   };
 
   const runningStep = steps.find((s) => stepStatus(s) === 'running');
-  const activeLabel = runningStep?.label || statusLabel || 'Réflexion en cours';
+  const activeLabel = runningStep?.label || statusLabel || t('aiChat:agentTimeline.thinking');
 
   const shimmerSx = {
     fontWeight: 500,
@@ -148,7 +150,7 @@ const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
               variant="caption"
               sx={{ fontSize: '0.75rem', fontWeight: 500, color: 'text.secondary' }}
             >
-              Raisonnement · {steps.length} étape{steps.length > 1 ? 's' : ''}
+              {t('aiChat:agentTimeline.reasoningSteps', { count: steps.length })}
             </Typography>
             <ExpandMore
               sx={{
@@ -264,7 +266,7 @@ const AgentTimeline = ({ steps = [], working = false, statusLabel = '' }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pt: 0.25 }}>
               <CircularProgress size={11} thickness={5} sx={{ color: accent }} />
               <Typography variant="caption" sx={{ fontSize: '0.72rem', color: 'text.disabled' }}>
-                Préparation…
+                {t('aiChat:agentTimeline.preparing')}
               </Typography>
             </Box>
           )}

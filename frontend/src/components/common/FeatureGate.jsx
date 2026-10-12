@@ -5,10 +5,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { Lock, ArrowForward } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useModules } from '../../contexts/ModuleContext';
 
 export default function FeatureGate({ feature, title, description, children }) {
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
   const { hasFeature, loading } = useModules();
 
   if (loading) {
@@ -27,17 +29,17 @@ export default function FeatureGate({ feature, title, description, children }) {
         <Lock sx={{ fontSize: 32 }} />
       </Box>
       <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
-        {title || 'Fonctionnalité Business'}
+        {title || t('common:featureGate.defaultTitle')}
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        {description || "Cette fonctionnalité est incluse dans le plan Business. Passez à Business pour y accéder — essai 30 jours offert, sans carte."}
+        {description || t('common:featureGate.defaultDescription')}
       </Typography>
       <Button
         variant="contained" size="large" endIcon={<ArrowForward />}
         onClick={() => navigate('/subscription/plans')}
         sx={{ fontWeight: 700, textTransform: 'none', px: 4, py: 1.2 }}
       >
-        Découvrir Business
+        {t('common:featureGate.discover')}
       </Button>
     </Box>
   );

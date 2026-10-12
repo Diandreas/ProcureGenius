@@ -29,14 +29,14 @@ import { ArrowBack, Edit, CheckCircle, Cancel } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 function BidDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(['eSourcing', 'common']);
+  const { t, i18n } = useTranslation(['eSourcing', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -111,7 +111,7 @@ function BidDetail() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return format(new Date(dateString), "dd MMMM yyyy 'à' HH:mm", { locale: fr });
+    return format(new Date(dateString), t('eSourcing:dateFormats.dateTime'), { locale: i18n.language?.startsWith('en') ? enUS : fr });
   };
 
   if (loading || !bid) {

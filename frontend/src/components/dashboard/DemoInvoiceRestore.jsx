@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, IconButton, Stack, Typography } from '@mui/material';
 import { Close, ReceiptLong } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { clientsAPI } from '../../services/api';
 import { offlineData } from '../../services/offline/entities';
 import { clearDemoInvoice, loadDemoInvoice } from '../../utils/demoInvoiceDraft';
@@ -13,6 +14,7 @@ import { clearDemoInvoice, loadDemoInvoice } from '../../utils/demoInvoiceDraft'
  */
 export default function DemoInvoiceRestore() {
   const navigate = useNavigate();
+  const { t } = useTranslation('dashboard');
   const [facture, setFacture] = useState(() => loadDemoInvoice());
   const [enCours, setEnCours] = useState(false);
   if (!facture) return null;
@@ -46,18 +48,18 @@ export default function DemoInvoiceRestore() {
     }}>
       <ReceiptLong sx={{ color: '#2563eb', fontSize: 32, display: { xs: 'none', sm: 'block' } }} />
       <Box sx={{ flex: 1, minWidth: 0, pr: { xs: 4, sm: 0 } }}>
-        <Typography sx={{ fontWeight: 800, color: '#0f172a' }}>Votre facture de la démo vous attend</Typography>
+        <Typography sx={{ fontWeight: 800, color: '#0f172a' }}>{t('demoInvoiceRestore.title')}</Typography>
         <Typography variant="body2" sx={{ color: '#334155' }}>
-          {facture.client?.name} · {facture.items?.length} ligne(s) · {total}. Vérifiez-la, puis enregistrez : elle aura son vrai numéro et votre logo.
+          {t('demoInvoiceRestore.summary', { client: facture.client?.name ?? '', lines: facture.items?.length ?? '', total })}
         </Typography>
       </Box>
       <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
         <Button variant="contained" disableElevation onClick={reprendre} disabled={enCours}
           sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}>
-          Ouvrir ma facture
+          {t('demoInvoiceRestore.open')}
         </Button>
       </Stack>
-      <IconButton size="small" onClick={ignorer} aria-label="Ignorer" sx={{ position: 'absolute', top: 6, right: 6 }}>
+      <IconButton size="small" onClick={ignorer} aria-label={t('demoInvoiceRestore.dismiss')} sx={{ position: 'absolute', top: 6, right: 6 }}>
         <Close fontSize="small" />
       </IconButton>
     </Box>

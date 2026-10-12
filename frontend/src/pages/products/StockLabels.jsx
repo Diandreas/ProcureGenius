@@ -6,14 +6,15 @@ import {
 import { ArrowBack, Delete, LocalPrintshop } from '@mui/icons-material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
+import { useTranslation } from 'react-i18next';
 import { productsAPI } from '../../services/api';
 import useCurrency from '../../hooks/useCurrency';
 
 // Formats de planche : étiquettes A4 adhésives courantes et étiquette unique (imprimante thermique)
 const FORMATS = {
-  a4_24: { label: 'A4 — 24 étiquettes (63,5 × 38 mm)', cols: 3, w: 63.5, h: 38, page: 'A4', margin: '12mm 7mm' },
-  a4_65: { label: 'A4 — 65 petites étiquettes (38 × 21 mm)', cols: 5, w: 38, h: 21, page: 'A4', margin: '10mm 5mm' },
-  thermal: { label: 'Thermique — 50 × 30 mm (une par étiquette)', cols: 1, w: 50, h: 30, page: '50mm 30mm', margin: '0' },
+  a4_24: { labelKey: 'stock:labels.formats.a4_24', cols: 3, w: 63.5, h: 38, page: 'A4', margin: '12mm 7mm' },
+  a4_65: { labelKey: 'stock:labels.formats.a4_65', cols: 5, w: 38, h: 21, page: 'A4', margin: '10mm 5mm' },
+  thermal: { labelKey: 'stock:labels.formats.thermal', cols: 1, w: 50, h: 30, page: '50mm 30mm', margin: '0' },
 };
 
 /**
@@ -22,6 +23,7 @@ const FORMATS = {
  * et imprimées avec l'imprimante de l'appareil.
  */
 export default function StockLabels() {
+  const { t, i18n } = useTranslation(['stock']);
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { format } = useCurrency();
@@ -69,7 +71,7 @@ export default function StockLabels() {
       ${showPrice ? `<div class="price">${format(parseFloat(p.price || 0))}</div>` : ''}</div></div>`).join('');
     const w = window.open('', '_blank');
     if (!w) return;
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Étiquettes</title><style>${css}</style></head>
+    w.document.write(`<!doctype html><html lang="${i18n.language}"><head><meta charset="utf-8"><title>${t('stock:labels.title')}</title><style>${css}</style></head>
       <body><div class="grid">${html}</div><script>window.onload=()=>{window.print();}</script></body></html>`);
     w.document.close();
   };
@@ -78,21 +80,21 @@ export default function StockLabels() {
     <Box p={{ xs: 0, sm: 1 }} maxWidth={820}>
       <Stack direction="row" alignItems="center" spacing={1} mb={2}>
         <IconButton onClick={() => navigate('/products')}><ArrowBack /></IconButton>
-        <Typography variant="h5" fontWeight={800}>Étiquettes</Typography>
+        <Typography variant="h5" fontWeight={800}>{t('stock:labels.title')}</Typography>
       </Stack>
       <Card sx={{ borderRadius: 3, mb: 2 }}>
         <CardContent>
           <Autocomplete options={options} getOptionLabel={(o) => `${o.name} (${o.reference || ''})`}
             onInputChange={(_, v) => search(v)} onChange={(_, v) => add(v)} value={null}
-            renderInput={(p) => <TextField {...p} label="Ajouter un produit" />} />
+            renderInput={(p) => <TextField {...p} label={t('stock:labels.addProduct')} />} />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mt={2} alignItems={{ sm: 'center' }}>
             <FormControl size="small" sx={{ minWidth: 300 }}>
-              <InputLabel id="lab-format">Format</InputLabel>
-              <Select labelId="lab-format" label="Format" value={fmt} onChange={(e) => setFmt(e.target.value)}>
-                {Object.entries(FORMATS).map(([k, v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
+              <InputLabel id="lab-format">{t('stock:labels.format')}</InputLabel>
+              <Select labelId="lab-format" label={t('stock:labels.format')} value={fmt} onChange={(e) => setFmt(e.target.value)}>
+                {Object.entries(FORMATS).map(([k, v]) => <MenuItem key={k} value={k}>{t(v.labelKey)}</MenuItem>)}
               </Select>
             </FormControl>
-            <FormControlLabel control={<Switch checked={showPrice} onChange={(e) => setShowPrice(e.target.checked)} />} label="Afficher le prix" />
+            <FormControlLabel control={<Switch checked={showPrice} onChange={(e) => setShowPrice(e.target.checked)} />} label={t('stock:labels.showPrice')} />
           </Stack>
         </CardContent>
       </Card>
@@ -105,16 +107,16 @@ export default function StockLabels() {
               <Typography fontWeight={700} noWrap>{it.product.name}</Typography>
               <Typography variant="caption" color="text.secondary">{it.product.reference} · {format(parseFloat(it.product.price || 0))}</Typography>
             </Box>
-            <TextField size="small" type="number" label="Copies" sx={{ width: 90 }} value={it.copies}
+            <TextField size="small" type="number" label={t('stock:labels.copies')} sx={{ width: 90 }} value={it.copies}
               inputProps={{ min: 1, max: 500 }}
               onChange={(e) => setItems((x) => x.map((y, j) => (j === i ? { ...y, copies: Math.min(500, parseInt(e.target.value, 10) || 1) } : y)))} />
-            <IconButton onClick={() => setItems((x) => x.filter((_, j) => j !== i))} aria-label="Retirer"><Delete /></IconButton>
+            <IconButton onClick={() => setItems((x) => x.filter((_, j) => j !== i))} aria-label={t('stock:labels.remove')}><Delete /></IconButton>
           </CardContent>
         </Card>
       ))}
 
       <Button variant="contained" size="large" startIcon={<LocalPrintshop />} disabled={!labels.length} onClick={print} sx={{ mt: 1 }}>
-        Imprimer {labels.length ? `${labels.length} étiquette(s)` : ''}
+        {labels.length ? t('stock:labels.printCount', { count: labels.length }) : t('stock:labels.print')}
       </Button>
     </Box>
   );

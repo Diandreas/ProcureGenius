@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import Mascot from './Mascot';
 
 /**
@@ -14,13 +15,16 @@ import Mascot from './Mascot';
  * @param {node} children - Contenu personnalisé
  */
 function EmptyState({
-  title = "Aucune donnée disponible",
-  description = "Il n'y a rien à afficher pour le moment.",
+  title: titleProp,
+  description: descriptionProp,
   mascotPose = 'reading',
   actionLabel = null,
   onAction = null,
   children = null,
 }) {
+  const { t } = useTranslation('common');
+  const title = titleProp === undefined ? t('common:emptyState.defaultTitle') : titleProp;
+  const description = descriptionProp === undefined ? t('common:emptyState.defaultDescription') : descriptionProp;
   return (
     <Paper
       sx={{

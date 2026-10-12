@@ -85,7 +85,7 @@ export default function RestockForecast() {
               <Table size="small">
                 <TableBody>
                   {[0, 1, 2, 3].map((i) => (
-                    <TableRow key={i}><TableCell>Produit exemple</TableCell><TableCell align="right">—</TableCell><TableCell align="right">—</TableCell></TableRow>
+                    <TableRow key={i}><TableCell>{t('products:restock.sampleProduct', 'Produit exemple')}</TableCell><TableCell align="right">—</TableCell><TableCell align="right">—</TableCell></TableRow>
                   ))}
                 </TableBody>
               </Table>

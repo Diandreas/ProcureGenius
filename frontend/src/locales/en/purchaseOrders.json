@@ -23,7 +23,8 @@
     "dateFilter": "Date filter"
   },
   "search": {
-    "placeholder": "Search for a purchase order..."
+    "placeholder": "Search for a purchase order...",
+    "placeholderFull": "Search for a purchase order, a supplier..."
   },
   "messages": {
     "loadingError": "Error loading purchase order",
@@ -63,7 +64,13 @@
     "noItemsAlert": "No items added. Click \"Add item\" to begin.",
     "reportError": "Error generating report",
     "reportGenerated": "Report generated successfully! Choose an action below.",
-    "pdfGenerationHelpText": "You can preview, download or print the report directly."
+    "pdfGenerationHelpText": "You can preview, download or print the report directly.",
+    "loading": "Loading purchase orders...",
+    "convertedToInvoice": "Invoice created from the purchase order.",
+    "convertToInvoiceError": "Error converting to an invoice.",
+    "poNotFoundDescription": "The purchase order you are looking for does not exist or has been deleted.",
+    "thermalPrintingMode": "Thermal printing format detected. The thermal receipt template will be used automatically.",
+    "thermalFormat": "Format: {{size}}"
   },
   "actions": {
     "generateReport": "PDF Report"
@@ -71,7 +78,21 @@
   "report": {
     "title": "Generate Purchase Orders Report",
     "itemLabel": "purchase order",
-    "itemsLabel": "purchase orders"
+    "itemsLabel": "purchase orders",
+    "fileName": "purchase-orders-report-{{timestamp}}.pdf",
+    "period": "Period (optional)",
+    "periodHelp": "Filter by period - leave empty to include everything",
+    "dateStart": "Start date",
+    "dateEnd": "End date",
+    "itemsToInclude": "Purchase orders to include",
+    "selectedCount": "{{count}} purchase order(s) selected",
+    "allIncluded": "All filtered purchase orders will be included",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "summarySelected": "A report will be generated with {{count}} selected purchase order(s)",
+    "summaryAll": "A report will be generated with all purchase orders ({{count}})",
+    "forPeriod": " for the specified period",
+    "generate": "Generate report"
   },
   "labels": {
     "delivery": "Delivery:",
@@ -107,7 +128,11 @@
     "poTemplate": "Purchase order template",
     "saving": "Saving...",
     "generating": "Generating...",
-    "generatingLabel": "Generating report..."
+    "generatingLabel": "Generating report...",
+    "poFallback": "Purchase order",
+    "deliveryOn": "Delivery {{date}}",
+    "noItems": "No items",
+    "sending": "Sending..."
   },
   "buttons": {
     "generatePDF": "Generate PDF",
@@ -122,7 +147,8 @@
     "print": "Print",
     "download": "Download",
     "save": "Save",
-    "sendEmail": "Send by email"
+    "sendEmail": "Send by email",
+    "convertToInvoice": "Convert to invoice"
   },
   "columns": {
     "reference": "Reference",
@@ -164,7 +190,8 @@
   "tabs": {
     "general": "General information",
     "items": "Items",
-    "financial": "Financial"
+    "financial": "Financial",
+    "ai": "AI analysis"
   },
   "tooltips": {
     "generatePDF": "Generate purchase order PDF",
@@ -172,5 +199,74 @@
     "approvePO": "Approve purchase order",
     "sendEmail": "Send purchase order by email to supplier",
     "noSupplierEmail": "The supplier has no email address"
+  },
+  "kpi": {
+    "total": "Total orders",
+    "poCount": "{{count}} PO",
+    "approved": "Approved",
+    "approvedSub": "validated",
+    "sent": "Sent",
+    "sentSub": "pending",
+    "drafts": "Drafts",
+    "draftsSub": "to finalize",
+    "cancelled": "Cancelled",
+    "cancelledSub": "closed"
+  },
+  "pdf": {
+    "fileName": "purchase-order-{{number}}.pdf",
+    "viewerTitle": "Purchase order {{number}}"
+  },
+  "ai": {
+    "you": "You:",
+    "assistant": "Aunlia:",
+    "error": "Error: {{message}}",
+    "itemLine": "- {{description}} (qty: {{quantity}}, unit price: {{unitPrice}}, total: {{total}})",
+    "noItems": "No items",
+    "notDefined": "Not specified",
+    "notDefinedDate": "Not specified",
+    "intro": "Let the AI analyze this order for you. Click a button to start the analysis.",
+    "anomaliesTitle": "Detect anomalies",
+    "anomaliesSubtitle": "Suspicious prices, odd quantities, tight deadlines",
+    "anomaliesButton": "Analyze",
+    "adviceTitle": "Practical advice",
+    "adviceSubtitle": "How to improve or secure this order",
+    "adviceButton": "Get advice",
+    "marketPriceTitle": "Online market prices",
+    "marketPriceSubtitle": "Comparison with Amazon, Alibaba and other sites",
+    "marketPriceButton": "Check prices",
+    "analyzing": "Analyzing...",
+    "rerun": "Run again",
+    "chatPlaceholder": "Chat with the AI or ask for details...",
+    "prompts": {
+      "anomalies": "Analyze this purchase order and detect any anomalies. Be direct and simple.\n\nPurchase order: {{number}}\nSupplier: {{supplier}}\nTotal: {{total}}\nDeadline: {{deadline}}\nItems:\n{{items}}\n\nTell me: do you see anything unusual? Prices too high, odd quantities, tight deadlines? Answer in 3-5 short points.",
+      "advice": "Give practical advice for this purchase order. Keep it simple.\n\nPurchase order: {{number}}\nSupplier: {{supplier}}\nStatus: {{status}}\nTotal: {{total}}\nItems:\n{{items}}\n\nGive 3 concrete tips to improve or secure this order.",
+      "marketPrice": "Look up market prices for these products. \nIMPORTANT: If you do not have direct internet access to look up live links, DO NOT PROVIDE INVENTED OR DEAD LINKS. Only give realistic estimates based on your knowledge. Never give fake URLs.\nDo NOT use the internal \"verify_price\" function/tool because there are several items.\n\nOrder items:\n{{items}}\n\nFor each product: give the estimated average market price and say whether the price paid is fair, low or too high."
+    }
+  },
+  "aiAssistant": {
+    "describeOrder": "Please describe what you want to order",
+    "defaultTitle": "Order {{supplier}}",
+    "supplierNotFound": "Supplier \"{{name}}\" not found, please select it manually.",
+    "itemWithoutDescription": "Item without description",
+    "prefilled": "Purchase order pre-filled by the AI!",
+    "error": "Error during AI analysis",
+    "close": "Close assistant",
+    "open": "AI assistant",
+    "title": "Smart Order Assistant",
+    "description": "Describe your order (supplier, items, quantities) and the AI will fill in the form for you.",
+    "placeholder": "E.g.: Order 50 laptops and 20 wireless mice from the supplier Dell Canada for the office project.",
+    "analyzing": "Analyzing...",
+    "fillForm": "Fill in the form"
+  },
+  "itemDialog": {
+    "editTitle": "Edit line",
+    "addTitle": "Add a line",
+    "description": "Item / Description",
+    "descriptionPlaceholder": "E.g.: A4 paper 80g/m², HP 652 cartridge, development service...",
+    "supplierReference": "Supplier reference",
+    "referencePlaceholder": "E.g.: REF-12345",
+    "quantity": "Quantity",
+    "unitPrice": "Unit price excl. tax",
+    "lineTotal": "Line total excl. tax"
   }
 }

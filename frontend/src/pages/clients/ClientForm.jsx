@@ -34,13 +34,14 @@ import { useTranslation } from 'react-i18next';
 import { clientsAPI } from '../../services/api';
 import { offlineData } from '../../services/offline/entities';
 
+// Codes stables (valeur envoyee au serveur) ; libelles traduits a l'affichage.
 const PAYMENT_TERMS = [
-    { value: 'CASH', label: 'Comptant' },
-    { value: 'NET 15', label: 'Net 15 jours' },
-    { value: 'NET 30', label: 'Net 30 jours' },
-    { value: 'NET 45', label: 'Net 45 jours' },
-    { value: 'NET 60', label: 'Net 60 jours' },
-    { value: '2/10 NET 30', label: '2% 10 jours, Net 30' },
+    { value: 'CASH', labelKey: 'cash' },
+    { value: 'NET 15', labelKey: 'net15' },
+    { value: 'NET 30', labelKey: 'net30' },
+    { value: 'NET 45', labelKey: 'net45' },
+    { value: 'NET 60', labelKey: 'net60' },
+    { value: '2/10 NET 30', labelKey: 'discount2_10Net30' },
 ];
 
 function ClientForm() {
@@ -65,8 +66,8 @@ function ClientForm() {
     });
 
     const validationSchema = Yup.object({
-        name: Yup.string().required('Nom requis'),
-        email: Yup.string().email('Email invalide').nullable(),
+        name: Yup.string().required(t('clients:form.validation.nameRequired')),
+        email: Yup.string().email(t('clients:validation.emailInvalid')).nullable(),
         phone: Yup.string().nullable(),
         contact_person: Yup.string().nullable(),
         address: Yup.string().nullable(),
@@ -130,10 +131,10 @@ function ClientForm() {
         <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 720, mx: 'auto' }}>
             <Box sx={{ mb: 3, display: { xs: 'none', md: 'block' } }}>
                 <Typography variant="h5" fontWeight={700}>
-                    {isEdit ? 'Modifier le client' : 'Nouveau client'}
+                    {isEdit ? t('clients:editClient') : t('clients:form.newClient')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {isEdit ? 'Modifiez les informations du client' : 'Renseignez les informations essentielles'}
+                    {isEdit ? t('clients:form.editSubtitle') : t('clients:form.newSubtitle')}
                 </Typography>
             </Box>
 
@@ -150,14 +151,14 @@ function ClientForm() {
                             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
                                     <Business sx={{ color: 'primary.main', fontSize: 20 }} />
-                                    <Typography variant="subtitle1" fontWeight={600}>Identité</Typography>
+                                    <Typography variant="subtitle1" fontWeight={600}>{t('clients:form.identity')}</Typography>
                                 </Box>
                                 <Grid container spacing={2}>
                                     <Grid item xs={12}>
                                         <TextField
                                             fullWidth
                                             name="name"
-                                            label="Nom commercial"
+                                            label={t('clients:form.tradeName')}
                                             value={values.name}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
@@ -171,7 +172,7 @@ function ClientForm() {
                                         <TextField
                                             fullWidth
                                             name="contact_person"
-                                            label="Personne contact"
+                                            label={t('clients:labels.contactPerson')}
                                             value={values.contact_person}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
@@ -181,7 +182,7 @@ function ClientForm() {
                                         <TextField
                                             fullWidth
                                             name="phone"
-                                            label="Téléphone"
+                                            label={t('clients:labels.phone')}
                                             value={values.phone}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
@@ -194,7 +195,7 @@ function ClientForm() {
                                         <TextField
                                             fullWidth
                                             name="email"
-                                            label="Email"
+                                            label={t('clients:labels.email')}
                                             type="email"
                                             value={values.email}
                                             onChange={handleChange}
@@ -212,7 +213,7 @@ function ClientForm() {
                                             multiline
                                             rows={2}
                                             name="address"
-                                            label="Adresse"
+                                            label={t('clients:labels.address')}
                                             value={values.address}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
@@ -240,7 +241,7 @@ function ClientForm() {
                                 onClick={() => setShowDetails(v => !v)}
                             >
                                 <Typography variant="subtitle1" fontWeight={600} color="text.secondary">
-                                    Détails supplémentaires
+                                    {t('clients:form.additionalDetails')}
                                 </Typography>
                                 {showDetails ? <ExpandLess sx={{ color: 'text.secondary' }} /> : <ExpandMore sx={{ color: 'text.secondary' }} />}
                             </Box>
@@ -252,24 +253,24 @@ function ClientForm() {
                                             <TextField
                                                 fullWidth
                                                 name="tax_id"
-                                                label="Numéro de taxe / NEQ"
+                                                label={t('clients:form.taxId')}
                                                 value={values.tax_id}
                                                 onChange={handleChange}
                                                 onBlur={handleBlur}
-                                                helperText="Numéro d'entreprise ou identifiant fiscal"
+                                                helperText={t('clients:form.taxIdHelp')}
                                             />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <FormControl fullWidth>
-                                                <InputLabel>Conditions de paiement</InputLabel>
+                                                <InputLabel>{t('clients:labels.paymentTerms')}</InputLabel>
                                                 <Select
                                                     name="payment_terms"
                                                     value={values.payment_terms}
                                                     onChange={handleChange}
-                                                    label="Conditions de paiement"
+                                                    label={t('clients:labels.paymentTerms')}
                                                 >
                                                     {PAYMENT_TERMS.map(term => (
-                                                        <MenuItem key={term.value} value={term.value}>{term.label}</MenuItem>
+                                                        <MenuItem key={term.value} value={term.value}>{t(`clients:form.paymentTermOptions.${term.labelKey}`)}</MenuItem>
                                                     ))}
                                                 </Select>
                                             </FormControl>
@@ -287,7 +288,7 @@ function ClientForm() {
                                 onClick={() => navigate('/clients')}
                                 disabled={isSubmitting}
                             >
-                                Annuler
+                                {t('clients:actions.cancel')}
                             </Button>
                             <Button
                                 type="submit"
@@ -296,7 +297,7 @@ function ClientForm() {
                                 disabled={isSubmitting}
                                 sx={{ fontWeight: 600, px: 3 }}
                             >
-                                {isSubmitting ? 'Enregistrement...' : (isEdit ? 'Enregistrer' : 'Créer le client')}
+                                {isSubmitting ? t('clients:form.saving') : (isEdit ? t('clients:actions.save') : t('clients:form.createClient'))}
                             </Button>
                         </Box>
                     </Form>

@@ -19,9 +19,11 @@ import {
     PendingActions,
     CheckCircle,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import useCurrency from '../../hooks/useCurrency';
 
 function ClientStatisticsCard({ statistics, loading }) {
+    const { t } = useTranslation(['clients', 'common']);
     const { format: formatCurrency } = useCurrency();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -61,25 +63,25 @@ function ClientStatisticsCard({ statistics, loading }) {
 
     const stats = [
         {
-            label: 'Total factures',
+            label: t('clients:statistics.totalInvoices'),
             value: statistics.invoice_summary?.total_invoices || 0,
             icon: <Receipt />,
             color: 'primary',
         },
         {
-            label: 'Chiffre d\'affaires',
+            label: t('clients:statistics.revenue'),
             value: formatCurrency(statistics.invoice_summary?.total_sales_amount || 0),
             icon: <AttachMoney />,
             color: 'success',
         },
         {
-            label: 'Montant payé',
+            label: t('clients:statistics.paidAmount'),
             value: formatCurrency(statistics.invoice_summary?.total_paid_amount || 0),
             icon: <CheckCircle />,
             color: 'info',
         },
         {
-            label: 'En attente',
+            label: t('clients:statistics.outstanding'),
             value: formatCurrency(statistics.invoice_summary?.total_outstanding || 0),
             icon: <PendingActions />,
             color: 'warning',
@@ -91,7 +93,7 @@ function ClientStatisticsCard({ statistics, loading }) {
             <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" fontWeight="bold">
-                        Statistiques client
+                        {t('clients:statistics.title')}
                     </Typography>
                     {statistics.sales_trend && (
                         <Chip

@@ -97,7 +97,7 @@ function ClientProductsTable({ products, loading }) {
                                             {product.product__name || t('clients:labels.productUnavailable')}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary">
-                                            {t('clients:labels.ref')}: {product.product__reference || 'N/A'}
+                                            {t('clients:labels.ref')}: {product.product__reference || t('clients:labels.notAvailable')}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -174,7 +174,7 @@ function ClientProductsTable({ products, loading }) {
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2" color="text.secondary">
-                                        {product.product__reference || 'N/A'}
+                                        {product.product__reference || t('clients:labels.notAvailable')}
                                     </Typography>
                                 </TableCell>
                                 <TableCell align="right">

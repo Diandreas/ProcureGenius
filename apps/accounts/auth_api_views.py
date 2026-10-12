@@ -34,6 +34,15 @@ from django.utils import timezone
 from datetime import timedelta
 
 
+def langue_demandee(request):
+    """Langue de l'app au moment de l'inscription : champ `language`, sinon en-tête Accept-Language."""
+    langue = str(request.data.get('language') or '').lower()[:2] if hasattr(request, 'data') else ''
+    if langue not in ('fr', 'en'):
+        entete = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
+        langue = entete.split(',')[0].strip().lower()[:2]
+    return langue if langue in ('fr', 'en') else 'fr'
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @throttle_classes([RegisterRateThrottle])
@@ -136,6 +145,8 @@ def api_register(request):
 
             # UserPreferences and UserPermissions are created automatically by signals
             # DO NOT mark onboarding as completed - user will go through setup wizard
+            # Langue de l'app : celle dans laquelle la personne utilisait le site
+            UserPreferences.objects.update_or_create(user=user, defaults={'preferred_language': langue_demandee(request)})
 
             # Tracking conversion : relier les visites anonymes de ce visiteur au compte créé
             try:
@@ -546,10 +557,13 @@ def api_google_login(request):
                     pass
 
                 # Create UserPreferences so onboarding is triggered on first login
-                UserPreferences.objects.get_or_create(
+                prefs, cree = UserPreferences.objects.get_or_create(
                     user=user,
-                    defaults={'onboarding_completed': False}
+                    defaults={'onboarding_completed': False, 'preferred_language': langue_demandee(request)}
                 )
+                if not cree and prefs.preferred_language != langue_demandee(request):
+                    prefs.preferred_language = langue_demandee(request)
+                    prefs.save(update_fields=['preferred_language'])
 
         # Generate token
         token, _ = Token.objects.get_or_create(user=user)

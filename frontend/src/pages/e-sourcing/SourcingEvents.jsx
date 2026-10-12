@@ -65,14 +65,14 @@ import {
   cancelSourcingEvent,
 } from '../../store/slices/eSourcingSlice';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import { useHeader } from '../../contexts/HeaderContext';
 
 function SourcingEvents() {
-  const { t } = useTranslation(['eSourcing', 'common']);
+  const { t, i18n } = useTranslation(['eSourcing', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
@@ -231,7 +231,7 @@ function SourcingEvents() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return format(new Date(dateString), 'dd MMM yyyy', { locale: fr });
+    return format(new Date(dateString), 'dd MMM yyyy', { locale: i18n.language?.startsWith('en') ? enUS : fr });
   };
 
   // Statistiques

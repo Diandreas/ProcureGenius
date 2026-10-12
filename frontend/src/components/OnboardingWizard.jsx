@@ -38,50 +38,62 @@ import {
     Dashboard as DashboardIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import Mascot from './Mascot';
 
 const steps = [
-    'Bienvenue',
-    'Type d\'entreprise',
-    'Cas d\'usage',
-    'Équipe',
-    'Modules',
-    'Terminé'
+    'onboarding:wizard.steps.welcome',
+    'onboarding:wizard.steps.companyType',
+    'onboarding:wizard.steps.useCase',
+    'onboarding:wizard.steps.team',
+    'onboarding:wizard.steps.modules',
+    'onboarding:wizard.steps.done'
 ];
 
 // Profils prédéfinis
 const MODULE_PROFILES = {
     basic: {
-        name: 'Basique',
-        description: 'Pour les achats simples et la facturation',
+        nameKey: 'onboarding:wizard.profiles.basic.name',
+        descriptionKey: 'onboarding:wizard.profiles.basic.description',
         modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices'],
     },
     advanced: {
-        name: 'Avancé',
-        description: 'PME avec sourcing et gestion des contrats',
+        nameKey: 'onboarding:wizard.profiles.advanced.name',
+        descriptionKey: 'onboarding:wizard.profiles.advanced.description',
         modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
     },
     complete: {
-        name: 'Complet',
-        description: 'Toutes les fonctionnalités pour grandes entreprises',
+        nameKey: 'onboarding:wizard.profiles.complete.name',
+        descriptionKey: 'onboarding:wizard.profiles.complete.description',
         modules: ['dashboard', 'suppliers', 'purchase-orders', 'invoices', 'products', 'clients', 'e-sourcing', 'contracts'],
     },
 };
 
 // Modules disponibles avec icônes et descriptions
 const AVAILABLE_MODULES = [
-    { id: 'dashboard', name: 'Tableau de bord', icon: <DashboardIcon />, description: 'Vue d\'ensemble et statistiques' },
-    { id: 'suppliers', name: 'Fournisseurs', icon: <Business />, description: 'Gestion des fournisseurs' },
-    { id: 'purchase-orders', name: 'Bons de commande', icon: <ShoppingCart />, description: 'Gestion des achats' },
-    { id: 'invoices', name: 'Factures', icon: <Receipt />, description: 'Facturation et paiements' },
-    { id: 'products', name: 'Produits', icon: <Inventory />, description: 'Catalogue produits et stock' },
-    { id: 'clients', name: 'Clients', icon: <People />, description: 'Gestion de la clientèle' },
-    { id: 'e-sourcing', name: 'E-Sourcing', icon: <CompareArrows />, description: 'Appels d\'offres (RFQ)' },
-    { id: 'contracts', name: 'Contrats', icon: <Gavel />, description: 'Gestion des contrats' },
+    { id: 'dashboard', nameKey: 'onboarding:wizard.modules.dashboard.name', icon: <DashboardIcon />, descriptionKey: 'onboarding:wizard.modules.dashboard.description' },
+    { id: 'suppliers', nameKey: 'onboarding:wizard.modules.suppliers.name', icon: <Business />, descriptionKey: 'onboarding:wizard.modules.suppliers.description' },
+    { id: 'purchase-orders', nameKey: 'onboarding:wizard.modules.purchaseOrders.name', icon: <ShoppingCart />, descriptionKey: 'onboarding:wizard.modules.purchaseOrders.description' },
+    { id: 'invoices', nameKey: 'onboarding:wizard.modules.invoices.name', icon: <Receipt />, descriptionKey: 'onboarding:wizard.modules.invoices.description' },
+    { id: 'products', nameKey: 'onboarding:wizard.modules.products.name', icon: <Inventory />, descriptionKey: 'onboarding:wizard.modules.products.description' },
+    { id: 'clients', nameKey: 'onboarding:wizard.modules.clients.name', icon: <People />, descriptionKey: 'onboarding:wizard.modules.clients.description' },
+    { id: 'e-sourcing', nameKey: 'onboarding:wizard.modules.eSourcing.name', icon: <CompareArrows />, descriptionKey: 'onboarding:wizard.modules.eSourcing.description' },
+    { id: 'contracts', nameKey: 'onboarding:wizard.modules.contracts.name', icon: <Gavel />, descriptionKey: 'onboarding:wizard.modules.contracts.description' },
+];
+
+// Rôles : la valeur (enregistrée dans onboarding_data) reste en français,
+// seul le libellé affiché est traduit.
+const TEAM_ROLES = [
+    { value: 'Achats', labelKey: 'onboarding:wizard.team.roles.purchasing' },
+    { value: 'Comptabilité', labelKey: 'onboarding:wizard.team.roles.accounting' },
+    { value: 'Direction', labelKey: 'onboarding:wizard.team.roles.management' },
+    { value: 'Commercial', labelKey: 'onboarding:wizard.team.roles.sales' },
+    { value: 'Logistique', labelKey: 'onboarding:wizard.team.roles.logistics' },
 ];
 
 function OnboardingWizard({ open, onComplete }) {
     const { enqueueSnackbar } = useSnackbar();
+    const { t } = useTranslation(['onboarding', 'common']);
     const [activeStep, setActiveStep] = useState(0);
     const [formData, setFormData] = useState({
         // Étape 2: Type d'entreprise
@@ -154,14 +166,14 @@ function OnboardingWizard({ open, onComplete }) {
             });
 
             if (response.ok) {
-                enqueueSnackbar('Configuration terminée avec succès!', { variant: 'success' });
+                enqueueSnackbar(t('onboarding:wizard.messages.success'), { variant: 'success' });
                 onComplete(enabledModules);
             } else {
                 throw new Error('Erreur lors de la sauvegarde');
             }
         } catch (error) {
             console.error('Onboarding error:', error);
-            enqueueSnackbar('Erreur lors de la configuration', { variant: 'error' });
+            enqueueSnackbar(t('onboarding:wizard.messages.error'), { variant: 'error' });
         }
     };
 
@@ -201,11 +213,10 @@ function OnboardingWizard({ open, onComplete }) {
                             <Mascot pose="excited" animation="bounce" size={120} />
                         </Box>
                         <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-                            Bienvenue sur ProcureGenius! 
+                            {t('onboarding:wizard.welcome.title')}
                         </Typography>
                         <Typography variant="body1" color="text.secondary" sx={{ mt: 2, mb: 4, maxWidth: 600, mx: 'auto' }}>
-                            Je suis ravi de vous accompagner dans la configuration de votre espace.
-                            En quelques étapes, nous allons personnaliser l'application selon vos besoins.
+                            {t('onboarding:wizard.welcome.text')}
                         </Typography>
                         <Button
                             variant="contained"
@@ -213,7 +224,7 @@ function OnboardingWizard({ open, onComplete }) {
                             onClick={handleNext}
                             sx={{ mt: 2 }}
                         >
-                            Commencer
+                            {t('onboarding:actions.start')}
                         </Button>
                     </Box>
                 );
@@ -222,28 +233,28 @@ function OnboardingWizard({ open, onComplete }) {
                 return (
                     <Box sx={{ py: 2 }}>
                         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-                            Parlez-nous de votre entreprise
+                            {t('onboarding:wizard.company.title')}
                         </Typography>
 
                         <FormControl component="fieldset" fullWidth sx={{ mb: 3 }}>
                             <Typography variant="subtitle1" gutterBottom>
-                                Type d'entreprise
+                                {t('onboarding:wizard.company.type')}
                             </Typography>
                             <RadioGroup
                                 value={formData.companyType}
                                 onChange={(e) => setFormData({ ...formData, companyType: e.target.value })}
                             >
-                                <FormControlLabel value="sme" control={<Radio />} label="PME (Petite et Moyenne Entreprise)" />
-                                <FormControlLabel value="large" control={<Radio />} label="Grande entreprise" />
-                                <FormControlLabel value="startup" control={<Radio />} label="Startup" />
-                                <FormControlLabel value="nonprofit" control={<Radio />} label="Organisation à but non lucratif" />
+                                <FormControlLabel value="sme" control={<Radio />} label={t('onboarding:wizard.company.types.sme')} />
+                                <FormControlLabel value="large" control={<Radio />} label={t('onboarding:wizard.company.types.large')} />
+                                <FormControlLabel value="startup" control={<Radio />} label={t('onboarding:wizard.company.types.startup')} />
+                                <FormControlLabel value="nonprofit" control={<Radio />} label={t('onboarding:wizard.company.types.nonprofit')} />
                             </RadioGroup>
                         </FormControl>
 
                         <TextField
                             fullWidth
-                            label="Secteur d'activité"
-                            placeholder="Ex: Technologie, Commerce, Services..."
+                            label={t('onboarding:wizard.company.sector')}
+                            placeholder={t('onboarding:wizard.company.sectorPlaceholder')}
                             value={formData.sector}
                             onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
                             sx={{ mb: 2 }}
@@ -255,7 +266,7 @@ function OnboardingWizard({ open, onComplete }) {
                 return (
                     <Box sx={{ py: 2 }}>
                         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-                            Quel est votre besoin principal?
+                            {t('onboarding:wizard.useCase.title')}
                         </Typography>
 
                         <FormControl component="fieldset" fullWidth>
@@ -270,10 +281,10 @@ function OnboardingWizard({ open, onComplete }) {
                                         label={
                                             <Box>
                                                 <Typography variant="subtitle1" fontWeight={600}>
-                                                    Achats simples et facturation
+                                                    {t('onboarding:wizard.useCase.simplePurchases.title')}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    Gérer les fournisseurs, créer des bons de commande et suivre les factures
+                                                    {t('onboarding:wizard.useCase.simplePurchases.desc')}
                                                 </Typography>
                                             </Box>
                                         }
@@ -288,10 +299,10 @@ function OnboardingWizard({ open, onComplete }) {
                                         label={
                                             <Box>
                                                 <Typography variant="subtitle1" fontWeight={600}>
-                                                    E-Sourcing et appels d'offres
+                                                    {t('onboarding:wizard.useCase.sourcing.title')}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    Comparer les offres fournisseurs, gérer les RFQ et optimiser les achats
+                                                    {t('onboarding:wizard.useCase.sourcing.desc')}
                                                 </Typography>
                                             </Box>
                                         }
@@ -306,10 +317,10 @@ function OnboardingWizard({ open, onComplete }) {
                                         label={
                                             <Box>
                                                 <Typography variant="subtitle1" fontWeight={600}>
-                                                    Gestion complète
+                                                    {t('onboarding:wizard.useCase.complete.title')}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    Toutes les fonctionnalités: achats, stocks, contrats, facturation, analytics
+                                                    {t('onboarding:wizard.useCase.complete.desc')}
                                                 </Typography>
                                             </Box>
                                         }
@@ -325,28 +336,28 @@ function OnboardingWizard({ open, onComplete }) {
                 return (
                     <Box sx={{ py: 2 }}>
                         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-                            Votre équipe
+                            {t('onboarding:wizard.team.title')}
                         </Typography>
 
                         <FormControl fullWidth sx={{ mb: 3 }}>
-                            <InputLabel>Taille de l'équipe</InputLabel>
+                            <InputLabel>{t('onboarding:wizard.team.size')}</InputLabel>
                             <Select
                                 value={formData.teamSize}
-                                label="Taille de l'équipe"
+                                label={t('onboarding:wizard.team.size')}
                                 onChange={(e) => setFormData({ ...formData, teamSize: e.target.value })}
                             >
-                                <MenuItem value="1-10">1-10 employés</MenuItem>
-                                <MenuItem value="11-50">11-50 employés</MenuItem>
-                                <MenuItem value="51-200">51-200 employés</MenuItem>
-                                <MenuItem value="200+">Plus de 200 employés</MenuItem>
+                                <MenuItem value="1-10">{t('onboarding:wizard.team.sizes.small')}</MenuItem>
+                                <MenuItem value="11-50">{t('onboarding:wizard.team.sizes.medium')}</MenuItem>
+                                <MenuItem value="51-200">{t('onboarding:wizard.team.sizes.large')}</MenuItem>
+                                <MenuItem value="200+">{t('onboarding:wizard.team.sizes.xlarge')}</MenuItem>
                             </Select>
                         </FormControl>
 
                         <Typography variant="subtitle1" gutterBottom>
-                            Rôles principaux dans votre équipe
+                            {t('onboarding:wizard.team.rolesTitle')}
                         </Typography>
                         <FormGroup>
-                            {['Achats', 'Comptabilité', 'Direction', 'Commercial', 'Logistique'].map((role) => (
+                            {TEAM_ROLES.map(({ value: role, labelKey }) => (
                                 <FormControlLabel
                                     key={role}
                                     control={
@@ -360,7 +371,7 @@ function OnboardingWizard({ open, onComplete }) {
                                             }}
                                         />
                                     }
-                                    label={role}
+                                    label={t(labelKey)}
                                 />
                             ))}
                         </FormGroup>
@@ -371,13 +382,13 @@ function OnboardingWizard({ open, onComplete }) {
                 return (
                     <Box sx={{ py: 2 }}>
                         <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-                            Choisissez vos modules
+                            {t('onboarding:wizard.modulesStep.title')}
                         </Typography>
 
                         {!formData.isCustom ? (
                             <>
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                    Sélectionnez un profil prédéfini ou personnalisez vos modules
+                                    {t('onboarding:wizard.modulesStep.profileHint')}
                                 </Typography>
 
                                 <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -393,14 +404,14 @@ function OnboardingWizard({ open, onComplete }) {
                                                 <CardActionArea onClick={() => handleProfileSelect(key)} sx={{ height: '100%', p: 2 }}>
                                                     <CardContent>
                                                         <Typography variant="h6" gutterBottom>
-                                                            {profile.name}
+                                                            {t(profile.nameKey)}
                                                         </Typography>
                                                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                                            {profile.description}
+                                                            {t(profile.descriptionKey)}
                                                         </Typography>
                                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                             {profile.modules.map((mod) => (
-                                                                <Chip key={mod} label={AVAILABLE_MODULES.find(m => m.id === mod)?.name} size="small" />
+                                                                <Chip key={mod} label={t(AVAILABLE_MODULES.find(m => m.id === mod)?.nameKey)} size="small" />
                                                             ))}
                                                         </Box>
                                                     </CardContent>
@@ -411,13 +422,13 @@ function OnboardingWizard({ open, onComplete }) {
                                 </Grid>
 
                                 <Button variant="outlined" onClick={handleCustomToggle} fullWidth>
-                                    Personnaliser les modules
+                                    {t('onboarding:wizard.modulesStep.customize')}
                                 </Button>
                             </>
                         ) : (
                             <>
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    Sélectionnez les modules que vous souhaitez utiliser
+                                    {t('onboarding:wizard.modulesStep.customHint')}
                                 </Typography>
 
                                 <Grid container spacing={2}>
@@ -440,11 +451,11 @@ function OnboardingWizard({ open, onComplete }) {
                                                     />
                                                     <Box sx={{ mr: 1, color: 'primary.main' }}>{module.icon}</Box>
                                                     <Typography variant="subtitle1" fontWeight={600}>
-                                                        {module.name}
+                                                        {t(module.nameKey)}
                                                     </Typography>
                                                 </Box>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {module.description}
+                                                    {t(module.descriptionKey)}
                                                 </Typography>
                                             </Paper>
                                         </Grid>
@@ -456,7 +467,7 @@ function OnboardingWizard({ open, onComplete }) {
                                     onClick={() => setFormData({ ...formData, isCustom: false })}
                                     sx={{ mt: 2 }}
                                 >
-                                    Retour aux profils prédéfinis
+                                    {t('onboarding:wizard.modulesStep.backToProfiles')}
                                 </Button>
                             </>
                         )}
@@ -471,10 +482,10 @@ function OnboardingWizard({ open, onComplete }) {
                         </Box>
                         <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
                         <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-                            Configuration terminée! 
+                            {t('onboarding:wizard.done.title')}
                         </Typography>
                         <Typography variant="body1" color="text.secondary" sx={{ mt: 2, mb: 4, maxWidth: 600, mx: 'auto' }}>
-                            Votre espace est prêt. Vous pouvez toujours modifier ces paramètres dans les réglages.
+                            {t('onboarding:wizard.done.text')}
                         </Typography>
                         <Button
                             variant="contained"
@@ -482,7 +493,7 @@ function OnboardingWizard({ open, onComplete }) {
                             onClick={handleComplete}
                             startIcon={<CheckCircle />}
                         >
-                            Commencer à utiliser ProcureGenius
+                            {t('onboarding:wizard.done.start')}
                         </Button>
                     </Box>
                 );
@@ -505,7 +516,7 @@ function OnboardingWizard({ open, onComplete }) {
                 <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
                     {steps.map((label) => (
                         <Step key={label}>
-                            <StepLabel>{label}</StepLabel>
+                            <StepLabel>{t(label)}</StepLabel>
                         </Step>
                     ))}
                 </Stepper>
@@ -520,14 +531,14 @@ function OnboardingWizard({ open, onComplete }) {
                             onClick={handleBack}
                             disabled={activeStep === 0}
                         >
-                            Précédent
+                            {t('onboarding:actions.previous')}
                         </Button>
                         <Button
                             variant="contained"
                             onClick={handleNext}
                             disabled={activeStep === steps.length - 1}
                         >
-                            {activeStep === steps.length - 2 ? 'Terminer' : 'Suivant'}
+                            {activeStep === steps.length - 2 ? t('onboarding:actions.finish') : t('onboarding:actions.next')}
                         </Button>
                     </Box>
                 )}

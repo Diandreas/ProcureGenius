@@ -29,6 +29,7 @@ import {
   LiveHelp,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const TutorialButton = ({
   variant = 'icon', // 'icon', 'button', 'menu-item'
@@ -37,6 +38,7 @@ const TutorialButton = ({
   color = 'default',
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['onboarding', 'common']);
   const [anchorEl, setAnchorEl] = useState(null);
   const [tutorialCompleted, setTutorialCompleted] = useState(false);
 
@@ -75,7 +77,7 @@ const TutorialButton = ({
         <ListItemIcon>
           <TutorialIcon fontSize="small" />
         </ListItemIcon>
-        <ListItemText primary="Tutoriel" />
+        <ListItemText primary={t('onboarding:tutorial.button.tutorial')} />
         {!tutorialCompleted && (
           <Badge color="primary" variant="dot" sx={{ ml: 1 }} />
         )}
@@ -94,7 +96,7 @@ const TutorialButton = ({
           size={size}
           color={color}
         >
-          Aide
+          {t('onboarding:tutorial.button.help')}
           {!tutorialCompleted && (
             <Badge color="primary" variant="dot" sx={{ ml: 1 }} />
           )}
@@ -112,8 +114,8 @@ const TutorialButton = ({
               <PlayArrow fontSize="small" color="primary" />
             </ListItemIcon>
             <ListItemText 
-              primary="Lancer le tutoriel"
-              secondary="Visite guidée de l'application"
+              primary={t('onboarding:tutorial.button.launch')}
+              secondary={t('onboarding:tutorial.button.guidedTour')}
             />
           </MenuItem>
           
@@ -123,8 +125,8 @@ const TutorialButton = ({
                 <Refresh fontSize="small" />
               </ListItemIcon>
               <ListItemText 
-                primary="Revoir le tutoriel"
-                secondary="Recommencer depuis le début"
+                primary={t('onboarding:tutorial.button.replay')}
+                secondary={t('onboarding:tutorial.button.restartFromStart')}
               />
             </MenuItem>
           )}
@@ -136,8 +138,8 @@ const TutorialButton = ({
               <MenuBook fontSize="small" />
             </ListItemIcon>
             <ListItemText
-              primary="Documentation"
-              secondary="Centre d'aide complet"
+              primary={t('onboarding:tutorial.button.documentation')}
+              secondary={t('onboarding:tutorial.button.helpCenter')}
             />
           </MenuItem>
 
@@ -145,14 +147,14 @@ const TutorialButton = ({
             <ListItemIcon>
               <LiveHelp fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="FAQ" />
+            <ListItemText primary={t('onboarding:tutorial.button.faq')} />
           </MenuItem>
 
           <MenuItem onClick={() => { handleCloseMenu(); navigate('/help/shortcuts'); }}>
             <ListItemIcon>
               <Keyboard fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Raccourcis clavier" />
+            <ListItemText primary={t('onboarding:tutorial.button.shortcuts')} />
           </MenuItem>
 
           <Divider />
@@ -161,7 +163,7 @@ const TutorialButton = ({
             <ListItemIcon>
               <Support fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Contacter le support" />
+            <ListItemText primary={t('onboarding:tutorial.button.contactSupport')} />
           </MenuItem>
         </Menu>
       </>
@@ -171,7 +173,7 @@ const TutorialButton = ({
   // Version Icône (par défaut)
   return (
     <>
-      <Tooltip title="Aide & Tutoriel">
+      <Tooltip title={t('onboarding:tutorial.button.tooltip')}>
         <IconButton
           onClick={handleOpenMenu}
           size={size}
@@ -204,7 +206,7 @@ const TutorialButton = ({
       >
         <Box sx={{ px: 2, py: 1 }}>
           <Typography variant="subtitle2" color="text.secondary">
-            Besoin d'aide ?
+            {t('onboarding:tutorial.button.needHelp')}
           </Typography>
         </Box>
         
@@ -215,9 +217,9 @@ const TutorialButton = ({
           <ListItemText 
             primary={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                Lancer le tutoriel
+                {t('onboarding:tutorial.button.launch')}
                 {!tutorialCompleted && (
-                  <Badge color="error" badgeContent="Nouveau" sx={{ 
+                  <Badge color="error" badgeContent={t('onboarding:tutorial.button.new')} sx={{ 
                     '& .MuiBadge-badge': { 
                       fontSize: '0.6rem', 
                       height: 16, 
@@ -228,7 +230,7 @@ const TutorialButton = ({
                 )}
               </Box>
             }
-            secondary="Visite guidée interactive"
+            secondary={t('onboarding:tutorial.button.interactiveTour')}
           />
         </MenuItem>
         
@@ -238,8 +240,8 @@ const TutorialButton = ({
               <Refresh fontSize="small" />
             </ListItemIcon>
             <ListItemText 
-              primary="Revoir le tutoriel"
-              secondary="Recommencer la visite"
+              primary={t('onboarding:tutorial.button.replay')}
+              secondary={t('onboarding:tutorial.button.restartTour')}
             />
           </MenuItem>
         )}
@@ -251,8 +253,8 @@ const TutorialButton = ({
             <MenuBook fontSize="small" />
           </ListItemIcon>
           <ListItemText
-            primary="Documentation"
-            secondary="Centre d'aide complet"
+            primary={t('onboarding:tutorial.button.documentation')}
+            secondary={t('onboarding:tutorial.button.helpCenter')}
           />
         </MenuItem>
 
@@ -260,14 +262,14 @@ const TutorialButton = ({
           <ListItemIcon>
             <LiveHelp fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="FAQ" />
+          <ListItemText primary={t('onboarding:tutorial.button.faq')} />
         </MenuItem>
 
         <MenuItem onClick={() => { handleCloseMenu(); navigate('/help/shortcuts'); }}>
           <ListItemIcon>
             <Keyboard fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Raccourcis clavier" />
+          <ListItemText primary={t('onboarding:tutorial.button.shortcuts')} />
         </MenuItem>
 
         <Divider sx={{ my: 1 }} />
@@ -276,7 +278,7 @@ const TutorialButton = ({
           <ListItemIcon>
             <Support fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Contacter le support" />
+          <ListItemText primary={t('onboarding:tutorial.button.contactSupport')} />
         </MenuItem>
       </Menu>
     </>

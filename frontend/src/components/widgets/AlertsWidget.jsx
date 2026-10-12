@@ -58,7 +58,7 @@ const AlertsWidget = ({ period = 'last_30_days' }) => {
                 <Icon size={16} className="alert-icon" />
                 <div className="alert-content">
                   <div className="alert-title">{alert.message}</div>
-                  <div className="alert-message">{alert.module} ({alert.count})</div>
+                  <div className="alert-message">{t(`dashboard:widgets.alertModules.${alert.module}`, { defaultValue: alert.module })} ({alert.count})</div>
                 </div>
               </div>
             );
@@ -67,7 +67,7 @@ const AlertsWidget = ({ period = 'last_30_days' }) => {
       ) : (
         <div className="widget-empty">
           <CheckCircle size={40} className="widget-empty-icon" />
-          <div className="widget-empty-text">{t('widgets.alerts_empty', { ns: 'dashboard', defaultValue: 'Aucune alerte' })}</div>
+          <div className="widget-empty-text">{t('dashboard:widgets.alerts_empty')}</div>
         </div>
       )}
     </>

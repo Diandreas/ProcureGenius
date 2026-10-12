@@ -22,14 +22,14 @@ import { ArrowBack, Visibility } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { compareBids } from '../../store/slices/eSourcingSlice';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 function BidComparison() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { eventId } = useParams();
-  const { t } = useTranslation(['eSourcing', 'common']);
+  const { t, i18n } = useTranslation(['eSourcing', 'common']);
 
   const { bidComparison, loading } = useSelector((state) => state.eSourcing);
 
@@ -39,7 +39,7 @@ function BidComparison() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return format(new Date(dateString), 'dd MMM yyyy HH:mm', { locale: fr });
+    return format(new Date(dateString), 'dd MMM yyyy HH:mm', { locale: i18n.language?.startsWith('en') ? enUS : fr });
   };
 
   const getBidStatusLabel = (status) => {

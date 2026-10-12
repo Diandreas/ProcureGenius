@@ -30,7 +30,8 @@
       "successTitle": "Message envoyé !",
       "successDesc": "Nous avons bien reçu votre message et vous répondrons très bientôt.",
       "errorTitle": "Erreur d'envoi",
-      "recaptchaRequired": "Veuillez valider le reCAPTCHA."
+      "recaptchaRequired": "Veuillez valider le reCAPTCHA.",
+      "sendAnother": "Envoyer un autre message"
     }
   },
   "privacy": {
@@ -78,6 +79,12 @@
         "title": "8. Contact et réclamations",
         "content": "Pour toute question relative à cette politique ou au traitement de vos données personnelles, vous pouvez nous contacter à : privacy@procuregenius.com. En cas de litige non résolu, vous avez le droit d'introduire une réclamation auprès de la CNIL (Commission Nationale de l'Informatique et des Libertés) à l'adresse www.cnil.fr."
       }
+    },
+    "gdprBadge": "RGPD conforme",
+    "labelSeparator": " :",
+    "footer": {
+      "protected": "Vos données sont protégées et hébergées en Europe",
+      "exerciseRights": "Pour exercer vos droits RGPD :"
     }
   },
   "terms": {
@@ -120,6 +127,60 @@
         "title": "9. Droit applicable et juridiction",
         "content": "Les présentes CGU sont régies par le droit français. En cas de litige, les parties s'engagent à rechercher une solution amiable avant tout recours judiciaire. À défaut d'accord amiable, tout litige sera soumis à la compétence exclusive des tribunaux de Paris. Pour toute question relative aux présentes CGU : legal@procuregenius.com."
       }
+    },
+    "legalBadge": "Document légal",
+    "footer": {
+      "questions": "Des questions sur ces conditions ?",
+      "contactUs": "Contactez-nous à"
+    }
+  },
+  "documentation": {
+    "pageTitle": "Documentation & API | Procura",
+    "title": "Documentation Procura",
+    "intro": "Bienvenue dans la documentation officielle de Procura. Retrouvez ici tous les guides, tutoriels d'intégration et références API pour bien démarrer.",
+    "quickStart": {
+      "title": "Guide de démarrage rapide",
+      "desc": "Apprenez à configurer votre entreprise, inviter vos collaborateurs et créer votre première facture en moins de 5 minutes."
+    },
+    "aiManual": {
+      "title": "Manuel d'utilisation de l'IA",
+      "desc": "Comment formuler vos prompts et requêtes à l'analyste privé Procura pour obtenir les meilleurs rapports possibles."
+    },
+    "apiReference": {
+      "title": "Référence API",
+      "desc": "Connectez Procura à vos outils ERP existants et manipulez vos données via nos endpoints RESTful."
+    }
+  },
+  "blog": {
+    "metaTitle": "Blog",
+    "metaDescription": "Conseils, retours d'expérience et astuces pour piloter facturation, stock et trésorerie sans y passer vos soirées.",
+    "badge": "Le blog Procura",
+    "title": "Reprends le contrôle de ton activité",
+    "subtitle": "Des conseils concrets pour gérer ton business sans t'éparpiller — et des coulisses de l'IA qui bosse pour toi.",
+    "audiences": {
+      "all": "Tous",
+      "freelance": "Freelances & indépendants",
+      "artisan": "Artisans & commerçants",
+      "service": "Prestataires de services",
+      "tpe": "TPE / petites entreprises"
+    },
+    "categories": {
+      "management": "Gestion",
+      "branding": "Image de marque",
+      "ai": "Intelligence artificielle",
+      "cashFlow": "Trésorerie",
+      "stock": "Stock",
+      "accounting": "Comptabilité",
+      "productivity": "Productivité",
+      "invoicing": "Facturation"
+    },
+    "notFound": "Article introuvable",
+    "backToBlog": "Retour au blog",
+    "allArticles": "Tous les articles",
+    "related": "À lire aussi",
+    "cta": {
+      "title": "Prêt à reprendre le contrôle ?",
+      "trial": "30 jours d'essai gratuit — sans carte bancaire"
     }
   }
 }

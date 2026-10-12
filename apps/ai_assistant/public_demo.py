@@ -203,17 +203,27 @@ def build_invoice_preview(organization, arguments):
     }
 
 
-def reponse_facture(facture):
+def reponse_facture(facture, langue='fr'):
     """Texte qui accompagne la facture d'aperçu, écrit à partir des montants calculés."""
     devise = 'FCFA' if facture['currency'] in ('XAF', 'XOF') else facture['currency']
-    total = f"{round(facture['total']):,}".replace(',', '\u202f')
     lignes = len(facture['items'])
-    texte = (f"Voilà, la facture pour **{facture['client']['name']}** est prête : {lignes} ligne"
+    client = facture['client']['name']
+    inconnus = ', '.join(facture.get('unknown_items') or [])
+    if langue == 'en':
+        total = f"{round(facture['total']):,}"
+        texte = (f"Done: the invoice for **{client}** is ready, {lignes} line{'s' if lignes > 1 else ''}, "
+                 f"**{total} {devise} incl. VAT**. To download it as a PDF, send it to your customer on "
+                 "WhatsApp and keep it, create your free account: one minute, one month free.")
+        if inconnus:
+            texte += f" I couldn't find a price for: {inconnus}. Tell me the price."
+        return texte
+    total = f"{round(facture['total']):,}".replace(',', ' ')
+    texte = (f"Voilà, la facture pour **{client}** est prête : {lignes} ligne"
              f"{'s' if lignes > 1 else ''}, **{total} {devise} TTC**, TVA comprise. "
              "Pour la télécharger en PDF, l'envoyer à votre client par WhatsApp et la garder, "
              "créez votre compte gratuit : une minute, un mois offert.")
-    if facture.get('unknown_items'):
-        texte += f" Je n'ai pas trouvé le prix de : {', '.join(facture['unknown_items'])} — donnez-le-moi."
+    if inconnus:
+        texte += f" Je n'ai pas trouvé le prix de : {inconnus} — donnez-le-moi."
     return texte
 
 
@@ -273,6 +283,12 @@ def _consommer(cle, limite):
         return True
     except Exception:  # cache indisponible : on laisse passer plutôt que casser la démo
         return True
+
+
+def _langue(request):
+    """Langue de la page d'accueil du visiteur (en-tête envoyé par l'app)."""
+    entete = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
+    return 'en' if entete.split(',')[0].strip().lower().startswith('en') else 'fr'
 
 
 def _historique(brut):
@@ -361,7 +377,7 @@ def public_demo_chat(request):
                    if tr.get('function') == OUTIL_APERCU and isinstance(tr.get('result'), dict)
                    and tr['result'].get('success')), None)
     return Response({
-        'reply': reponse_facture(apercu) if apercu else resultat.reply,
+        'reply': reponse_facture(apercu, _langue(request)) if apercu else resultat.reply,
         'suggested_followups': [] if apercu else list(resultat.suggested_followups or [])[:3],
         'remaining': restant,
         'invoice_preview': apercu,

@@ -8,15 +8,12 @@ import {
   TrendingUp, ShoppingCart, AccountBalanceWallet, Percent, Info, WarningAmber,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import analyticsAPI from '../../services/analyticsAPI';
 import useCurrency from '../../hooks/useCurrency';
 
-const PERIODS = [
-  { value: 'month', label: 'Ce mois' },
-  { value: 'quarter', label: '3 mois' },
-  { value: 'year', label: 'Année' },
-  { value: 'all', label: 'Tout' },
-];
+// Codes de période stables ; libellés traduits à l'affichage (products:marginsPage.periods.*)
+const PERIODS = ['month', 'quarter', 'year', 'all'];
 
 const SummaryCard = ({ icon, label, value, color, sub }) => (
   <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}>
@@ -32,6 +29,7 @@ const SummaryCard = ({ icon, label, value, color, sub }) => (
 );
 
 export default function ProductMargins() {
+  const { t } = useTranslation(['products']);
   const navigate = useNavigate();
   const { format } = useCurrency();
   const [period, setPeriod] = useState('year');
@@ -43,9 +41,9 @@ export default function ProductMargins() {
     setLoading(true);
     analyticsAPI.getProductMargins({ period })
       .then((r) => { setData(r.data); setError(null); })
-      .catch(() => setError('Erreur lors du chargement des marges.'))
+      .catch(() => setError(t('products:marginsPage.loadError')))
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -55,9 +53,9 @@ export default function ProductMargins() {
     <Box p={{ xs: 2, md: 3 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} mb={1}>
         <Box>
-          <Typography variant="h5" fontWeight={800}>Marges & bénéfice brut</Typography>
+          <Typography variant="h5" fontWeight={800}>{t('products:marginsPage.title')}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Calculé automatiquement : ventes − prix d'achat de vos produits.
+            {t('products:marginsPage.subtitle')}
           </Typography>
         </Box>
         <ToggleButtonGroup
@@ -65,7 +63,7 @@ export default function ProductMargins() {
           onChange={(_, v) => v && setPeriod(v)}
         >
           {PERIODS.map((p) => (
-            <ToggleButton key={p.value} value={p.value}>{p.label}</ToggleButton>
+            <ToggleButton key={p} value={p}>{t(`products:marginsPage.periods.${p}`)}</ToggleButton>
           ))}
         </ToggleButtonGroup>
       </Box>
@@ -78,7 +76,7 @@ export default function ProductMargins() {
               variant="button" sx={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
               onClick={() => navigate('/accounting')}
             >
-              Ajouter mes charges →
+              {t('products:marginsPage.addExpenses')}
             </Typography>
           }
         >
@@ -95,20 +93,20 @@ export default function ProductMargins() {
           <Grid container spacing={2} mb={3}>
             <Grid item xs={6} md={3}>
               <SummaryCard icon={<ShoppingCart />} color="#6366f1"
-                label="Chiffre d'affaires" value={format(summary.total_revenue)}
-                sub={`${summary.products_count} produit(s) vendu(s)`} />
+                label={t('products:marginsPage.revenue')} value={format(summary.total_revenue)}
+                sub={t('products:marginsPage.productsSold', { count: summary.products_count })} />
             </Grid>
             <Grid item xs={6} md={3}>
               <SummaryCard icon={<AccountBalanceWallet />} color="#f59e0b"
-                label="Coût d'achat (CMV)" value={format(summary.total_cogs)} />
+                label={t('products:marginsPage.cogs')} value={format(summary.total_cogs)} />
             </Grid>
             <Grid item xs={6} md={3}>
               <SummaryCard icon={<TrendingUp />} color="#10b981"
-                label="Bénéfice brut" value={format(summary.total_gross_profit)} />
+                label={t('products:marginsPage.grossProfit')} value={format(summary.total_gross_profit)} />
             </Grid>
             <Grid item xs={6} md={3}>
               <SummaryCard icon={<Percent />} color="#0ea5e9"
-                label="Taux de marge" value={`${summary.total_margin_percent} %`} />
+                label={t('products:marginsPage.marginRate')} value={`${summary.total_margin_percent} %`} />
             </Grid>
           </Grid>
 
@@ -117,13 +115,11 @@ export default function ProductMargins() {
               severity="warning" icon={<WarningAmber />} sx={{ mb: 2 }}
               action={
                 <Button color="inherit" size="small" onClick={() => navigate('/products')} sx={{ whiteSpace: 'nowrap', fontWeight: 700 }}>
-                  Renseigner les prix d'achat →
+                  {t('products:marginsPage.fillCostPrices')}
                 </Button>
               }
             >
-              {summary.products_without_cost} produit(s) n'ont pas de prix d'achat renseigné :
-              leur bénéfice brut est surévalué. Renseignez le prix d'achat dans la fiche produit
-              pour un calcul fiable.
+              {t('products:marginsPage.missingCostWarning', { count: summary.products_without_cost })}
             </Alert>
           )}
 
@@ -131,12 +127,12 @@ export default function ProductMargins() {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell><strong>Produit</strong></TableCell>
-                  <TableCell align="right"><strong>Prix d'achat</strong></TableCell>
-                  <TableCell align="right"><strong>Vendus</strong></TableCell>
-                  <TableCell align="right"><strong>CA</strong></TableCell>
-                  <TableCell align="right"><strong>Bénéfice brut</strong></TableCell>
-                  <TableCell align="right"><strong>Marge</strong></TableCell>
+                  <TableCell><strong>{t('products:marginsPage.columns.product')}</strong></TableCell>
+                  <TableCell align="right"><strong>{t('products:marginsPage.columns.costPrice')}</strong></TableCell>
+                  <TableCell align="right"><strong>{t('products:marginsPage.columns.sold')}</strong></TableCell>
+                  <TableCell align="right"><strong>{t('products:marginsPage.columns.revenue')}</strong></TableCell>
+                  <TableCell align="right"><strong>{t('products:marginsPage.grossProfit')}</strong></TableCell>
+                  <TableCell align="right"><strong>{t('products:marginsPage.columns.margin')}</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -144,14 +140,13 @@ export default function ProductMargins() {
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
                       <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                        Pas encore de marges à afficher
+                        {t('products:marginsPage.emptyTitle')}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Les marges se calculent à partir de vos ventes et du <strong>prix d'achat</strong> de
-                        vos produits. Renseignez le prix d'achat sur vos fiches produit pour commencer.
+                        <Trans t={t} i18nKey="products:marginsPage.emptyDescription" components={{ strong: <strong /> }} />
                       </Typography>
                       <Button variant="contained" size="small" onClick={() => navigate('/products')}>
-                        Aller à mes produits
+                        {t('products:marginsPage.goToProducts')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -164,8 +159,8 @@ export default function ProductMargins() {
                     <TableCell>
                       {p.name}
                       {p.cost_missing && (
-                        <Tooltip title="Prix d'achat manquant">
-                          <Chip size="small" color="warning" label="prix d'achat ?" sx={{ ml: 1, height: 18 }} />
+                        <Tooltip title={t('products:marginsPage.costMissing')}>
+                          <Chip size="small" color="warning" label={t('products:marginsPage.costMissingChip')} sx={{ ml: 1, height: 18 }} />
                         </Tooltip>
                       )}
                       <Typography variant="caption" color="text.secondary" display="block">

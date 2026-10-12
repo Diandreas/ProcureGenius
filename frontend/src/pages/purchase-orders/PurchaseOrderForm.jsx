@@ -103,7 +103,7 @@ function PurchaseOrderForm() {
 
   const handleAiAssist = async () => {
     if (!aiPrompt.trim()) {
-      enqueueSnackbar('Veuillez décrire ce que vous souhaitez commander', { variant: 'info' });
+      enqueueSnackbar(t('purchaseOrders:aiAssistant.describeOrder'), { variant: 'info' });
       return;
     }
 
@@ -130,8 +130,8 @@ function PurchaseOrderForm() {
           if (foundSupplier) {
             setFormData(prev => ({ ...prev, supplier: foundSupplier, title: data.title || prev.title }));
           } else {
-            setFormData(prev => ({ ...prev, title: data.title || `Commande ${data.supplier_name}` }));
-            enqueueSnackbar(`Fournisseur "${data.supplier_name}" non trouvé, veuillez le sélectionner manuellement.`, { variant: 'warning' });
+            setFormData(prev => ({ ...prev, title: data.title || t('purchaseOrders:aiAssistant.defaultTitle', { supplier: data.supplier_name }) }));
+            enqueueSnackbar(t('purchaseOrders:aiAssistant.supplierNotFound', { name: data.supplier_name }), { variant: 'warning' });
           }
         }
 
@@ -140,7 +140,7 @@ function PurchaseOrderForm() {
           const newItems = data.items.map(item => ({
             product: null, // On pourra faire du matching plus tard
             product_reference: '',
-            description: item.description || 'Article sans description',
+            description: item.description || t('purchaseOrders:aiAssistant.itemWithoutDescription'),
             quantity: item.quantity || 1,
             unit_price: item.unit_price || 0
           }));
@@ -149,11 +149,11 @@ function PurchaseOrderForm() {
 
         setShowAiAiInput(false);
         setAiAiPrompt('');
-        enqueueSnackbar('Bon de commande pré-rempli par l\'IA !', { variant: 'success' });
+        enqueueSnackbar(t('purchaseOrders:aiAssistant.prefilled'), { variant: 'success' });
       }
     } catch (error) {
       console.error('AI Assist error:', error);
-      enqueueSnackbar('Erreur lors de l\'analyse par l\'IA', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:aiAssistant.error'), { variant: 'error' });
     } finally {
       setIsAiProcessing(false);
     }
@@ -377,7 +377,7 @@ function PurchaseOrderForm() {
             onClick={() => setShowAiAiInput(!showAiInput)}
             sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600 }}
           >
-            {showAiInput ? 'Fermer Assistant' : 'Assistant IA'}
+            {showAiInput ? t('purchaseOrders:aiAssistant.close') : t('purchaseOrders:aiAssistant.open')}
           </Button>
           <Button
             variant="outlined"
@@ -426,9 +426,9 @@ function PurchaseOrderForm() {
                     <AutoFixHigh />
                   </Avatar>
                   <Box>
-                    <Typography variant="h6" fontWeight="600">Assistant de Commande Intelligent</Typography>
+                    <Typography variant="h6" fontWeight="600">{t('purchaseOrders:aiAssistant.title')}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Décrivez votre commande (fournisseur, articles, quantités) et l'IA remplira le formulaire pour vous.
+                      {t('purchaseOrders:aiAssistant.description')}
                     </Typography>
                   </Box>
                 </Box>
@@ -436,7 +436,7 @@ function PurchaseOrderForm() {
                   fullWidth
                   multiline
                   rows={2}
-                  placeholder="Ex: Commande 50 ordinateurs portables et 20 souris sans fil chez le fournisseur Dell Canada pour le projet de bureau."
+                  placeholder={t('purchaseOrders:aiAssistant.placeholder')}
                   value={aiPrompt}
                   onChange={(e) => setAiAiPrompt(e.target.value)}
                   disabled={isAiProcessing}
@@ -451,7 +451,7 @@ function PurchaseOrderForm() {
                     startIcon={isAiProcessing ? <CircularProgress size={20} color="inherit" /> : <AutoFixHigh />}
                     sx={{ borderRadius: 2, px: 4 }}
                   >
-                    {isAiProcessing ? 'Analyse en cours...' : 'Remplir le formulaire'}
+                    {isAiProcessing ? t('purchaseOrders:aiAssistant.analyzing') : t('purchaseOrders:aiAssistant.fillForm')}
                   </Button>
                 </Box>
               </CardContent>

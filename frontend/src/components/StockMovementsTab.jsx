@@ -44,8 +44,10 @@ import {
 import { productsAPI, productBatchesAPI } from '../services/api';
 import { formatDate } from '../utils/formatters';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
 function StockMovementsTab({ productId, productType }) {
+  const { t } = useTranslation(['stock']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [movements, setMovements] = useState([]);
@@ -85,7 +87,7 @@ function StockMovementsTab({ productId, productType }) {
       setMovements(response.data.results || response.data);
       setError(null);
     } catch (err) {
-      setError('Erreur lors du chargement de l\'historique');
+      setError(t('stock:movements.loadError'));
       console.error('Error fetching stock movements:', err);
     } finally {
       setLoading(false);
@@ -96,12 +98,12 @@ function StockMovementsTab({ productId, productType }) {
     const quantity = parseInt(adjustQuantity);
 
     if (isNaN(quantity) || quantity === 0) {
-      enqueueSnackbar('Veuillez entrer une quantité valide', { variant: 'error' });
+      enqueueSnackbar(t('stock:movements.invalidQuantity'), { variant: 'error' });
       return;
     }
 
     if (!adjustNotes.trim()) {
-      enqueueSnackbar('Veuillez saisir une justification', { variant: 'error' });
+      enqueueSnackbar(t('stock:movements.justificationRequired'), { variant: 'error' });
       return;
     }
 
@@ -132,8 +134,7 @@ function StockMovementsTab({ productId, productType }) {
 
       await productsAPI.adjustStock(productId, payload);
 
-      const action = movementType === 'add' ? 'ajouté au' : 'retiré du';
-      enqueueSnackbar(`Stock ${action} stock avec succès`, { variant: 'success' });
+      enqueueSnackbar(movementType === 'add' ? t('stock:movements.addedSuccess') : t('stock:movements.removedSuccess'), { variant: 'success' });
       setAdjustDialogOpen(false);
       setAdjustQuantity('');
       setAdjustNotes('');
@@ -145,7 +146,7 @@ function StockMovementsTab({ productId, productType }) {
       fetchMovements();
       fetchBatches();
     } catch (err) {
-      enqueueSnackbar('Erreur lors de l\'ajustement du stock', { variant: 'error' });
+      enqueueSnackbar(t('stock:movements.adjustError'), { variant: 'error' });
     }
   };
 
@@ -176,7 +177,7 @@ function StockMovementsTab({ productId, productType }) {
     return (
       <Box p={3}>
         <Alert severity="info">
-          L'historique des mouvements de stock n'est disponible que pour les produits physiques.
+          {t('stock:movements.physicalOnly')}
         </Alert>
       </Box>
     );
@@ -216,7 +217,7 @@ function StockMovementsTab({ productId, productType }) {
         gap={2}
       >
         <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-          Historique des mouvements
+          {t('stock:movements.history')}
         </Typography>
         <Button
           variant="contained"
@@ -228,13 +229,13 @@ function StockMovementsTab({ productId, productType }) {
             fontSize: { xs: '0.875rem', sm: '0.9375rem' }
           }}
         >
-          Mouvement de stock
+          {t('stock:movements.newMovementButton')}
         </Button>
       </Box>
 
       {movements.length === 0 ? (
         <Box p={3}>
-          <Alert severity="info">Aucun mouvement de stock enregistré</Alert>
+          <Alert severity="info">{t('stock:movements.empty')}</Alert>
         </Box>
       ) : isMobile ? (
         // Vue mobile avec cartes
@@ -291,12 +292,12 @@ function StockMovementsTab({ productId, productType }) {
                         )}
                         {movement.batch_number && (
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-                            Lot: {movement.batch_number}
+                            {t('stock:movements.batchLabel', { batch: movement.batch_number })}
                           </Typography>
                         )}
                         {movement.created_by_name && (
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-                            Par: {movement.created_by_name}
+                            {t('stock:movements.byLabel', { name: movement.created_by_name })}
                           </Typography>
                         )}
                         {movement.notes && (
@@ -318,14 +319,14 @@ function StockMovementsTab({ productId, productType }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell align="center">Mouvement</TableCell>
-                <TableCell align="right">Avant</TableCell>
-                <TableCell align="right">Après</TableCell>
-                <TableCell>Référence</TableCell>
-                <TableCell>Utilisateur</TableCell>
-                <TableCell>Notes</TableCell>
+                <TableCell>{t('stock:movements.columns.date')}</TableCell>
+                <TableCell>{t('stock:movements.columns.type')}</TableCell>
+                <TableCell align="center">{t('stock:movements.columns.movement')}</TableCell>
+                <TableCell align="right">{t('stock:movements.columns.before')}</TableCell>
+                <TableCell align="right">{t('stock:movements.columns.after')}</TableCell>
+                <TableCell>{t('stock:movements.columns.reference')}</TableCell>
+                <TableCell>{t('stock:movements.columns.user')}</TableCell>
+                <TableCell>{t('stock:movements.columns.notes')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -373,7 +374,7 @@ function StockMovementsTab({ productId, productType }) {
                       </Box>
                     )}
                     {movement.batch_number && (
-                      <Chip size="small" label={`Lot: ${movement.batch_number}`} variant="outlined" sx={{ mt: 0.5 }} />
+                      <Chip size="small" label={t('stock:movements.batchLabel', { batch: movement.batch_number })} variant="outlined" sx={{ mt: 0.5 }} />
                     )}
                   </TableCell>
                   <TableCell>
@@ -411,7 +412,7 @@ function StockMovementsTab({ productId, productType }) {
         <DialogTitle sx={{ pb: 1 }}>
           <Box display="flex" alignItems="center" gap={1}>
             <SwapVert color="primary" />
-            <Typography variant="h6">Nouveau mouvement de stock</Typography>
+            <Typography variant="h6">{t('stock:movements.newMovementTitle')}</Typography>
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -419,7 +420,7 @@ function StockMovementsTab({ productId, productType }) {
             {/* Sélection du type de mouvement */}
             <Box>
               <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1.5 }}>
-                Type de mouvement
+                {t('stock:movements.movementType')}
               </Typography>
               <Box display="flex" gap={1}>
                 <Button
@@ -430,7 +431,7 @@ function StockMovementsTab({ productId, productType }) {
                   fullWidth
                   sx={{ py: 1.5 }}
                 >
-                  Ajouter au stock
+                  {t('stock:movements.addToStock')}
                 </Button>
                 <Button
                   variant={movementType === 'remove' ? 'contained' : 'outlined'}
@@ -440,23 +441,23 @@ function StockMovementsTab({ productId, productType }) {
                   fullWidth
                   sx={{ py: 1.5 }}
                 >
-                  Retirer du stock
+                  {t('stock:movements.removeFromStock')}
                 </Button>
               </Box>
             </Box>
 
             {/* Quantité */}
             <TextField
-              label="Quantité"
+              label={t('stock:movements.quantity')}
               type="number"
               value={adjustQuantity}
               onChange={(e) => setAdjustQuantity(e.target.value)}
-              placeholder="Ex: 10"
+              placeholder={t('stock:movements.quantityPlaceholder')}
               fullWidth
               autoFocus
               required
               inputProps={{ min: 1 }}
-              helperText={movementType === 'add' ? 'Quantité à ajouter' : 'Quantité à retirer'}
+              helperText={movementType === 'add' ? t('stock:movements.quantityToAdd') : t('stock:movements.quantityToRemove')}
             />
 
             {/* Gestion des lots */}
@@ -469,21 +470,21 @@ function StockMovementsTab({ productId, productType }) {
                     disabled={movementType === 'remove'}
                   />
                 }
-                label="Créer un nouveau lot"
+                label={t('stock:movements.createNewBatch')}
               />
               
               {isNewBatch ? (
                 <Stack spacing={2} sx={{ mt: 1 }}>
                   <TextField
-                    label="Numéro de lot"
+                    label={t('stock:movements.batchNumber')}
                     value={newBatchNumber}
                     onChange={(e) => setNewBatchNumber(e.target.value)}
                     fullWidth
                     required={isNewBatch}
-                    placeholder="Ex: LOT-2026-001"
+                    placeholder={t('stock:movements.batchNumberPlaceholder')}
                   />
                   <TextField
-                    label="Date de péremption (optionnel)"
+                    label={t('stock:movements.expiryOptional')}
                     type="date"
                     value={newBatchExpiration}
                     onChange={(e) => setNewBatchExpiration(e.target.value)}
@@ -494,19 +495,19 @@ function StockMovementsTab({ productId, productType }) {
               ) : (
                 batches.length > 0 && (
                   <FormControl fullWidth sx={{ mt: 1 }}>
-                    <InputLabel id="batch-select-label">Lot existant (optionnel)</InputLabel>
+                    <InputLabel id="batch-select-label">{t('stock:movements.existingBatch')}</InputLabel>
                     <Select
                       labelId="batch-select-label"
                       value={adjustBatchId}
-                      label="Lot existant (optionnel)"
+                      label={t('stock:movements.existingBatch')}
                       onChange={(e) => setAdjustBatchId(e.target.value)}
                     >
                       <MenuItem value="">
-                        <em>Aucun lot spécifié</em>
+                        <em>{t('stock:movements.noBatchSpecified')}</em>
                       </MenuItem>
                       {batches.map((b) => (
                         <MenuItem key={b.id} value={b.id}>
-                          {b.batch_number} (Stock: {b.current_quantity}) - {b.expiration_date ? `Exp: ${formatDate(b.expiration_date)}` : 'Pas d\'expiration'}
+                          {b.batch_number} ({t('stock:movements.batchStock', { qty: b.current_quantity })}) - {b.expiration_date ? t('stock:movements.batchExpiry', { date: formatDate(b.expiration_date) }) : t('stock:movements.noExpiry')}
                         </MenuItem>
                       ))}
                     </Select>
@@ -517,15 +518,15 @@ function StockMovementsTab({ productId, productType }) {
 
             {/* Justification */}
             <TextField
-              label="Justification"
+              label={t('stock:movements.justification')}
               value={adjustNotes}
               onChange={(e) => setAdjustNotes(e.target.value)}
               multiline
               rows={4}
               fullWidth
               required
-              placeholder="Décrivez la raison de ce mouvement de stock (réception, inventaire, perte, retour client, etc.)"
-              helperText="Ce champ est obligatoire pour la traçabilité"
+              placeholder={t('stock:movements.justificationPlaceholder')}
+              helperText={t('stock:movements.justificationHelp')}
             />
           </Box>
         </DialogContent>
@@ -542,7 +543,7 @@ function StockMovementsTab({ productId, productType }) {
               setMovementType('add');
             }}
           >
-            Annuler
+            {t('stock:common.cancel')}
           </Button>
           <Button
             onClick={handleAdjustStock}
@@ -551,7 +552,7 @@ function StockMovementsTab({ productId, productType }) {
             color={movementType === 'add' ? 'success' : 'error'}
             startIcon={movementType === 'add' ? <Add /> : <Remove />}
           >
-            {movementType === 'add' ? 'Ajouter' : 'Retirer'}
+            {movementType === 'add' ? t('stock:movements.add') : t('stock:movements.remove')}
           </Button>
         </DialogActions>
       </Dialog>

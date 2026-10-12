@@ -216,7 +216,7 @@ function UserManagement() {
                 const errData = await response.json().catch(() => ({}));
                 setInviteDialogOpen(false);
                 enqueueSnackbar(
-                    errData.error || "Limite de sièges atteinte. Passez à un plan supérieur pour ajouter des utilisateurs.",
+                    errData.error || t('settings:userManagement.seatLimitInvite'),
                     { variant: 'warning', persist: false, action: null }
                 );
                 navigate('/subscription/plans');
@@ -313,7 +313,7 @@ function UserManagement() {
             } else if (response.status === 402) {
                 const errData = await response.json().catch(() => ({}));
                 enqueueSnackbar(
-                    errData.error || "Limite de sièges atteinte. Passez à un plan supérieur pour réactiver cet utilisateur.",
+                    errData.error || t('settings:userManagement.seatLimitReactivate'),
                     { variant: 'warning' }
                 );
             } else {
@@ -360,7 +360,7 @@ function UserManagement() {
                     {seatInfo.seat_limit != null && (
                         <Chip
                             icon={<PersonAdd sx={{ fontSize: 16 }} />}
-                            label={`${activeUsers} / ${seatInfo.seat_limit} sièges`}
+                            label={t('settings:userManagement.seatsCount', { active: activeUsers, limit: seatInfo.seat_limit })}
                             color={seatFull ? 'warning' : 'default'}
                             variant={seatFull ? 'filled' : 'outlined'}
                             onClick={() => setSeatDialogOpen(true)}
@@ -369,7 +369,7 @@ function UserManagement() {
                     )}
                     {seatFull ? (
                         <Button variant="contained" color="warning" onClick={() => setSeatDialogOpen(true)}>
-                            Ajouter des sièges
+                            {t('settings:userManagement.addSeats')}
                         </Button>
                     ) : (
                         <Button
@@ -392,7 +392,7 @@ function UserManagement() {
                                 {users.length}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                {t('common:total')}
+                                {t('common:labels.total')}
                             </Typography>
                         </CardContent>
                     </Card>
@@ -416,7 +416,7 @@ function UserManagement() {
                                 {users.filter(u => u.role === 'admin').length}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                {t('settings:userManagement.roles.admin')}s
+                                {t('settings:userManagement.stats.admins')}
                             </Typography>
                         </CardContent>
                     </Card>
@@ -582,20 +582,20 @@ function UserManagement() {
                         <Grid item xs={12}>
                             <Box sx={{ p: 1.75, borderRadius: 2, bgcolor: 'action.hover' }}>
                                 <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary' }}>
-                                    Ce rôle peut :
+                                    {t('settings:userManagement.rolePreview.title')}
                                 </Typography>
                                 <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                                     {(() => {
                                         const p = ROLES_CONFIG[inviteForm.role]?.permissions || {};
                                         const caps = [
-                                            [p.can_manage_users, 'Gérer les utilisateurs'],
-                                            [p.can_manage_settings, 'Gérer les paramètres'],
-                                            [p.can_view_analytics, 'Voir les analyses'],
-                                            [p.can_approve_purchases, 'Approuver les achats'],
+                                            [p.can_manage_users, t('settings:userManagement.permissions.manageUsers')],
+                                            [p.can_manage_settings, t('settings:userManagement.permissions.manageSettings')],
+                                            [p.can_view_analytics, t('settings:userManagement.permissions.viewAnalytics')],
+                                            [p.can_approve_purchases, t('settings:userManagement.permissions.approvePurchases')],
                                         ];
                                         const active = caps.filter(([on]) => on);
                                         if (active.length === 0) return (
-                                            <Typography variant="body2" color="text.secondary">Consultation uniquement.</Typography>
+                                            <Typography variant="body2" color="text.secondary">{t('settings:userManagement.rolePreview.viewOnly')}</Typography>
                                         );
                                         return active.map(([, label], i) => (
                                             <Chip key={i} size="small" icon={<CheckCircle sx={{ fontSize: 14 }} />} label={label}
@@ -604,7 +604,7 @@ function UserManagement() {
                                     })()}
                                 </Box>
                                 <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 1 }}>
-                                    Accès : {(ROLES_CONFIG[inviteForm.role]?.modules || []).length} module(s). Personnalisable après création.
+                                    {t('settings:userManagement.rolePreview.access', { count: (ROLES_CONFIG[inviteForm.role]?.modules || []).length })}
                                 </Typography>
                             </Box>
                         </Grid>

@@ -133,7 +133,7 @@ function Login() {
               {t('auth:login.title', 'Bon retour !')}
             </Typography>
             <Typography variant="body2" align="center" sx={{ color: '#8a97b5', mb: 3 }}>
-              Connectez-vous à votre compte
+              {t('auth:login.subtitleShort', 'Connectez-vous à votre compte')}
             </Typography>
           </motion.div>
 
@@ -223,7 +223,7 @@ function Login() {
                   to="/forgot-password"
                   sx={{ color: ACCENT, fontSize: '0.8rem', fontWeight: 600, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
                 >
-                  Mot de passe oublié ?
+                  {t('auth:login.forgotPassword', 'Mot de passe oublié ?')}
                 </Link>
               </Box>
             </motion.div>
@@ -266,7 +266,7 @@ function Login() {
             <motion.div {...fadeUp(0.5)}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5 }}>
                 <Box sx={{ flex: 1, height: '1px', background: '#c8cfd9' }} />
-                <Typography sx={{ px: 2, color: '#9aa3bb', fontSize: '0.75rem', fontWeight: 600 }}>OU</Typography>
+                <Typography sx={{ px: 2, color: '#9aa3bb', fontSize: '0.75rem', fontWeight: 600 }}>{t('auth:login.or', 'OU')}</Typography>
                 <Box sx={{ flex: 1, height: '1px', background: '#c8cfd9' }} />
               </Box>
             </motion.div>
@@ -274,13 +274,13 @@ function Login() {
             {/* Lien inscription */}
             <motion.div {...fadeUp(0.55)}>
               <Typography variant="body2" align="center" sx={{ color: '#8a97b5' }}>
-                Pas encore de compte ?{' '}
+                {t('auth:login.noAccountYet', 'Pas encore de compte ?')}{' '}
                 <Link
                   component={RouterLink}
                   to="/register"
                   sx={{ color: ACCENT, fontWeight: 700, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
                 >
-                  Créer un compte
+                  {t('auth:login.createAccount', 'Créer un compte')}
                 </Link>
               </Typography>
             </motion.div>

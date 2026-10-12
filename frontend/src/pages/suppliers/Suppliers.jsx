@@ -263,11 +263,11 @@ function Suppliers() {
       <NeumorphicCard
         index={index}
         accentColor={accent}
-        status={{ label: top ? 'Top' : isActive ? 'Actif' : 'Inactif', color: accent }}
+        status={{ label: top ? t('suppliers:labels.top') : isActive ? t('suppliers:status.active') : t('suppliers:status.inactive'), color: accent }}
         title={supplier.name}
         subtitle={supplier.contact_person || supplier.email || ''}
         amount={rating ? rating.toFixed(1) + '/5' : null}
-        footer={supplier.is_local ? 'Local' : 'International'}
+        footer={supplier.is_local ? t('suppliers:labels.local') : t('suppliers:labels.international')}
         onClick={(e) => handleCardClick(e, supplier)}
         actions={(
           <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/suppliers/${supplier.id}/edit`); }}
@@ -281,7 +281,7 @@ function Suppliers() {
 
   const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
-    const fname = `rapport-fournisseurs-${new Date().getTime()}.pdf`;
+    const fname = t('suppliers:report.fileName', { timestamp: new Date().getTime() });
 
     if (action === 'download') {
       await pdfViewer.download(generatedPdfBlob, fname);
@@ -289,11 +289,11 @@ function Suppliers() {
         variant: 'success',
       });
     } else if (action === 'preview') {
-      pdfViewer.preview(generatedPdfBlob, fname, 'Rapport fournisseurs');
+      pdfViewer.preview(generatedPdfBlob, fname, t('suppliers:report.viewerTitle'));
       return;
     } else if (action === 'print') {
       if (IS_NATIVE) {
-        pdfViewer.preview(generatedPdfBlob, fname, 'Rapport fournisseurs');
+        pdfViewer.preview(generatedPdfBlob, fname, t('suppliers:report.viewerTitle'));
         return;
       }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
@@ -322,18 +322,18 @@ function Suppliers() {
         activeKey={quickFilter}
         onSelect={handleQuickFilterClick}
         kpis={[
-          { key: '', label: 'Fournisseurs', value: totalSuppliers, sub: 'au total', color: '#2563eb' },
-          { key: 'active', label: 'Actifs', value: activeSuppliers, sub: 'en activite', color: '#10b981' },
-          { key: 'top_rated', label: 'Top notes', value: topRatedSuppliers, sub: '4+ etoiles', color: '#8b5cf6' },
-          { key: 'local', label: 'Locaux', value: localSuppliers, sub: 'proximite', color: '#3b82f6' },
-          { key: 'international', label: 'Internat.', value: internationalSuppliers, sub: 'a l etranger', color: '#f59e0b' },
+          { key: '', label: t('suppliers:kpi.total'), value: totalSuppliers, sub: t('suppliers:kpi.totalSub'), color: '#2563eb' },
+          { key: 'active', label: t('suppliers:kpi.active'), value: activeSuppliers, sub: t('suppliers:kpi.activeSub'), color: '#10b981' },
+          { key: 'top_rated', label: t('suppliers:kpi.topRated'), value: topRatedSuppliers, sub: t('suppliers:kpi.topRatedSub'), color: '#8b5cf6' },
+          { key: 'local', label: t('suppliers:kpi.local'), value: localSuppliers, sub: t('suppliers:kpi.localSub'), color: '#3b82f6' },
+          { key: 'international', label: t('suppliers:kpi.international'), value: internationalSuppliers, sub: t('suppliers:kpi.internationalSub'), color: '#f59e0b' },
         ]}
       />
 
       <NeumorphicSearch
         value={searchTerm}
         onChange={setSearchTerm}
-        placeholder="Rechercher un fournisseur, un contact..."
+        placeholder={t('suppliers:search.placeholderFull')}
       />
 
       {loading && suppliers.length === 0 ? (
@@ -371,7 +371,7 @@ function Suppliers() {
             <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={3}>
               <CircularProgress size={40} />
               <Typography variant="body2" color="text.secondary">
-                {t('common:labels.generating', 'Génération du PDF en cours...')}
+                {t('suppliers:pdf.generating')}
               </Typography>
             </Box>
           ) : generatedPdfBlob ? (

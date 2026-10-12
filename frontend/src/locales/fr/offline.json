@@ -1,0 +1,37 @@
+{
+  "badge": {
+    "pendingUpdate": "Modif. en attente",
+    "toSync": "À synchroniser",
+    "tooltip": "Sera synchronisé à la prochaine connexion"
+  },
+  "banner": {
+    "offlinePending_one": "Hors ligne — {{count}} enregistrement en attente d'envoi",
+    "offlinePending_other": "Hors ligne — {{count}} enregistrements en attente d'envoi",
+    "offlineSaved": "Hors ligne — vos saisies sont gardées sur cet appareil",
+    "pending_one": "{{count}} enregistrement à envoyer — toucher pour réessayer",
+    "pending_other": "{{count}} enregistrements à envoyer — toucher pour réessayer",
+    "failed_one": "{{count}} enregistrement refusé par le serveur — voir",
+    "failed_other": "{{count}} enregistrements refusés par le serveur — voir"
+  },
+  "failedDialog": {
+    "title": "Enregistrements non envoyés",
+    "description": "Saisis hors ligne, ils ont été refusés par le serveur. Corrigez si besoin puis réessayez, ou abandonnez-les.",
+    "retry": "Réessayer",
+    "discard": "Abandonner",
+    "item": "{{entity}} — {{op}}",
+    "itemWithName": "{{entity}} — {{op}} « {{name}} »"
+  },
+  "entities": {
+    "clients": "Client",
+    "suppliers": "Fournisseur",
+    "products": "Produit",
+    "invoices": "Facture",
+    "purchaseOrders": "Bon de commande"
+  },
+  "operations": {
+    "create": "création",
+    "update": "modification",
+    "delete": "suppression",
+    "settle": "paiement"
+  }
+}

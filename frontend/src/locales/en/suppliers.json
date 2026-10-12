@@ -3,7 +3,8 @@
   "newSupplier": "New Supplier",
   "editSupplier": "Edit Supplier",
   "search": {
-    "placeholder": "Search for a supplier..."
+    "placeholder": "Search for a supplier...",
+    "placeholderFull": "Search for a supplier, a contact..."
   },
   "filters": {
     "active": "Active",
@@ -42,7 +43,15 @@
     "reportGenerating": "Generating {{format}} report...",
     "reportGenerated": "Report generated successfully!",
     "reportInProgress": "The report is being generated...",
-    "reportError": "Error generating report"
+    "reportError": "Error generating report",
+    "loading": "Loading suppliers...",
+    "noSuppliersSelected": "No suppliers to include in the report",
+    "pdfDownloaded": "PDF downloaded successfully",
+    "pdfError": "Error generating the PDF",
+    "reportPdfDownloaded": "PDF report downloaded successfully",
+    "printWindowOpened": "Print window opened",
+    "cannotOpenPrintWindow": "Unable to open the print window",
+    "supplierNotFoundDescription": "The supplier you are looking for does not exist or has been deleted."
   },
   "actions": {
     "edit": "Edit",
@@ -50,7 +59,8 @@
     "quickActions": "Quick Actions",
     "newPurchaseOrder": "New Purchase Order",
     "addProducts": "Add Products",
-    "generateReport": "Generate Report"
+    "generateReport": "Generate Report",
+    "downloadPdf": "Download PDF report"
   },
   "tabs": {
     "info": "Info",
@@ -86,7 +96,13 @@
     "punctuality": "Punctuality",
     "quality": "Quality",
     "payment": "Payment",
-    "ofScore": "of score"
+    "ofScore": "of score",
+    "top": "Top",
+    "international": "International",
+    "autoCalculated": "Auto-calculated",
+    "performance": "Performance",
+    "quantityOrdered": "Qty ordered",
+    "ratingDetails": "Rating details"
   },
   "form": {
     "title": {
@@ -123,7 +139,8 @@
       "invalidEmail": "Invalid email",
       "emailRequired": "Email is required",
       "statusRequired": "Status is required"
-    }
+    },
+    "saving": "Saving..."
   },
   "provinces": {
     "QC": "Quebec",
@@ -143,6 +160,25 @@
   "pdf": {
     "title": "Supplier PDF Report",
     "description": "Generating PDF report...",
-    "ready": "The PDF report is ready. Choose an action:"
+    "ready": "The PDF report is ready. Choose an action:",
+    "generating": "Generating PDF..."
+  },
+  "kpi": {
+    "total": "Suppliers",
+    "totalSub": "in total",
+    "active": "Active",
+    "activeSub": "currently active",
+    "topRated": "Top rated",
+    "topRatedSub": "4+ stars",
+    "local": "Local",
+    "localSub": "nearby",
+    "international": "Internat.",
+    "internationalSub": "abroad"
+  },
+  "report": {
+    "fileName": "suppliers-report-{{timestamp}}.pdf",
+    "viewerTitle": "Suppliers report",
+    "supplierFileName": "supplier-report-{{name}}.pdf",
+    "supplierViewerTitle": "Report {{name}}"
   }
 }

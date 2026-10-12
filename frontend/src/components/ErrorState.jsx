@@ -3,6 +3,7 @@ import { Box, Typography, Button, Paper } from '@mui/material';
 import { Refresh, Home } from '@mui/icons-material';
 import Mascot from './Mascot';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Composant d'état d'erreur avec la mascotte
@@ -13,12 +14,15 @@ import { useNavigate } from 'react-router-dom';
  * @param {boolean} showHome - Afficher le bouton retour à l'accueil
  */
 function ErrorState({
-  title = "Oups ! Une erreur s'est produite",
-  message = "Nous rencontrons des difficultés techniques. Veuillez réessayer.",
+  title: titleProp,
+  message: messageProp,
   onRetry = null,
   showHome = true,
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
+  const title = titleProp === undefined ? t('common:errorState.defaultTitle') : titleProp;
+  const message = messageProp === undefined ? t('common:errorState.defaultMessage') : messageProp;
 
   return (
     <Paper
@@ -63,7 +67,7 @@ function ErrorState({
               fontSize: '1rem',
             }}
           >
-            Réessayer
+            {t('common:errorState.retry')}
           </Button>
         )}
 
@@ -82,7 +86,7 @@ function ErrorState({
               fontSize: '1rem',
             }}
           >
-            Retour à l'accueil
+            {t('common:errorState.backHome')}
           </Button>
         )}
       </Box>

@@ -62,5 +62,657 @@
       "viewStatistics": "Show me the statistics",
       "monthlyReport": "Generate a monthly report"
     }
+  },
+  "sidebar": {
+    "history": "History"
+  },
+  "proactiveConversations": {
+    "title": "Proactive conversations",
+    "accept": "Accept",
+    "dismiss": "Dismiss",
+    "startConversation": "Start conversation"
+  },
+  "suggestions": {
+    "emailActions": {
+      "sendInvoice": "Send invoice",
+      "sendPurchaseOrder": "Send purchase order",
+      "followupInvoice": "Follow up on invoice"
+    }
+  },
+  "topBar": {
+    "newConversation": "New"
+  },
+  "chatPage": {
+    "suggestionsPanel": {
+      "title": "Smart Suggestions",
+      "empty": "No suggestions right now"
+    },
+    "history": {
+      "deleteConfirm": "Are you sure you want to delete this conversation?",
+      "deleted": "Conversation deleted",
+      "deleteError": "Error deleting conversation",
+      "conversationCount_zero": "{{count}} conversations",
+      "conversationCount_one": "{{count}} conversation",
+      "conversationCount_other": "{{count}} conversations",
+      "todayCount": "{{count}} today",
+      "messageCount": "{{count}} msg",
+      "newConversation": "New conversation",
+      "noResults": "No results",
+      "noConversations": "No conversations",
+      "startNew": "Start a new conversation",
+      "older": "Older"
+    },
+    "quickActions": {
+      "help_me": {
+        "title": "Help me",
+        "prompt": "Can you help me with my day-to-day tasks?"
+      },
+      "analyze_data": {
+        "title": "Analyze my data",
+        "prompt": "Analyze my data and give me relevant insights for my business."
+      },
+      "optimize": {
+        "title": "Optimizations",
+        "prompt": "What optimizations can I make to my business to improve efficiency and reduce costs?"
+      },
+      "create_invoice": {
+        "title": "Create invoice",
+        "prompt": "I'd like to create a new invoice. Can you guide me through the process?"
+      },
+      "create_quote": {
+        "title": "Create a quote",
+        "prompt": "I want to create a quote for a client. Can you help me?"
+      },
+      "create_purchase_order": {
+        "title": "Purchase order",
+        "prompt": "I need to create a new purchase order. What's the procedure?"
+      },
+      "create_supplier": {
+        "title": "Add supplier",
+        "prompt": "I want to add a new supplier to my system. How do I proceed?"
+      },
+      "verify_price": {
+        "title": "Check a price",
+        "prompt": "Check the market price for a product I want to buy."
+      },
+      "three_way_match": {
+        "title": "3-Way Matching",
+        "prompt": "Run a 3-way match check between an invoice, a purchase order and a goods receipt."
+      },
+      "smart_reminder": {
+        "title": "Client reminder",
+        "prompt": "I want to send a reminder for an unpaid invoice. Can you write a reminder email?"
+      },
+      "predict_cashflow": {
+        "title": "AI Cash Flow",
+        "prompt": "Run a predictive analysis of my cash flow for the next 60 days."
+      },
+      "get_statistics": {
+        "title": "Dashboard",
+        "prompt": "Show me my business's key statistics for this month."
+      },
+      "product_analysis": {
+        "title": "Product performance",
+        "prompt": "Analyze the performance of my best-selling products this quarter."
+      },
+      "client_analysis": {
+        "title": "Client analysis",
+        "prompt": "Analyze my clients' behavior and buying habits."
+      }
+    },
+    "chips": {
+      "quote": {
+        "label": "Quote",
+        "prompt": "I want to create a quote for a client"
+      },
+      "verifyPrice": {
+        "label": "Check price",
+        "prompt": "Check the market price for a product"
+      },
+      "remindClient": {
+        "label": "Remind client",
+        "prompt": "Write a reminder for an unpaid invoice"
+      },
+      "cashFlow": {
+        "label": "Cash Flow",
+        "prompt": "Run a 60-day predictive analysis of my cash flow"
+      }
+    },
+    "notifications": "Notifications",
+    "visualizations": "Visualizations",
+    "serverError": "Server error (500). Check the Django logs for more details.",
+    "confirmCreation": "Confirm creation",
+    "toolInterrupted": "interrupted",
+    "generationInterrupted": "_Generation stopped._",
+    "conversationStarted": "Conversation started!",
+    "conversationStartError": "Error starting the conversation",
+    "conversationDismissError": "Error dismissing the conversation",
+    "refreshing": "Refreshing...",
+    "onlineStatus": "Procura AI · Online",
+    "importDocument": "Import a document",
+    "pendingImports": "Pending imports",
+    "proactiveTitle": "The AI would like to chat with you",
+    "chartAdded": "Chart added to visualizations"
+  },
+  "documentImport": {
+    "types": {
+      "expense": "Receipt / expense",
+      "invoice": "Customer invoice",
+      "purchase_order": "Purchase order",
+      "supplier_list": "Supplier register",
+      "product_catalog": "Product catalog",
+      "contract": "Contract",
+      "financial_report": "Financial report",
+      "mixed_document": "Complex document"
+    },
+    "unsupportedFormat": "Unsupported file format. Use JPG, PNG, WebP or PDF.",
+    "fileTooLarge": "File too large. Maximum 10MB.",
+    "selectTypeAndFile": "Please select a document type and a file.",
+    "analyzeSuccess": "Document analyzed successfully! Check your pending imports.",
+    "uploadError": "Error uploading the document.",
+    "fileSizeUnits": {
+      "bytes": "Bytes",
+      "kb": "KB",
+      "mb": "MB",
+      "gb": "GB"
+    },
+    "title": "AI Import",
+    "subtitle": "Analyze your documents with artificial intelligence",
+    "documentType": "Document type",
+    "fileToAnalyze": "File to analyze",
+    "dropHere": "Drag and drop your file here",
+    "clickToSelect": "or click to select • JPG, PNG, PDF (max 10MB)",
+    "analyzingAI": "AI analysis in progress...",
+    "uploading": "Uploading...",
+    "info": "The AI will analyze your document and create a review for you to validate before the record is created.",
+    "analyzingShort": "Analyzing...",
+    "analyze": "Analyze",
+    "extracting": "Extracting data intelligently...",
+    "preparing": "Preparing your document..."
+  },
+  "importReviews": {
+    "loadError": "Error loading imports",
+    "approveSuccess": "Import approved successfully",
+    "approveError": "Error approving import",
+    "rejectSuccess": "Import rejected",
+    "rejectError": "Error rejecting import",
+    "entityTypes": {
+      "expense": "Expense",
+      "invoice": "Customer invoice",
+      "purchase_order": "Purchase order",
+      "supplier": "Supplier",
+      "product": "Product"
+    },
+    "previewInvoice": "Invoice {{number}} - {{client}}",
+    "previewPurchaseOrder": "PO {{number}} - {{supplier}}",
+    "unknownClient": "Unknown client",
+    "unknownSupplier": "Unknown supplier",
+    "extractedData": "Extracted data",
+    "title": "Imports pending review",
+    "count_one": "{{count}} import",
+    "count_other": "{{count}} imports",
+    "status": {
+      "pending": "Pending",
+      "modified": "Modified",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "emptyPending": "No pending imports",
+    "emptyWithStatus": "No imports with status \"{{status}}\"",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "messageContent": {
+    "visualization": "Visualization",
+    "tapToExpand": "Tap to expand",
+    "chartLine": "Line chart",
+    "chartBar": "Bar chart",
+    "chartPie": "Pie chart",
+    "chartArea": "Area chart",
+    "fullscreen": "Full screen",
+    "pinToVisualizations": "Pin to visualizations",
+    "expand": "Expand",
+    "verifyAndConfirm": "Review and confirm",
+    "entityVerification": "Record review",
+    "associatedEntities": "Related records that will be created:",
+    "modalTitles": {
+      "client_one": "Client found",
+      "client_other": "Clients found",
+      "supplier_one": "Supplier found",
+      "supplier_other": "Suppliers found",
+      "invoice_one": "Invoice found",
+      "invoice_other": "Invoices found",
+      "purchase_order_one": "Purchase order found",
+      "purchase_order_other": "Purchase orders found",
+      "product_one": "Product found",
+      "product_other": "Products found",
+      "results": "Results"
+    },
+    "viewResults_one": "View {{count}} result",
+    "viewResults_other": "View {{count}} results",
+    "priority": "Priority: {{priority}}/10",
+    "invoiceNumber": "No. {{number}}",
+    "suggestedActions": "Suggested actions",
+    "tapAnywhereToClose": "Tap anywhere to close"
+  },
+  "agentTimeline": {
+    "thinking": "Thinking",
+    "reasoningSteps_one": "Reasoning · {{count}} step",
+    "reasoningSteps_other": "Reasoning · {{count}} steps",
+    "preparing": "Preparing…"
+  },
+  "artifactsPanel": {
+    "title": "Visualizations",
+    "tabActive": "Active ({{n}})",
+    "tabHistory": "History ({{n}})",
+    "emptyActive": "No active visualizations",
+    "emptyHistory": "Nothing in history yet",
+    "emptyActiveHint": "Ask the AI to generate charts and they will appear here",
+    "emptyHistoryHint": "Removed visualizations will appear here",
+    "untitled": "Untitled",
+    "chartTypes": {
+      "line": "Line",
+      "bar": "Bar",
+      "pie": "Pie",
+      "area": "Area"
+    },
+    "justNow": "Just now",
+    "minutesAgo": "{{n}} min ago",
+    "hoursAgo": "{{n}} h ago",
+    "fullscreen": "Full screen",
+    "refresh": "Refresh"
+  },
+  "chartRenderer": {
+    "noData": "No data to display",
+    "unsupportedType": "Unsupported chart type: {{type}}"
+  },
+  "confirmationModal": {
+    "entities": {
+      "invoice": {
+        "title": "Invoice",
+        "subtitle": "Review the invoice details before finalizing"
+      },
+      "client": {
+        "title": "Client",
+        "subtitle": "Creating a new client record"
+      },
+      "supplier": {
+        "title": "Supplier",
+        "subtitle": "Creating a new supplier record"
+      },
+      "purchase_order": {
+        "title": "Purchase Order",
+        "subtitle": "Review the purchase order details"
+      },
+      "product": {
+        "title": "Product",
+        "subtitle": "Adding a new product to the catalog"
+      }
+    },
+    "fields": {
+      "client": "Client",
+      "clientEmail": "Client email",
+      "clientPhone": "Client phone",
+      "invoiceTitle": "Invoice title",
+      "totalAmount": "Total amount",
+      "dueDate": "Due date",
+      "email": "Email",
+      "contactPerson": "Contact person",
+      "paymentTerms": "Payment terms",
+      "taxId": "Tax ID",
+      "supplier": "Supplier",
+      "expectedDeliveryDate": "Expected delivery date",
+      "productName": "Product name",
+      "reference": "Reference"
+    },
+    "verification": "Review: {{entity}}",
+    "aiPrepared": "The AI prepared this information. You can edit it before confirming creation.",
+    "itemsTitle": "Items & Services",
+    "lines_one": "{{count}} line",
+    "lines_other": "{{count}} lines",
+    "colDesignation": "Item",
+    "colQty": "Qty",
+    "colUnitPrice": "Unit price",
+    "subtotal": "Subtotal (excl. tax):",
+    "addLineManually": "Add a line manually",
+    "productService": "Product / Service",
+    "productOption": "Ref: {{reference}} - {{price}}",
+    "qty": "Qty",
+    "priceWithSymbol": "Price ({{symbol}})",
+    "help": "Need help? Contact AI support.",
+    "finalize": "Complete creation"
+  },
+  "listModal": {
+    "draft": "Draft",
+    "pending": "Pending",
+    "clientLabel": "Client: {{name}}",
+    "noClient": "No client specified",
+    "supplierLabel": "Supplier: {{name}}",
+    "noSupplier": "No supplier specified",
+    "match": "{{score}}% match",
+    "reference": "Ref: {{reference}}",
+    "stock": "Stock: {{qty}}",
+    "unnamed": "Unnamed item",
+    "downloadPdf": "Download PDF",
+    "results_zero": "{{count}} results",
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results",
+    "found_zero": "found in your database",
+    "found_one": "found in your database",
+    "found_other": "found in your database",
+    "filterPlaceholder": "Filter results...",
+    "noResults": "No results",
+    "noMatch": "We couldn't find anything matching \"{{query}}\"",
+    "clearSearch": "Clear search",
+    "tip": "Tip: Click a card to go straight to the full record.",
+    "done": "Done"
+  },
+  "previewCard": {
+    "defaultClient": "Client",
+    "defaultSupplier": "Supplier",
+    "invoiceTitle": "Invoice for {{name}}",
+    "invoiceSubtitle": "Amount: {{amount}} • Due: {{dueDate}}",
+    "newClient": "New Client",
+    "newSupplier": "New Supplier",
+    "newProduct": "New Product",
+    "noContact": "No contact",
+    "contactPrefix": "Contact: {{name}}",
+    "poTitle": "PO for {{name}}",
+    "poSubtitle": "Amount: {{amount}} • Delivery: {{date}}",
+    "productSubtitle": "Ref: {{reference}} • Price: {{price}}",
+    "fields": {
+      "client": "Client",
+      "email": "Email",
+      "dueDate": "Due date",
+      "contactPerson": "Contact person",
+      "paymentTerms": "Payment terms",
+      "supplier": "Supplier",
+      "deliveryDate": "Delivery date",
+      "reference": "Reference"
+    },
+    "toConfirm": "Pending confirmation",
+    "itemsCount": "Items ({{n}})",
+    "defaultItem": "Item",
+    "nestedDefault": "This item will be created automatically"
+  },
+  "contextualPanel": {
+    "openFullChat": "Open the full chat",
+    "openFullChatLink": "Open the full chat →",
+    "chartAvailable": "Chart available — open the full chat",
+    "placeholder": "Ask a question...",
+    "replyReceived": "Response received.",
+    "error": "Sorry, something went wrong. Try again or open the full chat.",
+    "contexts": {
+      "dashboard": {
+        "label": "Dashboard",
+        "greeting": "Here's an overview of your business. I can analyze your metrics or build a cash flow forecast.",
+        "actions": {
+          "analyzePeriod": {
+            "label": "Analyze the period",
+            "prompt": "Analyze the financial metrics on my dashboard and give me the key takeaways."
+          },
+          "cashForecast": {
+            "label": "Cash flow forecast",
+            "prompt": "Build a cash flow forecast based on my current data."
+          },
+          "priorityAlerts": {
+            "label": "Priority alerts",
+            "prompt": "Which alerts are the most important to handle today?"
+          }
+        }
+      },
+      "invoices": {
+        "label": "Invoices",
+        "greeting": "I can help you manage your invoices, analyze unpaid ones or write payment reminders.",
+        "actions": {
+          "analyzeUnpaid": {
+            "label": "Analyze unpaid invoices",
+            "prompt": "Analyze my unpaid invoices and suggest a follow-up plan."
+          },
+          "remindClient": {
+            "label": "Remind a client",
+            "prompt": "Write a professional, courteous reminder email for a client who is late on payment."
+          },
+          "optimizeTerms": {
+            "label": "Shorten payment times",
+            "prompt": "How can I improve my collection rate and shorten payment times?"
+          }
+        }
+      },
+      "contracts": {
+        "label": "Contracts",
+        "greeting": "I can generate contract sections, analyze risks or guide you through drafting.",
+        "actions": {
+          "generateClause": {
+            "label": "Generate a clause",
+            "prompt": "Generate a professional confidentiality clause in English, suited to OHADA law."
+          },
+          "analyzeRisks": {
+            "label": "Analyze risks",
+            "prompt": "What common contractual risks should I watch for in my active contracts?"
+          },
+          "contractTemplate": {
+            "label": "Contract template",
+            "prompt": "What type of contract do you recommend for a recurring service agreement?"
+          }
+        }
+      },
+      "purchaseOrders": {
+        "label": "Purchase orders",
+        "greeting": "I can help you draft purchase orders, compare suppliers or optimize your purchasing.",
+        "actions": {
+          "compareSuppliers": {
+            "label": "Compare suppliers",
+            "prompt": "How can I evaluate and compare my suppliers effectively to get the best value for money?"
+          },
+          "optimizePurchases": {
+            "label": "Optimize purchasing",
+            "prompt": "What strategies can I use to reduce my purchasing costs?"
+          },
+          "paymentTerms": {
+            "label": "Payment terms",
+            "prompt": "What are the standard payment terms in a B2B purchase order?"
+          }
+        }
+      },
+      "products": {
+        "label": "Products",
+        "greeting": "I can analyze your stock, suggest restocking or optimize your catalog.",
+        "actions": {
+          "analyzeStock": {
+            "label": "Analyze stock",
+            "prompt": "Analyze my stock levels and identify products that are out of stock or overstocked."
+          },
+          "restock": {
+            "label": "Restocking",
+            "prompt": "Which products should I restock first, and in what quantity?"
+          },
+          "optimizeCatalog": {
+            "label": "Optimize the catalog",
+            "prompt": "How can I optimize my product catalog to improve my margins?"
+          }
+        }
+      },
+      "clients": {
+        "label": "Clients",
+        "greeting": "I can analyze your client portfolio, identify the most profitable ones or help you build loyalty.",
+        "actions": {
+          "topClients": {
+            "label": "Top clients",
+            "prompt": "Who are my most profitable clients and how can I keep them loyal?"
+          },
+          "atRiskClients": {
+            "label": "At-risk clients",
+            "prompt": "Which clients are at risk of non-payment or inactivity?"
+          },
+          "loyaltyStrategy": {
+            "label": "Loyalty strategy",
+            "prompt": "Suggest a loyalty strategy tailored to my current clients."
+          }
+        }
+      },
+      "suppliers": {
+        "label": "Suppliers",
+        "greeting": "I can help you evaluate your suppliers, negotiate better terms or diversify your sources.",
+        "actions": {
+          "evaluateSupplier": {
+            "label": "Evaluate a supplier",
+            "prompt": "What criteria should I use to assess a supplier's reliability?"
+          },
+          "negotiatePrices": {
+            "label": "Negotiate prices",
+            "prompt": "Give me strategies to negotiate better terms with my suppliers."
+          },
+          "reduceRisks": {
+            "label": "Reduce risks",
+            "prompt": "How can I reduce my dependence on a single supplier and diversify my sources?"
+          }
+        }
+      },
+      "default": {
+        "label": "Procura",
+        "greeting": "Hello! I'm your Procura assistant. Ask me anything about your business.",
+        "actions": {
+          "createInvoice": {
+            "label": "Create an invoice",
+            "prompt": "Walk me through creating a professional invoice."
+          },
+          "activitySummary": {
+            "label": "Activity summary",
+            "prompt": "Give me a summary of my recent activity and anything that needs attention."
+          },
+          "dailyTip": {
+            "label": "Tip of the day",
+            "prompt": "Give me a practical tip to improve how I run my business."
+          }
+        }
+      }
+    }
+  },
+  "importReviewModal": {
+    "saveSuccess": "Changes saved",
+    "saveError": "Error while saving",
+    "invoiceNumber": "Invoice number",
+    "issueDate": "Issue date",
+    "client": "Client",
+    "clientEmail": "Client email",
+    "totalAmount": "Total amount",
+    "itemsCount": "Items ({{count}})",
+    "poNumber": "PO number",
+    "orderDate": "Order date",
+    "supplier": "Supplier",
+    "supplierEmail": "Supplier email",
+    "label": "Description",
+    "totalInclTax": "Total amount (incl. tax)",
+    "recoverableVat": "of which recoverable VAT",
+    "category": "Category",
+    "otherExpenses": "Other expenses",
+    "alreadyPaid": "Already paid",
+    "toPay": "To be paid",
+    "paidBy": "Paid by",
+    "expenseInfo": "On approval, the expense is recorded with the receipt photo and the accounting entry is posted.",
+    "editingSoon": "Field editing for this entity type will be available soon.",
+    "title": "Import review - {{type}}",
+    "entityTypes": {
+      "expense": "Expense",
+      "invoice": "Client invoice",
+      "purchase_order": "Purchase order"
+    },
+    "status": {
+      "pending": "Pending",
+      "modified": "Modified",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "notesPlaceholder": "Add notes about this import...",
+    "saveChanges": "Save changes",
+    "reject": "Reject",
+    "approveAndCreate": "Approve and create"
+  },
+  "thinking": {
+    "messages": {
+      "reflecting": "Thinking about your request...",
+      "analyzing": "Analyzing the information...",
+      "searching": "Looking for the best solution...",
+      "preparing": "Preparing the response...",
+      "verifying": "Checking the data...",
+      "finalizing": "Wrapping up..."
+    },
+    "steps": {
+      "validation": "Data validation",
+      "research": "Information lookup",
+      "contextAnalysis": "Context analysis",
+      "generation": "Response generation",
+      "qualityCheck": "Quality check",
+      "finalization": "Finalization"
+    },
+    "processingTitle": "Processing",
+    "stepProgress": "Step {{current}}/{{total}}: {{step}}",
+    "analyzingDefault": "Running an in-depth analysis...",
+    "mayTakeMoment": "This may take a few moments",
+    "celebrationDefault": "Action completed successfully!"
+  },
+  "floatingAssistant": {
+    "welcome": {
+      "suppliers": "I can help you manage your suppliers: create, search, edit or analyze their performance.",
+      "invoices": "I can create invoices, track payments, or analyze your revenue.",
+      "purchaseOrders": "I can create purchase orders, track deliveries, or analyze your purchasing.",
+      "default": "How can I help you run your business?"
+    },
+    "sendingToAI": "Sending to the AI...",
+    "executionError": "Error during execution",
+    "modeContext": "{{page}} mode",
+    "modeGeneral": "General mode"
+  },
+  "assistantToggle": {
+    "aiMode": "AI mode",
+    "manualMode": "Manual mode",
+    "smart": "Smart",
+    "aiDescription": "The AI proposes, suggests and automates tasks for you",
+    "manualDescription": "You stay in full control with the traditional interfaces",
+    "switchToManual": "Switch to manual mode",
+    "enableAssistant": "Enable the AI assistant"
+  },
+  "documentScanner": {
+    "captureOrUpload": "Please capture or upload an image",
+    "analysisError": "Error during analysis",
+    "processingError": "Error processing the document",
+    "title": "Scan a document",
+    "documentType": "Document type",
+    "types": {
+      "invoice": "Invoice",
+      "purchase_order": "Purchase order",
+      "supplier_list": "Supplier list"
+    },
+    "autoCreate": "Create automatically",
+    "camera": "Camera",
+    "upload": "Upload",
+    "capture": "Capture",
+    "dropHere": "Drop the file here",
+    "dragOrClick": "Drag and drop a file here or click to select",
+    "supportedFormats": "Supported formats: JPEG, PNG, GIF, BMP, TIFF (max 10MB)",
+    "capturedAlt": "Captured document",
+    "retake": "Retake",
+    "analyzing": "Analyzing...",
+    "analyze": "Analyze",
+    "success": "Document analyzed successfully!",
+    "extractedData": "Extracted data",
+    "ocrText": "Extracted text (OCR)",
+    "scanAnother": "Scan another document"
+  },
+  "voiceRecorder": {
+    "notSupported": "Speech recognition is not supported by your browser. Use Chrome, Edge or Safari.",
+    "noSpeech": "No speech detected. Please speak louder.",
+    "micDenied": "Microphone access was denied.",
+    "errorGeneric": "Error: {{error}}",
+    "startFailed": "Unable to start listening.",
+    "notSupportedTitle": "Feature not supported",
+    "listening": "Listening...",
+    "title": "Voice message",
+    "speakNow": "Speak now...",
+    "pressMic": "Tap the mic to start",
+    "realtime": "Transcription happens in real time",
+    "clickSend": "Click Send to use this text",
+    "browserHint": "Real-time speech recognition - Chrome, Edge, Safari"
   }
 }

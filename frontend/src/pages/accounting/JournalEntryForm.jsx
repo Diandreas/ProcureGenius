@@ -9,6 +9,7 @@ import { Add, Delete, Save, CheckCircle } from '@mui/icons-material';
 import AccountingTooltip from '../../components/accounting/AccountingTooltip';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
@@ -30,6 +31,7 @@ export default function JournalEntryForm() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
@@ -68,10 +70,10 @@ export default function JournalEntryForm() {
   });
 
   const validate = () => {
-    if (!form.journal) { enqueueSnackbar('Journal obligatoire', { variant: 'error' }); return false; }
-    if (!form.description.trim()) { enqueueSnackbar('Libellé obligatoire', { variant: 'error' }); return false; }
+    if (!form.journal) { enqueueSnackbar(t('accounting:entryForm.journalRequired'), { variant: 'error' }); return false; }
+    if (!form.description.trim()) { enqueueSnackbar(t('accounting:entryForm.descriptionRequired'), { variant: 'error' }); return false; }
     const validLines = lines.filter((l) => l.account && (parseFloat(l.debit) || parseFloat(l.credit)));
-    if (validLines.length < 2) { enqueueSnackbar('Minimum 2 lignes avec montant', { variant: 'error' }); return false; }
+    if (validLines.length < 2) { enqueueSnackbar(t('accounting:entryForm.minLines'), { variant: 'error' }); return false; }
     return true;
   };
 
@@ -83,13 +85,13 @@ export default function JournalEntryForm() {
       const entry = res.data;
       if (post) {
         await accountingAPI.postEntry(entry.id);
-        enqueueSnackbar('Écriture créée et validée', { variant: 'success' });
+        enqueueSnackbar(t('accounting:entryForm.createdPosted'), { variant: 'success' });
       } else {
-        enqueueSnackbar('Écriture sauvegardée en brouillon', { variant: 'success' });
+        enqueueSnackbar(t('accounting:entryForm.savedDraft'), { variant: 'success' });
       }
       navigate(`/accounting/entries/${entry.id}`);
     } catch (err) {
-      const msg = err?.response?.data?.error || JSON.stringify(err?.response?.data) || 'Erreur';
+      const msg = err?.response?.data?.error || JSON.stringify(err?.response?.data) || t('accounting:common.error');
       enqueueSnackbar(msg, { variant: 'error' });
     } finally {
       setSaving(false);
@@ -98,25 +100,25 @@ export default function JournalEntryForm() {
 
   return (
     <Box p={{ xs: 2, sm: 3 }} maxWidth={960}>
-      <AccountingNav title="Nouvelle Écriture Comptable" subtitle="Saisie en partie double" />
+      <AccountingNav title={t('accounting:entryForm.title')} subtitle={t('accounting:entryForm.subtitle')} />
 
       {/* En-tête */}
       <Card elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, mb: 3 }}>
         <CardContent>
           <Box display="flex" gap={2} flexWrap="wrap">
             <FormControl required sx={{ flex: '1 1 200px' }}>
-              <InputLabel>Journal *</InputLabel>
-              <Select value={form.journal} onChange={(e) => setForm((f) => ({ ...f, journal: e.target.value }))} label="Journal *">
+              <InputLabel>{t('accounting:entryForm.journalField')}</InputLabel>
+              <Select value={form.journal} onChange={(e) => setForm((f) => ({ ...f, journal: e.target.value }))} label={t('accounting:entryForm.journalField')}>
                 {journals.map((j) => <MenuItem key={j.id} value={j.id}>{j.code} — {j.name}</MenuItem>)}
               </Select>
             </FormControl>
-            <TextField label="Date *" type="date" value={form.date}
+            <TextField label={t('accounting:entryForm.dateField')} type="date" value={form.date}
               onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
               InputLabelProps={{ shrink: true }} sx={{ flex: '1 1 150px' }} />
-            <TextField label="Libellé *" value={form.description}
+            <TextField label={t('accounting:entryForm.descriptionField')} value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               sx={{ flex: '1 1 100%' }} />
-            <TextField label="Référence" value={form.reference}
+            <TextField label={t('accounting:common.reference')} value={form.reference}
               onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))}
               sx={{ flex: '1 1 180px' }} />
           </Box>
@@ -124,7 +126,7 @@ export default function JournalEntryForm() {
       </Card>
 
       {/* Lignes */}
-      <Typography variant="subtitle1" fontWeight={600} mb={1}>Lignes d'écriture</Typography>
+      <Typography variant="subtitle1" fontWeight={600} mb={1}>{t('accounting:entryDetail.lines')}</Typography>
       {isMobile ? (
         /* ── Vue mobile : éditeur en cartes ── */
         <Stack spacing={1.5} mb={2}>
@@ -132,7 +134,7 @@ export default function JournalEntryForm() {
             <Card key={i} elevation={0} sx={{ border: 'none', borderRadius: 2.5, bgcolor: 'background.paper', boxShadow: neu }}>
               <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>Ligne {i + 1}</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>{t('accounting:entryForm.lineNumber', { number: i + 1 })}</Typography>
                   {lines.length > 2 && (
                     <IconButton size="small" color="error" onClick={() => removeLine(i)}><Delete fontSize="small" /></IconButton>
                   )}
@@ -141,7 +143,7 @@ export default function JournalEntryForm() {
                   <Select value={line.account} onChange={(e) => setLine(i, 'account', e.target.value)}
                     displayEmpty
                     renderValue={(v) => {
-                      if (!v) return <Typography color="text.secondary" variant="body2">Sélectionner un compte...</Typography>;
+                      if (!v) return <Typography color="text.secondary" variant="body2">{t('accounting:entryForm.selectAccount')}</Typography>;
                       const acc = accounts.find((a) => a.id === v);
                       return acc ? `${acc.code} — ${acc.name}` : v;
                     }}>
@@ -149,11 +151,11 @@ export default function JournalEntryForm() {
                   </Select>
                 </FormControl>
                 <TextField value={line.description} onChange={(e) => setLine(i, 'description', e.target.value)}
-                  size="small" fullWidth placeholder="Libellé de la ligne" sx={{ mb: 1.25 }} />
+                  size="small" fullWidth placeholder={t('accounting:entryForm.lineDescription')} sx={{ mb: 1.25 }} />
                 <Box display="flex" gap={1.5}>
-                  <TextField label="Débit" value={line.debit} onChange={(e) => setLine(i, 'debit', e.target.value)}
+                  <TextField label={t('accounting:common.debit')} value={line.debit} onChange={(e) => setLine(i, 'debit', e.target.value)}
                     size="small" type="number" fullWidth inputProps={{ min: 0, step: '0.01' }} placeholder="0.00" />
-                  <TextField label="Crédit" value={line.credit} onChange={(e) => setLine(i, 'credit', e.target.value)}
+                  <TextField label={t('accounting:common.credit')} value={line.credit} onChange={(e) => setLine(i, 'credit', e.target.value)}
                     size="small" type="number" fullWidth inputProps={{ min: 0, step: '0.01' }} placeholder="0.00" />
                 </Box>
               </CardContent>
@@ -166,10 +168,10 @@ export default function JournalEntryForm() {
           <Table size="small" sx={{ minWidth: 680 }}>
             <TableHead>
               <TableRow sx={{ bgcolor: 'action.hover' }}>
-                <TableCell sx={{ minWidth: 240 }}><strong>Compte</strong></TableCell>
-                <TableCell><strong>Libellé</strong></TableCell>
-                <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="debit">Débit</AccountingTooltip></strong></TableCell>
-                <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="credit">Crédit</AccountingTooltip></strong></TableCell>
+                <TableCell sx={{ minWidth: 240 }}><strong>{t('accounting:common.account')}</strong></TableCell>
+                <TableCell><strong>{t('accounting:common.description')}</strong></TableCell>
+                <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="debit">{t('accounting:common.debit')}</AccountingTooltip></strong></TableCell>
+                <TableCell align="right" sx={{ width: 140 }}><strong><AccountingTooltip term="credit">{t('accounting:common.credit')}</AccountingTooltip></strong></TableCell>
                 <TableCell sx={{ width: 48 }} />
               </TableRow>
             </TableHead>
@@ -180,7 +182,7 @@ export default function JournalEntryForm() {
                     <Select value={line.account} onChange={(e) => setLine(i, 'account', e.target.value)}
                       displayEmpty size="small" fullWidth
                       renderValue={(v) => {
-                        if (!v) return <Typography color="text.secondary" variant="body2">Sélectionner...</Typography>;
+                        if (!v) return <Typography color="text.secondary" variant="body2">{t('accounting:entryForm.select')}</Typography>;
                         const acc = accounts.find((a) => a.id === v);
                         return acc ? `${acc.code} — ${acc.name}` : v;
                       }}>
@@ -189,7 +191,7 @@ export default function JournalEntryForm() {
                   </TableCell>
                   <TableCell>
                     <TextField value={line.description} onChange={(e) => setLine(i, 'description', e.target.value)}
-                      size="small" fullWidth placeholder="Libellé ligne" />
+                      size="small" fullWidth placeholder={t('accounting:entryForm.lineDescriptionShort')} />
                   </TableCell>
                   <TableCell>
                     <TextField value={line.debit} onChange={(e) => setLine(i, 'debit', e.target.value)}
@@ -213,26 +215,26 @@ export default function JournalEntryForm() {
         </Paper>
       )}
 
-      <Button startIcon={<Add />} onClick={addLine} size="small" sx={{ mb: 3 }}>Ajouter une ligne</Button>
+      <Button startIcon={<Add />} onClick={addLine} size="small" sx={{ mb: 3 }}>{t('accounting:entryForm.addLine')}</Button>
 
       {/* Totaux */}
       <Box display="flex" justifyContent={{ xs: 'stretch', sm: 'flex-end' }} mb={3}>
         <Box sx={{ borderRadius: 3, boxShadow: neu, bgcolor: 'background.paper', p: 2, width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 260 } }}>
           <Box display="flex" justifyContent="space-between" mb={0.5}>
-            <Typography variant="body2">Total Débit</Typography>
+            <Typography variant="body2">{t('accounting:common.totalDebit')}</Typography>
             <Typography variant="body2" fontWeight={600} color="primary.main">{format(totalDebit)}</Typography>
           </Box>
           <Box display="flex" justifyContent="space-between" mb={1}>
-            <Typography variant="body2">Total Crédit</Typography>
+            <Typography variant="body2">{t('accounting:common.totalCredit')}</Typography>
             <Typography variant="body2" fontWeight={600} color="secondary.main">{format(totalCredit)}</Typography>
           </Box>
           <Divider />
           <Box display="flex" justifyContent="space-between" mt={1} alignItems="center">
-            <Typography variant="body2">Écart</Typography>
+            <Typography variant="body2">{t('accounting:entryForm.difference')}</Typography>
             {isBalanced ? (
-              <Chip label="Équilibrée " color="success" size="small" />
+              <Chip label={`${t('accounting:entryForm.balanced')} `} color="success" size="small" />
             ) : (
-              <Chip label={`Écart: ${diff > 0 ? '+' : ''}${format(diff)}`} color="error" size="small" />
+              <Chip label={t('accounting:entryForm.differenceChip', { amount: `${diff > 0 ? '+' : ''}${format(diff)}` })} color="error" size="small" />
             )}
           </Box>
         </Box>
@@ -240,18 +242,18 @@ export default function JournalEntryForm() {
 
       {!isBalanced && totalDebit > 0 && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          L'écriture doit être équilibrée pour être validée. Écart : {format(Math.abs(diff))}.
+          {t('accounting:entryForm.mustBalance', { amount: format(Math.abs(diff)) })}
         </Alert>
       )}
 
       <Box display="flex" gap={1.5} flexWrap="wrap">
-        <Button variant="outlined" onClick={() => navigate('/accounting/entries')}>Annuler</Button>
+        <Button variant="outlined" onClick={() => navigate('/accounting/entries')}>{t('accounting:common.cancel')}</Button>
         <Button variant="outlined" startIcon={<Save />} onClick={() => handleSave(false)} disabled={saving}>
-          {isMobile ? 'Brouillon' : 'Sauvegarder (brouillon)'}
+          {isMobile ? t('accounting:status.draft') : t('accounting:entryForm.saveDraft')}
         </Button>
         <Button variant="contained" color="success" startIcon={<CheckCircle />}
           onClick={() => handleSave(true)} disabled={saving || !isBalanced}>
-          {saving ? <CircularProgress size={20} /> : (isMobile ? 'Valider' : 'Sauvegarder & Valider')}
+          {saving ? <CircularProgress size={20} /> : (isMobile ? t('accounting:entries.post') : t('accounting:entryForm.saveAndPost'))}
         </Button>
       </Box>
     </Box>

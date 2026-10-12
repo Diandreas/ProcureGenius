@@ -85,6 +85,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Token ${token}`;
     }
+    // Langue active de l'app (inscription, messages du serveur)
+    const langue = localStorage.getItem('appLanguage');
+    if (langue && !config.headers['Accept-Language']) {
+      config.headers['Accept-Language'] = langue;
+    }
     // Pour FormData, ne pas définir Content-Type - le navigateur le fera automatiquement avec la boundary
     if (config.data instanceof FormData) {
       // Supprimer Content-Type pour laisser le navigateur le définir avec la boundary
@@ -102,7 +107,14 @@ api.interceptors.request.use(
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Réglages de l'organisation enregistrés : la devise affichée partout se met à jour
+    const { method, url = '' } = response.config || {};
+    if (method && method !== 'get' && /organization\/settings|settings\/all/.test(url)) {
+      window.dispatchEvent(new Event('currency-changed'));
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       // Redirect to login if unauthorized

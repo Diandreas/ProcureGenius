@@ -66,7 +66,7 @@ const STATUS_COLORS = {
 
 function ImportReviews() {
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['aiChat', 'common']);
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -88,7 +88,7 @@ function ImportReviews() {
       setReviews(response.data.reviews || []);
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      enqueueSnackbar('Erreur lors du chargement des imports', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:importReviews.loadError'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -98,12 +98,12 @@ function ImportReviews() {
     try {
       const response = await aiChatAPI.approveImportReview(reviewId);
       if (response.data.success) {
-        enqueueSnackbar(response.data.message || 'Import approuvé avec succès', { variant: 'success' });
+        enqueueSnackbar(response.data.message || t('aiChat:importReviews.approveSuccess'), { variant: 'success' });
         fetchReviews();
       }
     } catch (error) {
       console.error('Error approving review:', error);
-      enqueueSnackbar('Erreur lors de l\'approbation', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:importReviews.approveError'), { variant: 'error' });
     }
   };
 
@@ -111,12 +111,12 @@ function ImportReviews() {
     try {
       const response = await aiChatAPI.rejectImportReview(reviewId);
       if (response.data.success) {
-        enqueueSnackbar('Import rejeté', { variant: 'info' });
+        enqueueSnackbar(t('aiChat:importReviews.rejectSuccess'), { variant: 'info' });
         fetchReviews();
       }
     } catch (error) {
       console.error('Error rejecting review:', error);
-      enqueueSnackbar('Erreur lors du rejet', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:importReviews.rejectError'), { variant: 'error' });
     }
   };
 
@@ -134,17 +134,17 @@ function ImportReviews() {
   const getPreviewText = (review) => {
     const data = review.modified_data || review.extracted_data;
     if (review.entity_type === 'expense') {
-      return `${data.description || 'Dépense'} - ${data.supplier_name || ''} - ${data.total ?? ''}`;
+      return `${data.description || t('aiChat:importReviews.entityTypes.expense')} - ${data.supplier_name || ''} - ${data.total ?? ''}`;
     } else if (review.entity_type === 'invoice') {
-      return `Facture ${data.invoice_number || 'N/A'} - ${data.client_name || 'Client inconnu'}`;
+      return t('aiChat:importReviews.previewInvoice', { number: data.invoice_number || 'N/A', client: data.client_name || t('aiChat:importReviews.unknownClient') });
     } else if (review.entity_type === 'purchase_order') {
-      return `BC ${data.po_number || 'N/A'} - ${data.supplier_name || 'Fournisseur inconnu'}`;
+      return t('aiChat:importReviews.previewPurchaseOrder', { number: data.po_number || 'N/A', supplier: data.supplier_name || t('aiChat:importReviews.unknownSupplier') });
     } else if (review.entity_type === 'supplier') {
-      return `${data.name || 'Fournisseur'} - ${data.email || ''}`;
+      return `${data.name || t('aiChat:importReviews.entityTypes.supplier')} - ${data.email || ''}`;
     } else if (review.entity_type === 'product') {
-      return `${data.name || 'Produit'} - ${data.sku || ''}`;
+      return `${data.name || t('aiChat:importReviews.entityTypes.product')} - ${data.sku || ''}`;
     }
-    return 'Données extraites';
+    return t('aiChat:importReviews.extractedData');
   };
 
   return (
@@ -155,11 +155,11 @@ function ImportReviews() {
           <ArrowBack />
         </IconButton>
         <Typography variant="h5" fontWeight={600}>
-          Imports en attente de révision
+          {t('aiChat:importReviews.title')}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
         <Chip
-          label={`${reviews.length} import${reviews.length > 1 ? 's' : ''}`}
+          label={t('aiChat:importReviews.count', { count: reviews.length })}
           color="primary"
           size="small"
         />
@@ -170,7 +170,7 @@ function ImportReviews() {
         {['pending', 'modified', 'approved', 'rejected'].map((status) => (
           <Chip
             key={status}
-            label={status === 'pending' ? 'En attente' : status === 'modified' ? 'Modifié' : status === 'approved' ? 'Approuvé' : 'Rejeté'}
+            label={status === 'pending' ? t('aiChat:importReviews.status.pending') : status === 'modified' ? t('aiChat:importReviews.status.modified') : status === 'approved' ? t('aiChat:importReviews.status.approved') : t('aiChat:importReviews.status.rejected')}
             onClick={() => setStatusFilter(status)}
             color={statusFilter === status ? 'primary' : 'default'}
             variant={statusFilter === status ? 'filled' : 'outlined'}
@@ -186,7 +186,7 @@ function ImportReviews() {
         </Box>
       ) : reviews.length === 0 ? (
         <Alert severity="info" sx={{ mt: 2 }}>
-          Aucun import {statusFilter === 'pending' ? 'en attente' : `avec le statut "${statusFilter}"`}
+          {statusFilter === 'pending' ? t('aiChat:importReviews.emptyPending') : t('aiChat:importReviews.emptyWithStatus', { status: statusFilter })}
         </Alert>
       ) : (
         <List sx={{ p: 0 }}>
@@ -226,10 +226,10 @@ function ImportReviews() {
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                       <Typography variant="subtitle1" fontWeight={600}>
-                        {ENTITY_TYPE_LABELS[review.entity_type] || review.entity_type}
+                        {ENTITY_TYPE_LABELS[review.entity_type] ? t(`aiChat:importReviews.entityTypes.${review.entity_type}`) : review.entity_type}
                       </Typography>
                       <Chip
-                        label={review.status === 'pending' ? 'En attente' : review.status === 'modified' ? 'Modifié' : review.status === 'approved' ? 'Approuvé' : 'Rejeté'}
+                        label={review.status === 'pending' ? t('aiChat:importReviews.status.pending') : review.status === 'modified' ? t('aiChat:importReviews.status.modified') : review.status === 'approved' ? t('aiChat:importReviews.status.approved') : t('aiChat:importReviews.status.rejected')}
                         size="small"
                         sx={{
                           bgcolor: alpha(STATUS_COLORS[review.status] || '#64748b', 0.15),
@@ -251,7 +251,7 @@ function ImportReviews() {
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     {review.status === 'pending' || review.status === 'modified' ? (
                       <>
-                        <Tooltip title="Voir les détails">
+                        <Tooltip title={t('common:viewDetails')}>
                           <IconButton
                             size="small"
                             onClick={() => handleOpenModal(review)}
@@ -260,7 +260,7 @@ function ImportReviews() {
                             <Visibility fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Approuver">
+                        <Tooltip title={t('aiChat:importReviews.approve')}>
                           <IconButton
                             size="small"
                             onClick={() => handleApprove(review.id)}
@@ -269,7 +269,7 @@ function ImportReviews() {
                             <CheckCircle fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Rejeter">
+                        <Tooltip title={t('aiChat:importReviews.reject')}>
                           <IconButton
                             size="small"
                             onClick={() => handleReject(review.id)}
@@ -280,7 +280,7 @@ function ImportReviews() {
                         </Tooltip>
                       </>
                     ) : (
-                      <Tooltip title="Voir les détails">
+                      <Tooltip title={t('common:viewDetails')}>
                         <IconButton
                           size="small"
                           onClick={() => handleOpenModal(review)}

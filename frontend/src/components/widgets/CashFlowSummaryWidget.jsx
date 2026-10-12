@@ -21,11 +21,11 @@ const CashFlowSummaryWidget = ({ period = 'last_30_days' }) => {
         if (response.success) {
           setData(response.data);
         } else {
-          setError('Failed to load data');
+          setError(t('dashboard:widgets.shared.loadFailed'));
         }
       } catch (err) {
         console.error('Error fetching cash flow:', err);
-        setError(err.message || 'Error loading data');
+        setError(err.message || t('dashboard:messages.loadingError'));
       } finally {
         setLoading(false);
       }
@@ -51,7 +51,7 @@ const CashFlowSummaryWidget = ({ period = 'last_30_days' }) => {
       <div className="widget-empty">
         <Scale size={40} className="widget-empty-icon" />
         <div className="widget-empty-text">
-          {t('widgets.cash_flow_empty', { ns: 'dashboard', defaultValue: 'Aucune donnée' })}
+          {t('dashboard:widgets.cash_flow_empty')}
         </div>
       </div>
     );
@@ -69,7 +69,7 @@ const CashFlowSummaryWidget = ({ period = 'last_30_days' }) => {
       <div className="cashflow-header">
         <Scale size={16} className="cashflow-icon" />
         <span className="cashflow-title">
-          {t('widgets.cash_flow_title', { ns: 'dashboard', defaultValue: 'Trésorerie' })}
+          {t('dashboard:widgets.cash_flow_title')}
         </span>
       </div>
 
@@ -78,7 +78,7 @@ const CashFlowSummaryWidget = ({ period = 'last_30_days' }) => {
           <ArrowDownCircle size={18} className="amount-icon" />
           <div className="amount-details">
             <span className="amount-label">
-              {t('widgets.cash_flow_receivable', { ns: 'dashboard', defaultValue: 'À recevoir' })}
+              {t('dashboard:widgets.cash_flow_receivable')}
             </span>
             <span className="amount-value positive">{formatCurrency(receivable)}</span>
           </div>
@@ -88,7 +88,7 @@ const CashFlowSummaryWidget = ({ period = 'last_30_days' }) => {
           <ArrowUpCircle size={18} className="amount-icon" />
           <div className="amount-details">
             <span className="amount-label">
-              {t('widgets.cash_flow_payable', { ns: 'dashboard', defaultValue: 'À payer' })}
+              {t('dashboard:widgets.cash_flow_payable')}
             </span>
             <span className="amount-value negative">{formatCurrency(payable)}</span>
           </div>
@@ -104,7 +104,7 @@ const CashFlowSummaryWidget = ({ period = 'last_30_days' }) => {
 
       <div className={`cashflow-balance ${isPositive ? 'positive' : 'negative'}`}>
         <span className="balance-label">
-          {t('widgets.cash_flow_balance', { ns: 'dashboard', defaultValue: 'Balance nette' })}
+          {t('dashboard:widgets.cash_flow_balance')}
         </span>
         <span className="balance-value">
           {isPositive ? '+' : ''}{formatCurrency(balance)}

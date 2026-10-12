@@ -8,14 +8,20 @@ import {
   Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, Typography,
 } from '@mui/material';
 import { CloudOff, CloudSync, ErrorOutline } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { onPendingChange, syncNow, notifyPending } from '../../services/offline/syncEngine';
 import { onConnectivityChange } from '../../services/offline/connectivity';
 import { failedMutations, removeMutation, retryMutation } from '../../services/offline/mutationQueue';
 
+// Codes -> cles de traduction (resolues au rendu)
 const ENTITY_LABEL = {
-  clients: 'Client', suppliers: 'Fournisseur', products: 'Produit', invoices: 'Facture', purchaseOrders: 'Bon de commande',
+  clients: 'offline:entities.clients', suppliers: 'offline:entities.suppliers', products: 'offline:entities.products',
+  invoices: 'offline:entities.invoices', purchaseOrders: 'offline:entities.purchaseOrders',
 };
-const OP_LABEL = { create: 'création', update: 'modification', delete: 'suppression', settle: 'paiement' };
+const OP_LABEL = {
+  create: 'offline:operations.create', update: 'offline:operations.update', delete: 'offline:operations.delete',
+  settle: 'offline:operations.settle',
+};
 
 const bar = (bgcolor, clickable) => ({
   position: 'sticky', top: 0, zIndex: 1300,
@@ -37,13 +43,18 @@ const readableError = (raw) => {
   }
 };
 
-const describe = (m) => {
+const describe = (m, t) => {
   const p = m.payload || {};
   const name = p.name || p.title || p.invoice_number || p.po_number || '';
-  return `${ENTITY_LABEL[m.entity] || m.entity} — ${OP_LABEL[m.op] || m.op}${name ? ` « ${name} »` : ''}`;
+  const entity = ENTITY_LABEL[m.entity] ? t(ENTITY_LABEL[m.entity]) : m.entity;
+  const op = OP_LABEL[m.op] ? t(OP_LABEL[m.op]) : m.op;
+  return name
+    ? t('offline:failedDialog.itemWithName', { entity, op, name })
+    : t('offline:failedDialog.item', { entity, op });
 };
 
 export default function OfflineBanner() {
+  const { t } = useTranslation(['offline', 'common']);
   const [offline, setOffline] = useState(false);
   const [pending, setPending] = useState(0);
   const [failed, setFailed] = useState(0);
@@ -69,26 +80,26 @@ export default function OfflineBanner() {
 
   const dialog = (
     <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
-      <DialogTitle>Enregistrements non envoyés</DialogTitle>
+      <DialogTitle>{t('offline:failedDialog.title')}</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" mb={1}>
-          Saisis hors ligne, ils ont été refusés par le serveur. Corrigez si besoin puis réessayez, ou abandonnez-les.
+          {t('offline:failedDialog.description')}
         </Typography>
         <List dense>
           {failedList.map((m) => (
             <ListItem key={m.mutation_id} disableGutters
               secondaryAction={(
                 <Box display="flex" gap={0.5}>
-                  <Button size="small" onClick={() => act(m, retryMutation)}>Réessayer</Button>
-                  <Button size="small" color="error" onClick={() => act(m, removeMutation)}>Abandonner</Button>
+                  <Button size="small" onClick={() => act(m, retryMutation)}>{t('offline:failedDialog.retry')}</Button>
+                  <Button size="small" color="error" onClick={() => act(m, removeMutation)}>{t('offline:failedDialog.discard')}</Button>
                 </Box>
               )}>
-              <ListItemText sx={{ pr: 22 }} primary={describe(m)} secondary={readableError(m.last_error)} />
+              <ListItemText sx={{ pr: 22 }} primary={describe(m, t)} secondary={readableError(m.last_error)} />
             </ListItem>
           ))}
         </List>
       </DialogContent>
-      <DialogActions><Button onClick={() => setOpen(false)}>Fermer</Button></DialogActions>
+      <DialogActions><Button onClick={() => setOpen(false)}>{t('common:buttons.close')}</Button></DialogActions>
     </Dialog>
   );
 
@@ -98,7 +109,7 @@ export default function OfflineBanner() {
       <Box sx={bar('#5a6478')} role="status">
         <CloudOff sx={{ fontSize: 18 }} />
         <Typography sx={text}>
-          Hors ligne — {pending > 0 ? `${pending} enregistrement${pending > 1 ? 's' : ''} en attente d'envoi` : 'vos saisies sont gardées sur cet appareil'}
+          {pending > 0 ? t('offline:banner.offlinePending', { count: pending }) : t('offline:banner.offlineSaved')}
         </Typography>
       </Box>
     );
@@ -107,7 +118,7 @@ export default function OfflineBanner() {
       <Box sx={bar('#2563eb', true)} onClick={() => syncNow()} role="status">
         <CloudSync sx={{ fontSize: 18 }} />
         <Typography sx={text}>
-          {pending} enregistrement{pending > 1 ? 's' : ''} à envoyer — toucher pour réessayer
+          {t('offline:banner.pending', { count: pending })}
         </Typography>
       </Box>
     );
@@ -116,7 +127,7 @@ export default function OfflineBanner() {
       <Box sx={bar('#b45309', true)} onClick={showFailed} role="status">
         <ErrorOutline sx={{ fontSize: 18 }} />
         <Typography sx={text}>
-          {failed} enregistrement{failed > 1 ? 's' : ''} refusé{failed > 1 ? 's' : ''} par le serveur — voir
+          {t('offline:banner.failed', { count: failed })}
         </Typography>
       </Box>
     );

@@ -3,7 +3,8 @@
   "newClient": "Nouveau client",
   "editClient": "Modifier le client",
   "search": {
-    "placeholder": "Rechercher un client..."
+    "placeholder": "Rechercher un client...",
+    "placeholderFull": "Rechercher un client, un contact, un email..."
   },
   "filters": {
     "active": "Actifs",
@@ -57,7 +58,20 @@
     "lastActivity": "Dernière activité",
     "autoStatusTitle": "Statut automatique",
     "autoStatusDescription": "Le statut du client est calculé automatiquement selon son activité récente.",
-    "manualStatus": "Forcer le statut manuellement"
+    "manualStatus": "Forcer le statut manuellement",
+    "invoiceCount": "{{count}} facture(s)",
+    "autoInactiveSince": "Inactif depuis le",
+    "performance": "Performance",
+    "totalInvoices": "Factures",
+    "totalRevenue": "CA généré",
+    "averageInvoice": "Panier moyen",
+    "uniqueProducts": "Produits",
+    "paymentConditions": "Conditions",
+    "call": "Appeler",
+    "dates": "Dates",
+    "createdAt": "Créé le",
+    "updatedAt": "Modifié le",
+    "notAvailable": "N/A"
   },
   "stats": {
     "totalRevenue": "CA Total",
@@ -78,7 +92,24 @@
   "report": {
     "title": "Générer un Rapport de Clients",
     "itemLabel": "client",
-    "itemsLabel": "clients"
+    "itemsLabel": "clients",
+    "fileName": "rapport-clients-{{timestamp}}.pdf",
+    "viewerTitle": "Rapport clients",
+    "period": "Période (optionnel)",
+    "periodHelp": "Filtrer par période - laisser vide pour tout inclure",
+    "dateStart": "Date de début",
+    "dateEnd": "Date de fin",
+    "itemsToInclude": "Clients à inclure",
+    "selectedCount": "{{count}} client(s) sélectionné(s)",
+    "allIncluded": "Tous les clients filtrés seront inclus",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "summarySelected": "Un rapport sera généré avec {{count}} client(s) sélectionné(s)",
+    "summaryAll": "Un rapport sera généré avec tous les clients ({{count}})",
+    "forPeriod": " pour la période spécifiée",
+    "generate": "Générer le Rapport",
+    "clientFileName": "rapport-client-{{name}}.pdf",
+    "clientViewerTitle": "Rapport {{name}}"
   },
   "buttons": {
     "preview": "Aperçu",
@@ -97,7 +128,8 @@
   "pdf": {
     "title": "Rapport PDF Client",
     "ready": "Le rapport PDF est prêt. Choisissez une action:",
-    "description": "Génération du rapport PDF..."
+    "description": "Génération du rapport PDF...",
+    "generating": "Génération du PDF en cours..."
   },
   "status": {
     "active": "Actif",
@@ -141,7 +173,9 @@
     "printWindowOpened": "Fenêtre d'impression ouverte",
     "pdfError": "Erreur lors de la génération du PDF",
     "pdfDownloaded": "Rapport PDF téléchargé avec succès",
-    "cannotOpenPrintWindow": "Impossible d'ouvrir la fenêtre d'impression"
+    "cannotOpenPrintWindow": "Impossible d'ouvrir la fenêtre d'impression",
+    "loadingErrorDescription": "Impossible de charger les clients. Veuillez réessayer.",
+    "clientNotFoundDescription": "Le client que vous recherchez n'existe pas ou a été supprimé."
   },
   "validation": {
     "nameRequired": "Le nom est requis",
@@ -160,5 +194,47 @@
     "net60": "NET 60 - Paiement sous 60 jours",
     "cash": "CASH - Paiement comptant",
     "discount2_10Net30": "2/10 NET 30 - 2% escompte si payé sous 10 jours, sinon 30 jours"
+  },
+  "kpi": {
+    "revenue": "Chiffre clients",
+    "clientCount": "{{count}} client(s)",
+    "active": "Actifs",
+    "activeSub": "en activité",
+    "vip": "VIP",
+    "vipSub": "+ 10k",
+    "new": "Nouveaux",
+    "newSub": "ce mois",
+    "inactive": "Inactifs",
+    "inactiveSub": "dormants"
+  },
+  "form": {
+    "newClient": "Nouveau client",
+    "editSubtitle": "Modifiez les informations du client",
+    "newSubtitle": "Renseignez les informations essentielles",
+    "identity": "Identité",
+    "tradeName": "Nom commercial",
+    "additionalDetails": "Détails supplémentaires",
+    "taxId": "Numéro de taxe / NEQ",
+    "taxIdHelp": "Numéro d'entreprise ou identifiant fiscal",
+    "saving": "Enregistrement...",
+    "createClient": "Créer le client",
+    "validation": {
+      "nameRequired": "Nom requis"
+    },
+    "paymentTermOptions": {
+      "cash": "Comptant",
+      "net15": "Net 15 jours",
+      "net30": "Net 30 jours",
+      "net45": "Net 45 jours",
+      "net60": "Net 60 jours",
+      "discount2_10Net30": "2% 10 jours, Net 30"
+    }
+  },
+  "statistics": {
+    "title": "Statistiques client",
+    "totalInvoices": "Total factures",
+    "revenue": "Chiffre d'affaires",
+    "paidAmount": "Montant payé",
+    "outstanding": "En attente"
   }
 }

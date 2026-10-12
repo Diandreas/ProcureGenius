@@ -44,7 +44,7 @@ export default function TermsOfService() {
                 <GavelIcon sx={{ color: accentColor, fontSize: 28 }} />
               </Box>
               <Chip
-                label="Document légal"
+                label={t('public:terms.legalBadge')}
                 size="small"
                 sx={{ bgcolor: `${accentColor}12`, color: accentColor, fontWeight: 600, fontSize: '0.75rem', border: `1px solid ${accentColor}30` }}
               />
@@ -125,10 +125,10 @@ export default function TermsOfService() {
             textAlign: 'center',
           }}>
             <Typography sx={{ color: isDark ? '#93c5fd' : accentColor, fontSize: '0.88rem', fontWeight: 600, mb: 0.5 }}>
-              Des questions sur ces conditions ?
+              {t('public:terms.footer.questions')}
             </Typography>
             <Typography sx={{ color: textColor, fontSize: '0.85rem' }}>
-              Contactez-nous à <strong>legal@procuregenius.com</strong>
+              {t('public:terms.footer.contactUs')} <strong>legal@procuregenius.com</strong>
             </Typography>
           </Box>
 

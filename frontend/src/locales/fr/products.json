@@ -3,7 +3,8 @@
   "newProduct": "Nouveau produit",
   "editProduct": "Modifier le produit",
   "search": {
-    "placeholder": "Rechercher un produit..."
+    "placeholder": "Rechercher un produit...",
+    "placeholderWithRef": "Rechercher un produit, une référence..."
   },
   "filters": {
     "inStock": "En stock",
@@ -16,14 +17,16 @@
     "categoryLabel": "Catégorie",
     "warehouseLabel": "Entrepôt",
     "allCategories": "Toutes",
-    "allWarehouses": "Tous"
+    "allWarehouses": "Tous",
+    "categoryShort": "Catégorie"
   },
   "tabs": {
     "info": "Infos",
     "invoices": "Factures",
     "clients": "Clients",
     "movements": "Mouvements",
-    "stock": "Stock"
+    "stock": "Stock",
+    "batches": "Lots"
   },
   "labels": {
     "description": "Description",
@@ -77,7 +80,9 @@
     "optional": "Optionnel",
     "advancedDetails": "Détails avancés",
     "stockManagement": "Gestion de stock",
-    "noSupplier": "Aucun fournisseur"
+    "noSupplier": "Aucun fournisseur",
+    "noEmail": "Aucun email",
+    "noDescription": "Aucune description"
   },
   "table": {
     "invoiceNumber": "N° Facture",
@@ -115,7 +120,11 @@
   },
   "pdf": {
     "title": "Rapport PDF Produit",
-    "description": "Génération du rapport PDF..."
+    "description": "Génération du rapport PDF...",
+    "generating": "Génération du PDF en cours...",
+    "ready": "Le rapport PDF est prêt. Choisissez une action:",
+    "fileName": "rapport-produit",
+    "previewTitle": "Rapport {{name}}"
   },
   "status": {
     "available": "Disponible",
@@ -170,7 +179,23 @@
     "categoryUpdated": "Catégorie modifiée avec succès",
     "categoryDeleted": "Catégorie supprimée avec succès",
     "categoryDeleteError": "Erreur lors de la suppression de la catégorie",
-    "deleteCategoryConfirm": "Êtes-vous sûr de vouloir supprimer cette catégorie ?"
+    "deleteCategoryConfirm": "Êtes-vous sûr de vouloir supprimer cette catégorie ?",
+    "loadingErrorDescription": "Impossible de charger les produits. Veuillez réessayer.",
+    "loadingProduct": "Chargement du produit...",
+    "pdfError": "Erreur lors de la génération du PDF",
+    "pdfDownloaded": "Rapport PDF téléchargé avec succès",
+    "cannotOpenPrintWindow": "Impossible d'ouvrir la fenêtre d'impression",
+    "productNotFoundDescription": "Le produit que vous recherchez n'existe pas ou a été supprimé.",
+    "warehousesLoadError": "Erreur lors du chargement des entrepôts",
+    "clickAddToCreateFirstSupplier": "Cliquez sur « Ajouter » pour créer votre premier fournisseur",
+    "clickAddToCreateFirstWarehouse": "Cliquez sur « Ajouter » pour créer votre premier entrepôt",
+    "clickAddToCreateFirstCategory": "Cliquez sur « Ajouter » pour créer votre première catégorie",
+    "editWarehouseDescription": "Modifiez les informations de l'entrepôt",
+    "createWarehouseDescription": "Ajoutez un nouvel entrepôt pour stocker vos produits",
+    "uniqueCode": "Code unique pour identifier l'entrepôt",
+    "uncategorizedProduct": "Produit sans catégorie",
+    "editCategoryDescription": "Modifiez les informations de la catégorie",
+    "createCategoryDescription": "Ajoutez une nouvelle catégorie pour organiser vos produits"
   },
   "actions": {
     "cancel": "Annuler",
@@ -179,12 +204,30 @@
     "change": "Changer",
     "add": "Ajouter",
     "save": "Enregistrer",
-    "generateReport": "Rapport PDF"
+    "generateReport": "Rapport PDF",
+    "more": "Plus"
   },
   "report": {
     "title": "Générer un Rapport de Produits",
     "itemLabel": "produit",
-    "itemsLabel": "produits"
+    "itemsLabel": "produits",
+    "period": "Période (optionnel)",
+    "periodHelp": "Filtrer par période - laisser vide pour tout inclure",
+    "dateStart": "Date de début",
+    "dateEnd": "Date de fin",
+    "productsToInclude": "Produits à inclure",
+    "selectedCount_one": "{{count}} produit sélectionné",
+    "selectedCount_other": "{{count}} produits sélectionnés",
+    "allIncluded": "Tous les produits filtrés seront inclus",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "summarySelected_one": "Un rapport sera généré avec {{count}} produit sélectionné",
+    "summarySelected_other": "Un rapport sera généré avec {{count}} produits sélectionnés",
+    "summaryAll": "Un rapport sera généré avec tous les produits ({{count}})",
+    "forPeriod": " pour la période spécifiée",
+    "generate": "Générer le Rapport",
+    "fileName": "rapport-produits",
+    "previewTitle": "Rapport produits"
   },
   "buttons": {
     "preview": "Aperçu",
@@ -205,7 +248,8 @@
     "stockNegative": "Le stock ne peut pas être négatif",
     "stockRequired": "Le stock est requis",
     "thresholdNegative": "Le seuil ne peut pas être négatif",
-    "thresholdRequired": "Requis"
+    "thresholdRequired": "Requis",
+    "batchNumberRequired": "Numéro de lot requis"
   },
   "modals": {
     "selectSupplier": "Sélectionner un fournisseur",
@@ -229,7 +273,13 @@
     "categoryDescription": "Description",
     "categoryDescriptionHelper": "Description optionnelle de la catégorie",
     "newCategory": "Nouvelle catégorie",
-    "editCategory": "Modifier la catégorie"
+    "editCategory": "Modifier la catégorie",
+    "selectSupplierSubtitle": "Choisissez un fournisseur pour ce produit",
+    "manageWarehousesSubtitle": "Sélectionnez ou gérez vos entrepôts",
+    "manageCategoriesSubtitle": "Organisez vos produits par catégories",
+    "warehouseProvince": "Province / Région",
+    "warehousePostalCode": "Code postal",
+    "warehouseCountry": "Pays"
   },
   "warehouseMode": {
     "activate": "Activer le mode entrepôt",
@@ -259,6 +309,162 @@
       "soon": "À recommander",
       "ok": "Stock suffisant",
       "idle": "Sans vente"
+    },
+    "periodDay": "Aujourd'hui",
+    "periodWeek": "7 jours",
+    "periodMonth": "30 jours",
+    "periodQuarter": "90 jours",
+    "periodLabel": "Période d'analyse des ventes",
+    "sold": "Qté vendue",
+    "sampleProduct": "Produit exemple"
+  },
+  "stockTools": {
+    "button": "Stock",
+    "scan": "Scanner un produit",
+    "inventory": "Inventaire",
+    "reception": "Réception de marchandise",
+    "labels": "Étiquettes QR"
+  },
+  "card": {
+    "service": "Service",
+    "inStockCount_one": "{{count}} en stock",
+    "inStockCount_other": "{{count}} en stock"
+  },
+  "kpis": {
+    "products": "Produits",
+    "productsSub": "au catalogue",
+    "inStockSub": "disponibles",
+    "lowStockSub": "à surveiller",
+    "outOfStockSub": "à réapprovisionner",
+    "servicesSub": "non stockés"
+  },
+  "statistics": {
+    "title": "Statistiques de vente",
+    "invoices": "Factures",
+    "totalSales": "Total des ventes",
+    "uniqueClients": "Clients uniques",
+    "lastSale": "Dernière vente",
+    "noSales": "Aucune vente"
+  },
+  "marginsPage": {
+    "loadError": "Erreur lors du chargement des marges.",
+    "title": "Marges & bénéfice brut",
+    "subtitle": "Calculé automatiquement : ventes − prix d'achat de vos produits.",
+    "periods": {
+      "month": "Ce mois",
+      "quarter": "3 mois",
+      "year": "Année",
+      "all": "Tout"
+    },
+    "addExpenses": "Ajouter mes charges →",
+    "revenue": "Chiffre d'affaires",
+    "productsSold_one": "{{count}} produit vendu",
+    "productsSold_other": "{{count}} produits vendus",
+    "cogs": "Coût d'achat (CMV)",
+    "grossProfit": "Bénéfice brut",
+    "marginRate": "Taux de marge",
+    "fillCostPrices": "Renseigner les prix d'achat →",
+    "missingCostWarning_one": "{{count}} produit n'a pas de prix d'achat renseigné : son bénéfice brut est surévalué. Renseignez le prix d'achat dans la fiche produit pour un calcul fiable.",
+    "missingCostWarning_other": "{{count}} produits n'ont pas de prix d'achat renseigné : leur bénéfice brut est surévalué. Renseignez le prix d'achat dans la fiche produit pour un calcul fiable.",
+    "columns": {
+      "product": "Produit",
+      "costPrice": "Prix d'achat",
+      "sold": "Vendus",
+      "revenue": "CA",
+      "margin": "Marge"
+    },
+    "emptyTitle": "Pas encore de marges à afficher",
+    "emptyDescription": "Les marges se calculent à partir de vos ventes et du <strong>prix d'achat</strong> de vos produits. Renseignez le prix d'achat sur vos fiches produit pour commencer.",
+    "goToProducts": "Aller à mes produits",
+    "costMissing": "Prix d'achat manquant",
+    "costMissingChip": "prix d'achat ?"
+  },
+  "typeLabels": {
+    "physical": "Physique",
+    "service": "Service",
+    "digital": "Digital"
+  },
+  "detail": {
+    "sellingPriceCaption": "prix de vente",
+    "information": "Informations",
+    "cost": "Coût",
+    "margin": "Marge",
+    "performance": "Performance",
+    "revenueGenerated": "CA généré",
+    "units": "unités"
+  },
+  "form": {
+    "lotsCreated_one": "{{count}} lot initial créé",
+    "lotsCreated_other": "{{count}} lots initiaux créés",
+    "lotsCreateError": "Erreur lors de la création des lots initiaux",
+    "stepOf": "Étape {{current}}/{{total}}",
+    "generalInfoSubtitle": "Type, nom et description",
+    "pricingSubtitle": "Prix de vente, coût et catégorie",
+    "categoryCreateErrorShort": "Erreur création catégorie",
+    "createOption": "Créer \"{{value}}\"",
+    "categoryPlaceholder": "Tapez pour chercher ou créer...",
+    "lotsTitle": "Lots & Stock Initial",
+    "lotsSubtitle": "Définissez le stock de départ par lot",
+    "lotsInfo": "Le stock est désormais géré exclusivement par lots. Ajoutez un ou plusieurs lots initiaux pour définir le stock de départ.",
+    "noInitialLot": "Aucun lot initial défini",
+    "addInitialLot": "Ajouter un lot initial",
+    "removeLot": "Supprimer ce lot",
+    "batchNumber": "Numéro de lot",
+    "initialQuantity": "Quantité initiale",
+    "expirationDate": "Date d'expiration",
+    "supplierReference": "Référence fournisseur",
+    "lotDescription": "Description du lot",
+    "lotDescriptionPlaceholder": "Description spécifique à ce lot (optionnel)",
+    "addAnotherLot": "Ajouter un autre lot",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
+  "steps": {
+    "info": "Informations",
+    "pricing": "Tarification",
+    "lots": "Lots & Stock"
+  },
+  "quickCreate": {
+    "common": {
+      "contactPerson": "Personne de contact",
+      "email": "Email",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "city": "Ville",
+      "description": "Description"
+    },
+    "client": {
+      "name": "Nom du client *"
+    },
+    "supplier": {
+      "name": "Nom du fournisseur *"
+    },
+    "service": {
+      "name": "Nom du service *",
+      "price": "Tarif *",
+      "costPrice": "Coût (optionnel)"
+    },
+    "product": {
+      "name": "Nom du produit *",
+      "type": "Type *",
+      "types": {
+        "physical": "Produit physique",
+        "service": "Service",
+        "digital": "Produit numérique"
+      },
+      "source": "Source *",
+      "sources": {
+        "purchased": "Acheté (fournisseur)",
+        "manufactured": "Fabriqué (maison)",
+        "resale": "Revente"
+      },
+      "supplier": "Fournisseur",
+      "noSupplier": "Aucun",
+      "supplierHelper": "Requis si source = Acheté",
+      "price": "Prix de vente *",
+      "costPrice": "Prix d'achat",
+      "initialStock": "Stock initial",
+      "initialStockHelper": "Pour produits physiques"
     }
   }
 }

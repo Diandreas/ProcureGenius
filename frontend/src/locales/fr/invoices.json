@@ -21,10 +21,13 @@
     "allInvoices": "Toutes",
     "activeFilter": "Filtre actif:",
     "statusLabel": "Statut",
-    "dateFilter": "Filtre par date"
+    "dateFilter": "Filtre par date",
+    "chipStatus": "Filtre : {{label}}",
+    "chipDate": "Date : {{date}}"
   },
   "search": {
-    "placeholder": "Rechercher une facture..."
+    "placeholder": "Rechercher une facture...",
+    "placeholderFull": "Rechercher une facture, un client..."
   },
   "messages": {
     "loading": "Chargement des factures...",
@@ -71,7 +74,16 @@
     "sending": "Envoi...",
     "priceFixedFromCatalog": "Prix fixé par le catalogue",
     "priceEditableByProduct": "Prix modifiable à la facturation",
-    "servicePriceOnQuote": "Prix libre — à définir ici"
+    "servicePriceOnQuote": "Prix libre — à définir ici",
+    "invoiceNotFoundDescription": "La facture que vous recherchez n'existe pas ou a été supprimée.",
+    "demoPrefilled": "Votre facture de la démo est pré-remplie : vérifiez-la puis enregistrez",
+    "offlineSaved": "Hors ligne : facture enregistrée sur cet appareil, elle partira dès le retour du réseau",
+    "contractPreselected": "Contrat {{title}} présélectionné",
+    "quoteConverted": "Devis converti en facture.",
+    "quoteConvertError": "Erreur lors de la conversion du devis.",
+    "loadingErrorDescription": "Impossible de charger les factures. Veuillez réessayer.",
+    "noProductsCreateOne": "Aucun produit. Créez-en un avec le bouton +.",
+    "batchRequired": "Veuillez sélectionner un lot pour ce produit"
   },
   "actions": {
     "generateReport": "Rapport PDF"
@@ -79,7 +91,21 @@
   "report": {
     "title": "Générer un Rapport de Factures",
     "itemLabel": "facture",
-    "itemsLabel": "factures"
+    "itemsLabel": "factures",
+    "fileName": "rapport-factures-{{timestamp}}.pdf",
+    "period": "Période (optionnel)",
+    "periodHelp": "Filtrer par période - laisser vide pour tout inclure",
+    "dateStart": "Date de début",
+    "dateEnd": "Date de fin",
+    "itemsToInclude": "Factures à inclure",
+    "selectedCount": "{{count}} facture(s) sélectionnée(s)",
+    "allIncluded": "Toutes les factures filtrées seront incluses",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "summarySelected": "Un rapport sera généré avec {{count}} facture(s) sélectionnée(s)",
+    "summaryAll": "Un rapport sera généré avec toutes les factures ({{count}})",
+    "forPeriod": " pour la période spécifiée",
+    "generate": "Générer le Rapport"
   },
   "labels": {
     "dueDate": "Échéance:",
@@ -135,7 +161,16 @@
     "unitPriceExclTax": "Prix unitaire HT",
     "lineTotal": "Total ligne",
     "contract": "Contrat",
-    "reference": "Réf."
+    "reference": "Réf.",
+    "sending": "Envoi...",
+    "notAvailable": "N/A",
+    "items": "Articles",
+    "statusAndPayment": "Statut & paiement",
+    "contractAssociated": "Contrat associé",
+    "invoiceFallback": "Facture",
+    "dueOn": "Échéance {{date}}",
+    "batchOption": "{{batch}} {{warehouse}} - Exp: {{expiration}}, Qté: {{quantity}}",
+    "selectBatchRequired": "Sélectionner un lot *"
   },
   "buttons": {
     "generatePdf": "Générer PDF",
@@ -152,7 +187,11 @@
     "print": "Imprimer",
     "download": "Télécharger",
     "save": "Enregistrer",
-    "sendEmail": "Envoyer par email"
+    "sendEmail": "Envoyer par email",
+    "viewContract": "Voir le contrat",
+    "convertToInvoice": "Convertir en facture",
+    "import": "Importer",
+    "newProduct": "Nouveau produit"
   },
   "columns": {
     "reference": "Référence",
@@ -186,8 +225,11 @@
       "defaultMessage": "Bonjour {{name}},\n\nVeuillez trouver ci-joint votre facture {{number}}.\n\nLe PDF de votre facture est joint à cet email.\n\nPour toute question, n'hésitez pas à nous contacter.\n\nCordialement",
       "send": "Envoyer",
       "pdfAttachment": "La facture sera envoyée en PDF en pièce jointe.",
-      "invoiceDetails": "Détails de la facture"
-    }
+      "invoiceDetails": "Détails de la facture",
+      "defaultSubject": "Facture {{number}} - ProcureGenius"
+    },
+    "quickCreateService": "Nouveau service",
+    "editItem": "Modifier l'article"
   },
   "fields": {
     "paymentDate": "Date de paiement",
@@ -198,7 +240,9 @@
     "productReference": "Référence produit",
     "invoiceTemplate": "Modèle de facture",
     "issueDate": "Date d'émission",
-    "selectClient": "Sélectionner un client"
+    "selectClient": "Sélectionner un client",
+    "linkContract": "Lier à un contrat",
+    "selectContract": "Sélectionner un contrat"
   },
   "templates": {
     "classic": "Classique",
@@ -223,5 +267,119 @@
     "valuePercent": "Remise (%)",
     "valueAmount": "Remise (montant)",
     "applied": "Remise appliquée"
+  },
+  "offlinePdf": {
+    "title": "FACTURE",
+    "draftTag": "VERSION RAPIDE — brouillon hors-ligne, non synchronisé",
+    "number": "N° {{number}}",
+    "date": "Date : {{date}}",
+    "dueDate": "Échéance : {{date}}",
+    "status": "Statut : {{status}}",
+    "billedTo": "Facturé à",
+    "description": "Description",
+    "qty": "Qté",
+    "unitPrice": "P.U.",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "taxes": "Taxes",
+    "grandTotal": "TOTAL",
+    "draftFooter": "Document provisoire généré hors-ligne. Le numéro définitif sera attribué à la synchronisation.",
+    "thanks": "Merci de votre confiance."
+  },
+  "paymentMethodLabels": {
+    "cash": "Espèces",
+    "orange_money": "Orange Money",
+    "mtn_momo": "MTN Mobile Money",
+    "wave": "Wave",
+    "mobile_money": "Mobile Money (autre)",
+    "bank_transfer": "Virement bancaire",
+    "check": "Chèque",
+    "credit_card": "Carte bancaire",
+    "other": "Autre",
+    "card": "Carte bancaire",
+    "transfer": "Virement bancaire",
+    "cheque": "Chèque",
+    "interac": "Interac",
+    "paypal": "PayPal"
+  },
+  "form": {
+    "demoTitle": "Facture {{name}}",
+    "hideOptions": "Masquer les options",
+    "moreOptions": "Plus d'options (titre, dates, taxe, remise…)"
+  },
+  "pdf": {
+    "fileName": "facture-{{number}}.pdf",
+    "viewerTitle": "Facture {{number}}"
+  },
+  "payments": {
+    "invalidAmount": "Montant invalide",
+    "saved": "Paiement enregistré",
+    "saveError": "Erreur lors de l'enregistrement",
+    "deleteConfirm": "Supprimer ce paiement ?",
+    "deleted": "Paiement supprimé",
+    "addPayment": "Ajouter un paiement",
+    "received": "Paiements reçus",
+    "total": "Total",
+    "paid": "Payé",
+    "balance": "Solde",
+    "none": "Aucun paiement enregistré",
+    "invoiceTotal": "Total facture",
+    "alreadyPaid": "Déjà payé",
+    "remainingBalance": "Solde restant",
+    "columns": {
+      "date": "Date",
+      "method": "Méthode",
+      "reference": "Réf.",
+      "amount": "Montant"
+    },
+    "deleteTooltip": "Supprimer ce paiement",
+    "deleteLocked": "Suppression impossible après 30 min",
+    "dialogTitle": "Enregistrer un paiement",
+    "remainingToPay": "Solde restant à payer :",
+    "amount": "Montant",
+    "maxAmount": "Max : {{amount}}",
+    "paymentDate": "Date du paiement",
+    "referenceNumber": "Numéro de référence",
+    "referencePlaceholder": "N° chèque, confirmation virement...",
+    "optional": "Optionnel",
+    "notesPlaceholder": "Notes internes...",
+    "save": "Enregistrer le paiement"
+  },
+  "kpi": {
+    "total": "Total facture",
+    "invoiceCount": "{{count}} facture(s)",
+    "paid": "Payées",
+    "paidSub": "encaissées",
+    "unpaid": "Impayees",
+    "unpaidSub": "envoyees",
+    "overdue": "En retard",
+    "overdueSub": "à relancer",
+    "drafts": "Brouillons",
+    "draftsSub": "a finaliser"
+  },
+  "smartUpload": {
+    "invalidFile": "Veuillez glisser un fichier PDF ou image (PNG, JPG)",
+    "analysisError": "Erreur lors de l'analyse du document",
+    "analyzing": "Analyse en cours...",
+    "extracting": "L'IA extrait toutes les informations",
+    "done": "Analyse terminée !",
+    "invoice": "Facture: {{number}}",
+    "amount": "Montant: {{amount}}",
+    "redirecting": "Redirection vers le formulaire pré-rempli...",
+    "dropHere": "Glissez votre facture PDF ici",
+    "dropHelp": "L'IA analysera et pré-remplira automatiquement le formulaire",
+    "clickToSelect": "Ou cliquez pour sélectionner",
+    "extractedData": "Données extraites",
+    "client": "Client:",
+    "invoiceNumber": "N° Facture:",
+    "date": "Date:",
+    "total": "Total:",
+    "items": "Articles:"
+  },
+  "pdfViewer": {
+    "close": "Fermer",
+    "share": "Partager",
+    "download": "Télécharger",
+    "loadError": "Impossible d'afficher le PDF."
   }
 }

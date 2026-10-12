@@ -38,17 +38,13 @@ import { productsAPI } from '../services/api';
 import { formatDate } from '../utils/formatters';
 import useCurrency from '../hooks/useCurrency';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
-const LOSS_REASONS = [
-  { value: 'damaged', label: 'Produit endommagé' },
-  { value: 'expired', label: 'Produit périmé' },
-  { value: 'stolen', label: 'Vol' },
-  { value: 'lost', label: 'Perte/Égarement' },
-  { value: 'quality_issue', label: 'Problème de qualité' },
-  { value: 'other', label: 'Autre raison' },
-];
+// Codes stables ; libellés traduits à l'affichage (stock:movements.lossReasons.*)
+const LOSS_REASONS = ['damaged', 'expired', 'stolen', 'lost', 'quality_issue', 'other'];
 
 function StockMovementsTab({ productId, productType }) {
+  const { t } = useTranslation(['stock']);
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -75,7 +71,7 @@ function StockMovementsTab({ productId, productType }) {
       setMovements(response.data.results || response.data);
       setError(null);
     } catch (err) {
-      setError('Erreur lors du chargement de l\'historique');
+      setError(t('stock:movements.loadError'));
       console.error('Error fetching stock movements:', err);
     } finally {
       setLoading(false);
@@ -86,7 +82,7 @@ function StockMovementsTab({ productId, productType }) {
     const quantity = parseInt(adjustQuantity);
 
     if (isNaN(quantity) || quantity === 0) {
-      enqueueSnackbar('Quantité invalide', { variant: 'error' });
+      enqueueSnackbar(t('stock:movements.invalidQuantityShort'), { variant: 'error' });
       return;
     }
 
@@ -96,13 +92,13 @@ function StockMovementsTab({ productId, productType }) {
         notes: adjustNotes,
       });
 
-      enqueueSnackbar('Stock ajusté avec succès', { variant: 'success' });
+      enqueueSnackbar(t('stock:movements.adjustedSuccess'), { variant: 'success' });
       setAdjustDialogOpen(false);
       setAdjustQuantity('');
       setAdjustNotes('');
       fetchMovements();
     } catch (err) {
-      enqueueSnackbar('Erreur lors de l\'ajustement du stock', { variant: 'error' });
+      enqueueSnackbar(t('stock:movements.adjustError'), { variant: 'error' });
     }
   };
 
@@ -110,12 +106,12 @@ function StockMovementsTab({ productId, productType }) {
     const quantity = parseInt(lossQuantity);
 
     if (isNaN(quantity) || quantity <= 0) {
-      enqueueSnackbar('Quantité invalide', { variant: 'error' });
+      enqueueSnackbar(t('stock:movements.invalidQuantityShort'), { variant: 'error' });
       return;
     }
 
     if (!lossReason) {
-      enqueueSnackbar('Raison de la perte requise', { variant: 'error' });
+      enqueueSnackbar(t('stock:movements.lossReasonRequired'), { variant: 'error' });
       return;
     }
 
@@ -128,7 +124,7 @@ function StockMovementsTab({ productId, productType }) {
       });
 
       enqueueSnackbar(
-        `Perte déclarée. Valeur: ${formatCurrency(response.data.loss_value)}`,
+        t('stock:movements.lossReported', { value: formatCurrency(response.data.loss_value) }),
         { variant: 'warning' }
       );
       setLossDialogOpen(false);
@@ -138,7 +134,7 @@ function StockMovementsTab({ productId, productType }) {
       setLossNotes('');
       fetchMovements();
     } catch (err) {
-      enqueueSnackbar(err.response?.data?.error || 'Erreur lors de la déclaration de perte', { variant: 'error' });
+      enqueueSnackbar(err.response?.data?.error || t('stock:movements.lossError'), { variant: 'error' });
     }
   };
 
@@ -171,7 +167,7 @@ function StockMovementsTab({ productId, productType }) {
     return (
       <Box p={3}>
         <Alert severity="info">
-          L'historique des mouvements de stock n'est disponible que pour les produits physiques.
+          {t('stock:movements.physicalOnly')}
         </Alert>
       </Box>
     );
@@ -202,34 +198,34 @@ function StockMovementsTab({ productId, productType }) {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} p={2}>
-        <Typography variant="h6">Historique des mouvements de stock</Typography>
+        <Typography variant="h6">{t('stock:movements.historyFull')}</Typography>
         <ButtonGroup variant="contained">
           <Button startIcon={<EditIcon />} onClick={() => setAdjustDialogOpen(true)}>
-            Ajuster
+            {t('stock:movements.adjust')}
           </Button>
           <Button startIcon={<ReportProblem />} color="error" onClick={() => setLossDialogOpen(true)}>
-            Déclarer perte
+            {t('stock:movements.reportLossButton')}
           </Button>
         </ButtonGroup>
       </Box>
 
       {movements.length === 0 ? (
         <Box p={3}>
-          <Alert severity="info">Aucun mouvement de stock enregistré</Alert>
+          <Alert severity="info">{t('stock:movements.empty')}</Alert>
         </Box>
       ) : (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell align="center">Mouvement</TableCell>
-                <TableCell align="right">Avant</TableCell>
-                <TableCell align="right">Après</TableCell>
-                <TableCell>Référence/Raison</TableCell>
-                <TableCell>Utilisateur</TableCell>
-                <TableCell>Notes</TableCell>
+                <TableCell>{t('stock:movements.columns.date')}</TableCell>
+                <TableCell>{t('stock:movements.columns.type')}</TableCell>
+                <TableCell align="center">{t('stock:movements.columns.movement')}</TableCell>
+                <TableCell align="right">{t('stock:movements.columns.before')}</TableCell>
+                <TableCell align="right">{t('stock:movements.columns.after')}</TableCell>
+                <TableCell>{t('stock:movements.columns.referenceReason')}</TableCell>
+                <TableCell>{t('stock:movements.columns.user')}</TableCell>
+                <TableCell>{t('stock:movements.columns.notes')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -279,7 +275,7 @@ function StockMovementsTab({ productId, productType }) {
                         )}
                         {movement.loss_value > 0 && (
                           <Typography variant="caption" display="block" color="error.main">
-                            Valeur: {formatCurrency(movement.loss_value)}
+                            {t('stock:movements.lossValue', { value: formatCurrency(movement.loss_value) })}
                           </Typography>
                         )}
                       </Box>
@@ -317,84 +313,84 @@ function StockMovementsTab({ productId, productType }) {
 
       {/* Dialog d'ajustement de stock */}
       <Dialog open={adjustDialogOpen} onClose={() => setAdjustDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Ajuster le stock</DialogTitle>
+        <DialogTitle>{t('stock:movements.adjustTitle')}</DialogTitle>
         <DialogContent>
           <Box pt={1} display="flex" flexDirection="column" gap={2}>
             <Alert severity="info">
-              Entrez une quantité positive pour ajouter du stock ou négative pour en retirer.
+              {t('stock:movements.adjustHelp')}
             </Alert>
             <TextField
-              label="Quantité"
+              label={t('stock:movements.quantity')}
               type="number"
               value={adjustQuantity}
               onChange={(e) => setAdjustQuantity(e.target.value)}
-              placeholder="Ex: +10 ou -5"
+              placeholder={t('stock:movements.adjustPlaceholder')}
               fullWidth
               autoFocus
             />
             <TextField
-              label="Notes (optionnel)"
+              label={t('stock:movements.notesOptional')}
               value={adjustNotes}
               onChange={(e) => setAdjustNotes(e.target.value)}
               multiline
               rows={3}
               fullWidth
-              placeholder="Raison de l'ajustement..."
+              placeholder={t('stock:movements.adjustReasonPlaceholder')}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAdjustDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setAdjustDialogOpen(false)}>{t('stock:common.cancel')}</Button>
           <Button onClick={handleAdjustStock} variant="contained" disabled={!adjustQuantity}>
-            Ajuster
+            {t('stock:movements.adjust')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Dialog de déclaration de perte */}
       <Dialog open={lossDialogOpen} onClose={() => setLossDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Déclarer une perte de stock</DialogTitle>
+        <DialogTitle>{t('stock:movements.lossTitle')}</DialogTitle>
         <DialogContent>
           <Box pt={1} display="flex" flexDirection="column" gap={2}>
             <Alert severity="warning">
-              Cette action enregistrera une perte de stock avec traçabilité complète.
+              {t('stock:movements.lossWarning')}
             </Alert>
             <TextField
-              label="Quantité perdue"
+              label={t('stock:movements.lossQuantity')}
               type="number"
               value={lossQuantity}
               onChange={(e) => setLossQuantity(e.target.value)}
-              placeholder="Ex: 5"
+              placeholder={t('stock:movements.lossQuantityPlaceholder')}
               fullWidth
               autoFocus
               required
             />
             <FormControl fullWidth required>
-              <InputLabel>Raison de la perte</InputLabel>
+              <InputLabel>{t('stock:movements.lossReason')}</InputLabel>
               <Select
                 value={lossReason}
                 onChange={(e) => setLossReason(e.target.value)}
-                label="Raison de la perte"
+                label={t('stock:movements.lossReason')}
               >
                 {LOSS_REASONS.map((reason) => (
-                  <MenuItem key={reason.value} value={reason.value}>
-                    {reason.label}
+                  <MenuItem key={reason} value={reason}>
+                    {t(`stock:movements.lossReasons.${reason}`)}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <TextField
-              label="Description détaillée"
+              label={t('stock:movements.lossDescription')}
               value={lossDescription}
               onChange={(e) => setLossDescription(e.target.value)}
               multiline
               rows={3}
               fullWidth
-              placeholder="Décrivez les circonstances de la perte..."
+              placeholder={t('stock:movements.lossDescriptionPlaceholder')}
               required
             />
             <TextField
-              label="Notes additionnelles (optionnel)"
+              label={t('stock:movements.additionalNotes')}
               value={lossNotes}
               onChange={(e) => setLossNotes(e.target.value)}
               multiline
@@ -404,14 +400,14 @@ function StockMovementsTab({ productId, productType }) {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setLossDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setLossDialogOpen(false)}>{t('stock:common.cancel')}</Button>
           <Button
             onClick={handleReportLoss}
             variant="contained"
             color="error"
             disabled={!lossQuantity || !lossReason || !lossDescription}
           >
-            Déclarer la perte
+            {t('stock:movements.reportLossSubmit')}
           </Button>
         </DialogActions>
       </Dialog>

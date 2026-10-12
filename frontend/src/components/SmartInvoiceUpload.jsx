@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Box, Paper, Typography, Button, CircularProgress, Alert } from '@mui/material';
 import { CloudUpload, CheckCircle } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../services/api';
 import useCurrency from '../hooks/useCurrency';
 
 const SmartInvoiceUpload = () => {
+  const { t } = useTranslation(['invoices', 'common']);
   const { format: fmt } = useCurrency();
   const [dragging, setDragging] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -19,7 +21,7 @@ const SmartInvoiceUpload = () => {
 
     const file = e.dataTransfer.files[0];
     if (!file || !file.name.match(/\.(pdf|png|jpg|jpeg)$/i)) {
-      setError('Veuillez glisser un fichier PDF ou image (PNG, JPG)');
+      setError(t('invoices:smartUpload.invalidFile'));
       return;
     }
 
@@ -57,11 +59,11 @@ const SmartInvoiceUpload = () => {
           }, 1500);
         }
       } else {
-        setError('Erreur lors de l\'analyse du document');
+        setError(t('invoices:smartUpload.analysisError'));
       }
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err.response?.data?.error || 'Erreur lors de l\'analyse du document');
+      setError(err.response?.data?.error || t('invoices:smartUpload.analysisError'));
     } finally {
       setAnalyzing(false);
     }
@@ -89,36 +91,36 @@ const SmartInvoiceUpload = () => {
           <Box>
             <CircularProgress size={60} />
             <Typography variant="h6" mt={2}>
-              Analyse en cours...
+              {t('invoices:smartUpload.analyzing')}
             </Typography>
             <Typography variant="body2" color="text.secondary" mt={1}>
-              L'IA extrait toutes les informations
+              {t('invoices:smartUpload.extracting')}
             </Typography>
           </Box>
         ) : extractedData ? (
           <Box>
             <CheckCircle color="success" sx={{ fontSize: 60 }} />
             <Typography variant="h6" mt={2} color="success.main">
-              Analyse terminée !
+              {t('invoices:smartUpload.done')}
             </Typography>
             <Typography variant="body2" mt={1}>
-              Facture: {extractedData.invoice_number || 'N/A'}
+              {t('invoices:smartUpload.invoice', { number: extractedData.invoice_number || t('invoices:labels.notAvailable') })}
             </Typography>
             <Typography variant="body2">
-              Montant: {fmt(extractedData.total || 0)}
+              {t('invoices:smartUpload.amount', { amount: fmt(extractedData.total || 0) })}
             </Typography>
             <Typography variant="caption" display="block" mt={2} color="text.secondary">
-              Redirection vers le formulaire pré-rempli...
+              {t('invoices:smartUpload.redirecting')}
             </Typography>
           </Box>
         ) : (
           <Box>
             <CloudUpload sx={{ fontSize: 80, color: 'primary.main', mb: 2 }} />
             <Typography variant="h5" gutterBottom fontWeight={600}>
-              Glissez votre facture PDF ici
+              {t('invoices:smartUpload.dropHere')}
             </Typography>
             <Typography variant="body2" color="text.secondary" mb={3}>
-              L'IA analysera et pré-remplira automatiquement le formulaire
+              {t('invoices:smartUpload.dropHelp')}
             </Typography>
 
             <input
@@ -130,7 +132,7 @@ const SmartInvoiceUpload = () => {
             />
             <label htmlFor="file-input">
               <Button variant="contained" component="span" size="large">
-                Ou cliquez pour sélectionner
+                {t('invoices:smartUpload.clickToSelect')}
               </Button>
             </label>
           </Box>
@@ -146,23 +148,23 @@ const SmartInvoiceUpload = () => {
       {extractedData && !analyzing && (
         <Paper elevation={1} sx={{ mt: 3, p: 3 }}>
           <Typography variant="h6" gutterBottom>
-            Données extraites
+            {t('invoices:smartUpload.extractedData')}
           </Typography>
           <Box display="flex" flexDirection="column" gap={1}>
             <Typography variant="body2">
-              <strong>Client:</strong> {extractedData.client_name || 'N/A'}
+              <strong>{t('invoices:smartUpload.client')}</strong> {extractedData.client_name || t('invoices:labels.notAvailable')}
             </Typography>
             <Typography variant="body2">
-              <strong>N° Facture:</strong> {extractedData.invoice_number || 'N/A'}
+              <strong>{t('invoices:smartUpload.invoiceNumber')}</strong> {extractedData.invoice_number || t('invoices:labels.notAvailable')}
             </Typography>
             <Typography variant="body2">
-              <strong>Date:</strong> {extractedData.date || 'N/A'}
+              <strong>{t('invoices:smartUpload.date')}</strong> {extractedData.date || t('invoices:labels.notAvailable')}
             </Typography>
             <Typography variant="body2">
-              <strong>Total:</strong> {fmt(extractedData.total || 0)}
+              <strong>{t('invoices:smartUpload.total')}</strong> {fmt(extractedData.total || 0)}
             </Typography>
             <Typography variant="body2">
-              <strong>Articles:</strong> {extractedData.items?.length || 0}
+              <strong>{t('invoices:smartUpload.items')}</strong> {extractedData.items?.length || 0}
             </Typography>
           </Box>
         </Paper>

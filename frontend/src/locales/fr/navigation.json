@@ -1,46 +1,58 @@
 {
-    "menu": {
-        "dashboard": "Tableau de bord",
-        "suppliers": "Fournisseurs",
-        "purchaseOrders": "Achats",
-        "invoices": "Factures",
-        "products": "Produits",
-        "clients": "Clients",
-        "eSourcing": "E-Sourcing (RFQ)",
-        "contracts": "Contrats",
-        "aiAssistant": "Assistant IA",
-        "modules": "Modules",
-        "users": "Utilisateurs",
-        "settings": "Paramètres"
-    },
-    "topBar": {
-        "newSupplier": "Nouveau fournisseur",
-        "newPurchaseOrder": "Nouvel achat",
-        "newInvoice": "Nouvelle facture",
-        "newProduct": "Nouveau produit",
-        "newClient": "Nouveau client",
-        "newRfqEvent": "Nouvel événement RFQ",
-        "newContract": "Nouveau contrat",
-        "newConversation": "Nouvelle conversation",
-        "newImport": "Nouvel import",
-        "new": "Nouveau",
-        "importWizard": "Assistant d'import",
-        "dataImport": "Import de données",
-        "customizeDashboard": "Personnaliser le tableau de bord",
-        "report": "Rapport"
-    },
-    "userMenu": {
-        "profile": "Profil",
-        "settings": "Paramètres",
-        "logout": "Déconnexion"
-    },
-    "mobile": {
-        "dashboard": "Tableau",
-        "suppliers": "Fournisseurs",
-        "orders": "Commandes",
-        "invoices": "Factures",
-        "products": "Produits",
-        "clients": "Clients",
-        "ai": "IA"
-    }
+  "menu": {
+    "dashboard": "Tableau de bord",
+    "suppliers": "Fournisseurs",
+    "purchaseOrders": "Achats",
+    "invoices": "Factures",
+    "products": "Produits",
+    "clients": "Clients",
+    "eSourcing": "E-Sourcing (RFQ)",
+    "contracts": "Contrats",
+    "aiAssistant": "Assistant IA",
+    "modules": "Modules",
+    "users": "Utilisateurs",
+    "settings": "Paramètres",
+    "accounting": "Comptabilité",
+    "collapse": "Réduire le menu",
+    "expand": "Déplier le menu",
+    "includedInPro": "Inclus dans Pro"
+  },
+  "topBar": {
+    "newSupplier": "Nouveau fournisseur",
+    "newPurchaseOrder": "Nouvel achat",
+    "newInvoice": "Nouvelle facture",
+    "newProduct": "Nouveau produit",
+    "newClient": "Nouveau client",
+    "newRfqEvent": "Nouvel événement RFQ",
+    "newContract": "Nouveau contrat",
+    "newConversation": "Nouvelle conversation",
+    "newImport": "Nouvel import",
+    "new": "Nouveau",
+    "importWizard": "Assistant d'import",
+    "dataImport": "Import de données",
+    "customizeDashboard": "Personnaliser le tableau de bord",
+    "report": "Rapport",
+    "importAlt": "Import",
+    "openDrawer": "Ouvrir le menu",
+    "lightMode": "Mode clair",
+    "darkMode": "Mode sombre"
+  },
+  "userMenu": {
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "notifications": "Notifications IA"
+  },
+  "mobile": {
+    "dashboard": "Tableau",
+    "suppliers": "Fournisseurs",
+    "orders": "Commandes",
+    "invoices": "Factures",
+    "products": "Produits",
+    "clients": "Clients",
+    "ai": "IA",
+    "contracts": "Contrats",
+    "accounting": "Comptabilité",
+    "more": "Plus"
+  }
 }

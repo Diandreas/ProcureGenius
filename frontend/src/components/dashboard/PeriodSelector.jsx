@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar, ChevronDown } from 'lucide-react';
 import '../../styles/PeriodSelector.css';
 
 const PeriodSelector = ({ period, onChange }) => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const [isOpen, setIsOpen] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
   const [startDate, setStartDate] = useState('');
@@ -12,14 +14,14 @@ const PeriodSelector = ({ period, onChange }) => {
   const dropdownRef = useRef(null);
 
   const periods = [
-    { value: 'today', label: "Aujourd'hui" },
-    { value: 'last_7_days', label: '7 derniers jours' },
-    { value: 'last_30_days', label: '30 derniers jours' },
-    { value: 'last_90_days', label: '90 derniers jours' },
-    { value: 'this_month', label: 'Ce mois' },
-    { value: 'last_month', label: 'Mois dernier' },
-    { value: 'this_year', label: 'Cette année' },
-    { value: 'custom', label: 'Plage personnalisée', icon: <Calendar size={14} /> },
+    { value: 'today', label: t('dashboard:periods.today') },
+    { value: 'last_7_days', label: t('dashboard:periods.last_7_days') },
+    { value: 'last_30_days', label: t('dashboard:periods.last_30_days') },
+    { value: 'last_90_days', label: t('dashboard:periods.last_90_days') },
+    { value: 'this_month', label: t('dashboard:periods.this_month') },
+    { value: 'last_month', label: t('dashboard:periodSelector.lastMonth') },
+    { value: 'this_year', label: t('dashboard:periods.this_year') },
+    { value: 'custom', label: t('dashboard:periodSelector.customRange'), icon: <Calendar size={14} /> },
   ];
 
   const selectedPeriod = periods.find(p => p.value === period) || periods[2];
@@ -133,10 +135,10 @@ const PeriodSelector = ({ period, onChange }) => {
               </div>
             ) : (
               <div className="custom-range-picker">
-                <h4>Sélectionner une plage</h4>
+                <h4>{t('dashboard:periodSelector.selectRange')}</h4>
                 <div className="date-inputs">
                   <div className="date-input-group">
-                    <label>Date de début</label>
+                    <label>{t('dashboard:dashboardPage.startDate')}</label>
                     <input
                       type="date"
                       value={startDate}
@@ -145,7 +147,7 @@ const PeriodSelector = ({ period, onChange }) => {
                     />
                   </div>
                   <div className="date-input-group">
-                    <label>Date de fin</label>
+                    <label>{t('dashboard:dashboardPage.endDate')}</label>
                     <input
                       type="date"
                       value={endDate}
@@ -164,14 +166,14 @@ const PeriodSelector = ({ period, onChange }) => {
                       setEndDate('');
                     }}
                   >
-                    Annuler
+                    {t('common:buttons.cancel')}
                   </button>
                   <button
                     className="btn-apply"
                     onClick={handleCustomRangeApply}
                     disabled={!startDate || !endDate}
                   >
-                    Appliquer
+                    {t('common:buttons.apply')}
                   </button>
                 </div>
               </div>

@@ -18,29 +18,30 @@ import {
   CheckRounded,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // ─── Tutorial steps ───────────────────────────────────────────────
 const TUTORIAL_STEPS = [
   {
     id: 'welcome',
-    title: 'Bienvenue sur Procura !',
-    description: 'On va vous montrer comment ça marche. Ça prend 2 minutes. Suivez les étapes et vous serez prêt à commencer.',
+    titleKey: 'onboarding:tutorial.simple.welcome.title',
+    descriptionKey: 'onboarding:tutorial.simple.welcome.description',
     target: null,
     route: '/dashboard',
     icon: '',
   },
   {
     id: 'dashboard',
-    title: 'Votre page principale',
-    description: 'Ici vous voyez tout ce qui se passe : vos commandes du jour, vos factures en attente, et vos alertes importantes.',
+    titleKey: 'onboarding:tutorial.simple.dashboard.title',
+    descriptionKey: 'onboarding:tutorial.simple.dashboard.description',
     target: '[data-tutorial="menu-dashboard"]',
     route: '/dashboard',
     icon: '',
   },
   {
     id: 'suppliers',
-    title: 'Vos fournisseurs',
-    description: 'C\'est ici que vous enregistrez vos vendeurs et fournisseurs. Quand vous faites une commande, vous les retrouvez facilement.',
+    titleKey: 'onboarding:tutorial.simple.suppliers.title',
+    descriptionKey: 'onboarding:tutorial.simple.suppliers.description',
     target: '[data-tutorial="menu-suppliers"]',
     route: '/dashboard',
     module: 'suppliers',
@@ -48,8 +49,8 @@ const TUTORIAL_STEPS = [
   },
   {
     id: 'purchase-orders',
-    title: 'Bons de commande',
-    description: 'Créez une commande à un fournisseur. Vous pouvez aussi voir si le prix est bon — l\'appli vérifie les prix du marché pour vous.',
+    titleKey: 'onboarding:tutorial.simple.purchaseOrders.title',
+    descriptionKey: 'onboarding:tutorial.simple.purchaseOrders.description',
     target: '[data-tutorial="menu-purchase-orders"]',
     route: '/dashboard',
     module: 'purchase-orders',
@@ -57,8 +58,8 @@ const TUTORIAL_STEPS = [
   },
   {
     id: 'invoices',
-    title: 'Vos factures',
-    description: 'Faites vos factures et envoyez-les à vos clients par email. Vous voyez qui a payé et qui doit encore payer.',
+    titleKey: 'onboarding:tutorial.simple.invoices.title',
+    descriptionKey: 'onboarding:tutorial.simple.invoices.description',
     target: '[data-tutorial="menu-invoices"]',
     route: '/dashboard',
     module: 'invoices',
@@ -66,8 +67,8 @@ const TUTORIAL_STEPS = [
   },
   {
     id: 'products',
-    title: 'Vos produits',
-    description: 'Listez vos produits et leur stock. Si un article est presque épuisé, l\'appli vous prévient avant qu\'il soit trop tard.',
+    titleKey: 'onboarding:tutorial.simple.products.title',
+    descriptionKey: 'onboarding:tutorial.simple.products.description',
     target: '[data-tutorial="menu-products"]',
     route: '/dashboard',
     module: 'products',
@@ -75,8 +76,8 @@ const TUTORIAL_STEPS = [
   },
   {
     id: 'contracts',
-    title: 'Contrats',
-    description: 'Gardez une copie de vos accords avec les fournisseurs. Comme ça, si un prix change ou s\'il y a un problème, vous avez la preuve écrite.',
+    titleKey: 'onboarding:tutorial.simple.contracts.title',
+    descriptionKey: 'onboarding:tutorial.simple.contracts.description',
     target: '[data-tutorial="menu-contracts"]',
     route: '/dashboard',
     module: 'contracts',
@@ -84,8 +85,8 @@ const TUTORIAL_STEPS = [
   },
   {
     id: 'accounting',
-    title: 'Comptabilité',
-    description: 'Voyez en un coup d\'œil combien vous avez dépensé, ce que vous avez gagné, et si votre activité est rentable.',
+    titleKey: 'onboarding:tutorial.simple.accounting.title',
+    descriptionKey: 'onboarding:tutorial.simple.accounting.description',
     target: '[data-tutorial="menu-accounting"]',
     route: '/dashboard',
     module: 'accounting',
@@ -93,8 +94,8 @@ const TUTORIAL_STEPS = [
   },
   {
     id: 'ai-assistant',
-    title: 'Votre assistant IA',
-    description: 'Posez-lui une question en français simple — "Montre-moi mes factures du mois" ou "Qui est mon meilleur fournisseur ?" — il répond tout de suite.',
+    titleKey: 'onboarding:tutorial.simple.aiAssistant.title',
+    descriptionKey: 'onboarding:tutorial.simple.aiAssistant.description',
     target: '[data-tutorial="menu-ai-assistant"]',
     route: '/dashboard',
     module: 'ai-assistant',
@@ -102,16 +103,16 @@ const TUTORIAL_STEPS = [
   },
   {
     id: 'settings',
-    title: 'Réglages',
-    description: 'Mettez le nom de votre boutique, votre logo, votre devise. C\'est aussi ici que vous ajoutez d\'autres personnes de votre équipe.',
+    titleKey: 'onboarding:tutorial.simple.settings.title',
+    descriptionKey: 'onboarding:tutorial.simple.settings.description',
     target: '[data-tutorial="menu-settings"]',
     route: '/dashboard',
     icon: '',
   },
   {
     id: 'complete',
-    title: 'C\'est parti !',
-    description: 'Vous avez vu l\'essentiel. Commencez par mettre le nom de votre boutique dans les réglages, puis ajoutez votre premier fournisseur.',
+    titleKey: 'onboarding:tutorial.simple.complete.title',
+    descriptionKey: 'onboarding:tutorial.simple.complete.description',
     target: null,
     route: '/dashboard',
     icon: '',
@@ -190,6 +191,7 @@ const SimpleTutorial = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation(['onboarding', 'common']);
 
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -455,7 +457,7 @@ const SimpleTutorial = () => {
                         color: 'primary.main',
                         mb: 0.1,
                       }}>
-                        Étape {currentStepIndex + 1} sur {steps.length}
+                        {t('onboarding:tutorial.stepOf', { current: currentStepIndex + 1, total: steps.length })}
                       </Typography>
                       <Typography sx={{
                         fontWeight: 700,
@@ -463,7 +465,7 @@ const SimpleTutorial = () => {
                         color: isDark ? '#f1f5f9' : '#0f172a',
                         lineHeight: 1.2,
                       }}>
-                        {step.title}
+                        {t(step.titleKey)}
                       </Typography>
                     </Box>
                   </Box>
@@ -487,7 +489,7 @@ const SimpleTutorial = () => {
                   lineHeight: 1.65,
                   mb: 3,
                 }}>
-                  {step.description}
+                  {t(step.descriptionKey)}
                 </Typography>
 
                 {/* Footer */}
@@ -530,7 +532,7 @@ const SimpleTutorial = () => {
                         },
                       }}
                     >
-                      {isFirst ? 'Commencer' : isLast ? 'Terminer' : 'Suivant'}
+                      {isFirst ? t('onboarding:actions.start') : isLast ? t('onboarding:actions.finish') : t('onboarding:actions.next')}
                     </Button>
                     {!isLast && (
                       <Button
@@ -544,7 +546,7 @@ const SimpleTutorial = () => {
                           '&:hover': { color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' },
                         }}
                       >
-                        Passer
+                        {t('onboarding:actions.skip')}
                       </Button>
                     )}
                   </Box>

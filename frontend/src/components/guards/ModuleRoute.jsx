@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useModules } from '../../contexts/ModuleContext';
 import { CircularProgress, Box, Typography, Button } from '@mui/material';
 import { Lock, ArrowForward } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Protège une route selon l'accès au module.
@@ -14,6 +15,7 @@ import { Lock, ArrowForward } from '@mui/icons-material';
  * - Module simplement non activé (cas rare) : redirection.
  */
 const ModuleRoute = ({ module, children, redirectTo = '/dashboard' }) => {
+    const { t } = useTranslation(['common']);
     const navigate = useNavigate();
     const { hasModule, isLocked, loading } = useModules();
 
@@ -43,18 +45,17 @@ const ModuleRoute = ({ module, children, redirectTo = '/dashboard' }) => {
                     <Lock sx={{ fontSize: 32 }} />
                 </Box>
                 <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
-                    Fonctionnalité réservée
+                    {t('common:guards.lockedTitle')}
                 </Typography>
                 <Typography color="text.secondary" sx={{ mb: 3 }}>
-                    Ce module est inclus dans un abonnement supérieur (Business ou Pro).
-                    Passez à un plan supérieur pour y accéder — essai 30 jours offert, sans carte.
+                    {t('common:guards.lockedDescription')}
                 </Typography>
                 <Button
                     variant="contained" size="large" endIcon={<ArrowForward />}
                     onClick={() => navigate('/subscription/plans')}
                     sx={{ fontWeight: 700, textTransform: 'none', px: 4, py: 1.2 }}
                 >
-                    Voir les plans
+                    {t('common:guards.viewPlans')}
                 </Button>
             </Box>
         );

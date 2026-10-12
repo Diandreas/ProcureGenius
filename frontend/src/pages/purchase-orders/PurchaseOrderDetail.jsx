@@ -165,10 +165,8 @@ function PurchaseOrderDetail() {
             </IconButton>
             <IconButton
               onClick={() => {
-                const currentLanguage = i18n.language || 'fr';
-                const lang = currentLanguage.split('-')[0];
                 const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
-                  name: purchaseOrder.supplier?.name || (lang === 'en' ? 'Supplier' : 'Fournisseur'),
+                  name: purchaseOrder.supplier?.name || t('purchaseOrders:labels.supplier'),
                   number: purchaseOrder.po_number
                 });
                 setEmailData({
@@ -251,45 +249,28 @@ function PurchaseOrderDetail() {
       setAiLoading(prev => ({ ...prev, [type]: true }));
       setAiResults(prev => ({ 
         ...prev, 
-        [type]: (prev[type] || '') + `\n\n**Vous :**\n${aiInputs[type]}`
+        [type]: (prev[type] || '') + `\n\n**${t('purchaseOrders:ai.you')}**\n${aiInputs[type]}`
       }));
     }
 
     const itemsList = purchaseOrder.items?.map(i =>
-      `- ${i.description} (qté: ${i.quantity}, prix unitaire: ${i.unit_price}, total: ${i.total_price})`
-    ).join('\n') || 'Aucun article';
+      t('purchaseOrders:ai.itemLine', { description: i.description, quantity: i.quantity, unitPrice: i.unit_price, total: i.total_price })
+    ).join('\n') || t('purchaseOrders:ai.noItems');
+
+    // Prompts envoyes a l'IA dans la langue de l'interface (la reponse suit la meme langue)
+    const promptVars = {
+      number: purchaseOrder.po_number,
+      supplier: purchaseOrder.supplier?.name || t('purchaseOrders:ai.notDefined'),
+      total: purchaseOrder.total_amount,
+      deadline: purchaseOrder.required_date || t('purchaseOrders:ai.notDefinedDate'),
+      status: purchaseOrder.status,
+      items: itemsList,
+    };
 
     const prompts = {
-      anomalies: `Analyse ce bon de commande et détecte les anomalies éventuelles. Sois direct et simple.
-
-Bon de commande: ${purchaseOrder.po_number}
-Fournisseur: ${purchaseOrder.supplier?.name || 'Non défini'}
-Total: ${purchaseOrder.total_amount}
-Date limite: ${purchaseOrder.required_date || 'Non définie'}
-Articles:
-${itemsList}
-
-Dis-moi : est-ce que tu vois quelque chose d'anormal ? Prix trop élevés, quantités bizarres, délais serrés ? Réponds en 3-5 points courts.`,
-
-      advice: `Donne des conseils pratiques pour ce bon de commande. Parle simplement.
-
-Bon de commande: ${purchaseOrder.po_number}
-Fournisseur: ${purchaseOrder.supplier?.name || 'Non défini'}
-Statut: ${purchaseOrder.status}
-Total: ${purchaseOrder.total_amount}
-Articles:
-${itemsList}
-
-Donne 3 conseils concrets pour améliorer ou sécuriser cette commande.`,
-
-      market_price: `Recherche les prix du marché pour ces produits. 
-IMPORTANT: Si tu n'as pas un accès direct à internet pour chercher des liens en direct, NE FOURNIS PAS DE LIENS INVENTÉS OU MORTS. Donne uniquement des estimations réalistes basées sur tes connaissances. Ne donne absolument pas de faux URLs.
-N'utilise PAS la fonction/outil interne "verify_price" car il y a plusieurs articles.
-
-Articles de la commande:
-${itemsList}
-
-Pour chaque produit : donne le prix moyen du marché estimé et indique si le prix payé est correct, bas ou trop élevé.`,
+      anomalies: t('purchaseOrders:ai.prompts.anomalies', promptVars),
+      advice: t('purchaseOrders:ai.prompts.advice', promptVars),
+      market_price: t('purchaseOrders:ai.prompts.marketPrice', promptVars),
     };
 
     try {
@@ -319,7 +300,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
 
       let newResults = { ...aiResults };
       if (isFollowUp) {
-        newResults[type] = newResults[type] + `\n\n**Aunlia :**\n${reply}`;
+        newResults[type] = newResults[type] + `\n\n**${t('purchaseOrders:ai.assistant')}**\n${reply}`;
         setAiInputs(prev => ({ ...prev, [type]: '' }));
       } else {
         newResults[type] = reply;
@@ -332,7 +313,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
       }).catch(e => console.error('Failed to save AI insights:', e));
 
     } catch (error) {
-      const errorMsg = `Erreur: ${error.response?.data?.error || error.message}`;
+      const errorMsg = t('purchaseOrders:ai.error', { message: error.response?.data?.error || error.message });
       if (isFollowUp) {
         setAiResults(prev => ({ ...prev, [type]: prev[type] + `\n\n*${errorMsg}*` }));
       } else {
@@ -384,7 +365,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
       const response = await purchaseOrdersAPI.convertToInvoice(id);
       const invoiceId = response.data?.invoice?.id;
       enqueueSnackbar(
-        response.data?.message || 'Facture créée à partir du bon de commande.',
+        response.data?.message || t('purchaseOrders:messages.convertedToInvoice'),
         { variant: 'success' }
       );
       await fetchPurchaseOrder();
@@ -393,7 +374,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
       }
     } catch (error) {
       enqueueSnackbar(
-        error.response?.data?.error || 'Erreur lors de la conversion en facture.',
+        error.response?.data?.error || t('purchaseOrders:messages.convertToInvoiceError'),
         { variant: 'error' }
       );
     }
@@ -413,7 +394,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
 
   const handleSendEmail = async () => {
     if (!emailData.recipient_email) {
-      enqueueSnackbar(t('purchaseOrders:messages.emailRequired') || 'Email destinataire requis', { variant: 'error' });
+      enqueueSnackbar(t('purchaseOrders:messages.emailRequired'), { variant: 'error' });
       return;
     }
 
@@ -430,14 +411,14 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
         language: language
       });
       setPurchaseOrder(response.data.purchase_order || response.data);
-      enqueueSnackbar(response.data.message || t('purchaseOrders:messages.emailSent') || 'Email envoyé avec succès', { variant: 'success' });
+      enqueueSnackbar(response.data.message || t('purchaseOrders:messages.emailSent'), { variant: 'success' });
       setSendEmailDialogOpen(false);
       setEmailData({ recipient_email: '', custom_message: '' });
       await fetchPurchaseOrder(); // Refresh to show updated sent_at date
     } catch (error) {
       console.error('Error sending email:', error);
       enqueueSnackbar(
-        error.response?.data?.error || t('purchaseOrders:messages.emailError') || 'Erreur lors de l\'envoi de l\'email',
+        error.response?.data?.error || t('purchaseOrders:messages.emailError'),
         { variant: 'error' }
       );
     } finally {
@@ -450,16 +431,16 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
     try {
       const pdfBlob = await generatePurchaseOrderPDF(purchaseOrder, selectedTemplate);
 
-      const fname = `bon-commande-${purchaseOrder.po_number}.pdf`;
+      const fname = t('purchaseOrders:pdf.fileName', { number: purchaseOrder.po_number });
 
       if (action === 'download') {
         await pdfViewer.download(pdfBlob, fname);
         enqueueSnackbar(t('purchaseOrders:messages.pdfDownloadedSuccess'), { variant: 'success' });
       } else if (action === 'preview') {
-        pdfViewer.preview(pdfBlob, fname, `Bon de commande ${purchaseOrder.po_number}`);
+        pdfViewer.preview(pdfBlob, fname, t('purchaseOrders:pdf.viewerTitle', { number: purchaseOrder.po_number }));
       } else if (action === 'print') {
         if (IS_NATIVE) {
-          pdfViewer.preview(pdfBlob, fname, `Bon de commande ${purchaseOrder.po_number}`);
+          pdfViewer.preview(pdfBlob, fname, t('purchaseOrders:pdf.viewerTitle', { number: purchaseOrder.po_number }));
         } else {
           const pdfUrl = URL.createObjectURL(pdfBlob);
           const printWindow = window.open(pdfUrl, '_blank');
@@ -501,7 +482,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
     { icon: Info, label: t('purchaseOrders:tabs.general') },
     { icon: Inventory, label: t('purchaseOrders:tabs.items') },
     { icon: AttachMoney, label: t('purchaseOrders:tabs.financial') },
-    { icon: Psychology, label: 'Analyse IA' },
+    { icon: Psychology, label: t('purchaseOrders:tabs.ai') },
   ];
 
   // Swipe entre onglets (mobile). AVANT tout return conditionnel (regle des hooks).
@@ -568,10 +549,8 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     variant="outlined"
                     startIcon={<Email />}
                     onClick={() => {
-                      const currentLanguage = i18n.language || 'fr';
-                      const lang = currentLanguage.split('-')[0];
                       const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
-                        name: purchaseOrder.supplier?.name || (lang === 'en' ? 'Supplier' : 'Fournisseur'),
+                        name: purchaseOrder.supplier?.name || t('purchaseOrders:labels.supplier'),
                         number: purchaseOrder.po_number
                       });
                       setEmailData({
@@ -643,7 +622,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                     <MenuItem
                       onClick={() => {
                         const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
-                          name: purchaseOrder.supplier?.name || 'Fournisseur',
+                          name: purchaseOrder.supplier?.name || t('purchaseOrders:labels.supplier'),
                           number: purchaseOrder.po_number
                         });
                         setEmailData({
@@ -672,7 +651,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                 {['approved', 'sent', 'received'].includes(purchaseOrder.status) && (
                   <MenuItem onClick={handleConvertToInvoice} sx={{ color: 'primary.main' }}>
                     <Receipt fontSize="small" sx={{ mr: 1 }} />
-                    Convertir en facture
+                    {t('purchaseOrders:buttons.convertToInvoice')}
                   </MenuItem>
                 )}
                 <Divider />
@@ -717,10 +696,8 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
           <span>
             <IconButton
               onClick={() => {
-                const currentLanguage = i18n.language || 'fr';
-                const lang = currentLanguage.split('-')[0];
                 const defaultMessage = t('purchaseOrders:dialogs.sendEmail.defaultMessage', {
-                  name: purchaseOrder.supplier?.name || (lang === 'en' ? 'Supplier' : 'Fournisseur'),
+                  name: purchaseOrder.supplier?.name || t('purchaseOrders:labels.supplier'),
                   number: purchaseOrder.po_number
                 });
                 setEmailData({
@@ -996,7 +973,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                         {(!purchaseOrder.items || purchaseOrder.items.length === 0) && (
                           <TableRow>
                             <TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                              Aucun article
+                              {t('purchaseOrders:labels.noItems')}
                             </TableCell>
                           </TableRow>
                         )}
@@ -1012,18 +989,18 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                       {purchaseOrder.tax_amount > 0 && (
                         <>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                            <Typography variant="body2" color="text.secondary">Sous-total</Typography>
+                            <Typography variant="body2" color="text.secondary">{t('purchaseOrders:labels.subtotal')}</Typography>
                             <Typography variant="body2">{formatCurrency(purchaseOrder.subtotal || 0)}</Typography>
                           </Box>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body2" color="text.secondary">Taxes</Typography>
+                            <Typography variant="body2" color="text.secondary">{t('purchaseOrders:labels.taxes')}</Typography>
                             <Typography variant="body2">{formatCurrency(purchaseOrder.tax_amount || 0)}</Typography>
                           </Box>
                           <Divider sx={{ mb: 1 }} />
                         </>
                       )}
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="subtitle2" fontWeight={700}>Total</Typography>
+                        <Typography variant="subtitle2" fontWeight={700}>{t('purchaseOrders:labels.total')}</Typography>
                         <Typography variant="subtitle2" fontWeight={700} color="primary.main">
                           {formatCurrency(purchaseOrder.total_amount || 0)}
                         </Typography>
@@ -1313,33 +1290,33 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
       {activeTab === 3 && (
         <Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Laissez l'IA analyser cette commande pour vous. Cliquez sur un bouton pour lancer l'analyse.
+            {t('purchaseOrders:ai.intro')}
           </Typography>
           <Grid container spacing={2}>
             {[
               {
                 key: 'anomalies',
                 icon: <BugReport sx={{ fontSize: 32, color: 'error.main' }} />,
-                title: 'Détecter les anomalies',
-                subtitle: 'Prix suspects, quantités bizarres, délais serrés',
+                title: t('purchaseOrders:ai.anomaliesTitle'),
+                subtitle: t('purchaseOrders:ai.anomaliesSubtitle'),
                 color: 'error',
-                btnLabel: 'Analyser',
+                btnLabel: t('purchaseOrders:ai.anomaliesButton'),
               },
               {
                 key: 'advice',
                 icon: <CheckCircleOutline sx={{ fontSize: 32, color: 'success.main' }} />,
-                title: 'Conseils pratiques',
-                subtitle: 'Comment améliorer ou sécuriser cette commande',
+                title: t('purchaseOrders:ai.adviceTitle'),
+                subtitle: t('purchaseOrders:ai.adviceSubtitle'),
                 color: 'success',
-                btnLabel: 'Obtenir des conseils',
+                btnLabel: t('purchaseOrders:ai.adviceButton'),
               },
               {
                 key: 'market_price',
                 icon: <TrendingDown sx={{ fontSize: 32, color: 'primary.main' }} />,
-                title: 'Prix du marché en ligne',
-                subtitle: 'Comparaison avec Amazon, Alibaba et autres sites',
+                title: t('purchaseOrders:ai.marketPriceTitle'),
+                subtitle: t('purchaseOrders:ai.marketPriceSubtitle'),
                 color: 'primary',
-                btnLabel: 'Vérifier les prix',
+                btnLabel: t('purchaseOrders:ai.marketPriceButton'),
               },
             ].map(({ key, icon, title, subtitle, color, btnLabel }) => (
               <Grid item xs={12} key={key}>
@@ -1365,7 +1342,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                         onClick={() => runAiAnalysis(key)}
                         sx={{ minWidth: 130, flexShrink: 0 }}
                       >
-                        {aiLoading[key] ? 'Analyse...' : (aiResults[key] ? 'Relancer' : btnLabel)}
+                        {aiLoading[key] ? t('purchaseOrders:ai.analyzing') : (aiResults[key] ? t('purchaseOrders:ai.rerun') : btnLabel)}
                       </Button>
                     </Box>
 
@@ -1399,7 +1376,7 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
                           <TextField
                             fullWidth
                             size="small"
-                            placeholder="Discuter avec l'IA ou demander une précision..."
+                            placeholder={t('purchaseOrders:ai.chatPlaceholder')}
                             value={aiInputs[key] || ''}
                             onChange={(e) => setAiInputs(prev => ({ ...prev, [key]: e.target.value }))}
                             onKeyPress={(e) => handleAiInputKeyPress(e, key)}
@@ -1508,10 +1485,10 @@ Pour chaque produit : donne le prix moyen du marché estimé et indique si le pr
             {settings?.paperSize === 'thermal_80' || settings?.paperSize === 'thermal_58' ? (
               <Alert severity="info" sx={{ mb: 3 }}>
                 <Typography variant="body2">
-                  {t('purchaseOrders:messages.thermalPrintingMode', 'Format d\'impression thermique détecté. Le template de ticket thermal sera utilisé automatiquement.')}
+                  {t('purchaseOrders:messages.thermalPrintingMode')}
                 </Typography>
                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                  {settings.paperSize === 'thermal_80' ? 'Format: 80mm' : 'Format: 58mm'}
+                  {t('purchaseOrders:messages.thermalFormat', { size: settings.paperSize === 'thermal_80' ? '80mm' : '58mm' })}
                 </Typography>
               </Alert>
             ) : (

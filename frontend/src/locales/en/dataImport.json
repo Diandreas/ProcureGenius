@@ -1,0 +1,350 @@
+{
+  "entities": {
+    "suppliers": "Suppliers",
+    "products": "Products",
+    "clients": "Clients",
+    "purchase_orders": "Purchase orders",
+    "invoices": "Invoices",
+    "default": "Data"
+  },
+  "entityDescriptions": {
+    "suppliers": "Import your supplier list with their contact details",
+    "products": "Import your product catalog with prices and stock levels",
+    "clients": "Import your client base with their information",
+    "purchase_orders": "Import your existing purchase orders",
+    "invoices": "Import your client invoices"
+  },
+  "fields": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "country": "Country",
+    "contact_name": "Contact",
+    "payment_terms": "Payment terms",
+    "notes": "Notes",
+    "reference": "Reference",
+    "sku": "SKU",
+    "description": "Description",
+    "unit_price": "Unit price",
+    "cost_price": "Cost price",
+    "quantity_in_stock": "Stock",
+    "category": "Category",
+    "unit": "Unit",
+    "credit_limit": "Credit limit"
+  },
+  "status": {
+    "pending": "Pending",
+    "running": "Running",
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled"
+  },
+  "results": {
+    "success": "Successful",
+    "errors": "Errors",
+    "skipped": "Skipped"
+  },
+  "delimiters": {
+    "comma": "Comma (,)",
+    "semicolon": "Semicolon (;)",
+    "tab": "Tab"
+  },
+  "actions": {
+    "selected": "Selected",
+    "changeFile": "Change file",
+    "previous": "Previous",
+    "next": "Next",
+    "startImport": "Start import",
+    "newImport": "New import",
+    "back": "Back",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "defaultImportName": "Import {{entity}} - {{date}}",
+  "page": {
+    "breadcrumbSettings": "Settings",
+    "breadcrumbImport": "Data import",
+    "title": "Smart data import",
+    "subtitle": "Import your data from Excel or CSV with automatic column mapping",
+    "history": "History",
+    "exportSuppliers": "Export suppliers",
+    "backToSettings": "Back to settings",
+    "steps": {
+      "selection": "Selection",
+      "file": "File",
+      "mapping": "Mapping",
+      "preview": "Preview",
+      "import": "Import"
+    },
+    "dropzone": {
+      "fileSelected": "File selected!",
+      "sizeKb": "{{size}} KB",
+      "dropHere": "Drop your file here!",
+      "dragDrop": "Drag and drop your file",
+      "orClick": "or click to select a file",
+      "maxSize": "Max 10 MB"
+    },
+    "step0": {
+      "title": "What type of data do you want to import?",
+      "subtitle": "Select the data type so the import can be configured intelligently"
+    },
+    "step1": {
+      "title": "Select your source file",
+      "configuration": "Configuration",
+      "importName": "Import name",
+      "firstRowHeaders": "First row = headers",
+      "separator": "Separator",
+      "downloadTemplate": "Download a template"
+    },
+    "step2": {
+      "title": "Match the columns",
+      "mappedColumns_one": "{{count}} column mapped",
+      "mappedColumns_other": "{{count}} columns mapped",
+      "requiredColumns": "Required columns",
+      "fileColumn": "File column",
+      "preview": "Preview",
+      "destField": "Destination field",
+      "ignore": "— Ignore —",
+      "used": " (used)"
+    },
+    "step3": {
+      "title": "Review and start the import",
+      "rowsToImport": "rows to import",
+      "mappedColumns": "mapped columns",
+      "importOptions": "Import options",
+      "skipDuplicates": "Skip duplicates",
+      "updateExisting": "Update existing records",
+      "dataPreview": "Data preview"
+    },
+    "step4": {
+      "inProgress": "Import in progress...",
+      "rowsProgress": "{{processed}} / {{total}} rows",
+      "completed": "Import complete!",
+      "viewHistory": "View history",
+      "failed": "Import error",
+      "genericError": "An error occurred",
+      "retry": "Try again"
+    },
+    "template": {
+      "exampleValue": "Example"
+    },
+    "errors": {
+      "emptyFile": "The file is empty",
+      "readError": "Error reading the file",
+      "parseError": "Error while reading the file",
+      "noJobId": "The server did not return the job ID. Response: {{response}}",
+      "importFailed": "Error during import",
+      "serviceWorker": "The service worker intercepted the request. Please refresh the page (Ctrl+F5) to update the service worker, or disable it temporarily in DevTools (Application > Service Workers > Unregister).",
+      "notFound": "Endpoint not found. Check that the backend server is running and that the URL is correct.",
+      "invalidData": "Invalid data. Check the file format.",
+      "unauthorized": "Unauthorized. Please sign in again.",
+      "unsupportedType": "Unsupported type",
+      "exportFailed": "Error during export"
+    }
+  },
+  "wizard": {
+    "title": "Smart data import",
+    "steps": {
+      "dataType": "Data type",
+      "sourceFile": "Source file",
+      "mapping": "Mapping",
+      "preview": "Preview",
+      "import": "Import"
+    },
+    "dropzone": {
+      "fileSelected": "File selected",
+      "sizeKb": "{{size}} KB",
+      "dropHere": "Drop the file here",
+      "dragDrop": "Drag and drop your file",
+      "orClick": "or click to select",
+      "maxSize": "Max 10 MB"
+    },
+    "step0": {
+      "title": "What type of data do you want to import?",
+      "subtitle": "Select the entity type so the import can be configured intelligently"
+    },
+    "step1": {
+      "title": "Select your source file",
+      "importName": "Import name",
+      "hasHeaders": "The file contains headers",
+      "delimiter": "CSV delimiter",
+      "downloadTemplate": "Download template"
+    },
+    "step2": {
+      "title": "Match the columns in your file",
+      "smartMapping": "Smart mapping enabled",
+      "requiredColumns": "Required columns",
+      "sourceColumn": "Source column",
+      "sampleValue": "Sample value",
+      "destField": "Destination field",
+      "ignoreColumn": "Ignore this column"
+    },
+    "step3": {
+      "title": "Import preview",
+      "rowsToImport": "Rows to import",
+      "mappedFields": "Mapped fields",
+      "entityType": "Entity type",
+      "importOptions": "Import options",
+      "skipDuplicates": "Skip duplicates",
+      "updateExisting": "Update existing records",
+      "dataPreview": "Data preview (first 5 rows)"
+    },
+    "step4": {
+      "inProgress": "Import in progress...",
+      "rowsProcessed": "{{processed}} / {{total}} rows processed",
+      "completed": "Import completed successfully!",
+      "failed": "Import error",
+      "unexpectedError": "An unexpected error occurred",
+      "preparing": "Preparing the import..."
+    },
+    "template": {
+      "requiredValue": "required_value"
+    }
+  },
+  "legacy": {
+    "steps": {
+      "upload": "File upload",
+      "mapping": "Column mapping",
+      "preview": "Preview",
+      "importing": "Import"
+    },
+    "titles": {
+      "clients": "Import clients",
+      "products": "Import products",
+      "contacts": "Import phone contacts"
+    },
+    "contacts": {
+      "title": "Import contacts from your phone",
+      "description": "Access your phone's contacts to import them directly.",
+      "accessing": "Accessing contacts...",
+      "access": "Access contacts"
+    },
+    "dropHere": "Drop the file here",
+    "dragDrop": "Drag and drop your file",
+    "supportedFormats": "Supported formats: CSV, XLS, XLSX",
+    "chooseFile": "Choose a file",
+    "requiredFieldsFor": "Required fields for {{type}}:",
+    "mapTitle": "Map the columns in your file",
+    "mapInfo": "Match each column in your file with the corresponding fields",
+    "columnLabel": "Column: {{column}}",
+    "ignoreColumn": "Ignore this column",
+    "preview": "Preview",
+    "previewTitle": "Preview of the data to import",
+    "recordsToImport_one": "{{count}} record will be imported",
+    "recordsToImport_other": "{{count}} records will be imported",
+    "startImport": "Start import",
+    "inProgress": "Import in progress...",
+    "percentDone": "{{percent}}% complete",
+    "completed": "Import complete!",
+    "success": "Successful",
+    "failures": "Failed",
+    "total": "Total",
+    "errorsEncountered": "Errors encountered:",
+    "finish": "Finish",
+    "mockLineError": "Line 3: Invalid email"
+  },
+  "quickbooks": {
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "test": "Test",
+    "disconnect": "Disconnect",
+    "connect": "Connect",
+    "company": "Company:",
+    "loading": "Loading...",
+    "connectedOn": "Connected on:",
+    "lastSync": "Last sync:",
+    "info": "Connect QuickBooks to import your suppliers, clients, products and invoices directly, without going through Excel/CSV.",
+    "disconnectTitle": "Disconnect QuickBooks?",
+    "disconnectConfirm": "Are you sure you want to disconnect QuickBooks? You will need to reconnect to import data again.",
+    "errors": {
+      "connect": "Error connecting to QuickBooks",
+      "disconnect": "Error while disconnecting",
+      "testFailed": "Connection test failed"
+    },
+    "testOk": "QuickBooks connection OK!"
+  },
+  "jobs": {
+    "title": "Data imports",
+    "searchPlaceholder": "Search...",
+    "status": "Status",
+    "entityType": "Entity type",
+    "all": "All",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "status": "Status",
+      "progress": "Progress",
+      "createdAt": "Created on",
+      "actions": "Actions"
+    },
+    "empty": "No imports found. Click \"New import\" to get started.",
+    "viewDetails": "View details",
+    "total_one": "{{count}} import in total",
+    "total_other": "{{count}} imports in total"
+  },
+  "migration": {
+    "title": "Data import wizard",
+    "errorTitle": "Error",
+    "steps": {
+      "upload": "Upload the file",
+      "previewMapping": "Preview and mapping",
+      "configuration": "Configuration",
+      "import": "Import"
+    },
+    "step1": {
+      "title": "Upload the source file",
+      "importName": "Import name",
+      "sourceType": "Source type",
+      "quickbooksSoon": "QuickBooks (Coming soon)",
+      "entityType": "Entity type",
+      "selectFile": "Select a file",
+      "hasHeaders": "The file contains headers",
+      "delimiter": "Delimiter (for CSV)",
+      "generatePreview": "Generate preview"
+    },
+    "step2": {
+      "title": "Data preview and field mapping",
+      "analyzing": "Analyzing the file...",
+      "rowsShown": "{{shown}} rows shown out of {{total}} total",
+      "fieldMapping": "Field mapping",
+      "sourceField": "Source field",
+      "destField": "Destination field",
+      "transformation": "Transformation",
+      "ignore": "-- Ignore --",
+      "transforms": {
+        "none": "None",
+        "uppercase": "UPPERCASE",
+        "lowercase": "lowercase",
+        "capitalize": "Capitalize",
+        "strip": "Trim spaces"
+      },
+      "dataPreview": "Data preview",
+      "configure": "Configure"
+    },
+    "step3": {
+      "title": "Import configuration",
+      "skipDuplicates": "Skip duplicates",
+      "updateExisting": "Update existing records",
+      "summary": "Summary:",
+      "rowsToImport": "{{rows}} rows to import",
+      "mappedFields": "{{fields}} mapped fields",
+      "type": "Type: {{type}}",
+      "start": "Start import"
+    },
+    "step4": {
+      "title": "Import in progress",
+      "progress": "Progress: {{processed}} / {{total}} rows ({{percent}}%)",
+      "completed": "Import completed successfully!",
+      "failed": "Import error: {{message}}",
+      "log": "Import log",
+      "columns": {
+        "row": "Row",
+        "level": "Level",
+        "message": "Message"
+      },
+      "viewAll": "View all imports"
+    }
+  }
+}

@@ -99,7 +99,7 @@ const DOCUMENT_TYPES = [
 
 function DocumentImport() {
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['aiChat', 'common']);
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -122,13 +122,13 @@ function DocumentImport() {
       // Vérifier le type de fichier
       const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
       if (!allowedTypes.includes(file.type)) {
-        enqueueSnackbar('Format de fichier non supporté. Utilisez JPG, PNG, WebP ou PDF.', { variant: 'error' });
+        enqueueSnackbar(t('aiChat:documentImport.unsupportedFormat'), { variant: 'error' });
         return;
       }
 
       // Vérifier la taille (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        enqueueSnackbar('Fichier trop volumineux. Maximum 10MB.', { variant: 'error' });
+        enqueueSnackbar(t('aiChat:documentImport.fileTooLarge'), { variant: 'error' });
         return;
       }
 
@@ -158,7 +158,7 @@ function DocumentImport() {
 
   const handleUpload = async () => {
     if (!selectedFile || !selectedType) {
-      enqueueSnackbar('Veuillez sélectionner un type de document et un fichier.', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:documentImport.selectTypeAndFile'), { variant: 'error' });
       return;
     }
 
@@ -186,7 +186,7 @@ function DocumentImport() {
 
         // Attendre un peu pour l'effet visuel
         setTimeout(() => {
-          enqueueSnackbar('Document analysé avec succès ! Vérifiez les imports en attente.', {
+          enqueueSnackbar(t('aiChat:documentImport.analyzeSuccess'), {
             variant: 'success',
             autoHideDuration: 5000
           });
@@ -197,7 +197,7 @@ function DocumentImport() {
       }
     } catch (error) {
       console.error('Error uploading document:', error);
-      enqueueSnackbar('Erreur lors du téléchargement du document.', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:documentImport.uploadError'), { variant: 'error' });
       setUploadProgress(0);
     } finally {
       setUploading(false);
@@ -212,9 +212,14 @@ function DocumentImport() {
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return `0 ${t('aiChat:documentImport.fileSizeUnits.bytes')}`;
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = [
+      t('aiChat:documentImport.fileSizeUnits.bytes'),
+      t('aiChat:documentImport.fileSizeUnits.kb'),
+      t('aiChat:documentImport.fileSizeUnits.mb'),
+      t('aiChat:documentImport.fileSizeUnits.gb'),
+    ];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
@@ -228,10 +233,10 @@ function DocumentImport() {
         </IconButton>
         <Box sx={{ flex: 1 }}>
           <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
-            Import IA
+            {t('aiChat:documentImport.title')}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Analysez vos documents avec l'intelligence artificielle
+            {t('aiChat:documentImport.subtitle')}
           </Typography>
         </Box>
       </Box>
@@ -240,7 +245,7 @@ function DocumentImport() {
       <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
         <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Description sx={{ fontSize: 18 }} />
-          Type de document
+          {t('aiChat:documentImport.documentType')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -248,7 +253,7 @@ function DocumentImport() {
             <Chip
               key={type.id}
               icon={React.cloneElement(type.icon, { sx: { fontSize: 16 } })}
-              label={type.label}
+              label={t(`aiChat:documentImport.types.${type.id}`)}
               onClick={() => setSelectedType(type.id)}
               variant={selectedType === type.id ? "filled" : "outlined"}
               sx={{
@@ -270,7 +275,7 @@ function DocumentImport() {
       <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
         <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
           <CloudUpload sx={{ fontSize: 18 }} />
-          Fichier à analyser
+          {t('aiChat:documentImport.fileToAnalyze')}
         </Typography>
 
         {selectedFile ? (
@@ -332,10 +337,10 @@ function DocumentImport() {
           >
             <CloudUpload sx={{ fontSize: 32, color: 'text.secondary', mb: 1 }} />
             <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
-              Glissez-déposez votre fichier ici
+              {t('aiChat:documentImport.dropHere')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              ou cliquez pour sélectionner • JPG, PNG, PDF (max 10MB)
+              {t('aiChat:documentImport.clickToSelect')}
             </Typography>
             <input
               ref={fileInputRef}
@@ -355,7 +360,7 @@ function DocumentImport() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <CircularProgress size={16} />
               <Typography variant="body2" color="text.secondary">
-                {analyzing ? 'Analyse IA en cours...' : 'Téléchargement...'}
+                {analyzing ? t('aiChat:documentImport.analyzingAI') : t('aiChat:documentImport.uploading')}
               </Typography>
             </Box>
             <LinearProgress variant="determinate" value={uploadProgress} sx={{ height: 4, borderRadius: 2 }} />
@@ -364,7 +369,7 @@ function DocumentImport() {
 
         <Alert severity="info" sx={{ mb: 2, py: 1 }}>
           <Typography variant="caption">
-            L'IA analysera votre document et créera une révision pour validation avant création de l'entité.
+            {t('aiChat:documentImport.info')}
           </Typography>
         </Alert>
 
@@ -377,7 +382,7 @@ function DocumentImport() {
             disabled={uploading || analyzing}
             sx={{ flex: 1 }}
           >
-            Retour
+            {t('common:buttons.back')}
           </Button>
           <Button
             variant="contained"
@@ -387,7 +392,7 @@ function DocumentImport() {
             disabled={!selectedFile || !selectedType || uploading || analyzing}
             sx={{ flex: 2 }}
           >
-            {analyzing ? 'Analyse...' : 'Analyser'}
+            {analyzing ? t('aiChat:documentImport.analyzingShort') : t('aiChat:documentImport.analyze')}
           </Button>
         </Box>
       </Paper>
@@ -417,12 +422,12 @@ function DocumentImport() {
               />
             </Box>
             <Typography variant="h6" sx={{ mb: 1 }}>
-              {analyzing ? 'Analyse IA en cours...' : 'Téléchargement...'}
+              {analyzing ? t('aiChat:documentImport.analyzingAI') : t('aiChat:documentImport.uploading')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {analyzing
-                ? 'Extraction intelligente des données...'
-                : 'Préparation de votre document...'}
+                ? t('aiChat:documentImport.extracting')
+                : t('aiChat:documentImport.preparing')}
             </Typography>
             {uploading && (
               <Box sx={{ mt: 2, width: '100%' }}>

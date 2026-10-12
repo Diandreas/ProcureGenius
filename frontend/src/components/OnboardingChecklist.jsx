@@ -30,14 +30,15 @@ import {
   SmartToy,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // ─── Onboarding tasks definition ─────────────────────────────────
 const ONBOARDING_TASKS = [
   {
     id: 'company_profile',
     icon: <Business sx={{ fontSize: 17 }} />,
-    title: 'Configurer votre profil entreprise',
-    subtitle: 'Nom, logo, informations légales',
+    titleKey: 'onboarding:checklist.tasks.companyProfile.title',
+    subtitleKey: 'onboarding:checklist.tasks.companyProfile.subtitle',
     path: '/settings',
     checkKey: 'onboarding_company_done',
     apiCheck: async (token) => {
@@ -52,8 +53,8 @@ const ONBOARDING_TASKS = [
   {
     id: 'first_supplier',
     icon: <People sx={{ fontSize: 17 }} />,
-    title: 'Ajouter votre premier fournisseur',
-    subtitle: 'Nom, contact, conditions',
+    titleKey: 'onboarding:checklist.tasks.firstSupplier.title',
+    subtitleKey: 'onboarding:checklist.tasks.firstSupplier.subtitle',
     path: '/suppliers/new',
     checkKey: 'onboarding_supplier_done',
     module: 'suppliers',
@@ -69,8 +70,8 @@ const ONBOARDING_TASKS = [
   {
     id: 'first_product',
     icon: <Receipt sx={{ fontSize: 17 }} />,
-    title: 'Créer un produit ou service',
-    subtitle: 'Référence, prix, stock initial',
+    titleKey: 'onboarding:checklist.tasks.firstProduct.title',
+    subtitleKey: 'onboarding:checklist.tasks.firstProduct.subtitle',
     path: '/products/new',
     checkKey: 'onboarding_product_done',
     module: 'products',
@@ -86,8 +87,8 @@ const ONBOARDING_TASKS = [
   {
     id: 'first_po',
     icon: <ShoppingCart sx={{ fontSize: 17 }} />,
-    title: 'Créer un bon de commande',
-    subtitle: 'Votre premier achat fournisseur',
+    titleKey: 'onboarding:checklist.tasks.firstPo.title',
+    subtitleKey: 'onboarding:checklist.tasks.firstPo.subtitle',
     path: '/purchase-orders/new',
     checkKey: 'onboarding_po_done',
     module: 'purchase-orders',
@@ -103,8 +104,8 @@ const ONBOARDING_TASKS = [
   {
     id: 'explore_ai',
     icon: <SmartToy sx={{ fontSize: 17 }} />,
-    title: 'Essayer l\'assistant IA',
-    subtitle: 'Posez votre première question',
+    titleKey: 'onboarding:checklist.tasks.exploreAi.title',
+    subtitleKey: 'onboarding:checklist.tasks.exploreAi.subtitle',
     path: '/ai-chat',
     checkKey: 'onboarding_ai_done',
     apiCheck: async () => false, // Manuel via localStorage uniquement
@@ -112,7 +113,9 @@ const ONBOARDING_TASKS = [
 ];
 
 // ─── Single task row ──────────────────────────────────────────────
-const TaskRow = ({ task, done, onAction, isDark }) => (
+const TaskRow = ({ task, done, onAction, isDark }) => {
+  const { t } = useTranslation(['onboarding', 'common']);
+  return (
   <Box
     onClick={() => !done && onAction(task)}
     sx={{
@@ -159,7 +162,7 @@ const TaskRow = ({ task, done, onAction, isDark }) => (
         overflow: 'hidden',
         textOverflow: 'ellipsis',
       }}>
-        {task.title}
+        {t(task.titleKey)}
       </Typography>
       {!done && (
         <Typography sx={{
@@ -167,7 +170,7 @@ const TaskRow = ({ task, done, onAction, isDark }) => (
           color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)',
           lineHeight: 1.3,
         }}>
-          {task.subtitle}
+          {t(task.subtitleKey)}
         </Typography>
       )}
     </Box>
@@ -180,13 +183,15 @@ const TaskRow = ({ task, done, onAction, isDark }) => (
       }} />
     )}
   </Box>
-);
+  );
+};
 
 // ─── Main component ───────────────────────────────────────────────
 export default function OnboardingChecklist() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { t } = useTranslation(['onboarding', 'common']);
 
   const [visible, setVisible] = useState(false);
   const [expanded, setExpanded] = useState(true);
@@ -351,14 +356,14 @@ export default function OnboardingChecklist() {
                     color: isDark ? '#f1f5f9' : '#0f172a',
                     lineHeight: 1.2,
                   }}>
-                    Démarrage rapide
+                    {t('onboarding:checklist.title')}
                   </Typography>
                   <Typography sx={{
                     fontSize: '0.72rem',
                     color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)',
                     mt: 0.25,
                   }}>
-                    {doneCount}/{total} tâches complétées
+                    {t('onboarding:checklist.progress', { done: doneCount, total })}
                   </Typography>
                 </Box>
 
@@ -410,10 +415,10 @@ export default function OnboardingChecklist() {
                     textAlign: 'center',
                   }}>
                     <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: '#10b981', mb: 0.25 }}>
-                       Tout est en place !
+                    {t('onboarding:checklist.allDoneTitle')}
                     </Typography>
                     <Typography sx={{ fontSize: '0.75rem', color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)' }}>
-                      Votre espace Procura est configuré.
+                      {t('onboarding:checklist.allDoneText')}
                     </Typography>
                   </Box>
                 )}

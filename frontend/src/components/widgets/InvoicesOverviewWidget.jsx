@@ -45,7 +45,7 @@ const InvoicesOverviewWidget = ({ period = 'last_30_days' }) => {
   const statuses = [
     {
       key: 'draft',
-      label: t('widgets.invoices_status_draft', { ns: 'dashboard', defaultValue: 'Brouillon' }),
+      label: t('dashboard:widgets.invoices_status_draft'),
       count: data.by_status?.draft || 0,
       amount: data.amounts?.draft || 0,
       icon: FileEdit,
@@ -54,7 +54,7 @@ const InvoicesOverviewWidget = ({ period = 'last_30_days' }) => {
     },
     {
       key: 'sent',
-      label: t('widgets.invoices_status_sent', { ns: 'dashboard', defaultValue: 'Envoyées' }),
+      label: t('dashboard:widgets.invoices_status_sent'),
       count: data.by_status?.sent || 0,
       amount: data.amounts?.sent || 0,
       icon: Clock,
@@ -63,7 +63,7 @@ const InvoicesOverviewWidget = ({ period = 'last_30_days' }) => {
     },
     {
       key: 'paid',
-      label: t('widgets.invoices_status_paid', { ns: 'dashboard', defaultValue: 'Payées' }),
+      label: t('dashboard:widgets.invoices_status_paid'),
       count: data.by_status?.paid || 0,
       amount: data.amounts?.paid || 0,
       icon: CheckCircle,
@@ -72,7 +72,7 @@ const InvoicesOverviewWidget = ({ period = 'last_30_days' }) => {
     },
     {
       key: 'overdue',
-      label: t('widgets.invoices_status_overdue', { ns: 'dashboard', defaultValue: 'En retard' }),
+      label: t('dashboard:widgets.invoices_status_overdue'),
       count: data.by_status?.overdue || 0,
       amount: data.amounts?.overdue || 0,
       icon: AlertCircle,
@@ -110,7 +110,7 @@ const InvoicesOverviewWidget = ({ period = 'last_30_days' }) => {
             {item.name}
           </div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            {item.value} {t('widgets.invoices_label', { ns: 'dashboard', defaultValue: 'facture(s)' })}
+            {item.value} {t('dashboard:widgets.invoices_label')}
           </div>
           <div style={{ fontSize: '13px', fontWeight: 500, marginTop: '4px' }}>
             {formatCurrency(item.amount)}
@@ -135,7 +135,7 @@ const InvoicesOverviewWidget = ({ period = 'last_30_days' }) => {
           <div className="header-info">
             <span className="header-count">{totalCount}</span>
             <span className="header-label">
-              {t('widgets.invoices_total', { ns: 'dashboard', defaultValue: 'factures' })}
+              {t('dashboard:widgets.invoices_total')}
             </span>
           </div>
         </div>

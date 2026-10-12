@@ -25,7 +25,7 @@ import { Add, Delete } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import axios from 'axios';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 // Instance axios pour les endpoints publics (sans authentification)
@@ -40,7 +40,7 @@ function PublicBidSubmission() {
   const { token } = useParams();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(['eSourcing', 'common']);
+  const { t, i18n } = useTranslation(['eSourcing', 'common']);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -214,7 +214,7 @@ function PublicBidSubmission() {
               {event.title}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t('eSourcing:publicBid.deadline')}: {format(new Date(event.submission_deadline), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
+              {t('eSourcing:publicBid.deadline')}: {format(new Date(event.submission_deadline), t('eSourcing:dateFormats.dateTime'), { locale: i18n.language?.startsWith('en') ? enUS : fr })}
             </Typography>
           </CardContent>
         </Card>
@@ -271,7 +271,7 @@ function PublicBidSubmission() {
             )}
             <Alert severity="info" sx={{ mt: 2 }}>
               <strong>{t('eSourcing:publicBid.submissionDeadline')}:</strong>{' '}
-              {format(new Date(event.submission_deadline), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
+              {format(new Date(event.submission_deadline), t('eSourcing:dateFormats.dateTime'), { locale: i18n.language?.startsWith('en') ? enUS : fr })}
             </Alert>
           </CardContent>
         </Card>

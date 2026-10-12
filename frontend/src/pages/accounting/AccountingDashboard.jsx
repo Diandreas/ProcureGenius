@@ -10,6 +10,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
@@ -70,6 +71,7 @@ export default function AccountingDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
@@ -78,7 +80,7 @@ export default function AccountingDashboard() {
   const loadDashboard = React.useCallback(() => {
     return accountingAPI.getDashboard()
       .then((r) => { setData(r.data); setError(null); })
-      .catch(() => setError('Erreur chargement du tableau de bord'))
+      .catch(() => setError(t('accounting:dashboard.loadError')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -97,7 +99,7 @@ export default function AccountingDashboard() {
 
   if (loading) return (
     <Box p={{ xs: 2, sm: 3 }}>
-      <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
+      <AccountingNav title={t('accounting:dashboard.title')} subtitle={t('accounting:dashboard.subtitle')} />
 
       <ChartStandardBanner />
       <Box display="flex" justifyContent="center" p={6}><CircularProgress /></Box>
@@ -106,7 +108,7 @@ export default function AccountingDashboard() {
 
   if (error) return (
     <Box p={{ xs: 2, sm: 3 }}>
-      <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
+      <AccountingNav title={t('accounting:dashboard.title')} subtitle={t('accounting:dashboard.subtitle')} />
       <Alert severity="error">{error}</Alert>
     </Box>
   );
@@ -117,9 +119,9 @@ export default function AccountingDashboard() {
 
   const chartData = (data.monthly_chart || []).map((row) => ({
     month: row.month.slice(0, 7),
-    Recettes: parseFloat(row.revenue),
-    Charges: parseFloat(row.expenses),
-    Résultat: parseFloat(row.result),
+    revenue: parseFloat(row.revenue),
+    expenses: parseFloat(row.expenses),
+    result: parseFloat(row.result),
   }));
 
   const YearCard = ({ label, value, color, suffix }) => (
@@ -136,62 +138,61 @@ export default function AccountingDashboard() {
 
   return (
     <Box p={{ xs: 2, sm: 3 }}>
-      <AccountingNav title="Comptabilité" subtitle="Vos recettes et charges, en clair" />
+      <AccountingNav title={t('accounting:dashboard.title')} subtitle={t('accounting:dashboard.subtitle')} />
 
       <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-        Vos ventes (factures) et vos achats (bons de commande) sont enregistrés
-        <strong> automatiquement</strong>. Il vous suffit d'ajouter vos autres charges
-        (loyer, salaires, abonnements…) pour connaître votre <strong>bénéfice net</strong>.
+        {t('accounting:dashboard.infoBefore')}
+        <strong> {t('accounting:dashboard.infoAuto')}</strong>{t('accounting:dashboard.infoMiddle')}<strong>{t('accounting:dashboard.infoNetProfit')}</strong>.
       </Alert>
 
       {/* KPIs mois courant */}
-      <Typography variant="overline" color="text.secondary">Mois en cours</Typography>
+      <Typography variant="overline" color="text.secondary">{t('accounting:dashboard.currentMonth')}</Typography>
       <Grid container spacing={{ xs: 1.5, sm: 2 }} mt={0.5} mb={3}>
         <Grid item xs={6} md={3}>
-          <KpiCard label="Recettes" value={format(parseFloat(m.revenue))} icon={<TrendingUp />} color="#10b981" neu={neu} />
+          <KpiCard label={t('accounting:dashboard.revenue')} value={format(parseFloat(m.revenue))} icon={<TrendingUp />} color="#10b981" neu={neu} />
         </Grid>
         <Grid item xs={6} md={3}>
-          <KpiCard label="Charges" value={format(parseFloat(m.expenses))} icon={<TrendingDown />} color="#ef4444" neu={neu} />
+          <KpiCard label={t('accounting:dashboard.expenses')} value={format(parseFloat(m.expenses))} icon={<TrendingDown />} color="#ef4444" neu={neu} />
         </Grid>
         <Grid item xs={6} md={3}>
           <KpiCard
-            label="Résultat net"
+            label={t('accounting:dashboard.netResult')}
             value={format(Math.abs(parseFloat(m.result)))}
             icon={<AccountBalance />}
             color={isProfit ? '#10b981' : '#ef4444'}
-            subtitle={isProfit ? 'Bénéfice' : 'Déficit'}
+            subtitle={isProfit ? t('accounting:dashboard.profit') : t('accounting:dashboard.deficit')}
             neu={neu}
           />
         </Grid>
         <Grid item xs={6} md={3}>
-          <KpiCard label="En attente" value={data.pending_entries} icon={<PendingActions />} color="#f59e0b" subtitle="Brouillons à valider" neu={neu} />
+          <KpiCard label={t('accounting:dashboard.pending')} value={data.pending_entries} icon={<PendingActions />} color="#f59e0b" subtitle={t('accounting:dashboard.draftsToPost')} neu={neu} />
         </Grid>
       </Grid>
 
       <Divider sx={{ mb: 3 }} />
 
       {/* KPIs année */}
-      <Typography variant="overline" color="text.secondary">Année en cours</Typography>
+      <Typography variant="overline" color="text.secondary">{t('accounting:dashboard.currentYear')}</Typography>
       <Grid container spacing={{ xs: 1.5, sm: 2 }} mt={0.5} mb={3}>
         <Grid item xs={12} sm={4}>
-          <YearCard label="Total Recettes" value={format(parseFloat(y.revenue))} color="success.main" />
+          <YearCard label={t('accounting:dashboard.totalRevenue')} value={format(parseFloat(y.revenue))} color="success.main" />
         </Grid>
         <Grid item xs={12} sm={4}>
-          <YearCard label="Total Charges" value={format(parseFloat(y.expenses))} color="error.main" />
+          <YearCard label={t('accounting:dashboard.totalExpenses')} value={format(parseFloat(y.expenses))} color="error.main" />
         </Grid>
         <Grid item xs={12} sm={4}>
           <YearCard
-            label="Résultat Annuel"
+            label={t('accounting:dashboard.annualResult')}
             value={format(Math.abs(parseFloat(y.result)))}
             color={parseFloat(y.result) >= 0 ? 'success.main' : 'error.main'}
-            suffix={parseFloat(y.result) >= 0 ? 'bénéfice' : 'déficit'}
+            suffix={parseFloat(y.result) >= 0 ? t('accounting:dashboard.profitLower') : t('accounting:dashboard.deficitLower')}
           />
         </Grid>
       </Grid>
 
       {/* Graphe mensuel */}
       <Card elevation={0} sx={{ border: 'none', borderRadius: 3, bgcolor: 'background.paper', boxShadow: neu, p: { xs: 1.5, sm: 2 } }}>
-        <Typography variant="subtitle1" fontWeight={600} mb={2}>Évolution mensuelle — 12 derniers mois</Typography>
+        <Typography variant="subtitle1" fontWeight={600} mb={2}>{t('accounting:dashboard.monthlyTrend')}</Typography>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={chartData}>
             <defs>
@@ -209,8 +210,8 @@ export default function AccountingDashboard() {
             <YAxis tick={{ fontSize: 11, fill: theme.palette.text.secondary }} tickFormatter={(v) => format(v)} width={70} />
             <Tooltip content={<CustomTooltip fmt={format} />} />
             <Legend />
-            <Area type="monotone" dataKey="Recettes" stroke="#10b981" fill="url(#gradRev)" strokeWidth={2} />
-            <Area type="monotone" dataKey="Charges" stroke="#ef4444" fill="url(#gradExp)" strokeWidth={2} />
+            <Area type="monotone" dataKey="revenue" name={t('accounting:dashboard.revenue')} stroke="#10b981" fill="url(#gradRev)" strokeWidth={2} />
+            <Area type="monotone" dataKey="expenses" name={t('accounting:dashboard.expenses')} stroke="#ef4444" fill="url(#gradExp)" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
       </Card>

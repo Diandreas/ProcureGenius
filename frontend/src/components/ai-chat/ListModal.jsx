@@ -47,6 +47,7 @@ import {
   ArrowForward,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
@@ -62,6 +63,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
  * Offre une expérience visuelle de haut calibre pour lister les résultats de recherche IA
  */
 const ListModal = ({ open, onClose, title, items, entityType }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
   const navigate = useNavigate();
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -156,7 +158,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
                 {item.invoice_number}
               </Typography>
               <Chip
-                label={item.status || 'Brouillon'}
+                label={item.status || t('aiChat:listModal.draft')}
                 size="small"
                 sx={{
                   height: 20,
@@ -170,7 +172,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
               />
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              {item.client_name ? `Client: ${item.client_name}` : 'Client non spécifié'}
+              {item.client_name ? t('aiChat:listModal.clientLabel', { name: item.client_name }) : t('aiChat:listModal.noClient')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant="body2" sx={{ fontWeight: 800, color: entityColor }}>
@@ -196,7 +198,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
                 {item.po_number}
               </Typography>
               <Chip
-                label={item.status || 'En attente'}
+                label={item.status || t('aiChat:listModal.pending')}
                 size="small"
                 sx={{
                   height: 20,
@@ -210,7 +212,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
               />
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              {item.supplier_name ? `Fournisseur: ${item.supplier_name}` : 'Fournisseur non spécifié'}
+              {item.supplier_name ? t('aiChat:listModal.supplierLabel', { name: item.supplier_name }) : t('aiChat:listModal.noSupplier')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant="body2" sx={{ fontWeight: 800, color: entityColor }}>
@@ -237,7 +239,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
               </Typography>
               {item.score !== undefined && (
                 <Chip
-                  label={`${item.score}% match`}
+                  label={t('aiChat:listModal.match', { score: item.score })}
                   size="small"
                   color={item.score >= 80 ? "success" : item.score >= 50 ? "warning" : "error"}
                   variant="outlined"
@@ -246,14 +248,14 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
               )}
             </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-              Réf: {item.reference || 'N/A'}
+              {t('aiChat:listModal.reference', { reference: item.reference || 'N/A' })}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Typography variant="body2" sx={{ fontWeight: 800, color: 'success.main' }}>
                 {formatCurrency(item.price || 0)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ bgcolor: alpha(theme.palette.divider, 0.5), px: 1, borderRadius: 1 }}>
-                Stock: {item.stock_quantity || 0}
+                {t('aiChat:listModal.stock', { qty: item.stock_quantity || 0 })}
               </Typography>
             </Box>
           </Box>
@@ -263,7 +265,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
         return (
           <Box sx={{ flex: 1 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              {item.name || item.title || 'Élément sans nom'}
+              {item.name || item.title || t('aiChat:listModal.unnamed')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               ID: {item.id}
@@ -278,7 +280,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
 
     return (
       <Box sx={{ display: 'flex', gap: 1 }}>
-        <Tooltip title="Voir les détails">
+        <Tooltip title={t('common:viewDetails')}>
           <IconButton
             size="small"
             onClick={(e) => {
@@ -295,7 +297,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
             <Visibility fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Modifier">
+        <Tooltip title={t('common:buttons.edit')}>
           <IconButton
             size="small"
             onClick={(e) => {
@@ -313,7 +315,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
           </IconButton>
         </Tooltip>
         {(entityType === 'invoice' || entityType === 'purchase_order') && (
-          <Tooltip title="Télécharger PDF">
+          <Tooltip title={t('aiChat:listModal.downloadPdf')}>
             <IconButton
               size="small"
               onClick={(e) => {
@@ -399,7 +401,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Chip 
-                  label={`${filteredItems.length} résultat${filteredItems.length !== 1 ? 's' : ''}`}
+                  label={t('aiChat:listModal.results', { count: filteredItems.length })}
                   size="small"
                   sx={{ 
                     bgcolor: alpha(entityColor, 0.1), 
@@ -410,7 +412,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
                   }}
                 />
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                  trouvé{filteredItems.length !== 1 ? 's' : ''} dans votre base de données
+                  {t('aiChat:listModal.found', { count: filteredItems.length })}
                 </Typography>
               </Box>
             </Box>
@@ -431,7 +433,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
         <Box sx={{ mt: 3, position: 'relative', zIndex: 1 }}>
           <TextField
             fullWidth
-            placeholder="Filtrer les résultats..."
+            placeholder={t('aiChat:listModal.filterPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             variant="outlined"
@@ -481,16 +483,16 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
                   <Search sx={{ fontSize: 40 }} />
                 </Avatar>
                 <Typography variant="h6" color="text.primary" fontWeight={700}>
-                  Aucun résultat
+                  {t('aiChat:listModal.noResults')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Nous n'avons rien trouvé correspondant à "{searchQuery}"
+                  {t('aiChat:listModal.noMatch', { query: searchQuery })}
                 </Typography>
                 <Button 
                   onClick={() => setSearchQuery('')} 
                   sx={{ mt: 3, textTransform: 'none', fontWeight: 700 }}
                 >
-                  Effacer la recherche
+                  {t('aiChat:listModal.clearSearch')}
                 </Button>
               </Box>
             </motion.div>
@@ -556,7 +558,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
                           {renderItemActions(item)}
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.disabled', transition: 'all 0.2s' }} className="arrow-icon">
                             <Typography variant="caption" sx={{ fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                              Détails
+                              {t('common:buttons.details')}
                             </Typography>
                             <ArrowForward sx={{ fontSize: 14 }} />
                           </Box>
@@ -578,7 +580,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
         justifyContent: 'space-between'
       }}>
         <Typography variant="caption" color="text.disabled" sx={{ fontStyle: 'italic' }}>
-          Astuce: Cliquez sur une carte pour accéder directement à la fiche complète.
+          {t('aiChat:listModal.tip')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
@@ -594,7 +596,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
               borderColor: theme.palette.divider
             }}
           >
-            Fermer
+            {t('common:buttons.close')}
           </Button>
           <Button
             variant="contained"
@@ -610,7 +612,7 @@ const ListModal = ({ open, onClose, title, items, entityType }) => {
               boxShadow: `0 8px 20px ${alpha(entityColor, 0.3)}`
             }}
           >
-            Terminer
+            {t('aiChat:listModal.done')}
           </Button>
         </Box>
       </DialogActions>

@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { Add, Remove, Person } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation, Trans } from 'react-i18next';
 import subscriptionAPI from '../../services/subscriptionAPI';
 import usePlansTarifs from '../../hooks/usePlansTarifs';
 import { formatPriceCurrency } from '../../utils/visitorCurrency';
@@ -19,6 +20,7 @@ import { formatPriceCurrency } from '../../utils/visitorCurrency';
 export default function SeatManagerDialog({ open, onClose, status, onUpdated }) {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['subscription', 'common']);
   const included = status?.included_users ?? 1;
   const activeUsers = status?.active_users ?? 0;
   const currentExtra = status?.extra_seats ?? 0;
@@ -41,11 +43,11 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
     setSaving(true);
     try {
       const res = await subscriptionAPI.manageSeats(extra);
-      enqueueSnackbar(`Sièges mis à jour : ${res.seat_limit} au total.`, { variant: 'success' });
+      enqueueSnackbar(t('subscription:seats.updated', { total: res.seat_limit }), { variant: 'success' });
       onUpdated?.(res);
       onClose();
     } catch (err) {
-      const msg = err?.response?.data?.error || 'Impossible de mettre à jour les sièges.';
+      const msg = err?.response?.data?.error || t('subscription:seats.updateError');
       enqueueSnackbar(msg, { variant: 'error' });
     } finally {
       setSaving(false);
@@ -56,21 +58,20 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth
       PaperProps={{ sx: { borderRadius: 3 } }}>
       <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Person color="primary" /> Gérer les sièges
+        <Person color="primary" /> {t('subscription:seats.title')}
       </DialogTitle>
 
       {!isPaid ? (
         <>
           <DialogContent>
             <Alert severity="info" sx={{ borderRadius: 2 }}>
-              L'ajout de sièges nécessite un plan payant. Passez à <strong>Pro</strong> ou
-              <strong> Business</strong> pour inviter votre équipe (puis ajoutez des sièges à {prixSiege(SEAT_PRICE)}/utilisateur).
+              <Trans t={t} i18nKey="subscription:seats.paidPlanRequired" values={{ price: prixSiege(SEAT_PRICE) }} components={{ strong: <strong /> }} />
             </Alert>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={onClose}>Fermer</Button>
+            <Button onClick={onClose}>{t('common:buttons.close')}</Button>
             <Button variant="contained" onClick={() => { onClose(); navigate('/subscription/plans'); }}>
-              Voir les formules
+              {t('subscription:seats.viewPlans')}
             </Button>
           </DialogActions>
         </>
@@ -78,8 +79,7 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
         <>
           <DialogContent>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Votre formule inclut <strong>{included}</strong> utilisateur(s). Ajoutez des sièges
-              supplémentaires à <strong>{prixSiege(SEAT_PRICE)}/mois</strong> chacun (facturation proratisée).
+              <Trans t={t} i18nKey="subscription:seats.intro" count={included} values={{ price: prixSiege(SEAT_PRICE) }} components={{ strong: <strong /> }} />
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, my: 2 }}>
@@ -92,7 +92,7 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
               </IconButton>
               <Box sx={{ textAlign: 'center', minWidth: 90 }}>
                 <Typography sx={{ fontWeight: 800, fontSize: '2rem', lineHeight: 1 }}>{extra}</Typography>
-                <Typography variant="caption" color="text.secondary">siège(s) en plus</Typography>
+                <Typography variant="caption" color="text.secondary">{t('subscription:seats.extraSeats', { count: extra })}</Typography>
               </Box>
               <IconButton
                 onClick={() => setExtra((v) => v + 1)}
@@ -104,29 +104,29 @@ export default function SeatManagerDialog({ open, onClose, status, onUpdated }) 
 
             <Box sx={{ p: 1.75, borderRadius: 2, bgcolor: 'action.hover', display: 'flex', justifyContent: 'space-between' }}>
               <Box>
-                <Typography variant="caption" color="text.secondary">Capacité totale</Typography>
-                <Typography sx={{ fontWeight: 700 }}>{totalSeats} utilisateurs</Typography>
+                <Typography variant="caption" color="text.secondary">{t('subscription:seats.totalCapacity')}</Typography>
+                <Typography sx={{ fontWeight: 700 }}>{t('subscription:seats.totalUsers', { count: totalSeats })}</Typography>
               </Box>
               <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="caption" color="text.secondary">Coût des sièges</Typography>
-                <Typography sx={{ fontWeight: 700 }}>+{prixSiege(monthlyCost)}/mois</Typography>
+                <Typography variant="caption" color="text.secondary">{t('subscription:seats.seatCost')}</Typography>
+                <Typography sx={{ fontWeight: 700 }}>{t('subscription:seats.costPerMonth', { price: prixSiege(monthlyCost) })}</Typography>
               </Box>
             </Box>
 
             {minExtra > 0 && extra <= minExtra && (
               <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 1 }}>
-                Minimum {minExtra} (sièges déjà occupés). Désactivez des utilisateurs pour réduire.
+                {t('subscription:seats.minimum', { min: minExtra })}
               </Typography>
             )}
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button onClick={onClose} disabled={saving}>Annuler</Button>
+            <Button onClick={onClose} disabled={saving}>{t('common:buttons.cancel')}</Button>
             <Button
               variant="contained" onClick={confirm}
               disabled={saving || extra === currentExtra}
               startIcon={saving ? <CircularProgress size={16} /> : null}
             >
-              {saving ? 'Mise à jour…' : 'Confirmer'}
+              {saving ? t('subscription:seats.updating') : t('common:buttons.confirm')}
             </Button>
           </DialogActions>
         </>

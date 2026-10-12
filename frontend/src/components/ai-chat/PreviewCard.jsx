@@ -1,3 +1,5 @@
+import { deviseActuelle } from '../../hooks/useCurrency';
+import { formatCurrency as formaterMontant } from '../../utils/currency';
 import React from 'react';
 import {
   Paper,
@@ -28,6 +30,7 @@ import {
   Description,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { scaleIn } from '../../animations/variants/scroll-reveal';
 import { buttonPress } from '../../animations/variants/micro-interactions';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
@@ -45,6 +48,7 @@ const PreviewCard = ({
   isNested = false,
   nestedMessage = '',
 }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
   draftData = draftData || {};
   // Configuration par type d'entité
   const entityConfig = {
@@ -53,17 +57,17 @@ const PreviewCard = ({
       color: '#10b981',
       bgColor: '#f0fdf4',
       title: 'Facture',
-      getPreviewTitle: (data) => `Facture pour ${data?.client_name || 'Client'}`,
+      getPreviewTitle: (data) => t('aiChat:previewCard.invoiceTitle', { name: data?.client_name || t('aiChat:previewCard.defaultClient') }),
       getPreviewSubtitle: (data) => {
         const total = data?.total_amount || (data?.items || []).reduce((sum, item) => sum + ((item?.quantity || 0) * (item?.unit_price || 0)), 0);
-        return `Montant: ${formatCurrency(total)} • Échéance: ${data?.due_date || 'N/A'}`;
+        return t('aiChat:previewCard.invoiceSubtitle', { amount: formatCurrency(total), dueDate: data?.due_date || 'N/A' });
       },
       fields: [
-        { label: 'Client', value: 'client_name', icon: <Person /> },
-        { label: 'Email', value: 'client_email', icon: <Email /> },
-        { label: 'Téléphone', value: 'client_phone', icon: <Phone /> },
-        { label: "Date d'échéance", value: 'due_date', icon: <CalendarToday /> },
-        { label: 'Description', value: 'description', icon: <Description />, fullWidth: true },
+        { label: t('aiChat:previewCard.fields.client'), value: 'client_name', icon: <Person /> },
+        { label: t('aiChat:previewCard.fields.email'), value: 'client_email', icon: <Email /> },
+        { label: t('common:labels.phone'), value: 'client_phone', icon: <Phone /> },
+        { label: t('aiChat:previewCard.fields.dueDate'), value: 'due_date', icon: <CalendarToday /> },
+        { label: t('common:labels.description'), value: 'description', icon: <Description />, fullWidth: true },
       ],
       hasItems: true,
     },
@@ -72,20 +76,20 @@ const PreviewCard = ({
       color: '#2563eb',
       bgColor: '#eff6ff',
       title: 'Client',
-      getPreviewTitle: (data) => data?.name || 'Nouveau Client',
+      getPreviewTitle: (data) => data?.name || t('aiChat:previewCard.newClient'),
       getPreviewSubtitle: (data) => {
         const parts = [];
         if (data?.email) parts.push(data.email);
         if (data?.phone) parts.push(data.phone);
-        return parts.join(' • ') || 'Aucun contact';
+        return parts.join(' • ') || t('aiChat:previewCard.noContact');
       },
       fields: [
-        { label: 'Nom', value: 'name', icon: <Person /> },
-        { label: 'Email', value: 'email', icon: <Email /> },
-        { label: 'Téléphone', value: 'phone', icon: <Phone /> },
-        { label: 'Personne de contact', value: 'contact_person', icon: <Person /> },
-        { label: 'Adresse', value: 'address', icon: <Description />, fullWidth: true },
-        { label: 'Conditions de paiement', value: 'payment_terms', icon: <Euro /> },
+        { label: t('common:labels.name'), value: 'name', icon: <Person /> },
+        { label: t('aiChat:previewCard.fields.email'), value: 'email', icon: <Email /> },
+        { label: t('common:labels.phone'), value: 'phone', icon: <Phone /> },
+        { label: t('aiChat:previewCard.fields.contactPerson'), value: 'contact_person', icon: <Person /> },
+        { label: t('common:labels.address'), value: 'address', icon: <Description />, fullWidth: true },
+        { label: t('aiChat:previewCard.fields.paymentTerms'), value: 'payment_terms', icon: <Euro /> },
       ],
     },
     supplier: {
@@ -93,21 +97,21 @@ const PreviewCard = ({
       color: '#06b6d4',
       bgColor: '#ecfeff',
       title: 'Fournisseur',
-      getPreviewTitle: (data) => data?.name || 'Nouveau Fournisseur',
+      getPreviewTitle: (data) => data?.name || t('aiChat:previewCard.newSupplier'),
       getPreviewSubtitle: (data) => {
-        if (!data) return 'Aucun contact';
+        if (!data) return t('aiChat:previewCard.noContact');
         const parts = [];
-        if (data?.contact_person) parts.push(`Contact: ${data.contact_person}`);
+        if (data?.contact_person) parts.push(t('aiChat:previewCard.contactPrefix', { name: data.contact_person }));
         if (data?.email) parts.push(data.email);
-        return parts.join(' • ') || 'Aucun contact';
+        return parts.join(' • ') || t('aiChat:previewCard.noContact');
       },
       fields: [
-        { label: 'Nom', value: 'name', icon: <Business /> },
-        { label: 'Personne de contact', value: 'contact_person', icon: <Person /> },
-        { label: 'Email', value: 'email', icon: <Email /> },
-        { label: 'Téléphone', value: 'phone', icon: <Phone /> },
-        { label: 'Ville', value: 'city', icon: <Description /> },
-        { label: 'Adresse', value: 'address', icon: <Description />, fullWidth: true },
+        { label: t('common:labels.name'), value: 'name', icon: <Business /> },
+        { label: t('aiChat:previewCard.fields.contactPerson'), value: 'contact_person', icon: <Person /> },
+        { label: t('aiChat:previewCard.fields.email'), value: 'email', icon: <Email /> },
+        { label: t('common:labels.phone'), value: 'phone', icon: <Phone /> },
+        { label: t('common:labels.city'), value: 'city', icon: <Description /> },
+        { label: t('common:labels.address'), value: 'address', icon: <Description />, fullWidth: true },
       ],
     },
     purchase_order: {
@@ -115,15 +119,15 @@ const PreviewCard = ({
       color: '#f59e0b',
       bgColor: '#fffbeb',
       title: 'Bon de Commande',
-      getPreviewTitle: (data) => `BC pour ${data?.supplier_name || 'Fournisseur'}`,
+      getPreviewTitle: (data) => t('aiChat:previewCard.poTitle', { name: data?.supplier_name || t('aiChat:previewCard.defaultSupplier') }),
       getPreviewSubtitle: (data) => {
         const total = data?.total_amount || (data?.items || []).reduce((sum, item) => sum + ((item?.quantity || 0) * (item?.unit_price || 0)), 0);
-        return `Montant: ${formatCurrency(total)} • Livraison: ${data?.expected_delivery_date || 'N/A'}`;
+        return t('aiChat:previewCard.poSubtitle', { amount: formatCurrency(total), date: data?.expected_delivery_date || 'N/A' });
       },
       fields: [
-        { label: 'Fournisseur', value: 'supplier_name', icon: <Business /> },
-        { label: 'Date de livraison', value: 'expected_delivery_date', icon: <CalendarToday /> },
-        { label: 'Description', value: 'description', icon: <Description />, fullWidth: true },
+        { label: t('aiChat:previewCard.fields.supplier'), value: 'supplier_name', icon: <Business /> },
+        { label: t('aiChat:previewCard.fields.deliveryDate'), value: 'expected_delivery_date', icon: <CalendarToday /> },
+        { label: t('common:labels.description'), value: 'description', icon: <Description />, fullWidth: true },
       ],
       hasItems: true,
     },
@@ -132,14 +136,14 @@ const PreviewCard = ({
       color: '#a855f7',
       bgColor: '#faf5ff',
       title: 'Produit',
-      getPreviewTitle: (data) => data?.name || 'Nouveau Produit',
+      getPreviewTitle: (data) => data?.name || t('aiChat:previewCard.newProduct'),
       getPreviewSubtitle: (data) =>
-        `Réf: ${data?.reference || 'N/A'} • Prix: ${formatCurrency(data?.price)}`,
+        t('aiChat:previewCard.productSubtitle', { reference: data?.reference || 'N/A', price: formatCurrency(data?.price) }),
       fields: [
-        { label: 'Nom', value: 'name', icon: <Inventory /> },
-        { label: 'Référence', value: 'reference', icon: <Description /> },
-        { label: 'Prix', value: 'price', icon: <Euro />, format: 'currency' },
-        { label: 'Description', value: 'description', icon: <Description />, fullWidth: true },
+        { label: t('common:labels.name'), value: 'name', icon: <Inventory /> },
+        { label: t('aiChat:previewCard.fields.reference'), value: 'reference', icon: <Description /> },
+        { label: t('common:labels.price'), value: 'price', icon: <Euro />, format: 'currency' },
+        { label: t('common:labels.description'), value: 'description', icon: <Description />, fullWidth: true },
       ],
     },
   };
@@ -149,10 +153,7 @@ const PreviewCard = ({
   // Formatage des valeurs
   const formatCurrency = (value) => {
     if (!value && value !== 0) return 'N/A';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(value);
+    return formaterMontant(value, deviseActuelle());
   };
 
   const formatValue = (value, format) => {
@@ -220,7 +221,7 @@ const PreviewCard = ({
                     {config.getPreviewTitle(draftData)}
                   </Typography>
                   <Chip
-                    label="À confirmer"
+                    label={t('aiChat:previewCard.toConfirm')}
                     size="small"
                     sx={{
                       bgcolor: config.color,
@@ -273,7 +274,7 @@ const PreviewCard = ({
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: config.color, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                   Articles ({draftData.items.length})
+                   {t('aiChat:previewCard.itemsCount', { n: draftData.items.length })}
                 </Typography>
                 <Box sx={{ bgcolor: getBgColor(config.bgColor), borderRadius: 1, p: { xs: 1, sm: 1.5 } }}>
                   {draftData.items.map((item, index) => (
@@ -292,7 +293,7 @@ const PreviewCard = ({
                     >
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {item?.name || item?.product_name || 'Article'}
+                          {item?.name || item?.product_name || t('aiChat:previewCard.defaultItem')}
                         </Typography>
                         {item?.description && (
                           <Typography variant="caption" color="text.secondary">
@@ -321,7 +322,7 @@ const PreviewCard = ({
                     }}
                   >
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      Total
+                      {t('common:labels.total')}
                     </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 700, color: config.color }}>
                       {formatCurrency(
@@ -355,7 +356,7 @@ const PreviewCard = ({
                 onClick={onCancel}
                 sx={{ textTransform: 'none', fontSize: { xs: '0.875rem', sm: '1rem' }, width: { xs: '100%', sm: 'auto' } }}
               >
-                Annuler
+                {t('common:buttons.cancel')}
               </Button>
               <Button
                 variant="outlined"
@@ -373,7 +374,7 @@ const PreviewCard = ({
                   },
                 }}
               >
-                Modifier
+                {t('common:buttons.edit')}
               </Button>
               <Button
                 variant="contained"
@@ -390,7 +391,7 @@ const PreviewCard = ({
                   },
                 }}
               >
-                 Confirmer
+                 {t('common:buttons.confirm')}
               </Button>
             </Box>
           )}
@@ -409,7 +410,7 @@ const PreviewCard = ({
               }}
             >
               <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                ℹ {nestedMessage || 'Cette entité sera créée automatiquement'}
+                ℹ {nestedMessage || t('aiChat:previewCard.nestedDefault')}
               </Typography>
             </Box>
           )}

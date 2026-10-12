@@ -69,7 +69,8 @@
   "proactiveConversations": {
     "title": "Conversations proactives",
     "accept": "Accepter",
-    "dismiss": "Ignorer"
+    "dismiss": "Ignorer",
+    "startConversation": "Démarrer conversation"
   },
   "suggestions": {
     "emailActions": {
@@ -77,5 +78,641 @@
       "sendPurchaseOrder": "Envoyer le bon de commande",
       "followupInvoice": "Relancer la facture"
     }
+  },
+  "topBar": {
+    "newConversation": "Nouveau"
+  },
+  "chatPage": {
+    "suggestionsPanel": {
+      "title": "Suggestions Intelligentes",
+      "empty": "Aucune suggestion pour le moment"
+    },
+    "history": {
+      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette conversation ?",
+      "deleted": "Conversation supprimée",
+      "deleteError": "Erreur lors de la suppression",
+      "conversationCount_zero": "{{count}} conversations",
+      "conversationCount_one": "{{count}} conversation",
+      "conversationCount_other": "{{count}} conversations",
+      "todayCount": "{{count}} aujourd'hui",
+      "messageCount": "{{count}} msg",
+      "newConversation": "Nouvelle conversation",
+      "noResults": "Aucun résultat",
+      "noConversations": "Aucune conversation",
+      "startNew": "Commencez une nouvelle conversation",
+      "older": "Plus ancien"
+    },
+    "quickActions": {
+      "help_me": {
+        "title": "Aide-moi",
+        "prompt": "Peux-tu m'aider avec mes tâches quotidiennes ?"
+      },
+      "analyze_data": {
+        "title": "Analyser mes données",
+        "prompt": "Analyse mes données et donne-moi des insights pertinents pour mon entreprise."
+      },
+      "optimize": {
+        "title": "Optimisations",
+        "prompt": "Quelles optimisations puis-je apporter à mon entreprise pour améliorer l'efficacité et réduire les coûts ?"
+      },
+      "create_invoice": {
+        "title": "Créer facture",
+        "prompt": "Je souhaite créer une nouvelle facture. Peux-tu me guider dans le processus ?"
+      },
+      "create_quote": {
+        "title": "Créer un devis",
+        "prompt": "Je veux créer un devis pour un client. Peux-tu m'aider ?"
+      },
+      "create_purchase_order": {
+        "title": "Bon de commande",
+        "prompt": "J'ai besoin de créer un nouveau bon de commande. Quelle est la procédure ?"
+      },
+      "create_supplier": {
+        "title": "Ajouter fournisseur",
+        "prompt": "Je veux ajouter un nouveau fournisseur à mon système. Comment procéder ?"
+      },
+      "verify_price": {
+        "title": "Vérifier un prix",
+        "prompt": "Vérifie le prix du marché pour un produit que je veux acheter."
+      },
+      "three_way_match": {
+        "title": "3-Way Matching",
+        "prompt": "Fais une vérification 3-way match entre une facture, un bon de commande et une réception."
+      },
+      "smart_reminder": {
+        "title": "Relance client",
+        "prompt": "Je veux envoyer une relance pour une facture impayée. Peux-tu générer un email de relance ?"
+      },
+      "predict_cashflow": {
+        "title": "Cash Flow IA",
+        "prompt": "Fais une analyse prédictive de ma trésorerie pour les 60 prochains jours."
+      },
+      "get_statistics": {
+        "title": "Tableau de bord",
+        "prompt": "Montre-moi les statistiques principales de mon entreprise ce mois-ci."
+      },
+      "product_analysis": {
+        "title": "Performance produits",
+        "prompt": "Analyse la performance de mes produits les plus vendus ce trimestre."
+      },
+      "client_analysis": {
+        "title": "Analyse clients",
+        "prompt": "Analyse le comportement de mes clients et leurs habitudes d'achat."
+      }
+    },
+    "chips": {
+      "quote": {
+        "label": "Devis",
+        "prompt": "Je veux créer un devis pour un client"
+      },
+      "verifyPrice": {
+        "label": "Vérifier prix",
+        "prompt": "Vérifie le prix du marché pour un produit"
+      },
+      "remindClient": {
+        "label": "Relancer client",
+        "prompt": "Génère une relance pour une facture impayée"
+      },
+      "cashFlow": {
+        "label": "Cash Flow",
+        "prompt": "Fais une analyse prédictive de ma trésorerie 60 jours"
+      }
+    },
+    "notifications": "Notifications",
+    "visualizations": "Visualisations",
+    "serverError": "Erreur serveur (500). Vérifiez les logs Django pour plus de détails.",
+    "confirmCreation": "Confirmer la création",
+    "toolInterrupted": "interrompu",
+    "generationInterrupted": "_Génération interrompue._",
+    "conversationStarted": "Conversation démarrée !",
+    "conversationStartError": "Erreur lors du démarrage de la conversation",
+    "conversationDismissError": "Erreur lors de l'ignorance de la conversation",
+    "refreshing": "Rafraîchissement en cours...",
+    "onlineStatus": "Procura IA · En ligne",
+    "importDocument": "Importer un document",
+    "pendingImports": "Imports en attente",
+    "proactiveTitle": "L'IA vous propose de discuter",
+    "chartAdded": "Graphique ajouté aux visualisations"
+  },
+  "documentImport": {
+    "types": {
+      "expense": "Reçu / dépense",
+      "invoice": "Facture client",
+      "purchase_order": "Bon de commande",
+      "supplier_list": "Registre fournisseurs",
+      "product_catalog": "Catalogue produits",
+      "contract": "Contrat",
+      "financial_report": "Rapport financier",
+      "mixed_document": "Document complexe"
+    },
+    "unsupportedFormat": "Format de fichier non supporté. Utilisez JPG, PNG, WebP ou PDF.",
+    "fileTooLarge": "Fichier trop volumineux. Maximum 10MB.",
+    "selectTypeAndFile": "Veuillez sélectionner un type de document et un fichier.",
+    "analyzeSuccess": "Document analysé avec succès ! Vérifiez les imports en attente.",
+    "uploadError": "Erreur lors du téléchargement du document.",
+    "fileSizeUnits": {
+      "bytes": "octets",
+      "kb": "Ko",
+      "mb": "Mo",
+      "gb": "Go"
+    },
+    "title": "Import IA",
+    "subtitle": "Analysez vos documents avec l'intelligence artificielle",
+    "documentType": "Type de document",
+    "fileToAnalyze": "Fichier à analyser",
+    "dropHere": "Glissez-déposez votre fichier ici",
+    "clickToSelect": "ou cliquez pour sélectionner • JPG, PNG, PDF (max 10MB)",
+    "analyzingAI": "Analyse IA en cours...",
+    "uploading": "Téléchargement...",
+    "info": "L'IA analysera votre document et créera une révision pour validation avant création de l'entité.",
+    "analyzingShort": "Analyse...",
+    "analyze": "Analyser",
+    "extracting": "Extraction intelligente des données...",
+    "preparing": "Préparation de votre document..."
+  },
+  "importReviews": {
+    "loadError": "Erreur lors du chargement des imports",
+    "approveSuccess": "Import approuvé avec succès",
+    "approveError": "Erreur lors de l'approbation",
+    "rejectSuccess": "Import rejeté",
+    "rejectError": "Erreur lors du rejet",
+    "entityTypes": {
+      "expense": "Dépense",
+      "invoice": "Facture client",
+      "purchase_order": "Bon de commande",
+      "supplier": "Fournisseur",
+      "product": "Produit"
+    },
+    "previewInvoice": "Facture {{number}} - {{client}}",
+    "previewPurchaseOrder": "BC {{number}} - {{supplier}}",
+    "unknownClient": "Client inconnu",
+    "unknownSupplier": "Fournisseur inconnu",
+    "extractedData": "Données extraites",
+    "title": "Imports en attente de révision",
+    "count_one": "{{count}} import",
+    "count_other": "{{count}} imports",
+    "status": {
+      "pending": "En attente",
+      "modified": "Modifié",
+      "approved": "Approuvé",
+      "rejected": "Rejeté"
+    },
+    "emptyPending": "Aucun import en attente",
+    "emptyWithStatus": "Aucun import avec le statut \"{{status}}\"",
+    "approve": "Approuver",
+    "reject": "Rejeter"
+  },
+  "messageContent": {
+    "visualization": "Visualisation",
+    "tapToExpand": "Appuyer pour agrandir",
+    "chartLine": "Graphique linéaire",
+    "chartBar": "Graphique en barres",
+    "chartPie": "Graphique circulaire",
+    "chartArea": "Graphique en aires",
+    "fullscreen": "Plein écran",
+    "pinToVisualizations": "Épingler aux visualisations",
+    "expand": "Agrandir",
+    "verifyAndConfirm": "Vérifier et Confirmer",
+    "entityVerification": "Vérification de l'entité",
+    "associatedEntities": "Entités associées qui seront créées:",
+    "modalTitles": {
+      "client_one": "Client trouvé",
+      "client_other": "Clients trouvés",
+      "supplier_one": "Fournisseur trouvé",
+      "supplier_other": "Fournisseurs trouvés",
+      "invoice_one": "Facture trouvée",
+      "invoice_other": "Factures trouvées",
+      "purchase_order_one": "Bon de commande trouvé",
+      "purchase_order_other": "Bons de commande trouvés",
+      "product_one": "Produit trouvé",
+      "product_other": "Produits trouvés",
+      "results": "Résultats"
+    },
+    "viewResults_one": "Voir les {{count}} résultat",
+    "viewResults_other": "Voir les {{count}} résultats",
+    "priority": "Priorité: {{priority}}/10",
+    "invoiceNumber": "N° {{number}}",
+    "suggestedActions": "Actions suggérées",
+    "tapAnywhereToClose": "Appuyez n'importe où pour fermer"
+  },
+  "agentTimeline": {
+    "thinking": "Réflexion en cours",
+    "reasoningSteps_one": "Raisonnement · {{count}} étape",
+    "reasoningSteps_other": "Raisonnement · {{count}} étapes",
+    "preparing": "Préparation…"
+  },
+  "artifactsPanel": {
+    "title": "Visualisations",
+    "tabActive": "Actifs ({{n}})",
+    "tabHistory": "Historique ({{n}})",
+    "emptyActive": "Aucune visualisation active",
+    "emptyHistory": "Aucun élément dans l'historique",
+    "emptyActiveHint": "Demandez à l'IA de générer des graphiques pour les voir apparaître ici",
+    "emptyHistoryHint": "Les visualisations supprimées apparaîtront ici",
+    "untitled": "Sans titre",
+    "chartTypes": {
+      "line": "Ligne",
+      "bar": "Barres",
+      "pie": "Camembert",
+      "area": "Aire"
+    },
+    "justNow": "À l'instant",
+    "minutesAgo": "Il y a {{n}} min",
+    "hoursAgo": "Il y a {{n}} h",
+    "fullscreen": "Plein écran",
+    "refresh": "Rafraîchir"
+  },
+  "chartRenderer": {
+    "noData": "Aucune donnée à afficher",
+    "unsupportedType": "Type de graphique non supporté: {{type}}"
+  },
+  "confirmationModal": {
+    "entities": {
+      "invoice": {
+        "title": "Facture",
+        "subtitle": "Vérifiez les détails de la facture avant finalisation"
+      },
+      "client": {
+        "title": "Client",
+        "subtitle": "Création d'une nouvelle fiche client"
+      },
+      "supplier": {
+        "title": "Fournisseur",
+        "subtitle": "Création d'une nouvelle fiche fournisseur"
+      },
+      "purchase_order": {
+        "title": "Bon de Commande",
+        "subtitle": "Vérifiez les détails du bon de commande"
+      },
+      "product": {
+        "title": "Produit",
+        "subtitle": "Ajout d'un nouveau produit au catalogue"
+      }
+    },
+    "fields": {
+      "client": "Client",
+      "clientEmail": "Email du client",
+      "clientPhone": "Téléphone du client",
+      "invoiceTitle": "Titre de la facture",
+      "totalAmount": "Montant total",
+      "dueDate": "Date d'échéance",
+      "email": "Email",
+      "contactPerson": "Personne de contact",
+      "paymentTerms": "Conditions de paiement",
+      "taxId": "Numéro fiscal",
+      "supplier": "Fournisseur",
+      "expectedDeliveryDate": "Date de livraison prévue",
+      "productName": "Nom du produit",
+      "reference": "Référence"
+    },
+    "verification": "Vérification : {{entity}}",
+    "aiPrepared": "L'IA a préparé ces informations. Vous pouvez les modifier avant de confirmer la création.",
+    "itemsTitle": "Articles & Prestations",
+    "lines_one": "{{count}} ligne",
+    "lines_other": "{{count}} lignes",
+    "colDesignation": "Désignation",
+    "colQty": "Qté",
+    "colUnitPrice": "P.U.",
+    "subtotal": "Total HT :",
+    "addLineManually": "Ajouter manuellement une ligne",
+    "productService": "Produit / Service",
+    "productOption": "Réf : {{reference}} - {{price}}",
+    "qty": "Qté",
+    "priceWithSymbol": "Prix ({{symbol}})",
+    "help": "Besoin d'aide ? Contactez le support IA.",
+    "finalize": "Finaliser la création"
+  },
+  "listModal": {
+    "draft": "Brouillon",
+    "pending": "En attente",
+    "clientLabel": "Client: {{name}}",
+    "noClient": "Client non spécifié",
+    "supplierLabel": "Fournisseur: {{name}}",
+    "noSupplier": "Fournisseur non spécifié",
+    "match": "{{score}}% de correspondance",
+    "reference": "Réf: {{reference}}",
+    "stock": "Stock: {{qty}}",
+    "unnamed": "Élément sans nom",
+    "downloadPdf": "Télécharger PDF",
+    "results_zero": "{{count}} résultats",
+    "results_one": "{{count}} résultat",
+    "results_other": "{{count}} résultats",
+    "found_zero": "trouvés dans votre base de données",
+    "found_one": "trouvé dans votre base de données",
+    "found_other": "trouvés dans votre base de données",
+    "filterPlaceholder": "Filtrer les résultats...",
+    "noResults": "Aucun résultat",
+    "noMatch": "Nous n'avons rien trouvé correspondant à \"{{query}}\"",
+    "clearSearch": "Effacer la recherche",
+    "tip": "Astuce: Cliquez sur une carte pour accéder directement à la fiche complète.",
+    "done": "Terminer"
+  },
+  "previewCard": {
+    "defaultClient": "Client",
+    "defaultSupplier": "Fournisseur",
+    "invoiceTitle": "Facture pour {{name}}",
+    "invoiceSubtitle": "Montant: {{amount}} • Échéance: {{dueDate}}",
+    "newClient": "Nouveau Client",
+    "newSupplier": "Nouveau Fournisseur",
+    "newProduct": "Nouveau Produit",
+    "noContact": "Aucun contact",
+    "contactPrefix": "Contact: {{name}}",
+    "poTitle": "BC pour {{name}}",
+    "poSubtitle": "Montant: {{amount}} • Livraison: {{date}}",
+    "productSubtitle": "Réf: {{reference}} • Prix: {{price}}",
+    "fields": {
+      "client": "Client",
+      "email": "Email",
+      "dueDate": "Date d'échéance",
+      "contactPerson": "Personne de contact",
+      "paymentTerms": "Conditions de paiement",
+      "supplier": "Fournisseur",
+      "deliveryDate": "Date de livraison",
+      "reference": "Référence"
+    },
+    "toConfirm": "À confirmer",
+    "itemsCount": "Articles ({{n}})",
+    "defaultItem": "Article",
+    "nestedDefault": "Cette entité sera créée automatiquement"
+  },
+  "contextualPanel": {
+    "openFullChat": "Ouvrir le chat complet",
+    "openFullChatLink": "Ouvrir le chat complet →",
+    "chartAvailable": "Graphique disponible — ouvrir le chat complet",
+    "placeholder": "Posez une question...",
+    "replyReceived": "Réponse reçue.",
+    "error": "Désolé, une erreur est survenue. Réessayez ou ouvrez le chat complet.",
+    "contexts": {
+      "dashboard": {
+        "label": "Tableau de bord",
+        "greeting": "Voici un aperçu de votre activité. Je peux analyser vos indicateurs ou faire une prévision de trésorerie.",
+        "actions": {
+          "analyzePeriod": {
+            "label": "Analyser la période",
+            "prompt": "Analyse mes indicateurs financiers du tableau de bord et donne-moi les points clés."
+          },
+          "cashForecast": {
+            "label": "Prévision trésorerie",
+            "prompt": "Fais une prévision de trésorerie basée sur mes données actuelles."
+          },
+          "priorityAlerts": {
+            "label": "Alertes prioritaires",
+            "prompt": "Quelles sont les alertes les plus importantes à traiter aujourd'hui ?"
+          }
+        }
+      },
+      "invoices": {
+        "label": "Factures",
+        "greeting": "Je peux vous aider à gérer vos factures, analyser les impayés ou rédiger des relances.",
+        "actions": {
+          "analyzeUnpaid": {
+            "label": "Analyser les impayés",
+            "prompt": "Analyse mes factures impayées et propose un plan de relance."
+          },
+          "remindClient": {
+            "label": "Relancer un client",
+            "prompt": "Rédige un email de relance professionnel et courtois pour un client en retard de paiement."
+          },
+          "optimizeTerms": {
+            "label": "Optimiser les délais",
+            "prompt": "Comment puis-je améliorer mon taux de recouvrement et réduire les délais de paiement ?"
+          }
+        }
+      },
+      "contracts": {
+        "label": "Contrats",
+        "greeting": "Je peux générer des sections de contrat, analyser les risques ou vous guider dans la rédaction.",
+        "actions": {
+          "generateClause": {
+            "label": "Générer une clause",
+            "prompt": "Génère une clause de confidentialité professionnelle en français, adaptée au droit OHADA."
+          },
+          "analyzeRisks": {
+            "label": "Analyser les risques",
+            "prompt": "Quels sont les risques contractuels courants à surveiller dans mes contrats actifs ?"
+          },
+          "contractTemplate": {
+            "label": "Modèle de contrat",
+            "prompt": "Quel type de contrat me recommandes-tu pour une prestation de service récurrente ?"
+          }
+        }
+      },
+      "purchaseOrders": {
+        "label": "Bons de commande",
+        "greeting": "Je peux vous aider à rédiger des bons de commande, comparer des fournisseurs ou optimiser vos achats.",
+        "actions": {
+          "compareSuppliers": {
+            "label": "Comparer fournisseurs",
+            "prompt": "Comment évaluer et comparer efficacement mes fournisseurs pour obtenir le meilleur rapport qualité-prix ?"
+          },
+          "optimizePurchases": {
+            "label": "Optimiser les achats",
+            "prompt": "Quelles stratégies puis-je adopter pour réduire mes coûts d'achats ?"
+          },
+          "paymentTerms": {
+            "label": "Termes de paiement",
+            "prompt": "Quels sont les termes de paiement standards dans un bon de commande B2B ?"
+          }
+        }
+      },
+      "products": {
+        "label": "Produits",
+        "greeting": "Je peux analyser votre stock, suggérer des réapprovisionnements ou optimiser votre catalogue.",
+        "actions": {
+          "analyzeStock": {
+            "label": "Analyser le stock",
+            "prompt": "Analyse mon niveau de stock et identifie les produits en rupture ou en surstock."
+          },
+          "restock": {
+            "label": "Réapprovisionnement",
+            "prompt": "Quels produits devrais-je réapprovisionner en priorité et en quelle quantité ?"
+          },
+          "optimizeCatalog": {
+            "label": "Optimiser le catalogue",
+            "prompt": "Comment puis-je optimiser mon catalogue produits pour améliorer mes marges ?"
+          }
+        }
+      },
+      "clients": {
+        "label": "Clients",
+        "greeting": "Je peux analyser votre portefeuille clients, identifier les plus rentables ou vous aider à fidéliser.",
+        "actions": {
+          "topClients": {
+            "label": "Top clients",
+            "prompt": "Qui sont mes clients les plus rentables et comment les fidéliser ?"
+          },
+          "atRiskClients": {
+            "label": "Clients à risque",
+            "prompt": "Quels clients présentent un risque d'impayé ou d'inactivité ?"
+          },
+          "loyaltyStrategy": {
+            "label": "Stratégie fidélisation",
+            "prompt": "Propose-moi une stratégie de fidélisation adaptée à mes clients actuels."
+          }
+        }
+      },
+      "suppliers": {
+        "label": "Fournisseurs",
+        "greeting": "Je peux vous aider à évaluer vos fournisseurs, négocier de meilleures conditions ou diversifier vos sources.",
+        "actions": {
+          "evaluateSupplier": {
+            "label": "Évaluer un fournisseur",
+            "prompt": "Quels critères utiliser pour évaluer la fiabilité d'un fournisseur ?"
+          },
+          "negotiatePrices": {
+            "label": "Négocier les prix",
+            "prompt": "Donne-moi des stratégies pour négocier de meilleures conditions avec mes fournisseurs."
+          },
+          "reduceRisks": {
+            "label": "Réduire les risques",
+            "prompt": "Comment réduire ma dépendance à un seul fournisseur et diversifier mes sources ?"
+          }
+        }
+      },
+      "default": {
+        "label": "Procura",
+        "greeting": "Bonjour ! Je suis votre assistant Procura. Posez-moi n'importe quelle question sur votre activité.",
+        "actions": {
+          "createInvoice": {
+            "label": "Créer une facture",
+            "prompt": "Guide-moi pour créer une facture professionnelle."
+          },
+          "activitySummary": {
+            "label": "Résumé d'activité",
+            "prompt": "Donne-moi un résumé de mon activité récente et des points d'attention."
+          },
+          "dailyTip": {
+            "label": "Conseil du jour",
+            "prompt": "Donne-moi un conseil pratique pour améliorer ma gestion d'entreprise."
+          }
+        }
+      }
+    }
+  },
+  "importReviewModal": {
+    "saveSuccess": "Modifications sauvegardées",
+    "saveError": "Erreur lors de la sauvegarde",
+    "invoiceNumber": "Numéro de facture",
+    "issueDate": "Date d'émission",
+    "client": "Client",
+    "clientEmail": "Email client",
+    "totalAmount": "Montant total",
+    "itemsCount": "Articles ({{count}})",
+    "poNumber": "Numéro de BC",
+    "orderDate": "Date de commande",
+    "supplier": "Fournisseur",
+    "supplierEmail": "Email fournisseur",
+    "label": "Libellé",
+    "totalInclTax": "Montant total (TTC)",
+    "recoverableVat": "dont TVA récupérable",
+    "category": "Catégorie",
+    "otherExpenses": "Autres dépenses",
+    "alreadyPaid": "Déjà payée",
+    "toPay": "À payer",
+    "paidBy": "Payée par",
+    "expenseInfo": "En validant, la dépense est enregistrée avec la photo du reçu et l'écriture comptable est passée.",
+    "editingSoon": "Édition des champs pour ce type d'entité sera disponible prochainement.",
+    "title": "Révision d'import - {{type}}",
+    "entityTypes": {
+      "expense": "Dépense",
+      "invoice": "Facture client",
+      "purchase_order": "Bon de commande"
+    },
+    "status": {
+      "pending": "En attente",
+      "modified": "Modifié",
+      "approved": "Approuvé",
+      "rejected": "Rejeté"
+    },
+    "notesPlaceholder": "Ajoutez des notes sur cet import...",
+    "saveChanges": "Sauvegarder modifications",
+    "reject": "Rejeter",
+    "approveAndCreate": "Approuver et créer"
+  },
+  "thinking": {
+    "messages": {
+      "reflecting": "Je réfléchis à votre demande...",
+      "analyzing": "Analyse des informations en cours...",
+      "searching": "Recherche de la meilleure solution...",
+      "preparing": "Préparation de la réponse...",
+      "verifying": "Vérification des données...",
+      "finalizing": "Finalisation du traitement..."
+    },
+    "steps": {
+      "validation": "Validation des données",
+      "research": "Recherche d'informations",
+      "contextAnalysis": "Analyse contextuelle",
+      "generation": "Génération de la réponse",
+      "qualityCheck": "Vérification qualité",
+      "finalization": "Finalisation"
+    },
+    "processingTitle": "Traitement en cours",
+    "stepProgress": "Étape {{current}}/{{total}}: {{step}}",
+    "analyzingDefault": "Analyse approfondie en cours...",
+    "mayTakeMoment": "Cela peut prendre quelques instants",
+    "celebrationDefault": "Action terminée avec succès !"
+  },
+  "floatingAssistant": {
+    "welcome": {
+      "suppliers": "Je peux vous aider à gérer vos fournisseurs : créer, rechercher, modifier ou analyser leurs performances.",
+      "invoices": "Je peux créer des factures, suivre les paiements, ou analyser vos revenus.",
+      "purchaseOrders": "Je peux créer des bons de commande, suivre les livraisons, ou analyser vos achats.",
+      "default": "Comment puis-je vous aider avec la gestion de votre entreprise ?"
+    },
+    "sendingToAI": "Envoi à l'IA...",
+    "executionError": "Erreur lors de l'exécution",
+    "modeContext": "Mode {{page}}",
+    "modeGeneral": "Mode général"
+  },
+  "assistantToggle": {
+    "aiMode": "Mode IA",
+    "manualMode": "Mode Manuel",
+    "smart": "Intelligent",
+    "aiDescription": "L'IA propose, suggère et automatise les tâches pour vous",
+    "manualDescription": "Vous gardez le contrôle total avec les interfaces traditionnelles",
+    "switchToManual": "Passer en mode manuel",
+    "enableAssistant": "Activer l'assistant IA"
+  },
+  "documentScanner": {
+    "captureOrUpload": "Veuillez capturer ou télécharger une image",
+    "analysisError": "Erreur lors de l'analyse",
+    "processingError": "Erreur lors du traitement du document",
+    "title": "Scanner un document",
+    "documentType": "Type de document",
+    "types": {
+      "invoice": "Facture",
+      "purchase_order": "Bon de commande",
+      "supplier_list": "Liste de fournisseurs"
+    },
+    "autoCreate": "Créer automatiquement",
+    "camera": "Caméra",
+    "upload": "Télécharger",
+    "capture": "Capturer",
+    "dropHere": "Déposez le fichier ici",
+    "dragOrClick": "Glissez-déposez un fichier ici ou cliquez pour sélectionner",
+    "supportedFormats": "Formats supportés : JPEG, PNG, GIF, BMP, TIFF (max 10MB)",
+    "capturedAlt": "Document capturé",
+    "retake": "Reprendre",
+    "analyzing": "Analyse en cours...",
+    "analyze": "Analyser",
+    "success": "Document analysé avec succès !",
+    "extractedData": "Données extraites",
+    "ocrText": "Texte extrait (OCR)",
+    "scanAnother": "Scanner un autre document"
+  },
+  "voiceRecorder": {
+    "notSupported": "La reconnaissance vocale n'est pas supportée par votre navigateur. Utilisez Chrome, Edge ou Safari.",
+    "noSpeech": "Aucune parole détectée. Parlez plus fort.",
+    "micDenied": "Permission d'accès au microphone refusée.",
+    "errorGeneric": "Erreur: {{error}}",
+    "startFailed": "Impossible de démarrer l'écoute.",
+    "notSupportedTitle": "Fonctionnalité non supportée",
+    "listening": "Écoute en cours...",
+    "title": "Message vocal",
+    "speakNow": "Parlez maintenant...",
+    "pressMic": "Appuyez sur le micro pour commencer",
+    "realtime": "La transcription se fait en temps réel",
+    "clickSend": "Cliquez sur Envoyer pour utiliser ce texte",
+    "browserHint": "Reconnaissance vocale en temps réel - Chrome, Edge, Safari"
   }
 }

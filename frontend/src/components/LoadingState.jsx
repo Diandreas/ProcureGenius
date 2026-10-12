@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import Mascot from './Mascot';
 
 /**
@@ -10,10 +11,12 @@ import Mascot from './Mascot';
  * @param {number} size - Taille de la mascotte (défaut: 100)
  */
 function LoadingState({
-    message = "Chargement en cours...",
+    message: messageProp,
     fullScreen = false,
     size = 100
 }) {
+    const { t } = useTranslation('common');
+    const message = messageProp === undefined ? t('common:loadingState.defaultMessage') : messageProp;
     const content = (
         <Box
             sx={{

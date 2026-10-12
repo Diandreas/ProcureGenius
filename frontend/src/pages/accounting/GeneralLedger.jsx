@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { ExpandMore, FilterList } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
@@ -25,6 +26,7 @@ export default function GeneralLedger() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
 
   useEffect(() => {
     accountingAPI.getAccounts({ active: 'true' }).then((r) => setAccounts(r.data));
@@ -37,7 +39,7 @@ export default function GeneralLedger() {
     if (accountId) params.account_id = accountId;
     accountingAPI.getGeneralLedger(params)
       .then((r) => { setData(r.data); setError(null); })
-      .catch(() => setError('Erreur chargement du grand livre'))
+      .catch(() => setError(t('accounting:ledger.loadError')))
       .finally(() => setLoading(false));
   };
 
@@ -49,12 +51,12 @@ export default function GeneralLedger() {
 
   return (
     <Box p={isMobile ? 1.5 : 3} sx={{ pb: isMobile ? 10 : 3 }}>
-      <AccountingNav title="Grand Livre" subtitle={isMobile ? "" : "Mouvements détaillés par compte"} />
+      <AccountingNav title={t('accounting:ledger.title')} subtitle={isMobile ? "" : t('accounting:ledger.subtitle')} />
 
       {/* Mobile Filters Header */}
       {isMobile && (
         <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle2" fontWeight={700}>Filtres</Typography>
+          <Typography variant="subtitle2" fontWeight={700}>{t('accounting:common.filters')}</Typography>
           <IconButton 
             size="small" 
             onClick={() => setShowFilters(!showFilters)}
@@ -81,26 +83,26 @@ export default function GeneralLedger() {
             boxShadow: isMobile ? neu : 0
           }}
         >
-          <TextField size="small" type="date" label="Du" InputLabelProps={{ shrink: true }}
+          <TextField size="small" type="date" label={t('accounting:common.from')} InputLabelProps={{ shrink: true }}
             value={start} onChange={(e) => setStart(e.target.value)} fullWidth={isMobile} />
-          <TextField size="small" type="date" label="Au" InputLabelProps={{ shrink: true }}
+          <TextField size="small" type="date" label={t('accounting:common.to')} InputLabelProps={{ shrink: true }}
             value={end} onChange={(e) => setEnd(e.target.value)} fullWidth={isMobile} />
           <FormControl size="small" sx={{ minWidth: isMobile ? '100%' : 260 }}>
-            <InputLabel>Compte (optionnel)</InputLabel>
-            <Select value={accountId} onChange={(e) => setAccountId(e.target.value)} label="Compte (optionnel)">
-              <MenuItem value="">Tous les comptes</MenuItem>
+            <InputLabel>{t('accounting:ledger.accountOptional')}</InputLabel>
+            <Select value={accountId} onChange={(e) => setAccountId(e.target.value)} label={t('accounting:ledger.accountOptional')}>
+              <MenuItem value="">{t('accounting:ledger.allAccounts')}</MenuItem>
               {accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.code} — {a.name}</MenuItem>)}
             </Select>
           </FormControl>
           <Button variant="contained" onClick={load} disabled={loading} fullWidth={isMobile}>
-            {loading ? <CircularProgress size={20} /> : 'Actualiser'}
+            {loading ? <CircularProgress size={20} /> : t('accounting:common.refresh')}
           </Button>
         </Box>
       )}
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {data && data.accounts.length === 0 && (
-        <Alert severity="info" sx={{ mb: 2 }}>Aucun mouvement pour la période sélectionnée.</Alert>
+        <Alert severity="info" sx={{ mb: 2 }}>{t('accounting:ledger.noMovement')}</Alert>
       )}
 
       {data && data.accounts.map((acc) => (
@@ -145,15 +147,15 @@ export default function GeneralLedger() {
                 pt: isMobile ? 1 : 0
               }}>
                 <Box textAlign={isMobile ? "left" : "right"}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', display: 'block' }}>Débit</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', display: 'block' }}>{t('accounting:common.debit')}</Typography>
                   <Typography variant="body2" color="primary.main" fontWeight={700}>{format(parseFloat(acc.total_debit))}</Typography>
                 </Box>
                 <Box textAlign={isMobile ? "left" : "right"}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', display: 'block' }}>Crédit</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', display: 'block' }}>{t('accounting:common.credit')}</Typography>
                   <Typography variant="body2" color="secondary.main" fontWeight={700}>{format(parseFloat(acc.total_credit))}</Typography>
                 </Box>
                 <Box textAlign={isMobile ? "right" : "right"}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', display: 'block' }}>Solde</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem', display: 'block' }}>{t('accounting:common.balance')}</Typography>
                   <Typography variant="body2" fontWeight={800}
                     color={parseFloat(acc.solde) >= 0 ? 'success.main' : 'error.main'}>
                     {parseFloat(acc.solde) >= 0 ? '+' : ''}{format(parseFloat(acc.solde))}
@@ -199,13 +201,13 @@ export default function GeneralLedger() {
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'action.hover' }}>
-                      <TableCell><strong>Date</strong></TableCell>
-                      <TableCell><strong>N° écriture</strong></TableCell>
-                      <TableCell><strong>Journal</strong></TableCell>
-                      <TableCell><strong>Libellé</strong></TableCell>
-                      <TableCell><strong>Référence</strong></TableCell>
-                      <TableCell align="right"><strong>Débit</strong></TableCell>
-                      <TableCell align="right"><strong>Crédit</strong></TableCell>
+                      <TableCell><strong>{t('accounting:common.date')}</strong></TableCell>
+                      <TableCell><strong>{t('accounting:common.entryNumber')}</strong></TableCell>
+                      <TableCell><strong>{t('accounting:common.journal')}</strong></TableCell>
+                      <TableCell><strong>{t('accounting:common.description')}</strong></TableCell>
+                      <TableCell><strong>{t('accounting:common.reference')}</strong></TableCell>
+                      <TableCell align="right"><strong>{t('accounting:common.debit')}</strong></TableCell>
+                      <TableCell align="right"><strong>{t('accounting:common.credit')}</strong></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>

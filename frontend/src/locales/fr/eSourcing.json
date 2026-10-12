@@ -125,7 +125,9 @@
     "publish": "Publier",
     "close": "Clôturer",
     "compareBids": "Comparer les soumissions",
-    "statistics": "Statistiques"
+    "statistics": "Statistiques",
+    "editEvent": "Modifier l'événement",
+    "publishEvent": "Publier l'événement"
   },
   "detail": {
     "title": "Détails de l'Événement",
@@ -234,7 +236,8 @@
     "currentScore": "Score actuel",
     "loadError": "Erreur lors du chargement de la soumission",
     "updateSuccess": "Soumission mise à jour avec succès",
-    "updateError": "Erreur lors de la mise à jour"
+    "updateError": "Erreur lors de la mise à jour",
+    "editBid": "Modifier la soumission"
   },
   "messages": {
     "loading": "Chargement des événements de sourcing...",
@@ -257,5 +260,8 @@
     "confirmDeleteMessage": "Êtes-vous sûr de vouloir supprimer l'événement \"{{number}}\" ? Cette action est irréversible.",
     "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer cet événement ?",
     "linkCopied": "Lien copié dans le presse-papiers"
+  },
+  "dateFormats": {
+    "dateTime": "dd MMMM yyyy 'à' HH:mm"
   }
 }

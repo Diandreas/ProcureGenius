@@ -8,9 +8,12 @@ import {
   ResponsiveContainer, Cell, ReferenceLine,
 } from 'recharts';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
+import useCurrency, { deviseActuelle } from '../../hooks/useCurrency';
+import { formatCurrency } from '../../utils/currency';
 
-const fmt = (v) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v);
+const fmt = (v) => formatCurrency(v, deviseActuelle(), 0);
 
 const KpiCard = ({ label, value, color }) => (
   <Box sx={{ textAlign: 'center', flex: 1 }}>
@@ -22,18 +25,21 @@ const KpiCard = ({ label, value, color }) => (
 );
 
 const CustomTooltip = ({ active, payload, label }) => {
+  const { t } = useTranslation(['dashboard', 'common']);
   if (!active || !payload?.length) return null;
   return (
     <Box sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1, fontSize: '0.75rem' }}>
       <Typography variant="caption" fontWeight={600}>{label}</Typography>
       {payload.map((p, i) => (
-        <Box key={i} sx={{ color: p.fill }}>{p.name} : {fmt(p.value)}</Box>
+        <Box key={i} sx={{ color: p.fill }}>{t('dashboard:widgets.cashFlow.tooltipValue', { name: p.name, value: fmt(p.value) })}</Box>
       ))}
     </Box>
   );
 };
 
 const CashFlowWidget = () => {
+  const { currency } = useCurrency();
+  const { t } = useTranslation(['dashboard', 'common']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,7 +53,7 @@ const CashFlowWidget = () => {
         setData(res.data);
         setError(null);
       } catch {
-        setError('Impossible de charger les données de trésorerie');
+        setError(t('dashboard:widgets.cashFlow.loadError'));
       } finally {
         setLoading(false);
       }
@@ -59,7 +65,7 @@ const CashFlowWidget = () => {
     return (
       <Box display="flex" alignItems="center" justifyContent="center" height="100%" gap={1}>
         <CircularProgress size={20} />
-        <Typography variant="caption" color="text.secondary">Calcul en cours...</Typography>
+        <Typography variant="caption" color="text.secondary">{t('dashboard:widgets.cashFlow.calculating')}</Typography>
       </Box>
     );
   }
@@ -67,7 +73,7 @@ const CashFlowWidget = () => {
   if (error || !data) {
     return (
       <Box display="flex" alignItems="center" justifyContent="center" height="100%">
-        <Typography variant="caption" color="error">{error || 'Données indisponibles'}</Typography>
+        <Typography variant="caption" color="error">{error || t('dashboard:widgets.cashFlow.unavailable')}</Typography>
       </Box>
     );
   }
@@ -90,7 +96,7 @@ const CashFlowWidget = () => {
       {/* Horizon toggle */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="caption" color="text.secondary">
-          Moy. mensuelle : {fmt(summary.monthly_avg_revenue)}
+          {t('dashboard:widgets.cashFlow.monthlyAvg', { value: fmt(summary.monthly_avg_revenue) })}
         </Typography>
         <ToggleButtonGroup
           value={horizon}
@@ -98,19 +104,19 @@ const CashFlowWidget = () => {
           onChange={(_, v) => v && setHorizon(v)}
           size="small"
         >
-          <ToggleButton value="30" sx={{ py: 0.25, px: 1, fontSize: '0.7rem' }}>30j</ToggleButton>
-          <ToggleButton value="60" sx={{ py: 0.25, px: 1, fontSize: '0.7rem' }}>60j</ToggleButton>
+          <ToggleButton value="30" sx={{ py: 0.25, px: 1, fontSize: '0.7rem' }}>{t('dashboard:widgets.cashFlow.days30')}</ToggleButton>
+          <ToggleButton value="60" sx={{ py: 0.25, px: 1, fontSize: '0.7rem' }}>{t('dashboard:widgets.cashFlow.days60')}</ToggleButton>
         </ToggleButtonGroup>
       </Box>
 
       {/* KPIs */}
       <Box display="flex" gap={1} sx={{ bgcolor: 'grey.50', borderRadius: 1.5, p: 1 }}>
-        <KpiCard label="Entrées prévues" value={summary.total_receivable} color="#10b981" />
+        <KpiCard label={t('dashboard:widgets.cashFlow.expectedInflows')} value={summary.total_receivable} color="#10b981" />
         <Divider orientation="vertical" flexItem />
-        <KpiCard label="Sorties engagées" value={summary.total_payable} color="#ef4444" />
+        <KpiCard label={t('dashboard:widgets.cashFlow.committedOutflows')} value={summary.total_payable} color="#ef4444" />
         <Divider orientation="vertical" flexItem />
         <Box sx={{ textAlign: 'center', flex: 1 }}>
-          <Typography variant="caption" color="text.secondary" display="block">Solde net</Typography>
+          <Typography variant="caption" color="text.secondary" display="block">{t('dashboard:widgets.cashFlow.netBalance')}</Typography>
           <Box display="flex" alignItems="center" justifyContent="center" gap={0.5}>
             <NetIcon size={14} color={netColor} />
             <Typography variant="body1" fontWeight={700} color={netColor} sx={{ fontSize: '1rem' }}>
@@ -129,8 +135,8 @@ const CashFlowWidget = () => {
               <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
               <RechartsTooltip content={<CustomTooltip />} />
               <ReferenceLine y={0} stroke="#e2e8f0" />
-              <Bar dataKey="Entrées" fill="#10b981" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="Sorties" fill="#ef4444" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="Entrées" name={t('dashboard:widgets.cashFlow.inflows')} fill="#10b981" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="Sorties" name={t('dashboard:widgets.cashFlow.outflows')} fill="#ef4444" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Box>

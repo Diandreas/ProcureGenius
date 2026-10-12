@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box, Typography, Button, Chip, Divider, CircularProgress,
 } from '@mui/material';
@@ -31,6 +32,7 @@ const TYPE_COLOR = {
 const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 const SmartAlertsWidget = () => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,7 +45,7 @@ const SmartAlertsWidget = () => {
       setAlerts(res.data?.alerts || []);
       setError(null);
     } catch (err) {
-      setError('Impossible de charger les alertes');
+      setError(t('dashboard:widgets.smartAlerts.loadError'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,7 @@ const SmartAlertsWidget = () => {
     return (
       <Box display="flex" alignItems="center" justifyContent="center" height="100%" gap={1}>
         <CircularProgress size={20} />
-        <Typography variant="caption" color="text.secondary">Analyse en cours...</Typography>
+        <Typography variant="caption" color="text.secondary">{t('dashboard:widgets.smartAlerts.analyzing')}</Typography>
       </Box>
     );
   }
@@ -77,10 +79,10 @@ const SmartAlertsWidget = () => {
       <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100%" gap={1}>
         <CheckCircle size={36} color="#10b981" />
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
-          Tout est en ordre
+          {t('dashboard:widgets.smartAlerts.allClear')}
         </Typography>
         <Typography variant="caption" color="text.disabled">
-          Aucune action prioritaire pour le moment
+          {t('dashboard:widgets.smartAlerts.noPriority')}
         </Typography>
       </Box>
     );

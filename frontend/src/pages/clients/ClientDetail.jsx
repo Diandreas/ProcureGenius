@@ -192,16 +192,16 @@ function ClientDetail() {
 
   const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
-    const fname = `rapport-client-${client.name}.pdf`;
+    const fname = t('clients:report.clientFileName', { name: client.name });
 
     if (action === 'download') {
       await pdfViewer.download(generatedPdfBlob, fname);
       enqueueSnackbar(t('clients:messages.pdfDownloaded', 'Rapport PDF téléchargé avec succès'), { variant: 'success' });
     } else if (action === 'preview') {
-      pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${client.name}`);
+      pdfViewer.preview(generatedPdfBlob, fname, t('clients:report.clientViewerTitle', { name: client.name }));
     } else if (action === 'print') {
       if (IS_NATIVE) {
-        pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${client.name}`);
+        pdfViewer.preview(generatedPdfBlob, fname, t('clients:report.clientViewerTitle', { name: client.name }));
       } else {
         const pdfUrl = URL.createObjectURL(generatedPdfBlob);
         const printWindow = window.open(pdfUrl, '_blank');
@@ -472,7 +472,7 @@ function ClientDetail() {
               <Grid container spacing={1.25}>
                 {[
                   { show: !!client.contact_person, icon: Person, label: t('clients:labels.contactPerson'), value: client.contact_person },
-                  { show: !!client.email, icon: Email, label: 'Email', value: client.email },
+                  { show: !!client.email, icon: Email, label: t('clients:labels.email'), value: client.email },
                   { show: !!client.phone, icon: Phone, label: t('clients:labels.phone', 'Téléphone'), value: client.phone },
                   { show: !!client.billing_address, icon: LocationOn, label: t('clients:labels.billingAddress', 'Adresse'), value: client.billing_address, full: true },
                 ].filter(f => f.show).map((f, i) => {
@@ -542,7 +542,7 @@ function ClientDetail() {
             <NeumorphicPanel sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 1.75, sm: 2.25 } }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 1.5 }}>{t('clients:labels.quickActions', 'Contact rapide')}</Typography>
               <Stack direction="row" spacing={1}>
-                <Button fullWidth size="small" variant="outlined" startIcon={<Email />} href={`mailto:${client.email}`} disabled={!client.email} sx={{ textTransform: 'none', borderRadius: 2 }}>Email</Button>
+                <Button fullWidth size="small" variant="outlined" startIcon={<Email />} href={`mailto:${client.email}`} disabled={!client.email} sx={{ textTransform: 'none', borderRadius: 2 }}>{t('clients:labels.email')}</Button>
                 <Button fullWidth size="small" variant="outlined" startIcon={<Phone />} href={`tel:${client.phone}`} disabled={!client.phone} sx={{ textTransform: 'none', borderRadius: 2 }}>{t('clients:labels.call', 'Appeler')}</Button>
               </Stack>
             </NeumorphicPanel>
@@ -644,7 +644,7 @@ function ClientDetail() {
           {statistics?.sales_summary?.total_invoices > 0 && (
             <Alert severity="error" sx={{ mt: 2 }}>
               <Typography variant="body2" fontWeight="bold">
-                {t('clients:messages.invoicesWillBeDeleted', { count: statistics.sales_summary.total_invoices }, `${statistics.sales_summary.total_invoices} facture(s) seront supprimée(s)`)}
+                {t('clients:messages.invoicesWillBeDeleted', { count: statistics.sales_summary.total_invoices })}
               </Typography>
             </Alert>
           )}
@@ -694,7 +694,7 @@ function ClientDetail() {
             <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={3}>
               <CircularProgress size={40} />
               <Typography variant="body2" color="text.secondary">
-                {t('common:labels.generating', 'Génération du PDF en cours...')}
+                {t('clients:pdf.generating')}
               </Typography>
             </Box>
           ) : generatedPdfBlob ? (

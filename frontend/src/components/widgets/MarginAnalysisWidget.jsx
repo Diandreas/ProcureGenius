@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
+import useCurrency from '../../hooks/useCurrency';
 
 const MarginAnalysisWidget = ({ period = 'last_30_days' }) => {
+  const { format } = useCurrency();
+  const { t } = useTranslation(['dashboard', 'common']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,13 +27,13 @@ const MarginAnalysisWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data) return <div className="widget-error">Erreur</div>;
+  if (loading) return <div className="widget-loading">{t('common:labels.loading')}</div>;
+  if (!data) return <div className="widget-error">{t('dashboard:widgets.shared.error')}</div>;
   if (!data.by_category || data.by_category.length === 0) {
     return (
       <div className="widget-empty">
         <BarChart3 size={40} className="widget-empty-icon" />
-        <div className="widget-empty-text">Aucune analyse de marge disponible</div>
+        <div className="widget-empty-text">{t('dashboard:widgets.marginAnalysis.empty')}</div>
       </div>
     );
   }
@@ -48,10 +52,10 @@ const MarginAnalysisWidget = ({ period = 'last_30_days' }) => {
         }}>
           <div style={{ fontWeight: 600, marginBottom: '4px', fontSize: '13px' }}>{category.category_name}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            Marge: {category.average_margin_percent?.toFixed(1) || 0}%
+            {t('dashboard:widgets.marginAnalysis.marginValue', { value: category.average_margin_percent?.toFixed(1) || 0 })}
           </div>
           <div style={{ fontSize: '13px', fontWeight: 500, color: '#8b5cf6', marginTop: '4px' }}>
-            {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(category.average_margin || 0)}
+            {format(category.average_margin || 0, 0)}
           </div>
         </div>
       );

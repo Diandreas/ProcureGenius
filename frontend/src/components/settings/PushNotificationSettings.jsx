@@ -9,47 +9,49 @@ import {
 } from '@mui/icons-material';
 import usePushNotifications from '../../hooks/usePushNotifications';
 import { aiChatAPI } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 const CATEGORIES = [
   {
     id: 'critique',
-    label: ' Critique',
-    description: 'Non désactivables — ruptures de stock, quota atteint, factures très en retard',
+    labelKey: 'settings:push.categories.critique.label',
+    descriptionKey: 'settings:push.categories.critique.description',
     color: 'error',
     fields: [
-      { key: 'push_stock_rupture', label: 'Rupture de stock' },
-      { key: 'push_quota_atteint', label: 'Quota plan atteint (90%+)' },
-      { key: 'push_facture_retard', label: 'Facture en retard de +7 jours' },
+      { key: 'push_stock_rupture', labelKey: 'settings:push.fields.push_stock_rupture' },
+      { key: 'push_quota_atteint', labelKey: 'settings:push.fields.push_quota_atteint' },
+      { key: 'push_facture_retard', labelKey: 'settings:push.fields.push_facture_retard' },
     ],
     locked: true,
   },
   {
     id: 'important',
-    label: ' Important',
-    description: 'Activées par défaut, désactivables',
+    labelKey: 'settings:push.categories.important.label',
+    descriptionKey: 'settings:push.categories.important.description',
     color: 'warning',
     fields: [
-      { key: 'push_stock_bas', label: 'Stock bas (seuil d\'alerte)' },
-      { key: 'push_facture_brouillon', label: 'Facture brouillon depuis +24h' },
-      { key: 'push_bc_retard', label: 'Bon de commande en retard' },
-      { key: 'push_lot_expirant', label: 'Lot produit expirant sous 30 jours' },
-      { key: 'push_insight_ia', label: 'Insight IA important (priorité ≥ 8)' },
+      { key: 'push_stock_bas', labelKey: 'settings:push.fields.push_stock_bas' },
+      { key: 'push_facture_brouillon', labelKey: 'settings:push.fields.push_facture_brouillon' },
+      { key: 'push_bc_retard', labelKey: 'settings:push.fields.push_bc_retard' },
+      { key: 'push_lot_expirant', labelKey: 'settings:push.fields.push_lot_expirant' },
+      { key: 'push_insight_ia', labelKey: 'settings:push.fields.push_insight_ia' },
     ],
     locked: false,
   },
   {
     id: 'resume',
-    label: ' Résumé hebdo',
-    description: 'Un seul push le lundi matin avec le résumé de la semaine',
+    labelKey: 'settings:push.categories.resume.label',
+    descriptionKey: 'settings:push.categories.resume.description',
     color: 'info',
     fields: [
-      { key: 'push_resume_hebdo', label: 'Résumé hebdomadaire (lundi 8h)' },
+      { key: 'push_resume_hebdo', labelKey: 'settings:push.fields.push_resume_hebdo' },
     ],
     locked: false,
   },
 ];
 
 export default function PushNotificationSettings() {
+  const { t } = useTranslation(['settings', 'common']);
   const { isSupported, permission, isSubscribed, isLoading, subscribe, unsubscribe } = usePushNotifications();
   const [prefs, setPrefs] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -68,10 +70,10 @@ export default function PushNotificationSettings() {
     setSaving(true);
     try {
       await aiChatAPI.updatePushPreferences({ [key]: value });
-      setSaveMsg({ type: 'success', text: 'Préférences sauvegardées' });
+      setSaveMsg({ type: 'success', text: t('settings:push.saved') });
     } catch {
       setPrefs(prefs); // rollback
-      setSaveMsg({ type: 'error', text: 'Erreur de sauvegarde' });
+      setSaveMsg({ type: 'error', text: t('settings:push.saveError') });
     } finally {
       setSaving(false);
       setTimeout(() => setSaveMsg(null), 2500);
@@ -84,7 +86,7 @@ export default function PushNotificationSettings() {
     } else {
       const ok = await subscribe();
       if (!ok && permission === 'denied') {
-        setSaveMsg({ type: 'error', text: 'Notifications bloquées dans le navigateur. Modifiez les autorisations dans les paramètres du site.' });
+        setSaveMsg({ type: 'error', text: t('settings:push.blockedInBrowser') });
       }
     }
   };
@@ -92,7 +94,7 @@ export default function PushNotificationSettings() {
   if (!isSupported) {
     return (
       <Alert severity="warning" icon={<NotificationsOff />}>
-        Votre navigateur ne supporte pas les notifications push. Essayez Chrome ou Firefox.
+        {t('settings:push.notSupported')}
       </Alert>
     );
   }
@@ -100,10 +102,10 @@ export default function PushNotificationSettings() {
   return (
     <Box>
       <Typography variant="h6" fontWeight={700} mb={0.5}>
-        Notifications push
+        {t('settings:push.title')}
       </Typography>
       <Typography variant="body2" color="text.secondary" mb={3}>
-        Recevez des alertes même quand Procura est fermé — directement sur votre appareil.
+        {t('settings:push.subtitle')}
       </Typography>
 
       {/* Bouton activation principale */}
@@ -122,12 +124,12 @@ export default function PushNotificationSettings() {
             <PhoneAndroid color={isSubscribed ? 'success' : 'disabled'} />
             <Box>
               <Typography fontWeight={600}>
-                {isSubscribed ? 'Notifications activées' : 'Notifications désactivées'}
+                {isSubscribed ? t('settings:push.enabled') : t('settings:push.disabled')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {isSubscribed
-                  ? 'Cet appareil reçoit les push notifications Procura.'
-                  : 'Cliquez pour recevoir les notifications sur cet appareil.'}
+                  ? t('settings:push.enabledHelper')
+                  : t('settings:push.disabledHelper')}
               </Typography>
             </Box>
           </Box>
@@ -141,7 +143,7 @@ export default function PushNotificationSettings() {
           >
             {isLoading
               ? <CircularProgress size={16} />
-              : isSubscribed ? 'Désactiver' : 'Activer les notifications'}
+              : isSubscribed ? t('settings:push.disable') : t('settings:push.enable')}
           </Button>
         </CardContent>
       </Card>
@@ -155,7 +157,7 @@ export default function PushNotificationSettings() {
       {/* Permission navigateur */}
       {permission === 'denied' && (
         <Alert severity="error" icon={<Warning />} sx={{ mb: 2 }}>
-          Les notifications sont bloquées dans votre navigateur. Cliquez sur l'icône cadenas dans la barre d'adresse pour les autoriser.
+          {t('settings:push.deniedAlert')}
         </Alert>
       )}
 
@@ -165,16 +167,16 @@ export default function PushNotificationSettings() {
           {CATEGORIES.map((cat) => (
             <Box key={cat.id}>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
-                <Typography fontWeight={700} fontSize="0.9rem">{cat.label}</Typography>
+                <Typography fontWeight={700} fontSize="0.9rem">{t(cat.labelKey)}</Typography>
                 {cat.locked && (
-                  <Chip label="Toujours actif" size="small" color="error" variant="outlined" />
+                  <Chip label={t('settings:push.alwaysActive')} size="small" color="error" variant="outlined" />
                 )}
               </Box>
               <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
-                {cat.description}
+                {t(cat.descriptionKey)}
               </Typography>
               <Stack spacing={0.5}>
-                {cat.fields.map(({ key, label }) => (
+                {cat.fields.map(({ key, labelKey }) => (
                   <FormControlLabel
                     key={key}
                     control={
@@ -186,7 +188,7 @@ export default function PushNotificationSettings() {
                         color={cat.color}
                       />
                     }
-                    label={<Typography variant="body2">{label}</Typography>}
+                    label={<Typography variant="body2">{t(labelKey)}</Typography>}
                   />
                 ))}
               </Stack>
@@ -198,7 +200,7 @@ export default function PushNotificationSettings() {
 
       {!isSubscribed && (
         <Alert severity="info" icon={<Info />}>
-          Activez les notifications pour configurer vos préférences.
+          {t('settings:push.enableToConfigure')}
         </Alert>
       )}
     </Box>

@@ -30,7 +30,8 @@
       "successTitle": "Message sent!",
       "successDesc": "We have received your message and will get back to you very soon.",
       "errorTitle": "Send error",
-      "recaptchaRequired": "Please validate the reCAPTCHA."
+      "recaptchaRequired": "Please validate the reCAPTCHA.",
+      "sendAnother": "Send another message"
     }
   },
   "privacy": {
@@ -78,6 +79,12 @@
         "title": "8. Contact and Complaints",
         "content": "For any questions regarding this policy or the processing of your personal data, you can contact us at: privacy@procuregenius.com. In case of unresolved dispute, you have the right to lodge a complaint with your national data protection authority."
       }
+    },
+    "gdprBadge": "GDPR compliant",
+    "labelSeparator": ":",
+    "footer": {
+      "protected": "Your data is protected and hosted in Europe",
+      "exerciseRights": "To exercise your GDPR rights:"
     }
   },
   "terms": {
@@ -120,6 +127,60 @@
         "title": "9. Governing Law and Jurisdiction",
         "content": "These Terms are governed by French law. In case of dispute, the parties agree to seek an amicable solution before any legal proceedings. Failing an amicable agreement, any dispute will be submitted to the exclusive jurisdiction of the Paris courts. For any questions regarding these Terms: legal@procuregenius.com."
       }
+    },
+    "legalBadge": "Legal document",
+    "footer": {
+      "questions": "Questions about these terms?",
+      "contactUs": "Contact us at"
+    }
+  },
+  "documentation": {
+    "pageTitle": "Documentation & API | Procura",
+    "title": "Procura Documentation",
+    "intro": "Welcome to the official Procura documentation. Here you'll find all the guides, integration tutorials and API references you need to get started.",
+    "quickStart": {
+      "title": "Quick start guide",
+      "desc": "Learn how to set up your company, invite your team and create your first invoice in under 5 minutes."
+    },
+    "aiManual": {
+      "title": "AI user guide",
+      "desc": "How to phrase your prompts and requests to Procura's private analyst to get the best possible reports."
+    },
+    "apiReference": {
+      "title": "API reference",
+      "desc": "Connect Procura to your existing ERP tools and work with your data through our RESTful endpoints."
+    }
+  },
+  "blog": {
+    "metaTitle": "Blog",
+    "metaDescription": "Advice, real-world experience and tips to manage invoicing, stock and cash flow without spending your evenings on it.",
+    "badge": "The Procura blog",
+    "title": "Take back control of your business",
+    "subtitle": "Practical advice to run your business without spreading yourself thin — and a look behind the scenes of the AI that works for you.",
+    "audiences": {
+      "all": "All",
+      "freelance": "Freelancers & self-employed",
+      "artisan": "Craftspeople & shopkeepers",
+      "service": "Service providers",
+      "tpe": "Micro & small businesses"
+    },
+    "categories": {
+      "management": "Management",
+      "branding": "Branding",
+      "ai": "Artificial intelligence",
+      "cashFlow": "Cash flow",
+      "stock": "Inventory",
+      "accounting": "Accounting",
+      "productivity": "Productivity",
+      "invoicing": "Invoicing"
+    },
+    "notFound": "Article not found",
+    "backToBlog": "Back to the blog",
+    "allArticles": "All articles",
+    "related": "You might also like",
+    "cta": {
+      "title": "Ready to take back control?",
+      "trial": "30-day free trial — no credit card required"
     }
   }
 }

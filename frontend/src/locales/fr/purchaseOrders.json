@@ -23,7 +23,8 @@
     "dateFilter": "Filtre par date"
   },
   "search": {
-    "placeholder": "Rechercher un achat..."
+    "placeholder": "Rechercher un achat...",
+    "placeholderFull": "Rechercher un bon de commande, un fournisseur..."
   },
   "messages": {
     "loading": "Chargement des achats...",
@@ -64,7 +65,12 @@
     "emailSent": "Email envoyé avec succès",
     "emailError": "Erreur lors de l'envoi de l'email",
     "emailRequired": "Email destinataire requis",
-    "sending": "Envoi..."
+    "sending": "Envoi...",
+    "convertedToInvoice": "Facture créée à partir du bon de commande.",
+    "convertToInvoiceError": "Erreur lors de la conversion en facture.",
+    "poNotFoundDescription": "Le bon de commande que vous recherchez n'existe pas ou a été supprimé.",
+    "thermalPrintingMode": "Format d'impression thermique détecté. Le template de ticket thermal sera utilisé automatiquement.",
+    "thermalFormat": "Format: {{size}}"
   },
   "actions": {
     "generateReport": "Rapport PDF"
@@ -72,7 +78,21 @@
   "report": {
     "title": "Générer un Rapport d'Achats",
     "itemLabel": "achat",
-    "itemsLabel": "achats"
+    "itemsLabel": "achats",
+    "fileName": "rapport-bons-commande-{{timestamp}}.pdf",
+    "period": "Période (optionnel)",
+    "periodHelp": "Filtrer par période - laisser vide pour tout inclure",
+    "dateStart": "Date de début",
+    "dateEnd": "Date de fin",
+    "itemsToInclude": "Bons de commande à inclure",
+    "selectedCount": "{{count}} bon(s) de commande sélectionné(s)",
+    "allIncluded": "Tous les bons de commande filtrés seront inclus",
+    "selectAll": "Tout sélectionner",
+    "deselectAll": "Tout désélectionner",
+    "summarySelected": "Un rapport sera généré avec {{count}} bon(s) de commande sélectionné(s)",
+    "summaryAll": "Un rapport sera généré avec tous les bons de commande ({{count}})",
+    "forPeriod": " pour la période spécifiée",
+    "generate": "Générer le Rapport"
   },
   "labels": {
     "delivery": "Livraison:",
@@ -108,7 +128,11 @@
     "poTemplate": "Modèle d'achat",
     "saving": "Sauvegarde...",
     "generating": "Génération...",
-    "generatingLabel": "Génération du rapport en cours..."
+    "generatingLabel": "Génération du rapport en cours...",
+    "poFallback": "Bon de commande",
+    "deliveryOn": "Livraison {{date}}",
+    "noItems": "Aucun article",
+    "sending": "Envoi..."
   },
   "buttons": {
     "generatePDF": "Générer PDF",
@@ -123,7 +147,8 @@
     "print": "Imprimer",
     "download": "Télécharger",
     "save": "Sauvegarder",
-    "sendEmail": "Envoyer par email"
+    "sendEmail": "Envoyer par email",
+    "convertToInvoice": "Convertir en facture"
   },
   "columns": {
     "reference": "Référence",
@@ -165,7 +190,8 @@
   "tabs": {
     "general": "Informations générales",
     "items": "Articles",
-    "financial": "Financier"
+    "financial": "Financier",
+    "ai": "Analyse IA"
   },
   "tooltips": {
     "generatePDF": "Générer un PDF de l'achat",
@@ -173,5 +199,74 @@
     "approvePO": "Approuver l'achat",
     "sendEmail": "Envoyer l'achat par email au fournisseur",
     "noSupplierEmail": "Le fournisseur n'a pas d'adresse email"
+  },
+  "kpi": {
+    "total": "Total commandes",
+    "poCount": "{{count}} BC",
+    "approved": "Approuvés",
+    "approvedSub": "valides",
+    "sent": "Envoyes",
+    "sentSub": "en attente",
+    "drafts": "Brouillons",
+    "draftsSub": "a finaliser",
+    "cancelled": "Annules",
+    "cancelledSub": "clotures"
+  },
+  "pdf": {
+    "fileName": "bon-commande-{{number}}.pdf",
+    "viewerTitle": "Bon de commande {{number}}"
+  },
+  "ai": {
+    "you": "Vous :",
+    "assistant": "Aunlia :",
+    "error": "Erreur: {{message}}",
+    "itemLine": "- {{description}} (qté: {{quantity}}, prix unitaire: {{unitPrice}}, total: {{total}})",
+    "noItems": "Aucun article",
+    "notDefined": "Non défini",
+    "notDefinedDate": "Non définie",
+    "intro": "Laissez l'IA analyser cette commande pour vous. Cliquez sur un bouton pour lancer l'analyse.",
+    "anomaliesTitle": "Détecter les anomalies",
+    "anomaliesSubtitle": "Prix suspects, quantités bizarres, délais serrés",
+    "anomaliesButton": "Analyser",
+    "adviceTitle": "Conseils pratiques",
+    "adviceSubtitle": "Comment améliorer ou sécuriser cette commande",
+    "adviceButton": "Obtenir des conseils",
+    "marketPriceTitle": "Prix du marché en ligne",
+    "marketPriceSubtitle": "Comparaison avec Amazon, Alibaba et autres sites",
+    "marketPriceButton": "Vérifier les prix",
+    "analyzing": "Analyse...",
+    "rerun": "Relancer",
+    "chatPlaceholder": "Discuter avec l'IA ou demander une précision...",
+    "prompts": {
+      "anomalies": "Analyse ce bon de commande et détecte les anomalies éventuelles. Sois direct et simple.\n\nBon de commande: {{number}}\nFournisseur: {{supplier}}\nTotal: {{total}}\nDate limite: {{deadline}}\nArticles:\n{{items}}\n\nDis-moi : est-ce que tu vois quelque chose d'anormal ? Prix trop élevés, quantités bizarres, délais serrés ? Réponds en 3-5 points courts.",
+      "advice": "Donne des conseils pratiques pour ce bon de commande. Parle simplement.\n\nBon de commande: {{number}}\nFournisseur: {{supplier}}\nStatut: {{status}}\nTotal: {{total}}\nArticles:\n{{items}}\n\nDonne 3 conseils concrets pour améliorer ou sécuriser cette commande.",
+      "marketPrice": "Recherche les prix du marché pour ces produits. \nIMPORTANT: Si tu n'as pas un accès direct à internet pour chercher des liens en direct, NE FOURNIS PAS DE LIENS INVENTÉS OU MORTS. Donne uniquement des estimations réalistes basées sur tes connaissances. Ne donne absolument pas de faux URLs.\nN'utilise PAS la fonction/outil interne \"verify_price\" car il y a plusieurs articles.\n\nArticles de la commande:\n{{items}}\n\nPour chaque produit : donne le prix moyen du marché estimé et indique si le prix payé est correct, bas ou trop élevé."
+    }
+  },
+  "aiAssistant": {
+    "describeOrder": "Veuillez décrire ce que vous souhaitez commander",
+    "defaultTitle": "Commande {{supplier}}",
+    "supplierNotFound": "Fournisseur \"{{name}}\" non trouvé, veuillez le sélectionner manuellement.",
+    "itemWithoutDescription": "Article sans description",
+    "prefilled": "Bon de commande pré-rempli par l'IA !",
+    "error": "Erreur lors de l'analyse par l'IA",
+    "close": "Fermer Assistant",
+    "open": "Assistant IA",
+    "title": "Assistant de Commande Intelligent",
+    "description": "Décrivez votre commande (fournisseur, articles, quantités) et l'IA remplira le formulaire pour vous.",
+    "placeholder": "Ex: Commande 50 ordinateurs portables et 20 souris sans fil chez le fournisseur Dell Canada pour le projet de bureau.",
+    "analyzing": "Analyse en cours...",
+    "fillForm": "Remplir le formulaire"
+  },
+  "itemDialog": {
+    "editTitle": "Modifier la ligne",
+    "addTitle": "Ajouter une ligne",
+    "description": "Désignation / Description",
+    "descriptionPlaceholder": "Ex : Papier A4 80g/m², Cartouche HP 652, Prestation développement...",
+    "supplierReference": "Référence fournisseur",
+    "referencePlaceholder": "Ex : REF-12345",
+    "quantity": "Quantité",
+    "unitPrice": "Prix unitaire HT",
+    "lineTotal": "Total ligne HT"
   }
 }

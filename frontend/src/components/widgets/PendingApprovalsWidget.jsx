@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CheckSquare } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
+import useCurrency from '../../hooks/useCurrency';
 
 const PendingApprovalsWidget = ({ period = 'last_30_days' }) => {
+  const { format } = useCurrency();
+  const { t } = useTranslation(['dashboard', 'common']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,13 +26,13 @@ const PendingApprovalsWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data) return <div className="widget-error">Erreur</div>;
+  if (loading) return <div className="widget-loading">{t('common:labels.loading')}</div>;
+  if (!data) return <div className="widget-error">{t('dashboard:widgets.shared.error')}</div>;
   if (!data.purchase_orders || data.purchase_orders.length === 0) {
     return (
       <div className="widget-empty">
         <CheckSquare size={40} className="widget-empty-icon" />
-        <div className="widget-empty-text">Aucune approbation en attente</div>
+        <div className="widget-empty-text">{t('dashboard:widgets.pending_approvals_empty')}</div>
       </div>
     );
   }
@@ -41,7 +45,7 @@ const PendingApprovalsWidget = ({ period = 'last_30_days' }) => {
             <div className="list-item-title">{po.po_number}</div>
             <div className="list-item-subtitle">{po.supplier_name}</div>
           </div>
-          <div className="list-item-value">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(po.total_amount)}</div>
+          <div className="list-item-value">{format(po.total_amount, 0)}</div>
         </div>
       ))}
     </div>

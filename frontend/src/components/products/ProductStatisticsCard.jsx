@@ -21,8 +21,10 @@ import {
 } from '@mui/icons-material';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import { useTranslation } from 'react-i18next';
 
 function ProductStatisticsCard({ statistics, loading }) {
+    const { t } = useTranslation(['products']);
     const { format: formatCurrency } = useCurrency();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -62,28 +64,28 @@ function ProductStatisticsCard({ statistics, loading }) {
 
     const stats = [
         {
-            label: 'Factures',
+            label: t('products:statistics.invoices'),
             value: statistics.sales_summary?.total_invoices || 0,
             icon: <Receipt />,
             color: 'primary',
         },
         {
-            label: 'Total des ventes',
+            label: t('products:statistics.totalSales'),
             value: formatCurrency(statistics.sales_summary?.total_sales_amount || 0),
             icon: <AttachMoney />,
             color: 'success',
         },
         {
-            label: 'Clients uniques',
+            label: t('products:statistics.uniqueClients'),
             value: statistics.sales_summary?.unique_clients || 0,
             icon: <People />,
             color: 'info',
         },
         {
-            label: 'Dernière vente',
+            label: t('products:statistics.lastSale'),
             value: statistics.recent_invoices && statistics.recent_invoices.length > 0
                 ? formatDate(statistics.recent_invoices[0].created_at)
-                : 'Aucune vente',
+                : t('products:statistics.noSales'),
             icon: <Schedule />,
             color: 'secondary',
         },
@@ -94,7 +96,7 @@ function ProductStatisticsCard({ statistics, loading }) {
             <CardContent sx={{ p: isMobile ? 1.5 : 2, '&:last-child': { pb: isMobile ? 1.5 : 2 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: isMobile ? 1 : 1.5 }}>
                     <Typography variant={isMobile ? 'subtitle1' : 'h6'} fontWeight="bold" sx={{ fontSize: isMobile ? '0.95rem' : '1.25rem' }}>
-                        Statistiques de vente
+                        {t('products:statistics.title')}
                     </Typography>
                     {statistics.sales_trend && (
                         <Chip

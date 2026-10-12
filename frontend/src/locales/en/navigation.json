@@ -1,46 +1,58 @@
 {
-    "menu": {
-        "dashboard": "Dashboard",
-        "suppliers": "Suppliers",
-        "purchaseOrders": "Purchase Orders",
-        "invoices": "Invoices",
-        "products": "Products",
-        "clients": "Clients",
-        "eSourcing": "E-Sourcing (RFQ)",
-        "contracts": "Contracts",
-        "aiAssistant": "AI Assistant",
-        "modules": "Modules",
-        "users": "Users",
-        "settings": "Settings"
-    },
-    "topBar": {
-        "newSupplier": "New supplier",
-        "newPurchaseOrder": "New purchase order",
-        "newInvoice": "New invoice",
-        "newProduct": "New product",
-        "newClient": "New client",
-        "newRfqEvent": "New RFQ event",
-        "newContract": "New contract",
-        "newConversation": "New conversation",
-        "newImport": "New import",
-        "new": "New",
-        "importWizard": "Import wizard",
-        "dataImport": "Data import",
-        "customizeDashboard": "Customize dashboard",
-        "report": "Report"
-    },
-    "userMenu": {
-        "profile": "Profile",
-        "settings": "Settings",
-        "logout": "Logout"
-    },
-    "mobile": {
-        "dashboard": "Dashboard",
-        "suppliers": "Suppliers",
-        "orders": "Orders",
-        "invoices": "Invoices",
-        "products": "Products",
-        "clients": "Clients",
-        "ai": "AI"
-    }
+  "menu": {
+    "dashboard": "Dashboard",
+    "suppliers": "Suppliers",
+    "purchaseOrders": "Purchase Orders",
+    "invoices": "Invoices",
+    "products": "Products",
+    "clients": "Clients",
+    "eSourcing": "E-Sourcing (RFQ)",
+    "contracts": "Contracts",
+    "aiAssistant": "AI Assistant",
+    "modules": "Modules",
+    "users": "Users",
+    "settings": "Settings",
+    "accounting": "Accounting",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu",
+    "includedInPro": "Included in Pro"
+  },
+  "topBar": {
+    "newSupplier": "New supplier",
+    "newPurchaseOrder": "New purchase order",
+    "newInvoice": "New invoice",
+    "newProduct": "New product",
+    "newClient": "New client",
+    "newRfqEvent": "New RFQ event",
+    "newContract": "New contract",
+    "newConversation": "New conversation",
+    "newImport": "New import",
+    "new": "New",
+    "importWizard": "Import wizard",
+    "dataImport": "Data import",
+    "customizeDashboard": "Customize dashboard",
+    "report": "Report",
+    "importAlt": "Import",
+    "openDrawer": "Open menu",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode"
+  },
+  "userMenu": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "notifications": "AI notifications"
+  },
+  "mobile": {
+    "dashboard": "Dashboard",
+    "suppliers": "Suppliers",
+    "orders": "Orders",
+    "invoices": "Invoices",
+    "products": "Products",
+    "clients": "Clients",
+    "ai": "AI",
+    "contracts": "Contracts",
+    "accounting": "Accounting",
+    "more": "More"
+  }
 }

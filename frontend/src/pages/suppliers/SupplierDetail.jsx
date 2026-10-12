@@ -220,17 +220,17 @@ function SupplierDetail() {
 
   const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
-    const fname = `rapport-fournisseur-${supplier.name}.pdf`;
+    const fname = t('suppliers:report.supplierFileName', { name: supplier.name });
 
     if (action === 'download') {
       await pdfViewer.download(generatedPdfBlob, fname);
-      enqueueSnackbar(t('suppliers:messages.pdfDownloaded', 'Rapport PDF téléchargé avec succès'), { variant: 'success' });
+      enqueueSnackbar(t('suppliers:messages.reportPdfDownloaded'), { variant: 'success' });
     } else if (action === 'preview') {
-      pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${supplier.name}`);
+      pdfViewer.preview(generatedPdfBlob, fname, t('suppliers:report.supplierViewerTitle', { name: supplier.name }));
       return;
     } else if (action === 'print') {
       if (IS_NATIVE) {
-        pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${supplier.name}`);
+        pdfViewer.preview(generatedPdfBlob, fname, t('suppliers:report.supplierViewerTitle', { name: supplier.name }));
         return;
       }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
@@ -712,7 +712,7 @@ function SupplierDetail() {
             <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={3}>
               <CircularProgress size={40} />
               <Typography variant="body2" color="text.secondary">
-                {t('common:labels.generating', 'Génération du PDF en cours...')}
+                {t('suppliers:pdf.generating')}
               </Typography>
             </Box>
           ) : generatedPdfBlob ? (

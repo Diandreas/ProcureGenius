@@ -94,6 +94,7 @@ import { useAINotifications } from '../../components/AI/AINotificationProvider';
 
 // Composant Panel Latéral Suggestions
 const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -123,7 +124,7 @@ const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
       <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-            Suggestions Intelligentes
+            {t('aiChat:chatPage.suggestionsPanel.title')}
           </Typography>
           <IconButton onClick={onClose} size="small">
             <Close fontSize="small" />
@@ -188,7 +189,7 @@ const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Lightbulb sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
               <Typography variant="body2" color="text.secondary">
-                Aucune suggestion pour le moment
+                {t('aiChat:chatPage.suggestionsPanel.empty')}
               </Typography>
             </Box>
           )}
@@ -201,6 +202,7 @@ const SuggestionsPanel = ({ open, onClose, suggestions, onActionClick }) => {
 
 // Composant Historique Amélioré des Conversations
 const ConversationsHistory = ({ open, onClose, conversations, onSelectConversation, onDeleteConversation, onNewConversation, currentConversationId }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
@@ -249,12 +251,12 @@ const ConversationsHistory = ({ open, onClose, conversations, onSelectConversati
 
   const handleDelete = async (convId, e) => {
     e.stopPropagation();
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette conversation ?')) {
+    if (window.confirm(t('aiChat:chatPage.history.deleteConfirm'))) {
       try {
         await onDeleteConversation(convId);
-        enqueueSnackbar('Conversation supprimée', { variant: 'success' });
+        enqueueSnackbar(t('aiChat:chatPage.history.deleted'), { variant: 'success' });
       } catch (error) {
-        enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+        enqueueSnackbar(t('aiChat:chatPage.history.deleteError'), { variant: 'error' });
       }
     }
   };
@@ -314,7 +316,7 @@ const ConversationsHistory = ({ open, onClose, conversations, onSelectConversati
             </Typography>
             {conv.message_count > 0 && (
               <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.7rem' }}>
-                · {conv.message_count} msg
+                · {t('aiChat:chatPage.history.messageCount', { count: conv.message_count })}
               </Typography>
             )}
           </Box>
@@ -389,11 +391,11 @@ const ConversationsHistory = ({ open, onClose, conversations, onSelectConversati
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box>
               <Typography variant="subtitle1" fontWeight={600} sx={{ lineHeight: 1.2, fontSize: '0.95rem' }}>
-                Historique
+                {t('aiChat:sidebar.history')}
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.72rem' }}>
-                {totalCount} conversation{totalCount !== 1 ? 's' : ''}
-                {todayCount > 0 && ` · ${todayCount} aujourd'hui`}
+                {t('aiChat:chatPage.history.conversationCount', { count: totalCount })}
+                {todayCount > 0 && ` · ${t('aiChat:chatPage.history.todayCount', { count: todayCount })}`}
               </Typography>
             </Box>
             <IconButton onClick={onClose} size="small" sx={{ color: 'text.disabled', '&:hover': { color: 'text.primary' } }}>
@@ -424,14 +426,14 @@ const ConversationsHistory = ({ open, onClose, conversations, onSelectConversati
               },
             }}
           >
-            Nouvelle conversation
+            {t('aiChat:chatPage.history.newConversation')}
           </Button>
 
           {/* Recherche */}
           <TextField
             fullWidth
             size="small"
-            placeholder="Rechercher..."
+            placeholder={t('common:search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -455,20 +457,20 @@ const ConversationsHistory = ({ open, onClose, conversations, onSelectConversati
             <Box sx={{ textAlign: 'center', py: 8 }}>
               <History sx={{ fontSize: 40, color: 'text.disabled', mb: 1.5, opacity: 0.3 }} />
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.825rem' }}>
-                {searchQuery ? 'Aucun résultat' : 'Aucune conversation'}
+                {searchQuery ? t('aiChat:chatPage.history.noResults') : t('aiChat:chatPage.history.noConversations')}
               </Typography>
               {!searchQuery && (
                 <Typography variant="caption" color="text.disabled">
-                  Commencez une nouvelle conversation
+                  {t('aiChat:chatPage.history.startNew')}
                 </Typography>
               )}
             </Box>
           ) : (
             <>
-              {renderGroup("Aujourd'hui", groupedConversations.today)}
-              {renderGroup('Hier', groupedConversations.yesterday)}
-              {renderGroup('Cette semaine', groupedConversations.thisWeek)}
-              {renderGroup('Plus ancien', groupedConversations.older)}
+              {renderGroup(t('common:time.today'), groupedConversations.today)}
+              {renderGroup(t('common:time.yesterday'), groupedConversations.yesterday)}
+              {renderGroup(t('common:time.thisWeek'), groupedConversations.thisWeek)}
+              {renderGroup(t('aiChat:chatPage.history.older'), groupedConversations.older)}
             </>
           )}
         </Box>
@@ -713,7 +715,7 @@ function AIChat() {
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Notifications">
+          <Tooltip title={t('aiChat:chatPage.notifications')}>
             <IconButton size="small" onClick={() => openNotificationsCenter()} sx={{ color: unreadCount > 0 ? 'warning.main' : 'text.secondary' }}>
               <Badge badgeContent={unreadCount} color="warning" variant="dot">
                 <Notifications sx={{ fontSize: 20 }} />
@@ -722,7 +724,7 @@ function AIChat() {
           </Tooltip>
 
           {artifactsCount > 0 && (
-            <Tooltip title="Visualisations">
+            <Tooltip title={t('aiChat:chatPage.visualizations')}>
               <IconButton size="small" onClick={() => setArtifactsPanelOpen(true)} sx={{ color: 'primary.main' }}>
                 <Badge badgeContent={artifactsCount} color="primary">
                   <Analytics sx={{ fontSize: 20 }} />
@@ -989,7 +991,7 @@ function AIChat() {
       || t('aiChat:messages.sendMessageError');
 
     if (error.response?.status === 500 || error.status === 500) {
-      enqueueSnackbar('Erreur serveur (500). Vérifiez les logs Django pour plus de détails.', {
+      enqueueSnackbar(t('aiChat:chatPage.serverError'), {
         variant: 'error',
         autoHideDuration: 5000,
       });
@@ -1008,7 +1010,7 @@ function AIChat() {
 
     const userMessage = {
       role: 'user',
-      content: confirmationData ? `Confirmer la création` : textToSend,
+      content: confirmationData ? t('aiChat:chatPage.confirmCreation') : textToSend,
       created_at: new Date().toISOString(),
     };
 
@@ -1125,12 +1127,12 @@ function AIChat() {
         stopped: true,
         agent_steps: (m.agent_steps || []).map(s =>
           s.kind === 'tool' && s.status === 'running'
-            ? { ...s, status: 'error', summary: 'interrompu' }
+            ? { ...s, status: 'error', summary: t('aiChat:chatPage.toolInterrupted') }
             : s
         ),
         content: m.content
-          ? `${m.content}\n\n_Génération interrompue._`
-          : '_Génération interrompue._',
+          ? `${m.content}\n\n${t('aiChat:chatPage.generationInterrupted')}`
+          : t('aiChat:chatPage.generationInterrupted'),
       };
       return next;
     });
@@ -1141,7 +1143,7 @@ function AIChat() {
       navigate(action.link);
     } else if (action.prompt) {
       // Remplir directement le champ de saisie
-      setMessage(action.prompt);
+      setMessage(t(`aiChat:chatPage.quickActions.${action.id}.prompt`));
       // Focus sur le champ pour permettre l'édition
       setTimeout(() => {
         const input = document.querySelector('input[type="text"], textarea');
@@ -1154,7 +1156,7 @@ function AIChat() {
     try {
       const response = await aiChatAPI.acceptProactiveConversation(conversationId);
       if (response.data.success) {
-        enqueueSnackbar('Conversation démarrée !', { variant: 'success' });
+        enqueueSnackbar(t('aiChat:chatPage.conversationStarted'), { variant: 'success' });
         // Recharger les conversations et naviguer vers la nouvelle
         await fetchConversations();
         if (response.data.conversation_id) {
@@ -1165,7 +1167,7 @@ function AIChat() {
       }
     } catch (error) {
       console.error('Error accepting proactive conversation:', error);
-      enqueueSnackbar('Erreur lors du démarrage de la conversation', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:chatPage.conversationStartError'), { variant: 'error' });
     }
   };
 
@@ -1178,7 +1180,7 @@ function AIChat() {
       }
     } catch (error) {
       console.error('Error dismissing proactive conversation:', error);
-      enqueueSnackbar('Erreur lors de l\'ignorance de la conversation', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:chatPage.conversationDismissError'), { variant: 'error' });
     }
   };
 
@@ -1242,8 +1244,8 @@ function AIChat() {
   }, []);
 
   const refreshArtifact = useCallback((id) => {
-    enqueueSnackbar('Rafraîchissement en cours...', { variant: 'info' });
-  }, [enqueueSnackbar]);
+    enqueueSnackbar(t('aiChat:chatPage.refreshing'), { variant: 'info' });
+  }, [enqueueSnackbar, t]);
 
   // NOTE: Les visualisations ne sont plus capturées automatiquement
   // L'utilisateur peut les épingler manuellement via le bouton dans MessageContent
@@ -1323,7 +1325,7 @@ function AIChat() {
                       }
                     }} />
                     <Typography variant="caption" sx={{ fontWeight: 600, color: '#10b981', letterSpacing: '0.05em', fontSize: '0.7rem', textTransform: 'uppercase' }}>
-                      Procura IA · En ligne
+                      {t('aiChat:chatPage.onlineStatus')}
                     </Typography>
                   </Box>
 
@@ -1358,7 +1360,7 @@ function AIChat() {
                 {/* Quick Actions — rangées de chips compacts */}
                 <Box sx={{ mb: { xs: 2.5, sm: 3 } }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.disabled', textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem', mb: 1.5, display: 'block' }}>
-                    Actions rapides
+                    {t('aiChat:quickActions.title')}
                   </Typography>
                   <Box sx={{
                     display: 'flex',
@@ -1395,7 +1397,7 @@ function AIChat() {
                             {action.icon}
                           </Box>
                           <Typography className="action-label" variant="caption" sx={{ fontWeight: 500, color: 'text.secondary', fontSize: '0.775rem', whiteSpace: 'nowrap', transition: 'color 0.18s', lineHeight: 1 }}>
-                            {action.title}
+                            {t(`aiChat:chatPage.quickActions.${action.id}.title`)}
                           </Typography>
                         </Box>
                       ))
@@ -1418,7 +1420,7 @@ function AIChat() {
                     }}
                   >
                     <DocumentScanner sx={{ fontSize: 14, color: 'text.disabled' }} />
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>Importer un document</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>{t('aiChat:chatPage.importDocument')}</Typography>
                   </Box>
                   <Box
                     onClick={() => navigate('/ai-chat/import-reviews')}
@@ -1433,7 +1435,7 @@ function AIChat() {
                     }}
                   >
                     <Assignment sx={{ fontSize: 14, color: 'text.disabled' }} />
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>Imports en attente</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', fontWeight: 500 }}>{t('aiChat:chatPage.pendingImports')}</Typography>
                   </Box>
                 </Box>
 
@@ -1444,7 +1446,7 @@ function AIChat() {
                       <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
                         <Mascot pose="excited" animation="wave" size={20} />
                       </Box>
-                      L'IA vous propose de discuter
+                      {t('aiChat:chatPage.proactiveTitle')}
                     </Typography>
                     {proactiveConversations.map((conv) => (
                       <ProactiveConversationCard
@@ -1540,7 +1542,7 @@ function AIChat() {
                             actionButtons={msg.action_buttons}
                             onButtonClick={(buttonIndex, confirmationData) => {
                               if (confirmationData) {
-                                handleSendMessage('Confirmer la création', confirmationData);
+                                handleSendMessage(t('aiChat:chatPage.confirmCreation'), confirmationData);
                               } else {
                                 const responseMap = { 0: '1', 1: '2', 2: '3' };
                                 handleSendMessage(responseMap[buttonIndex] || '1');
@@ -1548,7 +1550,7 @@ function AIChat() {
                             }}
                             onAddArtifact={(artifact) => {
                               addArtifact(artifact);
-                              enqueueSnackbar('Graphique ajouté aux visualisations', { variant: 'success' });
+                              enqueueSnackbar(t('aiChat:chatPage.chartAdded'), { variant: 'success' });
                             }}
                           />
                           {msg.needs_confirmation?.options?.length > 0 && (
@@ -1695,10 +1697,10 @@ function AIChat() {
           <Box sx={{ maxWidth: { xs: '100%', md: 900, lg: 1080 }, mx: 'auto', px: { xs: 1.5, sm: 3 }, mb: 0.5 }}>
             <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { display: 'none' } }}>
               {[
-                { label: ' Devis', prompt: 'Je veux créer un devis pour un client' },
-                { label: ' Vérifier prix', prompt: 'Vérifie le prix du marché pour un produit' },
-                { label: ' Relancer client', prompt: 'Génère une relance pour une facture impayée' },
-                { label: ' Cash Flow', prompt: 'Fais une analyse prédictive de ma trésorerie 60 jours' },
+                { label: t('aiChat:chatPage.chips.quote.label'), prompt: t('aiChat:chatPage.chips.quote.prompt') },
+                { label: t('aiChat:chatPage.chips.verifyPrice.label'), prompt: t('aiChat:chatPage.chips.verifyPrice.prompt') },
+                { label: t('aiChat:chatPage.chips.remindClient.label'), prompt: t('aiChat:chatPage.chips.remindClient.prompt') },
+                { label: t('aiChat:chatPage.chips.cashFlow.label'), prompt: t('aiChat:chatPage.chips.cashFlow.prompt') },
               ].map((chip, idx) => (
                 <Box
                   key={idx}
@@ -1765,7 +1767,7 @@ function AIChat() {
                 mb: 0.5,
               }}
             >
-              <Tooltip title="Importer un document">
+              <Tooltip title={t('aiChat:chatPage.importDocument')}>
                 <IconButton
                   onClick={() => navigate('/ai-chat/document-import')}
                   disabled={loading}
@@ -1856,7 +1858,7 @@ function AIChat() {
                   <IconButton
                     onClick={() => (loading ? handleStopGeneration() : handleSendMessage())}
                     disabled={!loading && !message.trim()}
-                    aria-label={loading ? 'stop' : 'send'}
+                    aria-label={loading ? t('aiChat:input.stop') : t('aiChat:input.send')}
                     sx={{
                       mb: 0.5,
                       background: (loading || message.trim())

@@ -25,91 +25,62 @@ import {
   OpenInFull,
   SmartToy,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../../services/api';
 
 // Context definitions per route
+// `label` reste le libellé français envoyé au backend comme contexte ;
+// les textes affichés (libellé, accueil, actions) sont traduits via aiChat:contextualPanel.contexts.<key>.
 const PAGE_CONTEXTS = {
   '/dashboard': {
+    key: 'dashboard',
     label: 'Tableau de bord',
     color: '#2563eb',
-    greeting: 'Voici un aperçu de votre activité. Je peux analyser vos indicateurs ou faire une prévision de trésorerie.',
-    actions: [
-      { label: 'Analyser la période', prompt: 'Analyse mes indicateurs financiers du tableau de bord et donne-moi les points clés.' },
-      { label: 'Prévision trésorerie', prompt: 'Fais une prévision de trésorerie basée sur mes données actuelles.' },
-      { label: 'Alertes prioritaires', prompt: 'Quelles sont les alertes les plus importantes à traiter aujourd\'hui ?' },
-    ],
+    actions: ['analyzePeriod', 'cashForecast', 'priorityAlerts'],
   },
   '/invoices': {
+    key: 'invoices',
     label: 'Factures',
     color: '#10b981',
-    greeting: 'Je peux vous aider à gérer vos factures, analyser les impayés ou rédiger des relances.',
-    actions: [
-      { label: 'Analyser les impayés', prompt: 'Analyse mes factures impayées et propose un plan de relance.' },
-      { label: 'Relancer un client', prompt: 'Rédige un email de relance professionnel et courtois pour un client en retard de paiement.' },
-      { label: 'Optimiser les délais', prompt: 'Comment puis-je améliorer mon taux de recouvrement et réduire les délais de paiement ?' },
-    ],
+    actions: ['analyzeUnpaid', 'remindClient', 'optimizeTerms'],
   },
   '/contracts': {
+    key: 'contracts',
     label: 'Contrats',
     color: '#8b5cf6',
-    greeting: 'Je peux générer des sections de contrat, analyser les risques ou vous guider dans la rédaction.',
-    actions: [
-      { label: 'Générer une clause', prompt: 'Génère une clause de confidentialité professionnelle en français, adaptée au droit OHADA.' },
-      { label: 'Analyser les risques', prompt: 'Quels sont les risques contractuels courants à surveiller dans mes contrats actifs ?' },
-      { label: 'Modèle de contrat', prompt: 'Quel type de contrat me recommandes-tu pour une prestation de service récurrente ?' },
-    ],
+    actions: ['generateClause', 'analyzeRisks', 'contractTemplate'],
   },
   '/purchase-orders': {
+    key: 'purchaseOrders',
     label: 'Bons de commande',
     color: '#f59e0b',
-    greeting: 'Je peux vous aider à rédiger des bons de commande, comparer des fournisseurs ou optimiser vos achats.',
-    actions: [
-      { label: 'Comparer fournisseurs', prompt: 'Comment évaluer et comparer efficacement mes fournisseurs pour obtenir le meilleur rapport qualité-prix ?' },
-      { label: 'Optimiser les achats', prompt: 'Quelles stratégies puis-je adopter pour réduire mes coûts d\'achats ?' },
-      { label: 'Termes de paiement', prompt: 'Quels sont les termes de paiement standards dans un bon de commande B2B ?' },
-    ],
+    actions: ['compareSuppliers', 'optimizePurchases', 'paymentTerms'],
   },
   '/products': {
+    key: 'products',
     label: 'Produits',
     color: '#ef4444',
-    greeting: 'Je peux analyser votre stock, suggérer des réapprovisionnements ou optimiser votre catalogue.',
-    actions: [
-      { label: 'Analyser le stock', prompt: 'Analyse mon niveau de stock et identifie les produits en rupture ou en surstock.' },
-      { label: 'Réapprovisionnement', prompt: 'Quels produits devrais-je réapprovisionner en priorité et en quelle quantité ?' },
-      { label: 'Optimiser le catalogue', prompt: 'Comment puis-je optimiser mon catalogue produits pour améliorer mes marges ?' },
-    ],
+    actions: ['analyzeStock', 'restock', 'optimizeCatalog'],
   },
   '/clients': {
+    key: 'clients',
     label: 'Clients',
     color: '#06b6d4',
-    greeting: 'Je peux analyser votre portefeuille clients, identifier les plus rentables ou vous aider à fidéliser.',
-    actions: [
-      { label: 'Top clients', prompt: 'Qui sont mes clients les plus rentables et comment les fidéliser ?' },
-      { label: 'Clients à risque', prompt: 'Quels clients présentent un risque d\'impayé ou d\'inactivité ?' },
-      { label: 'Stratégie fidélisation', prompt: 'Propose-moi une stratégie de fidélisation adaptée à mes clients actuels.' },
-    ],
+    actions: ['topClients', 'atRiskClients', 'loyaltyStrategy'],
   },
   '/suppliers': {
+    key: 'suppliers',
     label: 'Fournisseurs',
     color: '#f97316',
-    greeting: 'Je peux vous aider à évaluer vos fournisseurs, négocier de meilleures conditions ou diversifier vos sources.',
-    actions: [
-      { label: 'Évaluer un fournisseur', prompt: 'Quels critères utiliser pour évaluer la fiabilité d\'un fournisseur ?' },
-      { label: 'Négocier les prix', prompt: 'Donne-moi des stratégies pour négocier de meilleures conditions avec mes fournisseurs.' },
-      { label: 'Réduire les risques', prompt: 'Comment réduire ma dépendance à un seul fournisseur et diversifier mes sources ?' },
-    ],
+    actions: ['evaluateSupplier', 'negotiatePrices', 'reduceRisks'],
   },
 };
 
 const DEFAULT_CONTEXT = {
+  key: 'default',
   label: 'Procura',
   color: '#2563eb',
-  greeting: 'Bonjour ! Je suis votre assistant Procura. Posez-moi n\'importe quelle question sur votre activité.',
-  actions: [
-    { label: 'Créer une facture', prompt: 'Guide-moi pour créer une facture professionnelle.' },
-    { label: 'Résumé d\'activité', prompt: 'Donne-moi un résumé de mon activité récente et des points d\'attention.' },
-    { label: 'Conseil du jour', prompt: 'Donne-moi un conseil pratique pour améliorer ma gestion d\'entreprise.' },
-  ],
+  actions: ['createInvoice', 'activitySummary', 'dailyTip'],
 };
 
 function getContext(pathname) {
@@ -118,6 +89,7 @@ function getContext(pathname) {
 }
 
 export default function ContextualAIPanel() {
+  const { t } = useTranslation('aiChat');
   const location = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -131,6 +103,7 @@ export default function ContextualAIPanel() {
   const messagesEndRef = useRef(null);
 
   const ctx = getContext(location.pathname);
+  const ctxKey = `aiChat:contextualPanel.contexts.${ctx.key}`;
 
   // Masquer sur la page /ai-chat (le chat plein écran y est déjà présent).
   const hidden = location.pathname.startsWith('/ai-chat');
@@ -167,7 +140,7 @@ export default function ContextualAIPanel() {
       });
       const data = res.data || {};
       // `reply` est la source de vérité du contrat backend unifié.
-      const reply = data.reply || data.ai_response || 'Réponse reçue.';
+      const reply = data.reply || data.ai_response || t('aiChat:contextualPanel.replyReceived');
       if (data.conversation_id) setConversationId(data.conversation_id);
       setMessages(prev => [
         ...prev,
@@ -184,7 +157,7 @@ export default function ContextualAIPanel() {
         setPendingConfirmation(data.needs_confirmation);
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', text: 'Désolé, une erreur est survenue. Réessayez ou ouvrez le chat complet.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: t('aiChat:contextualPanel.error') }]);
     } finally {
       setLoading(false);
     }
@@ -244,15 +217,15 @@ export default function ContextualAIPanel() {
               </Box>
               <Box>
                 <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.2 }}>
-                  Assistant IA
+                  {t('aiChat:title')}
                 </Typography>
                 <Typography variant="caption" sx={{ color: ctx.color, fontWeight: 600 }}>
-                  {ctx.label}
+                  {t(`${ctxKey}.label`)}
                 </Typography>
               </Box>
             </Stack>
             <Stack direction="row" spacing={0.5}>
-              <IconButton size="small" onClick={() => { setOpen(false); navigate('/ai-chat'); }} title="Ouvrir le chat complet">
+              <IconButton size="small" onClick={() => { setOpen(false); navigate('/ai-chat'); }} title={t('aiChat:contextualPanel.openFullChat')}>
                 <OpenInFull sx={{ fontSize: 16 }} />
               </IconButton>
               <IconButton size="small" onClick={() => setOpen(false)}>
@@ -266,7 +239,7 @@ export default function ContextualAIPanel() {
         <Box sx={{ px: 2, pt: 2, pb: 1 }}>
           <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: alpha(ctx.color, 0.06), border: '1px solid', borderColor: alpha(ctx.color, 0.15) }}>
             <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5, fontSize: '0.82rem' }}>
-              {ctx.greeting}
+              {t(`${ctxKey}.greeting`)}
             </Typography>
           </Box>
         </Box>
@@ -275,13 +248,13 @@ export default function ContextualAIPanel() {
         {messages.length === 0 && (
           <Box sx={{ px: 2, pb: 1.5 }}>
             <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', mb: 1 }}>
-              Actions rapides
+              {t('aiChat:quickActions.title')}
             </Typography>
             <Stack spacing={0.75}>
               {ctx.actions.map((action, i) => (
                 <Box
                   key={i}
-                  onClick={() => sendMessage(action.prompt)}
+                  onClick={() => sendMessage(t(`${ctxKey}.actions.${action}.prompt`))}
                   sx={{
                     px: 1.5, py: 1, borderRadius: 1.5,
                     border: '1px solid', borderColor: 'divider',
@@ -291,7 +264,7 @@ export default function ContextualAIPanel() {
                     transition: 'all 0.15s',
                   }}
                 >
-                  {action.label}
+                  {t(`${ctxKey}.actions.${action}.label`)}
                 </Box>
               ))}
             </Stack>
@@ -354,7 +327,7 @@ export default function ContextualAIPanel() {
                     onClick={() => { setOpen(false); navigate('/ai-chat'); }}
                     sx={{ display: 'block', mt: 0.75, color: ctx.color, cursor: 'pointer', fontWeight: 600, fontSize: '0.72rem', '&:hover': { textDecoration: 'underline' } }}
                   >
-                     Graphique disponible — ouvrir le chat complet
+                     {t('aiChat:contextualPanel.chartAvailable')}
                   </Typography>
                 )}
               </Box>
@@ -431,7 +404,7 @@ export default function ContextualAIPanel() {
               multiline
               maxRows={3}
               size="small"
-              placeholder="Posez une question..."
+              placeholder={t('aiChat:contextualPanel.placeholder')}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
@@ -453,7 +426,7 @@ export default function ContextualAIPanel() {
               onClick={() => { setOpen(false); navigate('/ai-chat'); }}
               sx={{ color: ctx.color, cursor: 'pointer', fontWeight: 600, fontSize: '0.72rem', '&:hover': { textDecoration: 'underline' } }}
             >
-              Ouvrir le chat complet →
+              {t('aiChat:contextualPanel.openFullChatLink')}
             </Typography>
           </Box>
         </Box>

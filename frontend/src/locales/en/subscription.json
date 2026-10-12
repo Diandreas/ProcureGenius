@@ -1,0 +1,266 @@
+{
+  "plans": {
+    "free": {
+      "name": "Free",
+      "tagline": "To get started and discover Procura, with no commitment.",
+      "cta": "Get started",
+      "features": ["1 user", "30 invoices / month", "20 clients", "50 products", "Dashboard", "PDF export"],
+      "missing": ["Purchase orders", "Suppliers", "Accounting", "Contracts", "AI assistant"]
+    },
+    "pro": {
+      "name": "Pro",
+      "badge": "Most popular",
+      "tagline": "For SMEs that want to work quickly and efficiently.",
+      "cta": "Choose Pro",
+      "features": [
+        "2 users included (+{siege}/user)",
+        "Unlimited invoices, clients & products",
+        "Unlimited purchase orders & suppliers",
+        "Basic accounting (journal, entries)",
+        "Contracts",
+        "AI assistant — 100 requests / month",
+        "Ad-free"
+      ],
+      "missing": ["Advanced accounting (management ratios, balance sheet)", "Margin analysis", "Restocking forecast", "E-Sourcing"]
+    },
+    "business": {
+      "name": "Business",
+      "badge": "Most complete",
+      "tagline": "For teams that manage their business end to end.",
+      "cta": "Choose Business",
+      "features": [
+        "10 users included (+{siege}/user)",
+        "Everything in Pro, without limits",
+        "Full accounting (management ratios, balance sheet, income statement)",
+        "Margin & gross profit analysis",
+        "Restocking forecast",
+        "E-Sourcing & tenders",
+        "Unlimited AI assistant",
+        "Priority support + dedicated onboarding",
+        "50 GB storage"
+      ]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "Custom deployment for large organizations.",
+      "cta": "Contact us",
+      "features": ["Everything in Business", "Dedicated onboarding", "Custom integrations", "Guaranteed SLA", "Account manager"]
+    }
+  },
+  "billing": {
+    "monthly": "Monthly",
+    "yearly": "Yearly"
+  },
+  "price": {
+    "onQuote": "Custom quote",
+    "free": "Free",
+    "perMonth": "/month",
+    "perYear": "/year",
+    "billedMonthly": "Billed {{amount}} per month",
+    "billedYearly": "Billed {{amount}} per year"
+  },
+  "currencyNames": {
+    "EUR": "euros",
+    "XAF": "CFA francs",
+    "XOF": "CFA francs",
+    "USD": "dollars"
+  },
+  "redirecting": "Redirecting…",
+  "enterpriseWhatsappMessage": "Hello, I'm interested in the Procura Enterprise plan.",
+  "internalPricing": {
+    "mySubscription": "My subscription",
+    "trialDays": "Trial — {{days}} d",
+    "cancelScheduled": "Cancellation scheduled",
+    "activeUntilNotRenewed": "Active until {{date}} — will not renew.",
+    "nextRenewal": "Next renewal on {{date}}.",
+    "cancelSubscription": "Cancel subscription",
+    "title": "Your subscription",
+    "subtitle": "1-month free trial on Pro and Business — no card required. Change or cancel at any time.",
+    "currentPlan": "Current plan",
+    "yourPlan": "Your plan",
+    "securePayment": "Secure payment by Stripe. After payment, your account is activated automatically and you are redirected to your dashboard.",
+    "cancelledSuccess": "Subscription cancelled. Active until {{date}}.",
+    "cancelError": "Unable to cancel the subscription.",
+    "freeActivated": "Free plan activated.",
+    "actionFailed": "Action failed.",
+    "checkoutError": "Unable to start the payment. Please try again.",
+    "downgrade": {
+      "title": "Confirm the change",
+      "losingAccess": "By switching to the <strong>{{plan}}</strong> plan, you will lose access to:",
+      "quotasReduced": "Your quotas (invoices, clients, users…) will be reduced according to the {{plan}} plan.",
+      "dataKept": "Your data is kept, but these features will be unavailable until you move to a higher plan.",
+      "confirm": "Confirm switch to {{plan}}"
+    },
+    "cancelDialog": {
+      "title": "Cancel your subscription?",
+      "warning": "Your subscription will remain <strong>active until {{date}}</strong>. After that, you will move back to Free and lose access to paid features (your data is kept).",
+      "reasonPrompt": "Any reason? (optional — it helps us improve)",
+      "reasonPlaceholder": "Too expensive, I don't use it enough…",
+      "keep": "Keep my subscription",
+      "cancelling": "Cancelling…",
+      "confirm": "Confirm cancellation"
+    }
+  },
+  "seats": {
+    "title": "Manage seats",
+    "paidPlanRequired": "Adding seats requires a paid plan. Upgrade to <strong>Pro</strong> or <strong>Business</strong> to invite your team (then add seats at {{price}}/user).",
+    "viewPlans": "View plans",
+    "intro_one": "Your plan includes <strong>{{count}}</strong> user. Add extra seats at <strong>{{price}}/month</strong> each (prorated billing).",
+    "intro_other": "Your plan includes <strong>{{count}}</strong> users. Add extra seats at <strong>{{price}}/month</strong> each (prorated billing).",
+    "extraSeats_one": "extra seat",
+    "extraSeats_other": "extra seats",
+    "totalCapacity": "Total capacity",
+    "totalUsers_one": "{{count}} user",
+    "totalUsers_other": "{{count}} users",
+    "seatCost": "Seat cost",
+    "costPerMonth": "+{{price}}/month",
+    "minimum": "Minimum {{min}} (seats already in use). Deactivate users to reduce.",
+    "updated": "Seats updated: {{total}} in total.",
+    "updateError": "Unable to update seats.",
+    "updating": "Updating…"
+  },
+  "status": {
+    "viewPlans": "View plans",
+    "noActive": "No active subscription",
+    "unlimited": "Unlimited",
+    "trialBanner_one": "Trial period - {{count}} day left",
+    "trialBanner_other": "Trial period - {{count}} days left",
+    "subscribe": "Subscribe",
+    "upgrade": "Upgrade plan",
+    "quotaAlmostReached": "Quota almost reached",
+    "quotaWarning": "Quota warning",
+    "title": "{{plan}} subscription",
+    "trialChip_one": "Trial - {{count}} day left",
+    "trialChip_other": "Trial - {{count}} days left",
+    "quotasNearLimit_one": "{{count}} quota close to its limit",
+    "quotasNearLimit_other": "{{count}} quotas close to their limit",
+    "showLess": "Show less",
+    "showAllQuotas": "Show all quotas",
+    "statuses": {
+      "trial": "Trial period",
+      "active": "Active",
+      "past_due": "Payment overdue",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    },
+    "quotas": {
+      "invoices": "Invoices",
+      "purchase_orders": "Purchase orders",
+      "ai_requests": "AI requests",
+      "clients": "Clients",
+      "suppliers": "Suppliers",
+      "products": "Products"
+    }
+  },
+  "trialChip": {
+    "mobileDays": "{{days}} d",
+    "mobileExpired": "Expired",
+    "active": "{{plan}} trial — {{days}} d",
+    "expired": "{{plan}} trial expired",
+    "tooltipActive_one": "{{plan}} trial — {{count}} day left",
+    "tooltipActive_other": "{{plan}} trial — {{count}} days left",
+    "tooltipExpired": "Trial expired — manage your subscription"
+  },
+  "pastDue": {
+    "message": "Your subscription payment failed. Update your payment method to keep access.",
+    "opening": "Opening…",
+    "updatePayment": "Update payment"
+  },
+  "modules": {
+    "activate": "Enable {{module}}",
+    "currentlyDisabled": "This module is currently disabled",
+    "includedFeatures": "Included features:",
+    "canDisableLater": "You can always disable this module in the settings",
+    "activateNow": "Enable now",
+    "fallback": {
+      "name": "Module",
+      "description": "Module description"
+    },
+    "items": {
+      "dashboard": {
+        "name": "Dashboard",
+        "description": "Overview of your business with real-time statistics",
+        "features": ["Performance statistics", "Interactive charts", "Recent activity", "Key performance indicators (KPIs)"]
+      },
+      "suppliers": {
+        "name": "Suppliers",
+        "description": "Manage your supplier relationships efficiently",
+        "features": ["Supplier database", "Performance evaluation", "Order history", "CSV import/export"]
+      },
+      "purchase-orders": {
+        "name": "Purchase orders",
+        "description": "Create and track your purchase orders",
+        "features": ["Purchase order creation", "Delivery tracking", "Multi-level approvals", "PDF generation"]
+      },
+      "invoices": {
+        "name": "Invoices",
+        "description": "Manage your invoicing and payments",
+        "features": ["Invoice creation", "Payment tracking", "Automatic reminders", "Accounting reports"]
+      },
+      "products": {
+        "name": "Products",
+        "description": "Manage your product catalog and inventory",
+        "features": ["Product catalog", "Inventory management", "Restocking alerts", "Stock movements"]
+      },
+      "clients": {
+        "name": "Clients",
+        "description": "Manage your client base",
+        "features": ["Client database", "Transaction history", "Behavior analysis", "Segmentation"]
+      },
+      "e-sourcing": {
+        "name": "E-Sourcing",
+        "description": "Manage your tenders and compare suppliers",
+        "features": ["RFQ creation", "Bid comparison", "Supplier evaluation", "Online negotiation"]
+      },
+      "contracts": {
+        "name": "Contracts",
+        "description": "Manage your supplier contracts",
+        "features": ["Contract management", "AI clause extraction", "Expiry alerts", "Template library"]
+      }
+    }
+  },
+  "pricing": {
+    "metaTitle": "Pricing",
+    "metaDescription": "Clear plans, no surprises: start for free, upgrade when your business grows. 30-day trial, no card required.",
+    "eyebrow": "Procura pricing",
+    "heroTitle": "Fair pricing,<br/><accent>growth</accent> without friction.",
+    "intro": "Start for free. One-month free trial on paid plans — no credit card required.",
+    "indicativePrices": "Prices shown in {{currency}} for reference only; the subscription is billed in {{billingCurrency}}.",
+    "yearlyEquivalent": "i.e. {{monthly}}/month · {{saved}} saved",
+    "checkoutError": "An error occurred while creating the payment. Please try again.",
+    "africa": {
+      "eyebrow": "Built for Africa",
+      "title": "Local invoicing, rules you already know.",
+      "body": "Invoicing in FCFA, CDF, XOF, MAD. Contracts adapted to OHADA law. VAT Cameroon 19.25%, Senegal 18%, Côte d'Ivoire 18%. French-language interface, optimized for mobile networks.",
+      "talkToAdvisor": "Talk to an advisor"
+    },
+    "comparison": {
+      "title": "The details, line by line",
+      "subtitle": "Every feature, compared plan by plan.",
+      "feature": "Feature",
+      "rows": {
+        "invoicesPerMonth": "Invoices / month",
+        "clients": "Clients",
+        "products": "Products",
+        "purchaseOrders": "Purchase orders",
+        "suppliers": "Suppliers",
+        "accounting": "Accounting",
+        "aiAssistant": "AI assistant",
+        "contracts": "Contracts",
+        "eSourcing": "E-Sourcing",
+        "advancedAnalytics": "Advanced analytics",
+        "adFree": "Ad-free",
+        "prioritySupport": "Priority support"
+      },
+      "values": {
+        "unlimited": "Unlimited",
+        "aiPerMonth": "100 / month"
+      }
+    },
+    "contact": {
+      "title": "Any questions before you get started?",
+      "subtitle": "Our team replies in under 2 hours, Monday to Saturday, 8 am to 8 pm (WAT).",
+      "email": "Send an email"
+    }
+  }
+}

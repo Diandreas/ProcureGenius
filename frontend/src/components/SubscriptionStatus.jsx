@@ -26,10 +26,13 @@ import {
   ExpandLess,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import subscriptionAPI from '../services/subscriptionAPI';
+import { nomPlan } from '../hooks/usePlansTarifs';
 
 const SubscriptionStatus = ({ compact = false }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['subscription', 'common']);
   const [subscription, setSubscription] = useState(null);
   const [quotas, setQuotas] = useState({});
   const [features, setFeatures] = useState({});
@@ -56,6 +59,9 @@ const SubscriptionStatus = ({ compact = false }) => {
     }
   };
 
+  // Nom lisible d'un quota (clé technique renvoyée par l'API).
+  const quotaLabel = (key) => t(`subscription:status.quotas.${key}`, { defaultValue: key.replace(/_/g, ' ') });
+
   const getQuotaColor = (percentage) => {
     if (percentage >= 90) return 'error';
     if (percentage >= 80) return 'warning';
@@ -68,7 +74,7 @@ const SubscriptionStatus = ({ compact = false }) => {
     const { can_proceed, used, limit, percentage } = quota;
 
     if (limit === null || limit === undefined) return null;
-    if (limit === -1) return { text: 'Illimité', color: 'success', percentage: 0 };
+    if (limit === -1) return { text: t('subscription:status.unlimited'), color: 'success', percentage: 0 };
 
     return {
       text: `${used} / ${limit}`,
@@ -97,10 +103,10 @@ const SubscriptionStatus = ({ compact = false }) => {
         <CardContent>
           <Alert severity="info" action={
             <Button color="inherit" size="small" onClick={handleUpgrade}>
-              Voir les plans
+              {t('subscription:status.viewPlans')}
             </Button>
           }>
-            Aucun abonnement actif
+            {t('subscription:status.noActive')}
           </Alert>
         </CardContent>
       </Card>
@@ -121,9 +127,9 @@ const SubscriptionStatus = ({ compact = false }) => {
       <Box mb={2}>
         {subscription.is_trial && (
           <Alert severity="info" icon={<Info />} sx={{ mb: 1 }}>
-            Période d'essai - {subscription.trial_days_remaining} jours restants
+            {t('subscription:status.trialBanner', { count: subscription.trial_days_remaining })}
             <Button size="small" onClick={handleUpgrade} sx={{ ml: 2 }}>
-              S'abonner
+              {t('subscription:status.subscribe')}
             </Button>
           </Alert>
         )}
@@ -135,12 +141,12 @@ const SubscriptionStatus = ({ compact = false }) => {
             icon={<Warning />}
             action={
               <Button size="small" onClick={handleUpgrade}>
-                Passer au plan supérieur
+                {t('subscription:status.upgrade')}
               </Button>
             }
             sx={{ mb: 1 }}
           >
-            {quota.percentage >= 90 ? 'Quota presque atteint' : 'Attention au quota'}: {quota.used}/{quota.limit} {key}
+            {quota.percentage >= 90 ? t('subscription:status.quotaAlmostReached') : t('subscription:status.quotaWarning')}: {quota.used}/{quota.limit} {quotaLabel(key)}
           </Alert>
         ))}
       </Box>
@@ -154,23 +160,23 @@ const SubscriptionStatus = ({ compact = false }) => {
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box>
             <Typography variant="h6" gutterBottom>
-              Abonnement {subscription.plan.name}
+              {t('subscription:status.title', { plan: nomPlan(t, subscription.plan.code, subscription.plan.name) })}
             </Typography>
             <Box display="flex" gap={1} flexWrap="wrap">
               <Chip
-                label={subscription.status}
+                label={t(`subscription:status.statuses.${subscription.status}`, { defaultValue: subscription.status })}
                 color={subscription.is_active_or_trial ? 'success' : 'default'}
                 size="small"
               />
               {subscription.is_trial && (
                 <Chip
-                  label={`Essai - ${subscription.trial_days_remaining}j restants`}
+                  label={t('subscription:status.trialChip', { count: subscription.trial_days_remaining })}
                   color="info"
                   size="small"
                 />
               )}
               <Chip
-                label={subscription.billing_period === 'monthly' ? 'Mensuel' : 'Annuel'}
+                label={subscription.billing_period === 'monthly' ? t('subscription:billing.monthly') : t('subscription:billing.yearly')}
                 variant="outlined"
                 size="small"
               />
@@ -184,14 +190,14 @@ const SubscriptionStatus = ({ compact = false }) => {
               onClick={handleUpgrade}
               size="small"
             >
-              Passer au plan supérieur
+              {t('subscription:status.upgrade')}
             </Button>
           )}
         </Box>
 
         {warnings.length > 0 && (
           <Alert severity="warning" icon={<Warning />} sx={{ mb: 2 }}>
-            {warnings.length} quota(s) proche(s) de la limite
+            {t('subscription:status.quotasNearLimit', { count: warnings.length })}
           </Alert>
         )}
 
@@ -205,7 +211,7 @@ const SubscriptionStatus = ({ compact = false }) => {
               <Grid item xs={12} sm={4} key={key}>
                 <Box>
                   <Typography variant="caption" color="text.secondary" textTransform="capitalize">
-                    {key.replace(/_/g, ' ')}
+                    {quotaLabel(key)}
                   </Typography>
                   <Box display="flex" alignItems="center" gap={1}>
                     <Typography variant="body2" fontWeight={600}>
@@ -235,7 +241,7 @@ const SubscriptionStatus = ({ compact = false }) => {
               onClick={() => setExpanded(!expanded)}
               endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
             >
-              {expanded ? 'Voir moins' : 'Voir tous les quotas'}
+              {expanded ? t('subscription:status.showLess') : t('subscription:status.showAllQuotas')}
             </Button>
 
             <Collapse in={expanded}>
@@ -249,7 +255,7 @@ const SubscriptionStatus = ({ compact = false }) => {
                     <Grid item xs={12} sm={6} md={4} key={key}>
                       <Box>
                         <Typography variant="caption" color="text.secondary" textTransform="capitalize">
-                          {key.replace(/_/g, ' ')}
+                          {quotaLabel(key)}
                         </Typography>
                         <Box display="flex" alignItems="center" gap={1}>
                           <Typography variant="body2" fontWeight={600}>

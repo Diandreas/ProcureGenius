@@ -1,274 +1,503 @@
 {
-    "title": "Dashboard",
-    "editMode": "Edit Mode",
-    "customize": "Customize",
-    "refresh": "Refresh",
-    "addWidget": "Add Widget",
-    "addAllWidgets": "Show All Widgets",
-    "addAllWidgetsTooltip": "Add all available widgets to the dashboard",
-    "addAllWidgetsConfirm": "{{count}} widgets will be added. Continue?",
-    "addAllInLibrary": "Add All",
-    "allWidgetsAdded": "All widgets are already added",
-    "preview": "Preview",
-    "save": "Save",
-    "saving": "Saving...",
-    "saved": "Saved",
-    "saveSuccess": "Dashboard saved successfully!",
-    "saveError": "Error saving dashboard",
-    "confirmSave": "Do you want to save your changes?",
-    "emptyState": {
-        "title": "Your dashboard is empty",
-        "description": "Start by adding widgets to visualize your data",
-        "button": "Add my first widget"
-    },
-    "editHint": "Drag and drop widgets to reorganize, drag corners to resize",
-    "widgetPlaceholder": "Widget \"{{code}}\" in development",
-    "periods": {
-        "today": "Today",
-        "yesterday": "Yesterday",
-        "last_7_days": "Last 7 days",
-        "last_30_days": "Last 30 days",
-        "last_90_days": "Last 90 days",
-        "this_month": "This month",
-        "this_year": "This year"
-    },
-    "library": {
-        "title": "Widget Library",
-        "searchPlaceholder": "Search for a widget...",
-        "all": "All",
-        "noResults": "No widgets found",
-        "add": "Add",
-        "added": "Added",
-        "addAll": "Add All",
-        "allAdded": "All widgets are already added",
-        "modules": {
-            "global": "Global",
-            "products": "Products",
-            "clients": "Clients",
-            "invoices": "Invoices",
-            "purchase_orders": "Purchase Orders",
-            "ai": "AI Assistant"
-        }
-    },
-    "widgets": {
-        "financial_summary": "Financial Overview",
-        "recent_activity": "Recent Activity",
-        "alerts_notifications": "Alerts & Notifications",
-        "global_performance": "Global Performance",
-        "products_overview": "Stock Overview",
-        "top_selling_products": "Top Selling Products",
-        "stock_alerts": "Stock Alerts",
-        "margin_analysis": "Margin Analysis",
-        "stock_movements": "Stock Movements",
-        "clients_overview": "Clients Overview",
-        "top_clients": "Top Clients",
-        "clients_at_risk": "Clients at Risk",
-        "client_acquisition": "Client Acquisition",
-        "client_segmentation": "Client Segmentation",
-        "invoices_overview": "Invoices Overview",
-        "invoices_status": "Invoices Status",
-        "revenue_chart": "Revenue",
-        "overdue_invoices": "Overdue Invoices",
-        "payment_performance": "Payment Performance",
-        "recent_invoices": "Recent Invoices",
-        "po_overview": "Purchase Orders Overview",
-        "po_status": "Purchase Orders Status",
-        "expenses_chart": "Purchasing Expenses",
-        "overdue_po": "Overdue POs",
-        "supplier_performance": "Supplier Performance",
-        "pending_approvals": "Pending Approvals",
-        "budget_tracking": "Budget Tracking",
-        "ai_usage": "AI Usage",
-        "ai_documents": "Processed Documents",
-        "ai_last_conversation": "Last Conversation",
-        "ai_suggestions": "AI Suggestions",
-        "financial_summary_metrics": {
-            "revenue": "Revenue",
-            "expenses": "Expenses",
-            "net_profit": "Net Profit",
-            "margin": "Margin"
-        },
-        "global_performance_metrics": {
-            "total_revenue": "Total Revenue",
-            "clients": "Clients"
-        },
-        "clients_overview_metrics": {
-            "total": "Total",
-            "active": "Active",
-            "new": "New"
-        },
-        "client_acquisition_metrics": {
-            "new_clients": "New Clients"
-        },
-        "recent_activity_empty": "No activity",
-        "alerts_empty": "No alerts",
-        "top_clients_empty": "No clients",
-        "clients_at_risk_empty": "No clients at risk",
-        "client_segmentation_empty": "No data",
-        "invoices_label": "invoice(s)",
-        "overdue_invoices_label": "overdue invoice(s)",
-        "invoices_status_draft": "Draft",
-        "invoices_status_sent": "Sent",
-        "invoices_status_paid": "Paid",
-        "invoices_status_overdue": "Overdue",
-        "invoices_total": "invoices",
-        "po_status_draft": "Draft",
-        "po_status_pending": "Pending",
-        "po_status_approved": "Approved",
-        "po_status_received": "Received",
-        "po_status_cancelled": "Cancelled",
-        "po_total": "purchase orders",
-        "pareto_title": "Pareto Analysis 80/20",
-        "pareto_subtitle": "Revenue concentration",
-        "pareto_clients_label": "of clients",
-        "pareto_revenue_label": "of revenue",
-        "pareto_high_concentration": "High concentration - Client risk",
-        "pareto_normal": "Normal distribution",
-        "pareto_diversified": "Diversified portfolio",
-        "pareto_clients_empty": "No Pareto data",
-        "pareto_clients_title": "Client Pareto Analysis",
-        "pareto_clients_summary": "{{topClientsPercent}}% of clients generate {{revenuePercent}}% of revenue",
-        "pareto_clients_count": "{{count}} clients out of {{total}}",
-        "pareto_revenue_amount": "{{topRevenue}} out of {{totalRevenue}}",
-        "cash_flow_title": "Cash Flow",
-        "cash_flow_summary_title": "Cash Flow Summary",
-        "cash_flow_receivable": "Receivable",
-        "cash_flow_payable": "Payable",
-        "cash_flow_balance": "Net balance",
-        "cash_flow_empty": "No data",
-        "top_selling_products_empty": "No products",
-        "stock_alerts_empty": "No stock alerts",
-        "margin_analysis_empty": "No margin data",
-        "overdue_invoices_empty": "No overdue invoices",
-        "overdue_po_empty": "No overdue POs",
-        "supplier_performance_empty": "No suppliers",
-        "pending_approvals_empty": "No pending approvals"
-    },
-    "actions": {
-        "remove": "Remove",
-        "export": "Export",
-        "exportPDF": "Export as PDF",
-        "exportExcel": "Export as Excel"
-    },
-    "loading": "Loading your dashboard...",
-    "error": "Unable to load statistics",
-    "welcome": {
-        "morning": {
-            "greeting": "Good morning",
-            "message": "Have an excellent day!"
-        },
-        "afternoon": {
-            "greeting": "Good afternoon",
-            "message": "Keep up the great work!"
-        },
-        "evening": {
-            "greeting": "Good evening",
-            "message": "Have a nice end of day!"
-        },
-        "night": {
-            "greeting": "Good night",
-            "message": "It's getting late!"
-        }
-    },
-    "stats": {
-        "totalRevenue": "Total Revenue",
-        "expenses": "Expenses",
-        "unpaidInvoices": "Unpaid Invoices"
-    },
-    "labels": {
-        "invoices": "Invoices",
-        "topClients": "Top 5 Clients",
-        "topSuppliers": "Top 5 Suppliers",
-        "noClients": "No clients found",
-        "noSuppliers": "No suppliers found",
-        "loading": "Loading...",
-        "noData": "No data available",
-        "error": "Loading error"
-    },
-    "messages": {
-        "loadingError": "Error loading data",
-        "noDataAvailable": "No data available for this period",
-        "widgetError": "Unable to load this widget",
-        "refreshSuccess": "Data refreshed successfully",
-        "saveLayoutSuccess": "Layout saved successfully",
-        "saveLayoutError": "Error saving layout",
-        "widgetAdded": "Widget added to dashboard",
-        "widgetRemoved": "Widget removed from dashboard",
-        "allWidgetsAdded": "All widgets have been added"
-    },
-    "tooltips": {
-        "refresh": "Refresh data",
-        "customize": "Customize dashboard",
-        "addWidget": "Add a widget",
-        "removeWidget": "Remove this widget",
-        "expandWidget": "Expand this widget",
-        "exportData": "Export data",
-        "changePeriod": "Change period"
-    },
-    "gettingStarted": {
-        "title": "Getting Started with ProcureGenius",
-        "congratulations": "Congratulations! You've completed the setup",
-        "ready": "You're now ready to use ProcureGenius to its full potential!",
-        "reviewTutorial": "Review tutorial",
-        "dismiss": "Dismiss this message",
-        "actionsCompleted": "{{completed}} / {{total}} actions completed",
-        "start": "Start",
-        "blockedBy": "Complete first: {{actions}}",
-        "blockedByPrevious": "Complete previous steps first",
-        "showMore": "Show more actions",
-        "showLess": "Show less actions",
-        "completed": "Completed",
-        "optional": "Optional",
-        "startTutorial": "Launch interactive tutorial",
-        "refresh": "Refresh",
-        "recommendedActions": "Recommended actions to get started:",
-        "viewAllActions": "View all actions ({{count}})",
-        "hideForNow": "Hide for now",
-        "actions": {
-            "add_first_supplier": {
-                "title": "Add your first supplier",
-                "description": "Create a supplier record to start placing orders"
-            },
-            "import_suppliers": {
-                "title": "Import suppliers",
-                "description": "Import your suppliers from an Excel file"
-            },
-            "add_first_client": {
-                "title": "Add your first client",
-                "description": "Register your clients to simplify invoicing"
-            },
-            "create_first_po": {
-                "title": "Create a purchase order",
-                "description": "Place your first order with a supplier"
-            },
-            "create_first_invoice": {
-                "title": "Create your first invoice",
-                "description": "Invoice your clients in just a few clicks"
-            },
-            "add_first_product": {
-                "title": "Add a product",
-                "description": "Create your product or service catalog"
-            },
-            "configure_company": {
-                "title": "Configure your company",
-                "description": "Add your company information and logo"
-            },
-            "configure_email": {
-                "title": "Configure email",
-                "description": "Set up SMTP to send invoices automatically"
-            },
-            "complete_profile": {
-                "title": "Complete your profile",
-                "description": "Add your company information and logo"
-            },
-            "create_first_rfq": {
-                "title": "Create a sourcing event",
-                "description": "Launch your first request for quotation"
-            },
-            "create_first_contract": {
-                "title": "Create a contract",
-                "description": "Manage your first supplier contract"
-            }
-        }
+  "title": "Dashboard",
+  "editMode": "Edit Mode",
+  "customize": "Customize",
+  "refresh": "Refresh",
+  "addWidget": "Add Widget",
+  "addAllWidgets": "Show All Widgets",
+  "addAllWidgetsTooltip": "Add all available widgets to the dashboard",
+  "addAllWidgetsConfirm": "{{count}} widgets will be added. Continue?",
+  "addAllInLibrary": "Add All",
+  "allWidgetsAdded": "All widgets are already added",
+  "preview": "Preview",
+  "save": "Save",
+  "saving": "Saving...",
+  "saved": "Saved",
+  "saveSuccess": "Dashboard saved successfully!",
+  "saveError": "Error saving dashboard",
+  "confirmSave": "Do you want to save your changes?",
+  "emptyState": {
+    "title": "Your dashboard is empty",
+    "description": "Start by adding widgets to visualize your data",
+    "button": "Add my first widget"
+  },
+  "editHint": "Drag and drop widgets to reorganize, drag corners to resize",
+  "widgetPlaceholder": "Widget \"{{code}}\" in development",
+  "periods": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last_7_days": "Last 7 days",
+    "last_30_days": "Last 30 days",
+    "last_90_days": "Last 90 days",
+    "this_month": "This month",
+    "this_year": "This year"
+  },
+  "library": {
+    "title": "Widget Library",
+    "searchPlaceholder": "Search for a widget...",
+    "all": "All",
+    "noResults": "No widgets found",
+    "add": "Add",
+    "added": "Added",
+    "addAll": "Add All",
+    "allAdded": "All widgets are already added",
+    "modules": {
+      "global": "Global",
+      "products": "Products",
+      "clients": "Clients",
+      "invoices": "Invoices",
+      "purchase_orders": "Purchase Orders",
+      "ai": "AI Assistant"
     }
+  },
+  "widgets": {
+    "financial_summary": "Financial Overview",
+    "recent_activity": "Recent Activity",
+    "alerts_notifications": "Alerts & Notifications",
+    "global_performance": "Global Performance",
+    "products_overview": "Stock Overview",
+    "top_selling_products": "Top Selling Products",
+    "stock_alerts": "Stock Alerts",
+    "margin_analysis": "Margin Analysis",
+    "stock_movements": "Stock Movements",
+    "clients_overview": "Clients Overview",
+    "top_clients": "Top Clients",
+    "clients_at_risk": "Clients at Risk",
+    "client_acquisition": "Client Acquisition",
+    "client_segmentation": "Client Segmentation",
+    "invoices_overview": "Invoices Overview",
+    "invoices_status": "Invoices Status",
+    "revenue_chart": "Revenue",
+    "overdue_invoices": "Overdue Invoices",
+    "payment_performance": "Payment Performance",
+    "recent_invoices": "Recent Invoices",
+    "po_overview": "Purchase Orders Overview",
+    "po_status": "Purchase Orders Status",
+    "expenses_chart": "Purchasing Expenses",
+    "overdue_po": "Overdue POs",
+    "supplier_performance": "Supplier Performance",
+    "pending_approvals": "Pending Approvals",
+    "budget_tracking": "Budget Tracking",
+    "ai_usage": "AI Usage",
+    "ai_documents": "Processed Documents",
+    "ai_last_conversation": "Last Conversation",
+    "ai_suggestions": "AI Suggestions",
+    "financial_summary_metrics": {
+      "revenue": "Revenue",
+      "expenses": "Expenses",
+      "net_profit": "Net Profit",
+      "margin": "Margin"
+    },
+    "global_performance_metrics": {
+      "total_revenue": "Total Revenue",
+      "clients": "Clients"
+    },
+    "clients_overview_metrics": {
+      "total": "Total",
+      "active": "Active",
+      "new": "New"
+    },
+    "client_acquisition_metrics": {
+      "new_clients": "New Clients"
+    },
+    "recent_activity_empty": "No activity",
+    "alerts_empty": "No alerts",
+    "top_clients_empty": "No clients",
+    "clients_at_risk_empty": "No clients at risk",
+    "client_segmentation_empty": "No data",
+    "invoices_label": "invoice(s)",
+    "overdue_invoices_label": "overdue invoice(s)",
+    "invoices_status_draft": "Draft",
+    "invoices_status_sent": "Sent",
+    "invoices_status_paid": "Paid",
+    "invoices_status_overdue": "Overdue",
+    "invoices_total": "invoices",
+    "po_status_draft": "Draft",
+    "po_status_pending": "Pending",
+    "po_status_approved": "Approved",
+    "po_status_received": "Received",
+    "po_status_cancelled": "Cancelled",
+    "po_total": "purchase orders",
+    "pareto_title": "Pareto Analysis 80/20",
+    "pareto_subtitle": "Revenue concentration",
+    "pareto_clients_label": "of clients",
+    "pareto_revenue_label": "of revenue",
+    "pareto_high_concentration": "High concentration - Client risk",
+    "pareto_normal": "Normal distribution",
+    "pareto_diversified": "Diversified portfolio",
+    "pareto_clients_empty": "No Pareto data",
+    "pareto_clients_title": "Client Pareto Analysis",
+    "pareto_clients_summary": "{{topClientsPercent}}% of clients generate {{revenuePercent}}% of revenue",
+    "pareto_clients_count": "{{count}} clients out of {{total}}",
+    "pareto_revenue_amount": "{{topRevenue}} out of {{totalRevenue}}",
+    "cash_flow_title": "Cash Flow",
+    "cash_flow_summary_title": "Cash Flow Summary",
+    "cash_flow_receivable": "Receivable",
+    "cash_flow_payable": "Payable",
+    "cash_flow_balance": "Net balance",
+    "cash_flow_empty": "No data",
+    "top_selling_products_empty": "No products",
+    "stock_alerts_empty": "No stock alerts",
+    "margin_analysis_empty": "No margin data",
+    "overdue_invoices_empty": "No overdue invoices",
+    "overdue_po_empty": "No overdue POs",
+    "supplier_performance_empty": "No suppliers",
+    "pending_approvals_empty": "No pending approvals",
+    "shared": {
+      "error": "Error",
+      "loadFailed": "Failed to load data",
+      "serverError": "Server error. Please try again later.",
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days"
+    },
+    "aiSuggestions": {
+      "loadError": "Unable to load suggestions",
+      "empty": "No suggestions right now",
+      "stayTuned": "We'll keep you posted on new features!",
+      "types": {
+        "learning": "Learning",
+        "feature": "New feature",
+        "best_practice": "Best practice",
+        "optimization": "Optimization"
+      }
+    },
+    "alertModules": {
+      "invoices": "Invoices",
+      "products": "Products",
+      "purchase_orders": "Purchase orders"
+    },
+    "cashFlow": {
+      "loadError": "Unable to load cash flow data",
+      "calculating": "Calculating...",
+      "unavailable": "Data unavailable",
+      "monthlyAvg": "Monthly avg: {{value}}",
+      "days30": "30d",
+      "days60": "60d",
+      "expectedInflows": "Expected inflows",
+      "committedOutflows": "Committed outflows",
+      "netBalance": "Net balance",
+      "inflows": "Inflows",
+      "outflows": "Outflows",
+      "tooltipValue": "{{name}}: {{value}}"
+    },
+    "financialSummary": {
+      "netLoss": "Net Loss",
+      "dayShort": "D{{n}}",
+      "profit": "Profit",
+      "trendTitle": "Financial Trend",
+      "compositionTitle": "Revenue/Expense Breakdown",
+      "deficit": "Operating at a loss"
+    },
+    "marginAnalysis": {
+      "empty": "No margin analysis available",
+      "marginValue": "Margin: {{value}}%"
+    },
+    "overduePO": {
+      "empty": "No overdue purchase orders"
+    },
+    "pareto": {
+      "highConcentration": "High concentration"
+    },
+    "smartAlerts": {
+      "loadError": "Unable to load alerts",
+      "analyzing": "Analyzing...",
+      "allClear": "All clear",
+      "noPriority": "No priority actions right now"
+    },
+    "stockAlerts": {
+      "allGood": "All stock levels are healthy",
+      "tabs": {
+        "lowStock": "Low stock",
+        "expiring": "Expiring soon",
+        "expired": "Expired"
+      },
+      "stockLabel": "Stock:",
+      "minStock": "(Min: {{value}})",
+      "batch": "Batch",
+      "expiresOn": "expires on {{date}}",
+      "expiredOn": "expired on {{date}}",
+      "unitsParen_one": "({{count}} unit)",
+      "unitsParen_other": "({{count}} units)",
+      "unitsToRemove_one": "{{count}} unit to remove",
+      "unitsToRemove_other": "{{count}} units to remove",
+      "noneExpiring": "No batches expiring soon",
+      "noneExpired": "No expired batches"
+    },
+    "supplierPerformance": {
+      "ordersCount_one": "{{count}} order",
+      "ordersCount_other": "{{count}} orders"
+    },
+    "topSellingProducts": {
+      "empty": "No products sold",
+      "soldCount_one": "{{count}} sold",
+      "soldCount_other": "{{count}} sold"
+    }
+  },
+  "actions": {
+    "remove": "Remove",
+    "export": "Export",
+    "exportPDF": "Export as PDF",
+    "exportExcel": "Export as Excel"
+  },
+  "loading": "Loading your dashboard...",
+  "error": "Unable to load statistics",
+  "welcome": {
+    "morning": {
+      "greeting": "Good morning",
+      "message": "Have an excellent day!"
+    },
+    "afternoon": {
+      "greeting": "Good afternoon",
+      "message": "Keep up the great work!"
+    },
+    "evening": {
+      "greeting": "Good evening",
+      "message": "Have a nice end of day!"
+    },
+    "night": {
+      "greeting": "Good night",
+      "message": "It's getting late!"
+    }
+  },
+  "stats": {
+    "totalRevenue": "Total Revenue",
+    "expenses": "Expenses",
+    "unpaidInvoices": "Unpaid Invoices"
+  },
+  "labels": {
+    "invoices": "Invoices",
+    "topClients": "Top 5 Clients",
+    "topSuppliers": "Top 5 Suppliers",
+    "noClients": "No clients found",
+    "noSuppliers": "No suppliers found",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "error": "Loading error"
+  },
+  "messages": {
+    "loadingError": "Error loading data",
+    "noDataAvailable": "No data available for this period",
+    "widgetError": "Unable to load this widget",
+    "refreshSuccess": "Data refreshed successfully",
+    "saveLayoutSuccess": "Layout saved successfully",
+    "saveLayoutError": "Error saving layout",
+    "widgetAdded": "Widget added to dashboard",
+    "widgetRemoved": "Widget removed from dashboard",
+    "allWidgetsAdded": "All widgets have been added"
+  },
+  "tooltips": {
+    "refresh": "Refresh data",
+    "customize": "Customize dashboard",
+    "addWidget": "Add a widget",
+    "removeWidget": "Remove this widget",
+    "expandWidget": "Expand this widget",
+    "exportData": "Export data",
+    "changePeriod": "Change period"
+  },
+  "gettingStarted": {
+    "title": "Getting Started with ProcureGenius",
+    "congratulations": "Congratulations! You've completed the setup",
+    "ready": "You're now ready to use ProcureGenius to its full potential!",
+    "reviewTutorial": "Review tutorial",
+    "dismiss": "Dismiss this message",
+    "actionsCompleted": "{{completed}} / {{total}} actions completed",
+    "start": "Start",
+    "blockedBy": "Complete first: {{actions}}",
+    "blockedByPrevious": "Complete previous steps first",
+    "showMore": "Show more actions",
+    "showLess": "Show less actions",
+    "completed": "Completed",
+    "optional": "Optional",
+    "startTutorial": "Launch interactive tutorial",
+    "refresh": "Refresh",
+    "recommendedActions": "Recommended actions to get started:",
+    "viewAllActions": "View all actions ({{count}})",
+    "hideForNow": "Hide for now",
+    "actions": {
+      "add_first_supplier": {
+        "title": "Add your first supplier",
+        "description": "Create a supplier record to start placing orders"
+      },
+      "import_suppliers": {
+        "title": "Import suppliers",
+        "description": "Import your suppliers from an Excel file"
+      },
+      "add_first_client": {
+        "title": "Add your first client",
+        "description": "Register your clients to simplify invoicing"
+      },
+      "create_first_po": {
+        "title": "Create a purchase order",
+        "description": "Place your first order with a supplier"
+      },
+      "create_first_invoice": {
+        "title": "Create your first invoice",
+        "description": "Invoice your clients in just a few clicks"
+      },
+      "add_first_product": {
+        "title": "Add a product",
+        "description": "Create your product or service catalog"
+      },
+      "configure_company": {
+        "title": "Configure your company",
+        "description": "Add your company information and logo"
+      },
+      "configure_email": {
+        "title": "Configure email",
+        "description": "Set up SMTP to send invoices automatically"
+      },
+      "complete_profile": {
+        "title": "Complete your profile",
+        "description": "Add your company information and logo"
+      },
+      "create_first_rfq": {
+        "title": "Create a sourcing event",
+        "description": "Launch your first request for quotation"
+      },
+      "create_first_contract": {
+        "title": "Create a contract",
+        "description": "Manage your first supplier contract"
+      }
+    }
+  },
+  "widgetAlreadyExists": "This widget is already on your dashboard",
+  "dashboardPage": {
+    "periodShort": {
+      "last_7_days": "7 days",
+      "last_30_days": "30 days",
+      "last_90_days": "90 days"
+    },
+    "welcomeSubtitle": "{{message}} Here's an overview of your activity.",
+    "unpaidInvoicesShort": "Unpaid invoices",
+    "purchaseOrders": "Purchase orders",
+    "inPeriod": "{{count}} in this period",
+    "newClientsShort": "New clients",
+    "invoiceStatus": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "overdue": "Overdue"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "alerts": "Alerts",
+      "generalOverview": "Overview",
+      "billing": "Billing",
+      "performance": "Performance",
+      "productsAlerts": "Products & Alerts"
+    },
+    "trends": "Trends",
+    "dailyTrends": "Daily trends",
+    "topClients": "Top clients",
+    "topSuppliers": "Top suppliers",
+    "invoiceStatusTitle": "Invoice status",
+    "summary": "Summary",
+    "billingSummary": "Billing summary",
+    "invoicesIssued": "Invoices issued",
+    "totalInvoices": "Total invoices",
+    "selectedPeriod": "selected period",
+    "amountPaid": "Amount paid",
+    "amountPending": "Amount pending",
+    "paymentRate": "Payment rate",
+    "noClientsForPeriod": "No clients for this period",
+    "noSuppliersForPeriod": "No suppliers for this period",
+    "invoiceCount": "{{count}} invoice(s)",
+    "poCount": "{{count}} POs",
+    "alertsCount": "Alerts ({{count}})",
+    "noActiveAlerts": "No active alerts",
+    "stock": "Stock",
+    "outOfStock": "Out-of-stock products",
+    "lowStock": "Low stock",
+    "totalValue": "Total value",
+    "totalStockValue": "Total stock value",
+    "marginsTitle": "Margins & gross profit",
+    "marginsSubtitle": "Calculated automatically: sales − purchase cost of your products",
+    "view": "View →",
+    "customPeriodTitle": "Select a custom period",
+    "startDate": "Start date",
+    "endDate": "End date"
+  },
+  "demoInvoiceRestore": {
+    "title": "Your demo invoice is waiting for you",
+    "summary": "{{client}} · {{lines}} line(s) · {{total}}. Review it, then save: it will get its official number and your logo.",
+    "open": "Open my invoice",
+    "dismiss": "Dismiss"
+  },
+  "metricDetail": {
+    "currentValue": "Current value",
+    "vsPreviousPeriod": "vs previous period",
+    "trend30Days": "30-day trend"
+  },
+  "periodSelector": {
+    "lastMonth": "Last month",
+    "customRange": "Custom range",
+    "selectRange": "Select a range"
+  },
+  "dashboardWithAds": {
+    "monthlyStats": "Monthly statistics",
+    "recentActivities": "Recent activity",
+    "charts": "Charts",
+    "quickActions": "Quick actions"
+  },
+  "adminStats": {
+    "title": "Product analytics",
+    "subtitle": "Acquisition, activation, real usage and revenue — to know what to improve.",
+    "daysShort": "{{days}}d",
+    "noData": "No data",
+    "errors": {
+      "forbidden": "Access restricted to administrators (superuser).",
+      "loadFailed": "Unable to load statistics."
+    },
+    "kpi": {
+      "users": "Users",
+      "usersSub": "+{{added}} over {{days}}d · {{growth}}",
+      "activationRate": "Activation rate",
+      "activationSub": "{{acted}} / {{signedUp}} took action",
+      "activeUsers": "Active (WAU / MAU)",
+      "stickiness": "Stickiness {{value}}",
+      "mrr": "Estimated MRR",
+      "mrrSub": "{{active}} active · churn {{churn}}"
+    },
+    "acquisition": {
+      "title": "Acquisition",
+      "uniqueVisitors": "unique visitors",
+      "visitToSignup": "visit → sign-up",
+      "visitorJourney": "Visitor journey",
+      "trafficSources": "Traffic sources",
+      "empty": "No visits recorded yet. Tracking starts with the next visits to the landing page."
+    },
+    "signups": {
+      "title": "Sign-ups ({{days}}d)",
+      "last24h": "24h: {{value}}",
+      "last7d": "7d: {{value}}"
+    },
+    "featureUsage": "Usage by feature",
+    "volumes": {
+      "title": "Volume of data created",
+      "invoices": "Invoices",
+      "purchaseOrders": "Purchase orders",
+      "products": "Products",
+      "clients": "Clients",
+      "suppliers": "Suppliers",
+      "aiConversations": "AI conversations",
+      "aiMessages": "AI messages ({{days}}d)"
+    },
+    "subscriptions": {
+      "title": "Subscriptions & revenue",
+      "active": "active",
+      "trial": "on trial",
+      "cancelled": "cancelled",
+      "arr": "Estimated ARR",
+      "trialsEnding": "Trials ending within 7 days"
+    },
+    "aiFeedback": {
+      "title": "AI assistant satisfaction ({{days}}d)",
+      "total_one": "{{total}} piece of feedback in total",
+      "total_other": "{{total}} pieces of feedback in total",
+      "recentNegative": "Recent negative feedback",
+      "user": "User",
+      "quotedExcerpt": "“{{text}}”",
+      "noNegative": "No negative feedback for this period."
+    },
+    "generatedAt": "Generated on {{date}}"
+  }
 }

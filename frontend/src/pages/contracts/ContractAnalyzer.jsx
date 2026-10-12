@@ -97,7 +97,7 @@ export default function ContractAnalyzer() {
           {Object.keys(result.risk_summary || {}).length > 0 && (
             <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
               {Object.entries(result.risk_summary).map(([lvl, n]) => (
-                <Chip key={lvl} color={RISK_COLOR[lvl] || 'default'} label={`${riskLabel(lvl)} : ${n}`} />
+                <Chip key={lvl} color={RISK_COLOR[lvl] || 'default'} label={t('contracts:analyzer.riskCount', { label: riskLabel(lvl), value: n })} />
               ))}
             </Box>
           )}

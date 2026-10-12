@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { Email as EmailIcon, ArrowBack } from '@mui/icons-material';
 import { authAPI } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 const BG = '#e0e5ec';
 const SHADOW_OUT = '12px 12px 30px #b8bec7, -12px -12px 30px #ffffff';
@@ -17,6 +18,7 @@ const SHADOW_IN = 'inset 4px 4px 10px #b8bec7, inset -4px -4px 10px #ffffff';
 const ACCENT = '#2563eb';
 
 export default function ForgotPassword() {
+  const { t } = useTranslation(['auth', 'common']);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -25,7 +27,7 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!email) { setError('Veuillez saisir votre email.'); return; }
+    if (!email) { setError(t('auth:forgotPassword.page.emailRequired')); return; }
     setLoading(true);
     try {
       await authAPI.forgotPassword(email.trim().toLowerCase());
@@ -33,7 +35,7 @@ export default function ForgotPassword() {
     } catch (err) {
       setError(
         err?.response?.data?.error ||
-        "Une erreur est survenue. Veuillez reessayer."
+        t('auth:forgotPassword.page.genericError')
       );
     } finally {
       setLoading(false);
@@ -50,18 +52,16 @@ export default function ForgotPassword() {
         background: BG, boxShadow: SHADOW_OUT,
       }}>
         <Typography variant="h5" sx={{ fontWeight: 800, color: '#2c3344', mb: 1 }}>
-          Mot de passe oublie
+          {t('auth:forgotPassword.page.title')}
         </Typography>
         <Typography sx={{ color: '#7b8499', mb: 3, fontSize: '0.9rem' }}>
-          Saisissez votre email : nous vous enverrons un lien pour reinitialiser
-          votre mot de passe.
+          {t('auth:forgotPassword.page.intro')}
         </Typography>
 
         {done ? (
           <Alert severity="success" sx={{ borderRadius: '14px', mb: 2,
             background: BG, boxShadow: SHADOW_IN, border: 'none' }}>
-            Si un compte existe avec cet email, un lien de reinitialisation vient
-            d'etre envoye. Pensez a verifier vos spams.
+            {t('auth:forgotPassword.page.sent')}
           </Alert>
         ) : (
           <Box component="form" onSubmit={handleSubmit}>
@@ -72,7 +72,7 @@ export default function ForgotPassword() {
               </Alert>
             )}
             <TextField
-              fullWidth required type="email" label="Email" value={email}
+              fullWidth required type="email" label={t('auth:forgotPassword.page.email')} value={email}
               onChange={(e) => setEmail(e.target.value)} autoFocus
               InputProps={{
                 startAdornment: (
@@ -92,7 +92,7 @@ export default function ForgotPassword() {
                 '&:active': { boxShadow: SHADOW_IN },
               }}
             >
-              {loading ? <CircularProgress size={22} /> : 'Envoyer le lien'}
+              {loading ? <CircularProgress size={22} /> : t('auth:forgotPassword.page.sendLink')}
             </Button>
           </Box>
         )}
@@ -103,7 +103,7 @@ export default function ForgotPassword() {
             color: '#7b8499', textDecoration: 'none', fontSize: '0.85rem',
             fontWeight: 600,
           }}>
-            <ArrowBack sx={{ fontSize: 16 }} /> Retour a la connexion
+            <ArrowBack sx={{ fontSize: 16 }} /> {t('auth:forgotPassword.page.backToLogin')}
           </Link>
         </Box>
       </Box>

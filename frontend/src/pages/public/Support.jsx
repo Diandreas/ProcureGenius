@@ -149,7 +149,7 @@ export default function PublicSupport() {
                     <Typography variant="h5" fontWeight="bold" gutterBottom>{t('public:support.form.successTitle')}</Typography>
                     <Typography color="text.secondary" sx={{ mb: 4 }}>{t('public:support.form.successDesc')}</Typography>
                     <Button variant="outlined" onClick={() => setSuccess(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
-                      Envoyer un autre message
+                      {t('public:support.form.sendAnother')}
                     </Button>
                   </Box>
                 ) : (

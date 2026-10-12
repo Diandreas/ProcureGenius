@@ -83,7 +83,10 @@
     "bankAccountPlaceholder": "Numéro de compte ou IBAN",
     "bankSwift": "Code SWIFT/BIC",
     "bankSwiftPlaceholder": "Code SWIFT/BIC",
-    "bankSwiftHelper": "Code d'identification de la banque (transactions internationales)"
+    "bankSwiftHelper": "Code d'identification de la banque (transactions internationales)",
+    "logoAndBrand": "Logo & Marque",
+    "logoPreview": "Aperçu",
+    "examplePlaceholder": "Ex: {{value}}"
   },
   "billing": {
     "title": "Taxation et facturation",
@@ -133,7 +136,13 @@
     "headerFooter": "En-tête et pied de page",
     "showHeader": "Afficher l'en-tête",
     "showFooter": "Afficher le pied de page",
-    "showPageNumbers": "Afficher les numéros de page"
+    "showPageNumbers": "Afficher les numéros de page",
+    "thermal80": "Thermique 80mm (Ticket de caisse)",
+    "thermal58": "Thermique 58mm (Ticket de caisse)",
+    "showQrCodeLabel": "Afficher le QR Code",
+    "showQrCodeHelper": "Ajoute un QR code sur les documents imprimés",
+    "showBarcode": "Afficher le Code-barres",
+    "showBarcodeHelper": "Ajoute un code-barres sur les documents imprimés"
   },
   "appearance": {
     "title": "Apparence et localisation",
@@ -167,7 +176,8 @@
     "emailNotifications": "Notifications par email",
     "invoiceReminders": "Rappels de factures",
     "lowStockAlerts": "Alertes de stock bas",
-    "orderStatusUpdates": "Mises à jour du statut des commandes"
+    "orderStatusUpdates": "Mises à jour du statut des commandes",
+    "inAppAlerts": "Alertes in-app"
   },
   "security": {
     "title": "Sécurité et authentification",
@@ -228,7 +238,14 @@
     "zoom": "Zoom",
     "apply": "Appliquer",
     "cancel": "Annuler",
-    "aspectRatio": "Ratio d'aspect (carré par défaut)"
+    "aspectRatio": "Ratio d'aspect (carré par défaut)",
+    "formatOptions": {
+      "square": "Carré",
+      "landscape": "Paysage",
+      "portrait": "Portrait",
+      "original": "Original",
+      "freeHint": "libre"
+    }
   },
   "data": {
     "title": "Import / Export et Migration",
@@ -315,7 +332,10 @@
       "editPermissions": "Modifier les permissions",
       "deactivate": "Désactiver",
       "activate": "Activer",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "reactivate": "Réactiver",
+      "reactivateSuccess": "Utilisateur réactivé",
+      "reactivateError": "Erreur lors de la réactivation"
     },
     "permissions": {
       "manageUsers": "Gérer les utilisateurs",
@@ -333,7 +353,8 @@
       "emailInfo": "Un email d'invitation sera envoyé à l'utilisateur avec un lien pour créer son mot de passe.",
       "invite": "Inviter",
       "inviteSuccess": "Invitation envoyée avec succès",
-      "inviteError": "Erreur lors de l'envoi de l'invitation"
+      "inviteError": "Erreur lors de l'envoi de l'invitation",
+      "inviteSuccessWithEmail": "Utilisateur créé — un email avec ses identifiants a été envoyé."
     },
     "permissionsDialog": {
       "title": "Modifier les permissions",
@@ -348,6 +369,18 @@
       "deactivate": "Désactiver",
       "deleteSuccess": "Utilisateur désactivé avec succès",
       "deleteError": "Erreur lors de la désactivation de l'utilisateur"
+    },
+    "seatLimitInvite": "Limite de sièges atteinte. Passez à un plan supérieur pour ajouter des utilisateurs.",
+    "seatLimitReactivate": "Limite de sièges atteinte. Passez à un plan supérieur pour réactiver cet utilisateur.",
+    "seatsCount": "{{active}} / {{limit}} sièges",
+    "addSeats": "Ajouter des sièges",
+    "stats": {
+      "admins": "Administrateurs"
+    },
+    "rolePreview": {
+      "title": "Ce rôle peut :",
+      "viewOnly": "Consultation uniquement.",
+      "access": "Accès : {{count}} module(s). Personnalisable après création."
     }
   },
   "moduleSettings": {
@@ -377,5 +410,341 @@
     "activateProfile": "Activer ce Profil",
     "activating": "Activation en cours...",
     "otherModules": "autres modules"
+  },
+  "errorDescription": "Impossible de charger les paramètres. Veuillez réessayer.",
+  "pageSubtitle": "Gérez votre organisation, vos préférences et votre compte.",
+  "nav": {
+    "groups": {
+      "company": "Entreprise",
+      "customization": "Personnalisation",
+      "account": "Compte"
+    },
+    "general": {
+      "description": "Nom, coordonnées, logo"
+    },
+    "modules": {
+      "label": "Modules",
+      "description": "Activer / désactiver les modules"
+    },
+    "print": {
+      "description": "Format, templates documents"
+    },
+    "notifications": {
+      "label": "Notifications",
+      "description": "Alertes email et push"
+    },
+    "email": {
+      "label": "Email / SMTP",
+      "description": "Serveur d'envoi d'emails"
+    },
+    "subscription": {
+      "label": "Abonnement",
+      "description": "Plan, quotas, facturation"
+    },
+    "profile": {
+      "label": "Profil & Sécurité",
+      "description": "Informations personnelles, mot de passe"
+    },
+    "appearance": {
+      "label": "Apparence",
+      "description": "Langue, thème, formats"
+    },
+    "data": {
+      "label": "Données",
+      "description": "Import, export, migration"
+    }
+  },
+  "currencies": {
+    "CAD": "Dollar canadien",
+    "USD": "Dollar américain",
+    "EUR": "Euro",
+    "GBP": "Livre sterling",
+    "XAF": "Franc CFA (Afrique centrale)",
+    "XOF": "Franc CFA (Afrique de l'Ouest)",
+    "MAD": "Dirham marocain",
+    "TND": "Dinar tunisien",
+    "NGN": "Naira nigérian",
+    "GNF": "Franc guinéen",
+    "CDF": "Franc congolais",
+    "DZD": "Dinar algérien",
+    "CHF": "Franc suisse"
+  },
+  "profile": {
+    "genericError": "Erreur",
+    "updateSuccess": "Profil mis à jour avec succès.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "passwordChanged": "Mot de passe modifié avec succès.",
+    "personalInfo": "Informations personnelles",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "Adresse email",
+    "phone": "Téléphone",
+    "saveProfile": "Enregistrer le profil",
+    "changePasswordTitle": "Modifier le mot de passe",
+    "googleInfo": "Vous êtes connecté via Google. Définissez un mot de passe pour pouvoir aussi vous connecter par email.",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "showPasswords": "Afficher les mots de passe",
+    "changePassword": "Changer le mot de passe"
+  },
+  "dataSection": {
+    "importTypes": {
+      "suppliers": {
+        "label": "Fournisseurs",
+        "description": "Importez votre liste de fournisseurs"
+      },
+      "products": {
+        "label": "Produits",
+        "description": "Importez votre catalogue produits"
+      },
+      "clients": {
+        "label": "Clients",
+        "description": "Importez votre base clients"
+      }
+    },
+    "exportTypes": {
+      "suppliers": "fournisseurs",
+      "clients": "clients",
+      "products": "produits"
+    },
+    "exportInProgress": "Export {{type}} en cours...",
+    "exportSuccess": "Export {{type}} terminé avec succès !",
+    "exportError": "Erreur lors de l'export {{type}}",
+    "exportForbidden": "Vous n'avez pas les permissions nécessaires pour exporter. Vérifiez que le module correspondant est activé.",
+    "exportServerError": "Erreur serveur lors de l'export {{type}}. Veuillez réessayer ou contacter le support.",
+    "exportHttpError": "Erreur {{status}} lors de l'export {{type}}",
+    "openImportWizard": "Ouvrir l'assistant d'import",
+    "exportTitle": "Exporter vos données",
+    "exportSuppliersCsv": "Fournisseurs (CSV)",
+    "exportClientsCsv": "Clients (CSV)",
+    "exportProductsCsv": "Produits (CSV)",
+    "importHistory": "Historique des imports",
+    "viewFullHistory": "Voir l'historique complet"
+  },
+  "emailConfig": {
+    "loadError": "Erreur lors du chargement de la configuration email",
+    "saved": "Configuration email sauvegardée",
+    "saveError": "Erreur lors de la sauvegarde",
+    "testSent": "Email de test envoyé à {{email}}",
+    "sendError": "Erreur lors de l'envoi",
+    "testError": "Erreur lors de l'envoi du test",
+    "verifySuccess": "Connexion SMTP vérifiée avec succès",
+    "connectionError": "Erreur de connexion",
+    "verifyError": "Erreur lors de la vérification",
+    "smtpTitle": "Configuration SMTP",
+    "smtpHost": "Serveur SMTP",
+    "smtpPort": "Port SMTP",
+    "username": "Nom d'utilisateur",
+    "usernamePlaceholder": "votre@email.com",
+    "password": "Mot de passe",
+    "useTls": "Utiliser TLS",
+    "useSsl": "Utiliser SSL",
+    "fromEmail": "Email expéditeur",
+    "fromEmailPlaceholder": "noreply@votredomaine.com",
+    "fromName": "Nom expéditeur",
+    "fromNamePlaceholder": "Votre Entreprise",
+    "verified": "Vérifié",
+    "notVerified": "Non vérifié",
+    "lastVerified": "Dernière vérification: {{date}}",
+    "save": "Sauvegarder",
+    "verifyConnection": "Vérifier la connexion",
+    "testEmail": "Email de test",
+    "sendTest": "Envoyer test"
+  },
+  "billingPanel": {
+    "plans": {
+      "free": "Libre"
+    },
+    "status": {
+      "active": "Actif",
+      "trial": "Essai",
+      "past_due": "Paiement en retard",
+      "cancelled": "Annulé",
+      "expired": "Expiré"
+    },
+    "quotas": {
+      "invoices": "Factures (ce mois)",
+      "clients": "Clients",
+      "products": "Produits",
+      "purchase_orders": "Bons de commande (ce mois)",
+      "suppliers": "Fournisseurs",
+      "ai_requests": "Requêtes IA (ce mois)"
+    },
+    "noPaidSubscription": "Vous n'avez pas encore d'abonnement payant. Choisissez une formule pour activer la facturation.",
+    "trialRemaining_one": "Essai — {{count}}j restants",
+    "trialRemaining_other": "Essai — {{count}}j restants",
+    "trialEnds": "Votre essai se termine le {{date}}.",
+    "freePlan": "Plan gratuit, sans engagement.",
+    "nextRenewal": "Prochain renouvellement le {{date}}.",
+    "choosePlan": "Choisir une formule",
+    "changePlan": "Changer de formule",
+    "manageBilling": "Gérer la facturation",
+    "usage": "Utilisation",
+    "unlimited": "Illimité",
+    "portal": "Portail",
+    "stripeManaged": "Votre facturation est gérée par Stripe : factures, moyen de paiement et annulation depuis le portail.",
+    "trialOffer": "1 mois d'essai offert sur Pro et Business, sans carte. La facturation s'active dès votre première souscription payante."
+  },
+  "modulesManager": {
+    "modules": {
+      "dashboard": "Tableau de bord",
+      "invoices": "Facturation",
+      "purchase-orders": "Bons de commande",
+      "suppliers": "Fournisseurs",
+      "clients": "Clients",
+      "products": "Produits",
+      "contracts": "Contrats",
+      "analytics": "Analytics"
+    },
+    "loadError": "Erreur lors du chargement des modules",
+    "saveSuccess": "Modules mis à jour avec succès",
+    "saveError": "Erreur lors de la sauvegarde: {{error}}",
+    "title": "Modules actifs",
+    "description": "Activez ou désactivez les modules de votre organisation. Un rechargement sera nécessaire."
+  },
+  "push": {
+    "categories": {
+      "critique": {
+        "label": " Critique",
+        "description": "Non désactivables — ruptures de stock, quota atteint, factures très en retard"
+      },
+      "important": {
+        "label": " Important",
+        "description": "Activées par défaut, désactivables"
+      },
+      "resume": {
+        "label": " Résumé hebdo",
+        "description": "Un seul push le lundi matin avec le résumé de la semaine"
+      }
+    },
+    "fields": {
+      "push_stock_rupture": "Rupture de stock",
+      "push_quota_atteint": "Quota plan atteint (90%+)",
+      "push_facture_retard": "Facture en retard de +7 jours",
+      "push_stock_bas": "Stock bas (seuil d'alerte)",
+      "push_facture_brouillon": "Facture brouillon depuis +24h",
+      "push_bc_retard": "Bon de commande en retard",
+      "push_lot_expirant": "Lot produit expirant sous 30 jours",
+      "push_insight_ia": "Insight IA important (priorité ≥ 8)",
+      "push_resume_hebdo": "Résumé hebdomadaire (lundi 8h)"
+    },
+    "saved": "Préférences sauvegardées",
+    "saveError": "Erreur de sauvegarde",
+    "blockedInBrowser": "Notifications bloquées dans le navigateur. Modifiez les autorisations dans les paramètres du site.",
+    "notSupported": "Votre navigateur ne supporte pas les notifications push. Essayez Chrome ou Firefox.",
+    "title": "Notifications push",
+    "subtitle": "Recevez des alertes même quand Procura est fermé — directement sur votre appareil.",
+    "enabled": "Notifications activées",
+    "disabled": "Notifications désactivées",
+    "enabledHelper": "Cet appareil reçoit les push notifications Procura.",
+    "disabledHelper": "Cliquez pour recevoir les notifications sur cet appareil.",
+    "disable": "Désactiver",
+    "enable": "Activer les notifications",
+    "deniedAlert": "Les notifications sont bloquées dans votre navigateur. Cliquez sur l'icône cadenas dans la barre d'adresse pour les autoriser.",
+    "alwaysActive": "Toujours actif",
+    "enableToConfigure": "Activez les notifications pour configurer vos préférences."
+  },
+  "legacySettings": {
+    "saveSuccess": "Paramètres sauvegardés avec succès!",
+    "invalidImage": "Veuillez sélectionner un fichier image valide",
+    "fileTooLarge": "Le fichier est trop volumineux (max 5MB)",
+    "ratioConfirm": "Les proportions de votre image ne sont pas optimales pour un en-tête de facture (ratio recommandé: 2.6:1). Voulez-vous continuer?",
+    "importTab": "Importation",
+    "subtitle": "Configurez votre application selon vos besoins",
+    "uploadLogo": "Télécharger le logo",
+    "logoFormats": "Formats acceptés: PNG, JPG, SVG (max 2MB)",
+    "localization": "Paramètres de localisation",
+    "documentNumbering": "Numérotation des documents",
+    "defaultPaymentTerms": "Conditions de paiement par défaut",
+    "taxConfiguration": "Configuration des taxes",
+    "defaultRate": "Taux par défaut (%)",
+    "invoiceHeader": "En-tête de facture",
+    "invoiceHeaderInfo": "Configurez l'apparence de l'en-tête de vos factures. Ratio recommandé: 2.6:1 (210mm x 80mm pour A4).",
+    "headerType": "Type d'en-tête",
+    "headerTypes": {
+      "simple": "Simple (texte uniquement)",
+      "custom": "Personnalisé",
+      "uploaded": "Image uploadée"
+    },
+    "uploadHeader": "Télécharger en-tête",
+    "headerFormats": "Formats acceptés: PNG, JPG, SVG (max 5MB) - Ratio optimal: 2.6:1",
+    "headerPreview": "Aperçu de l'en-tête",
+    "headerPreviewAlt": "Aperçu en-tête",
+    "logoPosition": "Position du logo",
+    "positions": {
+      "left": "Gauche",
+      "center": "Centre",
+      "right": "Droite"
+    },
+    "logoSize": "Taille du logo",
+    "sizes": {
+      "small": "Petit",
+      "medium": "Moyen",
+      "large": "Grand"
+    },
+    "backgroundColor": "Couleur de fond:",
+    "textColor": "Couleur du texte:",
+    "showCompanyInfo": "Afficher les informations de l'entreprise",
+    "showLogo": "Afficher le logo",
+    "customHeaderPreview": "Aperçu de l'en-tête personnalisé",
+    "width": "Largeur (mm)",
+    "widthHelper": "Largeur recommandée: 210mm (A4)",
+    "height": "Hauteur (mm)",
+    "heightHelper": "Hauteur recommandée: 80mm",
+    "marginOptions": {
+      "narrow": "Étroites",
+      "normal": "Normales",
+      "wide": "Larges"
+    },
+    "includeQrCode": "Inclure le code QR sur les documents",
+    "printColors": "Impression en couleur",
+    "notifications": {
+      "general": "Notifications générales",
+      "generalHelper": "Recevoir les notifications importantes par email",
+      "invoiceRemindersHelper": "Rappels automatiques pour les factures en retard",
+      "lowStockHelper": "Notifications quand les produits sont en rupture",
+      "orderUpdates": "Mises à jour des commandes",
+      "orderUpdatesHelper": "Notifications sur les changements de statut des commandes"
+    },
+    "emailConfig": "Configuration email",
+    "emailConfigInfo": "Configurez vos paramètres SMTP pour envoyer des emails automatiques.",
+    "port": "Port",
+    "senderEmail": "Email d'expédition",
+    "useSslTls": "Utiliser SSL/TLS",
+    "themeAndColors": "Thème et couleurs",
+    "customColors": "Couleurs personnalisées",
+    "secondaryColor": "Couleur secondaire",
+    "securitySettings": "Paramètres de sécurité",
+    "loginAttempts": "Tentatives de connexion maximales",
+    "enableTwoFactor": "Activer l'authentification à deux facteurs",
+    "auditLogInfo": "Le journal d'audit enregistre toutes les actions importantes effectuées dans le système.",
+    "autoBackup": "Sauvegarde automatique",
+    "enableAutoBackup": "Activer la sauvegarde automatique",
+    "backupRetention": "Rétention des sauvegardes (jours)",
+    "manualBackup": "Sauvegarde manuelle",
+    "createBackupNow": "Créer une sauvegarde maintenant",
+    "manageBackups": "Gérer les sauvegardes",
+    "restoreFromBackup": "Restaurer depuis une sauvegarde",
+    "dataExport": "Export des données",
+    "dataExportWarning": "L'export des données peut prendre plusieurs minutes selon la taille de votre base de données.",
+    "exportAll": "Exporter toutes les données",
+    "exportInvoices": "Exporter les factures",
+    "exportPurchaseOrders": "Exporter les bons de commande",
+    "exportSuppliers": "Exporter les fournisseurs",
+    "importInfo": "Importez facilement vos données depuis des fichiers Excel, CSV ou depuis vos contacts téléphone.",
+    "importClients": "Importer des clients",
+    "importClientsDesc": "Importez votre liste de clients depuis un fichier Excel ou CSV",
+    "importProducts": "Importer des produits",
+    "importProductsDesc": "Ajoutez vos produits en lot avec leurs références et prix",
+    "phoneContacts": "Contacts téléphone",
+    "phoneContactsDesc": "Importez directement depuis vos contacts téléphone",
+    "importTemplates": "Modèles d'importation",
+    "importTemplatesDesc": "Téléchargez nos modèles Excel pour faciliter l'importation de vos données.",
+    "clientsTemplate": "Modèle Clients (CSV)",
+    "productsTemplate": "Modèle Produits (CSV)",
+    "importHistory": "Historique des importations",
+    "importHistoryComingSoon": "Fonctionnalité à venir - L'historique des importations sera disponible prochainement.",
+    "saveSettings": "Sauvegarder les paramètres"
   }
 }

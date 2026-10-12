@@ -1,13 +1,17 @@
 import React from 'react';
 import { Tooltip } from '@mui/material';
-import { ACCOUNTING_TERMS } from '../../constants/accountingHelp';
+import { useTranslation } from 'react-i18next';
+import { getAccountingHelp } from '../../constants/accountingHelp';
 
 /**
  * Entoure un terme comptable d'un tooltip explicatif.
  * Usage : <AccountingTooltip term="debit">Débit</AccountingTooltip>
  */
 const AccountingTooltip = ({ term, children }) => {
-  const definition = ACCOUNTING_TERMS[term];
+  const { t, i18n } = useTranslation(['accounting', 'common']);
+  // Définitions par défaut (SYSCOHADA, FCFA), dans la langue de l'utilisateur
+  const terms = React.useMemo(() => getAccountingHelp('syscohada', t, i18n.language).terms, [t, i18n.language]);
+  const definition = terms[term];
   if (!definition) return children;
 
   return (

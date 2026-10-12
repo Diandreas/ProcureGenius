@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
                 <ShieldIcon sx={{ color: accentColor, fontSize: 28 }} />
               </Box>
               <Chip
-                label="RGPD conforme"
+                label={t('public:privacy.gdprBadge')}
                 size="small"
                 sx={{ bgcolor: '#dcfce7', color: '#16a34a', fontWeight: 600, fontSize: '0.75rem', border: '1px solid #bbf7d0' }}
               />
@@ -122,7 +122,7 @@ export default function PrivacyPolicy() {
                         <Box component="li" key={i} sx={{ color: textColor, fontSize: '0.95rem', lineHeight: 1.8, mb: 0.5 }}>
                           {item.includes(':') ? (
                             <>
-                              <strong style={{ color: headingColor }}>{item.split(':')[0]} :</strong>
+                              <strong style={{ color: headingColor }}>{item.split(':')[0]}{t('public:privacy.labelSeparator')}</strong>
                               {item.split(':').slice(1).join(':')}
                             </>
                           ) : item}
@@ -144,10 +144,10 @@ export default function PrivacyPolicy() {
             textAlign: 'center',
           }}>
             <Typography sx={{ color: isDark ? '#86efac' : '#16a34a', fontSize: '0.88rem', fontWeight: 600, mb: 0.5 }}>
-              Vos données sont protégées et hébergées en Europe
+              {t('public:privacy.footer.protected')}
             </Typography>
             <Typography sx={{ color: textColor, fontSize: '0.85rem' }}>
-              Pour exercer vos droits RGPD : <strong>privacy@procuregenius.com</strong>
+              {t('public:privacy.footer.exerciseRights')} <strong>privacy@procuregenius.com</strong>
             </Typography>
           </Box>
 

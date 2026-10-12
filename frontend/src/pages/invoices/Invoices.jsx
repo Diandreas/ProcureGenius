@@ -151,7 +151,7 @@ function Invoices() {
               display: { xs: 'none', sm: 'inline-flex' },
             }}
           >
-            Importer
+            {t('invoices:buttons.import')}
           </Button>
           <Button
             variant="contained"
@@ -217,7 +217,7 @@ function Invoices() {
     if (!generatedPdfBlob) return;
 
     if (action === 'download') {
-      downloadPDF(generatedPdfBlob, `rapport-factures-${new Date().getTime()}.pdf`);
+      downloadPDF(generatedPdfBlob, t('invoices:report.fileName', { timestamp: new Date().getTime() }));
       enqueueSnackbar(t('invoices:messages.pdfDownloadedSuccess', 'PDF téléchargé avec succès'), {
         variant: 'success',
       });
@@ -286,7 +286,7 @@ function Invoices() {
     const labels = {
       draft: t('invoices:status.draft'),
       sent: t('invoices:status.sent'),
-      pending: 'En attente',
+      pending: t('invoices:status.pending'),
       paid: t('invoices:status.paid'),
       overdue: t('invoices:status.overdue'),
       cancelled: t('invoices:status.cancelled')
@@ -461,7 +461,7 @@ function Invoices() {
           {/* Titre + client */}
           <Box sx={{ flex: 1, minWidth: 0, mb: { xs: 1, sm: 1.5 } }}>
             <Typography sx={{ fontWeight: 600, fontSize: { xs: '0.82rem', sm: '0.95rem' }, color: 'text.primary', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-              {invoice.title || invoice.client_name || 'Facture'}
+              {invoice.title || invoice.client_name || t('invoices:labels.invoiceFallback')}
             </Typography>
             {invoice.client_name && invoice.title && (
               <Typography sx={{ fontSize: '0.72rem', color: 'text.disabled', mt: 0.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -478,7 +478,7 @@ function Invoices() {
           {/* Bas : echeance + actions (actions cachees sur mobile) */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto', pt: { xs: 0.75, sm: 1.25 }, borderTop: theme => `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
             <Typography sx={{ fontSize: { xs: '0.62rem', sm: '0.68rem' }, color: 'text.disabled', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {invoice.due_date ? `Échéance ${formatDate(invoice.due_date)}` : (invoice.issue_date ? formatDate(invoice.issue_date) : '')}
+              {invoice.due_date ? t('invoices:labels.dueOn', { date: formatDate(invoice.due_date) }) : (invoice.issue_date ? formatDate(invoice.issue_date) : '')}
             </Typography>
             <Box className="inv-actions" sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5, opacity: 0, transition: 'opacity 0.2s' }}>
               <IconButton size="small" onClick={async (e) => { e.stopPropagation(); try { const blob = await generateInvoicePDF(invoice); openSinglePDF(blob); } catch {} }}
@@ -518,11 +518,11 @@ function Invoices() {
       {/* KPI / Filtres rapides (tuiles neumorphiques) */}
       <Grid container spacing={{ xs: 1.25, sm: 2 }} sx={{ mb: 2.5 }}>
         {[
-          { key: '', label: 'Total facture', value: formatCurrency(totalAmount), sub: totalInvoices + ' facture(s)', color: '#2563eb' },
-          { key: 'paid', label: 'Payees', value: paidInvoices, sub: 'encaissees', color: '#10b981' },
-          { key: 'unpaid', label: 'Impayees', value: unpaidInvoices, sub: 'envoyees', color: '#3b82f6' },
-          { key: 'overdue', label: 'En retard', value: overdueInvoices, sub: 'a relancer', color: '#ef4444' },
-          { key: 'draft', label: 'Brouillons', value: draftInvoices, sub: 'a finaliser', color: '#94a3b8' },
+          { key: '', label: t('invoices:kpi.total'), value: formatCurrency(totalAmount), sub: t('invoices:kpi.invoiceCount', { count: totalInvoices }), color: '#2563eb' },
+          { key: 'paid', label: t('invoices:kpi.paid'), value: paidInvoices, sub: t('invoices:kpi.paidSub'), color: '#10b981' },
+          { key: 'unpaid', label: t('invoices:kpi.unpaid'), value: unpaidInvoices, sub: t('invoices:kpi.unpaidSub'), color: '#3b82f6' },
+          { key: 'overdue', label: t('invoices:kpi.overdue'), value: overdueInvoices, sub: t('invoices:kpi.overdueSub'), color: '#ef4444' },
+          { key: 'draft', label: t('invoices:kpi.drafts'), value: draftInvoices, sub: t('invoices:kpi.draftsSub'), color: '#94a3b8' },
         ].map((kpi) => {
           const active = quickFilter === kpi.key && kpi.key !== '';
           return (
@@ -576,7 +576,7 @@ function Invoices() {
             component="input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher une facture, un client..."
+            placeholder={t('invoices:search.placeholderFull')}
             sx={{
               flex: 1, border: 'none', outline: 'none', bgcolor: 'transparent',
               fontSize: '0.9rem', color: 'text.primary', fontFamily: 'inherit',
@@ -615,10 +615,10 @@ function Invoices() {
       {(quickFilter || selectedDate) && (
         <Box sx={{ display: 'flex', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
           {quickFilter && (
-            <Chip label={'Filtre : ' + getStatusLabel(quickFilter === 'unpaid' ? 'sent' : quickFilter)} onDelete={() => setQuickFilter('')} size="small" sx={{ fontWeight: 600 }} />
+            <Chip label={t('invoices:filters.chipStatus', { label: getStatusLabel(quickFilter === 'unpaid' ? 'sent' : quickFilter) })} onDelete={() => setQuickFilter('')} size="small" sx={{ fontWeight: 600 }} />
           )}
           {selectedDate && (
-            <Chip label={'Date : ' + formatDate(selectedDate)} onDelete={() => setSelectedDate('')} size="small" sx={{ fontWeight: 600 }} />
+            <Chip label={t('invoices:filters.chipDate', { date: formatDate(selectedDate) })} onDelete={() => setSelectedDate('')} size="small" sx={{ fontWeight: 600 }} />
           )}
         </Box>
       )}
@@ -656,14 +656,14 @@ function Invoices() {
           <Box sx={{ pt: 2 }}>
             {/* Période */}
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-               Période (optionnel)
+               {t('invoices:report.period')}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-              Filtrer par période - laisser vide pour tout inclure
+              {t('invoices:report.periodHelp')}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
               <TextField
-                label="Date de début"
+                label={t('invoices:report.dateStart')}
                 type="date"
                 value={reportFilters.dateStart}
                 onChange={(e) => setReportFilters({ ...reportFilters, dateStart: e.target.value })}
@@ -673,7 +673,7 @@ function Invoices() {
                 inputProps={{ max: reportFilters.dateEnd || undefined }}
               />
               <TextField
-                label="Date de fin"
+                label={t('invoices:report.dateEnd')}
                 type="date"
                 value={reportFilters.dateEnd}
                 onChange={(e) => setReportFilters({ ...reportFilters, dateEnd: e.target.value })}
@@ -689,12 +689,12 @@ function Invoices() {
             {/* Sélection de factures */}
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                 Factures à inclure
+                 {t('invoices:report.itemsToInclude')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                 {reportFilters.selectedInvoices.length > 0
-                  ? `${reportFilters.selectedInvoices.length} facture(s) sélectionnée(s)`
-                  : 'Toutes les factures filtrées seront incluses'}
+                  ? t('invoices:report.selectedCount', { count: reportFilters.selectedInvoices.length })
+                  : t('invoices:report.allIncluded')}
               </Typography>
 
               <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
@@ -742,13 +742,13 @@ function Invoices() {
                     size="small"
                     onClick={() => setReportFilters({ ...reportFilters, selectedInvoices: filteredInvoices.map(inv => inv.id) })}
                   >
-                    Tout sélectionner
+                    {t('invoices:report.selectAll')}
                   </Button>
                   <Button
                     size="small"
                     onClick={() => setReportFilters({ ...reportFilters, selectedInvoices: [] })}
                   >
-                    Tout désélectionner
+                    {t('invoices:report.deselectAll')}
                   </Button>
                 </Box>
               )}
@@ -757,9 +757,9 @@ function Invoices() {
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="caption">
                 {reportFilters.selectedInvoices.length > 0
-                  ? `Un rapport sera généré avec ${reportFilters.selectedInvoices.length} facture(s) sélectionnée(s)`
-                  : `Un rapport sera généré avec toutes les factures (${filteredInvoices.length})`}
-                {(reportFilters.dateStart || reportFilters.dateEnd) && ' pour la période spécifiée'}
+                  ? t('invoices:report.summarySelected', { count: reportFilters.selectedInvoices.length })
+                  : t('invoices:report.summaryAll', { count: filteredInvoices.length })}
+                {(reportFilters.dateStart || reportFilters.dateEnd) && t('invoices:report.forPeriod')}
                 .
               </Typography>
             </Alert>
@@ -767,7 +767,7 @@ function Invoices() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setReportConfigOpen(false)}>
-            Annuler
+            {t('invoices:buttons.cancel')}
           </Button>
           <Button
             onClick={handleConfigureReport}
@@ -775,7 +775,7 @@ function Invoices() {
             color="success"
             startIcon={<PictureAsPdf />}
           >
-            Générer le Rapport
+            {t('invoices:report.generate')}
           </Button>
         </DialogActions>
       </Dialog>

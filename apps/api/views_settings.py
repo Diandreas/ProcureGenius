@@ -50,15 +50,34 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
             organization=request.user.organization
         )
 
+        # La langue de l'interface est propre à chaque personne (UserPreferences) :
+        # un employé qui passe en anglais ne change pas la langue de ses collègues.
+        from apps.accounts.models import UserPreferences
+        preferences, _ = UserPreferences.objects.get_or_create(user=request.user)
+
+        def avec_langue(data):
+            data = dict(data)
+            data['language'] = preferences.preferred_language or data.get('language') or 'fr'
+            return data
+
         if request.method == 'GET':
             serializer = self.get_serializer(settings)
-            return Response(serializer.data)
+            return Response(avec_langue(serializer.data))
 
         elif request.method == 'PATCH':
-            serializer = self.get_serializer(settings, data=request.data, partial=True)
+            donnees = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+            langue = donnees.pop('language', None)
+            if isinstance(langue, list):
+                langue = langue[0] if langue else None
+            if langue:
+                if langue not in dict(UserPreferences._meta.get_field('preferred_language').choices):
+                    return Response({'language': ['Langue non prise en charge.']}, status=status.HTTP_400_BAD_REQUEST)
+                preferences.preferred_language = langue
+                preferences.save(update_fields=['preferred_language', 'updated_at'])
+            serializer = self.get_serializer(settings, data=donnees, partial=True)
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data)
+                return Response(avec_langue(serializer.data))
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], url_path='organization/upload_logo')

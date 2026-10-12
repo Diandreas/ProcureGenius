@@ -7,6 +7,7 @@ import {
 import { CheckCircle, Cancel, OpenInNew } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import { formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
@@ -14,14 +15,7 @@ import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 const STATUS_COLORS = { draft: 'default', posted: 'success', cancelled: 'error' };
-const STATUS_LABELS = { draft: 'Brouillon', posted: 'Validée', cancelled: 'Annulée' };
-const SOURCE_LABELS = {
-  manual: 'Saisie manuelle',
-  invoice: 'Facture client',
-  invoice_reversal: 'Extourne facture',
-  payment: 'Paiement client',
-  purchase_order: 'Bon de commande',
-};
+// Libellés traduits au rendu : accounting:status.<status> et accounting:entryDetail.source.<source>
 
 function getSourceUrl(entry) {
   if (entry.source === 'invoice' || entry.source === 'invoice_reversal' || entry.source === 'payment') {
@@ -39,6 +33,7 @@ export default function JournalEntryDetail() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
@@ -51,7 +46,7 @@ export default function JournalEntryDetail() {
     setLoading(true);
     accountingAPI.getEntry(id)
       .then((r) => { setEntry(r.data); setError(null); })
-      .catch(() => setError('Écriture introuvable'))
+      .catch(() => setError(t('accounting:entryDetail.notFound')))
       .finally(() => setLoading(false));
   };
 
@@ -60,30 +55,30 @@ export default function JournalEntryDetail() {
   const handlePost = async () => {
     try {
       await accountingAPI.postEntry(id);
-      enqueueSnackbar('Écriture validée', { variant: 'success' });
+      enqueueSnackbar(t('accounting:entries.posted'), { variant: 'success' });
       load();
     } catch (err) {
-      enqueueSnackbar(err?.response?.data?.error || 'Erreur', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.error || t('accounting:common.error'), { variant: 'error' });
     }
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('Annuler cette écriture ? Une contrepassation sera créée automatiquement.')) return;
+    if (!window.confirm(t('accounting:entryDetail.confirmCancel'))) return;
     try {
       await accountingAPI.cancelEntry(id);
-      enqueueSnackbar('Écriture annulée', { variant: 'warning' });
+      enqueueSnackbar(t('accounting:entries.cancelled'), { variant: 'warning' });
       load();
     } catch (err) {
-      enqueueSnackbar(err?.response?.data?.error || 'Erreur', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.error || t('accounting:common.error'), { variant: 'error' });
     }
   };
 
   return (
     <Box p={{ xs: 2, sm: 3 }} maxWidth={860}>
       <AccountingNav
-        title={entry ? `Écriture ${entry.entry_number}` : 'Détail Écriture'}
+        title={entry ? t('accounting:entryDetail.title', { number: entry.entry_number }) : t('accounting:entryDetail.defaultTitle')}
         subtitle={entry ? entry.description : ''}
-        action={entry && <Chip label={STATUS_LABELS[entry.status]} color={STATUS_COLORS[entry.status]} />}
+        action={entry && <Chip label={t(`accounting:status.${entry.status}`)} color={STATUS_COLORS[entry.status]} />}
       />
 
       {loading && <Box display="flex" justifyContent="center" p={6}><CircularProgress /></Box>}
@@ -95,20 +90,20 @@ export default function JournalEntryDetail() {
             <CardContent>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="text.secondary">Journal</Typography>
+                  <Typography variant="caption" color="text.secondary">{t('accounting:common.journal')}</Typography>
                   <Typography variant="body1" fontWeight={600}>{entry.journal_code} — {entry.journal_name}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="text.secondary">Date</Typography>
+                  <Typography variant="caption" color="text.secondary">{t('accounting:common.date')}</Typography>
                   <Typography variant="body1" fontWeight={600}>{formatDate(entry.date)}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Typography variant="caption" color="text.secondary">Source</Typography>
+                  <Typography variant="caption" color="text.secondary">{t('accounting:common.source')}</Typography>
                   <Box display="flex" alignItems="center" gap={0.5} mt={0.25}>
-                    <Typography variant="body1">{SOURCE_LABELS[entry.source] || entry.source_display}</Typography>
+                    <Typography variant="body1">{t(`accounting:entryDetail.source.${entry.source}`, { defaultValue: entry.source_display })}</Typography>
                     {getSourceUrl(entry) && (
                       <Chip
-                        label={entry.reference || 'Voir document'}
+                        label={entry.reference || t('accounting:entryDetail.viewDocument')}
                         size="small"
                         variant="outlined"
                         color="primary"
@@ -120,18 +115,18 @@ export default function JournalEntryDetail() {
                   </Box>
                 </Grid>
                 <Grid item xs={12} sm={8}>
-                  <Typography variant="caption" color="text.secondary">Libellé</Typography>
+                  <Typography variant="caption" color="text.secondary">{t('accounting:common.description')}</Typography>
                   <Typography variant="body1">{entry.description}</Typography>
                 </Grid>
                 {entry.reference && (
                   <Grid item xs={12} sm={4}>
-                    <Typography variant="caption" color="text.secondary">Référence</Typography>
+                    <Typography variant="caption" color="text.secondary">{t('accounting:common.reference')}</Typography>
                     <Typography variant="body1" fontFamily="monospace">{entry.reference}</Typography>
                   </Grid>
                 )}
                 {entry.created_by_name && (
                   <Grid item xs={12} sm={4}>
-                    <Typography variant="caption" color="text.secondary">Créé par</Typography>
+                    <Typography variant="caption" color="text.secondary">{t('accounting:entryDetail.createdBy')}</Typography>
                     <Typography variant="body1">{entry.created_by_name}</Typography>
                   </Grid>
                 )}
@@ -139,7 +134,7 @@ export default function JournalEntryDetail() {
             </CardContent>
           </Card>
 
-          <Typography variant="subtitle1" fontWeight={600} mb={1}>Lignes d'écriture</Typography>
+          <Typography variant="subtitle1" fontWeight={600} mb={1}>{t('accounting:entryDetail.lines')}</Typography>
           {isMobile ? (
             /* ── Vue mobile : cartes ── */
             <Stack spacing={1.25} mb={3}>
@@ -156,13 +151,13 @@ export default function JournalEntryDetail() {
                       )}
                       <Box display="flex" justifyContent="space-between" mt={1} pt={1} sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
                         <Box>
-                          <Typography variant="caption" color="text.secondary">Débit</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('accounting:common.debit')}</Typography>
                           <Typography variant="body2" fontWeight={600} color={debit > 0 ? 'primary.main' : 'text.disabled'}>
                             {debit > 0 ? format(debit) : '—'}
                           </Typography>
                         </Box>
                         <Box textAlign="right">
-                          <Typography variant="caption" color="text.secondary">Crédit</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('accounting:common.credit')}</Typography>
                           <Typography variant="body2" fontWeight={600} color={credit > 0 ? 'secondary.main' : 'text.disabled'}>
                             {credit > 0 ? format(credit) : '—'}
                           </Typography>
@@ -174,7 +169,7 @@ export default function JournalEntryDetail() {
               })}
               <Card elevation={0} sx={{ border: 'none', borderRadius: 2.5, bgcolor: 'action.hover', boxShadow: neu }}>
                 <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 }, display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" fontWeight={700}>Total</Typography>
+                  <Typography variant="body2" fontWeight={700}>{t('accounting:common.total')}</Typography>
                   <Box display="flex" gap={2}>
                     <Typography variant="body2" fontWeight={700}>{format(parseFloat(entry.total_debit))}</Typography>
                     <Typography variant="body2" fontWeight={700}>{format(parseFloat(entry.total_credit))}</Typography>
@@ -188,10 +183,10 @@ export default function JournalEntryDetail() {
               <Table size="small" sx={{ minWidth: 560 }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell><strong>Compte</strong></TableCell>
-                    <TableCell><strong>Libellé</strong></TableCell>
-                    <TableCell align="right"><strong>Débit</strong></TableCell>
-                    <TableCell align="right"><strong>Crédit</strong></TableCell>
+                    <TableCell><strong>{t('accounting:common.account')}</strong></TableCell>
+                    <TableCell><strong>{t('accounting:common.description')}</strong></TableCell>
+                    <TableCell align="right"><strong>{t('accounting:common.debit')}</strong></TableCell>
+                    <TableCell align="right"><strong>{t('accounting:common.credit')}</strong></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -215,7 +210,7 @@ export default function JournalEntryDetail() {
                     </TableRow>
                   ))}
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell colSpan={2}><strong>Total</strong></TableCell>
+                    <TableCell colSpan={2}><strong>{t('accounting:common.total')}</strong></TableCell>
                     <TableCell align="right"><strong>{format(parseFloat(entry.total_debit))}</strong></TableCell>
                     <TableCell align="right"><strong>{format(parseFloat(entry.total_credit))}</strong></TableCell>
                   </TableRow>
@@ -225,26 +220,26 @@ export default function JournalEntryDetail() {
           )}
 
           {entry.is_balanced ? (
-            <Alert severity="success" sx={{ mb: 3 }}>Écriture équilibrée </Alert>
+            <Alert severity="success" sx={{ mb: 3 }}>{t('accounting:entryDetail.balanced')} </Alert>
           ) : (
             <Alert severity="error" sx={{ mb: 3 }}>
-              Déséquilibrée — Débit : {format(parseFloat(entry.total_debit))} / Crédit : {format(parseFloat(entry.total_credit))}
+              {t('accounting:entryDetail.unbalanced', { debit: format(parseFloat(entry.total_debit)), credit: format(parseFloat(entry.total_credit)) })}
             </Alert>
           )}
 
           <Box display="flex" gap={1.5} flexWrap="wrap">
             {entry.status === 'draft' && (
               <Button variant="contained" color="success" startIcon={<CheckCircle />} onClick={handlePost}>
-                Valider l'écriture
+                {t('accounting:entryDetail.postEntry')}
               </Button>
             )}
             {entry.status === 'posted' && (
               <Button variant="outlined" color="error" startIcon={<Cancel />} onClick={handleCancel}>
-                Annuler (contrepassation)
+                {t('accounting:entries.cancelReversal')}
               </Button>
             )}
             <Button variant="outlined" onClick={() => navigate('/accounting/entries')}>
-              Retour à la liste
+              {t('accounting:entryDetail.backToList')}
             </Button>
           </Box>
         </>

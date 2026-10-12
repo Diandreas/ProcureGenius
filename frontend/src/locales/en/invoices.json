@@ -21,10 +21,13 @@
     "allInvoices": "All",
     "activeFilter": "Active filter:",
     "statusLabel": "Status",
-    "dateFilter": "Date filter"
+    "dateFilter": "Date filter",
+    "chipStatus": "Filter: {{label}}",
+    "chipDate": "Date: {{date}}"
   },
   "search": {
-    "placeholder": "Search for an invoice..."
+    "placeholder": "Search for an invoice...",
+    "placeholderFull": "Search for an invoice, a client..."
   },
   "messages": {
     "loading": "Loading invoice...",
@@ -68,7 +71,19 @@
     "emailSent": "Email sent successfully",
     "emailError": "Error sending email",
     "emailRequired": "Recipient email required",
-    "sending": "Sending..."
+    "sending": "Sending...",
+    "clientPreselected": "Client {{name}} preselected",
+    "priceFixedFromCatalog": "Price set by the catalog",
+    "priceEditableByProduct": "Price editable when invoicing",
+    "servicePriceOnQuote": "Open price — set it here",
+    "demoPrefilled": "Your demo invoice is pre-filled: check it, then save",
+    "offlineSaved": "Offline: invoice saved on this device, it will be sent as soon as the network is back",
+    "contractPreselected": "Contract {{title}} preselected",
+    "quoteConverted": "Quote converted to an invoice.",
+    "quoteConvertError": "Error converting the quote.",
+    "loadingErrorDescription": "Unable to load invoices. Please try again.",
+    "noProductsCreateOne": "No products. Create one with the + button.",
+    "batchRequired": "Please select a batch for this product"
   },
   "actions": {
     "generateReport": "PDF Report"
@@ -76,7 +91,21 @@
   "report": {
     "title": "Generate Invoices Report",
     "itemLabel": "invoice",
-    "itemsLabel": "invoices"
+    "itemsLabel": "invoices",
+    "fileName": "invoices-report-{{timestamp}}.pdf",
+    "period": "Period (optional)",
+    "periodHelp": "Filter by period - leave empty to include everything",
+    "dateStart": "Start date",
+    "dateEnd": "End date",
+    "itemsToInclude": "Invoices to include",
+    "selectedCount": "{{count}} invoice(s) selected",
+    "allIncluded": "All filtered invoices will be included",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "summarySelected": "A report will be generated with {{count}} selected invoice(s)",
+    "summaryAll": "A report will be generated with all invoices ({{count}})",
+    "forPeriod": " for the specified period",
+    "generate": "Generate report"
   },
   "labels": {
     "dueDate": "Due date:",
@@ -122,7 +151,26 @@
     "savingLabel": "Saving...",
     "generatingLabel": "Generating...",
     "sending": "Sending...",
-    "sentDateLabel": "Sent date"
+    "sentDateLabel": "Sent date",
+    "physicalProducts": "Physical products",
+    "servicesAndDigital": "Services & Digital",
+    "searchProduct": "Search for a product",
+    "searchService": "Search for a service",
+    "productReference": "Product reference",
+    "serviceReference": "Service reference",
+    "quantity": "Quantity",
+    "unitPriceExclTax": "Unit price excl. tax",
+    "lineTotal": "Line total",
+    "contract": "Contract",
+    "reference": "Ref.",
+    "notAvailable": "N/A",
+    "items": "Items",
+    "statusAndPayment": "Status & payment",
+    "contractAssociated": "Linked contract",
+    "invoiceFallback": "Invoice",
+    "dueOn": "Due {{date}}",
+    "batchOption": "{{batch}} {{warehouse}} - Exp: {{expiration}}, Qty: {{quantity}}",
+    "selectBatchRequired": "Select a batch *"
   },
   "buttons": {
     "generatePdf": "Generate PDF",
@@ -139,7 +187,11 @@
     "print": "Print",
     "download": "Download",
     "save": "Save",
-    "sendEmail": "Send by email"
+    "sendEmail": "Send by email",
+    "viewContract": "View contract",
+    "convertToInvoice": "Convert to invoice",
+    "import": "Import",
+    "newProduct": "New product"
   },
   "columns": {
     "reference": "Reference",
@@ -173,8 +225,11 @@
       "defaultMessage": "Hello {{name}},\n\nPlease find attached your invoice {{number}}.\n\nThe PDF of your invoice is attached to this email.\n\nIf you have any questions, please do not hesitate to contact us.\n\nBest regards",
       "send": "Send",
       "pdfAttachment": "The invoice will be sent as a PDF attachment.",
-      "invoiceDetails": "Invoice details"
-    }
+      "invoiceDetails": "Invoice details",
+      "defaultSubject": "Invoice {{number}} - ProcureGenius"
+    },
+    "quickCreateService": "New service",
+    "editItem": "Edit item"
   },
   "fields": {
     "paymentDate": "Payment date",
@@ -185,7 +240,9 @@
     "productReference": "Product reference",
     "invoiceTemplate": "Invoice template",
     "issueDate": "Issue date",
-    "selectClient": "Select a client"
+    "selectClient": "Select a client",
+    "linkContract": "Link to a contract",
+    "selectContract": "Select a contract"
   },
   "templates": {
     "classic": "Classic",
@@ -210,5 +267,119 @@
     "valuePercent": "Discount (%)",
     "valueAmount": "Discount (amount)",
     "applied": "Discount applied"
+  },
+  "offlinePdf": {
+    "title": "INVOICE",
+    "draftTag": "QUICK VERSION — offline draft, not synced",
+    "number": "No. {{number}}",
+    "date": "Date: {{date}}",
+    "dueDate": "Due date: {{date}}",
+    "status": "Status: {{status}}",
+    "billedTo": "Billed to",
+    "description": "Description",
+    "qty": "Qty",
+    "unitPrice": "Unit price",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "taxes": "Taxes",
+    "grandTotal": "TOTAL",
+    "draftFooter": "Provisional document generated offline. The final number will be assigned when it syncs.",
+    "thanks": "Thank you for your business."
+  },
+  "paymentMethodLabels": {
+    "cash": "Cash",
+    "orange_money": "Orange Money",
+    "mtn_momo": "MTN Mobile Money",
+    "wave": "Wave",
+    "mobile_money": "Mobile Money (other)",
+    "bank_transfer": "Bank transfer",
+    "check": "Cheque",
+    "credit_card": "Bank card",
+    "other": "Other",
+    "card": "Bank card",
+    "transfer": "Bank transfer",
+    "cheque": "Cheque",
+    "interac": "Interac",
+    "paypal": "PayPal"
+  },
+  "form": {
+    "demoTitle": "Invoice {{name}}",
+    "hideOptions": "Hide options",
+    "moreOptions": "More options (title, dates, tax, discount…)"
+  },
+  "pdf": {
+    "fileName": "invoice-{{number}}.pdf",
+    "viewerTitle": "Invoice {{number}}"
+  },
+  "payments": {
+    "invalidAmount": "Invalid amount",
+    "saved": "Payment recorded",
+    "saveError": "Error while saving",
+    "deleteConfirm": "Delete this payment?",
+    "deleted": "Payment deleted",
+    "addPayment": "Add a payment",
+    "received": "Payments received",
+    "total": "Total",
+    "paid": "Paid",
+    "balance": "Balance",
+    "none": "No payments recorded",
+    "invoiceTotal": "Invoice total",
+    "alreadyPaid": "Already paid",
+    "remainingBalance": "Remaining balance",
+    "columns": {
+      "date": "Date",
+      "method": "Method",
+      "reference": "Ref.",
+      "amount": "Amount"
+    },
+    "deleteTooltip": "Delete this payment",
+    "deleteLocked": "Cannot be deleted after 30 min",
+    "dialogTitle": "Record a payment",
+    "remainingToPay": "Remaining balance due:",
+    "amount": "Amount",
+    "maxAmount": "Max: {{amount}}",
+    "paymentDate": "Payment date",
+    "referenceNumber": "Reference number",
+    "referencePlaceholder": "Cheque no., transfer confirmation...",
+    "optional": "Optional",
+    "notesPlaceholder": "Internal notes...",
+    "save": "Record payment"
+  },
+  "kpi": {
+    "total": "Invoice total",
+    "invoiceCount": "{{count}} invoice(s)",
+    "paid": "Paid",
+    "paidSub": "collected",
+    "unpaid": "Unpaid",
+    "unpaidSub": "sent",
+    "overdue": "Overdue",
+    "overdueSub": "to follow up",
+    "drafts": "Drafts",
+    "draftsSub": "to finalize"
+  },
+  "smartUpload": {
+    "invalidFile": "Please drop a PDF or image file (PNG, JPG)",
+    "analysisError": "Error analyzing the document",
+    "analyzing": "Analyzing...",
+    "extracting": "The AI is extracting all the information",
+    "done": "Analysis complete!",
+    "invoice": "Invoice: {{number}}",
+    "amount": "Amount: {{amount}}",
+    "redirecting": "Redirecting to the pre-filled form...",
+    "dropHere": "Drop your PDF invoice here",
+    "dropHelp": "The AI will analyze it and pre-fill the form automatically",
+    "clickToSelect": "Or click to select",
+    "extractedData": "Extracted data",
+    "client": "Client:",
+    "invoiceNumber": "Invoice no.:",
+    "date": "Date:",
+    "total": "Total:",
+    "items": "Items:"
+  },
+  "pdfViewer": {
+    "close": "Close",
+    "share": "Share",
+    "download": "Download",
+    "loadError": "Unable to display the PDF."
   }
 }

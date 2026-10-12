@@ -65,7 +65,7 @@ export default function PublicLayout() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={() => navigate('/landing')}>
                 <img 
                   src="/main.png" 
-                  alt="Procura Logo" 
+                  alt={t('landing:nav.logoAlt')} 
                   style={{ width: 32, height: 32, objectFit: 'contain' }}
                   onError={(e) => { e.target.src = 'https://via.placeholder.com/32'; }} 
                 />
@@ -77,7 +77,7 @@ export default function PublicLayout() {
               <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, alignItems: 'center' }}>
                 <Button 
                   onClick={() => i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr')}
-                  title="Changer de langue / Switch Language"
+                  title={t('landing:nav.switchLanguage')}
                   sx={{ 
                     minWidth: 'auto', p: 1, 
                     color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
@@ -129,7 +129,7 @@ export default function PublicLayout() {
                     display: { xs: 'none', md: 'block' }
                   }}
                 >
-                  Documentation
+                  {t('landing:nav.documentation')}
                 </Button>
                 <Button
                   component="a"
@@ -145,7 +145,7 @@ export default function PublicLayout() {
                     display: { xs: 'none', md: 'block' }
                   }}
                 >
-                  Blog
+                  {t('landing:nav.blog')}
                 </Button>
                 {isAuthenticated ? (
                   <Button
@@ -159,7 +159,7 @@ export default function PublicLayout() {
                       '&:hover': { bgcolor: '#1d4ed8' },
                     }}
                   >
-                    {t('nav.goToDashboard', 'Tableau de bord')}
+                    {t('landing:nav.goToDashboard')}
                   </Button>
                 ) : (
                   <>
@@ -251,18 +251,18 @@ export default function PublicLayout() {
             
             <Box sx={{ display: 'flex', gap: { xs: 4, sm: 8 } }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>Produit</Typography>
-                <Typography component="a" href="/landing#demo-section" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>Fonctionnalités</Typography>
+                <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>{t('landing:footer.product')}</Typography>
+                <Typography component="a" href="/landing#demo-section" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:footer.features')}</Typography>
                 <Typography component="a" href="/landing#pricing-section" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:pricing.title')}</Typography>
                 <Typography component="a" href="/privacy" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('public:privacy.title')}</Typography>
                 <Typography component="a" href="/terms" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('public:terms.title')}</Typography>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>Ressources</Typography>
-                <Typography component="a" href="/blog" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>Blog</Typography>
-                <Typography component="a" href="/help" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>Documentation</Typography>
-                <Typography component="a" href="/help/faq" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>FAQ</Typography>
-                <Typography component="a" href="/support" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>Support & Contact</Typography>
+                <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>{t('landing:footer.resources')}</Typography>
+                <Typography component="a" href="/blog" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:nav.blog')}</Typography>
+                <Typography component="a" href="/help" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:nav.documentation')}</Typography>
+                <Typography component="a" href="/help/faq" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:footer.faq')}</Typography>
+                <Typography component="a" href="/support" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:footer.support')}</Typography>
               </Box>
             </Box>
           </Box>
@@ -271,7 +271,7 @@ export default function PublicLayout() {
           
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography sx={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)', fontSize: '0.8rem' }}>
-              &copy; {new Date().getFullYear()} Procura. {t('footer.rights', 'Tous droits réservés.')}
+              &copy; {new Date().getFullYear()} Procura. {t('landing:footer.allRightsReserved')}
             </Typography>
           </Box>
         </Container>

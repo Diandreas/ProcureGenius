@@ -5,6 +5,7 @@ import {
   Table, TableBody, TableCell, TableRow, LinearProgress, Tooltip,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import {
   People, TrendingUp, Bolt, Paid, Visibility, AutoGraph,
   ThumbUpAlt, ThumbDownAlt, SmartToy,
@@ -64,11 +65,12 @@ function Sparkline({ data, color }) {
 
 function ListPanel({ title, rows, labelKey, valueKey, total }) {
   const theme = useTheme();
+  const { t } = useTranslation(['dashboard']);
   if (!rows || !rows.length) {
     return (
       <Box>
         <Typography variant="subtitle2" fontWeight={700} mb={1}>{title}</Typography>
-        <Typography variant="caption" color="text.secondary">Aucune donnée</Typography>
+        <Typography variant="caption" color="text.secondary">{t('dashboard:adminStats.noData')}</Typography>
       </Box>
     );
   }
@@ -101,6 +103,7 @@ function ListPanel({ title, rows, labelKey, valueKey, total }) {
 
 export default function AdminStats() {
   const theme = useTheme();
+  const { t } = useTranslation(['dashboard']);
   const [days, setDays] = useState(30);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -114,8 +117,8 @@ export default function AdminStats() {
       setData(res.data);
     } catch (e) {
       const code = e?.response?.status;
-      if (code === 403) setError("Accès réservé aux administrateurs (superuser).");
-      else setError("Impossible de charger les statistiques.");
+      if (code === 403) setError('forbidden');
+      else setError('loadFailed');
     } finally {
       setLoading(false);
     }
@@ -139,19 +142,19 @@ export default function AdminStats() {
              alignItems={{ sm: 'center' }} spacing={2} mb={3}>
         <Box>
           <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-0.02em' }}>
-            Statistiques produit
+            {t('dashboard:adminStats.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Acquisition, activation, usage réel et revenu — pour savoir quoi améliorer.
+            {t('dashboard:adminStats.subtitle')}
           </Typography>
         </Box>
         <ToggleButtonGroup
           size="small" exclusive value={days}
           onChange={(_, v) => v && setDays(v)}
         >
-          <ToggleButton value={7}>7 j</ToggleButton>
-          <ToggleButton value={30}>30 j</ToggleButton>
-          <ToggleButton value={90}>90 j</ToggleButton>
+          <ToggleButton value={7}>{t('dashboard:adminStats.daysShort', { days: 7 })}</ToggleButton>
+          <ToggleButton value={30}>{t('dashboard:adminStats.daysShort', { days: 30 })}</ToggleButton>
+          <ToggleButton value={90}>{t('dashboard:adminStats.daysShort', { days: 90 })}</ToggleButton>
         </ToggleButtonGroup>
       </Stack>
 
@@ -161,34 +164,34 @@ export default function AdminStats() {
         </Box>
       )}
 
-      {error && !loading && <Alert severity="warning">{error}</Alert>}
+      {error && !loading && <Alert severity="warning">{t(`dashboard:adminStats.errors.${error}`)}</Alert>}
 
       {data && !loading && !error && (
         <Stack spacing={3}>
           {/* KPI principaux */}
           <Grid container spacing={2}>
             <Grid item xs={6} md={3}>
-              <KpiCard icon={<People />} label="Utilisateurs"
+              <KpiCard icon={<People />} label={t('dashboard:adminStats.kpi.users')}
                 value={fmt(u.total)}
-                sub={`+${fmt(u.new_this_period)} sur ${days} j · ${u.growth_pct == null ? '' : (u.growth_pct >= 0 ? '+' : '') + u.growth_pct + '%'}`}
+                sub={t('dashboard:adminStats.kpi.usersSub', { added: fmt(u.new_this_period), days, growth: u.growth_pct == null ? '' : (u.growth_pct >= 0 ? '+' : '') + u.growth_pct + '%' })}
                 color={theme.palette.primary.main} />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard icon={<Bolt />} label="Taux d'activation"
+              <KpiCard icon={<Bolt />} label={t('dashboard:adminStats.kpi.activationRate')}
                 value={pct(act.activation_rate)}
-                sub={`${fmt(act.users_with_real_action)} / ${fmt(act.signed_up)} ont agi`}
+                sub={t('dashboard:adminStats.kpi.activationSub', { acted: fmt(act.users_with_real_action), signedUp: fmt(act.signed_up) })}
                 color={theme.palette.warning.main} />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard icon={<TrendingUp />} label="Actifs (WAU / MAU)"
+              <KpiCard icon={<TrendingUp />} label={t('dashboard:adminStats.kpi.activeUsers')}
                 value={`${fmt(eng.wau)} / ${fmt(eng.mau)}`}
-                sub={`Stickiness ${pct(eng.stickiness_pct)}`}
+                sub={t('dashboard:adminStats.kpi.stickiness', { value: pct(eng.stickiness_pct) })}
                 color={theme.palette.success.main} />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard icon={<Paid />} label="MRR estimé"
+              <KpiCard icon={<Paid />} label={t('dashboard:adminStats.kpi.mrr')}
                 value={`${fmt(sub.mrr_estimate)} ${devise}`}
-                sub={`${fmt(sub.active)} actifs · churn ${pct(sub.churn_rate_pct)}`}
+                sub={t('dashboard:adminStats.kpi.mrrSub', { active: fmt(sub.active), churn: pct(sub.churn_rate_pct) })}
                 color={theme.palette.info.main} />
             </Grid>
           </Grid>
@@ -200,34 +203,34 @@ export default function AdminStats() {
                 <CardContent>
                   <Stack direction="row" spacing={1} alignItems="center" mb={1}>
                     <Visibility fontSize="small" color="action" />
-                    <Typography variant="subtitle2" fontWeight={700}>Acquisition</Typography>
+                    <Typography variant="subtitle2" fontWeight={700}>{t('dashboard:adminStats.acquisition.title')}</Typography>
                   </Stack>
                   {acq.available ? (
                     <>
                       <Stack direction="row" spacing={3} mb={2}>
                         <Box>
                           <Typography variant="h5" fontWeight={800}>{fmt(acq.unique_visitors)}</Typography>
-                          <Typography variant="caption" color="text.secondary">visiteurs uniques</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('dashboard:adminStats.acquisition.uniqueVisitors')}</Typography>
                         </Box>
                         <Box>
                           <Typography variant="h5" fontWeight={800}>{pct(acq.visit_to_signup_rate)}</Typography>
-                          <Typography variant="caption" color="text.secondary">visite → inscription</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('dashboard:adminStats.acquisition.visitToSignup')}</Typography>
                         </Box>
                       </Stack>
                       {acq.funnel?.length > 0 && (
                         <Box mb={2}>
                           {/* Barres rapportées à l'accueil : on voit d'un coup d'œil où ils partent. */}
-                          <ListPanel title="Parcours des visiteurs" rows={acq.funnel}
+                          <ListPanel title={t('dashboard:adminStats.acquisition.visitorJourney')} rows={acq.funnel}
                             labelKey="label" valueKey="visitors"
                             total={Math.max(...acq.funnel.map((e) => e.visitors), 1)} />
                         </Box>
                       )}
-                      <ListPanel title="Sources de trafic" rows={acq.top_sources}
+                      <ListPanel title={t('dashboard:adminStats.acquisition.trafficSources')} rows={acq.top_sources}
                         labelKey="referrer_domain" valueKey="c" />
                     </>
                   ) : (
                     <Typography variant="caption" color="text.secondary">
-                      Aucune visite enregistrée pour l'instant. Le tracking démarre dès les prochaines visites de la landing.
+                      {t('dashboard:adminStats.acquisition.empty')}
                     </Typography>
                   )}
                 </CardContent>
@@ -240,7 +243,7 @@ export default function AdminStats() {
                   <Stack direction="row" spacing={1} alignItems="center" mb={1}>
                     <AutoGraph fontSize="small" color="action" />
                     <Typography variant="subtitle2" fontWeight={700}>
-                      Inscriptions ({days} j)
+                      {t('dashboard:adminStats.signups.title', { days })}
                     </Typography>
                   </Stack>
                   <Typography variant="h4" fontWeight={800}>{fmt(u.new_this_period)}</Typography>
@@ -248,8 +251,8 @@ export default function AdminStats() {
                     <Sparkline data={u.daily_signups} color={theme.palette.primary.main} />
                   </Box>
                   <Stack direction="row" spacing={1}>
-                    <Chip size="small" label={`24h : ${fmt(u.new_last_24h)}`} />
-                    <Chip size="small" label={`7j : ${fmt(u.new_last_7d)}`} />
+                    <Chip size="small" label={t('dashboard:adminStats.signups.last24h', { value: fmt(u.new_last_24h) })} />
+                    <Chip size="small" label={t('dashboard:adminStats.signups.last7d', { value: fmt(u.new_last_7d) })} />
                   </Stack>
                 </CardContent>
               </Card>
@@ -258,7 +261,7 @@ export default function AdminStats() {
             <Grid item xs={12} md={4}>
               <Card sx={{ height: '100%', borderRadius: 3 }}>
                 <CardContent>
-                  <ListPanel title="Usage par fonctionnalité"
+                  <ListPanel title={t('dashboard:adminStats.featureUsage')}
                     rows={feat.by_feature} labelKey="entity_type" valueKey="c" />
                 </CardContent>
               </Card>
@@ -271,18 +274,18 @@ export default function AdminStats() {
               <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-                    Volume de données créées
+                    {t('dashboard:adminStats.volumes.title')}
                   </Typography>
                   <Table size="small">
                     <TableBody>
                       {[
-                        ['Factures', vol.invoices],
-                        ['Bons de commande', vol.purchase_orders],
-                        ['Produits', vol.products],
-                        ['Clients', vol.clients],
-                        ['Fournisseurs', vol.suppliers],
-                        ['Conversations IA', vol.ai_conversations],
-                        [`Messages IA (${days} j)`, vol.ai_messages_period],
+                        [t('dashboard:adminStats.volumes.invoices'), vol.invoices],
+                        [t('dashboard:adminStats.volumes.purchaseOrders'), vol.purchase_orders],
+                        [t('dashboard:adminStats.volumes.products'), vol.products],
+                        [t('dashboard:adminStats.volumes.clients'), vol.clients],
+                        [t('dashboard:adminStats.volumes.suppliers'), vol.suppliers],
+                        [t('dashboard:adminStats.volumes.aiConversations'), vol.ai_conversations],
+                        [t('dashboard:adminStats.volumes.aiMessages', { days }), vol.ai_messages_period],
                       ].map(([k, v]) => (
                         <TableRow key={k}>
                           <TableCell sx={{ border: 0, py: 0.6 }}>{k}</TableCell>
@@ -300,32 +303,32 @@ export default function AdminStats() {
             <Grid item xs={12} md={6}>
               <Card sx={{ borderRadius: 3, height: '100%' }}>
                 <CardContent>
-                  <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Abonnements & revenu</Typography>
+                  <Typography variant="subtitle2" fontWeight={700} mb={1.5}>{t('dashboard:adminStats.subscriptions.title')}</Typography>
                   <Grid container spacing={2} mb={1}>
                     <Grid item xs={4}>
                       <Typography variant="h5" fontWeight={800}>{fmt(sub.active)}</Typography>
-                      <Typography variant="caption" color="text.secondary">actifs</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('dashboard:adminStats.subscriptions.active')}</Typography>
                     </Grid>
                     <Grid item xs={4}>
                       <Typography variant="h5" fontWeight={800}>{fmt(sub.trial)}</Typography>
-                      <Typography variant="caption" color="text.secondary">en essai</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('dashboard:adminStats.subscriptions.trial')}</Typography>
                     </Grid>
                     <Grid item xs={4}>
                       <Typography variant="h5" fontWeight={800}>{fmt(sub.cancelled)}</Typography>
-                      <Typography variant="caption" color="text.secondary">annulés</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('dashboard:adminStats.subscriptions.cancelled')}</Typography>
                     </Grid>
                   </Grid>
                   <Divider sx={{ my: 1.5 }} />
                   <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">MRR estimé</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('dashboard:adminStats.kpi.mrr')}</Typography>
                     <Typography variant="body2" fontWeight={700}>{fmt(sub.mrr_estimate)} {devise}</Typography>
                   </Stack>
                   <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">ARR estimé</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('dashboard:adminStats.subscriptions.arr')}</Typography>
                     <Typography variant="body2" fontWeight={700}>{fmt(sub.arr_estimate)} {devise}</Typography>
                   </Stack>
                   <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="body2" color="text.secondary">Essais finissant sous 7 j</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('dashboard:adminStats.subscriptions.trialsEnding')}</Typography>
                     <Typography variant="body2" fontWeight={700}>{fmt(sub.trials_ending_7d)}</Typography>
                   </Stack>
                 </CardContent>
@@ -342,14 +345,14 @@ export default function AdminStats() {
                     <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
                       <SmartToy fontSize="small" color="action" />
                       <Typography variant="subtitle2" fontWeight={700}>
-                        Satisfaction assistant IA ({days} j)
+                        {t('dashboard:adminStats.aiFeedback.title', { days })}
                       </Typography>
                     </Stack>
                     <Typography variant="h3" fontWeight={800} sx={{ letterSpacing: '-0.02em' }}>
                       {pct(fb.satisfaction_pct)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-                      {fmt(fb.total)} retour{fb.total > 1 ? 's' : ''} au total
+                      {t('dashboard:adminStats.aiFeedback.total', { count: fb.total || 0, total: fmt(fb.total) })}
                     </Typography>
                     <Stack direction="row" spacing={3}>
                       <Stack direction="row" spacing={0.5} alignItems="center">
@@ -369,7 +372,7 @@ export default function AdminStats() {
                 <Card sx={{ height: '100%', borderRadius: 3 }}>
                   <CardContent>
                     <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-                      Retours négatifs récents
+                      {t('dashboard:adminStats.aiFeedback.recentNegative')}
                     </Typography>
                     {fb.recent_negative && fb.recent_negative.length ? (
                       <Stack spacing={1.5} sx={{ maxHeight: 320, overflowY: 'auto' }}>
@@ -381,14 +384,14 @@ export default function AdminStats() {
                           }}>
                             <Stack direction="row" justifyContent="space-between" mb={0.5}>
                               <Typography variant="caption" fontWeight={700} color="text.secondary">
-                                {r.user || 'Utilisateur'}
+                                {r.user || t('dashboard:adminStats.aiFeedback.user')}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 {new Date(r.created_at).toLocaleDateString('fr-FR')}
                               </Typography>
                             </Stack>
                             <Typography variant="body2" sx={{ fontStyle: 'italic', mb: r.comment ? 0.5 : 0 }} noWrap>
-                              « {r.message_excerpt} »
+                              {t('dashboard:adminStats.aiFeedback.quotedExcerpt', { text: r.message_excerpt })}
                             </Typography>
                             {r.comment && (
                               <Typography variant="body2" fontWeight={600}>
@@ -400,7 +403,7 @@ export default function AdminStats() {
                       </Stack>
                     ) : (
                       <Typography variant="caption" color="text.secondary">
-                        Aucun retour négatif sur cette période.
+                        {t('dashboard:adminStats.aiFeedback.noNegative')}
                       </Typography>
                     )}
                   </CardContent>
@@ -410,7 +413,7 @@ export default function AdminStats() {
           )}
 
           <Typography variant="caption" color="text.secondary" textAlign="center">
-            Généré le {data.generated_at ? new Date(data.generated_at).toLocaleString('fr-FR') : ''}
+            {t('dashboard:adminStats.generatedAt', { date: data.generated_at ? new Date(data.generated_at).toLocaleString('fr-FR') : '' })}
           </Typography>
         </Stack>
       )}

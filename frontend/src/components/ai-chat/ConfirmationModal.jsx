@@ -27,8 +27,10 @@ import {
   alpha,
   Slide,
   Tooltip,
+  Chip,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Receipt,
   Person,
@@ -65,6 +67,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
  * Modal de confirmation universelle pour création d'entités avec un design de haut calibre.
  */
 const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) => {
+  const { t } = useTranslation(['aiChat', 'common']);
   const { format: fmt, symbol } = useCurrency();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -116,69 +119,69 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
     invoice: {
       icon: <Receipt />,
       color: theme.palette.success.main,
-      title: 'Facture',
-      subtitle: 'Vérifiez les détails de la facture avant finalisation',
+      title: t('aiChat:confirmationModal.entities.invoice.title'),
+      subtitle: t('aiChat:confirmationModal.entities.invoice.subtitle'),
       fields: [
-        { name: 'client_name', label: 'Client', icon: <Person />, required: true, fullWidth: true },
-        { name: 'client_email', label: 'Email du client', icon: <Email />, type: 'email', fullWidth: true },
-        { name: 'client_phone', label: 'Téléphone du client', icon: <Phone />, type: 'tel', fullWidth: true },
-        { name: 'title', label: 'Titre de la facture', icon: <Description />, required: true, fullWidth: true },
-        { name: 'total_amount', label: 'Montant total', icon: <Euro />, type: 'number', required: true },
-        { name: 'due_date', label: "Date d'échéance", icon: <CalendarToday />, type: 'date', required: true },
-        { name: 'description', label: 'Description', icon: <Description />, multiline: true, rows: 3, fullWidth: true },
+        { name: 'client_name', label: t('aiChat:confirmationModal.fields.client'), icon: <Person />, required: true, fullWidth: true },
+        { name: 'client_email', label: t('aiChat:confirmationModal.fields.clientEmail'), icon: <Email />, type: 'email', fullWidth: true },
+        { name: 'client_phone', label: t('aiChat:confirmationModal.fields.clientPhone'), icon: <Phone />, type: 'tel', fullWidth: true },
+        { name: 'title', label: t('aiChat:confirmationModal.fields.invoiceTitle'), icon: <Description />, required: true, fullWidth: true },
+        { name: 'total_amount', label: t('aiChat:confirmationModal.fields.totalAmount'), icon: <Euro />, type: 'number', required: true },
+        { name: 'due_date', label: t('aiChat:confirmationModal.fields.dueDate'), icon: <CalendarToday />, type: 'date', required: true },
+        { name: 'description', label: t('common:labels.description'), icon: <Description />, multiline: true, rows: 3, fullWidth: true },
       ],
     },
     client: {
       icon: <Person />,
       color: theme.palette.primary.main,
-      title: 'Client',
-      subtitle: 'Création d\'une nouvelle fiche client',
+      title: t('aiChat:confirmationModal.entities.client.title'),
+      subtitle: t('aiChat:confirmationModal.entities.client.subtitle'),
       fields: [
-        { name: 'name', label: 'Nom', icon: <Person />, required: true, fullWidth: true },
-        { name: 'email', label: 'Email', icon: <Email />, type: 'email', fullWidth: true },
-        { name: 'phone', label: 'Téléphone', icon: <Phone />, type: 'tel' },
-        { name: 'contact_person', label: 'Personne de contact', icon: <ContactPage /> },
-        { name: 'address', label: 'Adresse', icon: <Home />, multiline: true, rows: 2, fullWidth: true },
-        { name: 'payment_terms', label: 'Conditions de paiement', icon: <Euro /> },
-        { name: 'tax_id', label: 'Numéro fiscal', icon: <Badge /> },
+        { name: 'name', label: t('common:labels.name'), icon: <Person />, required: true, fullWidth: true },
+        { name: 'email', label: t('aiChat:confirmationModal.fields.email'), icon: <Email />, type: 'email', fullWidth: true },
+        { name: 'phone', label: t('common:labels.phone'), icon: <Phone />, type: 'tel' },
+        { name: 'contact_person', label: t('aiChat:confirmationModal.fields.contactPerson'), icon: <ContactPage /> },
+        { name: 'address', label: t('common:labels.address'), icon: <Home />, multiline: true, rows: 2, fullWidth: true },
+        { name: 'payment_terms', label: t('aiChat:confirmationModal.fields.paymentTerms'), icon: <Euro /> },
+        { name: 'tax_id', label: t('aiChat:confirmationModal.fields.taxId'), icon: <Badge /> },
       ],
     },
     supplier: {
       icon: <Business />,
       color: theme.palette.info.main,
-      title: 'Fournisseur',
-      subtitle: 'Création d\'une nouvelle fiche fournisseur',
+      title: t('aiChat:confirmationModal.entities.supplier.title'),
+      subtitle: t('aiChat:confirmationModal.entities.supplier.subtitle'),
       fields: [
-        { name: 'name', label: 'Nom', icon: <Business />, required: true, fullWidth: true },
-        { name: 'contact_person', label: 'Personne de contact', icon: <ContactPage />, fullWidth: true },
-        { name: 'email', label: 'Email', icon: <Email />, type: 'email', fullWidth: true },
-        { name: 'phone', label: 'Téléphone', icon: <Phone />, type: 'tel' },
-        { name: 'city', label: 'Ville', icon: <LocationCity /> },
-        { name: 'address', label: 'Adresse', icon: <Home />, multiline: true, rows: 2, fullWidth: true },
+        { name: 'name', label: t('common:labels.name'), icon: <Business />, required: true, fullWidth: true },
+        { name: 'contact_person', label: t('aiChat:confirmationModal.fields.contactPerson'), icon: <ContactPage />, fullWidth: true },
+        { name: 'email', label: t('aiChat:confirmationModal.fields.email'), icon: <Email />, type: 'email', fullWidth: true },
+        { name: 'phone', label: t('common:labels.phone'), icon: <Phone />, type: 'tel' },
+        { name: 'city', label: t('common:labels.city'), icon: <LocationCity /> },
+        { name: 'address', label: t('common:labels.address'), icon: <Home />, multiline: true, rows: 2, fullWidth: true },
       ],
     },
     purchase_order: {
       icon: <ShoppingCart />,
       color: theme.palette.warning.main,
-      title: 'Bon de Commande',
-      subtitle: 'Vérifiez les détails du bon de commande',
+      title: t('aiChat:confirmationModal.entities.purchase_order.title'),
+      subtitle: t('aiChat:confirmationModal.entities.purchase_order.subtitle'),
       fields: [
-        { name: 'supplier_name', label: 'Fournisseur', icon: <Business />, required: true, fullWidth: true },
-        { name: 'total_amount', label: 'Montant total', icon: <Euro />, type: 'number', required: true },
-        { name: 'expected_delivery_date', label: 'Date de livraison prévue', icon: <CalendarToday />, type: 'date' },
-        { name: 'description', label: 'Description', icon: <Description />, multiline: true, rows: 3, fullWidth: true },
+        { name: 'supplier_name', label: t('aiChat:confirmationModal.fields.supplier'), icon: <Business />, required: true, fullWidth: true },
+        { name: 'total_amount', label: t('aiChat:confirmationModal.fields.totalAmount'), icon: <Euro />, type: 'number', required: true },
+        { name: 'expected_delivery_date', label: t('aiChat:confirmationModal.fields.expectedDeliveryDate'), icon: <CalendarToday />, type: 'date' },
+        { name: 'description', label: t('common:labels.description'), icon: <Description />, multiline: true, rows: 3, fullWidth: true },
       ],
     },
     product: {
       icon: <Inventory />,
       color: theme.palette.secondary.main,
-      title: 'Produit',
-      subtitle: 'Ajout d\'un nouveau produit au catalogue',
+      title: t('aiChat:confirmationModal.entities.product.title'),
+      subtitle: t('aiChat:confirmationModal.entities.product.subtitle'),
       fields: [
-        { name: 'name', label: 'Nom du produit', icon: <Inventory />, required: true, fullWidth: true },
-        { name: 'reference', label: 'Référence', icon: <Badge />, required: true },
-        { name: 'price', label: 'Prix unitaire', icon: <Euro />, type: 'number', required: true },
-        { name: 'description', label: 'Description', icon: <Description />, multiline: true, rows: 3, fullWidth: true },
+        { name: 'name', label: t('aiChat:confirmationModal.fields.productName'), icon: <Inventory />, required: true, fullWidth: true },
+        { name: 'reference', label: t('aiChat:confirmationModal.fields.reference'), icon: <Badge />, required: true },
+        { name: 'price', label: t('common:labels.unitPrice'), icon: <Euro />, type: 'number', required: true },
+        { name: 'description', label: t('common:labels.description'), icon: <Description />, multiline: true, rows: 3, fullWidth: true },
       ],
     },
   };
@@ -219,7 +222,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
     const newErrors = {};
     config.fields.forEach(field => {
       if (field.required && !formData[field.name]) {
-        newErrors[field.name] = 'Ce champ est requis';
+        newErrors[field.name] = t('common:validation.required');
       }
     });
     setErrors(newErrors);
@@ -294,7 +297,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
             </motion.div>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em', mb: 0.5 }}>
-                Vérification : {config.title}
+                {t('aiChat:confirmationModal.verification', { entity: config.title })}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                 {config.subtitle}
@@ -335,7 +338,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                   '& .MuiAlert-icon': { color: entityColor }
                 }}
               >
-                L'IA a préparé ces informations. Vous pouvez les modifier avant de confirmer la création.
+                {t('aiChat:confirmationModal.aiPrepared')}
               </Alert>
             </Grid>
 
@@ -381,10 +384,10 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 1 }}>
                       <ShoppingCart sx={{ color: entityColor }} />
-                      Articles & Prestations
+                      {t('aiChat:confirmationModal.itemsTitle')}
                     </Typography>
                     <Chip 
-                      label={`${items.length} ligne${items.length > 1 ? 's' : ''}`}
+                      label={t('aiChat:confirmationModal.lines', { count: items.length })}
                       size="small"
                       sx={{ fontWeight: 700, bgcolor: alpha(entityColor, 0.1), color: entityColor }}
                     />
@@ -404,10 +407,10 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                       <Table size="small">
                         <TableHead>
                           <TableRow sx={{ bgcolor: alpha(theme.palette.action.hover, 0.05) }}>
-                            <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Désignation</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>Qté</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>P.U.</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>Total</TableCell>
+                            <TableCell sx={{ fontWeight: 700, py: 1.5 }}>{t('aiChat:confirmationModal.colDesignation')}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>{t('aiChat:confirmationModal.colQty')}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>{t('aiChat:confirmationModal.colUnitPrice')}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>{t('common:labels.total')}</TableCell>
                             <TableCell align="center" width={50}></TableCell>
                           </TableRow>
                         </TableHead>
@@ -436,7 +439,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                         </TableBody>
                       </Table>
                       <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', bgcolor: alpha(entityColor, 0.03), borderTop: `1px solid ${theme.palette.divider}` }}>
-                        <Typography variant="subtitle2" sx={{ mr: 2, fontWeight: 600 }}>Total HT :</Typography>
+                        <Typography variant="subtitle2" sx={{ mr: 2, fontWeight: 600 }}>{t('aiChat:confirmationModal.subtotal')}</Typography>
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: entityColor, fontSize: '1.1rem' }}>
                           {fmt(items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0))}
                         </Typography>
@@ -456,7 +459,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                     }}
                   >
                     <Typography variant="caption" sx={{ mb: 2, fontWeight: 700, color: entityColor, display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Ajouter manuellement une ligne
+                      {t('aiChat:confirmationModal.addLineManually')}
                     </Typography>
                     <Grid container spacing={2} alignItems="flex-end">
                       <Grid item xs={12} sm={5}>
@@ -481,7 +484,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                             <TextField
                               {...params}
                               size="small"
-                              label="Produit / Service"
+                              label={t('aiChat:confirmationModal.productService')}
                               variant="outlined"
                               sx={{
                                 bgcolor: theme.palette.background.paper,
@@ -493,7 +496,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                             <li {...props}>
                               <Box>
                                 <Typography variant="body2" fontWeight={600}>{option.name}</Typography>
-                                <Typography variant="caption" color="text.secondary">Ref: {option.reference} - {fmt(option.price || 0)}</Typography>
+                                <Typography variant="caption" color="text.secondary">{t('aiChat:confirmationModal.productOption', { reference: option.reference, price: fmt(option.price || 0) })}</Typography>
                               </Box>
                             </li>
                           )}
@@ -503,7 +506,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                         <TextField
                           fullWidth
                           size="small"
-                          label="Qté"
+                          label={t('aiChat:confirmationModal.qty')}
                           type="number"
                           value={newItem.quantity}
                           onChange={(e) => setNewItem({ ...newItem, quantity: parseFloat(e.target.value) || 0 })}
@@ -515,7 +518,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                         <TextField
                           fullWidth
                           size="small"
-                          label={`Prix (${symbol})`}
+                          label={t('aiChat:confirmationModal.priceWithSymbol', { symbol })}
                           type="number"
                           value={newItem.unit_price}
                           onChange={(e) => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}
@@ -539,7 +542,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
                             '&:hover': { bgcolor: entityColor, opacity: 0.9 },
                           }}
                         >
-                          Ajouter
+                          {t('common:buttons.add')}
                         </Button>
                       </Grid>
                     </Grid>
@@ -560,7 +563,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.disabled' }}>
           <HelpOutline fontSize="small" />
-          <Typography variant="caption">Besoin d'aide ? Contactez le support IA.</Typography>
+          <Typography variant="caption">{t('aiChat:confirmationModal.help')}</Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
@@ -573,7 +576,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
               textTransform: 'none'
             }}
           >
-            Annuler
+            {t('common:buttons.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -594,7 +597,7 @@ const ConfirmationModal = ({ open, onClose, entityType, draftData, onConfirm }) 
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >
-            Finaliser la création
+            {t('aiChat:confirmationModal.finalize')}
           </Button>
         </Box>
       </DialogActions>

@@ -172,7 +172,7 @@ function PurchaseOrders() {
     if (!generatedPdfBlob) return;
 
     if (action === 'download') {
-      downloadPDF(generatedPdfBlob, `rapport-bons-commande-${new Date().getTime()}.pdf`);
+      downloadPDF(generatedPdfBlob, t('purchaseOrders:report.fileName', { timestamp: new Date().getTime() }));
       enqueueSnackbar(t('purchaseOrders:messages.pdfDownloadedSuccess', 'PDF téléchargé avec succès'), {
         variant: 'success',
       });
@@ -250,10 +250,10 @@ function PurchaseOrders() {
         accentColor={accent}
         code={po.po_number}
         status={{ label: getStatusLabel(po.status), color: accent }}
-        title={po.supplier_name || po.title || 'Bon de commande'}
+        title={po.supplier_name || po.title || t('purchaseOrders:labels.poFallback')}
         subtitle={po.supplier_name && po.title ? po.title : ''}
         amount={po.total_amount != null ? formatCurrency(po.total_amount) : null}
-        footer={po.expected_delivery_date ? `Livraison ${formatDate(po.expected_delivery_date)}` : (po.required_date ? formatDate(po.required_date) : '')}
+        footer={po.expected_delivery_date ? t('purchaseOrders:labels.deliveryOn', { date: formatDate(po.expected_delivery_date) }) : (po.required_date ? formatDate(po.required_date) : '')}
         onClick={() => navigate(`/purchase-orders/${po.id}`)}
         actions={(
           <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigate(`/purchase-orders/${po.id}/edit`); }}
@@ -277,18 +277,18 @@ function PurchaseOrders() {
         activeKey={quickFilter}
         onSelect={handleQuickFilterClick}
         kpis={[
-          { key: '', label: 'Total commandes', value: formatCurrency(totalAmount), sub: totalPOs + ' BC', color: '#2563eb' },
-          { key: 'approved', label: 'Approuves', value: approvedPOs, sub: 'valides', color: '#10b981' },
-          { key: 'sent', label: 'Envoyes', value: pendingPOs, sub: 'en attente', color: '#f59e0b' },
-          { key: 'draft', label: 'Brouillons', value: draftPOs, sub: 'a finaliser', color: '#94a3b8' },
-          { key: 'cancelled', label: 'Annules', value: cancelledPOs, sub: 'clotures', color: '#ef4444' },
+          { key: '', label: t('purchaseOrders:kpi.total'), value: formatCurrency(totalAmount), sub: t('purchaseOrders:kpi.poCount', { count: totalPOs }), color: '#2563eb' },
+          { key: 'approved', label: t('purchaseOrders:kpi.approved'), value: approvedPOs, sub: t('purchaseOrders:kpi.approvedSub'), color: '#10b981' },
+          { key: 'sent', label: t('purchaseOrders:kpi.sent'), value: pendingPOs, sub: t('purchaseOrders:kpi.sentSub'), color: '#f59e0b' },
+          { key: 'draft', label: t('purchaseOrders:kpi.drafts'), value: draftPOs, sub: t('purchaseOrders:kpi.draftsSub'), color: '#94a3b8' },
+          { key: 'cancelled', label: t('purchaseOrders:kpi.cancelled'), value: cancelledPOs, sub: t('purchaseOrders:kpi.cancelledSub'), color: '#ef4444' },
         ]}
       />
 
       <NeumorphicSearch
         value={searchTerm}
         onChange={setSearchTerm}
-        placeholder="Rechercher un bon de commande, un fournisseur..."
+        placeholder={t('purchaseOrders:search.placeholderFull')}
       />
 
       {filteredPurchaseOrders.length === 0 ? (
@@ -323,14 +323,14 @@ function PurchaseOrders() {
           <Box sx={{ pt: 2 }}>
             {/* Période */}
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-               Période (optionnel)
+               {t('purchaseOrders:report.period')}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-              Filtrer par période - laisser vide pour tout inclure
+              {t('purchaseOrders:report.periodHelp')}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
               <TextField
-                label="Date de début"
+                label={t('purchaseOrders:report.dateStart')}
                 type="date"
                 value={reportFilters.dateStart}
                 onChange={(e) => setReportFilters({ ...reportFilters, dateStart: e.target.value })}
@@ -340,7 +340,7 @@ function PurchaseOrders() {
                 inputProps={{ max: reportFilters.dateEnd || undefined }}
               />
               <TextField
-                label="Date de fin"
+                label={t('purchaseOrders:report.dateEnd')}
                 type="date"
                 value={reportFilters.dateEnd}
                 onChange={(e) => setReportFilters({ ...reportFilters, dateEnd: e.target.value })}
@@ -356,12 +356,12 @@ function PurchaseOrders() {
             {/* Sélection de bons de commande */}
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                 Bons de commande à inclure
+                 {t('purchaseOrders:report.itemsToInclude')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                 {reportFilters.selectedPOs.length > 0
-                  ? `${reportFilters.selectedPOs.length} bon(s) de commande sélectionné(s)`
-                  : 'Tous les bons de commande filtrés seront inclus'}
+                  ? t('purchaseOrders:report.selectedCount', { count: reportFilters.selectedPOs.length })
+                  : t('purchaseOrders:report.allIncluded')}
               </Typography>
               
               <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
@@ -409,13 +409,13 @@ function PurchaseOrders() {
                     size="small"
                     onClick={() => setReportFilters({ ...reportFilters, selectedPOs: filteredPurchaseOrders.map(po => po.id) })}
                   >
-                    Tout sélectionner
+                    {t('purchaseOrders:report.selectAll')}
                   </Button>
                   <Button
                     size="small"
                     onClick={() => setReportFilters({ ...reportFilters, selectedPOs: [] })}
                   >
-                    Tout désélectionner
+                    {t('purchaseOrders:report.deselectAll')}
                   </Button>
                 </Box>
               )}
@@ -424,9 +424,9 @@ function PurchaseOrders() {
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="caption">
                 {reportFilters.selectedPOs.length > 0
-                  ? `Un rapport sera généré avec ${reportFilters.selectedPOs.length} bon(s) de commande sélectionné(s)`
-                  : `Un rapport sera généré avec tous les bons de commande (${filteredPurchaseOrders.length})`}
-                {(reportFilters.dateStart || reportFilters.dateEnd) && ' pour la période spécifiée'}
+                  ? t('purchaseOrders:report.summarySelected', { count: reportFilters.selectedPOs.length })
+                  : t('purchaseOrders:report.summaryAll', { count: filteredPurchaseOrders.length })}
+                {(reportFilters.dateStart || reportFilters.dateEnd) && t('purchaseOrders:report.forPeriod')}
                 .
               </Typography>
             </Alert>
@@ -434,7 +434,7 @@ function PurchaseOrders() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setReportConfigOpen(false)}>
-            Annuler
+            {t('purchaseOrders:buttons.cancel')}
           </Button>
           <Button
             onClick={handleConfigureReport}
@@ -442,7 +442,7 @@ function PurchaseOrders() {
             color="success"
             startIcon={<PictureAsPdf />}
           >
-            Générer le Rapport
+            {t('purchaseOrders:report.generate')}
           </Button>
         </DialogActions>
       </Dialog>

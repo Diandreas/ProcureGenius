@@ -2,7 +2,12 @@
   "nav": {
     "login": "Connexion",
     "pricing": "Tarifs",
-    "freeTrial": "Essai gratuit"
+    "freeTrial": "Essai gratuit",
+    "goToDashboard": "Tableau de bord",
+    "logoAlt": "Logo Procura",
+    "switchLanguage": "Changer de langue / Switch Language",
+    "documentation": "Documentation",
+    "blog": "Blog"
   },
   "hero": {
     "badge": "Essayez ici, sans compte",
@@ -117,13 +122,20 @@
   "interface": {
     "badge": "Interface unifiée",
     "title": "Gagnez en clarté avec un tableau de bord interactif",
-    "desc": "Centralisez vos achats, factures, et suivi d'activités sur une seule vue. Dites adieu aux tableurs et prenez des décisions rapides avec confiance."
+    "desc": "Centralisez vos achats, factures, et suivi d'activités sur une seule vue. Dites adieu aux tableurs et prenez des décisions rapides avec confiance.",
+    "imageAlt": "Interface Procura"
   },
   "footer": {
     "title": "L'avenir de votre gestion commence ici.",
     "subtitle": "Rejoignez les centaines d'entreprises qui ont déjà franchi le pas.",
     "cta": "Démarrer l'essai",
-    "rights": "© 2026 Procura. Tous droits réservés."
+    "rights": "© 2026 Procura. Tous droits réservés.",
+    "product": "Produit",
+    "features": "Fonctionnalités",
+    "resources": "Ressources",
+    "faq": "FAQ",
+    "support": "Support & Contact",
+    "allRightsReserved": "Tous droits réservés."
   },
   "trust": {
     "offline": {
@@ -205,7 +217,8 @@
     "titleHighlight": "du temps",
     "subtitle": "Créez votre compte en 2 minutes. Un mois offert, sans carte.",
     "start": "Commencer gratuitement",
-    "login": "Se connecter"
+    "login": "Se connecter",
+    "questionMark": " ?"
   },
   "liveDemo": {
     "title": "Assistant Procura — essai en direct",

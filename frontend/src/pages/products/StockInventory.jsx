@@ -8,6 +8,7 @@ import {
 import { ArrowBack, Checklist, QrCodeScanner, Search } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation, Trans } from 'react-i18next';
 import { stockAPI, warehousesAPI } from '../../services/api';
 import useCurrency from '../../hooks/useCurrency';
 import CameraScanner from '../../components/stock/CameraScanner';
@@ -23,6 +24,7 @@ export default function StockInventory() {
 }
 
 function InventoryHome() {
+  const { t, i18n } = useTranslation(['stock']);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [list, setList] = useState(null);
@@ -43,7 +45,7 @@ function InventoryHome() {
       const r = await stockAPI.startInventory(warehouse ? { warehouse_id: warehouse } : {});
       navigate(`/products/inventory/${r.data.id}`);
     } catch (e) {
-      enqueueSnackbar(e.response?.data?.error || "Impossible d'ouvrir l'inventaire", { variant: 'error' });
+      enqueueSnackbar(e.response?.data?.error || t('stock:inventory.openError'), { variant: 'error' });
       setStarting(false);
     }
   };
@@ -52,43 +54,44 @@ function InventoryHome() {
     <Box p={{ xs: 0, sm: 1 }}>
       <Stack direction="row" alignItems="center" spacing={1} mb={2}>
         <IconButton onClick={() => navigate('/products')}><ArrowBack /></IconButton>
-        <Typography variant="h5" fontWeight={800}>Inventaire</Typography>
+        <Typography variant="h5" fontWeight={800}>{t('stock:inventory.title')}</Typography>
       </Stack>
 
       {draft ? (
         <Alert severity="info" sx={{ mb: 2 }} action={
-          <Button color="inherit" onClick={() => navigate(`/products/inventory/${draft.id}`)}>Continuer</Button>}>
-          Inventaire <strong>{draft.reference}</strong> en cours : {draft.lines_counted}/{draft.lines_total} lignes comptées.
+          <Button color="inherit" onClick={() => navigate(`/products/inventory/${draft.id}`)}>{t('stock:inventory.continue')}</Button>}>
+          <Trans t={t} i18nKey="stock:inventory.inProgress"
+            values={{ reference: draft.reference, counted: draft.lines_counted, total: draft.lines_total }}
+            components={{ strong: <strong /> }} />
         </Alert>
       ) : (
         <Card sx={{ mb: 3, borderRadius: 3 }}>
           <CardContent>
-            <Typography variant="h6" fontWeight={700} gutterBottom>Compter mon stock</Typography>
+            <Typography variant="h6" fontWeight={700} gutterBottom>{t('stock:inventory.countMyStock')}</Typography>
             <Typography variant="body2" color="text.secondary" mb={2}>
-              Comptez ce qui est réellement en rayon ou en réserve. Vous pouvez vous arrêter et reprendre plus tard ;
-              rien ne change dans le stock tant que vous n'avez pas appliqué l'inventaire.
+              {t('stock:inventory.countMyStockHelp')}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
               {warehouses.length > 0 && (
                 <FormControl sx={{ minWidth: 240 }} size="small">
-                  <InputLabel id="inv-depot">Entrepôt</InputLabel>
-                  <Select labelId="inv-depot" label="Entrepôt" value={warehouse} onChange={(e) => setWarehouse(e.target.value)}>
-                    <MenuItem value="">Tout le stock</MenuItem>
+                  <InputLabel id="inv-depot">{t('stock:common.warehouse')}</InputLabel>
+                  <Select labelId="inv-depot" label={t('stock:common.warehouse')} value={warehouse} onChange={(e) => setWarehouse(e.target.value)}>
+                    <MenuItem value="">{t('stock:inventory.allStock')}</MenuItem>
                     {warehouses.map((w) => <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>)}
                   </Select>
                 </FormControl>
               )}
               <Button variant="contained" size="large" startIcon={<Checklist />} onClick={start} disabled={starting}>
-                Commencer un inventaire
+                {t('stock:inventory.start')}
               </Button>
             </Stack>
           </CardContent>
         </Card>
       )}
 
-      <Typography variant="overline" color="text.secondary">Historique</Typography>
+      <Typography variant="overline" color="text.secondary">{t('stock:inventory.history')}</Typography>
       {list === null ? <CircularProgress size={24} /> : list.length === 0 ? (
-        <Typography color="text.secondary">Aucun inventaire pour l'instant.</Typography>
+        <Typography color="text.secondary">{t('stock:inventory.empty')}</Typography>
       ) : (
         <Stack spacing={1}>
           {list.map((s) => (
@@ -98,7 +101,7 @@ function InventoryHome() {
                   <Box>
                     <Typography fontWeight={700}>{s.reference}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {new Date(s.created_at).toLocaleDateString('fr-FR')} · {s.warehouse || 'Tout le stock'} · {s.lines_counted}/{s.lines_total} comptées
+                      {new Date(s.created_at).toLocaleDateString(i18n.language)} · {s.warehouse || t('stock:inventory.allStock')} · {t('stock:inventory.countedOf', { counted: s.lines_counted, total: s.lines_total })}
                     </Typography>
                   </Box>
                   <Chip size="small" label={s.status_display}
@@ -114,6 +117,7 @@ function InventoryHome() {
 }
 
 function InventorySessionView({ id }) {
+  const { t } = useTranslation(['stock']);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { format } = useCurrency();
@@ -134,7 +138,7 @@ function InventorySessionView({ id }) {
     setInv(r.data);
     setValues(Object.fromEntries(r.data.lines.map((l) => [l.id, l.counted ?? ''])));
   }, [id]);
-  useEffect(() => { load().catch(() => enqueueSnackbar('Inventaire introuvable', { variant: 'error' })); }, [load, enqueueSnackbar]);
+  useEffect(() => { load().catch(() => enqueueSnackbar(t('stock:inventory.notFound'), { variant: 'error' })); }, [load, enqueueSnackbar, t]);
 
   const editable = inv?.status === 'draft';
   const lines = inv?.lines || [];
@@ -165,7 +169,7 @@ function InventorySessionView({ id }) {
       }
       line.counted = raw === '' ? null : Number(raw);
     } catch {
-      enqueueSnackbar('Comptage non enregistré (connexion ?)', { variant: 'error' });
+      enqueueSnackbar(t('stock:inventory.countNotSaved'), { variant: 'error' });
     }
   };
 
@@ -177,7 +181,7 @@ function InventorySessionView({ id }) {
       const bid = r.data.batch?.id;
       const line = lines.find((l) => l.product_id === pid && (!bid || l.batch_id === bid)) || lines.find((l) => l.product_id === pid);
       if (!line) {
-        enqueueSnackbar(`${r.data.product.name} n'est pas dans cet inventaire`, { variant: 'warning' });
+        enqueueSnackbar(t('stock:inventory.notInInventory', { name: r.data.product.name }), { variant: 'warning' });
         return;
       }
       setSearch('');
@@ -186,9 +190,9 @@ function InventorySessionView({ id }) {
         const el = inputs.current[line.id];
         if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); el.select?.(); }
       }, 100);
-      enqueueSnackbar(`${r.data.product.name} — tapez la quantité comptée`, { variant: 'info' });
+      enqueueSnackbar(t('stock:inventory.typeCountedQty', { name: r.data.product.name }), { variant: 'info' });
     } catch (e) {
-      enqueueSnackbar(e.response?.status === 404 ? `Code inconnu : ${code}` : 'Lecture impossible', { variant: 'warning' });
+      enqueueSnackbar(e.response?.status === 404 ? t('stock:common.unknownCode', { code }) : t('stock:common.readError'), { variant: 'warning' });
     }
   };
 
@@ -199,16 +203,16 @@ function InventorySessionView({ id }) {
       setReport(r.data.report);
       setInv(r.data.inventory);
       setConfirm(false);
-      enqueueSnackbar('Inventaire appliqué : le stock est à jour', { variant: 'success' });
+      enqueueSnackbar(t('stock:inventory.applied'), { variant: 'success' });
     } catch (e) {
-      enqueueSnackbar(e.response?.data?.error || "Échec de l'application", { variant: 'error' });
+      enqueueSnackbar(e.response?.data?.error || t('stock:inventory.applyError'), { variant: 'error' });
     } finally {
       setBusy(false);
     }
   };
 
   const cancel = async () => {
-    if (!window.confirm('Annuler cet inventaire ? Les comptages seront abandonnés, le stock ne change pas.')) return;
+    if (!window.confirm(t('stock:inventory.cancelConfirm'))) return;
     await stockAPI.cancelInventory(id);
     navigate('/products/inventory');
   };
@@ -222,37 +226,37 @@ function InventorySessionView({ id }) {
         <IconButton onClick={() => navigate('/products/inventory')}><ArrowBack /></IconButton>
         <Box flex={1} minWidth={0}>
           <Typography variant="h6" fontWeight={800} noWrap>{inv.reference}</Typography>
-          <Typography variant="caption" color="text.secondary">{inv.warehouse || 'Tout le stock'} · {inv.status_display}</Typography>
+          <Typography variant="caption" color="text.secondary">{inv.warehouse || t('stock:inventory.allStock')} · {inv.status_display}</Typography>
         </Box>
-        {editable && <Button color="inherit" size="small" onClick={cancel}>Annuler</Button>}
+        {editable && <Button color="inherit" size="small" onClick={cancel}>{t('stock:common.cancel')}</Button>}
       </Stack>
 
       <LinearProgress variant="determinate" value={pct} sx={{ height: 8, borderRadius: 4, mb: 1 }} />
       <Typography variant="body2" color="text.secondary" mb={2}>
-        {counted.length}/{lines.length} comptées · {ecarts.length} écart(s){ecarts.length ? ` · ${format(valeur)}` : ''}
+        {t('stock:inventory.countedOf', { counted: counted.length, total: lines.length })} · {t('stock:inventory.diffCount', { count: ecarts.length })}{ecarts.length ? ` · ${format(valeur)}` : ''}
       </Typography>
 
       {report && (
         <Alert severity="success" sx={{ mb: 2 }}>
-          {report.adjusted.length} produit(s) ajusté(s), {report.unchanged} sans écart, {report.not_counted} non compté(s).
-          Écart en valeur (prix d'achat) : <strong>{format(report.value)}</strong>.
+          {t('stock:inventory.reportAdjusted', { count: report.adjusted.length })}, {t('stock:inventory.reportUnchanged', { count: report.unchanged })}, {t('stock:inventory.reportNotCounted', { count: report.not_counted })}.
+          {' '}{t('stock:inventory.reportValue')} <strong>{format(report.value)}</strong>.
         </Alert>
       )}
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} mb={2}>
-        <TextField size="small" fullWidth placeholder="Chercher un produit, une référence, un lot…" value={search}
+        <TextField size="small" fullWidth placeholder={t('stock:inventory.searchPlaceholder')} value={search}
           onChange={(e) => setSearch(e.target.value)}
           InputProps={{ startAdornment: <InputAdornment position="start"><Search /></InputAdornment> }} />
         {editable && (
           <Button variant="contained" startIcon={<QrCodeScanner />} onClick={() => setScanOpen(true)} sx={{ whiteSpace: 'nowrap' }}>
-            Scanner
+            {t('stock:common.scan')}
           </Button>
         )}
       </Stack>
       <ToggleButtonGroup size="small" exclusive value={show} onChange={(_, v) => v && setShow(v)} sx={{ mb: 1.5 }}>
-        <ToggleButton value="all">Tout</ToggleButton>
-        <ToggleButton value="todo">À compter</ToggleButton>
-        <ToggleButton value="diff">Écarts</ToggleButton>
+        <ToggleButton value="all">{t('stock:inventory.filterAll')}</ToggleButton>
+        <ToggleButton value="todo">{t('stock:inventory.filterTodo')}</ToggleButton>
+        <ToggleButton value="diff">{t('stock:inventory.filterDiff')}</ToggleButton>
       </ToggleButtonGroup>
 
       <Card sx={{ borderRadius: 3 }}>
@@ -260,10 +264,10 @@ function InventorySessionView({ id }) {
           {!isMobile && (
             <TableHead>
               <TableRow>
-                <TableCell>Produit</TableCell>
-                <TableCell align="right">Attendu</TableCell>
-                <TableCell align="right" sx={{ width: 140 }}>Compté</TableCell>
-                <TableCell align="right">Écart</TableCell>
+                <TableCell>{t('stock:common.product')}</TableCell>
+                <TableCell align="right">{t('stock:inventory.expected')}</TableCell>
+                <TableCell align="right" sx={{ width: 140 }}>{t('stock:inventory.counted')}</TableCell>
+                <TableCell align="right">{t('stock:inventory.difference')}</TableCell>
               </TableRow>
             </TableHead>
           )}
@@ -277,25 +281,25 @@ function InventorySessionView({ id }) {
                   <TableCell sx={{ py: 1 }}>
                     <Typography variant="body2" fontWeight={600}>{l.product}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {l.reference}{l.batch_number ? ` · lot ${l.batch_number}` : ''}{isMobile ? ` · attendu ${l.expected}` : ''}
+                      {l.reference}{l.batch_number ? ` · ${t('stock:common.batchInline', { batch: l.batch_number })}` : ''}{isMobile ? ` · ${t('stock:inventory.expectedInline', { qty: l.expected })}` : ''}
                     </Typography>
                   </TableCell>
                   {!isMobile && <TableCell align="right">{l.expected}</TableCell>}
                   <TableCell align="right" sx={{ width: isMobile ? 96 : 140 }}>
                     <TextField size="small" type="number" value={v ?? ''} disabled={!editable}
                       inputRef={(el) => { inputs.current[l.id] = el; }}
-                      inputProps={{ min: 0, inputMode: 'numeric', style: { textAlign: 'right' }, 'aria-label': `Quantité comptée ${l.product}` }}
+                      inputProps={{ min: 0, inputMode: 'numeric', style: { textAlign: 'right' }, 'aria-label': t('stock:inventory.countedQtyAria', { product: l.product }) }}
                       onChange={(e) => setValues((x) => ({ ...x, [l.id]: e.target.value }))}
                       onBlur={(e) => save(l, e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }} />
                   </TableCell>
                   <TableCell align="right" sx={{ pl: 0 }}>
                     {has && (diff === 0
-                      ? <Chip size="small" label="OK" color="success" variant="outlined" />
+                      ? <Chip size="small" label={t('stock:inventory.ok')} color="success" variant="outlined" />
                       : <Chip size="small" label={diff > 0 ? `+${diff}` : diff} color={diff > 0 ? 'info' : 'error'} />)}
                     {!editable && l.applied_delta != null && l.applied_delta !== 0 && (
-                      <Tooltip title="Écart réellement appliqué (stock au moment de l'application)">
-                        <Typography variant="caption" display="block" color="text.secondary">appliqué {l.applied_delta > 0 ? '+' : ''}{l.applied_delta}</Typography>
+                      <Tooltip title={t('stock:inventory.appliedTooltip')}>
+                        <Typography variant="caption" display="block" color="text.secondary">{t('stock:inventory.appliedDelta', { delta: `${l.applied_delta > 0 ? '+' : ''}${l.applied_delta}` })}</Typography>
                       </Tooltip>
                     )}
                   </TableCell>
@@ -309,28 +313,27 @@ function InventorySessionView({ id }) {
       {editable && (
         <Box sx={{ position: 'sticky', bottom: { xs: 76, sm: 12 }, mt: 2, display: 'flex', justifyContent: 'center' }}>
           <Button variant="contained" color="success" size="large" disabled={counted.length === 0} onClick={() => setConfirm(true)}>
-            Appliquer l'inventaire
+            {t('stock:inventory.apply')}
           </Button>
         </Box>
       )}
 
-      <CameraScanner open={scanOpen} onClose={() => setScanOpen(false)} onDetected={onScan} title="Scanner un produit" />
+      <CameraScanner open={scanOpen} onClose={() => setScanOpen(false)} onDetected={onScan} title={t('stock:scan.scanProduct')} />
 
       <Dialog open={confirm} onClose={() => !busy && setConfirm(false)}>
-        <DialogTitle>Appliquer l'inventaire ?</DialogTitle>
+        <DialogTitle>{t('stock:inventory.applyConfirmTitle')}</DialogTitle>
         <DialogContent>
           <Typography gutterBottom>
-            {ecarts.length} écart(s) seront enregistrés comme ajustements de stock
-            {ecarts.length ? <> (valeur au prix d'achat : <strong>{format(valeur)}</strong>)</> : null}.
+            {t('stock:inventory.applyConfirmDiffs', { count: ecarts.length })}
+            {ecarts.length ? <> ({t('stock:inventory.applyConfirmValue')} <strong>{format(valeur)}</strong>)</> : null}.
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {lines.length - counted.length} ligne(s) non comptée(s) resteront inchangées. Les ventes faites depuis le début
-            du comptage sont prises en compte. Cette opération ne peut pas être annulée.
+            {t('stock:inventory.applyConfirmHelp', { count: lines.length - counted.length })}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirm(false)} disabled={busy}>Retour</Button>
-          <Button variant="contained" color="success" onClick={apply} disabled={busy}>Appliquer</Button>
+          <Button onClick={() => setConfirm(false)} disabled={busy}>{t('stock:common.back')}</Button>
+          <Button variant="contained" color="success" onClick={apply} disabled={busy}>{t('stock:inventory.applyShort')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

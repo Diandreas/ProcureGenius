@@ -531,7 +531,7 @@ function SupplierForm() {
                       }
                     }}
                   >
-                    {isSubmitting ? t('common:labels.saving', 'Enregistrement...') : (isEdit ? t('suppliers:form.buttons.save') : t('suppliers:form.buttons.create'))}
+                    {isSubmitting ? t('suppliers:form.saving') : (isEdit ? t('suppliers:form.buttons.save') : t('suppliers:form.buttons.create'))}
                   </Button>
                 </Box>
               </Grid>

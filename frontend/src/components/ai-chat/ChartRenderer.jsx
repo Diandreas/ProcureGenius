@@ -1,3 +1,5 @@
+import { deviseActuelle } from '../../hooks/useCurrency';
+import { formatCurrency } from '../../utils/currency';
 import React, { useMemo, memo } from 'react';
 import {
   LineChart,
@@ -17,6 +19,7 @@ import {
   Cell,
 } from 'recharts';
 import { Box, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Composant universel pour afficher des graphiques Recharts
@@ -27,6 +30,7 @@ import { Box, Typography, Paper, useTheme, useMediaQuery } from '@mui/material';
  * thème sombre — le défaut visuel le plus visible de l'interface IA.
  */
 const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
+  const { t, i18n } = useTranslation(['aiChat', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -84,10 +88,7 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
         dataKey.includes('amount') ||
         dataKey.includes('expenses'))
     ) {
-      return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR',
-      }).format(value);
+      return formatCurrency(value, deviseActuelle());
     }
 
     // Si c'est un nombre
@@ -292,7 +293,7 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            Aucune donnée à afficher
+            {t('aiChat:chartRenderer.noData')}
           </Typography>
         </Box>
       );
@@ -318,13 +319,13 @@ const ChartRenderer = ({ chartType, chartTitle, chartData, chartConfig }) => {
             }}
           >
             <Typography variant="body2" color="error">
-              Type de graphique non supporté: {chartType}
+              {t('aiChat:chartRenderer.unsupportedType', { type: chartType })}
             </Typography>
           </Box>
         );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chartType, chartData, chartConfig, theme.palette.mode, isMobile]);
+  }, [chartType, chartData, chartConfig, theme.palette.mode, isMobile, i18n.language]);
 
   return (
     <Box

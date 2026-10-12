@@ -5,18 +5,20 @@
 import React from 'react';
 import { Chip, Tooltip } from '@mui/material';
 import { CloudQueue } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * @param {object} record  l'enregistrement (affiche le badge si record._offline)
  * @param {boolean} compact  version icone seule
  */
 export default function OfflineBadge({ record, compact = false }) {
+  const { t } = useTranslation(['offline']);
   if (!record || !record._offline) return null;
 
-  const label = record._pending === 'update' ? 'Modif. en attente' : 'À synchroniser';
+  const label = record._pending === 'update' ? t('offline:badge.pendingUpdate') : t('offline:badge.toSync');
 
   return (
-    <Tooltip title="Sera synchronisé à la prochaine connexion" arrow>
+    <Tooltip title={t('offline:badge.tooltip')} arrow>
       <Chip
         size="small"
         icon={<CloudQueue sx={{ fontSize: 14 }} />}

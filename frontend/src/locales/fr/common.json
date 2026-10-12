@@ -164,6 +164,105 @@
       "later": "Plus tard",
       "iosHint": "Appuyez sur ",
       "iosHint2": " puis \"Sur l'écran d'accueil\""
+    },
+    "prompt": {
+      "snackbar": "Installer l'application pour un accès rapide et hors ligne",
+      "dialogTitle": "Installer l'application",
+      "benefitsTitle": "Avantages de l'installation",
+      "benefitOffline": "Accès hors ligne aux données",
+      "benefitLaunch": "Lancement rapide depuis l'écran d'accueil",
+      "benefitUpdates": "Mises à jour automatiques",
+      "installNow": "Installer maintenant",
+      "update": "Mettre à jour",
+      "updateAvailable": "Une nouvelle version de l'application est disponible",
+      "offline": "Vous êtes hors ligne - Certaines fonctionnalités peuvent être limitées"
     }
+  },
+  "guards": {
+    "lockedTitle": "Fonctionnalité réservée",
+    "lockedDescription": "Ce module est inclus dans un abonnement supérieur (Business ou Pro). Passez à un plan supérieur pour y accéder — essai 30 jours offert, sans carte.",
+    "viewPlans": "Voir les plans"
+  },
+  "featureGate": {
+    "defaultTitle": "Fonctionnalité Business",
+    "defaultDescription": "Cette fonctionnalité est incluse dans le plan Business. Passez à Business pour y accéder — essai 30 jours offert, sans carte.",
+    "discover": "Découvrir Business"
+  },
+  "upgradeLock": {
+    "unlockModule": "Débloquez {{moduleName}}",
+    "premiumFeature": "Fonctionnalité premium",
+    "description": "Ce module n'est pas inclus dans votre formule actuelle. Passez à un plan supérieur pour en profiter — essai 30 jours offert, sans carte.",
+    "seePlans": "Voir les formules",
+    "later": "Plus tard"
+  },
+  "priceHistory": {
+    "lastPurchase": "Dernier achat :",
+    "onDate": " le {{date}}",
+    "average": "Moy. :"
+  },
+  "quickCreate": {
+    "similarFound": "Des entités similaires ont été trouvées.",
+    "createError": "Erreur lors de la création",
+    "forceCreateError": "Erreur lors de la création forcée",
+    "similarEntities": "Entités similaires trouvées :",
+    "similarity": " ({{percent}}% similaire)",
+    "createAnywayQuestion": "Voulez-vous créer quand même ?",
+    "createAnyway": "Créer quand même",
+    "creating": "Création..."
+  },
+  "reportDialog": {
+    "defaultTitle": "Générer un Rapport PDF",
+    "defaultItemLabel": "élément",
+    "defaultItemsLabel": "éléments",
+    "period": "Période",
+    "periodHint": "Filtrer par période (optionnel - laisser vide pour tout inclure)",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "itemSelection": "Sélection d'{{itemsLabel}}",
+    "selectedCount": "{{count}} {{itemLabel}}(s) sélectionné(s)",
+    "selectAllHint": "Tout sélectionner pour inclure tous les {{itemsLabel}}",
+    "available": "{{count}} {{itemsLabel}} disponibles",
+    "selectAll": "Tout sélectionner",
+    "infoSelected": "Un rapport sera généré avec {{count}} {{itemLabel}}(s) sélectionné(s)",
+    "infoAll": "Un rapport sera généré avec tous les {{itemsLabel}} correspondant aux filtres",
+    "infoPeriod": " pour la période du {{start}} au {{end}}",
+    "infoFrom": " à partir du {{start}}",
+    "infoUntil": " jusqu'au {{end}}",
+    "generating": "Génération...",
+    "generate": "Générer le Rapport"
+  },
+  "emptyState": {
+    "defaultTitle": "Aucune donnée disponible",
+    "defaultDescription": "Il n'y a rien à afficher pour le moment."
+  },
+  "errorState": {
+    "defaultTitle": "Oups ! Une erreur s'est produite",
+    "defaultMessage": "Nous rencontrons des difficultés techniques. Veuillez réessayer.",
+    "retry": "Réessayer",
+    "backHome": "Retour à l'accueil"
+  },
+  "errorBoundary": {
+    "newVersionTitle": "Une nouvelle version est disponible",
+    "errorTitle": "Une erreur est survenue",
+    "newVersionText": "L'application a été mise à jour. Rechargez la page pour continuer.",
+    "errorText": "Un problème inattendu est survenu. Vous pouvez recharger la page ; si le problème persiste, réessayez plus tard.",
+    "reload": "Recharger la page",
+    "backHome": "Retour à l'accueil"
+  },
+  "loadingState": {
+    "defaultMessage": "Chargement en cours..."
+  },
+  "moduleQuickActions": {
+    "title": "Actions rapides IA",
+    "smartChip": "Intelligent",
+    "hint": "L'IA peut vous aider à automatiser ces tâches"
+  },
+  "mascot": {
+    "tip1": " Utilisez l'Assistant IA pour créer rapidement des documents",
+    "tip2": " Les raccourcis clavier accélèrent votre travail",
+    "tip3": " Consultez le dashboard pour suivre vos performances",
+    "tip4": " L'e-sourcing vous aide à comparer les offres fournisseurs",
+    "tip5": " Importez vos données depuis d'autres systèmes facilement",
+    "clickForTip": "Cliquez pour un conseil !"
   }
 }

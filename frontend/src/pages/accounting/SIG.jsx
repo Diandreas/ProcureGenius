@@ -4,12 +4,31 @@ import {
   Paper, Collapse, IconButton, Chip, useTheme,
 } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
+// Le serveur renvoie les libellés des soldes en français : on les associe à une clé
+// stable pour les traduire (repli sur le texte du serveur si un libellé est inconnu).
+const SIG_ROW_KEYS = {
+  "Chiffre d'affaires": 'revenue',
+  'Marge brute': 'grossMargin',
+  'Valeur ajoutée': 'valueAdded',
+  "EBE (Excédent Brut d'Exploitation)": 'ebitda',
+  "Résultat d'exploitation": 'operatingResult',
+  'Résultat financier': 'financialResult',
+  'Résultat courant': 'currentResult',
+  'Résultat exceptionnel': 'exceptionalResult',
+  'Résultat net': 'netResult',
+};
+
 function SoldeRow({ solde, format }) {
+  const { t } = useTranslation(['accounting', 'common']);
+  const rowKey = SIG_ROW_KEYS[solde.label];
+  const label = rowKey ? t(`accounting:sig.rows.${rowKey}.label`, { defaultValue: solde.label }) : solde.label;
+  const description = rowKey ? t(`accounting:sig.rows.${rowKey}.description`, { defaultValue: solde.description }) : solde.description;
   const [open, setOpen] = useState(false);
   const montant = parseFloat(solde.montant);
   const isPositive = montant >= 0;
@@ -41,20 +60,20 @@ function SoldeRow({ solde, format }) {
             fontWeight={solde.final || solde.sous_total ? 700 : 500}
             color={solde.final ? 'white' : 'text.primary'}
           >
-            {solde.label}
+            {label}
           </Typography>
           <Typography
             variant="caption"
             color={solde.final ? 'rgba(255,255,255,0.7)' : 'text.secondary'}
           >
-            {solde.description}
+            {description}
           </Typography>
         </Box>
 
         <Box display="flex" alignItems="center" gap={1}>
           {hasLines && (
             <Chip
-              label={`${solde.lines.length} compte${solde.lines.length > 1 ? 's' : ''}`}
+              label={t('accounting:sig.accountCount', { count: solde.lines.length })}
               size="small"
               variant="outlined"
               sx={{ fontSize: '0.7rem', color: solde.final ? 'white' : undefined, borderColor: solde.final ? 'rgba(255,255,255,0.5)' : undefined }}
@@ -116,6 +135,7 @@ export default function SIG() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
@@ -124,7 +144,7 @@ export default function SIG() {
     setLoading(true);
     accountingAPI.getSIG({ start_date: start, end_date: end })
       .then((r) => { setData(r.data); setError(null); })
-      .catch(() => setError('Erreur chargement du SIG'))
+      .catch(() => setError(t('accounting:sig.loadError')))
       .finally(() => setLoading(false));
   };
 
@@ -132,15 +152,15 @@ export default function SIG() {
 
   return (
     <Box p={{ xs: 2, sm: 3 }} maxWidth={860}>
-      <AccountingNav title="SIG" subtitle="Soldes Intermédiaires de Gestion" />
+      <AccountingNav title={t('accounting:sig.title')} subtitle={t('accounting:sig.subtitle')} />
 
       <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
-        <TextField size="small" type="date" label="Du" InputLabelProps={{ shrink: true }}
+        <TextField size="small" type="date" label={t('accounting:common.from')} InputLabelProps={{ shrink: true }}
           value={start} onChange={(e) => setStart(e.target.value)} />
-        <TextField size="small" type="date" label="Au" InputLabelProps={{ shrink: true }}
+        <TextField size="small" type="date" label={t('accounting:common.to')} InputLabelProps={{ shrink: true }}
           value={end} onChange={(e) => setEnd(e.target.value)} />
         <Button variant="contained" onClick={load} disabled={loading}>
-          {loading ? <CircularProgress size={20} /> : 'Actualiser'}
+          {loading ? <CircularProgress size={20} /> : t('accounting:common.refresh')}
         </Button>
       </Box>
 
@@ -151,7 +171,7 @@ export default function SIG() {
       {data && (
         <>
           <Alert severity="info" sx={{ mb: 2 }}>
-            Les soldes sont calculés automatiquement selon les préfixes de comptes (60→achats, 61-62→services, 63-64→personnel, 65→autres charges, 66→financier, 67→exceptionnel, 68→amortissements, 70-75→CA, 76→produits fin., 77→produits excep.)
+            {t('accounting:sig.info')}
           </Alert>
           <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden' }}>
             {data.soldes.map((solde, i) => (
@@ -159,7 +179,7 @@ export default function SIG() {
             ))}
           </Paper>
           <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-            Période : {data.start_date} → {data.end_date} — Cliquer sur une ligne pour voir le détail des comptes
+            {t('accounting:sig.footer', { start: data.start_date, end: data.end_date })}
           </Typography>
         </>
       )}

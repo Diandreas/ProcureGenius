@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Box, Typography, Chip, Paper, Button, Divider, IconButton, Fade, Grow, Tooltip, alpha, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Typography, Chip, Paper, Button, Divider, IconButton, Fade, Grow, Tooltip, alpha, useMediaQuery, useTheme, Grid } from '@mui/material';
 import {
   CheckCircle,
   Error,
@@ -20,6 +20,7 @@ import {
   ZoomIn,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { scaleIn, fadeInUp } from '../../animations/variants/scroll-reveal';
 import { hoverLift } from '../../animations/variants/micro-interactions';
@@ -33,6 +34,7 @@ import { normalizeMarkdown } from './markdownUtils';
 
 const MessageContent = ({ content, streaming = false, actionResults, actionButtons, onButtonClick, onAddArtifact }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['aiChat', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [buttonsDisabled, setButtonsDisabled] = React.useState(false);
@@ -133,10 +135,10 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {chartTitle || 'Visualisation'}
+                  {chartTitle || t('aiChat:messageContent.visualization')}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
-                  {isMobile ? 'Appuyer pour agrandir' : `Graphique ${chartType === 'line' ? 'linéaire' : chartType === 'bar' ? 'en barres' : chartType === 'pie' ? 'circulaire' : 'en aires'}`}
+                  {isMobile ? t('aiChat:messageContent.tapToExpand') : (chartType === 'line' ? t('aiChat:messageContent.chartLine') : chartType === 'bar' ? t('aiChat:messageContent.chartBar') : chartType === 'pie' ? t('aiChat:messageContent.chartPie') : t('aiChat:messageContent.chartArea'))}
                 </Typography>
               </Box>
             </Box>
@@ -157,7 +159,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
               {/* Boutons desktop */}
               {!isMobile && (
                 <>
-                  <Tooltip title="Plein écran">
+                  <Tooltip title={t('aiChat:messageContent.fullscreen')}>
                     <IconButton
                       size="small"
                       onClick={() => setFullscreenChart({ chartType, chartTitle, chartData, chartConfig })}
@@ -167,7 +169,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                     </IconButton>
                   </Tooltip>
                   {onAddArtifact && (
-                    <Tooltip title="Épingler aux visualisations">
+                    <Tooltip title={t('aiChat:messageContent.pinToVisualizations')}>
                       <IconButton
                         size="small"
                         onClick={() => onAddArtifact({ chartType, chartTitle, chartData, chartConfig })}
@@ -210,7 +212,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                 }}
               >
                 <ZoomIn sx={{ fontSize: 14 }} />
-                Agrandir
+                {t('aiChat:messageContent.expand')}
               </Box>
             )}
           </Box>
@@ -465,17 +467,17 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
           const getModalTitle = () => {
             switch (entityType) {
               case 'client':
-                return items.length > 1 ? 'Clients trouvés' : 'Client trouvé';
+                return t('aiChat:messageContent.modalTitles.client', { count: items.length });
               case 'supplier':
-                return items.length > 1 ? 'Fournisseurs trouvés' : 'Fournisseur trouvé';
+                return t('aiChat:messageContent.modalTitles.supplier', { count: items.length });
               case 'invoice':
-                return items.length > 1 ? 'Factures trouvées' : 'Facture trouvée';
+                return t('aiChat:messageContent.modalTitles.invoice', { count: items.length });
               case 'purchase_order':
-                return items.length > 1 ? 'Bons de commande trouvés' : 'Bon de commande trouvé';
+                return t('aiChat:messageContent.modalTitles.purchase_order', { count: items.length });
               case 'product':
-                return items.length > 1 ? 'Produits trouvés' : 'Produit trouvé';
+                return t('aiChat:messageContent.modalTitles.product', { count: items.length });
               default:
-                return 'Résultats';
+                return t('aiChat:messageContent.modalTitles.results');
             }
           };
 
@@ -532,13 +534,13 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                         fontSize: '0.8rem',
                       }}
                     >
-                      {isSuccess ? 'Succès' : 'Échec'}
+                      {isSuccess ? t('common:success') : t('common:failed')}
                     </Typography>
 
                     {!REDUNDANT_MESSAGE_ENTITY_TYPES.includes(entityType) && (
                       <Box sx={{ mb: 1 }}>
                         <ReactMarkdown components={components} remarkPlugins={[remarkGfm]}>
-                          {normalizeMarkdown(result.result?.message || result.result?.error || 'Action exécutée')}
+                          {normalizeMarkdown(result.result?.message || result.result?.error || t('aiChat:actionResult.actionExecuted'))}
                         </ReactMarkdown>
                       </Box>
                     )}
@@ -564,14 +566,14 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                               }
                             }}
                           >
-                             Vérifier et Confirmer
+                             {t('aiChat:messageContent.verifyAndConfirm')}
                           </Button>
                         )}
 
                         <PremiumModal
                           open={showPreview && !!previewData}
                           onClose={handleCancel}
-                          title={previewData?.title || 'Vérification de l\'entité'}
+                          title={previewData?.title || t('aiChat:messageContent.entityVerification')}
                           maxWidth="md"
                         >
                           {previewData && (
@@ -580,7 +582,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                               {previewData.nested_previews && previewData.nested_previews.length > 0 && (
                                 <Box sx={{ mb: 3 }}>
                                   <Typography variant="subtitle2" sx={{ mb: 1.5, color: 'text.secondary', fontWeight: 600 }}>
-                                     Entités associées qui seront créées:
+                                     {t('aiChat:messageContent.associatedEntities')}
                                   </Typography>
                                   <Grid container spacing={2}>
                                     {previewData.nested_previews.map((nestedPreview, idx) => (
@@ -640,7 +642,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                           mb: 1,
                         }}
                       >
-                        Voir les {items.length} résultat{items.length !== 1 ? 's' : ''}
+                        {t('aiChat:messageContent.viewResults', { count: items.length })}
                       </Button>
                     )}
 
@@ -711,7 +713,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                                       mt: 0.5,
                                     }}
                                   >
-                                    Priorité: {insight.priority}/10
+                                    {t('aiChat:messageContent.priority', { priority: insight.priority })}
                                   </Typography>
                                 )}
                               </Box>
@@ -778,7 +780,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                         )}
                         {data.invoice_number && (
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', display: 'block' }}>
-                            N° {data.invoice_number}
+                            {t('aiChat:messageContent.invoiceNumber', { number: data.invoice_number })}
                           </Typography>
                         )}
                       </Box>
@@ -800,7 +802,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                             minHeight: 28,
                           }}
                         >
-                          Voir
+                          {t('common:buttons.view')}
                         </Button>
                         <Button
                           size="small"
@@ -815,7 +817,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                             minHeight: 28,
                           }}
                         >
-                          Modifier
+                          {t('common:buttons.edit')}
                         </Button>
                         {(entityType === 'invoice' || entityType === 'purchase_order') && (
                           <Button
@@ -847,7 +849,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                     {isSuccess && result.result?.success_actions && result.result.success_actions.length > 0 && (
                       <Box sx={{ mt: 1 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', display: 'block', mb: 0.5 }}>
-                          Actions suggérées
+                          {t('aiChat:messageContent.suggestedActions')}
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
                           {result.result.success_actions.slice(0, 2).map((action, idx) => {
@@ -1051,7 +1053,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                   },
                 }}
               >
-                Fermer
+                {t('common:buttons.close')}
               </Button>
             )}
           </Box>
@@ -1088,7 +1090,7 @@ const MessageContent = ({ content, streaming = false, actionResults, actionButto
                 fontSize: '0.75rem',
               }}
             >
-              Appuyez n'importe où pour fermer
+              {t('aiChat:messageContent.tapAnywhereToClose')}
             </Typography>
           )}
         </Box>

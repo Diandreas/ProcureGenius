@@ -3,6 +3,7 @@ import {
   Box, Typography, TextField, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, Paper, CircularProgress, Alert, Button, Card, CardContent, useTheme,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
@@ -15,6 +16,7 @@ export default function BalanceSheet() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const neu = getNeumorphicShadow(isDark ? 'dark' : 'light', 'soft');
@@ -23,7 +25,7 @@ export default function BalanceSheet() {
     setLoading(true);
     accountingAPI.getBalanceSheet({ end_date: endDate })
       .then((r) => { setData(r.data); setError(null); })
-      .catch(() => setError('Erreur chargement du bilan'))
+      .catch(() => setError(t('accounting:balanceSheet.loadError')))
       .finally(() => setLoading(false));
   };
 
@@ -37,16 +39,16 @@ export default function BalanceSheet() {
       <Table size="small">
         <TableHead>
           <TableRow sx={{ bgcolor: 'action.hover' }}>
-            <TableCell><strong>Code</strong></TableCell>
-            <TableCell><strong>Compte</strong></TableCell>
-            <TableCell align="right"><strong>Solde</strong></TableCell>
+            <TableCell><strong>{t('accounting:common.code')}</strong></TableCell>
+            <TableCell><strong>{t('accounting:common.account')}</strong></TableCell>
+            <TableCell align="right"><strong>{t('accounting:common.balance')}</strong></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {lines.length === 0 ? (
             <TableRow>
               <TableCell colSpan={3} align="center">
-                <Typography variant="body2" color="text.secondary" py={1}>Aucun mouvement</Typography>
+                <Typography variant="body2" color="text.secondary" py={1}>{t('accounting:common.noMovement')}</Typography>
               </TableCell>
             </TableRow>
           ) : lines.map((r) => (
@@ -59,7 +61,7 @@ export default function BalanceSheet() {
             </TableRow>
           ))}
           <TableRow sx={{ bgcolor: 'action.hover' }}>
-            <TableCell colSpan={2}><strong>Total</strong></TableCell>
+            <TableCell colSpan={2}><strong>{t('accounting:common.total')}</strong></TableCell>
             <TableCell align="right">
               <Typography color={`${color}.main`} fontWeight={700} variant="subtitle2">
                 {format(parseFloat(total))}
@@ -73,13 +75,13 @@ export default function BalanceSheet() {
 
   return (
     <Box p={{ xs: 2, sm: 3 }} maxWidth={900}>
-      <AccountingNav title="Bilan Comptable" subtitle="Actif / Passif / Capitaux propres" />
+      <AccountingNav title={t('accounting:balanceSheet.title')} subtitle={t('accounting:balanceSheet.subtitle')} />
 
       <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
-        <TextField size="small" type="date" label="Au" InputLabelProps={{ shrink: true }}
+        <TextField size="small" type="date" label={t('accounting:balanceSheet.asOf')} InputLabelProps={{ shrink: true }}
           value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         <Button variant="contained" onClick={load} disabled={loading}>
-          {loading ? <CircularProgress size={20} /> : 'Actualiser'}
+          {loading ? <CircularProgress size={20} /> : t('accounting:common.refresh')}
         </Button>
       </Box>
 
@@ -89,20 +91,20 @@ export default function BalanceSheet() {
         <>
           {data.is_balanced ? (
             <Alert severity="success" sx={{ mb: 2 }}>
-              Bilan équilibré — Total Actif = Total Passif = {format(parseFloat(data.total_assets))}
+              {t('accounting:balanceSheet.balanced', { amount: format(parseFloat(data.total_assets)) })}
             </Alert>
           ) : (
             <Alert severity="warning" sx={{ mb: 2 }}>
-              Bilan déséquilibré — Actif : {format(parseFloat(data.total_assets))} / Passif : {format(parseFloat(data.total_passif))}
+              {t('accounting:balanceSheet.unbalanced', { assets: format(parseFloat(data.total_assets)), liabilities: format(parseFloat(data.total_passif)) })}
             </Alert>
           )}
 
           <Box display="flex" gap={{ xs: 2, md: 3 }} flexWrap="wrap">
             {/* Colonne Actif */}
             <Box flex={1} minWidth={{ xs: '100%', sm: 320 }}>
-              <Typography variant="h6" fontWeight={700} mb={1} color="primary.main">ACTIF</Typography>
+              <Typography variant="h6" fontWeight={700} mb={1} color="primary.main">{t('accounting:balanceSheet.assetsHeading')}</Typography>
               <SectionTable
-                title="Actif"
+                title={t('accounting:balanceSheet.assets')}
                 lines={data.assets.lines}
                 total={data.assets.total}
                 color="primary"
@@ -110,7 +112,7 @@ export default function BalanceSheet() {
               <Card elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, borderTop: 3, borderTopColor: 'primary.main' }}>
                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="subtitle1" fontWeight={700}>TOTAL ACTIF</Typography>
+                    <Typography variant="subtitle1" fontWeight={700}>{t('accounting:balanceSheet.totalAssets')}</Typography>
                     <Typography variant="h6" fontWeight={800} color="primary.main">
                       {format(parseFloat(data.total_assets))}
                     </Typography>
@@ -121,15 +123,15 @@ export default function BalanceSheet() {
 
             {/* Colonne Passif */}
             <Box flex={1} minWidth={{ xs: '100%', sm: 320 }}>
-              <Typography variant="h6" fontWeight={700} mb={1} color="warning.main">PASSIF</Typography>
+              <Typography variant="h6" fontWeight={700} mb={1} color="warning.main">{t('accounting:balanceSheet.liabilitiesHeading')}</Typography>
               <SectionTable
-                title="Dettes & Passif"
+                title={t('accounting:balanceSheet.debts')}
                 lines={data.liabilities.lines}
                 total={data.liabilities.total}
                 color="warning"
               />
               <SectionTable
-                title="Capitaux Propres"
+                title={t('accounting:balanceSheet.equity')}
                 lines={data.equity.lines}
                 total={data.equity.total}
                 color="secondary"
@@ -138,10 +140,10 @@ export default function BalanceSheet() {
               {/* Résultat net de l'exercice */}
               <Paper elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, overflow: 'hidden', mb: 2 }}>
                 <Box sx={{ bgcolor: 'action.hover', px: 2, py: 1 }}>
-                  <Typography variant="subtitle2" fontWeight={700}>Résultat de l'exercice</Typography>
+                  <Typography variant="subtitle2" fontWeight={700}>{t('accounting:balanceSheet.yearResult')}</Typography>
                 </Box>
                 <Box px={2} py={1} display="flex" justifyContent="space-between">
-                  <Typography variant="body2">Résultat net (Produits − Charges)</Typography>
+                  <Typography variant="body2">{t('accounting:balanceSheet.netResultFormula')}</Typography>
                   <Typography
                     variant="body2"
                     fontWeight={700}
@@ -155,7 +157,7 @@ export default function BalanceSheet() {
               <Card elevation={0} sx={{ border: 'none', borderRadius: 3, boxShadow: neu, borderTop: 3, borderTopColor: 'warning.main' }}>
                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="subtitle1" fontWeight={700}>TOTAL PASSIF</Typography>
+                    <Typography variant="subtitle1" fontWeight={700}>{t('accounting:balanceSheet.totalLiabilities')}</Typography>
                     <Typography variant="h6" fontWeight={800} color="warning.main">
                       {format(parseFloat(data.total_passif))}
                     </Typography>
@@ -166,7 +168,7 @@ export default function BalanceSheet() {
           </Box>
 
           <Typography variant="caption" color="text.secondary" display="block" mt={2}>
-            Bilan arrêté au {data.as_of} — cumul depuis l'origine
+            {t('accounting:balanceSheet.asOfFooter', { date: data.as_of })}
           </Typography>
         </>
       )}

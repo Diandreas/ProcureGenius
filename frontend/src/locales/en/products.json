@@ -3,7 +3,8 @@
   "newProduct": "New Product",
   "editProduct": "Edit Product",
   "search": {
-    "placeholder": "Search for a product..."
+    "placeholder": "Search for a product...",
+    "placeholderWithRef": "Search for a product, a reference..."
   },
   "filters": {
     "inStock": "In Stock",
@@ -16,14 +17,16 @@
     "categoryLabel": "Category",
     "warehouseLabel": "Warehouse",
     "allCategories": "All",
-    "allWarehouses": "All"
+    "allWarehouses": "All",
+    "categoryShort": "Category"
   },
   "tabs": {
     "info": "Info",
     "invoices": "Invoices",
     "clients": "Clients",
     "movements": "Movements",
-    "stock": "Stock"
+    "stock": "Stock",
+    "batches": "Batches"
   },
   "labels": {
     "description": "Description",
@@ -56,6 +59,8 @@
     "stockQuantity": "Stock Quantity",
     "licensesCount": "Number of Licenses",
     "lowStockThreshold": "Low Stock Threshold",
+    "priceEditable": "Price editable when invoicing",
+    "priceEditableHelp": "Allows the price to be changed when creating an invoice",
     "activeProduct": "Active Product",
     "inactiveProduct": "Inactive Product",
     "generatingLabel": "Generating report...",
@@ -68,7 +73,16 @@
     "purchaseCount_one": "{{count}} purchase",
     "purchaseCount_other": "{{count}} purchases",
     "unitsCount_one": "{{count}} unit",
-    "unitsCount_other": "{{count}} units"
+    "unitsCount_other": "{{count}} units",
+    "uncategorized": "Uncategorized",
+    "selectWarehouse": "Select a warehouse",
+    "noWarehouseAvailable": "No warehouse available",
+    "optional": "Optional",
+    "advancedDetails": "Advanced details",
+    "stockManagement": "Stock management",
+    "noSupplier": "No supplier",
+    "noEmail": "No email",
+    "noDescription": "No description"
   },
   "table": {
     "invoiceNumber": "Invoice #",
@@ -106,7 +120,11 @@
   },
   "pdf": {
     "title": "Product PDF Report",
-    "description": "Generating PDF report..."
+    "description": "Generating PDF report...",
+    "generating": "Generating PDF...",
+    "ready": "The PDF report is ready. Choose an action:",
+    "fileName": "product-report",
+    "previewTitle": "Report {{name}}"
   },
   "status": {
     "available": "Available",
@@ -119,6 +137,7 @@
     "low": "Low"
   },
   "messages": {
+    "loading": "Loading products...",
     "noProducts": "No products",
     "noProductsDescription": "No products match your search criteria.",
     "loadingError": "Error loading products",
@@ -139,11 +158,44 @@
     "alertLowStock": "Alert if stock <= this threshold",
     "noInvoicesForProduct": "No invoices for this product",
     "noClientsPurchased": "No client has purchased this product yet",
+    "supplierCreated": "Supplier created successfully",
+    "supplierCreateError": "Error creating the supplier",
     "reportError": "Error generating report",
     "reportGenerated": "Report generated successfully! Choose an action below.",
     "pdfGenerationHelpText": "You can preview, download or print the report directly.",
     "pdfDownloadedSuccess": "PDF downloaded successfully",
-    "printWindowOpened": "Print window opened"
+    "printWindowOpened": "Print window opened",
+    "warehouseCreated": "Warehouse created successfully",
+    "warehouseCreateError": "Error creating the warehouse",
+    "categoryCreated": "Category created successfully",
+    "categoryCreateError": "Error creating the category",
+    "noSuppliers": "No supplier available",
+    "noWarehouses": "No warehouse available",
+    "noCategories": "No category available",
+    "warehouseUpdated": "Warehouse updated successfully",
+    "warehouseDeleted": "Warehouse deleted successfully",
+    "warehouseDeleteError": "Error deleting the warehouse",
+    "deleteWarehouseConfirm": "Are you sure you want to delete this warehouse?",
+    "categoryUpdated": "Category updated successfully",
+    "categoryDeleted": "Category deleted successfully",
+    "categoryDeleteError": "Error deleting the category",
+    "deleteCategoryConfirm": "Are you sure you want to delete this category?",
+    "loadingErrorDescription": "Unable to load products. Please try again.",
+    "loadingProduct": "Loading product...",
+    "pdfError": "Error generating the PDF",
+    "pdfDownloaded": "PDF report downloaded successfully",
+    "cannotOpenPrintWindow": "Unable to open the print window",
+    "productNotFoundDescription": "The product you are looking for does not exist or has been deleted.",
+    "warehousesLoadError": "Error loading warehouses",
+    "clickAddToCreateFirstSupplier": "Click “Add” to create your first supplier",
+    "clickAddToCreateFirstWarehouse": "Click “Add” to create your first warehouse",
+    "clickAddToCreateFirstCategory": "Click “Add” to create your first category",
+    "editWarehouseDescription": "Update the warehouse details",
+    "createWarehouseDescription": "Add a new warehouse to store your products",
+    "uniqueCode": "Unique code to identify the warehouse",
+    "uncategorizedProduct": "Product without a category",
+    "editCategoryDescription": "Update the category details",
+    "createCategoryDescription": "Add a new category to organize your products"
   },
   "actions": {
     "cancel": "Cancel",
@@ -151,12 +203,31 @@
     "modify": "Modify",
     "change": "Change",
     "add": "Add",
-    "generateReport": "PDF Report"
+    "save": "Save",
+    "generateReport": "PDF Report",
+    "more": "More"
   },
   "report": {
     "title": "Generate Products Report",
     "itemLabel": "product",
-    "itemsLabel": "products"
+    "itemsLabel": "products",
+    "period": "Period (optional)",
+    "periodHelp": "Filter by period - leave empty to include everything",
+    "dateStart": "Start date",
+    "dateEnd": "End date",
+    "productsToInclude": "Products to include",
+    "selectedCount_one": "{{count}} product selected",
+    "selectedCount_other": "{{count}} products selected",
+    "allIncluded": "All filtered products will be included",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "summarySelected_one": "A report will be generated with {{count}} selected product",
+    "summarySelected_other": "A report will be generated with {{count}} selected products",
+    "summaryAll": "A report will be generated with all products ({{count}})",
+    "forPeriod": " for the specified period",
+    "generate": "Generate Report",
+    "fileName": "products-report",
+    "previewTitle": "Products report"
   },
   "buttons": {
     "preview": "Preview",
@@ -177,7 +248,42 @@
     "stockNegative": "Stock cannot be negative",
     "stockRequired": "Stock is required",
     "thresholdNegative": "Threshold cannot be negative",
-    "thresholdRequired": "Required"
+    "thresholdRequired": "Required",
+    "batchNumberRequired": "Batch number is required"
+  },
+  "modals": {
+    "selectSupplier": "Select a supplier",
+    "selectWarehouse": "Select a warehouse",
+    "selectCategory": "Select a category",
+    "manageWarehouses": "Manage warehouses",
+    "manageCategories": "Manage categories",
+    "searchSupplier": "Search for a supplier...",
+    "searchWarehouse": "Search for a warehouse...",
+    "searchCategory": "Search for a category...",
+    "supplierName": "Supplier name:",
+    "supplierEmail": "Email (optional):",
+    "warehouseName": "Warehouse name",
+    "warehouseCode": "Code",
+    "warehouseCity": "City",
+    "warehouseAddress": "Address",
+    "warehouseCodeHelper": "Unique code to identify the warehouse",
+    "newWarehouse": "New warehouse",
+    "editWarehouse": "Edit warehouse",
+    "categoryName": "Category name",
+    "categoryDescription": "Description",
+    "categoryDescriptionHelper": "Optional description of the category",
+    "newCategory": "New category",
+    "editCategory": "Edit category",
+    "selectSupplierSubtitle": "Choose a supplier for this product",
+    "manageWarehousesSubtitle": "Select or manage your warehouses",
+    "manageCategoriesSubtitle": "Organize your products by category",
+    "warehouseProvince": "Province / Region",
+    "warehousePostalCode": "Postal code",
+    "warehouseCountry": "Country"
+  },
+  "warehouseMode": {
+    "activate": "Enable warehouse mode",
+    "active": "Warehouse mode active"
   },
   "margins": "Margins & profit",
   "restock": {
@@ -203,6 +309,162 @@
       "soon": "To reorder",
       "ok": "Enough stock",
       "idle": "No sales"
+    },
+    "periodDay": "Today",
+    "periodWeek": "7 days",
+    "periodMonth": "30 days",
+    "periodQuarter": "90 days",
+    "periodLabel": "Sales analysis period",
+    "sold": "Qty sold",
+    "sampleProduct": "Sample product"
+  },
+  "stockTools": {
+    "button": "Stock",
+    "scan": "Scan a product",
+    "inventory": "Stocktake",
+    "reception": "Goods receipt",
+    "labels": "QR labels"
+  },
+  "card": {
+    "service": "Service",
+    "inStockCount_one": "{{count}} in stock",
+    "inStockCount_other": "{{count}} in stock"
+  },
+  "kpis": {
+    "products": "Products",
+    "productsSub": "in catalog",
+    "inStockSub": "available",
+    "lowStockSub": "to watch",
+    "outOfStockSub": "to restock",
+    "servicesSub": "not stocked"
+  },
+  "statistics": {
+    "title": "Sales statistics",
+    "invoices": "Invoices",
+    "totalSales": "Total sales",
+    "uniqueClients": "Unique clients",
+    "lastSale": "Last sale",
+    "noSales": "No sales"
+  },
+  "marginsPage": {
+    "loadError": "Error loading margins.",
+    "title": "Margins & gross profit",
+    "subtitle": "Calculated automatically: sales − cost price of your products.",
+    "periods": {
+      "month": "This month",
+      "quarter": "3 months",
+      "year": "Year",
+      "all": "All"
+    },
+    "addExpenses": "Add my expenses →",
+    "revenue": "Revenue",
+    "productsSold_one": "{{count}} product sold",
+    "productsSold_other": "{{count}} products sold",
+    "cogs": "Cost of goods sold (COGS)",
+    "grossProfit": "Gross profit",
+    "marginRate": "Margin rate",
+    "fillCostPrices": "Enter cost prices →",
+    "missingCostWarning_one": "{{count}} product has no cost price: its gross profit is overstated. Enter the cost price on the product page for an accurate calculation.",
+    "missingCostWarning_other": "{{count}} products have no cost price: their gross profit is overstated. Enter the cost price on the product page for an accurate calculation.",
+    "columns": {
+      "product": "Product",
+      "costPrice": "Cost price",
+      "sold": "Sold",
+      "revenue": "Revenue",
+      "margin": "Margin"
+    },
+    "emptyTitle": "No margins to display yet",
+    "emptyDescription": "Margins are calculated from your sales and the <strong>cost price</strong> of your products. Enter the cost price on your product pages to get started.",
+    "goToProducts": "Go to my products",
+    "costMissing": "Missing cost price",
+    "costMissingChip": "cost price?"
+  },
+  "typeLabels": {
+    "physical": "Physical",
+    "service": "Service",
+    "digital": "Digital"
+  },
+  "detail": {
+    "sellingPriceCaption": "selling price",
+    "information": "Information",
+    "cost": "Cost",
+    "margin": "Margin",
+    "performance": "Performance",
+    "revenueGenerated": "Revenue generated",
+    "units": "units"
+  },
+  "form": {
+    "lotsCreated_one": "{{count}} initial batch created",
+    "lotsCreated_other": "{{count}} initial batches created",
+    "lotsCreateError": "Error creating initial batches",
+    "stepOf": "Step {{current}}/{{total}}",
+    "generalInfoSubtitle": "Type, name and description",
+    "pricingSubtitle": "Selling price, cost and category",
+    "categoryCreateErrorShort": "Error creating category",
+    "createOption": "Create \"{{value}}\"",
+    "categoryPlaceholder": "Type to search or create...",
+    "lotsTitle": "Batches & Initial Stock",
+    "lotsSubtitle": "Set the starting stock per batch",
+    "lotsInfo": "Stock is now managed exclusively by batches. Add one or more initial batches to set the starting stock.",
+    "noInitialLot": "No initial batch defined",
+    "addInitialLot": "Add an initial batch",
+    "removeLot": "Remove this batch",
+    "batchNumber": "Batch number",
+    "initialQuantity": "Initial quantity",
+    "expirationDate": "Expiry date",
+    "supplierReference": "Supplier reference",
+    "lotDescription": "Batch description",
+    "lotDescriptionPlaceholder": "Description specific to this batch (optional)",
+    "addAnotherLot": "Add another batch",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "steps": {
+    "info": "Information",
+    "pricing": "Pricing",
+    "lots": "Batches & Stock"
+  },
+  "quickCreate": {
+    "common": {
+      "contactPerson": "Contact person",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "city": "City",
+      "description": "Description"
+    },
+    "client": {
+      "name": "Client name *"
+    },
+    "supplier": {
+      "name": "Supplier name *"
+    },
+    "service": {
+      "name": "Service name *",
+      "price": "Rate *",
+      "costPrice": "Cost (optional)"
+    },
+    "product": {
+      "name": "Product name *",
+      "type": "Type *",
+      "types": {
+        "physical": "Physical product",
+        "service": "Service",
+        "digital": "Digital product"
+      },
+      "source": "Source *",
+      "sources": {
+        "purchased": "Purchased (supplier)",
+        "manufactured": "Manufactured (in-house)",
+        "resale": "Resale"
+      },
+      "supplier": "Supplier",
+      "noSupplier": "None",
+      "supplierHelper": "Required if source = Purchased",
+      "price": "Selling price *",
+      "costPrice": "Cost price",
+      "initialStock": "Initial stock",
+      "initialStockHelper": "For physical products"
     }
   }
 }

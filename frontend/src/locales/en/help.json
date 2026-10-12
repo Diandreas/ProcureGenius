@@ -1,41 +1,59 @@
 {
   "title": "Help Center",
   "subtitle": "Find answers and learn how to use ProcureGenius",
-  "search": {
-    "placeholder": "Search for help...",
-    "noResults": "No results found",
-    "noResultsDescription": "Try different keywords or browse categories below"
-  },
-  "categories": {
-    "all": "All",
-    "gettingStarted": "Getting Started",
-    "suppliers": "Suppliers",
-    "purchaseOrders": "Purchase Orders",
-    "invoices": "Invoices",
-    "clients": "Clients",
-    "products": "Products",
-    "settings": "Settings",
-    "tips": "Tips & Tricks"
-  },
   "quickActions": {
+    "tutorial": "Interactive tutorial",
+    "faq": "FAQ",
+    "shortcuts": "Keyboard shortcuts",
+    "support": "Contact support",
     "title": "Quick Actions",
     "startTutorial": "Start Interactive Tutorial",
     "viewFaq": "View FAQ",
     "keyboardShortcuts": "Keyboard Shortcuts",
     "contactSupport": "Contact Support"
   },
-  "articles": {
-    "title": "Help Articles",
-    "readMore": "Read more",
-    "relatedArticles": "Related Articles",
-    "helpful": "Was this helpful?",
-    "yes": "Yes",
-    "no": "No"
+  "search": {
+    "placeholder": "Search for help...",
+    "popular": "Popular searches",
+    "noResults": "No results found for",
+    "tryDifferent": "Try different keywords",
+    "noResultsDescription": "Try different keywords or browse categories below",
+    "popularTerms": {
+      "createInvoice": "create invoice",
+      "newSupplier": "new supplier",
+      "stockManagement": "stock management",
+      "purchaseOrder": "purchase order"
+    }
+  },
+  "needMoreHelp": {
+    "title": "Need more help?",
+    "description": "Our support team is here to help",
+    "contact": "Contact support",
+    "startTutorial": "Start the tutorial"
+  },
+  "article": {
+    "notFound": "Article not found",
+    "backToHelp": "Back to Help",
+    "wasHelpful": "Was this article helpful?",
+    "thanksFeedback": "Thanks for your feedback!",
+    "sorryNotHelpful": "We're sorry. Contact support for more help.",
+    "relatedTopics": "Related articles",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "breadcrumb": {
+    "help": "Help"
   },
   "faq": {
     "title": "Frequently Asked Questions",
     "subtitle": "Quick answers to common questions",
-    "backToHelp": "Back to Help Center"
+    "backToHelp": "Back to Help Center",
+    "searchPlaceholder": "Search for a question...",
+    "noResults": "No questions found",
+    "tryDifferent": "Try different keywords or categories",
+    "stillNeedHelp": "Didn't find your answer?",
+    "contactUs": "Our support team is here to help",
+    "contactSupport": "Contact support"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
@@ -46,6 +64,49 @@
     "tipContent": "Use Ctrl+/ (Cmd+/ on Mac) anytime to display contextual help and available shortcuts on the current page.",
     "print": "Print this page",
     "backToHelp": "Back to Help Center"
+  },
+  "categories": {
+    "all": "All",
+    "gettingStarted": {
+      "title": "Getting Started",
+      "description": "First steps with ProcureGenius"
+    },
+    "suppliers": {
+      "title": "Suppliers",
+      "description": "Manage your suppliers"
+    },
+    "purchaseOrders": {
+      "title": "Purchase Orders",
+      "description": "Create and track your orders"
+    },
+    "invoices": {
+      "title": "Invoices",
+      "description": "Manage your invoices"
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Manage your client portfolio"
+    },
+    "products": {
+      "title": "Products",
+      "description": "Product catalog and management"
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Application configuration"
+    },
+    "tips": {
+      "title": "Tips & Tricks",
+      "description": "Tips and best practices"
+    }
+  },
+  "articles": {
+    "title": "Help Articles",
+    "readMore": "Read more",
+    "relatedArticles": "Related Articles",
+    "helpful": "Was this helpful?",
+    "yes": "Yes",
+    "no": "No"
   },
   "support": {
     "title": "Need Help?",

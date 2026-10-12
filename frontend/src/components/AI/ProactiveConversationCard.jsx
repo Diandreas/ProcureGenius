@@ -18,8 +18,10 @@ import {
   Warning,
   Lightbulb,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 function ProactiveConversationCard({ conversation, onAccept, onDismiss }) {
+  const { t } = useTranslation('aiChat');
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -111,7 +113,7 @@ function ProactiveConversationCard({ conversation, onAccept, onDismiss }) {
                 },
               }}
             >
-              Ignorer
+              {t('aiChat:proactiveConversations.dismiss')}
             </Button>
             <Button
               variant="contained"
@@ -126,7 +128,7 @@ function ProactiveConversationCard({ conversation, onAccept, onDismiss }) {
                 },
               }}
             >
-              Démarrer conversation
+              {t('aiChat:proactiveConversations.startConversation')}
             </Button>
           </Box>
         </CardContent>

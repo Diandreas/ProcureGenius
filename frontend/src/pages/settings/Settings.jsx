@@ -105,10 +105,10 @@ const createImage = (url) =>
   });
 
 const LOGO_FORMATS = [
-  { value: 'square',    label: 'Carré',    aspect: 1,         hint: '1:1' },
-  { value: 'landscape', label: 'Paysage',  aspect: 4,         hint: '4:1' },
-  { value: 'portrait',  label: 'Portrait', aspect: 3 / 4,     hint: '3:4' },
-  { value: 'original',  label: 'Original', aspect: undefined,  hint: 'libre' },
+  { value: 'square',    labelKey: 'settings:logo.formatOptions.square',    aspect: 1,         hint: '1:1' },
+  { value: 'landscape', labelKey: 'settings:logo.formatOptions.landscape', aspect: 4,         hint: '4:1' },
+  { value: 'portrait',  labelKey: 'settings:logo.formatOptions.portrait',  aspect: 3 / 4,     hint: '3:4' },
+  { value: 'original',  labelKey: 'settings:logo.formatOptions.original',  aspect: undefined,  hintKey: 'settings:logo.formatOptions.freeHint' },
 ];
 
 /**
@@ -433,27 +433,27 @@ const Settings = () => {
   // Navigation items — groupés par thème
   const NAV_GROUPS = [
     {
-      label: 'Entreprise',
+      label: t('settings:nav.groups.company'),
       items: [
-        { id: 0, label: t('settings:tabs.general'), icon: <BusinessIcon fontSize="small" />, description: 'Nom, coordonnées, logo' },
-        { id: 1, label: 'Modules', icon: <AppsIcon fontSize="small" />, description: 'Activer / désactiver les modules' },
+        { id: 0, label: t('settings:tabs.general'), icon: <BusinessIcon fontSize="small" />, description: t('settings:nav.general.description') },
+        { id: 1, label: t('settings:nav.modules.label'), icon: <AppsIcon fontSize="small" />, description: t('settings:nav.modules.description') },
       ],
     },
     {
-      label: 'Personnalisation',
+      label: t('settings:nav.groups.customization'),
       items: [
-        { id: 2, label: t('settings:tabs.print'), icon: <PrintIcon fontSize="small" />, description: 'Format, templates documents' },
-        { id: 3, label: 'Notifications', icon: <NotificationsIcon fontSize="small" />, description: 'Alertes email et push' },
-        { id: 4, label: 'Email / SMTP', icon: <EmailIcon fontSize="small" />, description: 'Serveur d\'envoi d\'emails' },
+        { id: 2, label: t('settings:tabs.print'), icon: <PrintIcon fontSize="small" />, description: t('settings:nav.print.description') },
+        { id: 3, label: t('settings:nav.notifications.label'), icon: <NotificationsIcon fontSize="small" />, description: t('settings:nav.notifications.description') },
+        { id: 4, label: t('settings:nav.email.label'), icon: <EmailIcon fontSize="small" />, description: t('settings:nav.email.description') },
       ],
     },
     {
-      label: 'Compte',
+      label: t('settings:nav.groups.account'),
       items: [
-        { id: 8, label: 'Abonnement', icon: <CreditCardIcon fontSize="small" />, description: 'Plan, quotas, facturation' },
-        { id: 5, label: 'Profil & Sécurité', icon: <PersonIcon fontSize="small" />, description: 'Informations personnelles, mot de passe' },
-        { id: 6, label: 'Apparence', icon: <AppearanceIcon fontSize="small" />, description: 'Langue, thème, formats' },
-        { id: 7, label: 'Données', icon: <BackupIcon fontSize="small" />, description: 'Import, export, migration' },
+        { id: 8, label: t('settings:nav.subscription.label'), icon: <CreditCardIcon fontSize="small" />, description: t('settings:nav.subscription.description') },
+        { id: 5, label: t('settings:nav.profile.label'), icon: <PersonIcon fontSize="small" />, description: t('settings:nav.profile.description') },
+        { id: 6, label: t('settings:nav.appearance.label'), icon: <AppearanceIcon fontSize="small" />, description: t('settings:nav.appearance.description') },
+        { id: 7, label: t('settings:nav.data.label'), icon: <BackupIcon fontSize="small" />, description: t('settings:nav.data.description') },
       ],
     },
   ];
@@ -482,9 +482,9 @@ const Settings = () => {
     <Box p={{ xs: 2, sm: 2, md: 3 }}>
       {/* Header page */}
       <Box mb={3}>
-        <Typography variant="h5" fontWeight={700}>Paramètres</Typography>
+        <Typography variant="h5" fontWeight={700}>{t('settings:title')}</Typography>
         <Typography variant="body2" color="text.secondary">
-          Gérez votre organisation, vos préférences et votre compte.
+          {t('settings:pageSubtitle')}
         </Typography>
       </Box>
 
@@ -816,7 +816,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
         <Grid item xs={12}>
           <Stack spacing={1}>
             <Typography variant="subtitle2" color="text.secondary">
-              Logo &amp; Marque
+              {t('settings:general.logoAndBrand')}
             </Typography>
             <Divider />
             <Stack direction="row" spacing={1} flexWrap="wrap" pt={0.5}>
@@ -840,7 +840,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                     '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
                   }}
                 >
-                  {fmt.label} <Box component="span" sx={{ opacity: 0.6, ml: 0.5 }}>{fmt.hint}</Box>
+                  {t(fmt.labelKey)} <Box component="span" sx={{ opacity: 0.6, ml: 0.5 }}>{fmt.hintKey ? t(fmt.hintKey) : fmt.hint}</Box>
                 </Box>
               ))}
             </Stack>
@@ -869,7 +869,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                   />
                 ) : (
                   <Typography variant="caption" color="text.disabled" textAlign="center" px={1}>
-                    Aperçu
+                    {t('settings:general.logoPreview')}
                   </Typography>
                 )}
               </Box>
@@ -879,7 +879,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                 startIcon={<CloudUploadIcon />}
                 size="small"
               >
-                {settings.companyLogo ? 'Changer le logo' : t('settings:logo.choose')}
+                {settings.companyLogo ? t('settings:logo.change') : t('settings:logo.choose')}
                 <input
                   type="file"
                   hidden
@@ -907,7 +907,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
             <TextField
               fullWidth
               size="small"
-              label="Couleur de marque"
+              label={t('settings:appearance.brandColor')}
               value={settings.brandColor || '#2563eb'}
               onChange={(e) => onUpdate('brandColor', e.target.value)}
             />
@@ -959,19 +959,19 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                   onChange={(e) => onUpdate('defaultCurrency', e.target.value)}
                   label={t('settings:general.defaultCurrency')}
                 >
-                  <MenuItem value="CAD">CAD - Dollar canadien</MenuItem>
-                  <MenuItem value="USD">USD - Dollar américain</MenuItem>
-                  <MenuItem value="EUR">EUR - Euro</MenuItem>
-                  <MenuItem value="GBP">GBP - Livre sterling</MenuItem>
-                  <MenuItem value="XAF">XAF - Franc CFA (Afrique centrale)</MenuItem>
-                  <MenuItem value="XOF">XOF - Franc CFA (Afrique de l'Ouest)</MenuItem>
-                  <MenuItem value="MAD">MAD - Dirham marocain</MenuItem>
-                  <MenuItem value="TND">TND - Dinar tunisien</MenuItem>
-                  <MenuItem value="NGN">NGN - Naira nigérian</MenuItem>
-                  <MenuItem value="GNF">GNF - Franc guinéen</MenuItem>
-                  <MenuItem value="CDF">CDF - Franc congolais</MenuItem>
-                  <MenuItem value="DZD">DZD - Dinar algérien</MenuItem>
-                  <MenuItem value="CHF">CHF - Franc suisse</MenuItem>
+                  <MenuItem value="CAD">CAD - {t('settings:currencies.CAD')}</MenuItem>
+                  <MenuItem value="USD">USD - {t('settings:currencies.USD')}</MenuItem>
+                  <MenuItem value="EUR">EUR - {t('settings:currencies.EUR')}</MenuItem>
+                  <MenuItem value="GBP">GBP - {t('settings:currencies.GBP')}</MenuItem>
+                  <MenuItem value="XAF">XAF - {t('settings:currencies.XAF')}</MenuItem>
+                  <MenuItem value="XOF">XOF - {t('settings:currencies.XOF')}</MenuItem>
+                  <MenuItem value="MAD">MAD - {t('settings:currencies.MAD')}</MenuItem>
+                  <MenuItem value="TND">TND - {t('settings:currencies.TND')}</MenuItem>
+                  <MenuItem value="NGN">NGN - {t('settings:currencies.NGN')}</MenuItem>
+                  <MenuItem value="GNF">GNF - {t('settings:currencies.GNF')}</MenuItem>
+                  <MenuItem value="CDF">CDF - {t('settings:currencies.CDF')}</MenuItem>
+                  <MenuItem value="DZD">DZD - {t('settings:currencies.DZD')}</MenuItem>
+                  <MenuItem value="CHF">CHF - {t('settings:currencies.CHF')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -982,7 +982,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                     fullWidth
                     size="small"
                     label={t('settings:general.niu')}
-                    placeholder="Ex: M123456789"
+                    placeholder={t('settings:general.examplePlaceholder', { value: 'M123456789' })}
                     value={settings.companyNiu || ''}
                     onChange={(e) => onUpdate('companyNiu', e.target.value)}
                     helperText={t('settings:general.niuHelper')}
@@ -993,7 +993,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                     fullWidth
                     size="small"
                     label={t('settings:general.rcNumber')}
-                    placeholder="Ex: RC/YDE/2024/A/123"
+                    placeholder={t('settings:general.examplePlaceholder', { value: 'RC/YDE/2024/A/123' })}
                     value={settings.companyRcNumber || ''}
                     onChange={(e) => onUpdate('companyRcNumber', e.target.value)}
                     helperText={t('settings:general.rcHelper')}
@@ -1004,7 +1004,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                     fullWidth
                     size="small"
                     label={t('settings:general.rccmNumber')}
-                    placeholder="Ex: RCCM/YDE/2024/A/123"
+                    placeholder={t('settings:general.examplePlaceholder', { value: 'RCCM/YDE/2024/A/123' })}
                     value={settings.companyRccmNumber || ''}
                     onChange={(e) => onUpdate('companyRccmNumber', e.target.value)}
                     helperText={t('settings:general.rccmHelper')}
@@ -1019,7 +1019,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                     fullWidth
                     size="small"
                     label={t('settings:general.neq')}
-                    placeholder="Ex: 1234567890"
+                    placeholder={t('settings:general.examplePlaceholder', { value: '1234567890' })}
                     value={settings.companyNeq || ''}
                     onChange={(e) => onUpdate('companyNeq', e.target.value)}
                     helperText={t('settings:general.neqHelper')}
@@ -1030,7 +1030,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                     fullWidth
                     size="small"
                     label={t('settings:general.gstNumber')}
-                    placeholder="Ex: 123456789 RT0001"
+                    placeholder={t('settings:general.examplePlaceholder', { value: '123456789 RT0001' })}
                     value={settings.companyGstNumber || ''}
                     onChange={(e) => onUpdate('companyGstNumber', e.target.value)}
                     helperText={t('settings:general.gstHelper')}
@@ -1041,7 +1041,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                     fullWidth
                     size="small"
                     label={t('settings:general.qstNumber')}
-                    placeholder="Ex: 1234567890 TQ0001"
+                    placeholder={t('settings:general.examplePlaceholder', { value: '1234567890 TQ0001' })}
                     value={settings.companyQstNumber || ''}
                     onChange={(e) => onUpdate('companyQstNumber', e.target.value)}
                     helperText={t('settings:general.qstHelper')}
@@ -1055,7 +1055,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                   fullWidth
                   size="small"
                   label={t('settings:general.taxNumber')}
-                  placeholder="Ex: 12-3456789"
+                  placeholder={t('settings:general.examplePlaceholder', { value: '12-3456789' })}
                   value={settings.companyTaxNumber || ''}
                   onChange={(e) => onUpdate('companyTaxNumber', e.target.value)}
                   helperText={t('settings:general.taxNumberHelper')}
@@ -1068,7 +1068,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                   fullWidth
                   size="small"
                   label={t('settings:general.vatNumber')}
-                  placeholder="Ex: FR12345678901"
+                  placeholder={t('settings:general.examplePlaceholder', { value: 'FR12345678901' })}
                   value={settings.companyVatNumber || ''}
                   onChange={(e) => onUpdate('companyVatNumber', e.target.value)}
                   helperText={t('settings:general.vatHelper')}
@@ -1214,8 +1214,8 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
               <MenuItem value="Letter">Letter (8.5 × 11 in)</MenuItem>
               <MenuItem value="Legal">Legal (8.5 × 14 in)</MenuItem>
               <MenuItem value="A5">A5 (148 × 210 mm)</MenuItem>
-              <MenuItem value="thermal_80">Thermique 80mm (Ticket de caisse)</MenuItem>
-              <MenuItem value="thermal_58">Thermique 58mm (Ticket de caisse)</MenuItem>
+              <MenuItem value="thermal_80">{t('settings:print.thermal80')}</MenuItem>
+              <MenuItem value="thermal_58">{t('settings:print.thermal58')}</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -1244,10 +1244,10 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
                 onChange={(e) => onUpdate('includeQrCode', e.target.checked)}
               />
             }
-            label="Afficher le QR Code"
+            label={t('settings:print.showQrCodeLabel')}
           />
           <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -0.5 }}>
-            Ajoute un QR code sur les documents imprimés
+            {t('settings:print.showQrCodeHelper')}
           </Typography>
         </Grid>
 
@@ -1260,10 +1260,10 @@ const PrintSection = ({ settings, printTemplate, printConfiguration, onUpdateTem
                 onChange={(e) => onUpdate('includeBarcode', e.target.checked)}
               />
             }
-            label="Afficher le Code-barres"
+            label={t('settings:print.showBarcode')}
           />
           <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: 4, mt: -0.5 }}>
-            Ajoute un code-barres sur les documents imprimés
+            {t('settings:print.showBarcodeHelper')}
           </Typography>
         </Grid>
       </Grid>
@@ -1280,7 +1280,7 @@ const NotificationSection = ({ settings, onUpdate }) => {
   return (
     <Box>
       <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1.5}>
-        Alertes in-app
+        {t('settings:notificationsSection.inAppAlerts')}
       </Typography>
       <Stack spacing={2}>
         <FormControlLabel
@@ -1441,8 +1441,8 @@ const ProfileSection = ({ settings, onUpdate }) => {
         body: JSON.stringify(profileData),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erreur');
-      setProfileSuccess('Profil mis à jour avec succès.');
+      if (!res.ok) throw new Error(data.error || t('settings:profile.genericError'));
+      setProfileSuccess(t('settings:profile.updateSuccess'));
     } catch (e) {
       setProfileError(e.message);
     } finally {
@@ -1452,7 +1452,7 @@ const ProfileSection = ({ settings, onUpdate }) => {
 
   const handleSubmitPassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPwError('Les mots de passe ne correspondent pas.');
+      setPwError(t('settings:profile.passwordMismatch'));
       return;
     }
     setPwLoading(true);
@@ -1465,9 +1465,9 @@ const ProfileSection = ({ settings, onUpdate }) => {
         body: JSON.stringify({ current_password: passwordData.currentPassword, new_password: passwordData.newPassword }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erreur');
+      if (!res.ok) throw new Error(data.error || t('settings:profile.genericError'));
       if (data.token) localStorage.setItem('authToken', data.token);
-      setPwSuccess('Mot de passe modifié avec succès.');
+      setPwSuccess(t('settings:profile.passwordChanged'));
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (e) {
       setPwError(e.message);
@@ -1480,31 +1480,31 @@ const ProfileSection = ({ settings, onUpdate }) => {
     <Box>
       {/* Informations personnelles */}
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Informations personnelles
+        {t('settings:profile.personalInfo')}
       </Typography>
       <Divider sx={{ mb: 2 }} />
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth size="small" label="Prénom" value={profileData.first_name}
+          <TextField fullWidth size="small" label={t('settings:profile.firstName')} value={profileData.first_name}
             onChange={(e) => setProfileData(p => ({ ...p, first_name: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth size="small" label="Nom" value={profileData.last_name}
+          <TextField fullWidth size="small" label={t('settings:profile.lastName')} value={profileData.last_name}
             onChange={(e) => setProfileData(p => ({ ...p, last_name: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth size="small" label="Adresse email" type="email" value={profileData.email}
+          <TextField fullWidth size="small" label={t('settings:profile.email')} type="email" value={profileData.email}
             onChange={(e) => setProfileData(p => ({ ...p, email: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <TextField fullWidth size="small" label="Téléphone" value={profileData.phone}
+          <TextField fullWidth size="small" label={t('settings:profile.phone')} value={profileData.phone}
             onChange={(e) => setProfileData(p => ({ ...p, phone: e.target.value }))} />
         </Grid>
         {profileSuccess && <Grid item xs={12}><Alert severity="success" sx={{ py: 0 }}>{profileSuccess}</Alert></Grid>}
         {profileError && <Grid item xs={12}><Alert severity="error" sx={{ py: 0 }}>{profileError}</Alert></Grid>}
         <Grid item xs={12}>
           <Button variant="contained" size="small" onClick={handleProfileSave} disabled={profileLoading}>
-            {profileLoading ? <CircularProgress size={16} /> : 'Enregistrer le profil'}
+            {profileLoading ? <CircularProgress size={16} /> : t('settings:profile.saveProfile')}
           </Button>
         </Grid>
       </Grid>
@@ -1513,29 +1513,29 @@ const ProfileSection = ({ settings, onUpdate }) => {
 
       {/* Changement de mot de passe */}
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Modifier le mot de passe
+        {t('settings:profile.changePasswordTitle')}
       </Typography>
       <Divider sx={{ mb: 2 }} />
       {!hasUsablePassword && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Vous êtes connecté via Google. Définissez un mot de passe pour pouvoir aussi vous connecter par email.
+          {t('settings:profile.googleInfo')}
         </Alert>
       )}
       <Grid container spacing={2}>
         {hasUsablePassword && (
         <Grid item xs={12} md={4}>
-          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label="Mot de passe actuel"
+          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label={t('settings:profile.currentPassword')}
             value={passwordData.currentPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))} />
         </Grid>
         )}
         <Grid item xs={12} md={4}>
-          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label="Nouveau mot de passe"
+          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label={t('settings:profile.newPassword')}
             value={passwordData.newPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, newPassword: e.target.value }))} />
         </Grid>
         <Grid item xs={12} md={4}>
-          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label="Confirmer le mot de passe"
+          <TextField fullWidth size="small" type={showPasswords ? 'text' : 'password'} label={t('settings:profile.confirmPassword')}
             value={passwordData.confirmPassword}
             onChange={(e) => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))} />
         </Grid>
@@ -1545,11 +1545,11 @@ const ProfileSection = ({ settings, onUpdate }) => {
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
             <FormControlLabel
               control={<Switch size="small" checked={showPasswords} onChange={(e) => setShowPasswords(e.target.checked)} />}
-              label={<Typography variant="body2">Afficher les mots de passe</Typography>}
+              label={<Typography variant="body2">{t('settings:profile.showPasswords')}</Typography>}
             />
             <Button variant="contained" size="small" onClick={handleSubmitPassword}
               disabled={pwLoading || (hasUsablePassword && !passwordData.currentPassword) || !passwordData.newPassword || !passwordData.confirmPassword}>
-              {pwLoading ? <CircularProgress size={16} /> : 'Changer le mot de passe'}
+              {pwLoading ? <CircularProgress size={16} /> : t('settings:profile.changePassword')}
             </Button>
           </Stack>
         </Grid>
@@ -1571,24 +1571,24 @@ const DataSection = ({ settings, showSnackbar }) => {
   const importTypes = [
     {
       key: 'suppliers',
-      label: 'Fournisseurs',
+      label: t('settings:dataSection.importTypes.suppliers.label'),
       icon: <LocalShippingIcon sx={{ fontSize: 36 }} />,
       color: '#2563eb',
-      description: 'Importez votre liste de fournisseurs',
+      description: t('settings:dataSection.importTypes.suppliers.description'),
     },
     {
       key: 'products',
-      label: 'Produits',
+      label: t('settings:dataSection.importTypes.products.label'),
       icon: <InventoryIcon sx={{ fontSize: 36 }} />,
       color: '#059669',
-      description: 'Importez votre catalogue produits',
+      description: t('settings:dataSection.importTypes.products.description'),
     },
     {
       key: 'clients',
-      label: 'Clients',
+      label: t('settings:dataSection.importTypes.clients.label'),
       icon: <PeopleIcon sx={{ fontSize: 36 }} />,
       color: '#7c3aed',
-      description: 'Importez votre base clients',
+      description: t('settings:dataSection.importTypes.clients.description'),
     },
   ];
 
@@ -1596,7 +1596,7 @@ const DataSection = ({ settings, showSnackbar }) => {
   const handleExport = async (type, apiMethod, filename) => {
     try {
       setExporting(true);
-      showSnackbar(`Export ${type} en cours...`, 'info');
+      showSnackbar(t('settings:dataSection.exportInProgress', { type }), 'info');
 
       const response = await apiMethod();
 
@@ -1610,17 +1610,17 @@ const DataSection = ({ settings, showSnackbar }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      showSnackbar(`Export ${type} terminé avec succès !`, 'success');
+      showSnackbar(t('settings:dataSection.exportSuccess', { type }), 'success');
     } catch (error) {
       console.error(`Erreur export ${type}:`, error);
-      let errorMessage = `Erreur lors de l'export ${type}`;
+      let errorMessage = t('settings:dataSection.exportError', { type });
 
       if (error.response?.status === 403) {
-        errorMessage = 'Vous n\'avez pas les permissions nécessaires pour exporter. Vérifiez que le module correspondant est activé.';
+        errorMessage = t('settings:dataSection.exportForbidden');
       } else if (error.response?.status === 500) {
-        errorMessage = `Erreur serveur lors de l'export ${type}. Veuillez réessayer ou contacter le support.`;
+        errorMessage = t('settings:dataSection.exportServerError', { type });
       } else if (error.response?.status) {
-        errorMessage = `Erreur ${error.response.status} lors de l'export ${type}`;
+        errorMessage = t('settings:dataSection.exportHttpError', { status: error.response.status, type });
       }
 
       showSnackbar(errorMessage, 'error');
@@ -1630,15 +1630,15 @@ const DataSection = ({ settings, showSnackbar }) => {
   };
 
   // Handlers spécifiques
-  const handleExportSuppliers = () => handleExport('fournisseurs', suppliersAPI.exportCSV, 'fournisseurs');
-  const handleExportClients = () => handleExport('clients', clientsAPI.exportCSV, 'clients');
-  const handleExportProducts = () => handleExport('produits', productsAPI.exportCSV, 'produits');
+  const handleExportSuppliers = () => handleExport(t('settings:dataSection.exportTypes.suppliers'), suppliersAPI.exportCSV, 'fournisseurs');
+  const handleExportClients = () => handleExport(t('settings:dataSection.exportTypes.clients'), clientsAPI.exportCSV, 'clients');
+  const handleExportProducts = () => handleExport(t('settings:dataSection.exportTypes.products'), productsAPI.exportCSV, 'produits');
 
   return (
     <Box>
       {/* Import */}
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Importer des données
+        {t('settings:data.importSection.title')}
       </Typography>
       <Divider sx={{ mb: 2 }} />
       <Grid container spacing={2} mb={2}>
@@ -1694,14 +1694,14 @@ const DataSection = ({ settings, showSnackbar }) => {
         startIcon={<CloudUploadIcon />}
         onClick={() => navigate('/settings/import')}
       >
-        Ouvrir l'assistant d'import
+        {t('settings:dataSection.openImportWizard')}
       </Button>
 
       <Divider sx={{ my: 3 }} />
 
       {/* Export */}
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Exporter vos données
+        {t('settings:dataSection.exportTitle')}
       </Typography>
       <Divider sx={{ mb: 2 }} />
       <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
@@ -1713,7 +1713,7 @@ const DataSection = ({ settings, showSnackbar }) => {
             onClick={handleExportSuppliers}
             disabled={exporting}
           >
-            Fournisseurs (CSV)
+            {t('settings:dataSection.exportSuppliersCsv')}
           </Button>
         )}
         {hasModule('clients') && (
@@ -1724,7 +1724,7 @@ const DataSection = ({ settings, showSnackbar }) => {
             onClick={handleExportClients}
             disabled={exporting}
           >
-            Clients (CSV)
+            {t('settings:dataSection.exportClientsCsv')}
           </Button>
         )}
         {hasModule('products') && (
@@ -1735,7 +1735,7 @@ const DataSection = ({ settings, showSnackbar }) => {
             onClick={handleExportProducts}
             disabled={exporting}
           >
-            Produits (CSV)
+            {t('settings:dataSection.exportProductsCsv')}
           </Button>
         )}
       </Stack>
@@ -1744,7 +1744,7 @@ const DataSection = ({ settings, showSnackbar }) => {
 
       {/* Historique */}
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Historique des imports
+        {t('settings:dataSection.importHistory')}
       </Typography>
       <Divider sx={{ mb: 2 }} />
       <Button
@@ -1753,7 +1753,7 @@ const DataSection = ({ settings, showSnackbar }) => {
         startIcon={<HistoryIcon />}
         onClick={() => navigate('/migration/jobs')}
       >
-        Voir l'historique complet
+        {t('settings:dataSection.viewFullHistory')}
       </Button>
     </Box>
   );
@@ -1828,7 +1828,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
       console.error('Error fetching email config:', error);
       // Ne pas afficher d'erreur si c'est juste que la config n'existe pas
       if (!error.message.includes('404')) {
-        showSnackbar('Erreur lors du chargement de la configuration email', 'error');
+        showSnackbar(t('settings:emailConfig.loadError'), 'error');
       }
     } finally {
       setLoading(false);
@@ -1863,15 +1863,15 @@ const EmailSection = ({ settings, showSnackbar }) => {
 
       const data = await response.json();
       if (data.success || response.ok) {
-        showSnackbar('Configuration email sauvegardée', 'success');
+        showSnackbar(t('settings:emailConfig.saved'), 'success');
         // Recharger la configuration pour mettre à jour configExists
         await fetchEmailConfig();
       } else {
-        showSnackbar(data.error || 'Erreur lors de la sauvegarde', 'error');
+        showSnackbar(data.error || t('settings:emailConfig.saveError'), 'error');
       }
     } catch (error) {
       console.error('Error saving email config:', error);
-      showSnackbar('Erreur lors de la sauvegarde', 'error');
+      showSnackbar(t('settings:emailConfig.saveError'), 'error');
     } finally {
       setSaving(false);
     }
@@ -1891,14 +1891,14 @@ const EmailSection = ({ settings, showSnackbar }) => {
 
       const data = await response.json();
       if (data.success) {
-        showSnackbar(`Email de test envoyé à ${testEmail}`, 'success');
+        showSnackbar(t('settings:emailConfig.testSent', { email: testEmail }), 'success');
         fetchEmailConfig();
       } else {
-        showSnackbar(data.error || 'Erreur lors de l\'envoi', 'error');
+        showSnackbar(data.error || t('settings:emailConfig.sendError'), 'error');
       }
     } catch (error) {
       console.error('Error testing email:', error);
-      showSnackbar('Erreur lors de l\'envoi du test', 'error');
+      showSnackbar(t('settings:emailConfig.testError'), 'error');
     } finally {
       setTesting(false);
     }
@@ -1916,14 +1916,14 @@ const EmailSection = ({ settings, showSnackbar }) => {
 
       const data = await response.json();
       if (data.success) {
-        showSnackbar('Connexion SMTP vérifiée avec succès', 'success');
+        showSnackbar(t('settings:emailConfig.verifySuccess'), 'success');
         fetchEmailConfig();
       } else {
-        showSnackbar(data.error || 'Erreur de connexion', 'error');
+        showSnackbar(data.error || t('settings:emailConfig.connectionError'), 'error');
       }
     } catch (error) {
       console.error('Error verifying email config:', error);
-      showSnackbar('Erreur lors de la vérification', 'error');
+      showSnackbar(t('settings:emailConfig.verifyError'), 'error');
     } finally {
       setTesting(false);
     }
@@ -1949,7 +1949,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
   return (
     <Box>
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        Configuration SMTP
+        {t('settings:emailConfig.smtpTitle')}
       </Typography>
       <Divider sx={{ mb: 2 }} />
 
@@ -1958,7 +1958,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
           <TextField
             fullWidth
             size="small"
-            label="Serveur SMTP"
+            label={t('settings:emailConfig.smtpHost')}
             value={emailConfig?.smtp_host || ''}
             onChange={(e) => setEmailConfig({ ...emailConfig, smtp_host: e.target.value })}
             placeholder="smtp.gmail.com"
@@ -1968,7 +1968,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
           <TextField
             fullWidth
             size="small"
-            label="Port SMTP"
+            label={t('settings:emailConfig.smtpPort')}
             type="number"
             value={emailConfig?.smtp_port || 587}
             onChange={(e) => setEmailConfig({ ...emailConfig, smtp_port: parseInt(e.target.value) || 587 })}
@@ -1978,17 +1978,17 @@ const EmailSection = ({ settings, showSnackbar }) => {
           <TextField
             fullWidth
             size="small"
-            label="Nom d'utilisateur"
+            label={t('settings:emailConfig.username')}
             value={emailConfig?.smtp_username || ''}
             onChange={(e) => setEmailConfig({ ...emailConfig, smtp_username: e.target.value })}
-            placeholder="votre@email.com"
+            placeholder={t('settings:emailConfig.usernamePlaceholder')}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
             size="small"
-            label="Mot de passe"
+            label={t('settings:emailConfig.password')}
             type="password"
             value={emailConfig?.smtp_password || ''}
             onChange={(e) => setEmailConfig({ ...emailConfig, smtp_password: e.target.value })}
@@ -2005,7 +2005,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
                   onChange={(e) => setEmailConfig({ ...emailConfig, use_tls: e.target.checked })}
                 />
               }
-              label={<Typography variant="body2">Utiliser TLS</Typography>}
+              label={<Typography variant="body2">{t('settings:emailConfig.useTls')}</Typography>}
             />
             <FormControlLabel
               control={
@@ -2015,7 +2015,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
                   onChange={(e) => setEmailConfig({ ...emailConfig, use_ssl: e.target.checked })}
                 />
               }
-              label={<Typography variant="body2">Utiliser SSL</Typography>}
+              label={<Typography variant="body2">{t('settings:emailConfig.useSsl')}</Typography>}
             />
           </Stack>
         </Grid>
@@ -2023,21 +2023,21 @@ const EmailSection = ({ settings, showSnackbar }) => {
           <TextField
             fullWidth
             size="small"
-            label="Email expéditeur"
+            label={t('settings:emailConfig.fromEmail')}
             type="email"
             value={emailConfig?.default_from_email || ''}
             onChange={(e) => setEmailConfig({ ...emailConfig, default_from_email: e.target.value })}
-            placeholder="noreply@votredomaine.com"
+            placeholder={t('settings:emailConfig.fromEmailPlaceholder')}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
             size="small"
-            label="Nom expéditeur"
+            label={t('settings:emailConfig.fromName')}
             value={emailConfig?.default_from_name || ''}
             onChange={(e) => setEmailConfig({ ...emailConfig, default_from_name: e.target.value })}
-            placeholder="Votre Entreprise"
+            placeholder={t('settings:emailConfig.fromNamePlaceholder')}
           />
         </Grid>
       </Grid>
@@ -2047,13 +2047,13 @@ const EmailSection = ({ settings, showSnackbar }) => {
       <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap" mb={2}>
         <Chip
           size="small"
-          label={emailConfig?.is_verified ? 'Vérifié' : 'Non vérifié'}
+          label={emailConfig?.is_verified ? t('settings:emailConfig.verified') : t('settings:emailConfig.notVerified')}
           color={emailConfig?.is_verified ? 'success' : 'default'}
           icon={emailConfig?.is_verified ? <CheckCircle /> : undefined}
         />
         {emailConfig?.last_verified_at && (
           <Typography variant="caption" color="text.secondary">
-            Dernière vérification: {new Date(emailConfig.last_verified_at).toLocaleString()}
+            {t('settings:emailConfig.lastVerified', { date: new Date(emailConfig.last_verified_at).toLocaleString() })}
           </Typography>
         )}
       </Stack>
@@ -2072,7 +2072,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
           startIcon={saving ? <CircularProgress size={14} /> : <SaveIcon />}
           fullWidth={isMobile}
         >
-          Sauvegarder
+          {t('settings:emailConfig.save')}
         </Button>
         <Button
           variant="outlined"
@@ -2082,11 +2082,11 @@ const EmailSection = ({ settings, showSnackbar }) => {
           startIcon={testing ? <CircularProgress size={14} /> : <CheckCircle />}
           fullWidth={isMobile}
         >
-          Vérifier la connexion
+          {t('settings:emailConfig.verifyConnection')}
         </Button>
         <TextField
           size="small"
-          label="Email de test"
+          label={t('settings:emailConfig.testEmail')}
           type="email"
           value={testEmail}
           onChange={(e) => setTestEmail(e.target.value)}
@@ -2100,7 +2100,7 @@ const EmailSection = ({ settings, showSnackbar }) => {
           startIcon={testing ? <CircularProgress size={14} /> : <EmailIcon />}
           fullWidth={isMobile}
         >
-          Envoyer test
+          {t('settings:emailConfig.sendTest')}
         </Button>
       </Stack>
     </Box>
@@ -2109,19 +2109,29 @@ const EmailSection = ({ settings, showSnackbar }) => {
 
 // Pays de l'organisation : liste servie par l'API (apps/core/countries.py)
 function CountrySelect({ value, onChange }) {
+  const { t, i18n } = useTranslation(['settings', 'common']);
   const [countries, setCountries] = useState([]);
   useEffect(() => {
     api.get('/accounts/countries/').then((r) => setCountries(r.data.countries || [])).catch(() => {});
   }, []);
+  // Les noms renvoyés par l'API sont en français : en anglais, on les traduit à partir du code ISO
+  const countryName = (c) => {
+    if (!i18n.language || i18n.language.startsWith('fr')) return c.name;
+    try {
+      return new Intl.DisplayNames([i18n.language], { type: 'region' }).of(c.code) || c.name;
+    } catch {
+      return c.name;
+    }
+  };
   return (
     <FormControl fullWidth size="small">
-      <InputLabel>Pays</InputLabel>
+      <InputLabel>{t('common:labels.country')}</InputLabel>
       <Select
         value={countries.some((c) => c.code === value) ? value : ''}
-        label="Pays"
+        label={t('common:labels.country')}
         onChange={(e) => { const c = countries.find((x) => x.code === e.target.value); if (c) onChange(c); }}
       >
-        {countries.map((c) => <MenuItem key={c.code} value={c.code}>{c.name}</MenuItem>)}
+        {countries.map((c) => <MenuItem key={c.code} value={c.code}>{countryName(c)}</MenuItem>)}
       </Select>
     </FormControl>
   );

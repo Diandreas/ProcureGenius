@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Tooltip, Fade, Paper, Typography, IconButton } from '@mui/material';
 import { Close, Lightbulb } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import Mascot from './Mascot';
 
 /**
@@ -12,14 +13,18 @@ import Mascot from './Mascot';
  */
 function ContextualMascot({
     showTips = true,
-    tips = [
-        " Utilisez l'Assistant IA pour créer rapidement des documents",
-        " Les raccourcis clavier accélèrent votre travail",
-        " Consultez le dashboard pour suivre vos performances",
-        " L'e-sourcing vous aide à comparer les offres fournisseurs",
-        " Importez vos données depuis d'autres systèmes facilement",
-    ]
+    tips: tipsProp
 }) {
+    const { t } = useTranslation('common');
+    const tips = tipsProp === undefined
+        ? [
+            t('common:mascot.tip1'),
+            t('common:mascot.tip2'),
+            t('common:mascot.tip3'),
+            t('common:mascot.tip4'),
+            t('common:mascot.tip5'),
+        ]
+        : tipsProp;
     const [pose, setPose] = useState('happy');
     const [animation, setAnimation] = useState('float');
     const [showTip, setShowTip] = useState(false);
@@ -88,7 +93,7 @@ function ContextualMascot({
     return (
         <>
             {/* Mascotte flottante */}
-            <Tooltip title="Cliquez pour un conseil !" arrow placement="right">
+            <Tooltip title={t('common:mascot.clickForTip')} arrow placement="right">
                 <Box
                     onClick={handleClick}
                     sx={{

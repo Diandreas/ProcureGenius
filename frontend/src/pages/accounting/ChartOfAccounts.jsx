@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { Add, Edit, Delete, AutoFixHigh } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
@@ -15,15 +16,9 @@ import AccountingNav from './AccountingNav';
 const TYPE_COLORS = {
   asset: 'primary', liability: 'warning', equity: 'secondary', revenue: 'success', expense: 'error',
 };
-const TYPE_LABELS = {
-  asset: 'Actif', liability: 'Passif', equity: 'Capitaux Propres', revenue: 'Produit', expense: 'Charge',
-};
+// Libellés traduits au rendu : accounting:accountTypes.<type> et accounting:accountTypeSections.<type>
 // Ordre d'affichage des classes de comptes (présentation standard d'un plan comptable)
 const TYPE_ORDER = ['asset', 'liability', 'equity', 'revenue', 'expense'];
-const TYPE_SECTION_LABELS = {
-  asset: 'Actif', liability: 'Passif', equity: 'Capitaux propres',
-  revenue: 'Produits', expense: 'Charges',
-};
 const EMPTY_FORM = { code: '', name: '', account_type: 'asset', parent: '', notes: '' };
 
 export default function ChartOfAccounts() {
@@ -38,6 +33,9 @@ export default function ChartOfAccounts() {
   const [saving, setSaving] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['accounting', 'common']);
+  const typeLabel = (type) => t(`accounting:accountTypes.${type}`);
+  const sectionLabel = (type) => t(`accounting:accountTypeSections.${type}`);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
@@ -48,12 +46,12 @@ export default function ChartOfAccounts() {
     try {
       const r = await accountingAPI.initSetup();
       enqueueSnackbar(
-        `Plan comptable initialisé — ${r.data.accounts_created} comptes et ${r.data.journals_created} journaux créés`,
+        t('accounting:chart.initSuccess', { accounts: r.data.accounts_created, journals: r.data.journals_created }),
         { variant: 'success' }
       );
       load();
     } catch {
-      enqueueSnackbar('Erreur lors de l\'initialisation', { variant: 'error' });
+      enqueueSnackbar(t('accounting:chart.initError'), { variant: 'error' });
     } finally {
       setInitializing(false);
     }
@@ -63,7 +61,7 @@ export default function ChartOfAccounts() {
     setLoading(true);
     accountingAPI.getAccounts({ active: 'true' })
       .then((r) => { setAccounts(r.data); setError(null); })
-      .catch(() => setError('Erreur chargement du plan comptable'))
+      .catch(() => setError(t('accounting:chart.loadError')))
       .finally(() => setLoading(false));
   };
 
@@ -84,7 +82,7 @@ export default function ChartOfAccounts() {
 
   const handleSave = async () => {
     if (!form.code.trim() || !form.name.trim()) {
-      enqueueSnackbar('Code et intitulé obligatoires', { variant: 'error' });
+      enqueueSnackbar(t('accounting:chart.requiredFields'), { variant: 'error' });
       return;
     }
     setSaving(true);
@@ -92,15 +90,15 @@ export default function ChartOfAccounts() {
       const payload = { ...form, parent: form.parent || null };
       if (editing) {
         await accountingAPI.updateAccount(editing.id, payload);
-        enqueueSnackbar('Compte mis à jour', { variant: 'success' });
+        enqueueSnackbar(t('accounting:chart.updated'), { variant: 'success' });
       } else {
         await accountingAPI.createAccount(payload);
-        enqueueSnackbar('Compte créé', { variant: 'success' });
+        enqueueSnackbar(t('accounting:chart.created'), { variant: 'success' });
       }
       setDialogOpen(false);
       load();
     } catch (err) {
-      const msg = err?.response?.data?.error || err?.response?.data?.code?.[0] || 'Erreur';
+      const msg = err?.response?.data?.error || err?.response?.data?.code?.[0] || t('accounting:common.error');
       enqueueSnackbar(msg, { variant: 'error' });
     } finally {
       setSaving(false);
@@ -108,45 +106,45 @@ export default function ChartOfAccounts() {
   };
 
   const handleDelete = async (acc) => {
-    if (!window.confirm(`Supprimer le compte ${acc.code} — ${acc.name} ?`)) return;
+    if (!window.confirm(t('accounting:chart.confirmDelete', { code: acc.code, name: acc.name }))) return;
     try {
       await accountingAPI.deleteAccount(acc.id);
-      enqueueSnackbar('Compte supprimé', { variant: 'success' });
+      enqueueSnackbar(t('accounting:chart.deleted'), { variant: 'success' });
       load();
     } catch (err) {
-      enqueueSnackbar(err?.response?.data?.error || 'Erreur suppression', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.error || t('accounting:chart.deleteError'), { variant: 'error' });
     }
   };
 
   // Regroupe les comptes filtrés par classe, dans l'ordre comptable standard,
   // triés par code à l'intérieur de chaque classe.
   const grouped = TYPE_ORDER
-    .map((t) => [t, filtered
-      .filter((a) => a.account_type === t)
+    .map((type) => [type, filtered
+      .filter((a) => a.account_type === type)
       .sort((a, b) => String(a.code).localeCompare(String(b.code)))])
     .filter(([, list]) => list.length > 0);
 
   return (
     <Box p={{ xs: 2, sm: 3 }}>
       <AccountingNav
-        title="Plan Comptable"
-        subtitle={`${accounts.length} comptes enregistrés`}
+        title={t('accounting:chart.title')}
+        subtitle={t('accounting:chart.subtitle', { count: accounts.length })}
         action={
           <Button variant="contained" startIcon={<Add />} size={isMobile ? 'small' : 'medium'} onClick={openAdd}>
-            {isMobile ? 'Nouveau' : 'Nouveau compte'}
+            {isMobile ? t('accounting:chart.newShort') : t('accounting:chart.newAccount')}
           </Button>
         }
       />
 
       {/* Filtres */}
       <Box display="flex" gap={1.5} mb={2} flexWrap="wrap">
-        <TextField size="small" placeholder="Rechercher code ou intitulé..." value={search}
+        <TextField size="small" placeholder={t('accounting:chart.searchPlaceholder')} value={search}
           onChange={(e) => setSearch(e.target.value)} sx={{ flex: '1 1 200px' }} />
         <FormControl size="small" sx={{ flex: '1 1 160px' }}>
-          <InputLabel>Type de compte</InputLabel>
-          <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} label="Type de compte">
-            <MenuItem value="">Tous</MenuItem>
-            {Object.entries(TYPE_LABELS).map(([k, v]) => <MenuItem key={k} value={k}>{v}</MenuItem>)}
+          <InputLabel>{t('accounting:chart.accountType')}</InputLabel>
+          <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} label={t('accounting:chart.accountType')}>
+            <MenuItem value="">{t('accounting:common.all')}</MenuItem>
+            {TYPE_ORDER.map((k) => <MenuItem key={k} value={k}>{typeLabel(k)}</MenuItem>)}
           </Select>
         </FormControl>
       </Box>
@@ -167,19 +165,18 @@ export default function ChartOfAccounts() {
               onClick={handleInitSetup}
               disabled={initializing}
             >
-              Initialiser
+              {t('accounting:chart.initialize')}
             </Button>
           }
         >
-          <strong>Aucun plan comptable trouvé.</strong> Cliquez sur "Initialiser" pour créer automatiquement
-          les comptes et journaux standards (modifiables ensuite selon vos besoins).
+          <strong>{t('accounting:chart.emptyTitle')}</strong> {t('accounting:chart.emptyText')}
         </Alert>
       )}
 
       {!loading && !error && (
         filtered.length === 0 ? (
           <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
-            Aucun compte trouvé
+            {t('accounting:chart.noAccounts')}
           </Typography>
         ) : isMobile ? (
           /* ── Vue mobile : cartes groupées par classe ── */
@@ -188,7 +185,7 @@ export default function ChartOfAccounts() {
               <Box key={type}>
                 <Box display="flex" alignItems="center" gap={1} mb={1} px={0.5}>
                   <Typography variant="overline" fontWeight={700} color="text.secondary">
-                    {TYPE_SECTION_LABELS[type]}
+                    {sectionLabel(type)}
                   </Typography>
                   <Chip label={list.length} size="small" sx={{ height: 18, fontSize: '0.65rem' }} />
                 </Box>
@@ -200,13 +197,13 @@ export default function ChartOfAccounts() {
                           <Box minWidth={0} flex={1}>
                             <Box display="flex" alignItems="center" gap={1} mb={0.5} flexWrap="wrap">
                               <Typography variant="body2" fontFamily="monospace" fontWeight={700}>{acc.code}</Typography>
-                              <Chip label={TYPE_LABELS[acc.account_type]} size="small" color={TYPE_COLORS[acc.account_type] || 'default'} />
+                              <Chip label={typeLabel(acc.account_type)} size="small" color={TYPE_COLORS[acc.account_type] || 'default'} />
                             </Box>
                             <Typography variant="body2" fontWeight={600}>{acc.name}</Typography>
                             <Typography variant="caption" color="text.secondary">
                               {acc.parent
-                                ? `Parent : ${accounts.find((a) => a.id === acc.parent)?.code || '—'}`
-                                : 'Compte racine'}
+                                ? t('accounting:chart.parentLabel', { code: accounts.find((a) => a.id === acc.parent)?.code || '—' })
+                                : t('accounting:chart.rootAccount')}
                             </Typography>
                           </Box>
                           <Box flexShrink={0}>
@@ -234,11 +231,11 @@ export default function ChartOfAccounts() {
             <Table size="small" sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell><strong>Code</strong></TableCell>
-                  <TableCell><strong>Intitulé</strong></TableCell>
-                  <TableCell><strong>Type</strong></TableCell>
-                  <TableCell><strong>Compte parent</strong></TableCell>
-                  <TableCell align="center"><strong>Actions</strong></TableCell>
+                  <TableCell><strong>{t('accounting:common.code')}</strong></TableCell>
+                  <TableCell><strong>{t('accounting:common.label')}</strong></TableCell>
+                  <TableCell><strong>{t('accounting:common.type')}</strong></TableCell>
+                  <TableCell><strong>{t('accounting:chart.parentAccount')}</strong></TableCell>
+                  <TableCell align="center"><strong>{t('accounting:common.actions')}</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -247,7 +244,7 @@ export default function ChartOfAccounts() {
                     <TableRow>
                       <TableCell colSpan={5} sx={{ bgcolor: 'action.hover', py: 0.75 }}>
                         <Typography variant="caption" fontWeight={700} color="text.secondary" textTransform="uppercase" letterSpacing={0.5}>
-                          {TYPE_SECTION_LABELS[type]} · {list.length}
+                          {sectionLabel(type)} · {list.length}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -258,25 +255,25 @@ export default function ChartOfAccounts() {
                         </TableCell>
                         <TableCell>{acc.name}</TableCell>
                         <TableCell>
-                          <Chip label={TYPE_LABELS[acc.account_type]} size="small" color={TYPE_COLORS[acc.account_type] || 'default'} />
+                          <Chip label={typeLabel(acc.account_type)} size="small" color={TYPE_COLORS[acc.account_type] || 'default'} />
                         </TableCell>
                         <TableCell>
                           {acc.parent
                             ? accounts.find((a) => a.id === acc.parent)?.code || '—'
-                            : <Typography variant="caption" color="text.secondary">Racine</Typography>}
+                            : <Typography variant="caption" color="text.secondary">{t('accounting:chart.root')}</Typography>}
                         </TableCell>
                         <TableCell align="center">
-                          <Tooltip title="Modifier">
+                          <Tooltip title={t('accounting:common.edit')}>
                             <IconButton size="small" onClick={() => openEdit(acc)}><Edit fontSize="small" /></IconButton>
                           </Tooltip>
                           {acc.has_transactions ? (
-                            <Tooltip title="Impossible de supprimer : ce compte a des transactions associées">
+                            <Tooltip title={t('accounting:chart.cannotDelete')}>
                               <span>
                                 <IconButton size="small" color="error" disabled><Delete fontSize="small" /></IconButton>
                               </span>
                             </Tooltip>
                           ) : (
-                            <Tooltip title="Supprimer">
+                            <Tooltip title={t('accounting:common.delete')}>
                               <IconButton size="small" color="error" onClick={() => handleDelete(acc)}><Delete fontSize="small" /></IconButton>
                             </Tooltip>
                           )}
@@ -292,41 +289,41 @@ export default function ChartOfAccounts() {
       )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editing ? 'Modifier le compte' : 'Nouveau compte'}</DialogTitle>
+        <DialogTitle>{editing ? t('accounting:chart.editAccount') : t('accounting:chart.newAccount')}</DialogTitle>
         <DialogContent>
           <Box display="flex" flexDirection="column" gap={2} pt={1}>
             <Box display="flex" gap={2}>
-              <TextField label="Numéro *" value={form.code}
+              <TextField label={t('accounting:chart.numberField')} value={form.code}
                 onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-                sx={{ width: 150 }} placeholder="ex: 7100" />
-              <TextField label="Intitulé *" value={form.name}
+                sx={{ width: 150 }} placeholder={t('accounting:chart.numberPlaceholder')} />
+              <TextField label={t('accounting:chart.nameField')} value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
             </Box>
             <FormControl fullWidth>
-              <InputLabel>Type *</InputLabel>
+              <InputLabel>{t('accounting:chart.typeField')}</InputLabel>
               <Select value={form.account_type} onChange={(e) => setForm((f) => ({ ...f, account_type: e.target.value }))}
-                label="Type *">
-                {Object.entries(TYPE_LABELS).map(([k, v]) => <MenuItem key={k} value={k}>{v}</MenuItem>)}
+                label={t('accounting:chart.typeField')}>
+                {TYPE_ORDER.map((k) => <MenuItem key={k} value={k}>{typeLabel(k)}</MenuItem>)}
               </Select>
             </FormControl>
             <FormControl fullWidth>
-              <InputLabel>Compte parent (optionnel)</InputLabel>
+              <InputLabel>{t('accounting:chart.parentOptional')}</InputLabel>
               <Select value={form.parent} onChange={(e) => setForm((f) => ({ ...f, parent: e.target.value }))}
-                label="Compte parent (optionnel)">
-                <MenuItem value="">— Aucun (compte racine) —</MenuItem>
+                label={t('accounting:chart.parentOptional')}>
+                <MenuItem value="">{t('accounting:chart.noParent')}</MenuItem>
                 {accounts.filter((a) => !editing || a.id !== editing.id).map((a) => (
                   <MenuItem key={a.id} value={a.id}>{a.code} — {a.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <TextField label="Notes" value={form.notes}
+            <TextField label={t('accounting:common.notes')} value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} multiline rows={2} fullWidth />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Annuler</Button>
+          <Button onClick={() => setDialogOpen(false)}>{t('accounting:common.cancel')}</Button>
           <Button onClick={handleSave} variant="contained" disabled={saving}>
-            {saving ? <CircularProgress size={20} /> : (editing ? 'Mettre à jour' : 'Créer')}
+            {saving ? <CircularProgress size={20} /> : (editing ? t('accounting:common.update') : t('accounting:common.create'))}
           </Button>
         </DialogActions>
       </Dialog>

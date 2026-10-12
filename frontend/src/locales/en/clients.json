@@ -3,7 +3,8 @@
     "newClient": "New Client",
     "editClient": "Edit Client",
     "search": {
-        "placeholder": "Search for a client..."
+        "placeholder": "Search for a client...",
+        "placeholderFull": "Search for a client, a contact, an email..."
     },
     "filters": {
         "active": "Active",
@@ -50,7 +51,20 @@
         "lastActivity": "Last Activity",
         "autoStatusTitle": "Automatic Status",
         "autoStatusDescription": "The client status is automatically calculated based on recent activity.",
-        "manualStatus": "Force status manually"
+        "manualStatus": "Force status manually",
+        "invoiceCount": "{{count}} invoice(s)",
+        "autoInactiveSince": "Inactive since",
+        "performance": "Performance",
+        "totalInvoices": "Invoices",
+        "totalRevenue": "Revenue generated",
+        "averageInvoice": "Average basket",
+        "uniqueProducts": "Products",
+        "paymentConditions": "Terms",
+        "call": "Call",
+        "dates": "Dates",
+        "createdAt": "Created on",
+        "updatedAt": "Updated on",
+        "notAvailable": "N/A"
     },
     "stats": {
         "totalRevenue": "Total Revenue",
@@ -65,12 +79,30 @@
         "create": "Create",
         "modify": "Modify",
         "save": "Save",
-        "generateReport": "PDF Report"
+        "generateReport": "PDF Report",
+        "deletePermanently": "Delete permanently"
     },
     "report": {
         "title": "Generate Clients Report",
         "itemLabel": "client",
-        "itemsLabel": "clients"
+        "itemsLabel": "clients",
+        "fileName": "clients-report-{{timestamp}}.pdf",
+        "viewerTitle": "Clients report",
+        "period": "Period (optional)",
+        "periodHelp": "Filter by period - leave empty to include everything",
+        "dateStart": "Start date",
+        "dateEnd": "End date",
+        "itemsToInclude": "Clients to include",
+        "selectedCount": "{{count}} client(s) selected",
+        "allIncluded": "All filtered clients will be included",
+        "selectAll": "Select all",
+        "deselectAll": "Deselect all",
+        "summarySelected": "A report will be generated with {{count}} selected client(s)",
+        "summaryAll": "A report will be generated with all clients ({{count}})",
+        "forPeriod": " for the specified period",
+        "generate": "Generate report",
+        "clientFileName": "client-report-{{name}}.pdf",
+        "clientViewerTitle": "Report {{name}}"
     },
     "buttons": {
         "preview": "Preview",
@@ -89,7 +121,8 @@
     "pdf": {
         "title": "Client PDF Report",
         "ready": "PDF report is ready. Choose an action:",
-        "description": "Generating PDF report..."
+        "description": "Generating PDF report...",
+        "generating": "Generating PDF..."
     },
     "status": {
         "active": "Active",
@@ -128,7 +161,14 @@
         "reportGenerated": "Report generated successfully! Choose an action below.",
         "pdfGenerationHelpText": "You can preview, download or print the report directly.",
         "pdfDownloadedSuccess": "PDF downloaded successfully",
-        "printWindowOpened": "Print window opened"
+        "printWindowOpened": "Print window opened",
+        "loading": "Loading clients...",
+        "invoicesWillBeDeleted": "{{count}} invoice(s) will be deleted",
+        "pdfError": "Error generating the PDF",
+        "pdfDownloaded": "PDF report downloaded successfully",
+        "cannotOpenPrintWindow": "Unable to open the print window",
+        "loadingErrorDescription": "Unable to load clients. Please try again.",
+        "clientNotFoundDescription": "The client you are looking for does not exist or has been deleted."
     },
     "validation": {
         "nameRequired": "Name is required",
@@ -147,5 +187,54 @@
         "net60": "NET 60 - Payment within 60 days",
         "cash": "CASH - Cash payment",
         "discount2_10Net30": "2/10 NET 30 - 2% discount if paid within 10 days, otherwise 30 days"
+    },
+    "fields": {
+        "name": "Client name *",
+        "contactPerson": "Contact person",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address"
+    },
+    "kpi": {
+        "revenue": "Client revenue",
+        "clientCount": "{{count}} client(s)",
+        "active": "Active",
+        "activeSub": "currently active",
+        "vip": "VIP",
+        "vipSub": "+ 10k",
+        "new": "New",
+        "newSub": "this month",
+        "inactive": "Inactive",
+        "inactiveSub": "dormant"
+    },
+    "form": {
+        "newClient": "New client",
+        "editSubtitle": "Update the client's information",
+        "newSubtitle": "Enter the essential information",
+        "identity": "Identity",
+        "tradeName": "Trade name",
+        "additionalDetails": "Additional details",
+        "taxId": "Tax number / business ID",
+        "taxIdHelp": "Business number or tax identifier",
+        "saving": "Saving...",
+        "createClient": "Create client",
+        "validation": {
+            "nameRequired": "Name required"
+        },
+        "paymentTermOptions": {
+            "cash": "Cash",
+            "net15": "Net 15 days",
+            "net30": "Net 30 days",
+            "net45": "Net 45 days",
+            "net60": "Net 60 days",
+            "discount2_10Net30": "2% 10 days, Net 30"
+        }
+    },
+    "statistics": {
+        "title": "Client statistics",
+        "totalInvoices": "Total invoices",
+        "revenue": "Revenue",
+        "paidAmount": "Amount paid",
+        "outstanding": "Outstanding"
     }
 }

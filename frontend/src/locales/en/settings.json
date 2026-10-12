@@ -45,9 +45,48 @@
     "emailLabel": "Email",
     "website": "Website",
     "websitePlaceholder": "https://www.company.com",
+    "websiteInvalid": "Enter a valid URL (e.g. https://www.example.com)",
     "invoicePreview": "INVOICE",
     "invoiceNumber": "No.",
-    "dateLabel": "Date"
+    "dateLabel": "Date",
+    "legalInfo": "Legal and tax information",
+    "taxRegion": "Tax region",
+    "taxRegions": {
+      "international": "International (universal)",
+      "cameroon": "Cameroon (OHADA)",
+      "ohada": "OHADA (French-speaking Africa)",
+      "canada": "Canada",
+      "usa": "United States",
+      "eu": "European Union"
+    },
+    "defaultCurrency": "Default currency",
+    "niu": "NIU (Unique Identification Number)",
+    "niuHelper": "Mandatory in Cameroon - Unique tax identifier",
+    "rcNumber": "Trade Register Number (RC)",
+    "rcHelper": "Trade register registration number",
+    "rccmNumber": "RCCM Number",
+    "rccmHelper": "Trade and Personal Property Credit Register (OHADA)",
+    "neq": "NEQ (Québec Enterprise Number)",
+    "neqHelper": "Mandatory for Québec businesses",
+    "gstNumber": "GST/HST Number",
+    "gstHelper": "GST/HST registration number (mandatory in Canada if > CA$30,000/year)",
+    "qstNumber": "QST Number",
+    "qstHelper": "QST registration number (mandatory in Québec if > CA$30,000/year)",
+    "taxNumber": "Tax number (TIN)",
+    "taxNumberHelper": "Taxpayer Identification Number (TIN)",
+    "vatNumber": "VAT number",
+    "vatHelper": "Intra-community VAT number (e.g. FR12345678901)",
+    "bankInfo": "Bank details (optional)",
+    "bankName": "Bank name",
+    "bankNamePlaceholder": "Your bank name",
+    "bankAccount": "Bank account number",
+    "bankAccountPlaceholder": "Account number or IBAN",
+    "bankSwift": "SWIFT/BIC code",
+    "bankSwiftPlaceholder": "SWIFT/BIC code",
+    "bankSwiftHelper": "Bank identifier code (international transactions)",
+    "logoAndBrand": "Logo & Brand",
+    "logoPreview": "Preview",
+    "examplePlaceholder": "e.g. {{value}}"
   },
   "billing": {
     "title": "Taxation and Billing",
@@ -97,7 +136,13 @@
     "headerFooter": "Header and Footer",
     "showHeader": "Show Header",
     "showFooter": "Show Footer",
-    "showPageNumbers": "Show Page Numbers"
+    "showPageNumbers": "Show Page Numbers",
+    "thermal80": "Thermal 80mm (Receipt)",
+    "thermal58": "Thermal 58mm (Receipt)",
+    "showQrCodeLabel": "Show QR code",
+    "showQrCodeHelper": "Adds a QR code to printed documents",
+    "showBarcode": "Show barcode",
+    "showBarcodeHelper": "Adds a barcode to printed documents"
   },
   "appearance": {
     "title": "Appearance and Localization",
@@ -131,7 +176,8 @@
     "emailNotifications": "Email notifications",
     "invoiceReminders": "Invoice reminders",
     "lowStockAlerts": "Low stock alerts",
-    "orderStatusUpdates": "Order status updates"
+    "orderStatusUpdates": "Order status updates",
+    "inAppAlerts": "In-app alerts"
   },
   "security": {
     "title": "Security and Authentication",
@@ -191,7 +237,15 @@
     "cropImage": "Crop image",
     "zoom": "Zoom",
     "apply": "Apply",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "aspectRatio": "Aspect ratio (square by default)",
+    "formatOptions": {
+      "square": "Square",
+      "landscape": "Landscape",
+      "portrait": "Portrait",
+      "original": "Original",
+      "freeHint": "free"
+    }
   },
   "data": {
     "title": "Import / Export and Migration",
@@ -278,7 +332,10 @@
       "editPermissions": "Edit Permissions",
       "deactivate": "Deactivate",
       "activate": "Activate",
-      "delete": "Delete"
+      "delete": "Delete",
+      "reactivate": "Reactivate",
+      "reactivateSuccess": "User reactivated",
+      "reactivateError": "Error reactivating user"
     },
     "permissions": {
       "manageUsers": "Manage users",
@@ -296,7 +353,8 @@
       "emailInfo": "An invitation email will be sent to the user with a link to create their password.",
       "invite": "Invite",
       "inviteSuccess": "Invitation sent successfully",
-      "inviteError": "Error sending invitation"
+      "inviteError": "Error sending invitation",
+      "inviteSuccessWithEmail": "User created — an email with their login details has been sent."
     },
     "permissionsDialog": {
       "title": "Edit Permissions",
@@ -311,6 +369,18 @@
       "deactivate": "Deactivate",
       "deleteSuccess": "User deactivated successfully",
       "deleteError": "Error deactivating user"
+    },
+    "seatLimitInvite": "Seat limit reached. Upgrade to a higher plan to add users.",
+    "seatLimitReactivate": "Seat limit reached. Upgrade to a higher plan to reactivate this user.",
+    "seatsCount": "{{active}} / {{limit}} seats",
+    "addSeats": "Add seats",
+    "stats": {
+      "admins": "Administrators"
+    },
+    "rolePreview": {
+      "title": "This role can:",
+      "viewOnly": "View only.",
+      "access": "Access: {{count}} module(s). Can be customized after creation."
     }
   },
   "moduleSettings": {
@@ -340,5 +410,341 @@
     "activateProfile": "Activate this Profile",
     "activating": "Activation in progress...",
     "otherModules": "other modules"
+  },
+  "errorDescription": "Unable to load settings. Please try again.",
+  "pageSubtitle": "Manage your organization, preferences and account.",
+  "nav": {
+    "groups": {
+      "company": "Company",
+      "customization": "Customization",
+      "account": "Account"
+    },
+    "general": {
+      "description": "Name, contact details, logo"
+    },
+    "modules": {
+      "label": "Modules",
+      "description": "Enable / disable modules"
+    },
+    "print": {
+      "description": "Format, document templates"
+    },
+    "notifications": {
+      "label": "Notifications",
+      "description": "Email and push alerts"
+    },
+    "email": {
+      "label": "Email / SMTP",
+      "description": "Outgoing email server"
+    },
+    "subscription": {
+      "label": "Subscription",
+      "description": "Plan, quotas, billing"
+    },
+    "profile": {
+      "label": "Profile & Security",
+      "description": "Personal information, password"
+    },
+    "appearance": {
+      "label": "Appearance",
+      "description": "Language, theme, formats"
+    },
+    "data": {
+      "label": "Data",
+      "description": "Import, export, migration"
+    }
+  },
+  "currencies": {
+    "CAD": "Canadian dollar",
+    "USD": "US dollar",
+    "EUR": "Euro",
+    "GBP": "Pound sterling",
+    "XAF": "CFA franc (Central Africa)",
+    "XOF": "CFA franc (West Africa)",
+    "MAD": "Moroccan dirham",
+    "TND": "Tunisian dinar",
+    "NGN": "Nigerian naira",
+    "GNF": "Guinean franc",
+    "CDF": "Congolese franc",
+    "DZD": "Algerian dinar",
+    "CHF": "Swiss franc"
+  },
+  "profile": {
+    "genericError": "Error",
+    "updateSuccess": "Profile updated successfully.",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordChanged": "Password changed successfully.",
+    "personalInfo": "Personal information",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email address",
+    "phone": "Phone",
+    "saveProfile": "Save profile",
+    "changePasswordTitle": "Change password",
+    "googleInfo": "You are signed in with Google. Set a password so you can also sign in with your email.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "showPasswords": "Show passwords",
+    "changePassword": "Change password"
+  },
+  "dataSection": {
+    "importTypes": {
+      "suppliers": {
+        "label": "Suppliers",
+        "description": "Import your supplier list"
+      },
+      "products": {
+        "label": "Products",
+        "description": "Import your product catalog"
+      },
+      "clients": {
+        "label": "Clients",
+        "description": "Import your client base"
+      }
+    },
+    "exportTypes": {
+      "suppliers": "suppliers",
+      "clients": "clients",
+      "products": "products"
+    },
+    "exportInProgress": "Exporting {{type}}...",
+    "exportSuccess": "{{type}} export completed successfully!",
+    "exportError": "Error exporting {{type}}",
+    "exportForbidden": "You don't have the required permissions to export. Check that the corresponding module is enabled.",
+    "exportServerError": "Server error while exporting {{type}}. Please try again or contact support.",
+    "exportHttpError": "Error {{status}} while exporting {{type}}",
+    "openImportWizard": "Open the import wizard",
+    "exportTitle": "Export your data",
+    "exportSuppliersCsv": "Suppliers (CSV)",
+    "exportClientsCsv": "Clients (CSV)",
+    "exportProductsCsv": "Products (CSV)",
+    "importHistory": "Import history",
+    "viewFullHistory": "View full history"
+  },
+  "emailConfig": {
+    "loadError": "Error loading email configuration",
+    "saved": "Email configuration saved",
+    "saveError": "Error while saving",
+    "testSent": "Test email sent to {{email}}",
+    "sendError": "Error while sending",
+    "testError": "Error sending the test email",
+    "verifySuccess": "SMTP connection verified successfully",
+    "connectionError": "Connection error",
+    "verifyError": "Error during verification",
+    "smtpTitle": "SMTP configuration",
+    "smtpHost": "SMTP server",
+    "smtpPort": "SMTP port",
+    "username": "Username",
+    "usernamePlaceholder": "you@email.com",
+    "password": "Password",
+    "useTls": "Use TLS",
+    "useSsl": "Use SSL",
+    "fromEmail": "Sender email",
+    "fromEmailPlaceholder": "noreply@yourdomain.com",
+    "fromName": "Sender name",
+    "fromNamePlaceholder": "Your Company",
+    "verified": "Verified",
+    "notVerified": "Not verified",
+    "lastVerified": "Last verified: {{date}}",
+    "save": "Save",
+    "verifyConnection": "Verify connection",
+    "testEmail": "Test email",
+    "sendTest": "Send test"
+  },
+  "billingPanel": {
+    "plans": {
+      "free": "Free"
+    },
+    "status": {
+      "active": "Active",
+      "trial": "Trial",
+      "past_due": "Payment overdue",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    },
+    "quotas": {
+      "invoices": "Invoices (this month)",
+      "clients": "Clients",
+      "products": "Products",
+      "purchase_orders": "Purchase orders (this month)",
+      "suppliers": "Suppliers",
+      "ai_requests": "AI requests (this month)"
+    },
+    "noPaidSubscription": "You don't have a paid subscription yet. Choose a plan to enable billing.",
+    "trialRemaining_one": "Trial — {{count}} day left",
+    "trialRemaining_other": "Trial — {{count}} days left",
+    "trialEnds": "Your trial ends on {{date}}.",
+    "freePlan": "Free plan, no commitment.",
+    "nextRenewal": "Next renewal on {{date}}.",
+    "choosePlan": "Choose a plan",
+    "changePlan": "Change plan",
+    "manageBilling": "Manage billing",
+    "usage": "Usage",
+    "unlimited": "Unlimited",
+    "portal": "Portal",
+    "stripeManaged": "Your billing is managed by Stripe: invoices, payment method and cancellation from the portal.",
+    "trialOffer": "1-month free trial on Pro and Business, no card required. Billing starts with your first paid subscription."
+  },
+  "modulesManager": {
+    "modules": {
+      "dashboard": "Dashboard",
+      "invoices": "Invoicing",
+      "purchase-orders": "Purchase orders",
+      "suppliers": "Suppliers",
+      "clients": "Clients",
+      "products": "Products",
+      "contracts": "Contracts",
+      "analytics": "Analytics"
+    },
+    "loadError": "Error loading modules",
+    "saveSuccess": "Modules updated successfully",
+    "saveError": "Error while saving: {{error}}",
+    "title": "Active modules",
+    "description": "Enable or disable your organization's modules. A reload will be required."
+  },
+  "push": {
+    "categories": {
+      "critique": {
+        "label": " Critical",
+        "description": "Cannot be disabled — stockouts, quota reached, severely overdue invoices"
+      },
+      "important": {
+        "label": " Important",
+        "description": "Enabled by default, can be disabled"
+      },
+      "resume": {
+        "label": " Weekly summary",
+        "description": "A single push on Monday morning with the week's summary"
+      }
+    },
+    "fields": {
+      "push_stock_rupture": "Out of stock",
+      "push_quota_atteint": "Plan quota reached (90%+)",
+      "push_facture_retard": "Invoice overdue by 7+ days",
+      "push_stock_bas": "Low stock (alert threshold)",
+      "push_facture_brouillon": "Invoice in draft for 24h+",
+      "push_bc_retard": "Overdue purchase order",
+      "push_lot_expirant": "Product batch expiring within 30 days",
+      "push_insight_ia": "Important AI insight (priority ≥ 8)",
+      "push_resume_hebdo": "Weekly summary (Monday 8 AM)"
+    },
+    "saved": "Preferences saved",
+    "saveError": "Save error",
+    "blockedInBrowser": "Notifications are blocked in the browser. Change the permissions in the site settings.",
+    "notSupported": "Your browser doesn't support push notifications. Try Chrome or Firefox.",
+    "title": "Push notifications",
+    "subtitle": "Get alerts even when Procura is closed — right on your device.",
+    "enabled": "Notifications enabled",
+    "disabled": "Notifications disabled",
+    "enabledHelper": "This device receives Procura push notifications.",
+    "disabledHelper": "Click to receive notifications on this device.",
+    "disable": "Disable",
+    "enable": "Enable notifications",
+    "deniedAlert": "Notifications are blocked in your browser. Click the padlock icon in the address bar to allow them.",
+    "alwaysActive": "Always on",
+    "enableToConfigure": "Enable notifications to configure your preferences."
+  },
+  "legacySettings": {
+    "saveSuccess": "Settings saved successfully!",
+    "invalidImage": "Please select a valid image file",
+    "fileTooLarge": "The file is too large (max 5MB)",
+    "ratioConfirm": "The proportions of your image are not optimal for an invoice header (recommended ratio: 2.6:1). Do you want to continue?",
+    "importTab": "Import",
+    "subtitle": "Configure the application to suit your needs",
+    "uploadLogo": "Upload logo",
+    "logoFormats": "Accepted formats: PNG, JPG, SVG (max 2MB)",
+    "localization": "Localization settings",
+    "documentNumbering": "Document numbering",
+    "defaultPaymentTerms": "Default payment terms",
+    "taxConfiguration": "Tax configuration",
+    "defaultRate": "Default rate (%)",
+    "invoiceHeader": "Invoice header",
+    "invoiceHeaderInfo": "Configure the appearance of your invoice header. Recommended ratio: 2.6:1 (210mm x 80mm for A4).",
+    "headerType": "Header type",
+    "headerTypes": {
+      "simple": "Simple (text only)",
+      "custom": "Custom",
+      "uploaded": "Uploaded image"
+    },
+    "uploadHeader": "Upload header",
+    "headerFormats": "Accepted formats: PNG, JPG, SVG (max 5MB) - Optimal ratio: 2.6:1",
+    "headerPreview": "Header preview",
+    "headerPreviewAlt": "Header preview",
+    "logoPosition": "Logo position",
+    "positions": {
+      "left": "Left",
+      "center": "Center",
+      "right": "Right"
+    },
+    "logoSize": "Logo size",
+    "sizes": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "backgroundColor": "Background color:",
+    "textColor": "Text color:",
+    "showCompanyInfo": "Show company information",
+    "showLogo": "Show logo",
+    "customHeaderPreview": "Custom header preview",
+    "width": "Width (mm)",
+    "widthHelper": "Recommended width: 210mm (A4)",
+    "height": "Height (mm)",
+    "heightHelper": "Recommended height: 80mm",
+    "marginOptions": {
+      "narrow": "Narrow",
+      "normal": "Normal",
+      "wide": "Wide"
+    },
+    "includeQrCode": "Include QR code on documents",
+    "printColors": "Color printing",
+    "notifications": {
+      "general": "General notifications",
+      "generalHelper": "Receive important notifications by email",
+      "invoiceRemindersHelper": "Automatic reminders for overdue invoices",
+      "lowStockHelper": "Notifications when products are out of stock",
+      "orderUpdates": "Order updates",
+      "orderUpdatesHelper": "Notifications about order status changes"
+    },
+    "emailConfig": "Email configuration",
+    "emailConfigInfo": "Configure your SMTP settings to send automatic emails.",
+    "port": "Port",
+    "senderEmail": "Sender email",
+    "useSslTls": "Use SSL/TLS",
+    "themeAndColors": "Theme and colors",
+    "customColors": "Custom colors",
+    "secondaryColor": "Secondary color",
+    "securitySettings": "Security settings",
+    "loginAttempts": "Maximum login attempts",
+    "enableTwoFactor": "Enable two-factor authentication",
+    "auditLogInfo": "The audit log records all important actions performed in the system.",
+    "autoBackup": "Automatic backup",
+    "enableAutoBackup": "Enable automatic backup",
+    "backupRetention": "Backup retention (days)",
+    "manualBackup": "Manual backup",
+    "createBackupNow": "Create a backup now",
+    "manageBackups": "Manage backups",
+    "restoreFromBackup": "Restore from a backup",
+    "dataExport": "Data export",
+    "dataExportWarning": "Exporting data may take several minutes depending on the size of your database.",
+    "exportAll": "Export all data",
+    "exportInvoices": "Export invoices",
+    "exportPurchaseOrders": "Export purchase orders",
+    "exportSuppliers": "Export suppliers",
+    "importInfo": "Easily import your data from Excel or CSV files, or from your phone contacts.",
+    "importClients": "Import clients",
+    "importClientsDesc": "Import your client list from an Excel or CSV file",
+    "importProducts": "Import products",
+    "importProductsDesc": "Add your products in bulk with their references and prices",
+    "phoneContacts": "Phone contacts",
+    "phoneContactsDesc": "Import directly from your phone contacts",
+    "importTemplates": "Import templates",
+    "importTemplatesDesc": "Download our Excel templates to make importing your data easier.",
+    "clientsTemplate": "Clients template (CSV)",
+    "productsTemplate": "Products template (CSV)",
+    "importHistory": "Import history",
+    "importHistoryComingSoon": "Coming soon - Import history will be available shortly.",
+    "saveSettings": "Save settings"
   }
 }

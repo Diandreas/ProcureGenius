@@ -1,0 +1,404 @@
+{
+  "actions": {
+    "start": "Commencer",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "finish": "Terminer",
+    "skip": "Passer",
+    "continue": "Continuer",
+    "back": "Retour"
+  },
+  "setup": {
+    "steps": {
+      "company": "Votre entreprise",
+      "activity": "Votre activité",
+      "plan": "Votre formule"
+    },
+    "taxRegions": {
+      "international": "International",
+      "cameroon": "Cameroun (OHADA)",
+      "ohada": "Zone OHADA",
+      "eu": "Union Européenne",
+      "usa": "États-Unis",
+      "canada": "Canada"
+    },
+    "useCases": {
+      "sell": {
+        "title": "Vendre & facturer",
+        "desc": "Clients, devis, factures, paiements"
+      },
+      "buy": {
+        "title": "Acheter & fournisseurs",
+        "desc": "Fournisseurs, bons de commande, contrats"
+      },
+      "stock": {
+        "title": "Gérer mon stock",
+        "desc": "Catalogue produits et niveaux de stock"
+      },
+      "all": {
+        "title": "Tout gérer",
+        "desc": "L'entreprise complète : ventes, achats, stock, compta"
+      }
+    },
+    "plans": {
+      "free": {
+        "name": "Gratuit",
+        "tag": "Pour démarrer",
+        "seats": "1 utilisateur",
+        "features": {
+          "clientsProducts": "Clients & produits",
+          "basicInvoicing": "Facturation de base",
+          "dashboard": "Tableau de bord"
+        },
+        "cta": "Rester en gratuit (sans essai)"
+      },
+      "pro": {
+        "name": "Pro",
+        "tag": "30 jours offerts",
+        "seats": "2 utilisateurs inclus (+{siege}/utilisateur)",
+        "features": {
+          "allFree": "Tout le Gratuit",
+          "suppliersPo": "Fournisseurs & bons de commande",
+          "accountingAiContracts": "Compta de base, IA & contrats"
+        },
+        "cta": "Démarrer l'essai Pro"
+      },
+      "business": {
+        "name": "Business",
+        "tag": "30 jours offerts",
+        "seats": "10 utilisateurs inclus (+{siege}/utilisateur)",
+        "features": {
+          "fullAccounting": "Compta complète + marges & réappro",
+          "eSourcing": "E-Sourcing (appels d'offres)",
+          "prioritySupport": "Support prioritaire"
+        },
+        "cta": "Démarrer l'essai Business"
+      }
+    },
+    "errors": {
+      "companyNameRequired": "Le nom de l'entreprise est requis",
+      "chooseActivity": "Choisissez au moins une activité",
+      "unknown": "Erreur inconnue",
+      "generic": "Erreur : {{message}}"
+    },
+    "header": {
+      "title": "Bienvenue sur Procura",
+      "subtitle": "Quelques étapes rapides pour configurer votre espace"
+    },
+    "progress": "Étape {{current}} sur {{total}} — {{label}}",
+    "company": {
+      "title": "Votre entreprise",
+      "subtitle": "Ces informations apparaîtront sur vos factures et documents.",
+      "logoOptional": "Logo (optionnel)",
+      "companyName": "Nom de l'entreprise",
+      "companyNamePlaceholder": "Ex : ACME SARL",
+      "prefilled": "Pré-rempli depuis votre inscription",
+      "country": "Pays",
+      "countryHint": "TVA {{rate}} % · comptabilité {{standard}} — modifiable ensuite",
+      "accountingStandards": {
+        "syscohada": "SYSCOHADA (OHADA)",
+        "pcg": "plan comptable français",
+        "us_gaap": "US GAAP",
+        "ca": "canadienne"
+      },
+      "address": "Ville / adresse (optionnel)",
+      "addressPlaceholder": "Ex : Akwa, Douala",
+      "currency": "Devise",
+      "currencies": {
+        "XAF": "XAF — Franc CFA (Afrique centrale)",
+        "XOF": "XOF — Franc CFA (Afrique de l'Ouest)",
+        "EUR": "EUR — Euro",
+        "USD": "USD — Dollar américain",
+        "CAD": "CAD — Dollar canadien"
+      },
+      "language": "Langue",
+      "languageHint": "Langue de l'application et de vos documents.",
+      "moreInfo": "Plus d'informations",
+      "optional": "(optionnel)",
+      "email": "Email",
+      "emailPlaceholder": "contact@entreprise.com",
+      "phone": "Téléphone",
+      "website": "Site web",
+      "taxRegion": "Région fiscale",
+      "taxNumber": "Numéro fiscal (TIN)",
+      "editableLater": "Tout ceci est modifiable à tout moment dans les Paramètres."
+    },
+    "activity": {
+      "title": "Qu'allez-vous gérer ?",
+      "subtitle": "Choisissez ce qui vous concerne — on active les bonnes fonctionnalités. Modifiable à tout moment."
+    },
+    "plan": {
+      "title": "Votre formule",
+      "trialNotice": "<strong>30 jours d'essai Pro offerts</strong>, sans carte bancaire. Vous pouvez aussi rester en <strong>Gratuit</strong> — changement possible à tout moment.",
+      "recommended": "Recommandé"
+    },
+    "activating": "Activation…",
+    "start": "Démarrer",
+    "noCardRequired": "Aucune carte bancaire requise. Annulation à tout moment."
+  },
+  "wizard": {
+    "steps": {
+      "welcome": "Bienvenue",
+      "companyType": "Type d'entreprise",
+      "useCase": "Cas d'usage",
+      "team": "Équipe",
+      "modules": "Modules",
+      "done": "Terminé"
+    },
+    "profiles": {
+      "basic": {
+        "name": "Basique",
+        "description": "Pour les achats simples et la facturation"
+      },
+      "advanced": {
+        "name": "Avancé",
+        "description": "PME avec sourcing et gestion des contrats"
+      },
+      "complete": {
+        "name": "Complet",
+        "description": "Toutes les fonctionnalités pour grandes entreprises"
+      }
+    },
+    "modules": {
+      "dashboard": {
+        "name": "Tableau de bord",
+        "description": "Vue d'ensemble et statistiques"
+      },
+      "suppliers": {
+        "name": "Fournisseurs",
+        "description": "Gestion des fournisseurs"
+      },
+      "purchaseOrders": {
+        "name": "Bons de commande",
+        "description": "Gestion des achats"
+      },
+      "invoices": {
+        "name": "Factures",
+        "description": "Facturation et paiements"
+      },
+      "products": {
+        "name": "Produits",
+        "description": "Catalogue produits et stock"
+      },
+      "clients": {
+        "name": "Clients",
+        "description": "Gestion de la clientèle"
+      },
+      "eSourcing": {
+        "name": "E-Sourcing",
+        "description": "Appels d'offres (RFQ)"
+      },
+      "contracts": {
+        "name": "Contrats",
+        "description": "Gestion des contrats"
+      }
+    },
+    "messages": {
+      "success": "Configuration terminée avec succès!",
+      "error": "Erreur lors de la configuration"
+    },
+    "welcome": {
+      "title": "Bienvenue sur ProcureGenius!",
+      "text": "Je suis ravi de vous accompagner dans la configuration de votre espace. En quelques étapes, nous allons personnaliser l'application selon vos besoins."
+    },
+    "company": {
+      "title": "Parlez-nous de votre entreprise",
+      "type": "Type d'entreprise",
+      "types": {
+        "sme": "PME (Petite et Moyenne Entreprise)",
+        "large": "Grande entreprise",
+        "startup": "Startup",
+        "nonprofit": "Organisation à but non lucratif"
+      },
+      "sector": "Secteur d'activité",
+      "sectorPlaceholder": "Ex: Technologie, Commerce, Services..."
+    },
+    "useCase": {
+      "title": "Quel est votre besoin principal?",
+      "simplePurchases": {
+        "title": "Achats simples et facturation",
+        "desc": "Gérer les fournisseurs, créer des bons de commande et suivre les factures"
+      },
+      "sourcing": {
+        "title": "E-Sourcing et appels d'offres",
+        "desc": "Comparer les offres fournisseurs, gérer les RFQ et optimiser les achats"
+      },
+      "complete": {
+        "title": "Gestion complète",
+        "desc": "Toutes les fonctionnalités: achats, stocks, contrats, facturation, analytics"
+      }
+    },
+    "team": {
+      "title": "Votre équipe",
+      "size": "Taille de l'équipe",
+      "sizes": {
+        "small": "1-10 employés",
+        "medium": "11-50 employés",
+        "large": "51-200 employés",
+        "xlarge": "Plus de 200 employés"
+      },
+      "rolesTitle": "Rôles principaux dans votre équipe",
+      "roles": {
+        "purchasing": "Achats",
+        "accounting": "Comptabilité",
+        "management": "Direction",
+        "sales": "Commercial",
+        "logistics": "Logistique"
+      }
+    },
+    "modulesStep": {
+      "title": "Choisissez vos modules",
+      "profileHint": "Sélectionnez un profil prédéfini ou personnalisez vos modules",
+      "customize": "Personnaliser les modules",
+      "customHint": "Sélectionnez les modules que vous souhaitez utiliser",
+      "backToProfiles": "Retour aux profils prédéfinis"
+    },
+    "done": {
+      "title": "Configuration terminée!",
+      "text": "Votre espace est prêt. Vous pouvez toujours modifier ces paramètres dans les réglages.",
+      "start": "Commencer à utiliser ProcureGenius"
+    }
+  },
+  "checklist": {
+    "title": "Démarrage rapide",
+    "progress": "{{done}}/{{total}} tâches complétées",
+    "allDoneTitle": "Tout est en place !",
+    "allDoneText": "Votre espace Procura est configuré.",
+    "tasks": {
+      "companyProfile": {
+        "title": "Configurer votre profil entreprise",
+        "subtitle": "Nom, logo, informations légales"
+      },
+      "firstSupplier": {
+        "title": "Ajouter votre premier fournisseur",
+        "subtitle": "Nom, contact, conditions"
+      },
+      "firstProduct": {
+        "title": "Créer un produit ou service",
+        "subtitle": "Référence, prix, stock initial"
+      },
+      "firstPo": {
+        "title": "Créer un bon de commande",
+        "subtitle": "Votre premier achat fournisseur"
+      },
+      "exploreAi": {
+        "title": "Essayer l'assistant IA",
+        "subtitle": "Posez votre première question"
+      }
+    }
+  },
+  "tutorial": {
+    "stepOf": "Étape {{current}} sur {{total}}",
+    "skipTutorial": "Passer le tutoriel",
+    "simple": {
+      "welcome": {
+        "title": "Bienvenue sur Procura !",
+        "description": "On va vous montrer comment ça marche. Ça prend 2 minutes. Suivez les étapes et vous serez prêt à commencer."
+      },
+      "dashboard": {
+        "title": "Votre page principale",
+        "description": "Ici vous voyez tout ce qui se passe : vos commandes du jour, vos factures en attente, et vos alertes importantes."
+      },
+      "suppliers": {
+        "title": "Vos fournisseurs",
+        "description": "C'est ici que vous enregistrez vos vendeurs et fournisseurs. Quand vous faites une commande, vous les retrouvez facilement."
+      },
+      "purchaseOrders": {
+        "title": "Bons de commande",
+        "description": "Créez une commande à un fournisseur. Vous pouvez aussi voir si le prix est bon — l'appli vérifie les prix du marché pour vous."
+      },
+      "invoices": {
+        "title": "Vos factures",
+        "description": "Faites vos factures et envoyez-les à vos clients par email. Vous voyez qui a payé et qui doit encore payer."
+      },
+      "products": {
+        "title": "Vos produits",
+        "description": "Listez vos produits et leur stock. Si un article est presque épuisé, l'appli vous prévient avant qu'il soit trop tard."
+      },
+      "contracts": {
+        "title": "Contrats",
+        "description": "Gardez une copie de vos accords avec les fournisseurs. Comme ça, si un prix change ou s'il y a un problème, vous avez la preuve écrite."
+      },
+      "accounting": {
+        "title": "Comptabilité",
+        "description": "Voyez en un coup d'œil combien vous avez dépensé, ce que vous avez gagné, et si votre activité est rentable."
+      },
+      "aiAssistant": {
+        "title": "Votre assistant IA",
+        "description": "Posez-lui une question en français simple — \"Montre-moi mes factures du mois\" ou \"Qui est mon meilleur fournisseur ?\" — il répond tout de suite."
+      },
+      "settings": {
+        "title": "Réglages",
+        "description": "Mettez le nom de votre boutique, votre logo, votre devise. C'est aussi ici que vous ajoutez d'autres personnes de votre équipe."
+      },
+      "complete": {
+        "title": "C'est parti !",
+        "description": "Vous avez vu l'essentiel. Commencez par mettre le nom de votre boutique dans les réglages, puis ajoutez votre premier fournisseur."
+      }
+    },
+    "provider": {
+      "welcome": {
+        "title": "Bienvenue sur ProcureGenius !",
+        "description": "Je suis Procury, votre assistant. Je vais vous faire découvrir les principales fonctionnalités de la plateforme."
+      },
+      "dashboard": {
+        "title": "Le Tableau de bord",
+        "description": "C'est votre centre de commande. Vous y trouverez un aperçu de votre activité, vos alertes et vos statistiques en temps réel."
+      },
+      "sidebar": {
+        "title": "Le Menu latéral",
+        "description": "Naviguez facilement entre les différents modules de l'application. Les modules affichés dépendent de votre configuration."
+      },
+      "suppliers": {
+        "title": "Gestion des Fournisseurs",
+        "description": "Ajoutez et gérez vos fournisseurs. Vous pouvez importer depuis Excel, scanner des cartes de visite, et suivre leurs performances."
+      },
+      "purchaseOrders": {
+        "title": "Bons de Commande",
+        "description": "Créez des bons de commande professionnels en quelques clics. L'IA peut vous aider à rédiger le contenu."
+      },
+      "invoices": {
+        "title": "Facturation",
+        "description": "Gérez vos factures clients. Envoyez-les par email et suivez les paiements en temps réel."
+      },
+      "clients": {
+        "title": "Gestion des Clients",
+        "description": "Suivez vos clients, leur historique d'achats et leurs soldes impayés."
+      },
+      "products": {
+        "title": "Produits & Stock",
+        "description": "Gérez votre catalogue de produits, suivez vos stocks et recevez des alertes de réapprovisionnement."
+      },
+      "settings": {
+        "title": "Paramètres",
+        "description": "Personnalisez votre expérience : informations entreprise, modules, impression, notifications et plus encore."
+      },
+      "aiAssistant": {
+        "title": "Assistant IA",
+        "description": "Votre assistant intelligent peut répondre à vos questions, générer des documents et vous aider dans vos tâches quotidiennes."
+      },
+      "complete": {
+        "title": "Vous êtes prêt !",
+        "description": "Vous connaissez maintenant les bases de ProcureGenius. N'hésitez pas à explorer et à relancer ce tutoriel depuis le menu d'aide si besoin."
+      }
+    },
+    "button": {
+      "tutorial": "Tutoriel",
+      "help": "Aide",
+      "tooltip": "Aide & Tutoriel",
+      "needHelp": "Besoin d'aide ?",
+      "launch": "Lancer le tutoriel",
+      "guidedTour": "Visite guidée de l'application",
+      "interactiveTour": "Visite guidée interactive",
+      "new": "Nouveau",
+      "replay": "Revoir le tutoriel",
+      "restartFromStart": "Recommencer depuis le début",
+      "restartTour": "Recommencer la visite",
+      "documentation": "Documentation",
+      "helpCenter": "Centre d'aide complet",
+      "faq": "FAQ",
+      "shortcuts": "Raccourcis clavier",
+      "contactSupport": "Contacter le support"
+    }
+  }
+}

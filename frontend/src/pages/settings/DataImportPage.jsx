@@ -83,25 +83,12 @@ import { suppliersAPI, productsAPI, clientsAPI } from '../../services/api';
 // Configuration des types d'entités importables
 const ENTITY_CONFIGS = {
     suppliers: {
-        label: 'Fournisseurs',
         icon: LocalShipping,
         color: '#2563eb',
         gradient: '#2563eb',
-        description: 'Importez votre liste de fournisseurs avec leurs coordonnées',
         fields: {
             required: ['name'],
             optional: ['email', 'phone', 'address', 'city', 'country', 'contact_name', 'payment_terms', 'notes'],
-        },
-        fieldLabels: {
-            name: 'Nom',
-            email: 'Email',
-            phone: 'Téléphone',
-            address: 'Adresse',
-            city: 'Ville',
-            country: 'Pays',
-            contact_name: 'Contact',
-            payment_terms: 'Conditions paiement',
-            notes: 'Notes',
         },
         suggestedMappings: {
             'nom': 'name', 'name': 'name', 'fournisseur': 'name', 'supplier': 'name', 'raison_sociale': 'name',
@@ -114,25 +101,12 @@ const ENTITY_CONFIGS = {
         },
     },
     products: {
-        label: 'Produits',
         icon: Inventory,
         color: '#059669',
         gradient: '#059669',
-        description: 'Importez votre catalogue de produits avec prix et stocks',
         fields: {
             required: ['name'],
             optional: ['reference', 'sku', 'description', 'unit_price', 'cost_price', 'quantity_in_stock', 'category', 'unit'],
-        },
-        fieldLabels: {
-            name: 'Nom',
-            reference: 'Référence',
-            sku: 'SKU',
-            description: 'Description',
-            unit_price: 'Prix unitaire',
-            cost_price: 'Prix d\'achat',
-            quantity_in_stock: 'Stock',
-            category: 'Catégorie',
-            unit: 'Unité',
         },
         suggestedMappings: {
             'nom': 'name', 'name': 'name', 'produit': 'name', 'product': 'name', 'designation': 'name', 'désignation': 'name', 'libelle': 'name',
@@ -147,25 +121,12 @@ const ENTITY_CONFIGS = {
         },
     },
     clients: {
-        label: 'Clients',
         icon: People,
         color: '#7c3aed',
         gradient: '#7c3aed',
-        description: 'Importez votre base de clients avec leurs informations',
         fields: {
             required: ['name'],
             optional: ['email', 'phone', 'address', 'city', 'country', 'contact_name', 'credit_limit', 'notes'],
-        },
-        fieldLabels: {
-            name: 'Nom',
-            email: 'Email',
-            phone: 'Téléphone',
-            address: 'Adresse',
-            city: 'Ville',
-            country: 'Pays',
-            contact_name: 'Contact',
-            credit_limit: 'Limite de crédit',
-            notes: 'Notes',
         },
         suggestedMappings: {
             'nom': 'name', 'name': 'name', 'client': 'name', 'customer': 'name', 'raison_sociale': 'name', 'societe': 'name', 'société': 'name',
@@ -179,12 +140,13 @@ const ENTITY_CONFIGS = {
     },
 };
 
-const STEPS = ['Sélection', 'Fichier', 'Mapping', 'Aperçu', 'Import'];
+const STEPS = ['selection', 'file', 'mapping', 'preview', 'import'];
 
 /**
  * Carte de sélection d'entité
  */
 const EntityCard = ({ entityKey, config, selected, onClick }) => {
+    const { t } = useTranslation(['dataImport', 'common']);
     const Icon = config.icon;
 
     return (
@@ -222,15 +184,15 @@ const EntityCard = ({ entityKey, config, selected, onClick }) => {
                     <Icon sx={{ fontSize: 40, color: 'white' }} />
                 </Box>
                 <Typography variant="h6" fontWeight={700} gutterBottom>
-                    {config.label}
+                    {t(`dataImport:entities.${entityKey}`)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ minHeight: 48 }}>
-                    {config.description}
+                    {t(`dataImport:entityDescriptions.${entityKey}`)}
                 </Typography>
                 {selected && (
                     <Chip
                         icon={<CheckCircle />}
-                        label="Sélectionné"
+                        label={t('dataImport:actions.selected')}
                         color="success"
                         size="small"
                         sx={{ mt: 2 }}
@@ -246,6 +208,7 @@ const EntityCard = ({ entityKey, config, selected, onClick }) => {
  */
 const FileDropzone = ({ onFileAccepted, acceptedFile, entityConfig }) => {
     const theme = useTheme();
+    const { t } = useTranslation(['dataImport', 'common']);
 
     const onDrop = useCallback((acceptedFiles) => {
         if (acceptedFiles.length > 0) {
@@ -291,13 +254,13 @@ const FileDropzone = ({ onFileAccepted, acceptedFile, entityConfig }) => {
                     <Box>
                         <InsertDriveFile sx={{ fontSize: 72, color: '#059669', mb: 2 }} />
                         <Typography variant="h6" gutterBottom color="success.main" fontWeight={600}>
-                            Fichier sélectionné !
+                            {t('dataImport:page.dropzone.fileSelected')}
                         </Typography>
                         <Typography variant="body1" fontWeight={500}>
                             {acceptedFile.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            {(acceptedFile.size / 1024).toFixed(1)} Ko
+                            {t('dataImport:page.dropzone.sizeKb', { size: (acceptedFile.size / 1024).toFixed(1) })}
                         </Typography>
                         <Button
                             variant="outlined"
@@ -308,7 +271,7 @@ const FileDropzone = ({ onFileAccepted, acceptedFile, entityConfig }) => {
                                 onFileAccepted(null);
                             }}
                         >
-                            Changer de fichier
+                            {t('dataImport:actions.changeFile')}
                         </Button>
                     </Box>
                 </Fade>
@@ -316,15 +279,15 @@ const FileDropzone = ({ onFileAccepted, acceptedFile, entityConfig }) => {
                 <Box>
                     <CloudUpload sx={{ fontSize: 72, color: '#9ca3af', mb: 2 }} />
                     <Typography variant="h5" gutterBottom fontWeight={600}>
-                        {isDragActive ? 'Déposez votre fichier ici !' : 'Glissez-déposez votre fichier'}
+                        {isDragActive ? t('dataImport:page.dropzone.dropHere') : t('dataImport:page.dropzone.dragDrop')}
                     </Typography>
                     <Typography color="text.secondary" paragraph>
-                        ou cliquez pour sélectionner un fichier
+                        {t('dataImport:page.dropzone.orClick')}
                     </Typography>
                     <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap">
                         <Chip label="CSV" color="primary" variant="outlined" />
                         <Chip label="Excel (.xlsx)" color="primary" variant="outlined" />
-                        <Chip label="Max 10 Mo" variant="outlined" />
+                        <Chip label={t('dataImport:page.dropzone.maxSize')} variant="outlined" />
                     </Stack>
                 </Box>
             )}
@@ -340,7 +303,8 @@ const DataImportPage = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { t } = useTranslation(['settings', 'common']);
+    const { t } = useTranslation(['dataImport', 'common']);
+    const fieldLabel = (field) => t(`dataImport:fields.${field}`);
 
     const { currentJob, previewData, availableFields, logs, loading, error } = useSelector(
         (state) => state.migration
@@ -393,7 +357,7 @@ const DataImportPage = () => {
                     const text = e.target.result;
                     const lines = text.split('\n').filter(line => line.trim());
                     if (lines.length === 0) {
-                        reject(new Error('Le fichier est vide'));
+                        reject(new Error(t('dataImport:page.errors.emptyFile')));
                         return;
                     }
                     const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, '').replace(/^\uFEFF/, ''));
@@ -415,7 +379,7 @@ const DataImportPage = () => {
                     reject(err);
                 }
             };
-            reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
+            reader.onerror = () => reject(new Error(t('dataImport:page.errors.readError')));
             reader.readAsText(file, 'UTF-8');
         });
     };
@@ -469,13 +433,13 @@ const DataImportPage = () => {
                 setFieldMapping(suggestedMap);
 
                 if (!importName) {
-                    const entityLabel = ENTITY_CONFIGS[selectedEntity]?.label || 'Données';
+                    const entityLabel = ENTITY_CONFIGS[selectedEntity] ? t(`dataImport:entities.${selectedEntity}`) : t('dataImport:entities.default');
                     const date = new Date().toLocaleDateString('fr-FR');
-                    setImportName(`Import ${entityLabel} - ${date}`);
+                    setImportName(t('dataImport:defaultImportName', { entity: entityLabel, date }));
                 }
             } catch (err) {
                 console.error('Erreur parsing:', err);
-                setImportError(err.message || 'Erreur lors de la lecture du fichier');
+                setImportError(err.message || t('dataImport:page.errors.parseError'));
             } finally {
                 setLocalLoading(false);
             }
@@ -523,7 +487,7 @@ const DataImportPage = () => {
 
             // Vérifier que l'ID existe
             if (!result.id) {
-                throw new Error('L\'ID du job n\'a pas été retourné par le serveur. Réponse: ' + JSON.stringify(result));
+                throw new Error(t('dataImport:page.errors.noJobId', { response: JSON.stringify(result) }));
             }
 
             // Attendre puis prévisualiser
@@ -561,15 +525,15 @@ const DataImportPage = () => {
             });
 
             // Message d'erreur plus détaillé
-            let errorMessage = 'Erreur lors de l\'import';
+            let errorMessage = t('dataImport:page.errors.importFailed');
             if (err.response?.status === 503 || (err.response?.data?.error === 'Offline')) {
-                errorMessage = 'Le service worker a intercepté la requête. Veuillez rafraîchir la page (Ctrl+F5) pour mettre à jour le service worker, ou désactivez-le temporairement dans les DevTools (Application > Service Workers > Unregister).';
+                errorMessage = t('dataImport:page.errors.serviceWorker');
             } else if (err.response?.status === 404) {
-                errorMessage = 'Endpoint non trouvé. Vérifiez que le serveur backend est démarré et que l\'URL est correcte.';
+                errorMessage = t('dataImport:page.errors.notFound');
             } else if (err.response?.status === 400) {
-                errorMessage = err.response?.data?.message || err.response?.data?.error || 'Données invalides. Vérifiez le format du fichier.';
+                errorMessage = err.response?.data?.message || err.response?.data?.error || t('dataImport:page.errors.invalidData');
             } else if (err.response?.status === 401) {
-                errorMessage = 'Non autorisé. Veuillez vous reconnecter.';
+                errorMessage = t('dataImport:page.errors.unauthorized');
             } else if (err.response?.data) {
                 errorMessage = err.response.data.message || err.response.data.error || JSON.stringify(err.response.data);
             } else if (err.message) {
@@ -588,8 +552,8 @@ const DataImportPage = () => {
 
         const config = ENTITY_CONFIGS[selectedEntity];
         const allFields = [...config.fields.required, ...config.fields.optional];
-        const headerRow = allFields.map(f => config.fieldLabels[f] || f).join(';');
-        const exampleRow = allFields.map(f => config.fields.required.includes(f) ? 'Exemple' : '').join(';');
+        const headerRow = allFields.map(f => fieldLabel(f)).join(';');
+        const exampleRow = allFields.map(f => config.fields.required.includes(f) ? t('dataImport:page.template.exampleValue') : '').join(';');
         const csvContent = '\uFEFF' + headerRow + '\n' + exampleRow;
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -614,7 +578,7 @@ const DataImportPage = () => {
                     response = await suppliersAPI.exportCSV();
                     break;
                 default:
-                    throw new Error('Type non supporté');
+                    throw new Error(t('dataImport:page.errors.unsupportedType'));
             }
 
             const blob = new Blob([response.data], { type: 'text/csv' });
@@ -628,7 +592,7 @@ const DataImportPage = () => {
             window.URL.revokeObjectURL(url);
         } catch (err) {
             console.error('Erreur export:', err);
-            setImportError('Erreur lors de l\'export');
+            setImportError(t('dataImport:page.errors.exportFailed'));
         } finally {
             setLocalLoading(false);
         }
@@ -681,10 +645,10 @@ const DataImportPage = () => {
                 return (
                     <Box>
                         <Typography variant="h5" gutterBottom textAlign="center" fontWeight={700}>
-                            Quel type de données souhaitez-vous importer ?
+                            {t('dataImport:page.step0.title')}
                         </Typography>
                         <Typography color="text.secondary" textAlign="center" sx={{ mb: 4 }}>
-                            Sélectionnez le type de données pour configurer l'import intelligemment
+                            {t('dataImport:page.step0.subtitle')}
                         </Typography>
 
                         <Grid container spacing={3}>
@@ -706,7 +670,7 @@ const DataImportPage = () => {
                 return (
                     <Box>
                         <Typography variant="h5" gutterBottom textAlign="center" fontWeight={700}>
-                            Sélectionnez votre fichier source
+                            {t('dataImport:page.step1.title')}
                         </Typography>
 
                         <Grid container spacing={4}>
@@ -722,13 +686,13 @@ const DataImportPage = () => {
                             <Grid item xs={12} md={4}>
                                 <Card sx={{ p: 3, borderRadius: 3 }}>
                                     <Typography variant="h6" gutterBottom fontWeight={600}>
-                                        Configuration
+                                        {t('dataImport:page.step1.configuration')}
                                     </Typography>
 
                                     <Stack spacing={2.5}>
                                         <TextField
                                             fullWidth
-                                            label="Nom de l'import"
+                                            label={t('dataImport:page.step1.importName')}
                                             value={importName}
                                             onChange={(e) => setImportName(e.target.value)}
                                             required
@@ -742,22 +706,22 @@ const DataImportPage = () => {
                                                     onChange={(e) => setHasHeader(e.target.checked)}
                                                 />
                                             }
-                                            label="Première ligne = en-têtes"
+                                            label={t('dataImport:page.step1.firstRowHeaders')}
                                         />
 
                                         <FormControl fullWidth size="small">
-                                            <InputLabel>Séparateur</InputLabel>
+                                            <InputLabel>{t('dataImport:page.step1.separator')}</InputLabel>
                                             <Select
                                                 value={delimiter}
-                                                label="Séparateur"
+                                                label={t('dataImport:page.step1.separator')}
                                                 onChange={(e) => {
                                                     setDelimiter(e.target.value);
                                                     if (uploadedFile) handleFileChange(uploadedFile);
                                                 }}
                                             >
-                                                <MenuItem value=",">Virgule (,)</MenuItem>
-                                                <MenuItem value=";">Point-virgule (;)</MenuItem>
-                                                <MenuItem value="\t">Tabulation</MenuItem>
+                                                <MenuItem value=",">{t('dataImport:delimiters.comma')}</MenuItem>
+                                                <MenuItem value=";">{t('dataImport:delimiters.semicolon')}</MenuItem>
+                                                <MenuItem value="\t">{t('dataImport:delimiters.tab')}</MenuItem>
                                             </Select>
                                         </FormControl>
 
@@ -769,7 +733,7 @@ const DataImportPage = () => {
                                             onClick={handleDownloadTemplate}
                                             fullWidth
                                         >
-                                            Télécharger un modèle
+                                            {t('dataImport:page.step1.downloadTemplate')}
                                         </Button>
                                     </Stack>
                                 </Card>
@@ -787,22 +751,22 @@ const DataImportPage = () => {
                     <Box>
                         <Box display="flex" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={2}>
                             <Typography variant="h5" fontWeight={700}>
-                                Associez les colonnes
+                                {t('dataImport:page.step2.title')}
                             </Typography>
                             <Chip
                                 icon={<AutoAwesome />}
-                                label={`${Object.keys(fieldMapping).length} colonnes mappées`}
+                                label={t('dataImport:page.step2.mappedColumns', { count: Object.keys(fieldMapping).length })}
                                 color="primary"
                             />
                         </Box>
 
                         <Alert severity={mappedRequired.length === config.fields.required.length ? "success" : "warning"} sx={{ mb: 3, borderRadius: 2 }}>
-                            <AlertTitle>Colonnes requises</AlertTitle>
+                            <AlertTitle>{t('dataImport:page.step2.requiredColumns')}</AlertTitle>
                             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                                 {config.fields.required.map(f => (
                                     <Chip
                                         key={f}
-                                        label={config.fieldLabels[f] || f}
+                                        label={fieldLabel(f)}
                                         size="small"
                                         color={Object.values(fieldMapping).includes(f) ? 'success' : 'error'}
                                         icon={Object.values(fieldMapping).includes(f) ? <CheckCircle /> : undefined}
@@ -815,9 +779,9 @@ const DataImportPage = () => {
                             <Table size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Colonne du fichier</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Aperçu</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>Champ de destination</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>{t('dataImport:page.step2.fileColumn')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>{t('dataImport:page.step2.preview')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, bgcolor: '#f8fafc' }}>{t('dataImport:page.step2.destField')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -842,7 +806,7 @@ const DataImportPage = () => {
                                                         sx={{ minWidth: 180 }}
                                                     >
                                                         <MenuItem value="">
-                                                            <em>— Ignorer —</em>
+                                                            <em>{t('dataImport:page.step2.ignore')}</em>
                                                         </MenuItem>
                                                         {allDestFields.map(field => {
                                                             const isUsed = Object.values(fieldMapping).includes(field) && fieldMapping[header] !== field;
@@ -856,9 +820,9 @@ const DataImportPage = () => {
                                                                         fontWeight: config.fields.required.includes(field) ? 600 : 400,
                                                                     }}
                                                                 >
-                                                                    {config.fieldLabels[field] || field}
+                                                                    {fieldLabel(field)}
                                                                     {config.fields.required.includes(field) && ' *'}
-                                                                    {isUsed && ' (utilisé)'}
+                                                                    {isUsed && t('dataImport:page.step2.used')}
                                                                 </MenuItem>
                                                             );
                                                         })}
@@ -877,7 +841,7 @@ const DataImportPage = () => {
                 return (
                     <Box>
                         <Typography variant="h5" gutterBottom fontWeight={700} textAlign="center">
-                            Vérifiez et lancez l'import
+                            {t('dataImport:page.step3.title')}
                         </Typography>
 
                         <Grid container spacing={3} sx={{ mt: 2 }}>
@@ -886,7 +850,7 @@ const DataImportPage = () => {
                                     <Typography variant="h2" color="primary" fontWeight={700}>
                                         {localPreview?.totalRows || 0}
                                     </Typography>
-                                    <Typography color="text.secondary">lignes à importer</Typography>
+                                    <Typography color="text.secondary">{t('dataImport:page.step3.rowsToImport')}</Typography>
                                 </Card>
                             </Grid>
                             <Grid item xs={12} sm={4}>
@@ -894,7 +858,7 @@ const DataImportPage = () => {
                                     <Typography variant="h2" color="success.main" fontWeight={700}>
                                         {Object.keys(fieldMapping).length}
                                     </Typography>
-                                    <Typography color="text.secondary">colonnes mappées</Typography>
+                                    <Typography color="text.secondary">{t('dataImport:page.step3.mappedColumns')}</Typography>
                                 </Card>
                             </Grid>
                             <Grid item xs={12} sm={4}>
@@ -902,27 +866,27 @@ const DataImportPage = () => {
                                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                                         {React.createElement(ENTITY_CONFIGS[selectedEntity].icon, { sx: { fontSize: 40, color: ENTITY_CONFIGS[selectedEntity].color } })}
                                     </Box>
-                                    <Typography color="text.secondary">{ENTITY_CONFIGS[selectedEntity].label}</Typography>
+                                    <Typography color="text.secondary">{t(`dataImport:entities.${selectedEntity}`)}</Typography>
                                 </Card>
                             </Grid>
                         </Grid>
 
                         <Card sx={{ mt: 4, p: 3, borderRadius: 3 }}>
-                            <Typography variant="h6" gutterBottom fontWeight={600}>Options d'import</Typography>
+                            <Typography variant="h6" gutterBottom fontWeight={600}>{t('dataImport:page.step3.importOptions')}</Typography>
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
                                 <FormControlLabel
                                     control={<Switch checked={skipDuplicates} onChange={(e) => setSkipDuplicates(e.target.checked)} />}
-                                    label="Ignorer les doublons"
+                                    label={t('dataImport:page.step3.skipDuplicates')}
                                 />
                                 <FormControlLabel
                                     control={<Switch checked={updateExisting} onChange={(e) => setUpdateExisting(e.target.checked)} disabled={!skipDuplicates} />}
-                                    label="Mettre à jour les existants"
+                                    label={t('dataImport:page.step3.updateExisting')}
                                 />
                             </Stack>
                         </Card>
 
                         <Card sx={{ mt: 3, p: 3, borderRadius: 3 }}>
-                            <Typography variant="h6" gutterBottom fontWeight={600}>Aperçu des données</Typography>
+                            <Typography variant="h6" gutterBottom fontWeight={600}>{t('dataImport:page.step3.dataPreview')}</Typography>
                             <TableContainer sx={{ maxHeight: 250 }}>
                                 <Table size="small" stickyHeader>
                                     <TableHead>
@@ -930,7 +894,7 @@ const DataImportPage = () => {
                                             <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                                             {Object.entries(fieldMapping).map(([source, dest]) => (
                                                 <TableCell key={source} sx={{ fontWeight: 700 }}>
-                                                    {ENTITY_CONFIGS[selectedEntity].fieldLabels[dest] || dest}
+                                                    {fieldLabel(dest)}
                                                 </TableCell>
                                             ))}
                                         </TableRow>
@@ -959,7 +923,7 @@ const DataImportPage = () => {
                                 <Box>
                                     <CircularProgress size={100} thickness={2} sx={{ mb: 3 }} />
                                     <Typography variant="h5" gutterBottom fontWeight={600}>
-                                        Import en cours...
+                                        {t('dataImport:page.step4.inProgress')}
                                     </Typography>
                                     <LinearProgress
                                         variant="determinate"
@@ -967,7 +931,7 @@ const DataImportPage = () => {
                                         sx={{ mb: 2, height: 10, borderRadius: 5, maxWidth: 400, mx: 'auto' }}
                                     />
                                     <Typography color="text.secondary">
-                                        {currentJob?.processed_rows || 0} / {currentJob?.total_rows || localPreview?.totalRows || 0} lignes
+                                        {t('dataImport:page.step4.rowsProgress', { processed: currentJob?.processed_rows || 0, total: currentJob?.total_rows || localPreview?.totalRows || 0 })}
                                     </Typography>
                                 </Box>
                             </Fade>
@@ -978,7 +942,7 @@ const DataImportPage = () => {
                                 <Box>
                                     <CheckCircle sx={{ fontSize: 100, color: '#059669', mb: 2 }} />
                                     <Typography variant="h4" gutterBottom fontWeight={700} color="success.main">
-                                        Import terminé !
+                                        {t('dataImport:page.step4.completed')}
                                     </Typography>
 
                                     <Grid container spacing={3} sx={{ mt: 3, maxWidth: 600, mx: 'auto' }}>
@@ -987,7 +951,7 @@ const DataImportPage = () => {
                                                 <Typography variant="h3" color="success.main" fontWeight={700}>
                                                     {currentJob.success_count || 0}
                                                 </Typography>
-                                                <Typography variant="body2">Succès</Typography>
+                                                <Typography variant="body2">{t('dataImport:results.success')}</Typography>
                                             </Card>
                                         </Grid>
                                         <Grid item xs={4}>
@@ -995,7 +959,7 @@ const DataImportPage = () => {
                                                 <Typography variant="h3" color="error.main" fontWeight={700}>
                                                     {currentJob.error_count || 0}
                                                 </Typography>
-                                                <Typography variant="body2">Erreurs</Typography>
+                                                <Typography variant="body2">{t('dataImport:results.errors')}</Typography>
                                             </Card>
                                         </Grid>
                                         <Grid item xs={4}>
@@ -1003,17 +967,17 @@ const DataImportPage = () => {
                                                 <Typography variant="h3" color="warning.main" fontWeight={700}>
                                                     {currentJob.skipped_count || 0}
                                                 </Typography>
-                                                <Typography variant="body2">Ignorés</Typography>
+                                                <Typography variant="body2">{t('dataImport:results.skipped')}</Typography>
                                             </Card>
                                         </Grid>
                                     </Grid>
 
                                     <Stack direction="row" spacing={2} justifyContent="center" mt={4}>
                                         <Button variant="contained" startIcon={<Refresh />} onClick={resetWizard}>
-                                            Nouvel import
+                                            {t('dataImport:actions.newImport')}
                                         </Button>
                                         <Button variant="outlined" onClick={() => navigate('/migration/jobs')}>
-                                            Voir l'historique
+                                            {t('dataImport:page.step4.viewHistory')}
                                         </Button>
                                     </Stack>
                                 </Box>
@@ -1024,13 +988,13 @@ const DataImportPage = () => {
                             <Box>
                                 <ErrorIcon sx={{ fontSize: 100, color: '#dc2626', mb: 2 }} />
                                 <Typography variant="h5" gutterBottom color="error" fontWeight={600}>
-                                    Erreur lors de l'import
+                                    {t('dataImport:page.step4.failed')}
                                 </Typography>
                                 <Alert severity="error" sx={{ mt: 2, maxWidth: 500, mx: 'auto', textAlign: 'left' }}>
-                                    {currentJob.error_message || 'Une erreur est survenue'}
+                                    {currentJob.error_message || t('dataImport:page.step4.genericError')}
                                 </Alert>
                                 <Button variant="contained" startIcon={<Refresh />} onClick={resetWizard} sx={{ mt: 3 }}>
-                                    Réessayer
+                                    {t('dataImport:page.step4.retry')}
                                 </Button>
                             </Box>
                         )}
@@ -1053,11 +1017,11 @@ const DataImportPage = () => {
                     onClick={() => navigate('/settings')}
                 >
                     <Settings fontSize="small" />
-                    Paramètres
+                    {t('dataImport:page.breadcrumbSettings')}
                 </Link>
                 <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <CloudUpload fontSize="small" />
-                    Import de données
+                    {t('dataImport:page.breadcrumbImport')}
                 </Typography>
             </Breadcrumbs>
 
@@ -1065,10 +1029,10 @@ const DataImportPage = () => {
             <Box display="flex" alignItems="center" justifyContent="space-between" mb={4} flexWrap="wrap" gap={2}>
                 <Box>
                     <Typography variant="h4" fontWeight={700}>
-                        Import intelligent de données
+                        {t('dataImport:page.title')}
                     </Typography>
                     <Typography color="text.secondary">
-                        Importez vos données depuis Excel ou CSV avec mapping automatique
+                        {t('dataImport:page.subtitle')}
                     </Typography>
                 </Box>
                 <Stack direction="row" spacing={2}>
@@ -1077,7 +1041,7 @@ const DataImportPage = () => {
                         startIcon={<History />}
                         onClick={() => navigate('/migration/jobs')}
                     >
-                        Historique
+                        {t('dataImport:page.history')}
                     </Button>
                     <Button
                         variant="outlined"
@@ -1085,7 +1049,7 @@ const DataImportPage = () => {
                         onClick={() => handleExportData('suppliers')}
                         disabled={localLoading}
                     >
-                        Exporter Fournisseurs
+                        {t('dataImport:page.exportSuppliers')}
                     </Button>
                 </Stack>
             </Box>
@@ -1102,9 +1066,9 @@ const DataImportPage = () => {
                 {/* Stepper */}
                 <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                     <Stepper activeStep={activeStep} alternativeLabel>
-                        {STEPS.map((label, index) => (
-                            <Step key={label} completed={index < activeStep}>
-                                <StepLabel>{label}</StepLabel>
+                        {STEPS.map((stepKey, index) => (
+                            <Step key={stepKey} completed={index < activeStep}>
+                                <StepLabel>{t(`dataImport:page.steps.${stepKey}`)}</StepLabel>
                             </Step>
                         ))}
                     </Stepper>
@@ -1123,7 +1087,7 @@ const DataImportPage = () => {
                             onClick={activeStep === 0 ? () => navigate('/settings') : handleBack}
                             disabled={localLoading}
                         >
-                            {activeStep === 0 ? 'Retour aux paramètres' : 'Précédent'}
+                            {activeStep === 0 ? t('dataImport:page.backToSettings') : t('dataImport:actions.previous')}
                         </Button>
 
                         <Button
@@ -1139,9 +1103,9 @@ const DataImportPage = () => {
                             {localLoading ? (
                                 <CircularProgress size={24} color="inherit" />
                             ) : activeStep === 3 ? (
-                                'Lancer l\'import'
+                                t('dataImport:actions.startImport')
                             ) : (
-                                'Suivant'
+                                t('dataImport:actions.next')
                             )}
                         </Button>
                     </Box>

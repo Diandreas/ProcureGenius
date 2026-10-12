@@ -63,7 +63,7 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useDispatch, useSelector } from 'react-redux';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import {
   fetchContract,
   createContract,
@@ -81,86 +81,63 @@ const BUILTIN_TEMPLATES = [
   {
     id: 'service',
     icon: '',
-    label: 'Contrat de services',
     type: 'service',
-    description: 'Prestations de services professionnels',
-    prompt: 'Contrat de prestation de services professionnels',
   },
   {
     id: 'purchase',
     icon: '',
-    label: "Contrat d'achat",
     type: 'purchase',
-    description: 'Achat de produits ou matières premières',
-    prompt: "Contrat d'achat de marchandises",
   },
   {
     id: 'nda',
     icon: '',
-    label: 'Accord de confidentialité',
     type: 'nda',
-    description: 'Protection des informations confidentielles',
-    prompt: 'Accord de non-divulgation bilatéral',
   },
   {
     id: 'maintenance',
     icon: '',
-    label: 'Contrat de maintenance',
     type: 'maintenance',
-    description: 'Maintenance et support technique',
-    prompt: 'Contrat de maintenance avec SLA',
   },
   {
     id: 'lease',
     icon: '',
-    label: 'Contrat de location',
     type: 'lease',
-    description: 'Location de locaux ou équipements',
-    prompt: 'Contrat de location',
   },
   {
     id: 'partnership',
     icon: '',
-    label: 'Accord de partenariat',
     type: 'partnership',
-    description: 'Partenariat commercial ou stratégique',
-    prompt: 'Accord de partenariat commercial',
   },
   {
     id: 'freelance',
     icon: '',
-    label: 'Contrat freelance',
     type: 'service',
-    description: 'Mission freelance avec livrables',
-    prompt: 'Contrat de mission freelance',
   },
   {
     id: 'distribution',
     icon: '',
-    label: 'Contrat de distribution',
     type: 'other',
-    description: 'Distribution de produits',
-    prompt: 'Contrat de distribution',
   },
 ];
 
 const STEPS = [
-  { label: 'Type & description', icon: <SmartToy /> },
-  { label: 'Informations', icon: <Gavel /> },
-  { label: 'Rédaction des articles', icon: <AutoAwesome /> },
-  { label: 'Finalisation', icon: <CheckCircle /> },
+  { key: 'type', icon: <SmartToy /> },
+  { key: 'info', icon: <Gavel /> },
+  { key: 'articles', icon: <AutoAwesome /> },
+  { key: 'finalize', icon: <CheckCircle /> },
 ];
 
 // ===================================================================
 // Étape 1 : Sélection template + description pour l'IA
 // ===================================================================
 function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
+  const { t } = useTranslation(['contracts', 'common']);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [description, setDescription] = useState('');
 
   useEffect(() => {
     if (formData.contract_type) {
-      const tpl = BUILTIN_TEMPLATES.find(t => t.type === formData.contract_type);
+      const tpl = BUILTIN_TEMPLATES.find(tp => tp.type === formData.contract_type);
       if (tpl) setSelectedTemplate(tpl);
     }
   }, [formData.contract_type]);
@@ -168,13 +145,13 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
   const handleTemplateSelect = (tpl) => {
     setSelectedTemplate(tpl);
     setFormData(prev => ({ ...prev, contract_type: tpl.type }));
-    setDescription(tpl.prompt);
+    setDescription(t(`contracts:wizard.templates.${tpl.id}.prompt`));
   };
 
   if (isEditMode) {
     return (
       <Alert severity="info" sx={{ borderRadius: 2 }}>
-        Vous modifiez un contrat existant. Les sections sont éditables à l'étape 3.
+        {t('contracts:wizard.template.editModeInfo')}
       </Alert>
     );
   }
@@ -182,7 +159,7 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
   return (
     <Box>
       <Typography variant="body2" color="text.secondary" mb={2}>
-        Sélectionnez un type de contrat. L'IA générera chaque section selon les bonnes pratiques juridiques.
+        {t('contracts:wizard.template.selectType')}
       </Typography>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 1.5, mb: 3 }}>
@@ -200,8 +177,8 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
           >
             <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
               <Typography variant="h5" mb={0.5}>{tpl.icon}</Typography>
-              <Typography variant="subtitle2" fontWeight={700} gutterBottom>{tpl.label}</Typography>
-              <Typography variant="caption" color="text.secondary">{tpl.description}</Typography>
+              <Typography variant="subtitle2" fontWeight={700} gutterBottom>{t(`contracts:wizard.templates.${tpl.id}.label`)}</Typography>
+              <Typography variant="caption" color="text.secondary">{t(`contracts:wizard.templates.${tpl.id}.description`)}</Typography>
             </CardContent>
           </Card>
         ))}
@@ -210,10 +187,10 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
       {selectedTemplate && (
         <Box sx={{ bgcolor: 'primary.50', borderRadius: 2, p: 2, border: '1px solid', borderColor: 'primary.light' }}>
           <Typography variant="subtitle2" fontWeight={700} mb={1}>
-            {selectedTemplate.icon} {selectedTemplate.label}
+            {selectedTemplate.icon} {t(`contracts:wizard.templates.${selectedTemplate.id}.label`)}
           </Typography>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Décrivez brièvement les détails du contrat. L'IA s'en servira pour personnaliser chaque section :
+            {t('contracts:wizard.template.describeDetails')}
           </Typography>
           <TextField
             multiline
@@ -221,7 +198,7 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
             fullWidth
             value={description}
             onChange={e => setDescription(e.target.value)}
-            placeholder="Ex : maintenance du parc informatique d'une pharmacie à Douala, 600 000 FCFA par an, 4 visites, paiement trimestriel..."
+            placeholder={t('contracts:wizard.template.descriptionPlaceholder')}
             sx={{ mb: 1.5 }}
           />
           <Button
@@ -236,7 +213,7 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
               onNext();
             }}
           >
-            Suivant — Informations du contrat
+            {t('contracts:wizard.template.nextToInfo')}
           </Button>
         </Box>
       )}
@@ -248,6 +225,7 @@ function TemplateStep({ formData, setFormData, onNext, isEditMode }) {
 // Étape 3 : Sections du contrat (cœur de la refonte)
 // ===================================================================
 function SectionsStep({ formData, sections, setSections, isEditMode }) {
+  const { t } = useTranslation(['contracts', 'common']);
   const { currency: orgCurrency } = useCurrency();
   const [generating, setGenerating] = useState(false);
   const [generatingSection, setGeneratingSection] = useState(null);
@@ -307,7 +285,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
 
   const handleGenerateAll = async () => {
     if (!formData.title && !formData.description && !formData.extra_instructions) {
-      enqueueSnackbar('Remplissez le titre ou la description d\'abord (étape 2)', { variant: 'warning' });
+      enqueueSnackbar(t('contracts:wizard.sections.fillTitleFirst'), { variant: 'warning' });
       return;
     }
 
@@ -330,12 +308,12 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
       setProgress(100);
 
       enqueueSnackbar(
-        `${generatedSections.length} sections générées (${res.data.total_tokens} tokens)`,
+        t('contracts:wizard.sections.generatedCount', { count: generatedSections.length, tokens: res.data.total_tokens }),
         { variant: 'success' }
       );
     } catch (err) {
       console.error(err);
-      enqueueSnackbar('Erreur lors de la génération des sections', { variant: 'error' });
+      enqueueSnackbar(t('contracts:wizard.sections.generateError'), { variant: 'error' });
     } finally {
       setGenerating(false);
     }
@@ -362,9 +340,9 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
       setSections(updated);
       setTotalTokens(prev => prev + (res.data.tokens_used || 0));
 
-      enqueueSnackbar(`Section "${section.title}" régénérée`, { variant: 'success' });
+      enqueueSnackbar(t('contracts:wizard.sections.regenerated', { title: section.title }), { variant: 'success' });
     } catch (err) {
-      enqueueSnackbar('Erreur lors de la régénération', { variant: 'error' });
+      enqueueSnackbar(t('contracts:wizard.sections.regenerateError'), { variant: 'error' });
     } finally {
       setGeneratingSection(null);
     }
@@ -384,10 +362,10 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1 }}>
         <Box>
           <Typography variant="h6" fontWeight={700}>
-            Sections du contrat ({sections.length} articles)
+            {t('contracts:wizard.sections.title', { count: sections.length })}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Chaque article est pré-rempli avec du texte juridique standard. Utilisez l'IA pour personnaliser selon vos besoins.
+            {t('contracts:wizard.sections.subtitle')}
           </Typography>
         </Box>
         <Button
@@ -397,7 +375,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
           disabled={generating}
           color="primary"
         >
-          {generating ? 'Personnalisation en cours...' : sections.some(s => s.is_ai_generated) ? ' Re-personnaliser tout' : ' Personnaliser avec IA'}
+          {generating ? t('contracts:wizard.sections.personalizing') : sections.some(s => s.is_ai_generated) ? t('contracts:wizard.sections.repersonalizeAll') : t('contracts:wizard.sections.personalizeWithAI')}
         </Button>
       </Box>
 
@@ -406,7 +384,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
         <Box sx={{ mb: 2 }}>
           <LinearProgress sx={{ borderRadius: 2 }} />
           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-            Génération des {sections.length} sections en cours...
+            {t('contracts:wizard.sections.generatingCount', { count: sections.length })}
           </Typography>
         </Box>
       )}
@@ -414,14 +392,14 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
       {/* Stats tokens */}
       {totalTokens > 0 && (
         <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }} icon={<Token />}>
-          Total tokens utilisés : <strong>{totalTokens.toLocaleString()}</strong> — {sections.filter(s => s.is_ai_generated).length}/{sections.length} sections générées par IA
+          {t('contracts:wizard.sections.totalTokens')} <strong>{totalTokens.toLocaleString()}</strong> — {t('contracts:wizard.sections.aiGeneratedCount', { done: sections.filter(s => s.is_ai_generated).length, total: sections.length })}
         </Alert>
       )}
 
       {/* Liste des sections */}
       {sections.length === 0 ? (
         <Alert severity="warning" sx={{ borderRadius: 2 }}>
-          Aucune section définie. Revenez à l'étape 1 pour sélectionner un type de contrat.
+          {t('contracts:wizard.sections.noSections')}
         </Alert>
       ) : (
         <Stack spacing={1}>
@@ -441,7 +419,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
       {/* Notes internes */}
       {sections.length > 0 && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="subtitle2" fontWeight={700} mb={1}>Notes internes (non incluses dans le contrat)</Typography>
+          <Typography variant="subtitle2" fontWeight={700} mb={1}>{t('contracts:wizard.sections.internalNotes')}</Typography>
           <TextField
             fullWidth
             multiline
@@ -449,7 +427,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
             name="internal_notes"
             value={formData.internal_notes || ''}
             onChange={e => {/* handled by parent */}}
-            placeholder="Notes confidentielles..."
+            placeholder={t('contracts:wizard.sections.internalNotesPlaceholder')}
             size="small"
           />
         </Box>
@@ -462,6 +440,7 @@ function SectionsStep({ formData, sections, setSections, isEditMode }) {
 // Éditeur individuel de section
 // ===================================================================
 function SectionEditor({ section, index, isRegenerating, onRegenerate, onContentChange }) {
+  const { t } = useTranslation(['contracts', 'common']);
   const [expanded, setExpanded] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
@@ -487,7 +466,7 @@ function SectionEditor({ section, index, isRegenerating, onRegenerate, onContent
         }}
       >
         <Chip
-          label={`Art. ${section.order}`}
+          label={t('contracts:wizard.editor.article', { order: section.order })}
           size="small"
           color={hasContent ? 'success' : 'default'}
           variant={hasContent ? 'filled' : 'outlined'}
@@ -497,10 +476,10 @@ function SectionEditor({ section, index, isRegenerating, onRegenerate, onContent
           {section.title}
         </Typography>
         {hasContent && section.is_ai_generated && (
-          <Chip label="IA" size="small" color="primary" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+          <Chip label={t('contracts:wizard.editor.aiChip')} size="small" color="primary" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
         )}
         {!hasContent && (
-          <Chip label="Vide" size="small" color="warning" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
+          <Chip label={t('contracts:wizard.editor.empty')} size="small" color="warning" variant="outlined" sx={{ fontSize: '0.65rem', height: 20 }} />
         )}
       </AccordionSummary>
 
@@ -514,7 +493,7 @@ function SectionEditor({ section, index, isRegenerating, onRegenerate, onContent
             onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
             disabled={isRegenerating}
           >
-            {isRegenerating ? 'IA en cours...' : section.is_ai_generated ? 'Re-personnaliser IA' : ' Personnaliser avec IA'}
+            {isRegenerating ? t('contracts:wizard.editor.aiRunning') : section.is_ai_generated ? t('contracts:wizard.editor.repersonalize') : t('contracts:wizard.sections.personalizeWithAI')}
           </Button>
           {hasContent && (
             <Button
@@ -523,7 +502,7 @@ function SectionEditor({ section, index, isRegenerating, onRegenerate, onContent
               startIcon={editMode ? <Visibility /> : <EditIcon />}
               onClick={() => setEditMode(!editMode)}
             >
-              {editMode ? 'Aperçu' : 'Modifier'}
+              {editMode ? t('common:buttons.preview', 'Aperçu') : t('common:buttons.edit', 'Modifier')}
             </Button>
           )}
         </Stack>
@@ -560,7 +539,7 @@ function SectionEditor({ section, index, isRegenerating, onRegenerate, onContent
         ) : (
           <Box sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>
             <Typography variant="body2">
-              Cliquez sur "Générer avec IA" pour remplir cette section automatiquement
+              {t('contracts:wizard.editor.emptyHint')}
             </Typography>
           </Box>
         )}
@@ -573,6 +552,7 @@ function SectionEditor({ section, index, isRegenerating, onRegenerate, onContent
 // Composant section signature
 // ===================================================================
 function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
+  const { t } = useTranslation(['contracts', 'common']);
   const fileInputRef = useRef(null);
   const [uploadedFileName, setUploadedFileName] = useState('');
 
@@ -588,14 +568,14 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
     <Box>
       <Typography variant="h6" fontWeight={700} mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Draw fontSize="small" color="primary" />
-        Signatures des parties
+        {t('contracts:wizard.signatures.title')}
       </Typography>
 
       <Grid container spacing={3} mb={3}>
         <Grid item xs={12} md={6}>
           <Box sx={{ border: '1.5px solid', borderColor: 'divider', borderRadius: 2, p: 2.5 }}>
             <Typography variant="subtitle2" fontWeight={700} mb={2} color="primary">
-              Notre organisation
+              {t('contracts:wizard.signatures.ourOrganization')}
             </Typography>
             <Stack spacing={2}>
               <FormControlLabel
@@ -605,19 +585,19 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
                     onChange={e => setFormData(prev => ({ ...prev, signed_by_us: e.target.checked }))}
                   />
                 }
-                label="Signé de notre côté"
+                label={t('contracts:wizard.signatures.signedByUs')}
               />
               {formData.signed_by_us && (
                 <>
                   <TextField
-                    label="Nom du signataire"
+                    label={t('contracts:wizard.signatures.signerName')}
                     size="small"
                     value={formData.signed_by_us_name || ''}
                     onChange={e => setFormData(prev => ({ ...prev, signed_by_us_name: e.target.value }))}
                     fullWidth
                   />
                   <TextField
-                    label="Date de signature"
+                    label={t('contracts:wizard.signatures.signatureDate')}
                     type="date"
                     size="small"
                     value={formData.signed_by_us_at ? formData.signed_by_us_at.split('T')[0] : ''}
@@ -634,7 +614,7 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
         <Grid item xs={12} md={6}>
           <Box sx={{ border: '1.5px solid', borderColor: 'divider', borderRadius: 2, p: 2.5 }}>
             <Typography variant="subtitle2" fontWeight={700} mb={2} color="secondary">
-              Contrepartie
+              {t('contracts:wizard.signatures.counterparty')}
             </Typography>
             <Stack spacing={2}>
               <FormControlLabel
@@ -644,19 +624,19 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
                     onChange={e => setFormData(prev => ({ ...prev, signed_by_counterpart: e.target.checked }))}
                   />
                 }
-                label="Signé par la contrepartie"
+                label={t('contracts:wizard.signatures.signedByCounterparty')}
               />
               {formData.signed_by_counterpart && (
                 <>
                   <TextField
-                    label="Nom du signataire"
+                    label={t('contracts:wizard.signatures.signerName')}
                     size="small"
                     value={formData.signed_by_counterpart_name || ''}
                     onChange={e => setFormData(prev => ({ ...prev, signed_by_counterpart_name: e.target.value }))}
                     fullWidth
                   />
                   <TextField
-                    label="Date de signature"
+                    label={t('contracts:wizard.signatures.signatureDate')}
                     type="date"
                     size="small"
                     value={formData.signed_by_counterpart_at ? formData.signed_by_counterpart_at.split('T')[0] : ''}
@@ -685,27 +665,27 @@ function SignatureSection({ formData, setFormData, onSignedPdfUpload }) {
             <CheckCircle color="success" sx={{ fontSize: 40, mb: 1 }} />
             <Typography variant="subtitle2" fontWeight={600} color="success.main">{uploadedFileName}</Typography>
             <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-              PDF signé importé avec succès
+              {t('contracts:wizard.signatures.pdfImported')}
             </Typography>
             <Button size="small" variant="outlined" onClick={() => fileInputRef.current?.click()}>
-              Remplacer
+              {t('contracts:wizard.signatures.replace')}
             </Button>
           </Box>
         ) : (
           <Box>
             <PictureAsPdf sx={{ fontSize: 40, mb: 1, color: 'text.secondary' }} />
             <Typography variant="subtitle2" fontWeight={600} mb={0.5}>
-              Importer le PDF signé
+              {t('contracts:wizard.signatures.importSignedPdf')}
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-              Formats acceptés: PDF
+              {t('contracts:wizard.signatures.acceptedFormats')}
             </Typography>
             <Button
               variant="outlined"
               startIcon={<CloudUpload />}
               onClick={() => fileInputRef.current?.click()}
             >
-              Parcourir...
+              {t('contracts:wizard.signatures.browse')}
             </Button>
           </Box>
         )}
@@ -825,13 +805,13 @@ function ContractForm() {
 
   const handleSubmit = async () => {
     if (!formData.title) {
-      enqueueSnackbar('Le titre du contrat est requis', { variant: 'error' });
+      enqueueSnackbar(t('contracts:wizard.validation.titleRequired'), { variant: 'error' });
       setActiveStep(1);
       return;
     }
     // Cohérence des dates : la fin ne peut pas précéder le début.
     if (formData.start_date && formData.end_date && formData.end_date < formData.start_date) {
-      enqueueSnackbar('La date de fin doit être postérieure ou égale à la date de début.', { variant: 'error' });
+      enqueueSnackbar(t('contracts:wizard.validation.endBeforeStart'), { variant: 'error' });
       return;
     }
     setSubmitting(true);
@@ -855,15 +835,15 @@ function ContractForm() {
 
       if (isEditMode) {
         await dispatch(updateContract({ id, data: payload })).unwrap();
-        enqueueSnackbar('Contrat mis à jour avec succès', { variant: 'success' });
+        enqueueSnackbar(t('contracts:messages.updateSuccess'), { variant: 'success' });
         navigate(`/contracts/${id}`);
       } else {
         const result = await dispatch(createContract(payload)).unwrap();
-        enqueueSnackbar('Contrat créé avec succès ! Vous pouvez maintenant importer le PDF signé.', { variant: 'success' });
+        enqueueSnackbar(t('contracts:wizard.messages.createSuccess'), { variant: 'success' });
         navigate(`/contracts/${result?.id || ''}`);
       }
     } catch (err) {
-      enqueueSnackbar(err.message || 'Erreur lors de la sauvegarde', { variant: 'error' });
+      enqueueSnackbar(err.message || t('contracts:wizard.messages.saveError'), { variant: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -895,31 +875,31 @@ function ContractForm() {
               <TextField
                 fullWidth
                 required
-                label="Titre du contrat"
+                label={t('contracts:wizard.fields.title')}
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="Ex: Contrat de prestation — Développement App Mobile"
+                placeholder={t('contracts:wizard.fields.titlePlaceholder')}
               />
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth required>
-                <InputLabel>Type de contrat</InputLabel>
-                <Select name="contract_type" value={formData.contract_type} onChange={handleChange} label="Type de contrat">
-                  <MenuItem value="purchase">Contrat d'achat</MenuItem>
-                  <MenuItem value="service">Contrat de service</MenuItem>
-                  <MenuItem value="maintenance">Contrat de maintenance</MenuItem>
-                  <MenuItem value="lease">Contrat de location</MenuItem>
-                  <MenuItem value="nda">Accord de confidentialité</MenuItem>
-                  <MenuItem value="partnership">Accord de partenariat</MenuItem>
-                  <MenuItem value="other">Autre</MenuItem>
+                <InputLabel>{t('contracts:form.fields.contractType')}</InputLabel>
+                <Select name="contract_type" value={formData.contract_type} onChange={handleChange} label={t('contracts:form.fields.contractType')}>
+                  <MenuItem value="purchase">{t('contracts:form.fields.purchase_contract')}</MenuItem>
+                  <MenuItem value="service">{t('contracts:form.fields.service_contract')}</MenuItem>
+                  <MenuItem value="maintenance">{t('contracts:form.fields.maintenance_contract')}</MenuItem>
+                  <MenuItem value="lease">{t('contracts:form.fields.lease_contract')}</MenuItem>
+                  <MenuItem value="nda">{t('contracts:form.fields.nda_contract')}</MenuItem>
+                  <MenuItem value="partnership">{t('contracts:form.fields.partnership_contract')}</MenuItem>
+                  <MenuItem value="other">{t('contracts:form.fields.other_contract')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Langue du contrat</InputLabel>
-                <Select name="language" value={formData.language} onChange={handleChange} label="Langue du contrat">
+                <InputLabel>{t('contracts:wizard.fields.language')}</InputLabel>
+                <Select name="language" value={formData.language} onChange={handleChange} label={t('contracts:wizard.fields.language')}>
                   <MenuItem value="fr"> Français</MenuItem>
                   <MenuItem value="en"> English</MenuItem>
                   <MenuItem value="es"> Español</MenuItem>
@@ -928,7 +908,7 @@ function ContractForm() {
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Contrepartie du contrat</Typography>
+              <Typography variant="subtitle2" fontWeight={700} mb={1.5}>{t('contracts:wizard.fields.counterpartyTitle')}</Typography>
               <Stack direction="row" spacing={1} mb={2}>
                 <Button
                   variant={formData.party_type === 'client' ? 'contained' : 'outlined'}
@@ -936,7 +916,7 @@ function ContractForm() {
                   startIcon={<Person />}
                   onClick={() => setFormData(prev => ({ ...prev, party_type: 'client' }))}
                 >
-                  Client
+                  {t('contracts:wizard.fields.client')}
                 </Button>
                 <Button
                   variant={formData.party_type === 'supplier' ? 'contained' : 'outlined'}
@@ -944,14 +924,14 @@ function ContractForm() {
                   startIcon={<Business />}
                   onClick={() => setFormData(prev => ({ ...prev, party_type: 'supplier' }))}
                 >
-                  Fournisseur
+                  {t('contracts:form.fields.supplier')}
                 </Button>
                 <Button
                   variant={formData.party_type === 'other' ? 'contained' : 'outlined'}
                   size="small"
                   onClick={() => setFormData(prev => ({ ...prev, party_type: 'other' }))}
                 >
-                  Autre
+                  {t('contracts:form.fields.other_contract')}
                 </Button>
               </Stack>
 
@@ -961,7 +941,7 @@ function ContractForm() {
                   getOptionLabel={opt => opt.name || opt.company_name || ''}
                   value={formData.client}
                   onChange={(_, v) => setFormData(prev => ({ ...prev, client: v }))}
-                  renderInput={params => <TextField {...params} label="Client" placeholder="Sélectionner un client" />}
+                  renderInput={params => <TextField {...params} label={t('contracts:wizard.fields.client')} placeholder={t('contracts:wizard.fields.selectClient')} />}
                 />
               )}
               {formData.party_type === 'supplier' && (
@@ -970,17 +950,17 @@ function ContractForm() {
                   getOptionLabel={opt => opt.name || ''}
                   value={formData.supplier}
                   onChange={(_, v) => setFormData(prev => ({ ...prev, supplier: v }))}
-                  renderInput={params => <TextField {...params} label="Fournisseur" placeholder="Sélectionner un fournisseur" />}
+                  renderInput={params => <TextField {...params} label={t('contracts:form.fields.supplier')} placeholder={t('contracts:form.fields.selectSupplier')} />}
                 />
               )}
               {formData.party_type === 'other' && (
                 <TextField
                   fullWidth
-                  label="Nom de la contrepartie"
+                  label={t('contracts:wizard.fields.counterpartName')}
                   name="counterpart_name"
                   value={formData.counterpart_name}
                   onChange={handleChange}
-                  placeholder="Nom de l'entreprise ou de la personne"
+                  placeholder={t('contracts:wizard.fields.counterpartPlaceholder')}
                 />
               )}
             </Grid>
@@ -990,11 +970,11 @@ function ContractForm() {
                 fullWidth
                 multiline
                 rows={3}
-                label="Description de l'objet du contrat"
+                label={t('contracts:wizard.fields.description')}
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Décrivez l'objet et le contexte du contrat..."
+                placeholder={t('contracts:wizard.fields.descriptionPlaceholder')}
               />
             </Grid>
 
@@ -1002,7 +982,7 @@ function ContractForm() {
               <TextField
                 fullWidth
                 type="date"
-                label="Date de début"
+                label={t('contracts:detail.sections.startDate')}
                 name="start_date"
                 value={formData.start_date}
                 onChange={handleChange}
@@ -1013,7 +993,7 @@ function ContractForm() {
               <TextField
                 fullWidth
                 type="date"
-                label="Date de fin"
+                label={t('contracts:detail.sections.endDate')}
                 name="end_date"
                 value={formData.end_date}
                 onChange={handleChange}
@@ -1024,7 +1004,7 @@ function ContractForm() {
               <TextField
                 fullWidth
                 type="number"
-                label="Valeur totale"
+                label={t('contracts:form.fields.totalValue')}
                 name="total_value"
                 value={formData.total_value}
                 onChange={handleChange}
@@ -1053,11 +1033,11 @@ function ContractForm() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Conditions de paiement"
+                label={t('contracts:form.fields.paymentTerms')}
                 name="payment_terms"
                 value={formData.payment_terms}
                 onChange={handleChange}
-                placeholder="Ex: 50% à la signature, 50% à la livraison — Net 30 jours"
+                placeholder={t('contracts:wizard.fields.paymentTermsPlaceholder')}
               />
             </Grid>
           </Grid>
@@ -1078,7 +1058,7 @@ function ContractForm() {
           <Box>
             <Typography variant="h6" fontWeight={700} mb={2} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CalendarToday fontSize="small" color="primary" />
-              Renouvellement & Alertes
+              {t('contracts:wizard.finalize.renewalAndAlerts')}
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12}>
@@ -1086,14 +1066,14 @@ function ContractForm() {
                   control={
                     <Checkbox name="auto_renewal" checked={formData.auto_renewal} onChange={handleChange} />
                   }
-                  label="Renouvellement automatique"
+                  label={t('contracts:form.fields.autoRenewal')}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   type="number"
-                  label="Préavis de renouvellement (jours)"
+                  label={t('contracts:wizard.finalize.renewalNotice')}
                   name="renewal_notice_days"
                   value={formData.renewal_notice_days}
                   onChange={handleChange}
@@ -1105,7 +1085,7 @@ function ContractForm() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Alerte avant expiration (jours)"
+                  label={t('contracts:form.fields.alertDaysBeforeExpiry')}
                   name="alert_days_before_expiry"
                   value={formData.alert_days_before_expiry}
                   onChange={handleChange}
@@ -1116,25 +1096,25 @@ function ContractForm() {
             </Grid>
 
             <Divider sx={{ my: 3 }} />
-            <Typography variant="h6" fontWeight={700} mb={2}>Résumé du contrat</Typography>
+            <Typography variant="h6" fontWeight={700} mb={2}>{t('contracts:wizard.finalize.summary')}</Typography>
             <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2.5 }}>
               <Stack spacing={1}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Titre</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('contracts:wizard.finalize.title')}</Typography>
                   <Typography variant="body2" fontWeight={600}>{formData.title || '—'}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Type</Typography>
-                  <Typography variant="body2" fontWeight={600}>{formData.contract_type}</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('contracts:wizard.finalize.type')}</Typography>
+                  <Typography variant="body2" fontWeight={600}>{t(`contracts:form.fields.${formData.contract_type}_contract`, formData.contract_type)}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Langue</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('contracts:wizard.finalize.language')}</Typography>
                   <Typography variant="body2" fontWeight={600}>
                     {formData.language === 'fr' ? ' Français' : formData.language === 'en' ? ' English' : ' Español'}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Contrepartie</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('contracts:wizard.finalize.counterparty')}</Typography>
                   <Typography variant="body2" fontWeight={600}>
                     {formData.party_type === 'client' ? formData.client?.name || formData.client?.company_name :
                      formData.party_type === 'supplier' ? formData.supplier?.name :
@@ -1142,28 +1122,28 @@ function ContractForm() {
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Durée</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('contracts:wizard.finalize.duration')}</Typography>
                   <Typography variant="body2" fontWeight={600}>
                     {formData.start_date && formData.end_date ? `${formData.start_date} → ${formData.end_date}` : '—'}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Valeur</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('contracts:wizard.finalize.value')}</Typography>
                   <Typography variant="body2" fontWeight={600}>
                     {formData.total_value ? `${Number(formData.total_value).toLocaleString()} ${formData.currency || orgCurrency}` : '—'}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Sections</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('contracts:wizard.finalize.sections')}</Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {sections.filter(s => s.content).length}/{sections.length} générées
+                    {t('contracts:wizard.finalize.sectionsGenerated', { done: sections.filter(s => s.content).length, total: sections.length })}
                   </Typography>
                 </Box>
               </Stack>
             </Box>
 
             <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }} icon={<Draw fontSize="small" />}>
-              Les signatures et l'import du PDF signé se font depuis la <strong>vue détail</strong> du contrat, après sa création.
+              <Trans t={t} i18nKey="contracts:wizard.finalize.signaturesInfo" components={{ strong: <strong /> }} />
             </Alert>
           </Box>
         );
@@ -1182,10 +1162,10 @@ function ContractForm() {
         </IconButton>
         <Box>
           <Typography variant="h5" fontWeight={700}>
-            {isEditMode ? 'Modifier le contrat' : 'Nouveau contrat'}
+            {isEditMode ? t('contracts:wizard.header.editTitle') : t('contracts:wizard.header.newTitle')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {isEditMode ? 'Mettez à jour les informations du contrat' : 'Créez un contrat professionnel avec génération IA section par section'}
+            {isEditMode ? t('contracts:wizard.header.editSubtitle') : t('contracts:wizard.header.newSubtitle')}
           </Typography>
         </Box>
       </Box>
@@ -1193,13 +1173,13 @@ function ContractForm() {
       {/* Stepper */}
       <Stepper activeStep={activeStep} alternativeLabel={!isMobile} sx={{ mb: 4 }}>
         {STEPS.map((step, i) => (
-          <Step key={step.label} completed={i < activeStep}>
+          <Step key={step.key} completed={i < activeStep}>
             <StepLabel
               onClick={() => i <= activeStep && setActiveStep(i)}
               sx={{ cursor: i <= activeStep ? 'pointer' : 'default' }}
             >
               <Typography variant="caption" fontWeight={activeStep === i ? 700 : 400}>
-                {step.label}
+                {t(`contracts:wizard.steps.${step.key}`)}
               </Typography>
             </StepLabel>
           </Step>
@@ -1220,7 +1200,7 @@ function ContractForm() {
           startIcon={<ArrowBack />}
           onClick={activeStep === 0 ? () => navigate('/contracts') : handleBack}
         >
-          {activeStep === 0 ? 'Annuler' : 'Précédent'}
+          {activeStep === 0 ? t('common:buttons.cancel', 'Annuler') : t('common:buttons.previous', 'Précédent')}
         </Button>
 
         <Box sx={{ display: 'flex', gap: 1.5 }}>
@@ -1232,7 +1212,7 @@ function ContractForm() {
               onClick={handleSubmit}
               disabled={submitting || !formData.title}
             >
-              Sauvegarder
+              {t('contracts:wizard.actions.save')}
             </Button>
           )}
 
@@ -1242,7 +1222,7 @@ function ContractForm() {
               endIcon={<ArrowForward />}
               onClick={handleNext}
             >
-              Suivant
+              {t('common:buttons.next', 'Suivant')}
             </Button>
           ) : (
             <Button
@@ -1252,7 +1232,7 @@ function ContractForm() {
               disabled={submitting || !formData.title}
               color="success"
             >
-              {isEditMode ? 'Mettre à jour' : 'Créer le contrat'}
+              {isEditMode ? t('common:buttons.update', 'Mettre à jour') : t('contracts:wizard.actions.create')}
             </Button>
           )}
         </Box>

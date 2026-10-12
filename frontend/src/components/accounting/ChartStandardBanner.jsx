@@ -4,6 +4,7 @@ import {
   Table, TableHead, TableRow, TableCell, TableBody, CircularProgress, Box,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
+import { useTranslation, Trans } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 
 /**
@@ -16,6 +17,7 @@ export default function ChartStandardBanner({ onChanged }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation(['accounting', 'common']);
 
   useEffect(() => {
     accountingAPI.getChartStandard().then((r) => setInfo(r.data)).catch(() => setInfo(null));
@@ -28,12 +30,12 @@ export default function ChartStandardBanner({ onChanged }) {
     setSaving(true);
     try {
       const r = await accountingAPI.switchChartStandard(info.country_standard);
-      enqueueSnackbar(`Plan ${info.country_standard_label} installé (${r.data.renamed} comptes recodés).`, { variant: 'success' });
+      enqueueSnackbar(t('accounting:banner.installed', { standard: info.country_standard_label, count: r.data.renamed }), { variant: 'success' });
       setInfo(r.data);
       setOpen(false);
       onChanged?.();
     } catch (e) {
-      enqueueSnackbar(e.response?.data?.error || 'Changement de plan impossible', { variant: 'error' });
+      enqueueSnackbar(e.response?.data?.error || t('accounting:banner.switchError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -44,26 +46,27 @@ export default function ChartStandardBanner({ onChanged }) {
       <Alert
         severity="warning"
         sx={{ mb: 3, borderRadius: 2 }}
-        action={<Button color="inherit" size="small" onClick={() => setOpen(true)}>Voir le changement</Button>}
+        action={<Button color="inherit" size="small" onClick={() => setOpen(true)}>{t('accounting:banner.viewChange')}</Button>}
       >
-        Votre entreprise est au <strong>{info.country}</strong> : le plan comptable officiel est
-        <strong> {info.country_standard_label}</strong>. Vous utilisez encore le {info.current_label}.
+        <Trans
+          i18nKey="accounting:banner.message"
+          values={{ country: info.country, standard: info.country_standard_label, current: info.current_label }}
+          components={{ strong: <strong /> }}
+        />
       </Alert>
 
       <Dialog open={open} onClose={() => !saving && setOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Passer au plan {info.country_standard_label}</DialogTitle>
+        <DialogTitle>{t('accounting:banner.switchTo', { standard: info.country_standard_label })}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Vos comptes sont recodés selon le plan officiel. Les écritures déjà passées restent sur les
-            mêmes comptes : l'historique et les soldes ne changent pas. Les comptes manquants du nouveau
-            plan sont ajoutés. Rien n'est supprimé.
+            {t('accounting:banner.dialogText')}
           </Typography>
           {preview.renames.length > 0 && (
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Compte actuel</TableCell>
-                  <TableCell>Devient</TableCell>
+                  <TableCell>{t('accounting:banner.currentAccount')}</TableCell>
+                  <TableCell>{t('accounting:banner.becomes')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -79,17 +82,16 @@ export default function ChartStandardBanner({ onChanged }) {
           {preview.moves.length > 0 && (
             <Box mt={2}>
               <Typography variant="caption" color="text.secondary">
-                {preview.moves.length} compte(s) de l'ancien plan sont gardés avec le préfixe X
-                (ex. {preview.moves[0].from} → {preview.moves[0].to}) car leur numéro est utilisé par le nouveau plan.
+                {t('accounting:banner.moves', { count: preview.moves.length, from: preview.moves[0].from, to: preview.moves[0].to })}
               </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)} disabled={saving}>Annuler</Button>
+          <Button onClick={() => setOpen(false)} disabled={saving}>{t('accounting:common.cancel')}</Button>
           <Button variant="contained" onClick={apply} disabled={saving}
             startIcon={saving ? <CircularProgress size={16} /> : null}>
-            Passer au plan {info.country_standard_label}
+            {t('accounting:banner.switchTo', { standard: info.country_standard_label })}
           </Button>
         </DialogActions>
       </Dialog>

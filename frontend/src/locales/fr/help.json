@@ -5,13 +5,25 @@
     "tutorial": "Tutoriel interactif",
     "faq": "FAQ",
     "shortcuts": "Raccourcis clavier",
-    "support": "Contacter le support"
+    "support": "Contacter le support",
+    "title": "Actions rapides",
+    "startTutorial": "Lancer le tutoriel interactif",
+    "viewFaq": "Voir la FAQ",
+    "keyboardShortcuts": "Raccourcis clavier",
+    "contactSupport": "Contacter le support"
   },
   "search": {
     "placeholder": "Rechercher dans la documentation...",
     "popular": "Recherches populaires",
     "noResults": "Aucun résultat trouvé pour",
-    "tryDifferent": "Essayez avec d'autres mots-clés"
+    "tryDifferent": "Essayez avec d'autres mots-clés",
+    "noResultsDescription": "Essayez d'autres mots-clés ou parcourez les catégories ci-dessous",
+    "popularTerms": {
+      "createInvoice": "créer facture",
+      "newSupplier": "nouveau fournisseur",
+      "stockManagement": "gestion stock",
+      "purchaseOrder": "bon de commande"
+    }
   },
   "needMoreHelp": {
     "title": "Besoin d'aide supplémentaire ?",
@@ -54,6 +66,7 @@
     "print": "Imprimer cette page"
   },
   "categories": {
+    "all": "Tout",
     "gettingStarted": {
       "title": "Démarrage",
       "description": "Premiers pas avec ProcureGenius"
@@ -86,5 +99,49 @@
       "title": "Astuces",
       "description": "Conseils et bonnes pratiques"
     }
+  },
+  "articles": {
+    "title": "Articles d'aide",
+    "readMore": "Lire la suite",
+    "relatedArticles": "Articles liés",
+    "helpful": "Cet article vous a-t-il été utile ?",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "support": {
+    "title": "Besoin d'aide ?",
+    "subtitle": "Nous sommes là pour vous aider",
+    "whatsapp": {
+      "title": "Support WhatsApp",
+      "description": "Contactez-nous directement sur WhatsApp pour une aide rapide",
+      "button": "Ouvrir WhatsApp"
+    },
+    "email": {
+      "title": "Support par e-mail",
+      "description": "Envoyez-nous un e-mail et nous vous répondrons dans les plus brefs délais",
+      "button": "Envoyer un e-mail"
+    },
+    "youtube": {
+      "title": "Tutoriels vidéo",
+      "description": "Apprenez à utiliser ProcureGenius avec nos tutoriels vidéo",
+      "placeholder": "Collez ici le lien de votre tutoriel YouTube...",
+      "button": "Ouvrir",
+      "note": "Remarque : cette fonctionnalité vous permet d'ouvrir directement la vidéo YouTube de votre choix"
+    },
+    "quickActions": {
+      "title": "Actions rapides",
+      "faq": "FAQ",
+      "faqDescription": "Questions fréquentes",
+      "documentation": "Documentation",
+      "documentationDescription": "Guide complet de l'application",
+      "shortcuts": "Raccourcis clavier",
+      "shortcutsDescription": "Liste des raccourcis disponibles",
+      "tutorial": "Tutoriel interactif",
+      "tutorialDescription": "Découvrez l'application pas à pas"
+    }
+  },
+  "messages": {
+    "feedbackThankYou": "Merci pour votre retour !",
+    "copiedToClipboard": "Copié dans le presse-papiers"
   }
 }

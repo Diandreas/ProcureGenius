@@ -198,7 +198,7 @@ function MainLayout() {
 
     { divider: true },
     // Comptabilite : depend du module 'accounting' (Pro/Business), pas core.
-    { text: 'Comptabilité', iconSrc: '/icon/analysis.png', path: '/accounting', moduleId: 'accounting', isCore: false, matchPrefix: '/accounting' },
+    { text: t('navigation:menu.accounting'), iconSrc: '/icon/analysis.png', path: '/accounting', moduleId: 'accounting', isCore: false, matchPrefix: '/accounting' },
   ];
 
   const [userPermissions, setUserPermissions] = useState(null);
@@ -359,7 +359,7 @@ function MainLayout() {
           }
         };
       case '/migration/jobs':
-        return { title: t('navigation:topBar.dataImport'), action: { label: t('navigation:topBar.newImport'), icon: <IconImage src="/icon/migration.png" alt="Import" size={18} />, onClick: () => navigate('/migration/wizard') } };
+        return { title: t('navigation:topBar.dataImport'), action: { label: t('navigation:topBar.newImport'), icon: <IconImage src="/icon/migration.png" alt={t('navigation:topBar.importAlt')} size={18} />, onClick: () => navigate('/migration/wizard') } };
       case '/migration/wizard':
         return { title: t('navigation:topBar.importWizard') };
       case '/ai-chat':
@@ -454,7 +454,7 @@ function MainLayout() {
           onClick={toggleCollapsed}
           size="small"
           sx={{ display: { xs: 'none', md: 'inline-flex' }, color: 'text.secondary' }}
-          aria-label="Réduire le menu"
+          aria-label={t('navigation:menu.collapse')}
         >
           <ChevronLeft />
         </IconButton>
@@ -462,7 +462,7 @@ function MainLayout() {
       </Box>
       {collapsed && (
         <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mb: 1 }}>
-          <IconButton onClick={toggleCollapsed} size="small" sx={{ color: 'text.secondary' }} aria-label="Déplier le menu">
+          <IconButton onClick={toggleCollapsed} size="small" sx={{ color: 'text.secondary' }} aria-label={t('navigation:menu.expand')}>
             <ChevronRight />
           </IconButton>
         </Box>
@@ -493,7 +493,7 @@ function MainLayout() {
 
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
-                <Tooltip title={collapsed ? item.text : (locked ? 'Inclus dans Pro' : '')} placement="right" arrow>
+                <Tooltip title={collapsed ? item.text : (locked ? t('navigation:menu.includedInPro') : '')} placement="right" arrow>
                 <ListItemButton
                   selected={isSelected && !locked}
                   onClick={() => locked ? setLockedModuleName(item.text) : handleModuleClick(item)}
@@ -616,7 +616,7 @@ function MainLayout() {
             <ListItemIcon sx={{ minWidth: collapsed ? 0 : 40, justifyContent: 'center' }}>
               <IconImage
                 src="/icon/setting.png"
-                alt="Settings"
+                alt={t('navigation:menu.settings')}
                 size={22}
                 withBackground={mode === 'dark'}
               />
@@ -729,7 +729,7 @@ function MainLayout() {
                         period={contextualActions.currentPeriod}
                         onChange={contextualActions.onPeriodChange}
                       />
-                      <Tooltip title="Actualiser">
+                      <Tooltip title={t('common:buttons.refresh')}>
                         <IconButton
                           onClick={contextualActions.onRefresh}
                           size="small"
@@ -786,7 +786,7 @@ function MainLayout() {
                   ) : (
                     <IconButton
                       color="inherit"
-                      aria-label="open drawer"
+                      aria-label={t('navigation:topBar.openDrawer')}
                       edge="start"
                       onClick={handleDrawerToggle}
                       sx={{
@@ -869,7 +869,7 @@ function MainLayout() {
                   period={contextualActions.currentPeriod}
                   onChange={contextualActions.onPeriodChange}
                 />
-                <Tooltip title="Actualiser">
+                <Tooltip title={t('common:buttons.refresh')}>
                   <IconButton
                     onClick={contextualActions.onRefresh}
                     size="small"
@@ -1008,7 +1008,7 @@ function MainLayout() {
             <TutorialButton variant="icon" size="small" />
 
             {/* Theme Toggle - Design Premium (compact sur mobile) */}
-            <Tooltip title={mode === 'dark' ? 'Mode clair' : 'Mode sombre'}>
+            <Tooltip title={mode === 'dark' ? t('navigation:topBar.lightMode') : t('navigation:topBar.darkMode')}>
               <IconButton
                 onClick={toggleColorMode}
                 sx={{

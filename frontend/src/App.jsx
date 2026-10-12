@@ -620,7 +620,15 @@ function RootRedirect() {
 function AppInitializer({ children }) {
   const dispatch = useDispatch();
   const [initialized, setInitialized] = React.useState(false);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   usePWA(); // Enregistre le service worker au démarrage
+
+  // Après une connexion sans rechargement : la langue (et les réglages) du compte s'appliquent
+  const dejaConnecte = React.useRef(isAuthenticated);
+  React.useEffect(() => {
+    if (isAuthenticated && !dejaConnecte.current) dispatch(fetchSettings());
+    dejaConnecte.current = isAuthenticated;
+  }, [isAuthenticated, dispatch]);
 
   React.useEffect(() => {
     const initializeApp = async () => {

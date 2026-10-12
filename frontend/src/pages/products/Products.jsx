@@ -89,19 +89,19 @@ const TYPE_CONFIG = {
   physical: {
     color: '#2196F3',
     icon: Inventory,
-    label: 'Physique',
+    labelKey: 'products:typeLabels.physical',
     bgColor: 'rgba(33, 150, 243, 0.1)'
   },
   service: {
     color: '#4CAF50',
     icon: Build,
-    label: 'Service',
+    labelKey: 'products:typeLabels.service',
     bgColor: 'rgba(76, 175, 80, 0.1)'
   },
   digital: {
     color: '#9C27B0',
     icon: CloudDownload,
-    label: 'Digital',
+    labelKey: 'products:typeLabels.digital',
     bgColor: 'rgba(156, 39, 176, 0.1)'
   },
 };
@@ -112,10 +112,10 @@ const TYPE_CONFIG = {
 // et « Nouveau produit » devient un bouton icône.
 // Outils de stock (scan, inventaire, réception, étiquettes) : pages /products/scan|inventory|reception|labels
 const STOCK_TOOLS = [
-  { path: '/products/scan', label: 'Scanner un produit', icon: <QrCodeScanner fontSize="small" color="primary" /> },
-  { path: '/products/inventory', label: 'Inventaire', icon: <FactCheck fontSize="small" color="primary" /> },
-  { path: '/products/reception', label: 'Réception de marchandise', icon: <MoveToInbox fontSize="small" color="primary" /> },
-  { path: '/products/labels', label: 'Étiquettes QR', icon: <LocalPrintshop fontSize="small" color="primary" /> },
+  { path: '/products/scan', labelKey: 'products:stockTools.scan', icon: <QrCodeScanner fontSize="small" color="primary" /> },
+  { path: '/products/inventory', labelKey: 'products:stockTools.inventory', icon: <FactCheck fontSize="small" color="primary" /> },
+  { path: '/products/reception', labelKey: 'products:stockTools.reception', icon: <MoveToInbox fontSize="small" color="primary" /> },
+  { path: '/products/labels', labelKey: 'products:stockTools.labels', icon: <LocalPrintshop fontSize="small" color="primary" /> },
 ];
 
 function ProductsHeaderActions() {
@@ -133,7 +133,7 @@ function ProductsHeaderActions() {
           color="primary"
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{ border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`, borderRadius: 2 }}
-          aria-label={t('common:more', 'Plus')}
+          aria-label={t('products:actions.more', 'Plus')}
         >
           <MoreVert />
         </IconButton>
@@ -141,7 +141,7 @@ function ProductsHeaderActions() {
           {STOCK_TOOLS.map((tool) => (
             <MenuItem key={tool.path} onClick={() => { setAnchorEl(null); navigate(tool.path); }}>
               <ListItemIcon>{tool.icon}</ListItemIcon>
-              <ListItemText>{tool.label}</ListItemText>
+              <ListItemText>{t(tool.labelKey)}</ListItemText>
             </MenuItem>
           ))}
           <MenuItem onClick={() => { setAnchorEl(null); navigate('/products/margins'); }}>
@@ -176,13 +176,13 @@ function ProductsHeaderActions() {
         onClick={(e) => setStockEl(e.currentTarget)}
         sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 2.5 }}
       >
-        Stock
+        {t('products:stockTools.button', 'Stock')}
       </Button>
       <Menu anchorEl={stockEl} open={Boolean(stockEl)} onClose={() => setStockEl(null)}>
         {STOCK_TOOLS.map((tool) => (
           <MenuItem key={tool.path} onClick={() => { setStockEl(null); navigate(tool.path); }}>
             <ListItemIcon>{tool.icon}</ListItemIcon>
-            <ListItemText>{tool.label}</ListItemText>
+            <ListItemText>{t(tool.labelKey)}</ListItemText>
           </MenuItem>
         ))}
       </Menu>
@@ -360,7 +360,7 @@ function Products() {
 
   const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
-    const fname = `rapport-produits-${new Date().getTime()}.pdf`;
+    const fname = `${t('products:report.fileName', 'rapport-produits')}-${new Date().getTime()}.pdf`;
 
     if (action === 'download') {
       await pdfViewer.download(generatedPdfBlob, fname);
@@ -368,11 +368,11 @@ function Products() {
         variant: 'success',
       });
     } else if (action === 'preview') {
-      pdfViewer.preview(generatedPdfBlob, fname, 'Rapport produits');
+      pdfViewer.preview(generatedPdfBlob, fname, t('products:report.previewTitle', 'Rapport produits'));
       return;
     } else if (action === 'print') {
       if (IS_NATIVE) {
-        pdfViewer.preview(generatedPdfBlob, fname, 'Rapport produits');
+        pdfViewer.preview(generatedPdfBlob, fname, t('products:report.previewTitle', 'Rapport produits'));
         return;
       }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
@@ -404,10 +404,10 @@ function Products() {
     const oos = isPhysical && product.stock_quantity === 0;
     const low = isPhysical && product.stock_quantity > 0 && product.stock_quantity <= (product.low_stock_threshold || 10);
     const accent = !isPhysical ? '#3b82f6' : oos ? '#ef4444' : low ? '#f59e0b' : '#10b981';
-    const statusLabel = !isPhysical ? 'Service' : oos ? 'Rupture' : low ? 'Stock bas' : 'En stock';
+    const statusLabel = !isPhysical ? t('products:card.service', 'Service') : oos ? t('products:filters.outOfStock', 'Rupture') : low ? t('products:filters.lowStock', 'Stock bas') : t('products:filters.inStock', 'En stock');
     const footer = isPhysical
-      ? `${product.stock_quantity ?? 0} en stock`
-      : 'Service';
+      ? t('products:card.inStockCount', { count: product.stock_quantity ?? 0 })
+      : t('products:card.service', 'Service');
     return (
       <NeumorphicCard
         index={index}
@@ -481,11 +481,11 @@ function Products() {
         activeKey={stockFilter}
         onSelect={handleStockFilterClick}
         kpis={[
-          { key: '', label: 'Produits', value: totalProducts, sub: 'au catalogue', color: '#2563eb' },
-          { key: 'ok', label: 'En stock', value: inStock, sub: 'disponibles', color: '#10b981' },
-          { key: 'low_stock', label: 'Stock bas', value: lowStock, sub: 'a surveiller', color: '#f59e0b' },
-          { key: 'out_of_stock', label: 'Rupture', value: outOfStock, sub: 'a reapprovisionner', color: '#ef4444' },
-          { key: 'services', label: 'Services', value: servicesCount, sub: 'non stockes', color: '#3b82f6' },
+          { key: '', label: t('products:kpis.products', 'Produits'), value: totalProducts, sub: t('products:kpis.productsSub', 'au catalogue'), color: '#2563eb' },
+          { key: 'ok', label: t('products:filters.inStock', 'En stock'), value: inStock, sub: t('products:kpis.inStockSub', 'disponibles'), color: '#10b981' },
+          { key: 'low_stock', label: t('products:filters.lowStock', 'Stock bas'), value: lowStock, sub: t('products:kpis.lowStockSub', 'a surveiller'), color: '#f59e0b' },
+          { key: 'out_of_stock', label: t('products:filters.outOfStock', 'Rupture'), value: outOfStock, sub: t('products:kpis.outOfStockSub', 'a reapprovisionner'), color: '#ef4444' },
+          { key: 'services', label: t('products:filters.services', 'Services'), value: servicesCount, sub: t('products:kpis.servicesSub', 'non stockes'), color: '#3b82f6' },
         ]}
       />
 
@@ -493,18 +493,18 @@ function Products() {
       <NeumorphicSearch
         value={searchTerm}
         onChange={setSearchTerm}
-        placeholder="Rechercher un produit, une reference..."
+        placeholder={t('products:search.placeholderWithRef', 'Rechercher un produit, une reference...')}
         right={productCategories.length > 0 ? (
           <Box sx={{ minWidth: 160 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Categorie</InputLabel>
+              <InputLabel>{t('products:filters.categoryShort', 'Categorie')}</InputLabel>
               <Select
                 value={categoryFilter}
-                label="Categorie"
+                label={t('products:filters.categoryShort', 'Categorie')}
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 sx={{ borderRadius: 999, '& fieldset': { border: 'none' }, bgcolor: 'background.paper', boxShadow: theme => theme.palette.mode === 'light' ? 'inset 4px 4px 9px #cdd4e0, inset -4px -4px 9px #ffffff' : 'inset 4px 4px 9px #14191f, inset -4px -4px 9px #283041' }}
               >
-                <MenuItem value="">Toutes</MenuItem>
+                <MenuItem value="">{t('products:filters.allCategories', 'Toutes')}</MenuItem>
                 {productCategories.map((c) => (
                   <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
                 ))}
@@ -546,14 +546,14 @@ function Products() {
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-               Période (optionnel)
+               {t('products:report.period', 'Période (optionnel)')}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-              Filtrer par période - laisser vide pour tout inclure
+              {t('products:report.periodHelp', 'Filtrer par période - laisser vide pour tout inclure')}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
               <TextField
-                label="Date de début"
+                label={t('products:report.dateStart', 'Date de début')}
                 type="date"
                 value={reportFilters.dateStart}
                 onChange={(e) => setReportFilters({ ...reportFilters, dateStart: e.target.value })}
@@ -563,7 +563,7 @@ function Products() {
                 inputProps={{ max: reportFilters.dateEnd || undefined }}
               />
               <TextField
-                label="Date de fin"
+                label={t('products:report.dateEnd', 'Date de fin')}
                 type="date"
                 value={reportFilters.dateEnd}
                 onChange={(e) => setReportFilters({ ...reportFilters, dateEnd: e.target.value })}
@@ -578,12 +578,12 @@ function Products() {
 
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                 Produits à inclure
+                 {t('products:report.productsToInclude', 'Produits à inclure')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                 {reportFilters.selectedProducts.length > 0
-                  ? `${reportFilters.selectedProducts.length} produit(s) sélectionné(s)`
-                  : 'Tous les produits filtrés seront inclus'}
+                  ? t('products:report.selectedCount', { count: reportFilters.selectedProducts.length })
+                  : t('products:report.allIncluded', 'Tous les produits filtrés seront inclus')}
               </Typography>
 
               <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
@@ -631,13 +631,13 @@ function Products() {
                     size="small"
                     onClick={() => setReportFilters({ ...reportFilters, selectedProducts: filteredProducts.map(p => p.id) })}
                   >
-                    Tout sélectionner
+                    {t('products:report.selectAll', 'Tout sélectionner')}
                   </Button>
                   <Button
                     size="small"
                     onClick={() => setReportFilters({ ...reportFilters, selectedProducts: [] })}
                   >
-                    Tout désélectionner
+                    {t('products:report.deselectAll', 'Tout désélectionner')}
                   </Button>
                 </Box>
               )}
@@ -646,9 +646,9 @@ function Products() {
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="caption">
                 {reportFilters.selectedProducts.length > 0
-                  ? `Un rapport sera généré avec ${reportFilters.selectedProducts.length} produit(s) sélectionné(s)`
-                  : `Un rapport sera généré avec tous les produits (${filteredProducts.length})`}
-                {(reportFilters.dateStart || reportFilters.dateEnd) && ' pour la période spécifiée'}
+                  ? t('products:report.summarySelected', { count: reportFilters.selectedProducts.length })
+                  : t('products:report.summaryAll', { count: filteredProducts.length })}
+                {(reportFilters.dateStart || reportFilters.dateEnd) && t('products:report.forPeriod', ' pour la période spécifiée')}
                 .
               </Typography>
             </Alert>
@@ -656,7 +656,7 @@ function Products() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setReportConfigOpen(false)}>
-            Annuler
+            {t('products:buttons.cancel', 'Annuler')}
           </Button>
           <Button
             onClick={handleConfigureReport}
@@ -664,7 +664,7 @@ function Products() {
             color="success"
             startIcon={<PictureAsPdf />}
           >
-            Générer le Rapport
+            {t('products:report.generate', 'Générer le Rapport')}
           </Button>
         </DialogActions>
       </Dialog>

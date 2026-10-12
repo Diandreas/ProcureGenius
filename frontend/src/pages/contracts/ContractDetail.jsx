@@ -72,11 +72,11 @@ import {
 } from '../../store/slices/contractsSlice';
 import LoadingState from '../../components/LoadingState';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 function ContractDetail() {
-  const { t } = useTranslation(['contracts', 'common']);
+  const { t, i18n } = useTranslation(['contracts', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
@@ -163,7 +163,7 @@ function ContractDetail() {
       const result = await dispatch(renewContract({ id, data: {} })).unwrap();
       const newId = result?.new_contract?.id || result?.id;
       enqueueSnackbar(
-        result?.message || t('contracts:messages.renewSuccess', 'Contrat renouvelé avec succès.'),
+        result?.message || t('contracts:detail.messages.renewSuccess', 'Contrat renouvelé avec succès.'),
         { variant: 'success' }
       );
       if (newId && newId !== id) {
@@ -173,7 +173,7 @@ function ContractDetail() {
       }
     } catch (error) {
       enqueueSnackbar(
-        error?.response?.data?.message || t('contracts:messages.renewError', 'Erreur lors du renouvellement du contrat.'),
+        error?.response?.data?.message || t('contracts:detail.messages.renewError', 'Erreur lors du renouvellement du contrat.'),
         { variant: 'error' }
       );
     }
@@ -184,7 +184,7 @@ function ContractDetail() {
       const response = await contractsAPI.generateInvoice(id);
       const invoiceId = response.data?.invoice?.id;
       enqueueSnackbar(
-        response.data?.message || 'Facture brouillon créée à partir du contrat.',
+        response.data?.message || t('contracts:detail.messages.invoiceDraftCreated'),
         { variant: 'success' }
       );
       if (invoiceId) {
@@ -192,7 +192,7 @@ function ContractDetail() {
       }
     } catch (error) {
       enqueueSnackbar(
-        error.response?.data?.message || 'Erreur lors de la génération de la facture.',
+        error.response?.data?.message || t('contracts:detail.messages.invoiceError'),
         { variant: 'error' }
       );
     }
@@ -219,7 +219,7 @@ function ContractDetail() {
       } else {
         // Pas de faux succès : aucune clause détectée -> on garde le dialogue ouvert.
         enqueueSnackbar(
-          result?.message || t('contracts:messages.extractEmpty', "Aucune clause n'a pu être extraite. Vérifiez le texte du contrat."),
+          result?.message || t('contracts:detail.messages.extractEmpty', "Aucune clause n'a pu être extraite. Vérifiez le texte du contrat."),
           { variant: 'warning' }
         );
       }
@@ -249,13 +249,13 @@ function ContractDetail() {
       setTemplates(response.data.results || response.data);
       setGenerateDialogOpen(true);
     } catch (err) {
-      enqueueSnackbar("Erreur lors du chargement des modèles", { variant: 'error' });
+      enqueueSnackbar(t('contracts:detail.messages.templatesLoadError'), { variant: 'error' });
     }
   };
 
   const handleGenerateDocument = async () => {
     if (!selectedTemplate) {
-      enqueueSnackbar("Veuillez sélectionner un modèle", { variant: 'warning' });
+      enqueueSnackbar(t('contracts:detail.messages.selectTemplate'), { variant: 'warning' });
       return;
     }
 
@@ -266,7 +266,7 @@ function ContractDetail() {
         try {
           parsedContext = JSON.parse(contextData);
         } catch (e) {
-          enqueueSnackbar("Le contexte JSON est invalide", { variant: 'error' });
+          enqueueSnackbar(t('contracts:detail.messages.invalidJson'), { variant: 'error' });
           setGenerating(false);
           return;
         }
@@ -277,9 +277,9 @@ function ContractDetail() {
       });
       
       setGeneratedContent(response.data?.data?.generated_content || '');
-      enqueueSnackbar("Document généré avec succès", { variant: 'success' });
+      enqueueSnackbar(t('contracts:detail.messages.documentGenerated'), { variant: 'success' });
     } catch (error) {
-      enqueueSnackbar("Erreur lors de la génération", { variant: 'error' });
+      enqueueSnackbar(t('contracts:detail.messages.generateError'), { variant: 'error' });
     } finally {
       setGenerating(false);
     }
@@ -299,7 +299,7 @@ function ContractDetail() {
 
   const handleExportPDF = async (templateType = 'contract') => {
     if (!generatedContent) {
-      enqueueSnackbar("Veuillez d'abord générer le document", { variant: 'warning' });
+      enqueueSnackbar(t('contracts:detail.messages.generateFirst'), { variant: 'warning' });
       return;
     }
     try {
@@ -319,10 +319,10 @@ function ContractDetail() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      enqueueSnackbar('Export PDF réussi', { variant: 'success' });
+      enqueueSnackbar(t('contracts:detail.messages.pdfExportSuccess'), { variant: 'success' });
     } catch (error) {
       console.error(error);
-      enqueueSnackbar('Erreur lors de l\'export PDF', { variant: 'error' });
+      enqueueSnackbar(t('contracts:detail.messages.pdfExportError'), { variant: 'error' });
     } finally {
       setGenerating(false);
     }
@@ -330,7 +330,7 @@ function ContractDetail() {
 
   const handleExportWord = async (templateType = 'contract') => {
     if (!generatedContent) {
-      enqueueSnackbar("Veuillez d'abord générer le document", { variant: 'warning' });
+      enqueueSnackbar(t('contracts:detail.messages.generateFirst'), { variant: 'warning' });
       return;
     }
     try {
@@ -349,10 +349,10 @@ function ContractDetail() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      enqueueSnackbar('Export Word réussi', { variant: 'success' });
+      enqueueSnackbar(t('contracts:detail.messages.wordExportSuccess'), { variant: 'success' });
     } catch (error) {
       console.error(error);
-      enqueueSnackbar('Erreur lors de l\'export Word', { variant: 'error' });
+      enqueueSnackbar(t('contracts:detail.messages.wordExportError'), { variant: 'error' });
     } finally {
       setGenerating(false);
     }
@@ -371,9 +371,9 @@ function ContractDetail() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      enqueueSnackbar('Export PDF réussi', { variant: 'success' });
+      enqueueSnackbar(t('contracts:detail.messages.pdfExportSuccess'), { variant: 'success' });
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'export PDF', { variant: 'error' });
+      enqueueSnackbar(t('contracts:detail.messages.pdfExportError'), { variant: 'error' });
     } finally {
       setGenerating(false);
     }
@@ -392,9 +392,9 @@ function ContractDetail() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      enqueueSnackbar('Export Word réussi', { variant: 'success' });
+      enqueueSnackbar(t('contracts:detail.messages.wordExportSuccess'), { variant: 'success' });
     } catch (error) {
-      enqueueSnackbar('Erreur lors de l\'export Word', { variant: 'error' });
+      enqueueSnackbar(t('contracts:detail.messages.wordExportError'), { variant: 'error' });
     } finally {
       setGenerating(false);
     }
@@ -402,18 +402,18 @@ function ContractDetail() {
 
   const handleSendEmail = async () => {
     if (!emailRecipient.trim()) {
-      enqueueSnackbar('Email destinataire requis', { variant: 'warning' });
+      enqueueSnackbar(t('contracts:detail.messages.recipientRequired'), { variant: 'warning' });
       return;
     }
     setSendingEmail(true);
     try {
       await contractsAPI.sendEmail(id, { recipient_email: emailRecipient, message: emailMessage });
-      enqueueSnackbar('Email envoyé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('contracts:detail.messages.emailSent'), { variant: 'success' });
       setEmailDialogOpen(false);
       setEmailRecipient('');
       setEmailMessage('');
     } catch (e) {
-      enqueueSnackbar('Erreur lors de l\'envoi de l\'email', { variant: 'error' });
+      enqueueSnackbar(t('contracts:detail.messages.emailError'), { variant: 'error' });
     } finally {
       setSendingEmail(false);
     }
@@ -457,7 +457,7 @@ function ContractDetail() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return format(new Date(dateString), 'dd MMMM yyyy', { locale: fr });
+    return format(new Date(dateString), 'dd MMMM yyyy', { locale: i18n.language?.startsWith('en') ? enUS : fr });
   };
 
   const statusColorMap = {
@@ -591,7 +591,7 @@ function ContractDetail() {
                       onClick={handleGenerateInvoice}
                       sx={{ borderRadius: 2, textTransform: 'none' }}
                     >
-                      Générer une facture
+                      {t('contracts:detail.actions.generateInvoice')}
                     </Button>
                     <Button
                       variant="outlined"
@@ -650,7 +650,7 @@ function ContractDetail() {
                   }}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  Envoyer
+                  {t('contracts:detail.actions.send')}
                 </Button>
 
                 <Button
@@ -687,16 +687,16 @@ function ContractDetail() {
               {currentContract.sections && currentContract.sections.length > 0 ? (
                 <>
                   <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    Sections du contrat
-                    <Chip label={`${currentContract.sections.length} articles`} size="small" color="primary" variant="outlined" />
+                    {t('contracts:detail.sectionsTitle')}
+                    <Chip label={t('contracts:detail.articlesCount', { count: currentContract.sections.length })} size="small" color="primary" variant="outlined" />
                   </Typography>
                   {currentContract.sections.map((section, idx) => (
                     <Accordion key={section.id || idx} defaultExpanded={idx === 0} sx={{ boxShadow: 'none', '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: '8px !important', mb: 1 }}>
                       <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Chip label={`Art. ${section.order}`} size="small" sx={{ mr: 1.5, fontWeight: 700, minWidth: 55 }} />
+                        <Chip label={t('contracts:wizard.editor.article', { order: section.order })} size="small" sx={{ mr: 1.5, fontWeight: 700, minWidth: 55 }} />
                         <Typography variant="subtitle2" fontWeight={600}>{section.title}</Typography>
                         {section.is_ai_generated && (
-                          <Chip label="IA" size="small" color="primary" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 20 }} />
+                          <Chip label={t('contracts:wizard.editor.aiChip')} size="small" color="primary" variant="outlined" sx={{ ml: 1, fontSize: '0.65rem', height: 20 }} />
                         )}
                       </AccordionSummary>
                       <AccordionDetails>
@@ -790,7 +790,7 @@ function ContractDetail() {
                     label: t('contracts:detail.sections.contractType', 'Type'),
                     value: currentContract.contract_type === 'purchase' ? t('contracts:detail.sections.purchase', 'Achat') :
                            currentContract.contract_type === 'service' ? t('contracts:detail.sections.service', 'Service') :
-                           currentContract.contract_type,
+                           t(`contracts:form.fields.${currentContract.contract_type}_contract`, currentContract.contract_type),
                   },
                   { label: t('contracts:detail.sections.startDate', 'Début'), value: formatDate(currentContract.start_date) },
                   { label: t('contracts:detail.sections.endDate', 'Fin'), value: formatDate(currentContract.end_date) },
@@ -807,7 +807,7 @@ function ContractDetail() {
                       {t('contracts:detail.sections.daysUntilExpiry', 'Jours restants')}
                     </Typography>
                     <Chip
-                      label={`${currentContract.days_until_expiry}j`}
+                      label={t('contracts:detail.daysShort', { days: currentContract.days_until_expiry })}
                       size="small"
                       sx={{
                         bgcolor: alpha(currentContract.days_until_expiry < 30 ? '#ef4444' : '#10b981', 0.12),
@@ -847,7 +847,7 @@ function ContractDetail() {
             <CardContent>
               <Typography variant="subtitle1" fontWeight={700} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Description sx={{ fontSize: 18, color: statusColor }} />
-                Documents & Signatures
+                {t('contracts:detail.documents.title')}
               </Typography>
 
               {/* Upload PDF signé */}
@@ -864,7 +864,7 @@ function ContractDetail() {
                   <Box>
                     <CheckCircle color="success" sx={{ fontSize: 32, mb: 0.5 }} />
                     <Typography variant="body2" fontWeight={600} color="success.main" gutterBottom>
-                      PDF signé importé
+                      {t('contracts:detail.documents.signedPdfImported')}
                     </Typography>
                     <Stack direction="row" spacing={1} justifyContent="center">
                       <Button
@@ -875,7 +875,7 @@ function ContractDetail() {
                         target="_blank"
                         sx={{ borderRadius: 1.5, textTransform: 'none' }}
                       >
-                        Télécharger
+                        {t('common:buttons.download', 'Télécharger')}
                       </Button>
                       <Button
                         size="small"
@@ -883,7 +883,7 @@ function ContractDetail() {
                         component="label"
                         sx={{ borderRadius: 1.5, textTransform: 'none' }}
                       >
-                        Remplacer
+                        {t('contracts:wizard.signatures.replace')}
                         <input
                           type="file"
                           accept=".pdf"
@@ -893,10 +893,10 @@ function ContractDetail() {
                             if (file) {
                               try {
                                 await contractsAPI.uploadSignedPdf(id, file);
-                                enqueueSnackbar('PDF signé importé', { variant: 'success' });
+                                enqueueSnackbar(t('contracts:detail.documents.signedPdfImported'), { variant: 'success' });
                                 dispatch(fetchContract(id));
                               } catch {
-                                enqueueSnackbar('Erreur import PDF', { variant: 'error' });
+                                enqueueSnackbar(t('contracts:detail.messages.pdfImportError'), { variant: 'error' });
                               }
                             }
                           }}
@@ -910,13 +910,13 @@ function ContractDetail() {
                         <Box
                           component="iframe"
                           src={`${signedPdfBlobUrl}#toolbar=0&navpanes=0&view=FitH`}
-                          title="Aperçu du contrat signé"
+                          title={t('contracts:detail.documents.previewTitle')}
                           sx={{ width: '100%', height: { xs: 320, md: 460 }, border: 0, display: 'block' }}
                         />
                       </Box>
                     ) : (
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
-                        Chargement de l'aperçu…
+                        {t('contracts:detail.documents.loadingPreview')}
                       </Typography>
                     )}
                   </Box>
@@ -924,7 +924,7 @@ function ContractDetail() {
                   <Box>
                     <PictureAsPdf sx={{ fontSize: 32, mb: 0.5, color: 'text.secondary' }} />
                     <Typography variant="body2" fontWeight={600} mb={1}>
-                      Importer le PDF signé
+                      {t('contracts:wizard.signatures.importSignedPdf')}
                     </Typography>
                     <Button
                       size="small"
@@ -933,7 +933,7 @@ function ContractDetail() {
                       startIcon={<Description />}
                       sx={{ borderRadius: 1.5, textTransform: 'none' }}
                     >
-                      Parcourir...
+                      {t('contracts:wizard.signatures.browse')}
                       <input
                         type="file"
                         accept=".pdf"
@@ -943,10 +943,10 @@ function ContractDetail() {
                           if (file) {
                             try {
                               await contractsAPI.uploadSignedPdf(id, file);
-                              enqueueSnackbar('PDF signé importé avec succès', { variant: 'success' });
+                              enqueueSnackbar(t('contracts:wizard.signatures.pdfImported'), { variant: 'success' });
                               dispatch(fetchContract(id));
                             } catch {
-                              enqueueSnackbar('Erreur lors de l\'import', { variant: 'error' });
+                              enqueueSnackbar(t('contracts:detail.messages.importError'), { variant: 'error' });
                             }
                           }
                         }}
@@ -959,30 +959,30 @@ function ContractDetail() {
               {/* Signatures */}
               <Divider sx={{ mb: 1.5 }} />
               <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                SIGNATURES
+                {t('contracts:detail.documents.signaturesHeading')}
               </Typography>
               <Stack spacing={1.5}>
                 {/* Notre signature */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2">Notre organisation</Typography>
+                  <Typography variant="body2">{t('contracts:wizard.signatures.ourOrganization')}</Typography>
                   <Chip
                     size="small"
-                    label={currentContract.signed_by_us ? (currentContract.signed_by_us_name || 'Signé') : 'Non signé'}
+                    label={currentContract.signed_by_us ? (currentContract.signed_by_us_name || t('contracts:detail.documents.signed')) : t('contracts:detail.documents.notSigned')}
                     color={currentContract.signed_by_us ? 'success' : 'default'}
                     variant={currentContract.signed_by_us ? 'filled' : 'outlined'}
                     onClick={async () => {
                       if (!currentContract.signed_by_us) {
-                        const name = prompt('Nom du signataire :');
+                        const name = prompt(t('contracts:detail.documents.signerPrompt'));
                         if (name) {
                           try {
                             await contractsAPI.updateSignatures(id, {
                               signed_by_us: true,
                               signed_by_us_name: name,
                             });
-                            enqueueSnackbar('Signature enregistrée', { variant: 'success' });
+                            enqueueSnackbar(t('contracts:detail.messages.signatureSaved'), { variant: 'success' });
                             dispatch(fetchContract(id));
                           } catch {
-                            enqueueSnackbar('Erreur mise à jour signature', { variant: 'error' });
+                            enqueueSnackbar(t('contracts:detail.messages.signatureError'), { variant: 'error' });
                           }
                         }
                       }
@@ -993,25 +993,25 @@ function ContractDetail() {
 
                 {/* Signature contrepartie */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body2">Contrepartie</Typography>
+                  <Typography variant="body2">{t('contracts:wizard.signatures.counterparty')}</Typography>
                   <Chip
                     size="small"
-                    label={currentContract.signed_by_counterpart ? (currentContract.signed_by_counterpart_name || 'Signé') : 'Non signé'}
+                    label={currentContract.signed_by_counterpart ? (currentContract.signed_by_counterpart_name || t('contracts:detail.documents.signed')) : t('contracts:detail.documents.notSigned')}
                     color={currentContract.signed_by_counterpart ? 'success' : 'default'}
                     variant={currentContract.signed_by_counterpart ? 'filled' : 'outlined'}
                     onClick={async () => {
                       if (!currentContract.signed_by_counterpart) {
-                        const name = prompt('Nom du signataire (contrepartie) :');
+                        const name = prompt(t('contracts:detail.documents.counterpartSignerPrompt'));
                         if (name) {
                           try {
                             await contractsAPI.updateSignatures(id, {
                               signed_by_counterpart: true,
                               signed_by_counterpart_name: name,
                             });
-                            enqueueSnackbar('Signature contrepartie enregistrée', { variant: 'success' });
+                            enqueueSnackbar(t('contracts:detail.messages.counterpartSignatureSaved'), { variant: 'success' });
                             dispatch(fetchContract(id));
                           } catch {
-                            enqueueSnackbar('Erreur mise à jour signature', { variant: 'error' });
+                            enqueueSnackbar(t('contracts:detail.messages.signatureError'), { variant: 'error' });
                           }
                         }
                       }
@@ -1240,48 +1240,48 @@ function ContractDetail() {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Générer un document depuis un modèle</DialogTitle>
+        <DialogTitle>{t('contracts:detail.generateDialog.title')}</DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <FormControl fullWidth>
               <TextField
                 select
-                label="Sélectionner un modèle"
+                label={t('contracts:detail.generateDialog.selectTemplate')}
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
                 disabled={generating}
               >
                 {templates.map(tpl => (
                   <MenuItem key={tpl.id} value={tpl.id}>
-                    {tpl.name} ({tpl.template_type})
+                    {tpl.name} ({t(`contracts:templates.types.${tpl.template_type}`, tpl.template_type)})
                   </MenuItem>
                 ))}
               </TextField>
             </FormControl>
 
             <TextField
-              label="Contexte additionnel (JSON optionnel)"
+              label={t('contracts:detail.generateDialog.contextLabel')}
               multiline
               rows={4}
               value={contextData}
               onChange={(e) => setContextData(e.target.value)}
               disabled={generating}
               placeholder='{"champ_supplementaire": "valeur"}'
-              helperText="Les données du contrat seront automatiquement incluses."
+              helperText={t('contracts:detail.generateDialog.contextHelper')}
             />
 
             {generating && (
               <Box sx={{ mt: 2 }}>
                 <LinearProgress />
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                  Génération du document en cours par l'IA...
+                  {t('contracts:detail.generateDialog.generating')}
                 </Typography>
               </Box>
             )}
 
             {generatedContent && !generating && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>Résultat :</Typography>
+                <Typography variant="subtitle2" gutterBottom>{t('contracts:detail.generateDialog.result')}</Typography>
                 <Box sx={{ p: 0, bgcolor: 'background.paper', borderRadius: 1 }}>
                   <Box sx={{ 
                     '.ql-editor': { minHeight: 400, fontSize: '1rem', fontFamily: 'inherit' },
@@ -1306,24 +1306,24 @@ function ContractDetail() {
                   <Button 
                     startIcon={<Description />} 
                     onClick={() => {
-                        const tpl = templates.find(t => t.id === selectedTemplate);
+                        const tpl = templates.find(tp => tp.id === selectedTemplate);
                         handleExportWord(tpl ? tpl.template_type : 'contract');
                     }}
                     variant="contained"
                     color="primary"
                   >
-                    Exporter en Word
+                    {t('contracts:detail.generateDialog.exportWord')}
                   </Button>
                   <Button 
                     startIcon={<PictureAsPdf />} 
                     onClick={() => {
-                        const tpl = templates.find(t => t.id === selectedTemplate);
+                        const tpl = templates.find(tp => tp.id === selectedTemplate);
                         handleExportPDF(tpl ? tpl.template_type : 'contract');
                     }}
                     variant="contained"
                     color="error"
                   >
-                    Exporter en PDF
+                    {t('contracts:detail.generateDialog.exportPdf')}
                   </Button>
                 </Box>
               </Box>
@@ -1332,7 +1332,7 @@ function ContractDetail() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setGenerateDialogOpen(false)} disabled={generating}>
-            Fermer
+            {t('common:buttons.close', 'Fermer')}
           </Button>
           <Button
             onClick={handleGenerateDocument}
@@ -1341,7 +1341,7 @@ function ContractDetail() {
             disabled={generating || !selectedTemplate}
             startIcon={<Psychology />}
           >
-            {generating ? 'Génération...' : 'Générer'}
+            {generating ? t('contracts:detail.generateDialog.generatingShort') : t('contracts:detail.generateDialog.generate')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1356,36 +1356,36 @@ function ContractDetail() {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Email color="primary" />
-            Envoyer le contrat par email
+            {t('contracts:detail.emailDialog.title')}
           </Box>
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
               fullWidth
-              label="Email destinataire"
+              label={t('contracts:detail.emailDialog.recipient')}
               type="email"
               value={emailRecipient}
               onChange={(e) => setEmailRecipient(e.target.value)}
               disabled={sendingEmail}
               required
-              placeholder="client@exemple.com"
+              placeholder={t('contracts:detail.emailDialog.recipientPlaceholder')}
             />
             <TextField
               fullWidth
               multiline
               rows={4}
-              label="Message personnalisé (optionnel)"
+              label={t('contracts:detail.emailDialog.message')}
               value={emailMessage}
               onChange={(e) => setEmailMessage(e.target.value)}
               disabled={sendingEmail}
-              placeholder="Bonjour, veuillez trouver ci-joint le contrat..."
+              placeholder={t('contracts:detail.emailDialog.messagePlaceholder')}
             />
             {sendingEmail && (
               <Box sx={{ mt: 1 }}>
                 <LinearProgress />
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                  Envoi en cours...
+                  {t('contracts:detail.emailDialog.sending')}
                 </Typography>
               </Box>
             )}
@@ -1393,7 +1393,7 @@ function ContractDetail() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEmailDialogOpen(false)} disabled={sendingEmail}>
-            Annuler
+            {t('common:buttons.cancel', 'Annuler')}
           </Button>
           <Button
             onClick={handleSendEmail}
@@ -1401,7 +1401,7 @@ function ContractDetail() {
             disabled={sendingEmail || !emailRecipient.trim()}
             startIcon={<Email />}
           >
-            {sendingEmail ? 'Envoi...' : 'Envoyer'}
+            {sendingEmail ? t('contracts:detail.emailDialog.sendingShort') : t('contracts:detail.actions.send')}
           </Button>
         </DialogActions>
       </Dialog>

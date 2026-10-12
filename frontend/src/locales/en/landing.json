@@ -2,7 +2,12 @@
   "nav": {
     "login": "Login",
     "pricing": "Pricing",
-    "freeTrial": "Free Trial"
+    "freeTrial": "Free Trial",
+    "goToDashboard": "Dashboard",
+    "logoAlt": "Procura Logo",
+    "switchLanguage": "Switch language / Changer de langue",
+    "documentation": "Documentation",
+    "blog": "Blog"
   },
   "hero": {
     "badge": "Try it right here, no account",
@@ -117,13 +122,20 @@
   "interface": {
     "badge": "Unified Interface",
     "title": "Gain clarity with an interactive dashboard",
-    "desc": "Centralize your purchases, invoices, and activity tracking in a single view. Say goodbye to spreadsheets and make fast decisions with confidence."
+    "desc": "Centralize your purchases, invoices, and activity tracking in a single view. Say goodbye to spreadsheets and make fast decisions with confidence.",
+    "imageAlt": "Procura interface"
   },
   "footer": {
     "title": "The future of your management starts here.",
     "subtitle": "Join hundreds of companies that have already taken the leap.",
     "cta": "Start your trial",
-    "rights": "© 2026 Procura. All rights reserved."
+    "rights": "© 2026 Procura. All rights reserved.",
+    "product": "Product",
+    "features": "Features",
+    "resources": "Resources",
+    "faq": "FAQ",
+    "support": "Support & Contact",
+    "allRightsReserved": "All rights reserved."
   },
   "trust": {
     "offline": {
@@ -205,7 +217,8 @@
     "titleHighlight": "time",
     "subtitle": "Create your account in 2 minutes. One month free, no card.",
     "start": "Start for free",
-    "login": "Log in"
+    "login": "Log in",
+    "questionMark": "?"
   },
   "liveDemo": {
     "title": "Procura Assistant — live trial",

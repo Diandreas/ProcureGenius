@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getPriceHistory } from '../../services/api';
+import { deviseActuelle } from '../../hooks/useCurrency';
+import { formatCurrency } from '../../utils/currency';
 
-const fmt = (v) =>
-  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(v);
+const fmt = (v) => formatCurrency(v, deviseActuelle(), 2);
 
 /**
  * Affiche l'historique des prix d'achat sous le champ prix dans les formulaires PO/Devis.
@@ -18,6 +20,7 @@ const fmt = (v) =>
  *  - currentPrice : pour calculer l'écart
  */
 const PriceHistoryHint = ({ productId, descriptionKey, supplierId, currentPrice }) => {
+  const { t } = useTranslation('common');
   const [data, setData] = useState(null);
   const timerRef = useRef(null);
 
@@ -65,10 +68,10 @@ const PriceHistoryHint = ({ productId, descriptionKey, supplierId, currentPrice 
   return (
     <Box sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
       <Typography variant="caption" color="text.secondary">
-        Dernier achat : <strong>{fmt(last_price)}</strong>
-        {last_date && ` le ${last_date}`}
+        {t('common:priceHistory.lastPurchase')} <strong>{fmt(last_price)}</strong>
+        {last_date && t('common:priceHistory.onDate', { date: last_date })}
         {last_supplier && ` (${last_supplier})`}
-        {' · '}Moy. : <strong>{fmt(avg_price)}</strong>
+        {' · '}{t('common:priceHistory.average')} <strong>{fmt(avg_price)}</strong>
       </Typography>
 
       {deviation_percent !== null && (

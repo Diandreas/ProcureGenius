@@ -1,15 +1,19 @@
+import i18n from '../i18n/config';
+
 // Modes de paiement — mêmes codes que Payment.payment_method côté serveur (apps/invoicing/models.py).
 // Mobile Money d'abord : c'est le moyen de paiement le plus courant pour nos clients.
-export const PAYMENT_METHODS = [
-  { value: 'cash', label: 'Espèces' },
-  { value: 'orange_money', label: 'Orange Money' },
-  { value: 'mtn_momo', label: 'MTN Mobile Money' },
-  { value: 'wave', label: 'Wave' },
-  { value: 'mobile_money', label: 'Mobile Money (autre)' },
-  { value: 'bank_transfer', label: 'Virement bancaire' },
-  { value: 'check', label: 'Chèque' },
-  { value: 'credit_card', label: 'Carte bancaire' },
-  { value: 'other', label: 'Autre' },
+// Les libellés sont traduits à l'affichage (invoices:paymentMethodLabels.<code>) ;
+// le libellé français reste la valeur par défaut.
+const METHODS = [
+  ['cash', 'Espèces'],
+  ['orange_money', 'Orange Money'],
+  ['mtn_momo', 'MTN Mobile Money'],
+  ['wave', 'Wave'],
+  ['mobile_money', 'Mobile Money (autre)'],
+  ['bank_transfer', 'Virement bancaire'],
+  ['check', 'Chèque'],
+  ['credit_card', 'Carte bancaire'],
+  ['other', 'Autre'],
 ];
 
 // Anciens codes encore présents sur des factures existantes (affichage seulement).
@@ -18,8 +22,23 @@ const LEGACY_LABELS = {
   interac: 'Interac', paypal: 'PayPal',
 };
 
-export const paymentMethodLabel = (code) => {
+const DEFAULT_LABELS = { ...Object.fromEntries(METHODS), ...LEGACY_LABELS };
+
+const translate = (code, t) => {
+  const tr = t || ((key, options) => i18n.t(key, options));
+  return tr(`invoices:paymentMethodLabels.${code}`, { defaultValue: DEFAULT_LABELS[code] || code });
+};
+
+// `label` est calculé dans la langue courante à chaque lecture.
+export const PAYMENT_METHODS = METHODS.map(([value]) => ({
+  value,
+  get label() { return translate(value); },
+}));
+
+/** Liste des modes de paiement avec libellés traduits (t de useTranslation, optionnel). */
+export const getPaymentMethods = (t) => METHODS.map(([value]) => ({ value, label: translate(value, t) }));
+
+export const paymentMethodLabel = (code, t) => {
   if (!code) return '';
-  const m = PAYMENT_METHODS.find((p) => p.value === code);
-  return m ? m.label : LEGACY_LABELS[code] || code;
+  return DEFAULT_LABELS[code] ? translate(code, t) : code;
 };

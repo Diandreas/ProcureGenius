@@ -8,9 +8,10 @@ import {
   Check, Close, WhatsApp, NorthEast,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import subscriptionAPI from '../services/subscriptionAPI';
 import { PLAN_CHOISI_KEY, avecPrixSiege, nomDevise } from '../data/pricingPlans';
-import usePlansTarifs from '../hooks/usePlansTarifs';
+import usePlansTarifs, { traduirePlan } from '../hooks/usePlansTarifs';
 import usePageMeta from '../hooks/usePageMeta';
 import { usePricingCurrency, memeMonnaie, formatPriceCurrency } from '../utils/visitorCurrency';
 
@@ -28,25 +29,30 @@ const LINE = 'rgba(15,23,42,0.12)';
 const FONTS_HREF =
   'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600;700&display=swap';
 
+// Lignes du comparatif : codes stables, libellés traduits au rendu
+// (subscription:pricing.comparison.rows / .values).
 const COMPARISON = [
-  { label: 'Factures / mois', free: '30', pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
-  { label: 'Clients', free: '20', pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
-  { label: 'Produits', free: '50', pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
-  { label: 'Bons de commande', free: false, pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
-  { label: 'Fournisseurs', free: false, pro: 'Illimité', business: 'Illimité', enterprise: 'Illimité' },
-  { label: 'Comptabilité', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Assistant IA', free: false, pro: '100 / mois', business: 'Illimité', enterprise: 'Illimité' },
-  { label: 'Contrats', free: false, pro: true, business: true, enterprise: true },
-  { label: 'E-Sourcing', free: false, pro: false, business: true, enterprise: true },
-  { label: 'Analytics avancés', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Sans publicité', free: false, pro: true, business: true, enterprise: true },
-  { label: 'Support prioritaire', free: false, pro: false, business: true, enterprise: true },
+  { key: 'invoicesPerMonth', free: '30', pro: 'unlimited', business: 'unlimited', enterprise: 'unlimited' },
+  { key: 'clients', free: '20', pro: 'unlimited', business: 'unlimited', enterprise: 'unlimited' },
+  { key: 'products', free: '50', pro: 'unlimited', business: 'unlimited', enterprise: 'unlimited' },
+  { key: 'purchaseOrders', free: false, pro: 'unlimited', business: 'unlimited', enterprise: 'unlimited' },
+  { key: 'suppliers', free: false, pro: 'unlimited', business: 'unlimited', enterprise: 'unlimited' },
+  { key: 'accounting', free: false, pro: true, business: true, enterprise: true },
+  { key: 'aiAssistant', free: false, pro: 'aiPerMonth', business: 'unlimited', enterprise: 'unlimited' },
+  { key: 'contracts', free: false, pro: true, business: true, enterprise: true },
+  { key: 'eSourcing', free: false, pro: false, business: true, enterprise: true },
+  { key: 'advancedAnalytics', free: false, pro: true, business: true, enterprise: true },
+  { key: 'adFree', free: false, pro: true, business: true, enterprise: true },
+  { key: 'prioritySupport', free: false, pro: false, business: true, enterprise: true },
 ];
+const COMPARISON_VALUES = ['unlimited', 'aiPerMonth'];
 
 const CellValue = ({ value }) => {
+  const { t } = useTranslation(['subscription', 'common']);
   if (value === true) return <Check sx={{ color: GOLD, fontSize: 18 }} />;
   if (value === false) return <Close sx={{ color: 'rgba(20,17,14,0.22)', fontSize: 18 }} />;
-  return <Typography sx={{ fontFamily: '"Inter Tight", sans-serif', fontSize: 14, fontWeight: 500 }}>{value}</Typography>;
+  const text = COMPARISON_VALUES.includes(value) ? t(`subscription:pricing.comparison.values.${value}`) : value;
+  return <Typography sx={{ fontFamily: '"Inter Tight", sans-serif', fontSize: 14, fontWeight: 500 }}>{text}</Typography>;
 };
 
 const serif = { fontFamily: '"Fraunces", Georgia, serif' };
@@ -54,13 +60,15 @@ const sans = { fontFamily: '"Inter Tight", system-ui, sans-serif' };
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['subscription', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [choixPeriode, setBilling] = useState('monthly');
   const [loading, setLoading] = useState(null);
   const { currency, formatPrice } = usePricingCurrency();
   // Prix lus dans Stripe (via le serveur) ; l'annuel n'existe que si Stripe en a un.
-  const { plans: PLANS, annuelDisponible, siege } = usePlansTarifs();
+  const { plans: plansTarifs, annuelDisponible, siege } = usePlansTarifs();
+  const PLANS = plansTarifs.map((p) => traduirePlan(t, p));
   const billing = annuelDisponible ? choixPeriode : 'monthly';
   const deviseFacturation = siege.devise;
   // Visiteur dont la monnaie diffère de celle de facturation : équivalent indicatif.
@@ -69,8 +77,8 @@ const Pricing = () => {
   const facture = (montant, devise = deviseFacturation) => formatPriceCurrency(montant, devise);
 
   usePageMeta({
-    title: 'Tarifs',
-    description: "Des plans clairs, sans surprise : commencez gratuitement, passez au plan supérieur quand votre activité grandit. Essai 30 jours sans carte.",
+    title: t('subscription:pricing.metaTitle'),
+    description: t('subscription:pricing.metaDescription'),
     path: '/pricing',
   });
 
@@ -90,7 +98,7 @@ const Pricing = () => {
       return;
     }
     if (plan.code === 'enterprise') {
-      window.open('https://wa.me/237693427913?text=Bonjour%2C%20je%20suis%20int%C3%A9ress%C3%A9%20par%20le%20plan%20Enterprise%20de%20Procura.', '_blank');
+      window.open(`https://wa.me/237693427913?text=${encodeURIComponent(t('subscription:enterpriseWhatsappMessage'))}`, '_blank');
       return;
     }
     setLoading(plan.code);
@@ -98,7 +106,7 @@ const Pricing = () => {
       await subscriptionAPI.createStripeCheckout(plan.code, billing);
     } catch (err) {
       console.error('Stripe checkout error:', err);
-      alert('Erreur lors de la création du paiement. Veuillez réessayer.');
+      alert(t('subscription:pricing.checkoutError'));
     } finally {
       setLoading(null);
     }
@@ -113,32 +121,37 @@ const Pricing = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 4 }}>
           <Box sx={{ width: 28, height: 1, bgcolor: GOLD }} />
           <Typography sx={{ ...sans, fontSize: 12, letterSpacing: '0.22em', textTransform: 'uppercase', color: GOLD, fontWeight: 600 }}>
-            Tarifs Procura
+            {t('subscription:pricing.eyebrow')}
           </Typography>
         </Box>
 
         <Grid container spacing={4} alignItems="flex-end">
           <Grid item xs={12} md={8}>
             <Typography sx={{ ...serif, fontSize: { xs: 40, md: 68 }, lineHeight: 1.02, fontWeight: 400, letterSpacing: '-0.02em' }}>
-              Un prix juste,
-              <br />
-              <Box component="span" sx={{ fontStyle: 'italic', color: GOLD }}>une croissance</Box> sans friction.
+              <Trans
+                t={t}
+                i18nKey="subscription:pricing.heroTitle"
+                components={{ br: <br />, accent: <Box component="span" sx={{ fontStyle: 'italic', color: GOLD }} /> }}
+              />
             </Typography>
           </Grid>
           <Grid item xs={12} md={4}>
             <Typography sx={{ ...sans, fontSize: 17, lineHeight: 1.6, color: 'rgba(20,17,14,0.66)' }}>
-              Commencez gratuitement. Un mois d&apos;essai offert sur les formules payantes — sans carte bancaire.
+              {t('subscription:pricing.intro')}
             </Typography>
             {enDevise && (
               <Typography sx={{ ...sans, fontSize: 13, mt: 1, color: 'rgba(20,17,14,0.5)' }}>
-                Prix affichés en {currency === 'XAF' || currency === 'XOF' ? 'FCFA' : currency} à titre indicatif ; l&apos;abonnement est facturé en {nomDevise(deviseFacturation)}.
+                {t('subscription:pricing.indicativePrices', {
+                  currency: currency === 'XAF' || currency === 'XOF' ? 'FCFA' : currency,
+                  billingCurrency: t(`subscription:currencyNames.${deviseFacturation}`, { defaultValue: nomDevise(deviseFacturation) }),
+                })}
               </Typography>
             )}
 
             {/* Bascule mensuel / annuel (seulement si Stripe a des prix annuels) */}
             {annuelDisponible && (
             <Box sx={{ display: 'inline-flex', mt: 3, p: '4px', border: `1px solid ${LINE}`, borderRadius: 999, bgcolor: 'rgba(255,255,255,0.5)' }}>
-              {[['monthly', 'Mensuel'], ['yearly', 'Annuel']].map(([val, label]) => (
+              {[['monthly', t('subscription:billing.monthly')], ['yearly', t('subscription:billing.yearly')]].map(([val, label]) => (
                 <Box
                   key={val}
                   onClick={() => setBilling(val)}
@@ -197,14 +210,14 @@ const Pricing = () => {
 
                 <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, mt: 1.5, mb: 1 }}>
                   {price === null ? (
-                    <Typography sx={{ ...serif, fontSize: 34, fontWeight: 500 }}>Sur devis</Typography>
+                    <Typography sx={{ ...serif, fontSize: 34, fontWeight: 500 }}>{t('subscription:price.onQuote')}</Typography>
                   ) : price === 0 ? (
-                    <Typography sx={{ ...serif, fontSize: 34, fontWeight: 500 }}>Gratuit</Typography>
+                    <Typography sx={{ ...serif, fontSize: 34, fontWeight: 500 }}>{t('subscription:price.free')}</Typography>
                   ) : (
                     <>
                       <Typography sx={{ ...serif, fontSize: enDevise ? 30 : 46, fontWeight: 500, lineHeight: 1, whiteSpace: 'nowrap' }}>{prix(price, plan.currency)}</Typography>
                       <Typography sx={{ ...sans, fontSize: 14, color: featured ? 'rgba(255,255,255,0.6)' : 'rgba(20,17,14,0.5)' }}>
-                        /{billing === 'monthly' ? 'mois' : 'an'}
+                        {billing === 'monthly' ? t('subscription:price.perMonth') : t('subscription:price.perYear')}
                       </Typography>
                     </>
                   )}
@@ -212,12 +225,12 @@ const Pricing = () => {
                 <Box sx={{ minHeight: 18, mb: 2 }}>
                   {billing === 'yearly' && price !== null && price > 0 && (
                     <Typography sx={{ ...sans, fontSize: 12.5, color: GOLD, fontWeight: 600 }}>
-                      soit {prix(price / 12, plan.currency)}/mois · {prix(plan.priceMonthly * 12 - price, plan.currency)} économisés
+                      {t('subscription:pricing.yearlyEquivalent', { monthly: prix(price / 12, plan.currency), saved: prix(plan.priceMonthly * 12 - price, plan.currency) })}
                     </Typography>
                   )}
                   {enDevise && price !== null && price > 0 && (
                     <Typography sx={{ ...sans, fontSize: 12, mt: 0.5, color: featured ? 'rgba(255,255,255,0.6)' : 'rgba(20,17,14,0.5)' }}>
-                      Facturé {facture(price, plan.currency)} par {billing === 'monthly' ? 'mois' : 'an'}
+                      {t(billing === 'monthly' ? 'subscription:price.billedMonthly' : 'subscription:price.billedYearly', { amount: facture(price, plan.currency) })}
                     </Typography>
                   )}
                 </Box>
@@ -240,7 +253,7 @@ const Pricing = () => {
                       : { bgcolor: BLUE, color: '#fff', '&:hover': { bgcolor: '#1d4ed8' } }),
                   }}
                 >
-                  {loading === plan.code ? 'Redirection…' : plan.cta}
+                  {loading === plan.code ? t('subscription:redirecting') : plan.cta}
                 </Button>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.1 }}>
@@ -269,14 +282,13 @@ const Pricing = () => {
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={8}>
               <Typography sx={{ ...sans, fontSize: 12, letterSpacing: '0.2em', textTransform: 'uppercase', color: GOLD, fontWeight: 600, mb: 1.5 }}>
-                Pensé pour l&apos;Afrique
+                {t('subscription:pricing.africa.eyebrow')}
               </Typography>
               <Typography sx={{ ...serif, fontSize: { xs: 24, md: 32 }, fontWeight: 400, lineHeight: 1.2, mb: 2 }}>
-                Une facturation locale, des règles que vous connaissez.
+                {t('subscription:pricing.africa.title')}
               </Typography>
               <Typography sx={{ ...sans, fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,0.72)' }}>
-                Facturation en FCFA, CDF, XOF, MAD. Contrats adaptés au droit OHADA. TVA Cameroun 19,25 %,
-                Sénégal 18 %, Côte d&apos;Ivoire 18 %. Interface en français, optimisée pour les réseaux mobiles.
+                {t('subscription:pricing.africa.body')}
               </Typography>
             </Grid>
             <Grid item xs={12} md={4} sx={{ textAlign: { md: 'right' } }}>
@@ -286,7 +298,7 @@ const Pricing = () => {
                 onClick={() => window.open('https://wa.me/237693427913', '_blank')}
                 sx={{ ...sans, textTransform: 'none', fontWeight: 600, fontSize: 15, px: 3, py: 1.4, borderRadius: 0, bgcolor: GOLD, color: INK, '&:hover': { bgcolor: '#c79c63' } }}
               >
-                Parler à un conseiller
+                {t('subscription:pricing.africa.talkToAdvisor')}
               </Button>
             </Grid>
           </Grid>
@@ -296,16 +308,16 @@ const Pricing = () => {
       {/* ── Tableau comparatif ────────────────────────────────────────────── */}
       {!isMobile && (
         <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
-          <Typography sx={{ ...serif, fontSize: 34, fontWeight: 400, mb: 1 }}>Le détail, ligne par ligne</Typography>
+          <Typography sx={{ ...serif, fontSize: 34, fontWeight: 400, mb: 1 }}>{t('subscription:pricing.comparison.title')}</Typography>
           <Typography sx={{ ...sans, fontSize: 15, color: 'rgba(20,17,14,0.55)', mb: 4 }}>
-            Toutes les fonctionnalités, comparées plan par plan.
+            {t('subscription:pricing.comparison.subtitle')}
           </Typography>
           <Box sx={{ border: `1px solid ${LINE}`, bgcolor: '#fff' }}>
             <Table>
               <TableHead>
                 <TableRow sx={{ '& th': { borderBottom: `1px solid ${LINE}` } }}>
                   <TableCell sx={{ ...sans, fontWeight: 600, fontSize: 13, width: '34%', color: 'rgba(20,17,14,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Fonctionnalité
+                    {t('subscription:pricing.comparison.feature')}
                   </TableCell>
                   {PLANS.map((p) => (
                     <TableCell key={p.code} align="center" sx={{ ...serif, fontWeight: 500, fontSize: 18 }}>
@@ -315,9 +327,9 @@ const Pricing = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {COMPARISON.map((row, i) => (
-                  <TableRow key={i} sx={{ '& td': { borderBottom: `1px solid ${LINE}` }, '&:last-child td': { borderBottom: 'none' } }}>
-                    <TableCell sx={{ ...sans, fontWeight: 500, fontSize: 14 }}>{row.label}</TableCell>
+                {COMPARISON.map((row) => (
+                  <TableRow key={row.key} sx={{ '& td': { borderBottom: `1px solid ${LINE}` }, '&:last-child td': { borderBottom: 'none' } }}>
+                    <TableCell sx={{ ...sans, fontWeight: 500, fontSize: 14 }}>{t(`subscription:pricing.comparison.rows.${row.key}`)}</TableCell>
                     <TableCell align="center"><CellValue value={row.free} /></TableCell>
                     <TableCell align="center" sx={{ bgcolor: 'rgba(176,141,87,0.05)' }}><CellValue value={row.pro} /></TableCell>
                     <TableCell align="center"><CellValue value={row.business} /></TableCell>
@@ -333,10 +345,10 @@ const Pricing = () => {
       {/* ── Contact ───────────────────────────────────────────────────────── */}
       <Container maxWidth="md" sx={{ py: { xs: 6, md: 9 }, textAlign: 'center' }}>
         <Typography sx={{ ...serif, fontSize: { xs: 28, md: 38 }, fontWeight: 400, mb: 1.5 }}>
-          Une question avant de vous lancer&nbsp;?
+          {t('subscription:pricing.contact.title')}
         </Typography>
         <Typography sx={{ ...sans, fontSize: 16, color: 'rgba(20,17,14,0.6)', mb: 4 }}>
-          Notre équipe répond en moins de 2 h, du lundi au samedi, de 8 h à 20 h (WAT).
+          {t('subscription:pricing.contact.subtitle')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Button
@@ -352,7 +364,7 @@ const Pricing = () => {
             onClick={() => { window.location.href = 'mailto:report.makeitreal@gmail.com'; }}
             sx={{ ...sans, textTransform: 'none', fontWeight: 600, fontSize: 15, px: 3.5, py: 1.4, borderRadius: 0, border: `1px solid ${INK}`, color: INK, '&:hover': { bgcolor: 'rgba(20,17,14,0.04)' } }}
           >
-            Écrire un email
+            {t('subscription:pricing.contact.email')}
           </Button>
         </Box>
       </Container>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PAYMENT_METHODS, paymentMethodLabel } from '../../constants/paymentMethods';
+import { getPaymentMethods, paymentMethodLabel } from '../../constants/paymentMethods';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -213,7 +213,7 @@ function InvoiceDetail() {
 
   const handleAddPayment = async () => {
     if (!newPayment.amount || parseFloat(newPayment.amount) <= 0) {
-      enqueueSnackbar('Montant invalide', { variant: 'error' });
+      enqueueSnackbar(t('invoices:payments.invalidAmount'), { variant: 'error' });
       return;
     }
     setSavingPayment(true);
@@ -226,7 +226,7 @@ function InvoiceDetail() {
         notes: newPayment.notes || undefined,
       });
       await Promise.all([fetchInvoice(), fetchPayments()]);
-      enqueueSnackbar('Paiement enregistré', { variant: 'success' });
+      enqueueSnackbar(t('invoices:payments.saved'), { variant: 'success' });
       setAddPaymentOpen(false);
       setNewPayment({
         amount: '',
@@ -236,20 +236,20 @@ function InvoiceDetail() {
         notes: '',
       });
     } catch (error) {
-      enqueueSnackbar(error.response?.data?.amount?.[0] || error.response?.data?.non_field_errors?.[0] || 'Erreur lors de l\'enregistrement', { variant: 'error' });
+      enqueueSnackbar(error.response?.data?.amount?.[0] || error.response?.data?.non_field_errors?.[0] || t('invoices:payments.saveError'), { variant: 'error' });
     } finally {
       setSavingPayment(false);
     }
   };
 
   const handleDeletePayment = async (paymentId) => {
-    if (!window.confirm('Supprimer ce paiement ?')) return;
+    if (!window.confirm(t('invoices:payments.deleteConfirm'))) return;
     try {
       await invoicesAPI.deletePayment(id, paymentId);
       await Promise.all([fetchInvoice(), fetchPayments()]);
-      enqueueSnackbar('Paiement supprimé', { variant: 'success' });
+      enqueueSnackbar(t('invoices:payments.deleted'), { variant: 'success' });
     } catch (error) {
-      enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.deleteError'), { variant: 'error' });
     }
   };
 
@@ -285,16 +285,16 @@ function InvoiceDetail() {
     try {
       const response = await invoicesAPI.convertQuote(id);
       setInvoice(response.data.invoice || response.data);
-      enqueueSnackbar(response.data.message || 'Devis converti en facture.', { variant: 'success' });
+      enqueueSnackbar(response.data.message || t('invoices:messages.quoteConverted'), { variant: 'success' });
       await fetchInvoice();
     } catch (error) {
-      enqueueSnackbar(error.response?.data?.error || 'Erreur lors de la conversion du devis.', { variant: 'error' });
+      enqueueSnackbar(error.response?.data?.error || t('invoices:messages.quoteConvertError'), { variant: 'error' });
     }
   };
 
   const handleSendEmail = async () => {
     if (!emailData.recipient_email) {
-      enqueueSnackbar(t('invoices:messages.emailRequired') || 'Email destinataire requis', { variant: 'error' });
+      enqueueSnackbar(t('invoices:messages.emailRequired'), { variant: 'error' });
       return;
     }
 
@@ -311,13 +311,13 @@ function InvoiceDetail() {
         language: language
       });
       setInvoice(response.data.invoice || response.data);
-      enqueueSnackbar(response.data.message || t('invoices:messages.emailSent') || 'Email envoyé avec succès', { variant: 'success' });
+      enqueueSnackbar(response.data.message || t('invoices:messages.emailSent'), { variant: 'success' });
       setSendEmailDialogOpen(false);
       setEmailData({ recipient_email: '', custom_message: '' });
     } catch (error) {
       console.error('Error sending email:', error);
       enqueueSnackbar(
-        error.response?.data?.error || t('invoices:messages.emailError') || 'Erreur lors de l\'envoi de l\'email',
+        error.response?.data?.error || t('invoices:messages.emailError'),
         { variant: 'error' }
       );
     } finally {
@@ -354,19 +354,19 @@ function InvoiceDetail() {
     try {
       const pdfBlob = await generateInvoicePDF(invoice, selectedTemplate);
 
-      const fname = `facture-${invoice.invoice_number}.pdf`;
+      const fname = t('invoices:pdf.fileName', { number: invoice.invoice_number });
 
       if (action === 'download') {
         await pdfViewer.download(pdfBlob, fname);
         enqueueSnackbar(t('invoices:messages.pdfDownloadedSuccess'), { variant: 'success' });
       } else if (action === 'preview') {
         // Visionneuse integree (dans l'app), avec Telecharger/Partager.
-        pdfViewer.preview(pdfBlob, fname, `Facture ${invoice.invoice_number}`);
+        pdfViewer.preview(pdfBlob, fname, t('invoices:pdf.viewerTitle', { number: invoice.invoice_number }));
       } else if (action === 'print') {
         if (IS_NATIVE) {
           // Pas d'impression directe en natif : on ouvre la visionneuse
           // (l'utilisateur imprime depuis le lecteur PDF du systeme).
-          pdfViewer.preview(pdfBlob, fname, `Facture ${invoice.invoice_number}`);
+          pdfViewer.preview(pdfBlob, fname, t('invoices:pdf.viewerTitle', { number: invoice.invoice_number }));
         } else {
           const pdfUrl = URL.createObjectURL(pdfBlob);
           const printWindow = window.open(pdfUrl, '_blank');
@@ -470,7 +470,7 @@ function InvoiceDetail() {
                 size="small"
                 onClick={() => {
                   const defaultMessage = t('invoices:dialogs.sendEmail.defaultMessage', {
-                    name: invoice.client?.name || 'Client',
+                    name: invoice.client?.name || t('invoices:labels.client'),
                     number: invoice.invoice_number
                   });
                   setEmailData({
@@ -527,7 +527,7 @@ function InvoiceDetail() {
               onClick={handleConvertQuote}
               sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
             >
-              Convertir en facture
+              {t('invoices:buttons.convertToInvoice')}
             </Button>
           )}
           {invoice.status === 'draft' && (
@@ -658,15 +658,10 @@ function InvoiceDetail() {
                   onClick={() => {
                     setEmailData({
                       recipient_email: invoice.client?.email || '',
-                      custom_message: `Bonjour ${invoice.client?.name || 'Client'},
-
-Veuillez trouver ci-joint votre facture ${invoice.invoice_number}.
-
-Le PDF de votre facture est joint à cet email.
-
-Pour toute question, n'hésitez pas à nous contacter.
-
-Cordialement`
+                      custom_message: t('invoices:dialogs.sendEmail.defaultMessage', {
+                        name: invoice.client?.name || t('invoices:labels.client'),
+                        number: invoice.invoice_number
+                      })
                     });
                     setSendEmailDialogOpen(true);
                   }}
@@ -733,7 +728,7 @@ Cordialement`
               )}
               <MenuItem onClick={() => { setAddPaymentOpen(true); setAnchorEl(null); }}>
                 <Add fontSize="small" sx={{ mr: 1, color: 'success.main' }} />
-                Ajouter un paiement
+                {t('invoices:payments.addPayment')}
               </MenuItem>
               <Divider />
               <MenuItem onClick={() => { setAddItemDialogOpen(true); setAnchorEl(null); }} disabled={invoice.status !== 'draft'}>
@@ -799,7 +794,7 @@ Cordialement`
               </Box>
               {(invoice.discount_amount || 0) > 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography sx={{ fontSize: '0.75rem', color: 'error.main' }}>Remise{invoice.discount_type === 'percent' ? ` (${invoice.discount_value}%)` : ''}</Typography>
+                  <Typography sx={{ fontSize: '0.75rem', color: 'error.main' }}>{t('invoices:discount.title')}{invoice.discount_type === 'percent' ? ` (${invoice.discount_value}%)` : ''}</Typography>
                   <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'error.main' }}>−{formatCurrency(invoice.discount_amount || 0)}</Typography>
                 </Box>
               )}
@@ -818,15 +813,15 @@ Cordialement`
           {/* Paiements */}
           <NeumorphicPanel sx={{ mb: 1.5, p: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}>
-              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Paiements reçus</Typography>
+              <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('invoices:payments.received')}</Typography>
               <IconButton size="small" color="primary" onClick={() => setAddPaymentOpen(true)} sx={{ p: 0.4, boxShadow: th => neuShadows.shadowInset(th), borderRadius: 1.5 }}><Add fontSize="small" /></IconButton>
             </Box>
             {paymentsInfo && (
               <Stack direction="row" spacing={1} sx={{ mb: 1.25 }}>
                 {[
-                  { label: 'Total', value: paymentsInfo.total_amount, color: 'primary.main' },
-                  { label: 'Payé', value: paymentsInfo.total_paid, color: 'success.main' },
-                  { label: 'Solde', value: paymentsInfo.balance_due, color: paymentsInfo.balance_due <= 0 ? 'success.main' : 'error.main' },
+                  { label: t('invoices:payments.total'), value: paymentsInfo.total_amount, color: 'primary.main' },
+                  { label: t('invoices:payments.paid'), value: paymentsInfo.total_paid, color: 'success.main' },
+                  { label: t('invoices:payments.balance'), value: paymentsInfo.balance_due, color: paymentsInfo.balance_due <= 0 ? 'success.main' : 'error.main' },
                 ].map((b) => (
                   <Box key={b.label} sx={{ flex: 1, p: 1, borderRadius: 2, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
                     <Typography sx={{ fontSize: '0.58rem', color: 'text.secondary', textTransform: 'uppercase', display: 'block' }}>{b.label}</Typography>
@@ -836,13 +831,13 @@ Cordialement`
               </Stack>
             )}
             {payments.length === 0 ? (
-              <Typography sx={{ textAlign: 'center', py: 1, color: 'text.secondary', fontSize: '0.75rem' }}>Aucun paiement enregistré</Typography>
+              <Typography sx={{ textAlign: 'center', py: 1, color: 'text.secondary', fontSize: '0.75rem' }}>{t('invoices:payments.none')}</Typography>
             ) : (
               <Stack spacing={0.75}>
                 {payments.map((p) => (
                   <Box key={p.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 0.9, borderRadius: 2, boxShadow: th => neuShadows.shadowInset(th) }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ fontSize: '0.72rem', fontWeight: 600 }}>{formatDate(p.payment_date)} · {paymentMethodLabel(p.payment_method)}</Typography>
+                      <Typography sx={{ fontSize: '0.72rem', fontWeight: 600 }}>{formatDate(p.payment_date)} · {paymentMethodLabel(p.payment_method, t)}</Typography>
                       {p.reference_number && <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary' }}>{p.reference_number}</Typography>}
                     </Box>
                     <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, color: 'success.main', whiteSpace: 'nowrap' }}>{formatCurrency(p.amount)}</Typography>
@@ -959,7 +954,7 @@ Cordialement`
                   </Box>
                   {(invoice.discount_amount || 0) > 0 && (
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
-                      <Typography sx={{ fontSize: '0.82rem', color: 'error.main' }}>Remise{invoice.discount_type === 'percent' ? ` (${invoice.discount_value}%)` : ''}</Typography>
+                      <Typography sx={{ fontSize: '0.82rem', color: 'error.main' }}>{t('invoices:discount.title')}{invoice.discount_type === 'percent' ? ` (${invoice.discount_value}%)` : ''}</Typography>
                       <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'error.main' }}>−{formatCurrency(invoice.discount_amount || 0)}</Typography>
                     </Box>
                   )}
@@ -979,16 +974,16 @@ Cordialement`
             {/* Paiements */}
             <NeumorphicPanel sx={{ mb: 2.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: '1rem' }}>Paiements reçus</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: '1rem' }}>{t('invoices:payments.received')}</Typography>
                 <Button size="small" variant="contained" startIcon={<Add />} onClick={() => setAddPaymentOpen(true)}
-                  sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>Ajouter</Button>
+                  sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>{t('invoices:buttons.add')}</Button>
               </Box>
               {paymentsInfo && (
                 <Grid container spacing={1.5} sx={{ mb: 2 }}>
                   {[
-                    { label: 'Total facture', value: paymentsInfo.total_amount, color: 'primary.main' },
-                    { label: 'Déjà payé', value: paymentsInfo.total_paid, color: 'success.main' },
-                    { label: 'Solde restant', value: paymentsInfo.balance_due, color: paymentsInfo.balance_due <= 0 ? 'success.main' : 'error.main' },
+                    { label: t('invoices:payments.invoiceTotal'), value: paymentsInfo.total_amount, color: 'primary.main' },
+                    { label: t('invoices:payments.alreadyPaid'), value: paymentsInfo.total_paid, color: 'success.main' },
+                    { label: t('invoices:payments.remainingBalance'), value: paymentsInfo.balance_due, color: paymentsInfo.balance_due <= 0 ? 'success.main' : 'error.main' },
                   ].map((b) => (
                     <Grid item xs={4} key={b.label}>
                       <Box sx={{ p: 1.5, borderRadius: 2.5, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
@@ -1002,16 +997,16 @@ Cordialement`
               {payments.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 3, borderRadius: 2.5, boxShadow: th => neuShadows.shadowInset(th) }}>
                   <Payment sx={{ fontSize: '2rem', color: 'text.disabled', mb: 0.5 }} />
-                  <Typography color="text.secondary" variant="body2">Aucun paiement enregistré</Typography>
+                  <Typography color="text.secondary" variant="body2">{t('invoices:payments.none')}</Typography>
                 </Box>
               ) : (
                 <Table size="small" sx={{ '& td, & th': { borderColor: th => alpha(th.palette.divider, 0.5) } }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, fontSize: '0.68rem', color: 'text.secondary' }}>Date</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: '0.68rem', color: 'text.secondary' }}>Méthode</TableCell>
-                      <TableCell sx={{ fontWeight: 700, fontSize: '0.68rem', color: 'text.secondary' }}>Réf.</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.68rem', color: 'text.secondary' }}>Montant</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.68rem', color: 'text.secondary' }}>{t('invoices:payments.columns.date')}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.68rem', color: 'text.secondary' }}>{t('invoices:payments.columns.method')}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.68rem', color: 'text.secondary' }}>{t('invoices:payments.columns.reference')}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.68rem', color: 'text.secondary' }}>{t('invoices:payments.columns.amount')}</TableCell>
                       <TableCell />
                     </TableRow>
                   </TableHead>
@@ -1019,11 +1014,11 @@ Cordialement`
                     {payments.map((p) => (
                       <TableRow key={p.id} hover>
                         <TableCell sx={{ fontSize: '0.8rem' }}>{formatDate(p.payment_date)}</TableCell>
-                        <TableCell sx={{ fontSize: '0.8rem' }}>{paymentMethodLabel(p.payment_method)}</TableCell>
+                        <TableCell sx={{ fontSize: '0.8rem' }}>{paymentMethodLabel(p.payment_method, t)}</TableCell>
                         <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{p.reference_number || '—'}</TableCell>
                         <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 700, color: 'success.main' }}>{formatCurrency(p.amount)}</TableCell>
                         <TableCell align="right" sx={{ py: 0.5 }}>
-                          <Tooltip title={p.can_delete ? 'Supprimer ce paiement' : 'Suppression impossible après 30 min'}>
+                          <Tooltip title={p.can_delete ? t('invoices:payments.deleteTooltip') : t('invoices:payments.deleteLocked')}>
                             <span><IconButton size="small" color="error" onClick={() => handleDeletePayment(p.id)} disabled={!p.can_delete}><Delete fontSize="small" /></IconButton></span>
                           </Tooltip>
                         </TableCell>
@@ -1328,31 +1323,31 @@ Cordialement`
       <Dialog open={addPaymentOpen} onClose={() => setAddPaymentOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Payment sx={{ color: 'success.main' }} />
-          Enregistrer un paiement
+          {t('invoices:payments.dialogTitle')}
         </DialogTitle>
         <DialogContent>
           {paymentsInfo && paymentsInfo.balance_due > 0 && (
             <Alert severity="info" sx={{ mb: 2, mt: 1 }}>
-              Solde restant à payer : <strong>{formatCurrency(paymentsInfo.balance_due)}</strong>
+              {t('invoices:payments.remainingToPay')} <strong>{formatCurrency(paymentsInfo.balance_due)}</strong>
             </Alert>
           )}
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Montant"
+                label={t('invoices:payments.amount')}
                 type="number"
                 required
                 value={newPayment.amount}
                 onChange={(e) => setNewPayment({ ...newPayment, amount: e.target.value })}
                 inputProps={{ min: 0.01, step: 0.01 }}
-                helperText={paymentsInfo ? `Max : ${formatCurrency(paymentsInfo.balance_due)}` : ''}
+                helperText={paymentsInfo ? t('invoices:payments.maxAmount', { amount: formatCurrency(paymentsInfo.balance_due) }) : ''}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Date du paiement"
+                label={t('invoices:payments.paymentDate')}
                 type="date"
                 required
                 value={newPayment.payment_date}
@@ -1362,13 +1357,13 @@ Cordialement`
             </Grid>
             <Grid item xs={12}>
               <FormControl fullWidth required>
-                <InputLabel>Méthode de paiement</InputLabel>
+                <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
                 <Select
                   value={newPayment.payment_method}
                   onChange={(e) => setNewPayment({ ...newPayment, payment_method: e.target.value })}
-                  label="Méthode de paiement"
+                  label={t('invoices:labels.paymentMethod')}
                 >
-                  {PAYMENT_METHODS.map((m) => (
+                  {getPaymentMethods(t).map((m) => (
                     <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>
                   ))}
                 </Select>
@@ -1377,30 +1372,30 @@ Cordialement`
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Numéro de référence"
+                label={t('invoices:payments.referenceNumber')}
                 value={newPayment.reference_number}
                 onChange={(e) => setNewPayment({ ...newPayment, reference_number: e.target.value })}
-                placeholder="N° chèque, confirmation virement..."
-                helperText="Optionnel"
+                placeholder={t('invoices:payments.referencePlaceholder')}
+                helperText={t('invoices:payments.optional')}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Notes"
+                label={t('invoices:fields.notes')}
                 multiline
                 rows={2}
                 value={newPayment.notes}
                 onChange={(e) => setNewPayment({ ...newPayment, notes: e.target.value })}
-                placeholder="Notes internes..."
-                helperText="Optionnel"
+                placeholder={t('invoices:payments.notesPlaceholder')}
+                helperText={t('invoices:payments.optional')}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setAddPaymentOpen(false)} sx={{ borderRadius: 2, textTransform: 'none' }}>
-            Annuler
+            {t('invoices:buttons.cancel')}
           </Button>
           <Button
             onClick={handleAddPayment}
@@ -1410,7 +1405,7 @@ Cordialement`
             startIcon={savingPayment ? <CircularProgress size={18} /> : <CheckCircle />}
             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
-            {savingPayment ? 'Enregistrement...' : 'Enregistrer le paiement'}
+            {savingPayment ? t('invoices:labels.savingLabel') : t('invoices:payments.save')}
           </Button>
         </DialogActions>
       </Dialog>

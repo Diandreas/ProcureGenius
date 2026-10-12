@@ -1,64 +1,53 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { formatCurrency, formatCurrencyCompact, getCurrencySymbol } from '../utils/currency';
+
+// Devise de l'organisation, partagée par tous les composants : une seule requête
+// au chargement (et après un changement dans les paramètres), au lieu d'une
+// requête toutes les 30 s par composant.
+const DEFAUT = 'XAF'; // marché Afrique
+let devise = null;
+let pourJeton = null; // la devise appartient à l'organisation du compte connecté
+let enCours = null;
+const abonnes = new Set();
+
+function charger(forcer = false) {
+  const jeton = localStorage.getItem('authToken');
+  if (jeton !== pourJeton) { devise = null; pourJeton = jeton; }
+  if (enCours) return enCours;
+  if (devise && !forcer) return Promise.resolve(devise);
+  enCours = api.get('/accounts/organization/settings/')
+    .then((r) => r.data.defaultCurrency || r.data.default_currency || DEFAUT)
+    .catch(() => devise || DEFAUT)
+    .then((d) => {
+      devise = d;
+      abonnes.forEach((cb) => cb(d));
+      return d;
+    })
+    .finally(() => { enCours = null; });
+  return enCours;
+}
+
+if (typeof window !== 'undefined') {
+  // Changement de devise dans les paramètres
+  window.addEventListener('currency-changed', () => { charger(true); });
+}
 
 /**
  * Hook pour gérer la devise de l'organisation
  * Récupère automatiquement la devise depuis les paramètres
  */
 export const useCurrency = () => {
-  const [currency, setCurrency] = useState('XAF'); // Devise par défaut (marché Afrique)
-  const [loading, setLoading] = useState(true);
-
-  const loadCurrency = useCallback(async () => {
-    try {
-      const response = await api.get('/accounts/organization/settings/');
-      // Support both camelCase and snake_case formats
-      const defaultCurrency = response.data.defaultCurrency || response.data.default_currency || 'XAF';
-      
-      if (defaultCurrency) {
-        setCurrency(prevCurrency => {
-          if (prevCurrency !== defaultCurrency) {
-            console.log('Devise chargée depuis l\'organisation:', defaultCurrency);
-            return defaultCurrency;
-          }
-          return prevCurrency;
-        });
-      } else {
-        console.warn('Aucune devise trouvée dans les paramètres, utilisation de CAD par défaut');
-        setCurrency('XAF');
-      }
-    } catch (error) {
-      console.warn('Erreur lors du chargement de la devise, utilisation de CAD par défaut:', error);
-      setCurrency('XAF');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [currency, setCurrency] = useState(devise || DEFAUT);
+  const [loading, setLoading] = useState(!devise);
 
   useEffect(() => {
-    loadCurrency();
-
-    // Écouter les changements de devise depuis les paramètres
-    const handleCurrencyChange = () => {
-      console.log('Changement de devise détecté, rechargement...');
-      loadCurrency();
-    };
-
-    // Écouter l'événement personnalisé pour le changement de devise
-    window.addEventListener('currency-changed', handleCurrencyChange);
-
-    // Rafraîchir périodiquement (toutes les 30 secondes) pour s'assurer que la devise est à jour
-    const interval = setInterval(() => {
-      loadCurrency();
-    }, 30000);
-
-    return () => {
-      window.removeEventListener('currency-changed', handleCurrencyChange);
-      clearInterval(interval);
-    };
-  }, [loadCurrency]);
-
+    const maj = (d) => { setCurrency(d); setLoading(false); };
+    abonnes.add(maj);
+    if (localStorage.getItem('authToken')) charger().then(maj);
+    else setLoading(false);
+    return () => { abonnes.delete(maj); };
+  }, []);
 
   /**
    * Formate un montant avec la devise de l'organisation
@@ -89,3 +78,6 @@ export const useCurrency = () => {
 };
 
 export default useCurrency;
+
+/** Devise courante, pour les formateurs définis hors d'un composant. */
+export const deviseActuelle = () => devise || DEFAUT;

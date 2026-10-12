@@ -3,6 +3,7 @@ import {
   Box, Typography, Divider, Tabs, Tab, useMediaQuery, useTheme, IconButton, Tooltip,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Dashboard as DashboardIcon,
   AccountTree as PlanIcon,
@@ -29,20 +30,22 @@ const PATH_TO_CONTEXT = {
   '/accounting/reports/general-ledger': 'general_ledger',
 };
 
+// labelKey : clé de traduction accounting:nav.<labelKey>
 const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/accounting', icon: <DashboardIcon />, exact: true },
-  { label: 'Dépenses', path: '/accounting/expenses', icon: <ExpensesIcon /> },
-  { label: 'Plan comptable', path: '/accounting/chart-of-accounts', icon: <PlanIcon /> },
-  { label: 'Écritures', path: '/accounting/entries', icon: <EntriesIcon /> },
-  { label: 'Balance', path: '/accounting/reports/trial-balance', icon: <BalanceIcon /> },
-  { label: 'Grand livre', path: '/accounting/reports/general-ledger', icon: <LedgerIcon /> },
-  { label: 'Résultat', path: '/accounting/reports/income-statement', icon: <ResultIcon />, feature: 'accounting_statements' },
-  { label: 'Bilan', path: '/accounting/reports/balance-sheet', icon: <BilanIcon />, feature: 'accounting_statements' },
-  { label: 'SIG', path: '/accounting/reports/sig', icon: <SIGIcon />, feature: 'accounting_statements' },
+  { labelKey: 'dashboard', path: '/accounting', icon: <DashboardIcon />, exact: true },
+  { labelKey: 'expenses', path: '/accounting/expenses', icon: <ExpensesIcon /> },
+  { labelKey: 'chartOfAccounts', path: '/accounting/chart-of-accounts', icon: <PlanIcon /> },
+  { labelKey: 'entries', path: '/accounting/entries', icon: <EntriesIcon /> },
+  { labelKey: 'trialBalance', path: '/accounting/reports/trial-balance', icon: <BalanceIcon /> },
+  { labelKey: 'generalLedger', path: '/accounting/reports/general-ledger', icon: <LedgerIcon /> },
+  { labelKey: 'incomeStatement', path: '/accounting/reports/income-statement', icon: <ResultIcon />, feature: 'accounting_statements' },
+  { labelKey: 'balanceSheet', path: '/accounting/reports/balance-sheet', icon: <BilanIcon />, feature: 'accounting_statements' },
+  { labelKey: 'sig', path: '/accounting/reports/sig', icon: <SIGIcon />, feature: 'accounting_statements' },
 ];
 
 export default function AccountingNav({ title, subtitle, action }) {
   const navigate = useNavigate();
+  const { t } = useTranslation(['accounting', 'common']);
   const { pathname } = useLocation();
   const { isFeatureLocked } = useModules();
   const lockedItem = (item) => item.feature && isFeatureLocked(item.feature);
@@ -63,10 +66,10 @@ export default function AccountingNav({ title, subtitle, action }) {
 
   React.useEffect(() => {
     setPageHeader({
-      title: title || 'Comptabilité',
+      title: title || t('accounting:nav.defaultTitle'),
       actions: action || null
     });
-  }, [title, action, setPageHeader]);
+  }, [title, action, setPageHeader, t]);
 
   return (
     <Box mb={2}>
@@ -89,7 +92,7 @@ export default function AccountingNav({ title, subtitle, action }) {
           {NAV_ITEMS.map((item, idx) => {
             const isActive = item.exact ? pathname === item.path : pathname.startsWith(item.path);
             return (
-              <Tooltip key={item.path} title={item.label} placement="bottom">
+              <Tooltip key={item.path} title={t(`accounting:nav.${item.labelKey}`)} placement="bottom">
                 <IconButton
                   size="small"
                   onClick={() => navigate(item.path)}
@@ -140,8 +143,8 @@ export default function AccountingNav({ title, subtitle, action }) {
             <Tab
               key={item.path}
               label={lockedItem(item)
-                ? <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.4, opacity: 0.6 }}>{item.label}<LockIcon sx={{ fontSize: 13 }} /></Box>
-                : item.label}
+                ? <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.4, opacity: 0.6 }}>{t(`accounting:nav.${item.labelKey}`)}<LockIcon sx={{ fontSize: 13 }} /></Box>
+                : t(`accounting:nav.${item.labelKey}`)}
               icon={React.cloneElement(item.icon, { fontSize: 'small' })}
               iconPosition="start"
               onClick={() => navigate(item.path)}
@@ -150,7 +153,7 @@ export default function AccountingNav({ title, subtitle, action }) {
         </Tabs>
       )}
 
-      <Tooltip title="Aide comptabilité" placement="left">
+      <Tooltip title={t('accounting:nav.help')} placement="left">
         <IconButton size="small" onClick={() => openHelp(helpContext)} sx={{ ml: 'auto', flexShrink: 0 }}>
           <HelpIcon fontSize="small" />
         </IconButton>

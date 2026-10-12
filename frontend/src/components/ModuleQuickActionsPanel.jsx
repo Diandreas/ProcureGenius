@@ -27,6 +27,7 @@ import {
     Add,
     BarChart,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../services/api';
 
 /**
@@ -34,6 +35,7 @@ import { aiChatAPI } from '../services/api';
  * Affiche 4-6 actions rapides selon le module actif
  */
 function ModuleQuickActionsPanel({ currentModule, onActionClick }) {
+    const { t } = useTranslation('common');
     const [quickActions, setQuickActions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isExpanded, setIsExpanded] = useState(true);
@@ -111,10 +113,10 @@ function ModuleQuickActionsPanel({ currentModule, onActionClick }) {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <SmartToy sx={{ color: 'primary.main' }} />
                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        Actions rapides IA
+                        {t('common:moduleQuickActions.title')}
                     </Typography>
                     <Chip
-                        label="Intelligent"
+                        label={t('common:moduleQuickActions.smartChip')}
                         size="small"
                         color="primary"
                         variant="outlined"
@@ -161,7 +163,7 @@ function ModuleQuickActionsPanel({ currentModule, onActionClick }) {
 
                 {quickActions.length > 0 && (
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, textAlign: 'center' }}>
-                         L'IA peut vous aider à automatiser ces tâches
+                         {t('common:moduleQuickActions.hint')}
                     </Typography>
                 )}
             </Collapse>

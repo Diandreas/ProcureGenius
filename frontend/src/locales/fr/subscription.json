@@ -1,0 +1,266 @@
+{
+  "plans": {
+    "free": {
+      "name": "Libre",
+      "tagline": "Pour démarrer et découvrir Procura, sans engagement.",
+      "cta": "Commencer",
+      "features": ["1 utilisateur", "30 factures / mois", "20 clients", "50 produits", "Tableau de bord", "Export PDF"],
+      "missing": ["Bons de commande", "Fournisseurs", "Comptabilité", "Contrats", "Assistant IA"]
+    },
+    "pro": {
+      "name": "Pro",
+      "badge": "Le plus choisi",
+      "tagline": "Pour les PME qui veulent travailler vite et bien.",
+      "cta": "Choisir Pro",
+      "features": [
+        "2 utilisateurs inclus (+{siege}/utilisateur)",
+        "Factures, clients & produits illimités",
+        "Bons de commande & fournisseurs illimités",
+        "Comptabilité de base (journal, écritures)",
+        "Contrats",
+        "Assistant IA — 100 requêtes / mois",
+        "Sans publicité"
+      ],
+      "missing": ["Comptabilité avancée (SIG, bilan)", "Analyse des marges", "Prévision de réappro", "E-Sourcing"]
+    },
+    "business": {
+      "name": "Business",
+      "badge": "Le plus complet",
+      "tagline": "Pour les équipes qui pilotent leur activité de bout en bout.",
+      "cta": "Choisir Business",
+      "features": [
+        "10 utilisateurs inclus (+{siege}/utilisateur)",
+        "Tout le plan Pro, sans limites",
+        "Comptabilité complète (SIG, bilan, compte de résultat)",
+        "Analyse des marges & bénéfice brut",
+        "Prévision de réapprovisionnement",
+        "E-Sourcing & appels d’offres",
+        "Assistant IA illimité",
+        "Support prioritaire + onboarding dédié",
+        "Stockage 50 Go"
+      ]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "Déploiement sur mesure pour les grandes structures.",
+      "cta": "Nous contacter",
+      "features": ["Tout Business inclus", "Onboarding dédié", "Intégrations sur mesure", "SLA garanti", "Account manager"]
+    }
+  },
+  "billing": {
+    "monthly": "Mensuel",
+    "yearly": "Annuel"
+  },
+  "price": {
+    "onQuote": "Sur devis",
+    "free": "Gratuit",
+    "perMonth": "/mois",
+    "perYear": "/an",
+    "billedMonthly": "Facturé {{amount}} par mois",
+    "billedYearly": "Facturé {{amount}} par an"
+  },
+  "currencyNames": {
+    "EUR": "euros",
+    "XAF": "francs CFA",
+    "XOF": "francs CFA",
+    "USD": "dollars"
+  },
+  "redirecting": "Redirection…",
+  "enterpriseWhatsappMessage": "Bonjour, je suis intéressé par le plan Enterprise de Procura.",
+  "internalPricing": {
+    "mySubscription": "Mon abonnement",
+    "trialDays": "Essai — {{days}} j",
+    "cancelScheduled": "Annulation programmée",
+    "activeUntilNotRenewed": "Actif jusqu'au {{date}} — non renouvelé.",
+    "nextRenewal": "Prochain renouvellement le {{date}}.",
+    "cancelSubscription": "Annuler l'abonnement",
+    "title": "Votre abonnement",
+    "subtitle": "1 mois d'essai offert sur Pro et Business — sans carte. Changez ou annulez à tout moment.",
+    "currentPlan": "Plan actuel",
+    "yourPlan": "Votre plan",
+    "securePayment": "Paiement sécurisé par Stripe. Après le paiement, votre compte est activé automatiquement et vous êtes redirigé vers votre tableau de bord.",
+    "cancelledSuccess": "Abonnement annulé. Actif jusqu'au {{date}}.",
+    "cancelError": "Impossible d'annuler l'abonnement.",
+    "freeActivated": "Plan gratuit activé.",
+    "actionFailed": "Action impossible.",
+    "checkoutError": "Impossible de lancer le paiement. Réessayez.",
+    "downgrade": {
+      "title": "Confirmer le changement",
+      "losingAccess": "En passant au plan <strong>{{plan}}</strong>, vous perdez l'accès à :",
+      "quotasReduced": "Vos quotas (factures, clients, utilisateurs…) seront réduits selon le plan {{plan}}.",
+      "dataKept": "Vos données sont conservées, mais ces fonctionnalités deviennent inaccessibles tant que vous n'êtes pas sur un plan supérieur.",
+      "confirm": "Confirmer le passage à {{plan}}"
+    },
+    "cancelDialog": {
+      "title": "Annuler votre abonnement ?",
+      "warning": "Votre abonnement restera <strong>actif jusqu'au {{date}}</strong>. Ensuite, vous repasserez en Gratuit et perdrez l'accès aux fonctionnalités payantes (vos données sont conservées).",
+      "reasonPrompt": "Une raison ? (facultatif — ça nous aide à nous améliorer)",
+      "reasonPlaceholder": "Trop cher, je n'utilise pas assez…",
+      "keep": "Garder mon abonnement",
+      "cancelling": "Annulation…",
+      "confirm": "Confirmer l'annulation"
+    }
+  },
+  "seats": {
+    "title": "Gérer les sièges",
+    "paidPlanRequired": "L'ajout de sièges nécessite un plan payant. Passez à <strong>Pro</strong> ou<strong> Business</strong> pour inviter votre équipe (puis ajoutez des sièges à {{price}}/utilisateur).",
+    "viewPlans": "Voir les formules",
+    "intro_one": "Votre formule inclut <strong>{{count}}</strong> utilisateur(s). Ajoutez des sièges supplémentaires à <strong>{{price}}/mois</strong> chacun (facturation proratisée).",
+    "intro_other": "Votre formule inclut <strong>{{count}}</strong> utilisateur(s). Ajoutez des sièges supplémentaires à <strong>{{price}}/mois</strong> chacun (facturation proratisée).",
+    "extraSeats_one": "siège(s) en plus",
+    "extraSeats_other": "siège(s) en plus",
+    "totalCapacity": "Capacité totale",
+    "totalUsers_one": "{{count}} utilisateurs",
+    "totalUsers_other": "{{count}} utilisateurs",
+    "seatCost": "Coût des sièges",
+    "costPerMonth": "+{{price}}/mois",
+    "minimum": "Minimum {{min}} (sièges déjà occupés). Désactivez des utilisateurs pour réduire.",
+    "updated": "Sièges mis à jour : {{total}} au total.",
+    "updateError": "Impossible de mettre à jour les sièges.",
+    "updating": "Mise à jour…"
+  },
+  "status": {
+    "viewPlans": "Voir les plans",
+    "noActive": "Aucun abonnement actif",
+    "unlimited": "Illimité",
+    "trialBanner_one": "Période d'essai - {{count}} jours restants",
+    "trialBanner_other": "Période d'essai - {{count}} jours restants",
+    "subscribe": "S'abonner",
+    "upgrade": "Passer au plan supérieur",
+    "quotaAlmostReached": "Quota presque atteint",
+    "quotaWarning": "Attention au quota",
+    "title": "Abonnement {{plan}}",
+    "trialChip_one": "Essai - {{count}}j restants",
+    "trialChip_other": "Essai - {{count}}j restants",
+    "quotasNearLimit_one": "{{count}} quota(s) proche(s) de la limite",
+    "quotasNearLimit_other": "{{count}} quota(s) proche(s) de la limite",
+    "showLess": "Voir moins",
+    "showAllQuotas": "Voir tous les quotas",
+    "statuses": {
+      "trial": "Période d'essai",
+      "active": "Actif",
+      "past_due": "Paiement en retard",
+      "cancelled": "Annulé",
+      "expired": "Expiré"
+    },
+    "quotas": {
+      "invoices": "Factures",
+      "purchase_orders": "Bons de commande",
+      "ai_requests": "Requêtes IA",
+      "clients": "Clients",
+      "suppliers": "Fournisseurs",
+      "products": "Produits"
+    }
+  },
+  "trialChip": {
+    "mobileDays": "{{days}} j",
+    "mobileExpired": "Expiré",
+    "active": "Essai {{plan}} — {{days}} j",
+    "expired": "Essai {{plan}} expiré",
+    "tooltipActive_one": "Essai {{plan}} — {{count}} jour(s) restant(s)",
+    "tooltipActive_other": "Essai {{plan}} — {{count}} jour(s) restant(s)",
+    "tooltipExpired": "Essai expiré — gérer votre abonnement"
+  },
+  "pastDue": {
+    "message": "Le paiement de votre abonnement a échoué. Mettez à jour votre moyen de paiement pour conserver l'accès.",
+    "opening": "Ouverture…",
+    "updatePayment": "Mettre à jour le paiement"
+  },
+  "modules": {
+    "activate": "Activer {{module}}",
+    "currentlyDisabled": "Ce module est actuellement désactivé",
+    "includedFeatures": "Fonctionnalités incluses:",
+    "canDisableLater": "Vous pourrez toujours désactiver ce module dans les paramètres",
+    "activateNow": "Activer maintenant",
+    "fallback": {
+      "name": "Module",
+      "description": "Description du module"
+    },
+    "items": {
+      "dashboard": {
+        "name": "Tableau de bord",
+        "description": "Vue d'ensemble de votre activité avec statistiques en temps réel",
+        "features": ["Statistiques de performance", "Graphiques interactifs", "Activité récente", "Indicateurs clés (KPI)"]
+      },
+      "suppliers": {
+        "name": "Fournisseurs",
+        "description": "Gérez efficacement vos relations fournisseurs",
+        "features": ["Base de données fournisseurs", "Évaluation des performances", "Historique des commandes", "Import/Export CSV"]
+      },
+      "purchase-orders": {
+        "name": "Bons de commande",
+        "description": "Créez et suivez vos bons de commande",
+        "features": ["Création de bons de commande", "Suivi des livraisons", "Approbations multi-niveaux", "Génération de PDF"]
+      },
+      "invoices": {
+        "name": "Factures",
+        "description": "Gérez votre facturation et vos paiements",
+        "features": ["Création de factures", "Suivi des paiements", "Relances automatiques", "Rapports comptables"]
+      },
+      "products": {
+        "name": "Produits",
+        "description": "Gérez votre catalogue produits et vos stocks",
+        "features": ["Catalogue produits", "Gestion des stocks", "Alertes de réapprovisionnement", "Mouvements de stock"]
+      },
+      "clients": {
+        "name": "Clients",
+        "description": "Gérez votre base clients",
+        "features": ["Base de données clients", "Historique des transactions", "Analyse du comportement", "Segmentation"]
+      },
+      "e-sourcing": {
+        "name": "E-Sourcing",
+        "description": "Gérez vos appels d'offres et comparez les fournisseurs",
+        "features": ["Création de RFQ", "Comparaison des offres", "Évaluation des fournisseurs", "Négociation en ligne"]
+      },
+      "contracts": {
+        "name": "Contrats",
+        "description": "Gérez vos contrats fournisseurs",
+        "features": ["Gestion des contrats", "Extraction de clauses par IA", "Alertes d'expiration", "Bibliothèque de templates"]
+      }
+    }
+  },
+  "pricing": {
+    "metaTitle": "Tarifs",
+    "metaDescription": "Des plans clairs, sans surprise : commencez gratuitement, passez au plan supérieur quand votre activité grandit. Essai 30 jours sans carte.",
+    "eyebrow": "Tarifs Procura",
+    "heroTitle": "Un prix juste,<br/><accent>une croissance</accent> sans friction.",
+    "intro": "Commencez gratuitement. Un mois d'essai offert sur les formules payantes — sans carte bancaire.",
+    "indicativePrices": "Prix affichés en {{currency}} à titre indicatif ; l'abonnement est facturé en {{billingCurrency}}.",
+    "yearlyEquivalent": "soit {{monthly}}/mois · {{saved}} économisés",
+    "checkoutError": "Erreur lors de la création du paiement. Veuillez réessayer.",
+    "africa": {
+      "eyebrow": "Pensé pour l'Afrique",
+      "title": "Une facturation locale, des règles que vous connaissez.",
+      "body": "Facturation en FCFA, CDF, XOF, MAD. Contrats adaptés au droit OHADA. TVA Cameroun 19,25 %, Sénégal 18 %, Côte d'Ivoire 18 %. Interface en français, optimisée pour les réseaux mobiles.",
+      "talkToAdvisor": "Parler à un conseiller"
+    },
+    "comparison": {
+      "title": "Le détail, ligne par ligne",
+      "subtitle": "Toutes les fonctionnalités, comparées plan par plan.",
+      "feature": "Fonctionnalité",
+      "rows": {
+        "invoicesPerMonth": "Factures / mois",
+        "clients": "Clients",
+        "products": "Produits",
+        "purchaseOrders": "Bons de commande",
+        "suppliers": "Fournisseurs",
+        "accounting": "Comptabilité",
+        "aiAssistant": "Assistant IA",
+        "contracts": "Contrats",
+        "eSourcing": "E-Sourcing",
+        "advancedAnalytics": "Analytics avancés",
+        "adFree": "Sans publicité",
+        "prioritySupport": "Support prioritaire"
+      },
+      "values": {
+        "unlimited": "Illimité",
+        "aiPerMonth": "100 / mois"
+      }
+    },
+    "contact": {
+      "title": "Une question avant de vous lancer ?",
+      "subtitle": "Notre équipe répond en moins de 2 h, du lundi au samedi, de 8 h à 20 h (WAT).",
+      "email": "Écrire un email"
+    }
+  }
+}

@@ -2,20 +2,35 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Box, Container, Typography, useTheme, Chip, Grid, Card, CardActionArea, Stack } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ArticleIcon from '@mui/icons-material/Article';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { BLOG_POSTS, AUDIENCES } from '../../data/blogPosts';
 import usePageMeta from '../../hooks/usePageMeta';
+
+// Catégories des articles (données en français) -> clés de traduction affichées dans l'interface
+const CATEGORY_KEYS = {
+  'Gestion': 'management',
+  'Image de marque': 'branding',
+  'Intelligence artificielle': 'ai',
+  'Trésorerie': 'cashFlow',
+  'Stock': 'stock',
+  'Comptabilité': 'accounting',
+  'Productivité': 'productivity',
+  'Facturation': 'invoicing',
+};
 
 export default function Blog() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
   const [audience, setAudience] = useState('all');
+  const { t } = useTranslation(['public']);
+  const categoryLabel = (c) => (CATEGORY_KEYS[c] ? t(`public:blog.categories.${CATEGORY_KEYS[c]}`) : c);
 
   usePageMeta({
-    title: 'Blog',
-    description: "Conseils, retours d'expérience et astuces pour piloter facturation, stock et trésorerie sans y passer vos soirées.",
+    title: t('public:blog.metaTitle'),
+    description: t('public:blog.metaDescription'),
     path: '/blog',
   });
 
@@ -47,13 +62,13 @@ export default function Blog() {
           <Box sx={{ mb: { xs: 5, md: 7 }, textAlign: 'center' }}>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, p: 1, px: 2, mb: 2, borderRadius: 99, bgcolor: `${accent}12` }}>
               <ArticleIcon sx={{ color: accent, fontSize: 20 }} />
-              <Typography sx={{ color: accent, fontWeight: 700, fontSize: '0.85rem' }}>Le blog Procura</Typography>
+              <Typography sx={{ color: accent, fontWeight: 700, fontSize: '0.85rem' }}>{t('public:blog.badge')}</Typography>
             </Box>
             <Typography variant="h1" sx={{ fontSize: { xs: '2rem', md: '3rem' }, fontWeight: 800, letterSpacing: '-0.02em', color: headingColor, mb: 1.5 }}>
-              Reprends le contrôle de ton activité
+              {t('public:blog.title')}
             </Typography>
             <Typography sx={{ color: textColor, fontSize: { xs: '1rem', md: '1.15rem' }, maxWidth: 640, mx: 'auto' }}>
-              Des conseils concrets pour gérer ton business sans t'éparpiller — et des coulisses de l'IA qui bosse pour toi.
+              {t('public:blog.subtitle')}
             </Typography>
           </Box>
 
@@ -64,7 +79,7 @@ export default function Blog() {
               return (
                 <Chip
                   key={a.key}
-                  label={a.label}
+                  label={t(`public:blog.audiences.${a.key}`)}
                   onClick={() => setAudience(a.key)}
                   sx={{
                     fontWeight: 700,
@@ -102,7 +117,7 @@ export default function Blog() {
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <Box sx={{ p: { xs: 3, md: 5 } }}>
-                      <Chip label={featured.category} size="small" sx={{ mb: 2, bgcolor: `${accent}15`, color: accent, fontWeight: 700 }} />
+                      <Chip label={categoryLabel(featured.category)} size="small" sx={{ mb: 2, bgcolor: `${accent}15`, color: accent, fontWeight: 700 }} />
                       <Typography variant="h2" sx={{ fontSize: { xs: '1.4rem', md: '1.8rem' }, fontWeight: 800, color: headingColor, mb: 1.5, lineHeight: 1.2 }}>
                         {featured.title}
                       </Typography>
@@ -133,7 +148,7 @@ export default function Blog() {
                   <CardActionArea onClick={() => navigate(`/blog/${post.slug}`)} sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
                     <Box sx={{ height: 180, backgroundImage: `url(${post.cover})`, backgroundSize: 'cover', backgroundPosition: 'top center' }} />
                     <Box sx={{ p: 3, flexGrow: 1 }}>
-                      <Chip label={post.category} size="small" sx={{ mb: 1.5, bgcolor: `${accent}12`, color: accent, fontWeight: 700, fontSize: '0.72rem' }} />
+                      <Chip label={categoryLabel(post.category)} size="small" sx={{ mb: 1.5, bgcolor: `${accent}12`, color: accent, fontWeight: 700, fontSize: '0.72rem' }} />
                       <Typography sx={{ fontSize: '1.15rem', fontWeight: 800, color: headingColor, mb: 1, lineHeight: 1.25 }}>
                         {post.title}
                       </Typography>

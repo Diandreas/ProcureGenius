@@ -1,10 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import useCurrency from '../../hooks/useCurrency';
 
 const MetricDetailModal = ({ metric, onClose, generateDetailedData }) => {
   const { format: formatCurrency, symbol } = useCurrency();
+  const { t } = useTranslation('dashboard');
 
   if (!metric) return null;
 
@@ -95,7 +97,7 @@ const MetricDetailModal = ({ metric, onClose, generateDetailedData }) => {
           border: `2px solid ${metric.color}40`
         }}>
           <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px', fontWeight: 500 }}>
-            Valeur actuelle
+            {t('metricDetail.currentValue')}
           </div>
           <div style={{ fontSize: '42px', fontWeight: 700, color: metric.color, marginBottom: '12px' }}>
             {metric.isPercentage ? metric.value : formatCurrency(metric.value)}
@@ -122,7 +124,7 @@ const MetricDetailModal = ({ metric, onClose, generateDetailedData }) => {
                 {metric.change > 0 ? '+' : ''}{metric.change.toFixed(1)}%
               </span>
               <span style={{ color: '#6b7280', fontSize: '14px' }}>
-                vs période précédente
+                {t('metricDetail.vsPreviousPeriod')}
               </span>
             </div>
           )}
@@ -131,7 +133,7 @@ const MetricDetailModal = ({ metric, onClose, generateDetailedData }) => {
         {/* Graphique détaillé */}
         <div>
           <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#374151', marginBottom: '16px' }}>
-            Évolution sur 30 jours
+            {t('metricDetail.trend30Days')}
           </h3>
           <div style={{ height: '350px' }}>
             <ResponsiveContainer width="100%" height="100%">

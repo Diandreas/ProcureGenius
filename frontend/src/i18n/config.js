@@ -30,6 +30,19 @@ import eSourcingEn from '../locales/en/eSourcing.json';
 import authFr from '../locales/fr/auth.json';
 import authEn from '../locales/en/auth.json';
 import helpFr from '../locales/fr/help.json';
+import helpEn from '../locales/en/help.json';
+import accountingFr from '../locales/fr/accounting.json';
+import accountingEn from '../locales/en/accounting.json';
+import stockFr from '../locales/fr/stock.json';
+import stockEn from '../locales/en/stock.json';
+import onboardingFr from '../locales/fr/onboarding.json';
+import onboardingEn from '../locales/en/onboarding.json';
+import dataImportFr from '../locales/fr/dataImport.json';
+import dataImportEn from '../locales/en/dataImport.json';
+import subscriptionFr from '../locales/fr/subscription.json';
+import subscriptionEn from '../locales/en/subscription.json';
+import offlineFr from '../locales/fr/offline.json';
+import offlineEn from '../locales/en/offline.json';
 import landingFr from '../locales/fr/landing.json';
 import landingEn from '../locales/en/landing.json';
 import publicFr from '../locales/fr/public.json';
@@ -58,6 +71,12 @@ i18n
         help: helpFr,
         landing: landingFr,
         public: publicFr,
+        accounting: accountingFr,
+        stock: stockFr,
+        onboarding: onboardingFr,
+        dataImport: dataImportFr,
+        subscription: subscriptionFr,
+        offline: offlineFr,
       },
       en: {
         common: commonEn,
@@ -73,8 +92,15 @@ i18n
         contracts: contractsEn,
         eSourcing: eSourcingEn,
         auth: authEn,
+        help: helpEn,
         landing: landingEn,
         public: publicEn,
+        accounting: accountingEn,
+        stock: stockEn,
+        onboarding: onboardingEn,
+        dataImport: dataImportEn,
+        subscription: subscriptionEn,
+        offline: offlineEn,
       },
     },
 
@@ -102,7 +128,7 @@ i18n
     },
 
     // Support des namespaces séparés
-    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard', 'navigation', 'suppliers', 'aiChat', 'contracts', 'eSourcing', 'auth', 'help', 'landing', 'public'],
+    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard', 'navigation', 'suppliers', 'aiChat', 'contracts', 'eSourcing', 'auth', 'help', 'landing', 'public', 'accounting', 'stock', 'onboarding', 'dataImport', 'subscription', 'offline'],
 
     // Mode debug (désactiver en production)
     debug: process.env.NODE_ENV === 'development',
@@ -115,5 +141,12 @@ i18n
       transEmptyNodeValue: undefined,
     },
   });
+
+// La page annonce sa langue au navigateur (lecteurs d'écran, traduction automatique, césure)
+const marquerLangue = (lng) => {
+  if (typeof document !== 'undefined' && lng) document.documentElement.lang = lng.slice(0, 2);
+};
+i18n.on('languageChanged', marquerLangue);
+marquerLangue(i18n.language);
 
 export default i18n;

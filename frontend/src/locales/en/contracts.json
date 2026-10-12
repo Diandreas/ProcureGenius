@@ -17,7 +17,8 @@
     "expired": "Expired",
     "pending": "Pending Signature",
     "archived": "Archived",
-    "terminated": "Terminated"
+    "terminated": "Terminated",
+    "approved": "Approved"
   },
   "labels": {
     "contractNumber": "Contract N°",
@@ -120,7 +121,71 @@
       "delete": "Delete",
       "approve": "Approve",
       "activate": "Activate",
-      "extractClauses": "Extract clauses (AI)"
+      "extractClauses": "Extract clauses (AI)",
+      "generateInvoice": "Generate an invoice",
+      "send": "Send",
+      "createInvoice": "Create invoice"
+    },
+    "riskLevel": "Risk level",
+    "sectionsTitle": "Contract sections",
+    "articlesCount": "{{count}} clauses",
+    "daysShort": "{{days}}d",
+    "messages": {
+      "renewSuccess": "Contract renewed successfully.",
+      "renewError": "Error renewing the contract.",
+      "extractEmpty": "No clauses could be extracted. Please check the contract text.",
+      "invoiceDraftCreated": "Draft invoice created from the contract.",
+      "invoiceError": "Error generating the invoice.",
+      "templatesLoadError": "Error loading templates",
+      "selectTemplate": "Please select a template",
+      "invalidJson": "The JSON context is invalid",
+      "documentGenerated": "Document generated successfully",
+      "generateError": "Error during generation",
+      "generateFirst": "Please generate the document first",
+      "pdfExportSuccess": "PDF export successful",
+      "pdfExportError": "Error exporting PDF",
+      "wordExportSuccess": "Word export successful",
+      "wordExportError": "Error exporting Word document",
+      "recipientRequired": "Recipient email is required",
+      "emailSent": "Email sent successfully",
+      "emailError": "Error sending the email",
+      "pdfImportError": "PDF upload error",
+      "importError": "Error during upload",
+      "signatureSaved": "Signature recorded",
+      "counterpartSignatureSaved": "Counterparty signature recorded",
+      "signatureError": "Error updating signature"
+    },
+    "documents": {
+      "title": "Documents & Signatures",
+      "signedPdfImported": "Signed PDF uploaded",
+      "previewTitle": "Signed contract preview",
+      "loadingPreview": "Loading preview…",
+      "signaturesHeading": "SIGNATURES",
+      "signed": "Signed",
+      "notSigned": "Not signed",
+      "signerPrompt": "Signatory name:",
+      "counterpartSignerPrompt": "Signatory name (counterparty):"
+    },
+    "generateDialog": {
+      "title": "Generate a document from a template",
+      "selectTemplate": "Select a template",
+      "contextLabel": "Additional context (optional JSON)",
+      "contextHelper": "Contract data will be included automatically.",
+      "generating": "The AI is generating the document...",
+      "result": "Result:",
+      "exportWord": "Export to Word",
+      "exportPdf": "Export to PDF",
+      "generatingShort": "Generating...",
+      "generate": "Generate"
+    },
+    "emailDialog": {
+      "title": "Send the contract by email",
+      "recipient": "Recipient email",
+      "recipientPlaceholder": "client@example.com",
+      "message": "Personal message (optional)",
+      "messagePlaceholder": "Hello, please find the contract attached...",
+      "sending": "Sending...",
+      "sendingShort": "Sending..."
     }
   },
   "messages": {
@@ -213,6 +278,205 @@
       "medium": "Medium",
       "low": "Low",
       "unknown": "Not assessed"
+    },
+    "riskCount": "{{label}}: {{value}}"
+  },
+  "tabs": {
+    "templates": "Templates"
+  },
+  "wizard": {
+    "templates": {
+      "service": {
+        "label": "Service agreement",
+        "description": "Professional services",
+        "prompt": "Professional services agreement"
+      },
+      "purchase": {
+        "label": "Purchase contract",
+        "description": "Purchase of goods or raw materials",
+        "prompt": "Contract for the purchase of goods"
+      },
+      "nda": {
+        "label": "Confidentiality agreement",
+        "description": "Protection of confidential information",
+        "prompt": "Mutual non-disclosure agreement"
+      },
+      "maintenance": {
+        "label": "Maintenance contract",
+        "description": "Maintenance and technical support",
+        "prompt": "Maintenance contract with SLA"
+      },
+      "lease": {
+        "label": "Lease agreement",
+        "description": "Rental of premises or equipment",
+        "prompt": "Lease agreement"
+      },
+      "partnership": {
+        "label": "Partnership agreement",
+        "description": "Commercial or strategic partnership",
+        "prompt": "Commercial partnership agreement"
+      },
+      "freelance": {
+        "label": "Freelance contract",
+        "description": "Freelance assignment with deliverables",
+        "prompt": "Freelance assignment contract"
+      },
+      "distribution": {
+        "label": "Distribution agreement",
+        "description": "Product distribution",
+        "prompt": "Distribution agreement"
+      }
+    },
+    "steps": {
+      "type": "Type & description",
+      "info": "Details",
+      "articles": "Drafting the clauses",
+      "finalize": "Finalization"
+    },
+    "template": {
+      "editModeInfo": "You are editing an existing contract. Sections can be edited in step 3.",
+      "selectType": "Select a contract type. The AI will draft each section following legal best practices.",
+      "describeDetails": "Briefly describe the contract details. The AI will use them to tailor each section:",
+      "descriptionPlaceholder": "e.g. IT equipment maintenance for a pharmacy in Douala, 600,000 FCFA per year, 4 visits, quarterly payment...",
+      "nextToInfo": "Next — Contract details"
+    },
+    "sections": {
+      "fillTitleFirst": "Fill in the title or description first (step 2)",
+      "generatedCount": "{{count}} sections generated ({{tokens}} tokens)",
+      "generateError": "Error generating sections",
+      "regenerated": "Section \"{{title}}\" regenerated",
+      "regenerateError": "Error regenerating section",
+      "title": "Contract sections ({{count}} clauses)",
+      "subtitle": "Each clause is pre-filled with standard legal wording. Use the AI to tailor it to your needs.",
+      "personalizing": "Tailoring in progress...",
+      "repersonalizeAll": "Re-tailor all",
+      "personalizeWithAI": "Tailor with AI",
+      "generatingCount": "Generating {{count}} sections...",
+      "totalTokens": "Total tokens used:",
+      "aiGeneratedCount": "{{done}}/{{total}} sections generated by AI",
+      "noSections": "No sections defined. Go back to step 1 to select a contract type.",
+      "internalNotes": "Internal notes (not included in the contract)",
+      "internalNotesPlaceholder": "Confidential notes..."
+    },
+    "editor": {
+      "article": "Art. {{order}}",
+      "aiChip": "AI",
+      "empty": "Empty",
+      "aiRunning": "AI working...",
+      "repersonalize": "Re-tailor with AI",
+      "emptyHint": "Click \"Generate with AI\" to fill this section automatically"
+    },
+    "signatures": {
+      "title": "Signatures of the parties",
+      "ourOrganization": "Our organization",
+      "signedByUs": "Signed on our side",
+      "signerName": "Signatory name",
+      "signatureDate": "Signature date",
+      "counterparty": "Counterparty",
+      "signedByCounterparty": "Signed by the counterparty",
+      "pdfImported": "Signed PDF uploaded successfully",
+      "replace": "Replace",
+      "importSignedPdf": "Upload the signed PDF",
+      "acceptedFormats": "Accepted formats: PDF",
+      "browse": "Browse..."
+    },
+    "validation": {
+      "titleRequired": "Contract title is required",
+      "endBeforeStart": "The end date must be on or after the start date."
+    },
+    "messages": {
+      "createSuccess": "Contract created successfully! You can now upload the signed PDF.",
+      "saveError": "Error while saving"
+    },
+    "fields": {
+      "title": "Contract title",
+      "titlePlaceholder": "e.g. Services agreement — Mobile app development",
+      "language": "Contract language",
+      "counterpartyTitle": "Contract counterparty",
+      "client": "Client",
+      "selectClient": "Select a client",
+      "counterpartName": "Counterparty name",
+      "counterpartPlaceholder": "Name of the company or person",
+      "description": "Purpose of the contract",
+      "descriptionPlaceholder": "Describe the purpose and context of the contract...",
+      "paymentTermsPlaceholder": "e.g. 50% on signature, 50% on delivery — Net 30 days"
+    },
+    "finalize": {
+      "renewalAndAlerts": "Renewal & Alerts",
+      "renewalNotice": "Renewal notice (days)",
+      "summary": "Contract summary",
+      "title": "Title",
+      "type": "Type",
+      "language": "Language",
+      "counterparty": "Counterparty",
+      "duration": "Duration",
+      "value": "Value",
+      "sections": "Sections",
+      "sectionsGenerated": "{{done}}/{{total}} generated",
+      "signaturesInfo": "Signatures and the signed PDF upload are handled from the contract's <strong>detail view</strong>, once it has been created."
+    },
+    "header": {
+      "editTitle": "Edit contract",
+      "newTitle": "New contract",
+      "editSubtitle": "Update the contract information",
+      "newSubtitle": "Create a professional contract with section-by-section AI drafting"
+    },
+    "actions": {
+      "save": "Save",
+      "create": "Create contract"
+    }
+  },
+  "templates": {
+    "newTemplate": "New Template",
+    "active": "Active",
+    "inactive": "Inactive",
+    "noDescription": "No description",
+    "types": {
+      "contract": "Standard contract",
+      "payment": "Payment agreement",
+      "receipt": "Payment receipt",
+      "quote": "Quote",
+      "other": "Other"
+    },
+    "empty": {
+      "title": "No contract templates",
+      "description": "You haven't created any contract, payment or quote templates yet.",
+      "action": "Create a template"
+    },
+    "columns": {
+      "type": "Type",
+      "actions": "Actions"
+    },
+    "tooltips": {
+      "view": "Preview / View"
+    },
+    "dialog": {
+      "editTitle": "Edit template",
+      "newTitle": "New template"
+    },
+    "fields": {
+      "name": "Template name",
+      "documentType": "Document type",
+      "description": "Description",
+      "content": "Template content (HTML/Markdown)",
+      "contentHelper": "Enter the template text",
+      "aiInstructions": "Instructions for the AI (optional)",
+      "aiInstructionsHelper": "e.g. 'Use the supplier's first and last name to generate the final signature.'",
+      "status": "Status"
+    },
+    "view": {
+      "content": "Template content:",
+      "aiInstructions": "AI instructions:"
+    },
+    "messages": {
+      "loadError": "Error loading templates",
+      "nameContentRequired": "Name and content are required",
+      "updateSuccess": "Template updated successfully",
+      "createSuccess": "Template created successfully",
+      "saveError": "Error saving template",
+      "deleteConfirm": "Are you sure you want to delete this template?",
+      "deleteSuccess": "Template deleted successfully",
+      "deleteError": "Error deleting template"
     }
   }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -49,9 +50,10 @@ import {
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 
-const steps = ['Téléverser le fichier', 'Aperçu et mapping', 'Configuration', 'Import'];
+const steps = ['upload', 'previewMapping', 'configuration', 'import'];
 
 function MigrationWizard() {
+  const { t } = useTranslation(['dataImport', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
@@ -156,26 +158,20 @@ function MigrationWizard() {
   };
 
   const getEntityTypeLabel = (type) => {
-    const labels = {
-      suppliers: 'Fournisseurs',
-      products: 'Produits',
-      clients: 'Clients',
-      purchase_orders: 'Bons de commande',
-      invoices: 'Factures',
-    };
-    return labels[type] || type;
+    const labels = ['suppliers', 'products', 'clients', 'purchase_orders', 'invoices'];
+    return labels.includes(type) ? t(`dataImport:entities.${type}`) : type;
   };
 
   const renderStep1 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Téléverser le fichier source
+        {t('dataImport:migration.step1.title')}
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Nom de l'import"
+            label={t('dataImport:migration.step1.importName')}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
@@ -183,32 +179,32 @@ function MigrationWizard() {
         </Grid>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
-            <InputLabel>Type de source</InputLabel>
+            <InputLabel>{t('dataImport:migration.step1.sourceType')}</InputLabel>
             <Select
               value={formData.source_type}
               onChange={(e) => setFormData({ ...formData, source_type: e.target.value })}
-              label="Type de source"
+              label={t('dataImport:migration.step1.sourceType')}
             >
               <MenuItem value="excel_csv">Excel / CSV</MenuItem>
               <MenuItem value="quickbooks" disabled>
-                QuickBooks (Bientôt disponible)
+                {t('dataImport:migration.step1.quickbooksSoon')}
               </MenuItem>
             </Select>
           </FormControl>
         </Grid>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
-            <InputLabel>Type d'entité</InputLabel>
+            <InputLabel>{t('dataImport:migration.step1.entityType')}</InputLabel>
             <Select
               value={formData.entity_type}
               onChange={(e) => setFormData({ ...formData, entity_type: e.target.value })}
-              label="Type d'entité"
+              label={t('dataImport:migration.step1.entityType')}
             >
-              <MenuItem value="suppliers">Fournisseurs</MenuItem>
-              <MenuItem value="products">Produits</MenuItem>
-              <MenuItem value="clients">Clients</MenuItem>
-              <MenuItem value="purchase_orders">Bons de commande</MenuItem>
-              <MenuItem value="invoices">Factures</MenuItem>
+              <MenuItem value="suppliers">{t('dataImport:entities.suppliers')}</MenuItem>
+              <MenuItem value="products">{t('dataImport:entities.products')}</MenuItem>
+              <MenuItem value="clients">{t('dataImport:entities.clients')}</MenuItem>
+              <MenuItem value="purchase_orders">{t('dataImport:entities.purchase_orders')}</MenuItem>
+              <MenuItem value="invoices">{t('dataImport:entities.invoices')}</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -219,7 +215,7 @@ function MigrationWizard() {
             startIcon={<CloudUpload />}
             fullWidth
           >
-            {formData.source_file ? formData.source_file.name : 'Sélectionner un fichier'}
+            {formData.source_file ? formData.source_file.name : t('dataImport:migration.step1.selectFile')}
             <input type="file" hidden onChange={handleFileChange} accept=".xlsx,.xls,.csv" />
           </Button>
         </Grid>
@@ -231,13 +227,13 @@ function MigrationWizard() {
                 onChange={(e) => setFormData({ ...formData, has_header: e.target.checked })}
               />
             }
-            label="Le fichier contient des en-têtes"
+            label={t('dataImport:migration.step1.hasHeaders')}
           />
         </Grid>
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
-            label="Délimiteur (pour CSV)"
+            label={t('dataImport:migration.step1.delimiter')}
             value={formData.delimiter}
             onChange={(e) => setFormData({ ...formData, delimiter: e.target.value })}
             disabled={formData.source_type !== 'excel_csv'}
@@ -251,7 +247,7 @@ function MigrationWizard() {
           disabled={!formData.name || !formData.source_file || loading}
           startIcon={<Visibility />}
         >
-          Générer l'aperçu
+          {t('dataImport:migration.step1.generatePreview')}
         </Button>
       </Box>
     </Box>
@@ -260,25 +256,25 @@ function MigrationWizard() {
   const renderStep2 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Aperçu des données et mapping des champs
+        {t('dataImport:migration.step2.title')}
       </Typography>
       {loading ? (
-        <LoadingState message="Analyse du fichier en cours..." size={60} />
+        <LoadingState message={t('dataImport:migration.step2.analyzing')} size={60} />
       ) : (
         <>
           <Alert severity="info" sx={{ mb: 2 }}>
-            {previewData?.length || 0} lignes affichées sur {currentJob?.total_rows || 0} total
+            {t('dataImport:migration.step2.rowsShown', { shown: previewData?.length || 0, total: currentJob?.total_rows || 0 })}
           </Alert>
           <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-            Mapping des champs
+            {t('dataImport:migration.step2.fieldMapping')}
           </Typography>
           <TableContainer component={Paper} sx={{ mb: 3 }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Champ source</TableCell>
-                  <TableCell>Champ destination</TableCell>
-                  <TableCell>Transformation</TableCell>
+                  <TableCell>{t('dataImport:migration.step2.sourceField')}</TableCell>
+                  <TableCell>{t('dataImport:migration.step2.destField')}</TableCell>
+                  <TableCell>{t('dataImport:migration.step2.transformation')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -293,7 +289,7 @@ function MigrationWizard() {
                             handleFieldMappingChange(sourceField, e.target.value)
                           }
                         >
-                          <MenuItem value="">-- Ignorer --</MenuItem>
+                          <MenuItem value="">{t('dataImport:migration.step2.ignore')}</MenuItem>
                           {availableFields?.map((field) => (
                             <MenuItem key={field} value={field}>
                               {field}
@@ -311,11 +307,11 @@ function MigrationWizard() {
                           }
                           disabled={!fieldMapping[sourceField]}
                         >
-                          <MenuItem value="">Aucune</MenuItem>
-                          <MenuItem value="uppercase">MAJUSCULES</MenuItem>
-                          <MenuItem value="lowercase">minuscules</MenuItem>
-                          <MenuItem value="capitalize">Capitaliser</MenuItem>
-                          <MenuItem value="strip">Enlever espaces</MenuItem>
+                          <MenuItem value="">{t('dataImport:migration.step2.transforms.none')}</MenuItem>
+                          <MenuItem value="uppercase">{t('dataImport:migration.step2.transforms.uppercase')}</MenuItem>
+                          <MenuItem value="lowercase">{t('dataImport:migration.step2.transforms.lowercase')}</MenuItem>
+                          <MenuItem value="capitalize">{t('dataImport:migration.step2.transforms.capitalize')}</MenuItem>
+                          <MenuItem value="strip">{t('dataImport:migration.step2.transforms.strip')}</MenuItem>
                         </Select>
                       </FormControl>
                     </TableCell>
@@ -325,7 +321,7 @@ function MigrationWizard() {
             </Table>
           </TableContainer>
           <Typography variant="subtitle2" gutterBottom>
-            Aperçu des données
+            {t('dataImport:migration.step2.dataPreview')}
           </Typography>
           <TableContainer component={Paper}>
             <Table size="small">
@@ -352,14 +348,14 @@ function MigrationWizard() {
         </>
       )}
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
-        <Button onClick={() => setActiveStep(0)}>Retour</Button>
+        <Button onClick={() => setActiveStep(0)}>{t('dataImport:actions.back')}</Button>
         <Button
           variant="contained"
           onClick={handleStep2Submit}
           disabled={Object.keys(fieldMapping).length === 0}
           startIcon={<Settings />}
         >
-          Configurer
+          {t('dataImport:migration.step2.configure')}
         </Button>
       </Box>
     </Box>
@@ -368,7 +364,7 @@ function MigrationWizard() {
   const renderStep3 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Configuration de l'import
+        {t('dataImport:migration.step3.title')}
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12}>
@@ -379,7 +375,7 @@ function MigrationWizard() {
                 onChange={(e) => setSkipDuplicates(e.target.checked)}
               />
             }
-            label="Ignorer les doublons"
+            label={t('dataImport:migration.step3.skipDuplicates')}
           />
         </Grid>
         <Grid item xs={12}>
@@ -391,28 +387,28 @@ function MigrationWizard() {
                 disabled={!skipDuplicates}
               />
             }
-            label="Mettre à jour les enregistrements existants"
+            label={t('dataImport:migration.step3.updateExisting')}
           />
         </Grid>
         <Grid item xs={12}>
           <Alert severity="info">
             <Typography variant="body2">
-              <strong>Résumé:</strong>
+              <strong>{t('dataImport:migration.step3.summary')}</strong>
             </Typography>
             <Typography variant="body2">
-              • {currentJob?.total_rows || 0} lignes à importer
+              • {t('dataImport:migration.step3.rowsToImport', { rows: currentJob?.total_rows || 0 })}
             </Typography>
             <Typography variant="body2">
-              • {Object.keys(fieldMapping).length} champs mappés
+              • {t('dataImport:migration.step3.mappedFields', { fields: Object.keys(fieldMapping).length })}
             </Typography>
             <Typography variant="body2">
-              • Type: {getEntityTypeLabel(formData.entity_type)}
+              • {t('dataImport:migration.step3.type', { type: getEntityTypeLabel(formData.entity_type) })}
             </Typography>
           </Alert>
         </Grid>
       </Grid>
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
-        <Button onClick={() => setActiveStep(1)}>Retour</Button>
+        <Button onClick={() => setActiveStep(1)}>{t('dataImport:actions.back')}</Button>
         <Button
           variant="contained"
           onClick={handleStep3Submit}
@@ -420,7 +416,7 @@ function MigrationWizard() {
           startIcon={<PlayArrow />}
           color="success"
         >
-          Démarrer l'import
+          {t('dataImport:migration.step3.start')}
         </Button>
       </Box>
     </Box>
@@ -429,7 +425,7 @@ function MigrationWizard() {
   const renderStep4 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>
-        Import en cours
+        {t('dataImport:migration.step4.title')}
       </Typography>
       {currentJob?.status === 'running' && (
         <>
@@ -439,19 +435,22 @@ function MigrationWizard() {
             sx={{ mb: 2 }}
           />
           <Typography variant="body2" color="text.secondary" gutterBottom>
-            Progression: {currentJob.processed_rows} / {currentJob.total_rows} lignes (
-            {currentJob.progress_percentage.toFixed(1)}%)
+            {t('dataImport:migration.step4.progress', {
+              processed: currentJob.processed_rows,
+              total: currentJob.total_rows,
+              percent: currentJob.progress_percentage.toFixed(1),
+            })}
           </Typography>
         </>
       )}
       {currentJob?.status === 'completed' && (
         <Alert severity="success" icon={<CheckCircle />} sx={{ mb: 2 }}>
-          Import terminé avec succès!
+          {t('dataImport:migration.step4.completed')}
         </Alert>
       )}
       {currentJob?.status === 'failed' && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          Erreur lors de l'import: {currentJob.error_message}
+          {t('dataImport:migration.step4.failed', { message: currentJob.error_message })}
         </Alert>
       )}
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -459,7 +458,7 @@ function MigrationWizard() {
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
-                Succès
+                {t('dataImport:results.success')}
               </Typography>
               <Typography variant="h4" color="success.main">
                 {currentJob?.success_count || 0}
@@ -471,7 +470,7 @@ function MigrationWizard() {
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
-                Erreurs
+                {t('dataImport:results.errors')}
               </Typography>
               <Typography variant="h4" color="error.main">
                 {currentJob?.error_count || 0}
@@ -483,7 +482,7 @@ function MigrationWizard() {
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
-                Ignorés
+                {t('dataImport:results.skipped')}
               </Typography>
               <Typography variant="h4" color="warning.main">
                 {currentJob?.skipped_count || 0}
@@ -493,15 +492,15 @@ function MigrationWizard() {
         </Grid>
       </Grid>
       <Typography variant="subtitle2" gutterBottom>
-        Journal d'import
+        {t('dataImport:migration.step4.log')}
       </Typography>
       <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
         <Table size="small" stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>Ligne</TableCell>
-              <TableCell>Niveau</TableCell>
-              <TableCell>Message</TableCell>
+              <TableCell>{t('dataImport:migration.step4.columns.row')}</TableCell>
+              <TableCell>{t('dataImport:migration.step4.columns.level')}</TableCell>
+              <TableCell>{t('dataImport:migration.step4.columns.message')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -530,7 +529,7 @@ function MigrationWizard() {
       {currentJob?.status === 'completed' && (
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button variant="contained" onClick={() => navigate('/migration/jobs')}>
-            Voir tous les imports
+            {t('dataImport:migration.step4.viewAll')}
           </Button>
         </Box>
       )}
@@ -540,20 +539,20 @@ function MigrationWizard() {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Assistant d'import de données
+        {t('dataImport:migration.title')}
       </Typography>
       <Card>
         <CardContent>
           <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
+            {steps.map((stepKey) => (
+              <Step key={stepKey}>
+                <StepLabel>{t(`dataImport:migration.steps.${stepKey}`)}</StepLabel>
               </Step>
             ))}
           </Stepper>
           {error && (
             <ErrorState
-              title="Erreur"
+              title={t('dataImport:migration.errorTitle')}
               message={error}
               showHome={false}
               onRetry={() => window.location.reload()}

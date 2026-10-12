@@ -591,7 +591,7 @@ export default function Landing() {
                   border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
                   boxShadow: isDark ? '0 24px 60px rgba(0,0,0,0.5)' : '0 16px 48px rgba(0,0,0,0.08)',
                 }}>
-                  <img src="/procura.png" alt="Interface Procura" style={{ width: '100%', display: 'block' }} />
+                  <img src="/procura.png" alt={t('interface.imageAlt')} style={{ width: '100%', display: 'block' }} />
                 </Box>
               </div>
             </Grid>
@@ -844,7 +844,7 @@ export default function Landing() {
             />
             <Typography variant="h2" sx={{ ...serifTitle, fontSize: { xs: '2.1rem', sm: '3rem' }, mb: 2.5 }}>
               {t('finalCta.titleStart')}{' '}
-              <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>{t('finalCta.titleHighlight')}</Box> ?
+              <Box component="span" sx={{ fontStyle: 'italic', color: '#2563eb' }}>{t('finalCta.titleHighlight')}</Box>{t('finalCta.questionMark')}
             </Typography>
             <Typography sx={{
               color: pal.body,

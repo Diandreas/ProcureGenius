@@ -10,34 +10,36 @@ import {
   CheckCircle, CreditCard,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import subscriptionAPI from '../../services/subscriptionAPI';
 import { neuShadows } from '../neumorphic/NeumorphicList';
 
 const PLAN_META = {
-  free: { label: 'Libre', color: '#64748b' },
+  free: { labelKey: 'settings:billingPanel.plans.free', color: '#64748b' },
   pro: { label: 'Pro', color: '#2563eb' },
   business: { label: 'Business', color: '#8b5cf6' },
   enterprise: { label: 'Enterprise', color: '#0b1f4d' },
 };
 const STATUS_META = {
-  active: { label: 'Actif', color: '#10b981' },
-  trial: { label: 'Essai', color: '#f59e0b' },
-  past_due: { label: 'Paiement en retard', color: '#ef4444' },
-  cancelled: { label: 'Annulé', color: '#94a3b8' },
-  expired: { label: 'Expiré', color: '#94a3b8' },
+  active: { labelKey: 'settings:billingPanel.status.active', color: '#10b981' },
+  trial: { labelKey: 'settings:billingPanel.status.trial', color: '#f59e0b' },
+  past_due: { labelKey: 'settings:billingPanel.status.past_due', color: '#ef4444' },
+  cancelled: { labelKey: 'settings:billingPanel.status.cancelled', color: '#94a3b8' },
+  expired: { labelKey: 'settings:billingPanel.status.expired', color: '#94a3b8' },
 };
 const QUOTA_LABELS = {
-  invoices: 'Factures (ce mois)',
-  clients: 'Clients',
-  products: 'Produits',
-  purchase_orders: 'Bons de commande (ce mois)',
-  suppliers: 'Fournisseurs',
-  ai_requests: 'Requêtes IA (ce mois)',
+  invoices: 'settings:billingPanel.quotas.invoices',
+  clients: 'settings:billingPanel.quotas.clients',
+  products: 'settings:billingPanel.quotas.products',
+  purchase_orders: 'settings:billingPanel.quotas.purchase_orders',
+  suppliers: 'settings:billingPanel.quotas.suppliers',
+  ai_requests: 'settings:billingPanel.quotas.ai_requests',
 };
 
 export default function BillingPanel() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t, i18n } = useTranslation(['settings', 'common']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [portalBusy, setPortalBusy] = useState(false);
@@ -61,7 +63,7 @@ export default function BillingPanel() {
       enqueueSnackbar(
         backendMsg && !/stripe error/i.test(backendMsg)
           ? backendMsg
-          : "Vous n'avez pas encore d'abonnement payant. Choisissez une formule pour activer la facturation.",
+          : t('settings:billingPanel.noPaidSubscription'),
         { variant: 'info' }
       );
     } finally { setPortalBusy(false); }
@@ -78,7 +80,7 @@ export default function BillingPanel() {
   const hasStripe = !!(sub?.payment_method === 'stripe');
   const quotas = data?.quotas || {};
 
-  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
 
   return (
     <Box>
@@ -95,9 +97,9 @@ export default function BillingPanel() {
           <Grid item xs={12} sm={7}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1 }}>
               <WorkspacePremium sx={{ color: meta.color }} />
-              <Typography sx={{ fontWeight: 800, fontSize: '1.5rem' }}>{meta.label}</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: '1.5rem' }}>{meta.labelKey ? t(meta.labelKey) : meta.label}</Typography>
               <Chip
-                label={isTrial && sub?.trial_days_remaining != null ? `Essai — ${sub.trial_days_remaining}j restants` : status.label}
+                label={isTrial && sub?.trial_days_remaining != null ? t('settings:billingPanel.trialRemaining', { count: sub.trial_days_remaining }) : t(status.labelKey)}
                 size="small"
                 sx={{ fontWeight: 700, bgcolor: alpha(status.color, 0.15), color: planCode === 'pro' ? '#fff' : status.color }}
               />
@@ -105,9 +107,9 @@ export default function BillingPanel() {
             <Typography sx={{ fontSize: '0.9rem', opacity: 0.75 }}>
               {sub
                 ? (isTrial
-                    ? `Votre essai se termine le ${fmtDate(sub.trial_ends_at || sub.current_period_end)}.`
-                    : `${planCode === 'free' ? 'Plan gratuit, sans engagement.' : `Prochain renouvellement le ${fmtDate(sub.current_period_end)}.`}`)
-                : 'Plan gratuit, sans engagement.'}
+                    ? t('settings:billingPanel.trialEnds', { date: fmtDate(sub.trial_ends_at || sub.current_period_end) })
+                    : `${planCode === 'free' ? t('settings:billingPanel.freePlan') : t('settings:billingPanel.nextRenewal', { date: fmtDate(sub.current_period_end) })}`)
+                : t('settings:billingPanel.freePlan')}
             </Typography>
           </Grid>
           <Grid item xs={12} sm={5}>
@@ -119,7 +121,7 @@ export default function BillingPanel() {
                   bgcolor: planCode === 'pro' ? '#f59e0b' : 'primary.main', color: planCode === 'pro' ? '#0f172a' : '#fff',
                   '&:hover': { bgcolor: planCode === 'pro' ? '#d97706' : 'primary.dark' } }}
               >
-                {planCode === 'free' ? 'Choisir une formule' : 'Changer de formule'}
+                {planCode === 'free' ? t('settings:billingPanel.choosePlan') : t('settings:billingPanel.changePlan')}
               </Button>
               <Button
                 variant="outlined" fullWidth disabled={portalBusy}
@@ -129,7 +131,7 @@ export default function BillingPanel() {
                   borderColor: planCode === 'pro' ? 'rgba(255,255,255,0.4)' : undefined,
                   color: planCode === 'pro' ? '#fff' : undefined }}
               >
-                Gérer la facturation
+                {t('settings:billingPanel.manageBilling')}
               </Button>
             </Stack>
           </Grid>
@@ -139,7 +141,7 @@ export default function BillingPanel() {
       {/* ─── Quotas / utilisation ──────────────────────────────────────── */}
       {Object.keys(quotas).length > 0 && (
         <Box sx={{ borderRadius: 4, bgcolor: 'background.paper', boxShadow: (th) => neuShadows.shadowRaised(th), p: { xs: 2.5, sm: 3 }, mb: 3 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>Utilisation</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', mb: 2 }}>{t('settings:billingPanel.usage')}</Typography>
           <Grid container spacing={2.5}>
             {Object.entries(quotas).map(([key, q]) => {
               const limit = q.limit;
@@ -150,7 +152,7 @@ export default function BillingPanel() {
               return (
                 <Grid item xs={12} sm={6} md={4} key={key}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
-                    <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary', fontWeight: 600 }}>{QUOTA_LABELS[key] || key}</Typography>
+                    <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary', fontWeight: 600 }}>{QUOTA_LABELS[key] ? t(QUOTA_LABELS[key]) : key}</Typography>
                     <Typography sx={{ fontSize: '0.8rem', fontWeight: 700 }}>
                       {used}{unlimited ? '' : ` / ${limit}`}
                     </Typography>
@@ -158,7 +160,7 @@ export default function BillingPanel() {
                   {unlimited ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#10b981' }}>
                       <AutoAwesome sx={{ fontSize: 15 }} />
-                      <Typography sx={{ fontSize: '0.72rem', fontWeight: 700 }}>Illimité</Typography>
+                      <Typography sx={{ fontSize: '0.72rem', fontWeight: 700 }}>{t('settings:billingPanel.unlimited')}</Typography>
                     </Box>
                   ) : (
                     <LinearProgress variant="determinate" value={pct}
@@ -178,13 +180,13 @@ export default function BillingPanel() {
         sx={{ borderRadius: 3 }}
         action={hasStripe ? (
           <Button color="inherit" size="small" endIcon={<OpenInNew sx={{ fontSize: 15 }} />} onClick={openPortal}>
-            Portail
+            {t('settings:billingPanel.portal')}
           </Button>
         ) : null}
       >
         {hasStripe
-          ? 'Votre facturation est gérée par Stripe : factures, moyen de paiement et annulation depuis le portail.'
-          : "1 mois d'essai offert sur Pro et Business, sans carte. La facturation s'active dès votre première souscription payante."}
+          ? t('settings:billingPanel.stripeManaged')
+          : t('settings:billingPanel.trialOffer')}
       </Alert>
     </Box>
   );

@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { AlertCircle } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
+import useCurrency from '../../hooks/useCurrency';
 
 const ClientsAtRiskWidget = ({ period = 'last_30_days' }) => {
+  const { format } = useCurrency();
   const { t } = useTranslation(['common', 'dashboard']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,13 +21,13 @@ const ClientsAtRiskWidget = ({ period = 'last_30_days' }) => {
         if (response.success) {
           setData(response.data);
         } else {
-          setError('Failed to load data');
+          setError(t('dashboard:widgets.shared.loadFailed'));
         }
       } catch (error) {
         console.error('Error:', error);
-        setError(error.response?.status === 500 
-          ? 'Erreur serveur. Veuillez réessayer plus tard.' 
-          : 'Erreur lors du chargement des données');
+        setError(error.response?.status === 500
+          ? t('dashboard:widgets.shared.serverError')
+          : t('dashboard:messages.loadingError'));
         setData(null);
       } finally {
         setLoading(false);
@@ -36,7 +38,7 @@ const ClientsAtRiskWidget = ({ period = 'last_30_days' }) => {
 
   if (loading) return <div className="widget-loading">{t('labels.loading')}</div>;
   if (error) return <div className="widget-error"><AlertCircle size={20} className="widget-error-icon" /><div className="widget-error-text">{error}</div></div>;
-  if (!data || !data.clients || data.clients.length === 0) return <div className="widget-empty"><AlertCircle size={40} className="widget-empty-icon" /><div className="widget-empty-text">{t('widgets.clients_at_risk_empty', { ns: 'dashboard', defaultValue: 'Aucun client à risque' })}</div></div>;
+  if (!data || !data.clients || data.clients.length === 0) return <div className="widget-empty"><AlertCircle size={40} className="widget-empty-icon" /><div className="widget-empty-text">{t('dashboard:widgets.clients_at_risk_empty')}</div></div>;
 
   return (
     <>
@@ -45,7 +47,7 @@ const ClientsAtRiskWidget = ({ period = 'last_30_days' }) => {
           <AlertCircle size={16} className="alert-icon" />
           <div className="alert-content">
             <div className="alert-title">{client.name}</div>
-            <div className="alert-message">{client.overdue_invoices} {t('widgets.overdue_invoices_label', { ns: 'dashboard', defaultValue: 'facture(s) en retard' })} - {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(client.overdue_amount)}</div>
+            <div className="alert-message">{client.overdue_invoices} {t('dashboard:widgets.overdue_invoices_label')} - {format(client.overdue_amount, 0)}</div>
           </div>
         </div>
       ))}

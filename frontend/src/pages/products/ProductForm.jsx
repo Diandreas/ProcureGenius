@@ -89,8 +89,10 @@ import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { productsAPI, suppliersAPI, productCategoriesAPI, warehousesAPI } from '../../services/api';
 import { offlineData } from '../../services/offline/entities';
+import useCurrency from '../../hooks/useCurrency';
 
 function ProductForm() {
+    const { symbol } = useCurrency(); // devise de l'organisation (FCFA, €...)
     const { t } = useTranslation(['products', 'common']);
     const navigate = useNavigate();
     const { id } = useParams();
@@ -525,11 +527,11 @@ function ProductForm() {
 
                         if (lotPromises.length > 0) {
                             await Promise.all(lotPromises);
-                            enqueueSnackbar(`${lotPromises.length} lot(s) initial(aux) créé(s)`, { variant: 'info' });
+                            enqueueSnackbar(t('products:form.lotsCreated', { count: lotPromises.length }), { variant: 'info' });
                         }
                     } catch (e) {
                         console.warn('Erreur lors de la création des lots:', e);
-                        enqueueSnackbar('Erreur lors de la création des lots initiaux', { variant: 'warning' });
+                        enqueueSnackbar(t('products:form.lotsCreateError'), { variant: 'warning' });
                     }
                 }
             }
@@ -827,7 +829,7 @@ function ProductForm() {
                                                 ))}
                                             </Box>
                                             <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700, px: 0.5 }}>
-                                                {steps[safeActiveStep]} — Étape {safeActiveStep + 1}/{steps.length}
+                                                {steps[safeActiveStep]} — {t('products:form.stepOf', { current: safeActiveStep + 1, total: steps.length })}
                                             </Typography>
                                         </Box>
                                     )}
@@ -856,7 +858,7 @@ function ProductForm() {
                                                                     {t('products:labels.generalInfo')}
                                                                 </Typography>
                                                                 <Typography variant="caption" color="text.secondary">
-                                                                    Type, nom et description
+                                                                    {t('products:form.generalInfoSubtitle')}
                                                                 </Typography>
                                                             </Box>
                                                         </Box>
@@ -952,7 +954,7 @@ function ProductForm() {
                                                                 {t('products:labels.pricing')}
                                                             </Typography>
                                                             <Typography variant="caption" color="text.secondary">
-                                                                Prix de vente, coût et catégorie
+                                                                {t('products:form.pricingSubtitle')}
                                                             </Typography>
                                                         </Box>
                                                     </Box>
@@ -975,7 +977,7 @@ function ProductForm() {
                                                                 error={touched.price && Boolean(errors.price)}
                                                                 helperText={touched.price && errors.price}
                                                                 InputProps={{
-                                                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                                                    startAdornment: <InputAdornment position="start">{symbol}</InputAdornment>,
                                                                 }}
                                                                 required
                                                             />
@@ -994,7 +996,7 @@ function ProductForm() {
                                                                 error={touched.cost_price && Boolean(errors.cost_price)}
                                                                 helperText={touched.cost_price && errors.cost_price}
                                                                 InputProps={{
-                                                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                                                    startAdornment: <InputAdornment position="start">{symbol}</InputAdornment>,
                                                                 }}
                                                             />
                                                         </Grid>
@@ -1038,7 +1040,7 @@ function ProductForm() {
                                                                             setCategories(prev => [...prev, res.data]);
                                                                             setFieldValue('category_id', res.data.id);
                                                                         } catch {
-                                                                            enqueueSnackbar('Erreur création catégorie', { variant: 'error' });
+                                                                            enqueueSnackbar(t('products:form.categoryCreateErrorShort'), { variant: 'error' });
                                                                         }
                                                                     } else if (newValue.inputValue) {
                                                                         // Option "Créer X"
@@ -1047,7 +1049,7 @@ function ProductForm() {
                                                                             setCategories(prev => [...prev, res.data]);
                                                                             setFieldValue('category_id', res.data.id);
                                                                         } catch {
-                                                                            enqueueSnackbar('Erreur création catégorie', { variant: 'error' });
+                                                                            enqueueSnackbar(t('products:form.categoryCreateErrorShort'), { variant: 'error' });
                                                                         }
                                                                     } else {
                                                                         setFieldValue('category_id', newValue.id);
@@ -1058,7 +1060,7 @@ function ProductForm() {
                                                                         o.name.toLowerCase().includes(params.inputValue.toLowerCase())
                                                                     );
                                                                     if (params.inputValue !== '' && !filtered.some(o => o.name.toLowerCase() === params.inputValue.toLowerCase())) {
-                                                                        filtered.push({ inputValue: params.inputValue, name: `Créer "${params.inputValue}"` });
+                                                                        filtered.push({ inputValue: params.inputValue, name: t('products:form.createOption', { value: params.inputValue }) });
                                                                     }
                                                                     return filtered;
                                                                 }}
@@ -1067,7 +1069,7 @@ function ProductForm() {
                                                                         {...params}
                                                                         label={t('products:labels.category')}
                                                                         size={isMobile ? "small" : "medium"}
-                                                                        placeholder="Tapez pour chercher ou créer..."
+                                                                        placeholder={t('products:form.categoryPlaceholder')}
                                                                     />
                                                                 )}
                                                             />
@@ -1163,16 +1165,16 @@ function ProductForm() {
                                                         </Box>
                                                         <Box>
                                                             <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                                                                Lots &amp; Stock Initial
+                                                                {t('products:form.lotsTitle')}
                                                             </Typography>
                                                             <Typography variant="caption" color="text.secondary">
-                                                                Définissez le stock de départ par lot
+                                                                {t('products:form.lotsSubtitle')}
                                                             </Typography>
                                                         </Box>
                                                     </Box>
 
                                                     <Alert severity="info" sx={{ mb: 3, borderRadius: 1.5 }}>
-                                                        Le stock est désormais géré exclusivement par lots. Ajoutez un ou plusieurs lots initiaux pour définir le stock de départ.
+                                                        {t('products:form.lotsInfo')}
                                                     </Alert>
 
                                                     <FieldArray name="lots">
@@ -1188,7 +1190,7 @@ function ProductForm() {
                                                                         borderColor: 'divider'
                                                                     }}>
                                                                         <Typography color="text.secondary" gutterBottom>
-                                                                            Aucun lot initial défini
+                                                                            {t('products:form.noInitialLot')}
                                                                         </Typography>
                                                                         <Button
                                                                             variant="contained"
@@ -1203,7 +1205,7 @@ function ProductForm() {
                                                                             })}
                                                                             sx={{ borderRadius: 2, textTransform: 'none' }}
                                                                         >
-                                                                            Ajouter un lot initial
+                                                                            {t('products:form.addInitialLot')}
                                                                         </Button>
                                                                     </Box>
                                                                 ) : (
@@ -1215,6 +1217,7 @@ function ProductForm() {
                                                                                         size="small"
                                                                                         color="error"
                                                                                         onClick={() => remove(index)}
+                                                                                        aria-label={t('products:form.removeLot')}
                                                                                         sx={{ position: 'absolute', top: 8, right: 8 }}
                                                                                     >
                                                                                         <DeleteOutline fontSize="small" />
@@ -1224,7 +1227,7 @@ function ProductForm() {
                                                                                             <TextField
                                                                                                 fullWidth
                                                                                                 size="small"
-                                                                                                label="Numéro de lot"
+                                                                                                label={t('products:form.batchNumber')}
                                                                                                 name={`lots.${index}.batch_number`}
                                                                                                 value={lot.batch_number}
                                                                                                 onChange={handleChange}
@@ -1237,7 +1240,7 @@ function ProductForm() {
                                                                                             <TextField
                                                                                                 fullWidth
                                                                                                 size="small"
-                                                                                                label="Quantité initiale"
+                                                                                                label={t('products:form.initialQuantity')}
                                                                                                 type="number"
                                                                                                 name={`lots.${index}.initial_quantity`}
                                                                                                 value={lot.initial_quantity}
@@ -1252,20 +1255,20 @@ function ProductForm() {
                                                                                             <TextField
                                                                                                 fullWidth
                                                                                                 size="small"
-                                                                                                label="Date d'expiration"
+                                                                                                label={t('products:form.expirationDate')}
                                                                                                 type="date"
                                                                                                 name={`lots.${index}.expiration_date`}
                                                                                                 value={lot.expiration_date || ''}
                                                                                                 onChange={handleChange}
                                                                                                 InputLabelProps={{ shrink: true }}
-                                                                                                helperText="Optionnel"
+                                                                                                helperText={t('products:labels.optional')}
                                                                                             />
                                                                                         </Grid>
                                                                                         <Grid item xs={12} md={4}>
                                                                                             <TextField
                                                                                                 fullWidth
                                                                                                 size="small"
-                                                                                                label="Référence fournisseur"
+                                                                                                label={t('products:form.supplierReference')}
                                                                                                 name={`lots.${index}.supplier_batch_reference`}
                                                                                                 value={lot.supplier_batch_reference}
                                                                                                 onChange={handleChange}
@@ -1275,13 +1278,13 @@ function ProductForm() {
                                                                                             <TextField
                                                                                                 fullWidth
                                                                                                 size="small"
-                                                                                                label="Description du lot"
+                                                                                                label={t('products:form.lotDescription')}
                                                                                                 multiline
                                                                                                 rows={2}
                                                                                                 name={`lots.${index}.description`}
                                                                                                 value={lot.description || ''}
                                                                                                 onChange={handleChange}
-                                                                                                placeholder="Description spécifique à ce lot (optionnel)"
+                                                                                                placeholder={t('products:form.lotDescriptionPlaceholder')}
                                                                                             />
                                                                                         </Grid>
                                                                                     </Grid>
@@ -1302,7 +1305,7 @@ function ProductForm() {
                                                                                 })}
                                                                                 sx={{ borderRadius: 2, textTransform: 'none' }}
                                                                             >
-                                                                                Ajouter un autre lot
+                                                                                {t('products:form.addAnotherLot')}
                                                                             </Button>
                                                                         </Grid>
                                                                     </Grid>
@@ -1360,7 +1363,7 @@ function ProductForm() {
                                                 onClick={handleStepBack}
                                                 disabled={isSubmitting}
                                             >
-                                                {activeStep === 0 ? t('products:actions.cancel') : 'Précédent'}
+                                                {activeStep === 0 ? t('products:actions.cancel') : t('products:form.previous')}
                                             </Button>
 
                                             {isLastStep ? (
@@ -1381,7 +1384,7 @@ function ProductForm() {
                                                     onClick={handleStepNext}
                                                     disabled={isSubmitting}
                                                 >
-                                                    Suivant
+                                                    {t('products:form.next')}
                                                 </Button>
                                             )}
                                         </Box>
@@ -1424,7 +1427,7 @@ function ProductForm() {
                                     {t('products:modals.selectSupplier', 'Sélectionner un fournisseur')}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
-                                    Choisissez un fournisseur pour ce produit
+                                    {t('products:modals.selectSupplierSubtitle')}
                                 </Typography>
                             </Box>
                         </Box>
@@ -1491,7 +1494,7 @@ function ProductForm() {
                                         </ListItemIcon>
                                         <ListItemText
                                             primary={supplier.name}
-                                            secondary={supplier.email || t('common:labels.noEmail')}
+                                            secondary={supplier.email || t('products:labels.noEmail')}
                                         />
                                     </ListItemButton>
                                 </ListItem>
@@ -1547,7 +1550,7 @@ function ProductForm() {
                                     {t('products:modals.manageWarehouses', 'Gérer les entrepôts')}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
-                                    Sélectionnez ou gérez vos entrepôts
+                                    {t('products:modals.manageWarehousesSubtitle')}
                                 </Typography>
                             </Box>
                         </Box>
@@ -1759,7 +1762,7 @@ function ProductForm() {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label={t('common:labels.province')}
+                                    label={t('products:modals.warehouseProvince')}
                                     value={warehouseFormData.province}
                                     onChange={(e) => setWarehouseFormData({ ...warehouseFormData, province: e.target.value })}
                                     variant="outlined"
@@ -1769,7 +1772,7 @@ function ProductForm() {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label={t('common:labels.postalCode')}
+                                    label={t('products:modals.warehousePostalCode')}
                                     value={warehouseFormData.postal_code}
                                     onChange={(e) => setWarehouseFormData({ ...warehouseFormData, postal_code: e.target.value })}
                                     variant="outlined"
@@ -1779,7 +1782,7 @@ function ProductForm() {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label={t('common:labels.country')}
+                                    label={t('products:modals.warehouseCountry')}
                                     value={warehouseFormData.country}
                                     onChange={(e) => setWarehouseFormData({ ...warehouseFormData, country: e.target.value })}
                                     variant="outlined"
@@ -1843,7 +1846,7 @@ function ProductForm() {
                                     {t('products:modals.manageCategories', 'Gérer les catégories')}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary">
-                                    Organisez vos produits par catégories
+                                    {t('products:modals.manageCategoriesSubtitle')}
                                 </Typography>
                             </Box>
                         </Box>
@@ -1971,7 +1974,7 @@ function ProductForm() {
                                         </ListItemIcon>
                                         <ListItemText
                                             primary={category.name}
-                                            secondary={category.description || t('common:labels.noDescription')}
+                                            secondary={category.description || t('products:labels.noDescription')}
                                         />
                                     </ListItemButton>
                                 </ListItem>

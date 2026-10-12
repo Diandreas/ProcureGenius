@@ -20,9 +20,11 @@ import {
   Update,
   WifiOff,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { usePWA } from '../hooks/usePWA';
 
 function PWAInstallPrompt() {
+  const { t } = useTranslation('common');
   const {
     isInstallable,
     isInstalled,
@@ -74,7 +76,7 @@ function PWAInstallPrompt() {
                   onClick={() => setShowInstallDialog(true)}
                   startIcon={<GetApp />}
                 >
-                  Installer
+                  {t('common:pwa.install.button')}
                 </Button>
                 <IconButton
                   size="small"
@@ -86,12 +88,12 @@ function PWAInstallPrompt() {
               </>
             }
           >
-            Installer l'application pour un accès rapide et hors ligne
+            {t('common:pwa.prompt.snackbar')}
           </Alert>
         </Snackbar>
 
         <Dialog open={showInstallDialog} onClose={handleCloseDialog}>
-          <DialogTitle>Installer l'application</DialogTitle>
+          <DialogTitle>{t('common:pwa.prompt.dialogTitle')}</DialogTitle>
           <DialogContent>
             <Box sx={{ textAlign: 'center', py: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
@@ -100,31 +102,31 @@ function PWAInstallPrompt() {
               </Box>
               
               <Typography variant="h6" gutterBottom>
-                Avantages de l'installation
+                {t('common:pwa.prompt.benefitsTitle')}
               </Typography>
               
               <Box sx={{ textAlign: 'left', mt: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <OfflinePin sx={{ mr: 1, color: 'success.main' }} />
-                  <Typography>Accès hors ligne aux données</Typography>
+                  <Typography>{t('common:pwa.prompt.benefitOffline')}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <GetApp sx={{ mr: 1, color: 'primary.main' }} />
-                  <Typography>Lancement rapide depuis l'écran d'accueil</Typography>
+                  <Typography>{t('common:pwa.prompt.benefitLaunch')}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Update sx={{ mr: 1, color: 'info.main' }} />
-                  <Typography>Mises à jour automatiques</Typography>
+                  <Typography>{t('common:pwa.prompt.benefitUpdates')}</Typography>
                 </Box>
               </Box>
             </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>
-              Plus tard
+              {t('common:pwa.install.later')}
             </Button>
             <Button variant="contained" onClick={handleInstall} startIcon={<GetApp />}>
-              Installer maintenant
+              {t('common:pwa.prompt.installNow')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -140,11 +142,11 @@ function PWAInstallPrompt() {
           severity="info"
           action={
             <Button color="inherit" size="small" onClick={updatePWA} startIcon={<Update />}>
-              Mettre à jour
+              {t('common:pwa.prompt.update')}
             </Button>
           }
         >
-          Une nouvelle version de l'application est disponible
+          {t('common:pwa.prompt.updateAvailable')}
         </Alert>
       </Snackbar>
     );
@@ -155,7 +157,7 @@ function PWAInstallPrompt() {
     return (
       <Snackbar open={true} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
         <Alert severity="warning" icon={<WifiOff />}>
-          Vous êtes hors ligne - Certaines fonctionnalités peuvent être limitées
+          {t('common:pwa.prompt.offline')}
         </Alert>
       </Snackbar>
     );

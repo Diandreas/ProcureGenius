@@ -3,10 +3,12 @@
  * This shows how to integrate ads into your dashboard
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Container, Grid, Box, Typography } from '@mui/material';
 import { ConditionalAdBanner } from './AdSense';
 
 function DashboardWithAds() {
+  const { t } = useTranslation(['dashboard', 'common']);
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       {/* Top Leaderboard Ad */}
@@ -14,7 +16,7 @@ function DashboardWithAds() {
 
       {/* Dashboard Header */}
       <Typography variant="h4" gutterBottom sx={{ mt: 2 }}>
-        Tableau de bord
+        {t('common:navigation.dashboard')}
       </Typography>
 
       <Grid container spacing={3}>
@@ -24,13 +26,13 @@ function DashboardWithAds() {
           <Box sx={{ mb: 3 }}>
             {/* Widget 1 */}
             <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, mb: 2 }}>
-              <Typography variant="h6">Statistiques du mois</Typography>
+              <Typography variant="h6">{t('dashboard:dashboardWithAds.monthlyStats')}</Typography>
               {/* Stats content */}
             </Box>
 
             {/* Widget 2 */}
             <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, mb: 2 }}>
-              <Typography variant="h6">Activités récentes</Typography>
+              <Typography variant="h6">{t('dashboard:dashboardWithAds.recentActivities')}</Typography>
               {/* Activities content */}
             </Box>
 
@@ -39,7 +41,7 @@ function DashboardWithAds() {
 
             {/* Widget 3 */}
             <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, mt: 2 }}>
-              <Typography variant="h6">Graphiques</Typography>
+              <Typography variant="h6">{t('dashboard:dashboardWithAds.charts')}</Typography>
               {/* Charts content */}
             </Box>
           </Box>
@@ -53,7 +55,7 @@ function DashboardWithAds() {
           {/* Sidebar Widgets */}
           <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 2, mt: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Actions rapides
+              {t('dashboard:dashboardWithAds.quickActions')}
             </Typography>
             {/* Quick actions */}
           </Box>

@@ -3,7 +3,8 @@
   "newSupplier": "Nouveau fournisseur",
   "editSupplier": "Modifier le fournisseur",
   "search": {
-    "placeholder": "Rechercher un fournisseur..."
+    "placeholder": "Rechercher un fournisseur...",
+    "placeholderFull": "Rechercher un fournisseur, un contact..."
   },
   "filters": {
     "active": "Actifs",
@@ -43,7 +44,14 @@
     "reportGenerating": "Génération du rapport {{format}} en cours...",
     "reportGenerated": "Rapport généré avec succès !",
     "reportInProgress": "Le rapport est en cours de génération...",
-    "reportError": "Erreur lors de la génération du rapport"
+    "reportError": "Erreur lors de la génération du rapport",
+    "noSuppliersSelected": "Aucun fournisseur à générer",
+    "pdfDownloaded": "PDF téléchargé avec succès",
+    "pdfError": "Erreur lors de la génération du PDF",
+    "reportPdfDownloaded": "Rapport PDF téléchargé avec succès",
+    "printWindowOpened": "Fenêtre d'impression ouverte",
+    "cannotOpenPrintWindow": "Impossible d'ouvrir la fenêtre d'impression",
+    "supplierNotFoundDescription": "Le fournisseur que vous recherchez n'existe pas ou a été supprimé."
   },
   "actions": {
     "edit": "Modifier",
@@ -51,7 +59,8 @@
     "quickActions": "Actions rapides",
     "newPurchaseOrder": "Nouveau bon de commande",
     "addProducts": "Ajouter des produits",
-    "generateReport": "Générer un rapport"
+    "generateReport": "Générer un rapport",
+    "downloadPdf": "Télécharger le rapport PDF"
   },
   "tabs": {
     "info": "Infos",
@@ -87,7 +96,13 @@
     "punctuality": "Ponctualité",
     "quality": "Qualité",
     "payment": "Paiement",
-    "ofScore": "du score"
+    "ofScore": "du score",
+    "top": "Top",
+    "international": "International",
+    "autoCalculated": "Calcul automatique",
+    "performance": "Performance",
+    "quantityOrdered": "Qté commandée",
+    "ratingDetails": "Détail de la notation"
   },
   "form": {
     "title": {
@@ -124,7 +139,8 @@
       "invalidEmail": "Email invalide",
       "emailRequired": "L'email est requis",
       "statusRequired": "Le statut est requis"
-    }
+    },
+    "saving": "Enregistrement..."
   },
   "provinces": {
     "QC": "Québec",
@@ -144,6 +160,25 @@
   "pdf": {
     "title": "Rapport PDF Fournisseur",
     "description": "Génération du rapport PDF...",
-    "ready": "Le rapport PDF est prêt. Choisissez une action:"
+    "ready": "Le rapport PDF est prêt. Choisissez une action:",
+    "generating": "Génération du PDF en cours..."
+  },
+  "kpi": {
+    "total": "Fournisseurs",
+    "totalSub": "au total",
+    "active": "Actifs",
+    "activeSub": "en activité",
+    "topRated": "Top notes",
+    "topRatedSub": "4+ étoiles",
+    "local": "Locaux",
+    "localSub": "proximite",
+    "international": "Internat.",
+    "internationalSub": "a l etranger"
+  },
+  "report": {
+    "fileName": "rapport-fournisseurs-{{timestamp}}.pdf",
+    "viewerTitle": "Rapport fournisseurs",
+    "supplierFileName": "rapport-fournisseur-{{name}}.pdf",
+    "supplierViewerTitle": "Rapport {{name}}"
   }
 }

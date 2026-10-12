@@ -1,0 +1,404 @@
+{
+  "actions": {
+    "start": "Get started",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish",
+    "skip": "Skip",
+    "continue": "Continue",
+    "back": "Back"
+  },
+  "setup": {
+    "steps": {
+      "company": "Your business",
+      "activity": "Your activity",
+      "plan": "Your plan"
+    },
+    "taxRegions": {
+      "international": "International",
+      "cameroon": "Cameroon (OHADA)",
+      "ohada": "OHADA zone",
+      "eu": "European Union",
+      "usa": "United States",
+      "canada": "Canada"
+    },
+    "useCases": {
+      "sell": {
+        "title": "Sell & invoice",
+        "desc": "Clients, quotes, invoices, payments"
+      },
+      "buy": {
+        "title": "Purchasing & suppliers",
+        "desc": "Suppliers, purchase orders, contracts"
+      },
+      "stock": {
+        "title": "Manage my stock",
+        "desc": "Product catalog and stock levels"
+      },
+      "all": {
+        "title": "Manage everything",
+        "desc": "The whole business: sales, purchasing, stock, accounting"
+      }
+    },
+    "plans": {
+      "free": {
+        "name": "Free",
+        "tag": "To get started",
+        "seats": "1 user",
+        "features": {
+          "clientsProducts": "Clients & products",
+          "basicInvoicing": "Basic invoicing",
+          "dashboard": "Dashboard"
+        },
+        "cta": "Stay on Free (no trial)"
+      },
+      "pro": {
+        "name": "Pro",
+        "tag": "30 days free",
+        "seats": "2 users included (+{siege}/user)",
+        "features": {
+          "allFree": "Everything in Free",
+          "suppliersPo": "Suppliers & purchase orders",
+          "accountingAiContracts": "Basic accounting, AI & contracts"
+        },
+        "cta": "Start the Pro trial"
+      },
+      "business": {
+        "name": "Business",
+        "tag": "30 days free",
+        "seats": "10 users included (+{siege}/user)",
+        "features": {
+          "fullAccounting": "Full accounting + margins & reordering",
+          "eSourcing": "E-Sourcing (tenders)",
+          "prioritySupport": "Priority support"
+        },
+        "cta": "Start the Business trial"
+      }
+    },
+    "errors": {
+      "companyNameRequired": "Company name is required",
+      "chooseActivity": "Choose at least one activity",
+      "unknown": "Unknown error",
+      "generic": "Error: {{message}}"
+    },
+    "header": {
+      "title": "Welcome to Procura",
+      "subtitle": "A few quick steps to set up your workspace"
+    },
+    "progress": "Step {{current}} of {{total}} — {{label}}",
+    "company": {
+      "title": "Your business",
+      "subtitle": "This information will appear on your invoices and documents.",
+      "logoOptional": "Logo (optional)",
+      "companyName": "Company name",
+      "companyNamePlaceholder": "e.g. ACME Ltd",
+      "prefilled": "Pre-filled from your sign-up",
+      "country": "Country",
+      "countryHint": "VAT {{rate}}% · accounting: {{standard}} — can be changed later",
+      "accountingStandards": {
+        "syscohada": "SYSCOHADA (OHADA)",
+        "pcg": "French chart of accounts",
+        "us_gaap": "US GAAP",
+        "ca": "Canadian"
+      },
+      "address": "City / address (optional)",
+      "addressPlaceholder": "e.g. Akwa, Douala",
+      "currency": "Currency",
+      "currencies": {
+        "XAF": "XAF — CFA franc (Central Africa)",
+        "XOF": "XOF — CFA franc (West Africa)",
+        "EUR": "EUR — Euro",
+        "USD": "USD — US dollar",
+        "CAD": "CAD — Canadian dollar"
+      },
+      "language": "Language",
+      "languageHint": "Language of the app and your documents.",
+      "moreInfo": "More information",
+      "optional": "(optional)",
+      "email": "Email",
+      "emailPlaceholder": "contact@company.com",
+      "phone": "Phone",
+      "website": "Website",
+      "taxRegion": "Tax region",
+      "taxNumber": "Tax number (TIN)",
+      "editableLater": "All of this can be changed at any time in Settings."
+    },
+    "activity": {
+      "title": "What will you manage?",
+      "subtitle": "Pick what applies to you — we'll turn on the right features. You can change this at any time."
+    },
+    "plan": {
+      "title": "Your plan",
+      "trialNotice": "<strong>30-day free Pro trial</strong>, no credit card required. You can also stay on <strong>Free</strong> — switch at any time.",
+      "recommended": "Recommended"
+    },
+    "activating": "Activating…",
+    "start": "Start",
+    "noCardRequired": "No credit card required. Cancel anytime."
+  },
+  "wizard": {
+    "steps": {
+      "welcome": "Welcome",
+      "companyType": "Business type",
+      "useCase": "Use case",
+      "team": "Team",
+      "modules": "Modules",
+      "done": "Done"
+    },
+    "profiles": {
+      "basic": {
+        "name": "Basic",
+        "description": "For simple purchasing and invoicing"
+      },
+      "advanced": {
+        "name": "Advanced",
+        "description": "SMEs with sourcing and contract management"
+      },
+      "complete": {
+        "name": "Complete",
+        "description": "Every feature for large companies"
+      }
+    },
+    "modules": {
+      "dashboard": {
+        "name": "Dashboard",
+        "description": "Overview and statistics"
+      },
+      "suppliers": {
+        "name": "Suppliers",
+        "description": "Supplier management"
+      },
+      "purchaseOrders": {
+        "name": "Purchase orders",
+        "description": "Purchasing management"
+      },
+      "invoices": {
+        "name": "Invoices",
+        "description": "Invoicing and payments"
+      },
+      "products": {
+        "name": "Products",
+        "description": "Product catalog and stock"
+      },
+      "clients": {
+        "name": "Clients",
+        "description": "Client management"
+      },
+      "eSourcing": {
+        "name": "E-Sourcing",
+        "description": "Tenders (RFQ)"
+      },
+      "contracts": {
+        "name": "Contracts",
+        "description": "Contract management"
+      }
+    },
+    "messages": {
+      "success": "Setup completed successfully!",
+      "error": "Error during setup"
+    },
+    "welcome": {
+      "title": "Welcome to ProcureGenius!",
+      "text": "I'm happy to help you set up your workspace. In a few steps, we'll tailor the app to your needs."
+    },
+    "company": {
+      "title": "Tell us about your business",
+      "type": "Business type",
+      "types": {
+        "sme": "SME (Small and Medium Enterprise)",
+        "large": "Large company",
+        "startup": "Startup",
+        "nonprofit": "Non-profit organization"
+      },
+      "sector": "Industry",
+      "sectorPlaceholder": "e.g. Technology, Retail, Services..."
+    },
+    "useCase": {
+      "title": "What is your main need?",
+      "simplePurchases": {
+        "title": "Simple purchasing and invoicing",
+        "desc": "Manage suppliers, create purchase orders and track invoices"
+      },
+      "sourcing": {
+        "title": "E-Sourcing and tenders",
+        "desc": "Compare supplier offers, manage RFQs and optimize purchasing"
+      },
+      "complete": {
+        "title": "Complete management",
+        "desc": "Every feature: purchasing, stock, contracts, invoicing, analytics"
+      }
+    },
+    "team": {
+      "title": "Your team",
+      "size": "Team size",
+      "sizes": {
+        "small": "1-10 employees",
+        "medium": "11-50 employees",
+        "large": "51-200 employees",
+        "xlarge": "More than 200 employees"
+      },
+      "rolesTitle": "Main roles in your team",
+      "roles": {
+        "purchasing": "Purchasing",
+        "accounting": "Accounting",
+        "management": "Management",
+        "sales": "Sales",
+        "logistics": "Logistics"
+      }
+    },
+    "modulesStep": {
+      "title": "Choose your modules",
+      "profileHint": "Select a preset profile or customize your modules",
+      "customize": "Customize modules",
+      "customHint": "Select the modules you want to use",
+      "backToProfiles": "Back to preset profiles"
+    },
+    "done": {
+      "title": "Setup complete!",
+      "text": "Your workspace is ready. You can always change these settings later.",
+      "start": "Start using ProcureGenius"
+    }
+  },
+  "checklist": {
+    "title": "Quick start",
+    "progress": "{{done}}/{{total}} tasks completed",
+    "allDoneTitle": "You're all set!",
+    "allDoneText": "Your Procura workspace is set up.",
+    "tasks": {
+      "companyProfile": {
+        "title": "Set up your company profile",
+        "subtitle": "Name, logo, legal information"
+      },
+      "firstSupplier": {
+        "title": "Add your first supplier",
+        "subtitle": "Name, contact, terms"
+      },
+      "firstProduct": {
+        "title": "Create a product or service",
+        "subtitle": "Reference, price, opening stock"
+      },
+      "firstPo": {
+        "title": "Create a purchase order",
+        "subtitle": "Your first supplier purchase"
+      },
+      "exploreAi": {
+        "title": "Try the AI assistant",
+        "subtitle": "Ask your first question"
+      }
+    }
+  },
+  "tutorial": {
+    "stepOf": "Step {{current}} of {{total}}",
+    "skipTutorial": "Skip tutorial",
+    "simple": {
+      "welcome": {
+        "title": "Welcome to Procura!",
+        "description": "We'll show you how it works. It takes 2 minutes. Follow the steps and you'll be ready to get started."
+      },
+      "dashboard": {
+        "title": "Your main page",
+        "description": "Here you see everything that's going on: today's orders, pending invoices and important alerts."
+      },
+      "suppliers": {
+        "title": "Your suppliers",
+        "description": "This is where you record your vendors and suppliers. When you place an order, you'll find them easily."
+      },
+      "purchaseOrders": {
+        "title": "Purchase orders",
+        "description": "Create an order for a supplier. You can also check whether the price is fair — the app compares market prices for you."
+      },
+      "invoices": {
+        "title": "Your invoices",
+        "description": "Create your invoices and email them to your clients. See who has paid and who still owes you."
+      },
+      "products": {
+        "title": "Your products",
+        "description": "List your products and their stock. When an item is about to run out, the app warns you before it's too late."
+      },
+      "contracts": {
+        "title": "Contracts",
+        "description": "Keep a copy of your agreements with suppliers. That way, if a price changes or there's a problem, you have written proof."
+      },
+      "accounting": {
+        "title": "Accounting",
+        "description": "See at a glance how much you've spent, what you've earned and whether your business is profitable."
+      },
+      "aiAssistant": {
+        "title": "Your AI assistant",
+        "description": "Ask it a question in plain English — \"Show me this month's invoices\" or \"Who is my best supplier?\" — and it answers right away."
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "Add your shop name, your logo and your currency. This is also where you add other people from your team."
+      },
+      "complete": {
+        "title": "Let's go!",
+        "description": "You've seen the essentials. Start by adding your shop name in the settings, then add your first supplier."
+      }
+    },
+    "provider": {
+      "welcome": {
+        "title": "Welcome to ProcureGenius!",
+        "description": "I'm Procury, your assistant. I'll walk you through the main features of the platform."
+      },
+      "dashboard": {
+        "title": "The Dashboard",
+        "description": "This is your command center. You'll find an overview of your business, your alerts and your real-time statistics."
+      },
+      "sidebar": {
+        "title": "The Sidebar",
+        "description": "Move easily between the app's modules. The modules shown depend on your configuration."
+      },
+      "suppliers": {
+        "title": "Supplier Management",
+        "description": "Add and manage your suppliers. You can import from Excel, scan business cards and track their performance."
+      },
+      "purchaseOrders": {
+        "title": "Purchase Orders",
+        "description": "Create professional purchase orders in a few clicks. The AI can help you write the content."
+      },
+      "invoices": {
+        "title": "Invoicing",
+        "description": "Manage your client invoices. Email them and track payments in real time."
+      },
+      "clients": {
+        "title": "Client Management",
+        "description": "Track your clients, their purchase history and their outstanding balances."
+      },
+      "products": {
+        "title": "Products & Stock",
+        "description": "Manage your product catalog, track your stock and get reorder alerts."
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "Customize your experience: company information, modules, printing, notifications and more."
+      },
+      "aiAssistant": {
+        "title": "AI Assistant",
+        "description": "Your smart assistant can answer your questions, generate documents and help with your daily tasks."
+      },
+      "complete": {
+        "title": "You're ready!",
+        "description": "You now know the basics of ProcureGenius. Feel free to explore, and restart this tutorial from the help menu if needed."
+      }
+    },
+    "button": {
+      "tutorial": "Tutorial",
+      "help": "Help",
+      "tooltip": "Help & Tutorial",
+      "needHelp": "Need help?",
+      "launch": "Start the tutorial",
+      "guidedTour": "Guided tour of the app",
+      "interactiveTour": "Interactive guided tour",
+      "new": "New",
+      "replay": "Replay the tutorial",
+      "restartFromStart": "Start over from the beginning",
+      "restartTour": "Restart the tour",
+      "documentation": "Documentation",
+      "helpCenter": "Full help center",
+      "faq": "FAQ",
+      "shortcuts": "Keyboard shortcuts",
+      "contactSupport": "Contact support"
+    }
+  }
+}

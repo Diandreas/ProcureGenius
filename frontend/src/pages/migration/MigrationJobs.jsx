@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -38,6 +39,7 @@ import {
 import { fetchMigrationJobs } from '../../store/slices/migrationSlice';
 
 function MigrationJobs() {
+  const { t } = useTranslation(['dataImport', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { jobs, loading, totalCount } = useSelector((state) => state.migration);
@@ -83,25 +85,13 @@ function MigrationJobs() {
   };
 
   const getStatusLabel = (status) => {
-    const labels = {
-      pending: 'En attente',
-      running: 'En cours',
-      completed: 'Terminé',
-      failed: 'Échoué',
-      cancelled: 'Annulé',
-    };
-    return labels[status] || status;
+    const labels = ['pending', 'running', 'completed', 'failed', 'cancelled'];
+    return labels.includes(status) ? t(`dataImport:status.${status}`) : status;
   };
 
   const getEntityTypeLabel = (type) => {
-    const labels = {
-      suppliers: 'Fournisseurs',
-      products: 'Produits',
-      clients: 'Clients',
-      purchase_orders: 'Bons de commande',
-      invoices: 'Factures',
-    };
-    return labels[type] || type;
+    const labels = ['suppliers', 'products', 'clients', 'purchase_orders', 'invoices'];
+    return labels.includes(type) ? t(`dataImport:entities.${type}`) : type;
   };
 
   const handleFilterChange = (field, value) => {
@@ -111,13 +101,13 @@ function MigrationJobs() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Imports de données</Typography>
+        <Typography variant="h4">{t('dataImport:jobs.title')}</Typography>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => navigate('/settings/import')}
         >
-          Nouvel import
+          {t('dataImport:actions.newImport')}
         </Button>
       </Box>
 
@@ -127,7 +117,7 @@ function MigrationJobs() {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                placeholder="Rechercher..."
+                placeholder={t('dataImport:jobs.searchPlaceholder')}
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 InputProps={{
@@ -141,35 +131,35 @@ function MigrationJobs() {
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Statut</InputLabel>
+                <InputLabel>{t('dataImport:jobs.status')}</InputLabel>
                 <Select
                   value={filters.status}
                   onChange={(e) => handleFilterChange('status', e.target.value)}
-                  label="Statut"
+                  label={t('dataImport:jobs.status')}
                 >
-                  <MenuItem value="">Tous</MenuItem>
-                  <MenuItem value="pending">En attente</MenuItem>
-                  <MenuItem value="running">En cours</MenuItem>
-                  <MenuItem value="completed">Terminé</MenuItem>
-                  <MenuItem value="failed">Échoué</MenuItem>
-                  <MenuItem value="cancelled">Annulé</MenuItem>
+                  <MenuItem value="">{t('dataImport:jobs.all')}</MenuItem>
+                  <MenuItem value="pending">{t('dataImport:status.pending')}</MenuItem>
+                  <MenuItem value="running">{t('dataImport:status.running')}</MenuItem>
+                  <MenuItem value="completed">{t('dataImport:status.completed')}</MenuItem>
+                  <MenuItem value="failed">{t('dataImport:status.failed')}</MenuItem>
+                  <MenuItem value="cancelled">{t('dataImport:status.cancelled')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} md={4}>
               <FormControl fullWidth>
-                <InputLabel>Type d'entité</InputLabel>
+                <InputLabel>{t('dataImport:jobs.entityType')}</InputLabel>
                 <Select
                   value={filters.entity_type}
                   onChange={(e) => handleFilterChange('entity_type', e.target.value)}
-                  label="Type d'entité"
+                  label={t('dataImport:jobs.entityType')}
                 >
-                  <MenuItem value="">Tous</MenuItem>
-                  <MenuItem value="suppliers">Fournisseurs</MenuItem>
-                  <MenuItem value="products">Produits</MenuItem>
-                  <MenuItem value="clients">Clients</MenuItem>
-                  <MenuItem value="purchase_orders">Bons de commande</MenuItem>
-                  <MenuItem value="invoices">Factures</MenuItem>
+                  <MenuItem value="">{t('dataImport:jobs.all')}</MenuItem>
+                  <MenuItem value="suppliers">{t('dataImport:entities.suppliers')}</MenuItem>
+                  <MenuItem value="products">{t('dataImport:entities.products')}</MenuItem>
+                  <MenuItem value="clients">{t('dataImport:entities.clients')}</MenuItem>
+                  <MenuItem value="purchase_orders">{t('dataImport:entities.purchase_orders')}</MenuItem>
+                  <MenuItem value="invoices">{t('dataImport:entities.invoices')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -181,15 +171,15 @@ function MigrationJobs() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Nom</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Statut</TableCell>
-              <TableCell>Progression</TableCell>
-              <TableCell align="right">Succès</TableCell>
-              <TableCell align="right">Erreurs</TableCell>
-              <TableCell align="right">Ignorés</TableCell>
-              <TableCell>Date de création</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>{t('dataImport:jobs.columns.name')}</TableCell>
+              <TableCell>{t('dataImport:jobs.columns.type')}</TableCell>
+              <TableCell>{t('dataImport:jobs.columns.status')}</TableCell>
+              <TableCell>{t('dataImport:jobs.columns.progress')}</TableCell>
+              <TableCell align="right">{t('dataImport:results.success')}</TableCell>
+              <TableCell align="right">{t('dataImport:results.errors')}</TableCell>
+              <TableCell align="right">{t('dataImport:results.skipped')}</TableCell>
+              <TableCell>{t('dataImport:jobs.columns.createdAt')}</TableCell>
+              <TableCell align="center">{t('dataImport:jobs.columns.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -203,7 +193,7 @@ function MigrationJobs() {
               <TableRow>
                 <TableCell colSpan={9} align="center">
                   <Typography variant="body2" color="text.secondary" sx={{ py: 3 }}>
-                    Aucun import trouvé. Cliquez sur "Nouvel import" pour commencer.
+                    {t('dataImport:jobs.empty')}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -257,7 +247,7 @@ function MigrationJobs() {
                     <IconButton
                       size="small"
                       onClick={() => navigate(`/migration/jobs/${job.id}`)}
-                      title="Voir les détails"
+                      title={t('dataImport:jobs.viewDetails')}
                     >
                       <Visibility />
                     </IconButton>
@@ -271,7 +261,7 @@ function MigrationJobs() {
 
       <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
         <Typography variant="body2" color="text.secondary">
-          {totalCount} import{totalCount > 1 ? 's' : ''} au total
+          {t('dataImport:jobs.total', { count: totalCount })}
         </Typography>
       </Box>
     </Box>

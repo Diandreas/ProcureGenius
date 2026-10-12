@@ -13,6 +13,7 @@ import {
   PersonOutline,
   AutoAwesome,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Composant pour basculer entre Mode IA et Mode Manuel
@@ -24,6 +25,7 @@ function AIAssistantToggle({
   disabled = false,
   showModeDescription = true
 }) {
+  const { t } = useTranslation('aiChat');
   const [localMode, setLocalMode] = useState(isAIMode);
 
   const handleToggle = (event) => {
@@ -61,12 +63,12 @@ function AIAssistantToggle({
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {currentMode ? 'Mode IA' : 'Mode Manuel'}
+                {currentMode ? t('aiChat:assistantToggle.aiMode') : t('aiChat:assistantToggle.manualMode')}
               </Typography>
               {currentMode && (
                 <Chip
                   icon={<AutoAwesome sx={{ fontSize: 16 }} />}
-                  label="Intelligent"
+                  label={t('aiChat:assistantToggle.smart')}
                   size="small"
                   color="primary"
                   variant="outlined"
@@ -81,8 +83,8 @@ function AIAssistantToggle({
                 sx={{ maxWidth: 300 }}
               >
                 {currentMode
-                  ? "L'IA propose, suggère et automatise les tâches pour vous"
-                  : "Vous gardez le contrôle total avec les interfaces traditionnelles"
+                  ? t('aiChat:assistantToggle.aiDescription')
+                  : t('aiChat:assistantToggle.manualDescription')
                 }
               </Typography>
             )}
@@ -90,7 +92,7 @@ function AIAssistantToggle({
         </Box>
 
         {/* Switch pour basculer */}
-        <Tooltip title={currentMode ? "Passer en mode manuel" : "Activer l'assistant IA"}>
+        <Tooltip title={currentMode ? t('aiChat:assistantToggle.switchToManual') : t('aiChat:assistantToggle.enableAssistant')}>
           <FormControlLabel
             control={
               <Switch

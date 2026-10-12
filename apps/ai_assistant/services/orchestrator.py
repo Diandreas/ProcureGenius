@@ -327,7 +327,9 @@ class Orchestrator:
         hint = _page_hint(page)
         prompt = f"{base}\n\n{hint}" if hint else base
         # Règle produit : aucun emoji dans les réponses (positionnement premium).
-        return prompt + "\n\nRÈGLE DE STYLE : n'utilise jamais d'emoji dans tes réponses."
+        return prompt + ("\n\nRÈGLE DE STYLE : n'utilise jamais d'emoji dans tes réponses. "
+                         "Réponds toujours dans la langue du dernier message de l'utilisateur "
+                         "(en anglais s'il écrit en anglais, sinon en français).")
 
     # ------------------------------------------------------------------ run
     async def run(

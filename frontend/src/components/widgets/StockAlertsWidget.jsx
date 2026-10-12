@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Clock, PackageX, Package } from 'lucide-react';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
 
 const StockAlertsWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('low_stock'); // low_stock | expiring | expired
@@ -23,7 +25,7 @@ const StockAlertsWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
+  if (loading) return <div className="widget-loading">{t('common:labels.loading')}</div>;
 
   const lowStock = data?.low_stock_products || [];
   const expiringBatches = data?.expiring_batches || [];
@@ -35,15 +37,15 @@ const StockAlertsWidget = ({ period = 'last_30_days' }) => {
     return (
       <div className="widget-empty">
         <Package size={40} className="widget-empty-icon" style={{ color: '#10b981' }} />
-        <div className="widget-empty-text">Tous les stocks sont en ordre</div>
+        <div className="widget-empty-text">{t('dashboard:widgets.stockAlerts.allGood')}</div>
       </div>
     );
   }
 
   const tabs = [
-    { key: 'low_stock', label: 'Stock bas', count: lowStock.length, icon: <AlertTriangle size={14} /> },
-    { key: 'expiring', label: 'Expirent bientôt', count: expiringBatches.length, icon: <Clock size={14} /> },
-    { key: 'expired', label: 'Périmés', count: expiredBatches.length, icon: <PackageX size={14} /> },
+    { key: 'low_stock', label: t('dashboard:widgets.stockAlerts.tabs.lowStock'), count: lowStock.length, icon: <AlertTriangle size={14} /> },
+    { key: 'expiring', label: t('dashboard:widgets.stockAlerts.tabs.expiring'), count: expiringBatches.length, icon: <Clock size={14} /> },
+    { key: 'expired', label: t('dashboard:widgets.stockAlerts.tabs.expired'), count: expiredBatches.length, icon: <PackageX size={14} /> },
   ].filter(t => t.count > 0);
 
   return (
@@ -94,7 +96,7 @@ const StockAlertsWidget = ({ period = 'last_30_days' }) => {
             <AlertTriangle size={15} className="alert-icon" style={{ color: '#f59e0b', flexShrink: 0 }} />
             <div className="alert-content">
               <div className="alert-title">{product.name}</div>
-              <div className="alert-message">Stock: <strong>{product.stock}</strong> (Min: {product.min_stock})</div>
+              <div className="alert-message">{t('dashboard:widgets.stockAlerts.stockLabel')} <strong>{product.stock}</strong> {t('dashboard:widgets.stockAlerts.minStock', { value: product.min_stock })}</div>
             </div>
           </div>
         ))}
@@ -106,15 +108,15 @@ const StockAlertsWidget = ({ period = 'last_30_days' }) => {
               <div className="alert-content">
                 <div className="alert-title">{batch.product_name || batch.name}</div>
                 <div className="alert-message">
-                  Lot <strong>{batch.batch_number}</strong> — expire le {batch.expiration_date}
-                  {batch.current_quantity != null && ` (${batch.current_quantity} unités)`}
+                  {t('dashboard:widgets.stockAlerts.batch')} <strong>{batch.batch_number}</strong> — {t('dashboard:widgets.stockAlerts.expiresOn', { date: batch.expiration_date })}
+                  {batch.current_quantity != null && ` ${t('dashboard:widgets.stockAlerts.unitsParen', { count: batch.current_quantity })}`}
                 </div>
               </div>
             </div>
           ))
           : <div className="widget-empty" style={{ padding: 16 }}>
               <Clock size={28} style={{ color: '#10b981', opacity: 0.5 }} />
-              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 6 }}>Aucun lot n'expire bientôt</div>
+              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 6 }}>{t('dashboard:widgets.stockAlerts.noneExpiring')}</div>
             </div>
         )}
 
@@ -125,9 +127,9 @@ const StockAlertsWidget = ({ period = 'last_30_days' }) => {
               <div className="alert-content">
                 <div className="alert-title" style={{ color: '#dc2626' }}>{batch.product_name || batch.name}</div>
                 <div className="alert-message">
-                  Lot <strong>{batch.batch_number}</strong> — périmé le {batch.expiration_date}
+                  {t('dashboard:widgets.stockAlerts.batch')} <strong>{batch.batch_number}</strong> — {t('dashboard:widgets.stockAlerts.expiredOn', { date: batch.expiration_date })}
                   {batch.current_quantity > 0 && (
-                    <span style={{ color: '#dc2626', fontWeight: 600 }}> · {batch.current_quantity} unités à retirer</span>
+                    <span style={{ color: '#dc2626', fontWeight: 600 }}> · {t('dashboard:widgets.stockAlerts.unitsToRemove', { count: batch.current_quantity })}</span>
                   )}
                 </div>
               </div>
@@ -135,7 +137,7 @@ const StockAlertsWidget = ({ period = 'last_30_days' }) => {
           ))
           : <div className="widget-empty" style={{ padding: 16 }}>
               <PackageX size={28} style={{ color: '#10b981', opacity: 0.5 }} />
-              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 6 }}>Aucun lot périmé</div>
+              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 6 }}>{t('dashboard:widgets.stockAlerts.noneExpired')}</div>
             </div>
         )}
       </div>

@@ -70,12 +70,12 @@ function MobileBottomNav({ enabledModules = ['dashboard'], isAiLocked = false, o
   const allNavigationItems = [
     { label: t('navigation:mobile.dashboard', 'Dashboard'), value: '/dashboard', icon: '/icon/dashboard.png', moduleId: 'dashboard', isCore: true },
     { label: t('navigation:mobile.invoices', 'Factures'), value: '/invoices', icon: '/icon/bill.png', moduleId: 'invoices', isCore: false },
-    { label: 'Produits', value: '/products', icon: '/icon/product.png', moduleId: 'products', isCore: false },
-    { label: 'Clients', value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
+    { label: t('navigation:mobile.products'), value: '/products', icon: '/icon/product.png', moduleId: 'products', isCore: false },
+    { label: t('navigation:mobile.clients'), value: '/clients', icon: '/icon/user.png', moduleId: 'clients', isCore: false },
     { label: t('navigation:mobile.suppliers', 'Fournisseurs'), value: '/suppliers', icon: '/icon/supplier.png', moduleId: 'suppliers', isCore: false },
     { label: t('navigation:mobile.orders', 'Commandes'), value: '/purchase-orders', icon: '/icon/purchase-order.png', moduleId: 'purchase-orders', isCore: false },
-    { label: 'Contrats', value: '/contracts', icon: '/icon/contract.png', moduleId: 'contracts', isCore: false },
-    { label: 'Comptabilité', value: '/accounting', icon: '/icon/analysis.png', moduleId: 'accounting', isCore: false },
+    { label: t('navigation:mobile.contracts'), value: '/contracts', icon: '/icon/contract.png', moduleId: 'contracts', isCore: false },
+    { label: t('navigation:mobile.accounting'), value: '/accounting', icon: '/icon/analysis.png', moduleId: 'accounting', isCore: false },
   ];
 
   const navigationItems = allNavigationItems.filter(item => {
@@ -296,7 +296,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'], isAiLocked = false, o
               <Box
                 component="img"
                 src={aiItem.icon}
-                alt="Assistant IA"
+                alt={t('navigation:menu.aiAssistant')}
                 sx={{
                   width: 28,
                   height: 28,
@@ -390,9 +390,9 @@ function MobileBottomNav({ enabledModules = ['dashboard'], isAiLocked = false, o
             })}
             {/* Bouton Plus toujours affiché à la fin */}
             <BottomNavigationAction
-              label="Plus"
+              label={t('navigation:mobile.more')}
               value="__plus__"
-              icon={<NavIcon IconComponent={Plus} alt="Plus" isSelected={false} />}
+              icon={<NavIcon IconComponent={Plus} alt={t('navigation:mobile.more')} isSelected={false} />}
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMoreMenuOpen(true); }}
             />
           </BottomNavigation>
@@ -438,7 +438,7 @@ function MobileBottomNav({ enabledModules = ['dashboard'], isAiLocked = false, o
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <Settings size={22} color={theme.palette.text.secondary} />
               </ListItemIcon>
-              <ListItemText primary="Paramètres" primaryTypographyProps={{ fontWeight: 500 }} />
+              <ListItemText primary={t('navigation:menu.settings')} primaryTypographyProps={{ fontWeight: 500 }} />
             </ListItemButton>
           </ListItem>
         </List>

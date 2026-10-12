@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import * as widgetsAPI from '../../services/widgetsAPI';
 import '../../styles/Widgets.css';
+import useCurrency from '../../hooks/useCurrency';
 
 const TopSellingProductsWidget = ({ period = 'last_30_days' }) => {
+  const { format, symbol } = useCurrency();
+  const { t } = useTranslation(['dashboard', 'common']);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,13 +26,13 @@ const TopSellingProductsWidget = ({ period = 'last_30_days' }) => {
     fetchData();
   }, [period]);
 
-  if (loading) return <div className="widget-loading">Chargement...</div>;
-  if (!data) return <div className="widget-error">Erreur</div>;
+  if (loading) return <div className="widget-loading">{t('common:labels.loading')}</div>;
+  if (!data) return <div className="widget-error">{t('dashboard:widgets.shared.error')}</div>;
   if (!data.products || data.products.length === 0) {
     return (
       <div className="widget-empty">
         <div className="widget-empty-icon"></div>
-        <div className="widget-empty-text">Aucun produit vendu</div>
+        <div className="widget-empty-text">{t('dashboard:widgets.topSellingProducts.empty')}</div>
       </div>
     );
   }
@@ -47,10 +51,10 @@ const TopSellingProductsWidget = ({ period = 'last_30_days' }) => {
         }}>
           <div style={{ fontWeight: 600, marginBottom: '4px', fontSize: '13px' }}>{product.name}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            {product.quantity_sold} vendus
+            {t('dashboard:widgets.topSellingProducts.soldCount', { count: product.quantity_sold })}
           </div>
           <div style={{ fontSize: '13px', fontWeight: 500, color: '#10b981', marginTop: '4px' }}>
-            {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(product.revenue || 0)}
+            {format(product.revenue || 0, 0)}
           </div>
         </div>
       );
@@ -61,12 +65,12 @@ const TopSellingProductsWidget = ({ period = 'last_30_days' }) => {
   // Formateur pour l'axe Y
   const formatYAxis = (value) => {
     if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M€`;
+      return `${(value / 1000000).toFixed(1)}M ${symbol}`;
     }
     if (value >= 1000) {
-      return `${(value / 1000).toFixed(0)}k€`;
+      return `${(value / 1000).toFixed(0)}k ${symbol}`;
     }
-    return `${value}€`;
+    return `${value} ${symbol}`;
   };
 
   // Couleurs vertes pour les produits

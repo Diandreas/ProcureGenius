@@ -42,8 +42,10 @@ function ClientInvoicesTable({ invoices, loading }) {
 
     const getStatusLabel = (status) => {
         const labels = {
+            quote: t('invoices:status.quote'),
             draft: t('invoices:status.draft'),
             sent: t('invoices:status.sent'),
+            pending: t('invoices:status.pending'),
             paid: t('invoices:status.paid'),
             overdue: t('invoices:status.overdue'),
             cancelled: t('invoices:status.cancelled'),

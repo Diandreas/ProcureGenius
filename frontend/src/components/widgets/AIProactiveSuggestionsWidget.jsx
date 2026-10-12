@@ -20,9 +20,11 @@ import {
   School
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import * as widgetsAPI from '../../services/widgetsAPI';
 
 const AIProactiveSuggestionsWidget = ({ period = 'last_30_days' }) => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,7 +46,7 @@ const AIProactiveSuggestionsWidget = ({ period = 'last_30_days' }) => {
       }
     } catch (err) {
       console.error('Error fetching suggestions:', err);
-      setError('Impossible de charger les suggestions');
+      setError(t('dashboard:widgets.aiSuggestions.loadError'));
     } finally {
       setLoading(false);
     }
@@ -97,10 +99,10 @@ const AIProactiveSuggestionsWidget = ({ period = 'last_30_days' }) => {
 
   const getTypeLabel = (type) => {
     const labels = {
-      'learning': 'Apprentissage',
-      'feature': 'Nouvelle fonctionnalité',
-      'best_practice': 'Bonne pratique',
-      'optimization': 'Optimisation'
+      'learning': t('dashboard:widgets.aiSuggestions.types.learning'),
+      'feature': t('dashboard:widgets.aiSuggestions.types.feature'),
+      'best_practice': t('dashboard:widgets.aiSuggestions.types.best_practice'),
+      'optimization': t('dashboard:widgets.aiSuggestions.types.optimization')
     };
     return labels[type] || type;
   };
@@ -134,10 +136,10 @@ const AIProactiveSuggestionsWidget = ({ period = 'last_30_days' }) => {
           <Box textAlign="center" py={3}>
             <AutoAwesome sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
             <Typography variant="body2" color="text.secondary">
-              {message || 'Aucune suggestion pour le moment'}
+              {message || t('dashboard:widgets.aiSuggestions.empty')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Nous vous tiendrons informé des nouvelles fonctionnalités!
+              {t('dashboard:widgets.aiSuggestions.stayTuned')}
             </Typography>
           </Box>
         </CardContent>

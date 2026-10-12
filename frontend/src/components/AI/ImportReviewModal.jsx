@@ -35,6 +35,7 @@ import {
   Inventory,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import { aiChatAPI } from '../../services/api';
 import accountingAPI from '../../services/accountingAPI';
 import { PAYMENT_METHODS } from '../../constants/paymentMethods';
@@ -48,6 +49,7 @@ const ENTITY_TYPE_ICONS = {
 };
 
 function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
+  const { t } = useTranslation(['aiChat', 'common']);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -90,11 +92,11 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         modified_data: modifiedData,
         notes: notes
       });
-      enqueueSnackbar('Modifications sauvegardées', { variant: 'success' });
+      enqueueSnackbar(t('aiChat:importReviewModal.saveSuccess'), { variant: 'success' });
       onClose();
     } catch (error) {
       console.error('Error saving modifications:', error);
-      enqueueSnackbar('Erreur lors de la sauvegarde', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:importReviewModal.saveError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -108,7 +110,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Numéro de facture"
+            label={t('aiChat:importReviewModal.invoiceNumber')}
             value={modifiedData.invoice_number || ''}
             onChange={(e) => handleFieldChange('invoice_number', e.target.value)}
             size="small"
@@ -117,7 +119,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Date d'émission"
+            label={t('aiChat:importReviewModal.issueDate')}
             type="date"
             value={modifiedData.issue_date || ''}
             onChange={(e) => handleFieldChange('issue_date', e.target.value)}
@@ -128,7 +130,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Client"
+            label={t('aiChat:importReviewModal.client')}
             value={modifiedData.client_name || ''}
             onChange={(e) => handleFieldChange('client_name', e.target.value)}
             size="small"
@@ -137,7 +139,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Email client"
+            label={t('aiChat:importReviewModal.clientEmail')}
             type="email"
             value={modifiedData.client_email || ''}
             onChange={(e) => handleFieldChange('client_email', e.target.value)}
@@ -147,7 +149,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Montant total"
+            label={t('aiChat:importReviewModal.totalAmount')}
             type="number"
             value={modifiedData.total_amount || ''}
             onChange={(e) => handleFieldChange('total_amount', parseFloat(e.target.value) || 0)}
@@ -157,7 +159,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         {modifiedData.items && modifiedData.items.length > 0 && (
           <Grid item xs={12}>
             <Typography variant="subtitle2" gutterBottom>
-              Articles ({modifiedData.items.length})
+              {t('aiChat:importReviewModal.itemsCount', { count: modifiedData.items.length })}
             </Typography>
             <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
               {modifiedData.items.map((item, idx) => (
@@ -166,7 +168,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Description"
+                        label={t('common:labels.description')}
                         value={item.description || ''}
                         onChange={(e) => handleNestedFieldChange('items', idx, 'description', e.target.value)}
                         size="small"
@@ -175,7 +177,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
                     <Grid item xs={6} sm={3}>
                       <TextField
                         fullWidth
-                        label="Quantité"
+                        label={t('common:labels.quantity')}
                         type="number"
                         value={item.quantity || ''}
                         onChange={(e) => handleNestedFieldChange('items', idx, 'quantity', parseFloat(e.target.value) || 0)}
@@ -185,7 +187,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
                     <Grid item xs={6} sm={3}>
                       <TextField
                         fullWidth
-                        label="Prix unitaire"
+                        label={t('common:labels.unitPrice')}
                         type="number"
                         value={item.unit_price || ''}
                         onChange={(e) => handleNestedFieldChange('items', idx, 'unit_price', parseFloat(e.target.value) || 0)}
@@ -210,7 +212,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Numéro de BC"
+            label={t('aiChat:importReviewModal.poNumber')}
             value={modifiedData.po_number || ''}
             onChange={(e) => handleFieldChange('po_number', e.target.value)}
             size="small"
@@ -219,7 +221,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Date de commande"
+            label={t('aiChat:importReviewModal.orderDate')}
             type="date"
             value={modifiedData.order_date || ''}
             onChange={(e) => handleFieldChange('order_date', e.target.value)}
@@ -230,7 +232,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Fournisseur"
+            label={t('aiChat:importReviewModal.supplier')}
             value={modifiedData.supplier_name || ''}
             onChange={(e) => handleFieldChange('supplier_name', e.target.value)}
             size="small"
@@ -239,7 +241,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Email fournisseur"
+            label={t('aiChat:importReviewModal.supplierEmail')}
             type="email"
             value={modifiedData.supplier_email || ''}
             onChange={(e) => handleFieldChange('supplier_email', e.target.value)}
@@ -249,7 +251,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Téléphone"
+            label={t('common:labels.phone')}
             value={modifiedData.supplier_phone || ''}
             onChange={(e) => handleFieldChange('supplier_phone', e.target.value)}
             size="small"
@@ -274,44 +276,44 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
     return (
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <TextField fullWidth size="small" label="Libellé" value={modifiedData.description || ''}
+          <TextField fullWidth size="small" label={t('aiChat:importReviewModal.label')} value={modifiedData.description || ''}
             onChange={(e) => handleFieldChange('description', e.target.value)} />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField fullWidth size="small" label="Fournisseur" value={modifiedData.supplier_name || ''}
+          <TextField fullWidth size="small" label={t('aiChat:importReviewModal.supplier')} value={modifiedData.supplier_name || ''}
             onChange={(e) => handleFieldChange('supplier_name', e.target.value)} />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField fullWidth size="small" label="Date" type="date" InputLabelProps={{ shrink: true }}
+          <TextField fullWidth size="small" label={t('common:labels.date')} type="date" InputLabelProps={{ shrink: true }}
             value={(modifiedData.date || '').slice(0, 10)} onChange={(e) => handleFieldChange('date', e.target.value)} />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField fullWidth size="small" label="Montant total (TTC)" type="number" value={modifiedData.total ?? ''}
+          <TextField fullWidth size="small" label={t('aiChat:importReviewModal.totalInclTax')} type="number" value={modifiedData.total ?? ''}
             onChange={(e) => handleFieldChange('total', parseFloat(e.target.value) || 0)} />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <TextField fullWidth size="small" label="dont TVA récupérable" type="number" value={modifiedData.tax ?? ''}
+          <TextField fullWidth size="small" label={t('aiChat:importReviewModal.recoverableVat')} type="number" value={modifiedData.tax ?? ''}
             onChange={(e) => handleFieldChange('tax', parseFloat(e.target.value) || 0)} />
         </Grid>
         <Grid item xs={12}>
           <FormControl fullWidth size="small">
-            <InputLabel>Catégorie</InputLabel>
-            <Select label="Catégorie" value={modifiedData.category || 'exp_other'}
+            <InputLabel>{t('aiChat:importReviewModal.category')}</InputLabel>
+            <Select label={t('aiChat:importReviewModal.category')} value={modifiedData.category || 'exp_other'}
               onChange={(e) => handleFieldChange('category', e.target.value)}>
-              {(expenseCategories.length ? expenseCategories : [{ value: modifiedData.category || 'exp_other', label: modifiedData.category || 'Autres dépenses' }])
+              {(expenseCategories.length ? expenseCategories : [{ value: modifiedData.category || 'exp_other', label: modifiedData.category || t('aiChat:importReviewModal.otherExpenses') }])
                 .map((c) => <MenuItem key={c.value} value={c.value}>{c.label}{c.account_code ? ` (${c.account_code})` : ''}</MenuItem>)}
             </Select>
           </FormControl>
         </Grid>
         <Grid item xs={12} sm={6}>
           <FormControlLabel control={<Switch checked={paid} onChange={(e) => handleFieldChange('paid', e.target.checked)} />}
-            label={paid ? 'Déjà payée' : 'À payer'} />
+            label={paid ? t('aiChat:importReviewModal.alreadyPaid') : t('aiChat:importReviewModal.toPay')} />
         </Grid>
         {paid && (
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth size="small">
-              <InputLabel>Payée par</InputLabel>
-              <Select label="Payée par" value={method} onChange={(e) => handleFieldChange('payment_method', e.target.value)}>
+              <InputLabel>{t('aiChat:importReviewModal.paidBy')}</InputLabel>
+              <Select label={t('aiChat:importReviewModal.paidBy')} value={method} onChange={(e) => handleFieldChange('payment_method', e.target.value)}>
                 {PAYMENT_METHODS.map((m) => <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>)}
               </Select>
             </FormControl>
@@ -319,7 +321,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
         )}
         <Grid item xs={12}>
           <Alert severity="info">
-            En validant, la dépense est enregistrée avec la photo du reçu et l'écriture comptable est passée.
+            {t('aiChat:importReviewModal.expenseInfo')}
           </Alert>
         </Grid>
       </Grid>
@@ -339,7 +341,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
       default:
         return (
           <Alert severity="info">
-            Édition des champs pour ce type d'entité sera disponible prochainement.
+            {t('aiChat:importReviewModal.editingSoon')}
           </Alert>
         );
     }
@@ -377,10 +379,10 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
           </Box>
           <Box sx={{ flex: 1 }}>
             <Typography variant="h6">
-              Révision d'import - {review.entity_type === 'expense' ? 'Dépense' : review.entity_type === 'invoice' ? 'Facture client' : review.entity_type === 'purchase_order' ? 'Bon de commande' : review.entity_type}
+              {t('aiChat:importReviewModal.title', { type: ['expense', 'invoice', 'purchase_order'].includes(review.entity_type) ? t(`aiChat:importReviewModal.entityTypes.${review.entity_type}`) : review.entity_type })}
             </Typography>
             <Chip
-              label={review.status === 'pending' ? 'En attente' : review.status === 'modified' ? 'Modifié' : review.status === 'approved' ? 'Approuvé' : 'Rejeté'}
+              label={t(`aiChat:importReviewModal.status.${['pending', 'modified', 'approved'].includes(review.status) ? review.status : 'rejected'}`)}
               size="small"
               sx={{ mt: 0.5 }}
             />
@@ -402,17 +404,17 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
           fullWidth
           multiline
           rows={3}
-          label="Notes"
+          label={t('common:labels.notes')}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Ajoutez des notes sur cet import..."
+          placeholder={t('aiChat:importReviewModal.notesPlaceholder')}
           size="small"
         />
       </DialogContent>
 
       <DialogActions sx={{ p: 2, gap: 1 }}>
         <Button onClick={onClose} variant="outlined">
-          Annuler
+          {t('common:buttons.cancel')}
         </Button>
         {(review.status === 'pending' || review.status === 'modified') && (
           <Button
@@ -421,7 +423,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
             startIcon={<Edit />}
             disabled={saving}
           >
-            Sauvegarder modifications
+            {t('aiChat:importReviewModal.saveChanges')}
           </Button>
         )}
         {review.status === 'pending' || review.status === 'modified' ? (
@@ -432,7 +434,7 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
               color="error"
               startIcon={<Cancel />}
             >
-              Rejeter
+              {t('aiChat:importReviewModal.reject')}
             </Button>
             <Button
               onClick={onApprove}
@@ -440,12 +442,12 @@ function ImportReviewModal({ open, onClose, review, onApprove, onReject }) {
               color="success"
               startIcon={<CheckCircle />}
             >
-              Approuver et créer
+              {t('aiChat:importReviewModal.approveAndCreate')}
             </Button>
           </>
         ) : (
           <Button onClick={onClose} variant="contained">
-            Fermer
+            {t('common:buttons.close')}
           </Button>
         )}
       </DialogActions>

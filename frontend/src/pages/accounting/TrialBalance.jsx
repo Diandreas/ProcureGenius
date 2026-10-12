@@ -4,14 +4,13 @@ import {
   TableContainer, Paper, Chip, CircularProgress, Alert, Button, Card, CardContent,
   Stack, useMediaQuery, useTheme,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
 import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
-const TYPE_LABELS = {
-  asset: 'Actif', liability: 'Passif', equity: 'Capitaux', revenue: 'Produit', expense: 'Charge',
-};
+// Libellés des types traduits au rendu : accounting:accountTypesShort.<type>
 const TYPE_COLORS = {
   asset: 'primary', liability: 'warning', equity: 'secondary', revenue: 'success', expense: 'error',
 };
@@ -25,6 +24,8 @@ export default function TrialBalance() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
+  const typeLabel = (type) => t(`accounting:accountTypesShort.${type}`);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
@@ -34,7 +35,7 @@ export default function TrialBalance() {
     setLoading(true);
     accountingAPI.getTrialBalance({ start_date: start, end_date: end })
       .then((r) => { setData(r.data); setError(null); })
-      .catch(() => setError('Erreur chargement de la balance'))
+      .catch(() => setError(t('accounting:trialBalance.loadError')))
       .finally(() => setLoading(false));
   };
 
@@ -42,22 +43,22 @@ export default function TrialBalance() {
 
   return (
     <Box p={{ xs: 2, sm: 3 }}>
-      <AccountingNav title="Balance des Comptes" subtitle="Soldes débiteurs et créditeurs par compte" />
+      <AccountingNav title={t('accounting:trialBalance.title')} subtitle={t('accounting:trialBalance.subtitle')} />
 
       {/* Filtres */}
       <Box display="flex" gap={1.5} mb={3} alignItems="center" flexWrap="wrap">
         <TextField
-          size="small" type="date" label="Du" InputLabelProps={{ shrink: true }}
+          size="small" type="date" label={t('accounting:common.from')} InputLabelProps={{ shrink: true }}
           value={start} onChange={(e) => setStart(e.target.value)}
           sx={{ flex: '1 1 130px', maxWidth: 180 }}
         />
         <TextField
-          size="small" type="date" label="Au" InputLabelProps={{ shrink: true }}
+          size="small" type="date" label={t('accounting:common.to')} InputLabelProps={{ shrink: true }}
           value={end} onChange={(e) => setEnd(e.target.value)}
           sx={{ flex: '1 1 130px', maxWidth: 180 }}
         />
         <Button variant="contained" onClick={load} disabled={loading} sx={{ whiteSpace: 'nowrap' }}>
-          {loading ? <CircularProgress size={20} /> : 'Actualiser'}
+          {loading ? <CircularProgress size={20} /> : t('accounting:common.refresh')}
         </Button>
       </Box>
 
@@ -67,10 +68,10 @@ export default function TrialBalance() {
         <>
           <Box mb={2}>
             {data.is_balanced ? (
-              <Alert severity="success">Balance équilibrée — Total = {format(parseFloat(data.total_debit))}</Alert>
+              <Alert severity="success">{t('accounting:trialBalance.balanced', { amount: format(parseFloat(data.total_debit)) })}</Alert>
             ) : (
               <Alert severity="error">
-                Balance déséquilibrée — Débit : {format(parseFloat(data.total_debit))} / Crédit : {format(parseFloat(data.total_credit))}
+                {t('accounting:trialBalance.unbalanced', { debit: format(parseFloat(data.total_debit)), credit: format(parseFloat(data.total_credit)) })}
               </Alert>
             )}
           </Box>
@@ -91,7 +92,7 @@ export default function TrialBalance() {
                         </Typography>
                       </Box>
                       <Chip
-                        label={TYPE_LABELS[row.account_type]}
+                        label={typeLabel(row.account_type)}
                         size="small"
                         color={TYPE_COLORS[row.account_type] || 'default'}
                         sx={{ ml: 1, flexShrink: 0 }}
@@ -104,21 +105,21 @@ export default function TrialBalance() {
                       sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 1 }}
                     >
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Débit</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('accounting:common.debit')}</Typography>
                         <Typography variant="body2">{format(parseFloat(row.total_debit))}</Typography>
                       </Box>
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Crédit</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('accounting:common.credit')}</Typography>
                         <Typography variant="body2">{format(parseFloat(row.total_credit))}</Typography>
                       </Box>
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Solde débiteur</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('accounting:trialBalance.debitBalance')}</Typography>
                         <Typography variant="body2" color="primary.main" fontWeight={parseFloat(row.solde_debiteur) > 0 ? 700 : 400}>
                           {parseFloat(row.solde_debiteur) > 0 ? format(parseFloat(row.solde_debiteur)) : '—'}
                         </Typography>
                       </Box>
                       <Box>
-                        <Typography variant="caption" color="text.secondary">Solde créditeur</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('accounting:trialBalance.creditBalance')}</Typography>
                         <Typography variant="body2" color="secondary.main" fontWeight={parseFloat(row.solde_crediteur) > 0 ? 700 : 400}>
                           {parseFloat(row.solde_crediteur) > 0 ? format(parseFloat(row.solde_crediteur)) : '—'}
                         </Typography>
@@ -130,14 +131,14 @@ export default function TrialBalance() {
               {/* Total */}
               <Card elevation={0} sx={{ border: 'none', borderRadius: 2.5, boxShadow: neu, borderTop: 3, borderTopColor: 'primary.main', bgcolor: 'action.hover' }}>
                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                  <Typography variant="body2" fontWeight={700} mb={1}>TOTAL</Typography>
+                  <Typography variant="body2" fontWeight={700} mb={1}>{t('accounting:trialBalance.total')}</Typography>
                   <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1}>
                     <Box>
-                      <Typography variant="caption" color="text.secondary">Débit</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('accounting:common.debit')}</Typography>
                       <Typography variant="body2" fontWeight={700}>{format(parseFloat(data.total_debit))}</Typography>
                     </Box>
                     <Box>
-                      <Typography variant="caption" color="text.secondary">Crédit</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('accounting:common.credit')}</Typography>
                       <Typography variant="body2" fontWeight={700}>{format(parseFloat(data.total_credit))}</Typography>
                     </Box>
                   </Box>
@@ -154,13 +155,13 @@ export default function TrialBalance() {
               <Table size="small" sx={{ minWidth: 650 }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>Code</strong></TableCell>
-                    <TableCell><strong>Intitulé</strong></TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>Type</strong></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>Total Débit</strong></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>Total Crédit</strong></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>Solde Débiteur</strong></TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>Solde Créditeur</strong></TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.code')}</strong></TableCell>
+                    <TableCell><strong>{t('accounting:common.label')}</strong></TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.type')}</strong></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.totalDebit')}</strong></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.totalCredit')}</strong></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:trialBalance.debitBalanceHeader')}</strong></TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:trialBalance.creditBalanceHeader')}</strong></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -171,7 +172,7 @@ export default function TrialBalance() {
                       </TableCell>
                       <TableCell>{row.name}</TableCell>
                       <TableCell>
-                        <Chip label={TYPE_LABELS[row.account_type]} size="small" color={TYPE_COLORS[row.account_type] || 'default'} />
+                        <Chip label={typeLabel(row.account_type)} size="small" color={TYPE_COLORS[row.account_type] || 'default'} />
                       </TableCell>
                       <TableCell align="right">{format(parseFloat(row.total_debit))}</TableCell>
                       <TableCell align="right">{format(parseFloat(row.total_credit))}</TableCell>
@@ -188,7 +189,7 @@ export default function TrialBalance() {
                     </TableRow>
                   ))}
                   <TableRow sx={{ bgcolor: 'action.hover' }}>
-                    <TableCell colSpan={3}><strong>TOTAL</strong></TableCell>
+                    <TableCell colSpan={3}><strong>{t('accounting:trialBalance.total')}</strong></TableCell>
                     <TableCell align="right"><strong>{format(parseFloat(data.total_debit))}</strong></TableCell>
                     <TableCell align="right"><strong>{format(parseFloat(data.total_credit))}</strong></TableCell>
                     <TableCell /><TableCell />

@@ -31,6 +31,7 @@ import Webcam from 'react-webcam';
 import { useDropzone } from 'react-dropzone';
 import { aiChatAPI } from '../services/api';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -47,6 +48,7 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 function DocumentScanner({ open, onClose, onSuccess }) {
+  const { t } = useTranslation(['aiChat', 'common']);
   const { enqueueSnackbar } = useSnackbar();
   const webcamRef = useRef(null);
   
@@ -85,7 +87,7 @@ function DocumentScanner({ open, onClose, onSuccess }) {
 
   const processDocument = async () => {
     if (!capturedImage) {
-      enqueueSnackbar('Veuillez capturer ou télécharger une image', { variant: 'warning' });
+      enqueueSnackbar(t('aiChat:documentScanner.captureOrUpload'), { variant: 'warning' });
       return;
     }
 
@@ -122,11 +124,11 @@ function DocumentScanner({ open, onClose, onSuccess }) {
           }
         }
       } else {
-        enqueueSnackbar(response.data.error || 'Erreur lors de l\'analyse', { variant: 'error' });
+        enqueueSnackbar(response.data.error || t('aiChat:documentScanner.analysisError'), { variant: 'error' });
       }
     } catch (error) {
       console.error('Document processing error:', error);
-      enqueueSnackbar('Erreur lors du traitement du document', { variant: 'error' });
+      enqueueSnackbar(t('aiChat:documentScanner.processingError'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -147,7 +149,7 @@ function DocumentScanner({ open, onClose, onSuccess }) {
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6">Scanner un document</Typography>
+          <Typography variant="h6">{t('aiChat:documentScanner.title')}</Typography>
           <IconButton onClick={handleClose}>
             <Close />
           </IconButton>
@@ -157,15 +159,15 @@ function DocumentScanner({ open, onClose, onSuccess }) {
       <DialogContent>
         <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
           <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Type de document</InputLabel>
+            <InputLabel>{t('aiChat:documentScanner.documentType')}</InputLabel>
             <Select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value)}
-              label="Type de document"
+              label={t('aiChat:documentScanner.documentType')}
             >
-              <MenuItem value="invoice">Facture</MenuItem>
-              <MenuItem value="purchase_order">Bon de commande</MenuItem>
-              <MenuItem value="supplier_list">Liste de fournisseurs</MenuItem>
+              <MenuItem value="invoice">{t('aiChat:documentScanner.types.invoice')}</MenuItem>
+              <MenuItem value="purchase_order">{t('aiChat:documentScanner.types.purchase_order')}</MenuItem>
+              <MenuItem value="supplier_list">{t('aiChat:documentScanner.types.supplier_list')}</MenuItem>
             </Select>
           </FormControl>
           
@@ -176,15 +178,15 @@ function DocumentScanner({ open, onClose, onSuccess }) {
                 onChange={(e) => setAutoCreate(e.target.checked)}
               />
             }
-            label="Créer automatiquement"
+            label={t('aiChat:documentScanner.autoCreate')}
           />
         </Box>
 
         {!capturedImage && !extractedData && (
           <>
             <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-              <Tab label="Caméra" icon={<CameraAlt />} />
-              <Tab label="Télécharger" icon={<CloudUpload />} />
+              <Tab label={t('aiChat:documentScanner.camera')} icon={<CameraAlt />} />
+              <Tab label={t('aiChat:documentScanner.upload')} icon={<CloudUpload />} />
             </Tabs>
 
             <TabPanel value={tabValue} index={0}>
@@ -203,7 +205,7 @@ function DocumentScanner({ open, onClose, onSuccess }) {
                   startIcon={<CameraAlt />}
                   sx={{ mt: 2 }}
                 >
-                  Capturer
+                  {t('aiChat:documentScanner.capture')}
                 </Button>
               </Box>
             </TabPanel>
@@ -225,11 +227,11 @@ function DocumentScanner({ open, onClose, onSuccess }) {
                 <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                 <Typography variant="h6" gutterBottom>
                   {isDragActive
-                    ? 'Déposez le fichier ici'
-                    : 'Glissez-déposez un fichier ici ou cliquez pour sélectionner'}
+                    ? t('aiChat:documentScanner.dropHere')
+                    : t('aiChat:documentScanner.dragOrClick')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Formats supportés : JPEG, PNG, GIF, BMP, TIFF (max 10MB)
+                  {t('aiChat:documentScanner.supportedFormats')}
                 </Typography>
               </Box>
             </TabPanel>
@@ -240,12 +242,12 @@ function DocumentScanner({ open, onClose, onSuccess }) {
           <Box sx={{ textAlign: 'center' }}>
             <img
               src={capturedImage}
-              alt="Document capturé"
+              alt={t('aiChat:documentScanner.capturedAlt')}
               style={{ maxWidth: '100%', maxHeight: 400 }}
             />
             <Box sx={{ mt: 2, display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button onClick={resetScanner} disabled={loading}>
-                Reprendre
+                {t('aiChat:documentScanner.retake')}
               </Button>
               <Button
                 variant="contained"
@@ -253,7 +255,7 @@ function DocumentScanner({ open, onClose, onSuccess }) {
                 disabled={loading}
                 startIcon={loading ? <CircularProgress size={20} /> : <ScanIcon />}
               >
-                {loading ? 'Analyse en cours...' : 'Analyser'}
+                {loading ? t('aiChat:documentScanner.analyzing') : t('aiChat:documentScanner.analyze')}
               </Button>
             </Box>
           </Box>
@@ -262,12 +264,12 @@ function DocumentScanner({ open, onClose, onSuccess }) {
         {extractedData && (
           <Box>
             <Alert severity="success" icon={<CheckCircle />} sx={{ mb: 2 }}>
-              Document analysé avec succès !
+              {t('aiChat:documentScanner.success')}
             </Alert>
             
             <Paper sx={{ p: 2, mb: 2 }}>
               <Typography variant="h6" gutterBottom>
-                Données extraites
+                {t('aiChat:documentScanner.extractedData')}
               </Typography>
               <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.875rem' }}>
                 {JSON.stringify(extractedData, null, 2)}
@@ -277,7 +279,7 @@ function DocumentScanner({ open, onClose, onSuccess }) {
             {ocrText && (
               <Paper sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>
-                  Texte extrait (OCR)
+                  {t('aiChat:documentScanner.ocrText')}
                 </Typography>
                 <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
                   {ocrText}
@@ -289,10 +291,10 @@ function DocumentScanner({ open, onClose, onSuccess }) {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleClose}>Fermer</Button>
+        <Button onClick={handleClose}>{t('common:buttons.close')}</Button>
         {extractedData && (
           <Button variant="contained" onClick={resetScanner}>
-            Scanner un autre document
+            {t('aiChat:documentScanner.scanAnother')}
           </Button>
         )}
       </DialogActions>

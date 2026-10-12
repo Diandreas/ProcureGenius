@@ -2,15 +2,30 @@ import React, { useEffect } from 'react';
 import { Box, Container, Typography, useTheme, Chip, Button, Divider } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { getPostBySlug, BLOG_POSTS } from '../../data/blogPosts';
 import usePageMeta from '../../hooks/usePageMeta';
 
+// Catégories des articles (données en français) -> clés de traduction affichées dans l'interface
+const CATEGORY_KEYS = {
+  'Gestion': 'management',
+  'Image de marque': 'branding',
+  'Intelligence artificielle': 'ai',
+  'Trésorerie': 'cashFlow',
+  'Stock': 'stock',
+  'Comptabilité': 'accounting',
+  'Productivité': 'productivity',
+  'Facturation': 'invoicing',
+};
+
 export default function BlogPost() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation(['public']);
+  const categoryLabel = (c) => (CATEGORY_KEYS[c] ? t(`public:blog.categories.${CATEGORY_KEYS[c]}`) : c);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const post = getPostBySlug(slug);
@@ -35,9 +50,9 @@ export default function BlogPost() {
   if (!post) {
     return (
       <Container maxWidth="md" sx={{ py: 12, textAlign: 'center' }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, color: headingColor, mb: 2 }}>Article introuvable</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 800, color: headingColor, mb: 2 }}>{t('public:blog.notFound')}</Typography>
         <Button variant="contained" onClick={() => navigate('/blog')} sx={{ bgcolor: accent, textTransform: 'none', fontWeight: 700 }}>
-          Retour au blog
+          {t('public:blog.backToBlog')}
         </Button>
       </Container>
     );
@@ -104,7 +119,7 @@ export default function BlogPost() {
         return (
           <Box key={i} sx={{ my: 5, p: { xs: 3, md: 4 }, borderRadius: 4, textAlign: 'center', background: accent }}>
             <Typography sx={{ color: '#fff', fontSize: '1.3rem', fontWeight: 800, mb: 2 }}>
-              Prêt à reprendre le contrôle ?
+              {t('public:blog.cta.title')}
             </Typography>
             <Button
               variant="contained"
@@ -115,7 +130,7 @@ export default function BlogPost() {
               {block.text}
             </Button>
             <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.8rem', mt: 1.5 }}>
-              30 jours d'essai gratuit — sans carte bancaire
+              {t('public:blog.cta.trial')}
             </Typography>
           </Box>
         );
@@ -130,10 +145,10 @@ export default function BlogPost() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
 
           <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/blog')} sx={{ color: mutedColor, textTransform: 'none', fontWeight: 600, mb: 3, '&:hover': { color: accent } }}>
-            Tous les articles
+            {t('public:blog.allArticles')}
           </Button>
 
-          <Chip label={post.category} size="small" sx={{ mb: 2.5, bgcolor: `${accent}15`, color: accent, fontWeight: 700 }} />
+          <Chip label={categoryLabel(post.category)} size="small" sx={{ mb: 2.5, bgcolor: `${accent}15`, color: accent, fontWeight: 700 }} />
 
           <Typography variant="h1" sx={{ fontSize: { xs: '1.9rem', md: '2.7rem' }, fontWeight: 800, color: headingColor, mb: 2, lineHeight: 1.15, letterSpacing: '-0.02em' }}>
             {post.title}
@@ -160,7 +175,7 @@ export default function BlogPost() {
             <>
               <Divider sx={{ my: 6, borderColor }} />
               <Typography sx={{ fontWeight: 800, fontSize: '1.3rem', color: headingColor, mb: 3 }}>
-                À lire aussi
+                {t('public:blog.related')}
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                 {related.map((r) => (

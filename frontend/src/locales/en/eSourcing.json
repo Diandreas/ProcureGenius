@@ -125,7 +125,9 @@
     "publish": "Publish",
     "close": "Close",
     "compareBids": "Compare Bids",
-    "statistics": "Statistics"
+    "statistics": "Statistics",
+    "editEvent": "Edit event",
+    "publishEvent": "Publish event"
   },
   "detail": {
     "title": "Event Details",
@@ -234,7 +236,8 @@
     "currentScore": "Current score",
     "loadError": "Error loading submission",
     "updateSuccess": "Submission updated successfully",
-    "updateError": "Error updating submission"
+    "updateError": "Error updating submission",
+    "editBid": "Edit bid"
   },
   "messages": {
     "loading": "Loading sourcing events...",
@@ -257,5 +260,8 @@
     "confirmDeleteMessage": "Are you sure you want to delete event \"{{number}}\"? This action is irreversible.",
     "deleteConfirmation": "Are you sure you want to delete this event?",
     "linkCopied": "Link copied to clipboard"
+  },
+  "dateFormats": {
+    "dateTime": "MMMM d, yyyy 'at' HH:mm"
   }
 }

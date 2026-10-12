@@ -7,6 +7,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
     Card,
@@ -85,10 +86,8 @@ import {
 // Configuration des types d'entités importables
 const ENTITY_CONFIGS = {
     suppliers: {
-        label: 'Fournisseurs',
         icon: LocalShipping,
         color: '#2563eb',
-        description: 'Importez votre liste de fournisseurs avec leurs coordonnées',
         fields: {
             required: ['name'],
             optional: ['email', 'phone', 'address', 'city', 'country', 'contact_name', 'payment_terms', 'notes'],
@@ -116,10 +115,8 @@ const ENTITY_CONFIGS = {
         },
     },
     products: {
-        label: 'Produits',
         icon: Inventory,
         color: '#059669',
-        description: 'Importez votre catalogue de produits avec prix et stocks',
         fields: {
             required: ['name'],
             optional: ['reference', 'sku', 'description', 'unit_price', 'cost_price', 'quantity_in_stock', 'category', 'unit'],
@@ -156,10 +153,8 @@ const ENTITY_CONFIGS = {
         },
     },
     clients: {
-        label: 'Clients',
         icon: People,
         color: '#7c3aed',
-        description: 'Importez votre base de clients avec leurs informations',
         fields: {
             required: ['name'],
             optional: ['email', 'phone', 'address', 'city', 'country', 'contact_name', 'credit_limit', 'notes'],
@@ -187,10 +182,8 @@ const ENTITY_CONFIGS = {
         },
     },
     purchase_orders: {
-        label: 'Bons de commande',
         icon: Description,
         color: '#ea580c',
-        description: 'Importez vos bons de commande existants',
         fields: {
             required: ['supplier_name'],
             optional: ['order_number', 'order_date', 'expected_date', 'status', 'notes'],
@@ -209,10 +202,8 @@ const ENTITY_CONFIGS = {
         },
     },
     invoices: {
-        label: 'Factures',
         icon: Receipt,
         color: '#dc2626',
-        description: 'Importez vos factures clients',
         fields: {
             required: ['client_name'],
             optional: ['invoice_number', 'invoice_date', 'due_date', 'status', 'total', 'notes'],
@@ -234,13 +225,14 @@ const ENTITY_CONFIGS = {
     },
 };
 
-const STEPS = ['Type de données', 'Fichier source', 'Mapping', 'Aperçu', 'Import'];
+const STEPS = ['dataType', 'sourceFile', 'mapping', 'preview', 'import'];
 
 /**
  * Carte de sélection d'entité
  */
 const EntityCard = ({ entityKey, config, selected, onClick }) => {
     const theme = useTheme();
+    const { t } = useTranslation(['dataImport', 'common']);
     const Icon = config.icon;
 
     return (
@@ -284,15 +276,15 @@ const EntityCard = ({ entityKey, config, selected, onClick }) => {
                     <Icon sx={{ fontSize: 32, color: 'white' }} />
                 </Box>
                 <Typography variant="h6" fontWeight={600} gutterBottom>
-                    {config.label}
+                    {t(`dataImport:entities.${entityKey}`)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                    {config.description}
+                    {t(`dataImport:entityDescriptions.${entityKey}`)}
                 </Typography>
                 {selected && (
                     <Chip
                         icon={<CheckCircle />}
-                        label="Sélectionné"
+                        label={t('dataImport:actions.selected')}
                         color="success"
                         size="small"
                         sx={{ mt: 2 }}
@@ -308,6 +300,7 @@ const EntityCard = ({ entityKey, config, selected, onClick }) => {
  */
 const FileDropzone = ({ onFileAccepted, acceptedFile }) => {
     const theme = useTheme();
+    const { t } = useTranslation(['dataImport', 'common']);
 
     const onDrop = useCallback((acceptedFiles) => {
         if (acceptedFiles.length > 0) {
@@ -361,13 +354,13 @@ const FileDropzone = ({ onFileAccepted, acceptedFile }) => {
                     <Box>
                         <InsertDriveFile sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
                         <Typography variant="h6" gutterBottom color="success.main">
-                            Fichier sélectionné
+                            {t('dataImport:wizard.dropzone.fileSelected')}
                         </Typography>
                         <Typography variant="body1" fontWeight={500}>
                             {acceptedFile.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            {(acceptedFile.size / 1024).toFixed(1)} KB
+                            {t('dataImport:wizard.dropzone.sizeKb', { size: (acceptedFile.size / 1024).toFixed(1) })}
                         </Typography>
                         <Button
                             variant="outlined"
@@ -378,7 +371,7 @@ const FileDropzone = ({ onFileAccepted, acceptedFile }) => {
                                 onFileAccepted(null);
                             }}
                         >
-                            Changer de fichier
+                            {t('dataImport:actions.changeFile')}
                         </Button>
                     </Box>
                 </Fade>
@@ -386,15 +379,15 @@ const FileDropzone = ({ onFileAccepted, acceptedFile }) => {
                 <Box>
                     <CloudUpload sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
                     <Typography variant="h6" gutterBottom>
-                        {isDragActive ? 'Déposez le fichier ici' : 'Glissez-déposez votre fichier'}
+                        {isDragActive ? t('dataImport:wizard.dropzone.dropHere') : t('dataImport:wizard.dropzone.dragDrop')}
                     </Typography>
                     <Typography color="text.secondary" paragraph>
-                        ou cliquez pour sélectionner
+                        {t('dataImport:wizard.dropzone.orClick')}
                     </Typography>
                     <Stack direction="row" spacing={1} justifyContent="center">
                         <Chip label="CSV" size="small" variant="outlined" />
                         <Chip label="Excel (.xlsx)" size="small" variant="outlined" />
-                        <Chip label="Max 10 MB" size="small" variant="outlined" />
+                        <Chip label={t('dataImport:wizard.dropzone.maxSize')} size="small" variant="outlined" />
                     </Stack>
                 </Box>
             )}
@@ -409,6 +402,7 @@ const SmartImportWizard = ({ open, onClose }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const dispatch = useDispatch();
+    const { t } = useTranslation(['dataImport', 'common']);
 
     const { currentJob, previewData, availableFields, logs, loading, error } = useSelector(
         (state) => state.migration
@@ -536,9 +530,9 @@ const SmartImportWizard = ({ open, onClose }) => {
 
                 // Générer un nom d'import par défaut
                 if (!importName) {
-                    const entityLabel = ENTITY_CONFIGS[selectedEntity]?.label || 'Données';
+                    const entityLabel = ENTITY_CONFIGS[selectedEntity] ? t(`dataImport:entities.${selectedEntity}`) : t('dataImport:entities.default');
                     const date = new Date().toLocaleDateString('fr-FR');
-                    setImportName(`Import ${entityLabel} - ${date}`);
+                    setImportName(t('dataImport:defaultImportName', { entity: entityLabel, date }));
                 }
             } catch (err) {
                 console.error('Error parsing file:', err);
@@ -611,7 +605,7 @@ const SmartImportWizard = ({ open, onClose }) => {
         const config = ENTITY_CONFIGS[selectedEntity];
         const allFields = [...config.fields.required, ...config.fields.optional];
         const csvContent = allFields.join(',') + '\n' +
-            allFields.map(f => config.fields.required.includes(f) ? 'valeur_requise' : '').join(',');
+            allFields.map(f => config.fields.required.includes(f) ? t('dataImport:wizard.template.requiredValue') : '').join(',');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
@@ -661,10 +655,10 @@ const SmartImportWizard = ({ open, onClose }) => {
                 return (
                     <Box>
                         <Typography variant="h6" gutterBottom textAlign="center">
-                            Quel type de données souhaitez-vous importer ?
+                            {t('dataImport:wizard.step0.title')}
                         </Typography>
                         <Typography color="text.secondary" textAlign="center" sx={{ mb: 4 }}>
-                            Sélectionnez le type d'entité pour configurer l'import intelligemment
+                            {t('dataImport:wizard.step0.subtitle')}
                         </Typography>
 
                         <Grid container spacing={2}>
@@ -686,7 +680,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                 return (
                     <Box>
                         <Typography variant="h6" gutterBottom textAlign="center">
-                            Sélectionnez votre fichier source
+                            {t('dataImport:wizard.step1.title')}
                         </Typography>
 
                         <Grid container spacing={3}>
@@ -701,7 +695,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                 <Stack spacing={2}>
                                     <TextField
                                         fullWidth
-                                        label="Nom de l'import"
+                                        label={t('dataImport:wizard.step1.importName')}
                                         value={importName}
                                         onChange={(e) => setImportName(e.target.value)}
                                         required
@@ -715,20 +709,20 @@ const SmartImportWizard = ({ open, onClose }) => {
                                                 onChange={(e) => setHasHeader(e.target.checked)}
                                             />
                                         }
-                                        label="Le fichier contient des en-têtes"
+                                        label={t('dataImport:wizard.step1.hasHeaders')}
                                     />
 
                                     <TextField
                                         fullWidth
-                                        label="Délimiteur CSV"
+                                        label={t('dataImport:wizard.step1.delimiter')}
                                         value={delimiter}
                                         onChange={(e) => setDelimiter(e.target.value)}
                                         size="small"
                                         select
                                     >
-                                        <MenuItem value=",">Virgule (,)</MenuItem>
-                                        <MenuItem value=";">Point-virgule (;)</MenuItem>
-                                        <MenuItem value="\t">Tabulation</MenuItem>
+                                        <MenuItem value=",">{t('dataImport:delimiters.comma')}</MenuItem>
+                                        <MenuItem value=";">{t('dataImport:delimiters.semicolon')}</MenuItem>
+                                        <MenuItem value="\t">{t('dataImport:delimiters.tab')}</MenuItem>
                                     </TextField>
 
                                     <Divider />
@@ -739,7 +733,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                         onClick={handleDownloadTemplate}
                                         size="small"
                                     >
-                                        Télécharger template
+                                        {t('dataImport:wizard.step1.downloadTemplate')}
                                     </Button>
                                 </Stack>
                             </Grid>
@@ -757,18 +751,18 @@ const SmartImportWizard = ({ open, onClose }) => {
                     <Box>
                         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                             <Typography variant="h6">
-                                Associez les colonnes de votre fichier
+                                {t('dataImport:wizard.step2.title')}
                             </Typography>
                             <Chip
                                 icon={<AutoAwesome />}
-                                label="Mapping intelligent actif"
+                                label={t('dataImport:wizard.step2.smartMapping')}
                                 color="primary"
                                 size="small"
                             />
                         </Box>
 
                         <Alert severity="info" sx={{ mb: 3 }}>
-                            <AlertTitle>Colonnes requises</AlertTitle>
+                            <AlertTitle>{t('dataImport:wizard.step2.requiredColumns')}</AlertTitle>
                             {config.fields.required.map(f => (
                                 <Chip
                                     key={f}
@@ -784,9 +778,9 @@ const SmartImportWizard = ({ open, onClose }) => {
                             <Table size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 600 }}>Colonne source</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Exemple de valeur</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Champ destination</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>{t('dataImport:wizard.step2.sourceColumn')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>{t('dataImport:wizard.step2.sampleValue')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>{t('dataImport:wizard.step2.destField')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -810,7 +804,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                                         displayEmpty
                                                     >
                                                         <MenuItem value="">
-                                                            <em>Ignorer cette colonne</em>
+                                                            <em>{t('dataImport:wizard.step2.ignoreColumn')}</em>
                                                         </MenuItem>
                                                         {allDestFields.map(field => (
                                                             <MenuItem
@@ -836,7 +830,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                 return (
                     <Box>
                         <Typography variant="h6" gutterBottom>
-                            Aperçu de l'import
+                            {t('dataImport:wizard.step3.title')}
                         </Typography>
 
                         <Grid container spacing={3}>
@@ -844,7 +838,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                 <Card sx={{ background: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
                                     <CardContent>
                                         <Typography variant="overline" color="text.secondary">
-                                            Lignes à importer
+                                            {t('dataImport:wizard.step3.rowsToImport')}
                                         </Typography>
                                         <Typography variant="h3" color="primary.main">
                                             {localPreview?.totalRows || 0}
@@ -856,7 +850,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                 <Card sx={{ background: alpha(theme.palette.success.main, 0.05), borderRadius: 2 }}>
                                     <CardContent>
                                         <Typography variant="overline" color="text.secondary">
-                                            Champs mappés
+                                            {t('dataImport:wizard.step3.mappedFields')}
                                         </Typography>
                                         <Typography variant="h3" color="success.main">
                                             {Object.keys(fieldMapping).length}
@@ -868,10 +862,10 @@ const SmartImportWizard = ({ open, onClose }) => {
                                 <Card sx={{ background: alpha(theme.palette.warning.main, 0.05), borderRadius: 2 }}>
                                     <CardContent>
                                         <Typography variant="overline" color="text.secondary">
-                                            Type d'entité
+                                            {t('dataImport:wizard.step3.entityType')}
                                         </Typography>
                                         <Typography variant="h6" color="warning.main">
-                                            {ENTITY_CONFIGS[selectedEntity]?.label}
+                                            {ENTITY_CONFIGS[selectedEntity] && t(`dataImport:entities.${selectedEntity}`)}
                                         </Typography>
                                     </CardContent>
                                 </Card>
@@ -881,7 +875,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                         <Divider sx={{ my: 3 }} />
 
                         <Typography variant="subtitle2" gutterBottom>
-                            Options d'import
+                            {t('dataImport:wizard.step3.importOptions')}
                         </Typography>
                         <Stack direction="row" spacing={3}>
                             <FormControlLabel
@@ -891,7 +885,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                         onChange={(e) => setSkipDuplicates(e.target.checked)}
                                     />
                                 }
-                                label="Ignorer les doublons"
+                                label={t('dataImport:wizard.step3.skipDuplicates')}
                             />
                             <FormControlLabel
                                 control={
@@ -901,14 +895,14 @@ const SmartImportWizard = ({ open, onClose }) => {
                                         disabled={!skipDuplicates}
                                     />
                                 }
-                                label="Mettre à jour les existants"
+                                label={t('dataImport:wizard.step3.updateExisting')}
                             />
                         </Stack>
 
                         <Divider sx={{ my: 3 }} />
 
                         <Typography variant="subtitle2" gutterBottom>
-                            Aperçu des données (5 premières lignes)
+                            {t('dataImport:wizard.step3.dataPreview')}
                         </Typography>
                         <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
                             <Table size="small" stickyHeader>
@@ -952,7 +946,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                 <Box>
                                     <CircularProgress size={80} sx={{ mb: 3 }} />
                                     <Typography variant="h5" gutterBottom>
-                                        Import en cours...
+                                        {t('dataImport:wizard.step4.inProgress')}
                                     </Typography>
                                     <LinearProgress
                                         variant="determinate"
@@ -960,7 +954,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                         sx={{ mb: 2, height: 8, borderRadius: 4 }}
                                     />
                                     <Typography color="text.secondary">
-                                        {currentJob.processed_rows || 0} / {currentJob.total_rows || 0} lignes traitées
+                                        {t('dataImport:wizard.step4.rowsProcessed', { processed: currentJob.processed_rows || 0, total: currentJob.total_rows || 0 })}
                                     </Typography>
                                 </Box>
                             </Fade>
@@ -971,7 +965,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                 <Box>
                                     <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 2 }} />
                                     <Typography variant="h5" gutterBottom color="success.main">
-                                        Import terminé avec succès !
+                                        {t('dataImport:wizard.step4.completed')}
                                     </Typography>
 
                                     <Grid container spacing={2} sx={{ mt: 3, maxWidth: 600, mx: 'auto' }}>
@@ -981,7 +975,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                                     <Typography variant="h4" color="success.main">
                                                         {currentJob.success_count || 0}
                                                     </Typography>
-                                                    <Typography variant="body2">Succès</Typography>
+                                                    <Typography variant="body2">{t('dataImport:results.success')}</Typography>
                                                 </CardContent>
                                             </Card>
                                         </Grid>
@@ -991,7 +985,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                                     <Typography variant="h4" color="error.main">
                                                         {currentJob.error_count || 0}
                                                     </Typography>
-                                                    <Typography variant="body2">Erreurs</Typography>
+                                                    <Typography variant="body2">{t('dataImport:results.errors')}</Typography>
                                                 </CardContent>
                                             </Card>
                                         </Grid>
@@ -1001,7 +995,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                                                     <Typography variant="h4" color="warning.main">
                                                         {currentJob.skipped_count || 0}
                                                     </Typography>
-                                                    <Typography variant="body2">Ignorés</Typography>
+                                                    <Typography variant="body2">{t('dataImport:results.skipped')}</Typography>
                                                 </CardContent>
                                             </Card>
                                         </Grid>
@@ -1014,10 +1008,10 @@ const SmartImportWizard = ({ open, onClose }) => {
                             <Box>
                                 <ErrorIcon sx={{ fontSize: 80, color: 'error.main', mb: 2 }} />
                                 <Typography variant="h5" gutterBottom color="error.main">
-                                    Erreur lors de l'import
+                                    {t('dataImport:wizard.step4.failed')}
                                 </Typography>
                                 <Alert severity="error" sx={{ mt: 2, textAlign: 'left' }}>
-                                    {currentJob.error_message || 'Une erreur inattendue est survenue'}
+                                    {currentJob.error_message || t('dataImport:wizard.step4.unexpectedError')}
                                 </Alert>
                             </Box>
                         )}
@@ -1026,7 +1020,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                             <Box>
                                 <CircularProgress size={60} sx={{ mb: 3 }} />
                                 <Typography variant="h6" color="text.secondary">
-                                    Préparation de l'import...
+                                    {t('dataImport:wizard.step4.preparing')}
                                 </Typography>
                             </Box>
                         )}
@@ -1057,7 +1051,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                     <Box display="flex" alignItems="center" gap={1}>
                         <AutoAwesome color="primary" />
                         <Typography variant="h6">
-                            Import intelligent de données
+                            {t('dataImport:wizard.title')}
                         </Typography>
                     </Box>
                     <IconButton onClick={onClose} size="small">
@@ -1068,9 +1062,9 @@ const SmartImportWizard = ({ open, onClose }) => {
 
             <Box sx={{ px: 3, pt: 2 }}>
                 <Stepper activeStep={activeStep} alternativeLabel>
-                    {STEPS.map((label, index) => (
-                        <Step key={label} completed={index < activeStep}>
-                            <StepLabel>{label}</StepLabel>
+                    {STEPS.map((stepKey, index) => (
+                        <Step key={stepKey} completed={index < activeStep}>
+                            <StepLabel>{t(`dataImport:wizard.steps.${stepKey}`)}</StepLabel>
                         </Step>
                     ))}
                 </Stepper>
@@ -1088,7 +1082,7 @@ const SmartImportWizard = ({ open, onClose }) => {
 
             <DialogActions sx={{ px: 3, py: 2 }}>
                 <Button onClick={onClose} disabled={loading || localLoading}>
-                    {activeStep === 4 && currentJob?.status === 'completed' ? 'Fermer' : 'Annuler'}
+                    {activeStep === 4 && currentJob?.status === 'completed' ? t('dataImport:actions.close') : t('dataImport:actions.cancel')}
                 </Button>
 
                 <Box sx={{ flex: 1 }} />
@@ -1099,7 +1093,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                         onClick={handleBack}
                         disabled={loading || localLoading}
                     >
-                        Précédent
+                        {t('dataImport:actions.previous')}
                     </Button>
                 )}
 
@@ -1110,7 +1104,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                         onClick={handleNext}
                         disabled={!canProceed() || loading || localLoading}
                     >
-                        {activeStep === 3 ? 'Lancer l\'import' : 'Suivant'}
+                        {activeStep === 3 ? t('dataImport:actions.startImport') : t('dataImport:actions.next')}
                     </Button>
                 )}
 
@@ -1120,7 +1114,7 @@ const SmartImportWizard = ({ open, onClose }) => {
                         startIcon={<Refresh />}
                         onClick={resetWizard}
                     >
-                        Nouvel import
+                        {t('dataImport:actions.newImport')}
                     </Button>
                 )}
             </DialogActions>

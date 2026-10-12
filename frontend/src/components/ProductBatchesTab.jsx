@@ -47,20 +47,25 @@ import {
 import { productBatchesAPI, productsAPI, warehousesAPI } from '../services/api';
 import { formatDate } from '../utils/formatters';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
-// Calcule le statut d'expiration et retourne label + couleur
+// Calcule le statut d'expiration et retourne un code stable + couleur
+// (le libellé est traduit à l'affichage via expirationLabel)
 function getExpirationStatus(date) {
   if (!date) return null;
   const expDate = new Date(date);
   const now = new Date();
   const diffDays = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
-  if (diffDays <= 0) return { label: 'Périmé', color: 'error', icon: <ErrorOutline fontSize="small" /> };
-  if (diffDays <= 7) return { label: `Expire dans ${diffDays}j`, color: 'error', icon: <Warning fontSize="small" /> };
-  if (diffDays <= 30) return { label: `Expire dans ${diffDays}j`, color: 'warning', icon: <WarningAmber fontSize="small" /> };
-  return { label: 'Valide', color: 'success', icon: <CheckCircle fontSize="small" /> };
+  if (diffDays <= 0) return { key: 'expired', days: diffDays, color: 'error', icon: <ErrorOutline fontSize="small" /> };
+  if (diffDays <= 7) return { key: 'expiresIn', days: diffDays, color: 'error', icon: <Warning fontSize="small" /> };
+  if (diffDays <= 30) return { key: 'expiresIn', days: diffDays, color: 'warning', icon: <WarningAmber fontSize="small" /> };
+  return { key: 'valid', days: diffDays, color: 'success', icon: <CheckCircle fontSize="small" /> };
 }
 
+const expirationLabel = (t, status) => t(`stock:batches.expiry.${status.key}`, { days: status.days });
+
 function StockReceptionDialog({ open, batch, productId, onClose, onSuccess }) {
+  const { t } = useTranslation(['stock']);
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -73,7 +78,7 @@ function StockReceptionDialog({ open, batch, productId, onClose, onSuccess }) {
   const handleSubmit = async () => {
     const qty = parseInt(quantity);
     if (!qty || qty <= 0) {
-      enqueueSnackbar('La quantité doit être supérieure à 0', { variant: 'error' });
+      enqueueSnackbar(t('stock:batches.quantityPositive'), { variant: 'error' });
       return;
     }
     setSubmitting(true);
@@ -82,14 +87,14 @@ function StockReceptionDialog({ open, batch, productId, onClose, onSuccess }) {
         quantity: qty,
         movement_type: 'reception',
         reference_type: 'manual',
-        notes: notes || `Réception sur lot ${batch?.batch_number}`,
+        notes: notes || t('stock:batches.receptionNote', { batch: batch?.batch_number }),
         batch_id: batch?.id,
       });
-      enqueueSnackbar(`${qty} unités réceptionnées sur le lot ${batch?.batch_number}`, { variant: 'success' });
+      enqueueSnackbar(t('stock:batches.received', { count: qty, batch: batch?.batch_number }), { variant: 'success' });
       onSuccess();
       onClose();
     } catch (err) {
-      enqueueSnackbar('Erreur lors de la réception du stock', { variant: 'error' });
+      enqueueSnackbar(t('stock:batches.receptionError'), { variant: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -110,24 +115,24 @@ function StockReceptionDialog({ open, batch, productId, onClose, onSuccess }) {
         sx={{ bgcolor: 'background.paper', borderRadius: 3, p: 3, width: 400, maxWidth: '95vw', boxShadow: 8 }}
         onClick={e => e.stopPropagation()}
       >
-        <Typography variant="h6" fontWeight={700} mb={0.5}>Réception de stock</Typography>
+        <Typography variant="h6" fontWeight={700} mb={0.5}>{t('stock:batches.receptionTitle')}</Typography>
         <Typography variant="body2" color="text.secondary" mb={2.5}>
-          Lot : <strong>{batch?.batch_number}</strong>
-          {batch?.expiration_date && ` • Exp: ${formatDate(batch.expiration_date)}`}
+          {t('stock:batches.batchPrefix')} <strong>{batch?.batch_number}</strong>
+          {batch?.expiration_date && ` • ${t('stock:movements.batchExpiry', { date: formatDate(batch.expiration_date) })}`}
         </Typography>
         <Stack spacing={2}>
           <TextField
-            label="Quantité réceptionnée"
+            label={t('stock:batches.receivedQuantity')}
             type="number"
             value={quantity}
             onChange={e => setQuantity(e.target.value)}
             fullWidth
             autoFocus
             inputProps={{ min: 1 }}
-            InputProps={{ endAdornment: <InputAdornment position="end">unités</InputAdornment> }}
+            InputProps={{ endAdornment: <InputAdornment position="end">{t('stock:batches.units')}</InputAdornment> }}
           />
           <TextField
-            label="Notes (optionnel)"
+            label={t('stock:movements.notesOptional')}
             value={notes}
             onChange={e => setNotes(e.target.value)}
             fullWidth
@@ -136,14 +141,14 @@ function StockReceptionDialog({ open, batch, productId, onClose, onSuccess }) {
           />
         </Stack>
         <Stack direction="row" spacing={1.5} justifyContent="flex-end" mt={3}>
-          <Button onClick={onClose} disabled={submitting}>Annuler</Button>
+          <Button onClick={onClose} disabled={submitting}>{t('stock:common.cancel')}</Button>
           <Button
             variant="contained"
             onClick={handleSubmit}
             disabled={submitting || !quantity}
             startIcon={submitting ? <CircularProgress size={16} /> : <LocalShipping />}
           >
-            Réceptionner
+            {t('stock:batches.receive')}
           </Button>
         </Stack>
       </Box>
@@ -152,6 +157,7 @@ function StockReceptionDialog({ open, batch, productId, onClose, onSuccess }) {
 }
 
 function CreateBatchPanel({ productId, onSuccess, onCancel }) {
+  const { t } = useTranslation(['stock']);
   const [batchNumber, setBatchNumber] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
   const [initialQuantity, setInitialQuantity] = useState('');
@@ -184,7 +190,7 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
 
   const handleCreate = async () => {
     if (!batchNumber.trim()) {
-      enqueueSnackbar('Le numéro de lot est requis', { variant: 'error' });
+      enqueueSnackbar(t('stock:batches.batchNumberRequired'), { variant: 'error' });
       return;
     }
     setSubmitting(true);
@@ -197,10 +203,10 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
         supplier_batch_reference: supplierBatchRef,
         warehouse: warehouseId || null,
       });
-      enqueueSnackbar('Lot créé avec succès', { variant: 'success' });
+      enqueueSnackbar(t('stock:batches.created'), { variant: 'success' });
       onSuccess();
     } catch (err) {
-      enqueueSnackbar('Erreur lors de la création du lot', { variant: 'error' });
+      enqueueSnackbar(t('stock:batches.createError'), { variant: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -208,11 +214,11 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
 
   return (
     <Box sx={{ bgcolor: 'background.paper', border: '1.5px solid', borderColor: 'primary.main', borderRadius: 2, p: 2.5, mb: 2 }}>
-      <Typography variant="subtitle1" fontWeight={700} mb={2}>Nouveau lot</Typography>
+      <Typography variant="subtitle1" fontWeight={700} mb={2}>{t('stock:batches.newBatch')}</Typography>
       <Stack spacing={2}>
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
           <TextField
-            label="Numéro de lot *"
+            label={t('stock:batches.batchNumberRequiredLabel')}
             value={batchNumber}
             onChange={e => setBatchNumber(e.target.value)}
             fullWidth
@@ -220,7 +226,7 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
             size="small"
           />
           <TextField
-            label="Quantité initiale"
+            label={t('stock:batches.initialQuantity')}
             type="number"
             value={initialQuantity}
             onChange={e => setInitialQuantity(e.target.value)}
@@ -229,7 +235,7 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
             inputProps={{ min: 0 }}
           />
           <TextField
-            label="Date d'expiration"
+            label={t('stock:batches.expirationDate')}
             type="date"
             value={expirationDate}
             onChange={e => setExpirationDate(e.target.value)}
@@ -238,20 +244,20 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
             InputLabelProps={{ shrink: true }}
           />
           <TextField
-            label="Réf. lot fournisseur"
+            label={t('stock:batches.supplierBatchRef')}
             value={supplierBatchRef}
             onChange={e => setSupplierBatchRef(e.target.value)}
             fullWidth
             size="small"
           />
           <FormControl fullWidth size="small">
-            <InputLabel>Entrepôt</InputLabel>
+            <InputLabel>{t('stock:common.warehouse')}</InputLabel>
             <Select
               value={warehouseId}
-              label="Entrepôt"
+              label={t('stock:common.warehouse')}
               onChange={e => setWarehouseId(e.target.value)}
             >
-              <MenuItem value=""><em>Aucun</em></MenuItem>
+              <MenuItem value=""><em>{t('stock:batches.none')}</em></MenuItem>
               {warehouses.map(w => (
                 <MenuItem key={w.id} value={w.id}>{w.name} ({w.code})</MenuItem>
               ))}
@@ -259,7 +265,7 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
           </FormControl>
         </Box>
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-          <Button onClick={onCancel} size="small">Annuler</Button>
+          <Button onClick={onCancel} size="small">{t('stock:common.cancel')}</Button>
           <Button
             variant="contained"
             onClick={handleCreate}
@@ -267,7 +273,7 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
             size="small"
             startIcon={submitting ? <CircularProgress size={14} /> : <Add />}
           >
-            Créer le lot
+            {t('stock:batches.createBatch')}
           </Button>
         </Stack>
       </Stack>
@@ -276,6 +282,7 @@ function CreateBatchPanel({ productId, onSuccess, onCancel }) {
 }
 
 function ProductBatchesTab({ productId, onStockChange }) {
+  const { t } = useTranslation(['stock']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [batches, setBatches] = useState([]);
@@ -295,7 +302,7 @@ function ProductBatchesTab({ productId, onStockChange }) {
       setBatches(response.data.results || response.data);
       setError(null);
     } catch (err) {
-      setError('Erreur lors du chargement des lots');
+      setError(t('stock:batches.loadError'));
     } finally {
       setLoading(false);
     }
@@ -304,10 +311,10 @@ function ProductBatchesTab({ productId, onStockChange }) {
   const handleDeactivate = async (batch) => {
     try {
       await productBatchesAPI.update(batch.id, { is_active: !batch.is_active });
-      enqueueSnackbar(batch.is_active ? 'Lot désactivé' : 'Lot activé', { variant: 'success' });
+      enqueueSnackbar(batch.is_active ? t('stock:batches.deactivated') : t('stock:batches.activated'), { variant: 'success' });
       fetchBatches();
     } catch {
-      enqueueSnackbar('Erreur lors de la mise à jour', { variant: 'error' });
+      enqueueSnackbar(t('stock:batches.updateError'), { variant: 'error' });
     }
   };
 
@@ -324,8 +331,8 @@ function ProductBatchesTab({ productId, onStockChange }) {
   const sortedBatches = [...filteredBatches].sort((a, b) => {
     const aExp = getExpirationStatus(a.expiration_date);
     const bExp = getExpirationStatus(b.expiration_date);
-    const aIsExpired = aExp?.label === 'Périmé';
-    const bIsExpired = bExp?.label === 'Périmé';
+    const aIsExpired = aExp?.key === 'expired';
+    const bIsExpired = bExp?.key === 'expired';
     if (aIsExpired && !bIsExpired) return 1;
     if (!aIsExpired && bIsExpired) return -1;
     if (a.expiration_date && b.expiration_date) return new Date(a.expiration_date) - new Date(b.expiration_date);
@@ -335,7 +342,7 @@ function ProductBatchesTab({ productId, onStockChange }) {
   // Stats
   const expiredCount = batches.filter(b => {
     const s = getExpirationStatus(b.expiration_date);
-    return s?.label === 'Périmé';
+    return s?.key === 'expired';
   }).length;
   const expiringCount = batches.filter(b => {
     const s = getExpirationStatus(b.expiration_date);
@@ -357,22 +364,22 @@ function ProductBatchesTab({ productId, onStockChange }) {
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 1.5, mb: 2, px: 2, pt: 2 }}>
           <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.08), textAlign: 'center' }}>
             <Typography variant="h5" fontWeight={700} color="primary">{batches.length}</Typography>
-            <Typography variant="caption" color="text.secondary">Lots total</Typography>
+            <Typography variant="caption" color="text.secondary">{t('stock:batches.totalBatches')}</Typography>
           </Box>
           <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.success.main, 0.08), textAlign: 'center' }}>
             <Typography variant="h5" fontWeight={700} color="success.main">{totalStock}</Typography>
-            <Typography variant="caption" color="text.secondary">En stock</Typography>
+            <Typography variant="caption" color="text.secondary">{t('stock:batches.inStock')}</Typography>
           </Box>
           {expiringCount > 0 && (
             <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.warning.main, 0.1), textAlign: 'center' }}>
               <Typography variant="h5" fontWeight={700} color="warning.main">{expiringCount}</Typography>
-              <Typography variant="caption" color="text.secondary">Expirent bientôt</Typography>
+              <Typography variant="caption" color="text.secondary">{t('stock:batches.expiringSoon')}</Typography>
             </Box>
           )}
           {expiredCount > 0 && (
             <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.error.main, 0.08), textAlign: 'center' }}>
               <Typography variant="h5" fontWeight={700} color="error">{expiredCount}</Typography>
-              <Typography variant="caption" color="text.secondary">Périmés</Typography>
+              <Typography variant="caption" color="text.secondary">{t('stock:batches.expiredPlural')}</Typography>
             </Box>
           )}
         </Box>
@@ -381,12 +388,12 @@ function ProductBatchesTab({ productId, onStockChange }) {
       {/* Alertes */}
       {expiredCount > 0 && (
         <Alert severity="error" icon={<Block />} sx={{ mx: 2, mb: 1 }}>
-          {expiredCount} lot(s) périmé(s) — vérifiez et retirez ces articles du stock actif.
+          {t('stock:batches.expiredAlert', { count: expiredCount })}
         </Alert>
       )}
       {expiringCount > 0 && (
         <Alert severity="warning" icon={<Warning />} sx={{ mx: 2, mb: 1 }}>
-          {expiringCount} lot(s) expirant dans moins de 30 jours.
+          {t('stock:batches.expiringAlert', { count: expiringCount })}
         </Alert>
       )}
 
@@ -399,11 +406,11 @@ function ProductBatchesTab({ productId, onStockChange }) {
           size="small"
           sx={{ flexWrap: 'wrap', gap: 0.5 }}
         >
-          <ToggleButton value="all">Tous ({batches.length})</ToggleButton>
-          <ToggleButton value="active" sx={{ color: 'success.main' }}>Actifs</ToggleButton>
-          {expiringCount > 0 && <ToggleButton value="expiring" sx={{ color: 'warning.main' }}>Bientôt exp. ({expiringCount})</ToggleButton>}
-          {expiredCount > 0 && <ToggleButton value="expired" sx={{ color: 'error.main' }}>Périmés ({expiredCount})</ToggleButton>}
-          <ToggleButton value="empty">Épuisés</ToggleButton>
+          <ToggleButton value="all">{t('stock:batches.filters.all', { n: batches.length })}</ToggleButton>
+          <ToggleButton value="active" sx={{ color: 'success.main' }}>{t('stock:batches.filters.active')}</ToggleButton>
+          {expiringCount > 0 && <ToggleButton value="expiring" sx={{ color: 'warning.main' }}>{t('stock:batches.filters.expiring', { n: expiringCount })}</ToggleButton>}
+          {expiredCount > 0 && <ToggleButton value="expired" sx={{ color: 'error.main' }}>{t('stock:batches.filters.expired', { n: expiredCount })}</ToggleButton>}
+          <ToggleButton value="empty">{t('stock:batches.filters.empty')}</ToggleButton>
         </ToggleButtonGroup>
 
         <Button
@@ -412,7 +419,7 @@ function ProductBatchesTab({ productId, onStockChange }) {
           onClick={() => setShowCreateForm(v => !v)}
           size="small"
         >
-          Nouveau lot
+          {t('stock:batches.newBatch')}
         </Button>
       </Box>
 
@@ -432,15 +439,15 @@ function ProductBatchesTab({ productId, onStockChange }) {
         <Box p={3}>
           <Alert severity="info" icon={<Inventory2 />}>
             {batches.length === 0
-              ? 'Aucun lot enregistré — créez votre premier lot pour gérer le stock par lot.'
-              : 'Aucun lot ne correspond au filtre sélectionné.'}
+              ? t('stock:batches.emptyAll')
+              : t('stock:batches.emptyFiltered')}
           </Alert>
         </Box>
       ) : isMobile ? (
         <Box px={2} pb={2}>
           {sortedBatches.map(batch => {
             const expStatus = getExpirationStatus(batch.expiration_date);
-            const isExpired = expStatus?.label === 'Périmé';
+            const isExpired = expStatus?.key === 'expired';
             const pct = batch.initial_quantity > 0
               ? Math.round((batch.current_quantity / batch.initial_quantity) * 100)
               : 0;
@@ -458,25 +465,25 @@ function ProductBatchesTab({ productId, onStockChange }) {
                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                     <Box>
-                      <Typography variant="subtitle2" fontWeight={700}>Lot {batch.batch_number}</Typography>
+                      <Typography variant="subtitle2" fontWeight={700}>{t('stock:batches.batchTitle', { batch: batch.batch_number })}</Typography>
                       <Stack direction="row" spacing={1}>
                         {batch.supplier_batch_reference && (
-                          <Typography variant="caption" color="text.secondary">Réf frs: {batch.supplier_batch_reference}</Typography>
+                          <Typography variant="caption" color="text.secondary">{t('stock:batches.supplierRefShort', { ref: batch.supplier_batch_reference })}</Typography>
                         )}
                         {batch.warehouse_name && (
-                          <Typography variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>Loc: {batch.warehouse_name}</Typography>
+                          <Typography variant="caption" color="primary.main" sx={{ fontWeight: 600 }}>{t('stock:batches.location', { name: batch.warehouse_name })}</Typography>
                         )}
                       </Stack>
                     </Box>
                     <Stack direction="row" spacing={0.5}>
-                      {expStatus && <Chip label={expStatus.label} size="small" color={expStatus.color} icon={expStatus.icon} />}
-                      <Chip label={batch.is_active ? 'Actif' : 'Inactif'} size="small" color={batch.is_active ? 'success' : 'default'} />
+                      {expStatus && <Chip label={expirationLabel(t, expStatus)} size="small" color={expStatus.color} icon={expStatus.icon} />}
+                      <Chip label={batch.is_active ? t('stock:batches.active') : t('stock:batches.inactive')} size="small" color={batch.is_active ? 'success' : 'default'} />
                     </Stack>
                   </Box>
 
                   <Box mb={1.5}>
                     <Box display="flex" justifyContent="space-between" mb={0.5}>
-                      <Typography variant="caption" color="text.secondary">Stock</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('stock:batches.stock')}</Typography>
                       <Typography variant="caption" fontWeight={600}>
                         {batch.current_quantity} / {batch.initial_quantity}
                       </Typography>
@@ -490,7 +497,7 @@ function ProductBatchesTab({ productId, onStockChange }) {
                   </Box>
 
                   {batch.expiration_date && (
-                    <Typography variant="caption" color="text.secondary">Expire: {formatDate(batch.expiration_date)}</Typography>
+                    <Typography variant="caption" color="text.secondary">{t('stock:batches.expiresOn', { date: formatDate(batch.expiration_date) })}</Typography>
                   )}
 
                   <Stack direction="row" spacing={1} mt={1.5}>
@@ -502,10 +509,10 @@ function ProductBatchesTab({ productId, onStockChange }) {
                         onClick={() => setReceptionBatch(batch)}
                         sx={{ flex: 1, fontSize: '0.75rem' }}
                       >
-                        Réceptionner
+                        {t('stock:batches.receive')}
                       </Button>
                     )}
-                    <Tooltip title={batch.is_active ? 'Désactiver' : 'Activer'}>
+                    <Tooltip title={batch.is_active ? t('stock:batches.deactivate') : t('stock:batches.activate')}>
                       <IconButton size="small" onClick={() => handleDeactivate(batch)}>
                         {batch.is_active ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
                       </IconButton>
@@ -521,21 +528,21 @@ function ProductBatchesTab({ productId, onStockChange }) {
           <Table size="small">
             <TableHead sx={{ bgcolor: 'grey.50' }}>
               <TableRow>
-                <TableCell><strong>Numéro de lot</strong></TableCell>
-                <TableCell><strong>Entrepôt</strong></TableCell>
-                <TableCell><strong>Stock actuel</strong></TableCell>
-                <TableCell><strong>Utilisation</strong></TableCell>
-                <TableCell><strong>Date d'expiration</strong></TableCell>
-                <TableCell><strong>Statut exp.</strong></TableCell>
-                <TableCell><strong>Réf. fournisseur</strong></TableCell>
-                <TableCell><strong>Statut</strong></TableCell>
-                <TableCell align="center"><strong>Actions</strong></TableCell>
+                <TableCell><strong>{t('stock:batches.columns.batchNumber')}</strong></TableCell>
+                <TableCell><strong>{t('stock:common.warehouse')}</strong></TableCell>
+                <TableCell><strong>{t('stock:batches.columns.currentStock')}</strong></TableCell>
+                <TableCell><strong>{t('stock:batches.columns.usage')}</strong></TableCell>
+                <TableCell><strong>{t('stock:batches.expirationDate')}</strong></TableCell>
+                <TableCell><strong>{t('stock:batches.columns.expiryStatus')}</strong></TableCell>
+                <TableCell><strong>{t('stock:batches.columns.supplierRef')}</strong></TableCell>
+                <TableCell><strong>{t('stock:batches.columns.status')}</strong></TableCell>
+                <TableCell align="center"><strong>{t('stock:batches.columns.actions')}</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {sortedBatches.map(batch => {
                 const expStatus = getExpirationStatus(batch.expiration_date);
-                const isExpired = expStatus?.label === 'Périmé';
+                const isExpired = expStatus?.key === 'expired';
                 const pct = batch.initial_quantity > 0
                   ? Math.round((batch.current_quantity / batch.initial_quantity) * 100)
                   : 0;
@@ -577,29 +584,29 @@ function ProductBatchesTab({ productId, onStockChange }) {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      {batch.expiration_date ? formatDate(batch.expiration_date) : <Typography variant="caption" color="text.secondary">Aucune</Typography>}
+                      {batch.expiration_date ? formatDate(batch.expiration_date) : <Typography variant="caption" color="text.secondary">{t('stock:batches.noExpiryDate')}</Typography>}
                     </TableCell>
                     <TableCell>
                       {expStatus
-                        ? <Chip label={expStatus.label} size="small" color={expStatus.color} icon={expStatus.icon} />
+                        ? <Chip label={expirationLabel(t, expStatus)} size="small" color={expStatus.color} icon={expStatus.icon} />
                         : <Typography variant="caption" color="text.secondary">—</Typography>}
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">{batch.supplier_batch_reference || '—'}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip label={batch.is_active ? 'Actif' : 'Inactif'} size="small" color={batch.is_active ? 'success' : 'default'} />
+                      <Chip label={batch.is_active ? t('stock:batches.active') : t('stock:batches.inactive')} size="small" color={batch.is_active ? 'success' : 'default'} />
                     </TableCell>
                     <TableCell align="center">
                       <Stack direction="row" spacing={0.5} justifyContent="center">
                         {!isExpired && batch.is_active && (
-                          <Tooltip title="Réceptionner du stock sur ce lot">
+                          <Tooltip title={t('stock:batches.receiveTooltip')}>
                             <IconButton size="small" color="primary" onClick={() => setReceptionBatch(batch)}>
                               <LocalShipping fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         )}
-                        <Tooltip title={batch.is_active ? 'Désactiver ce lot' : 'Réactiver ce lot'}>
+                        <Tooltip title={batch.is_active ? t('stock:batches.deactivateTooltip') : t('stock:batches.reactivateTooltip')}>
                           <IconButton size="small" color={batch.is_active ? 'error' : 'success'} onClick={() => handleDeactivate(batch)}>
                             {batch.is_active ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
                           </IconButton>

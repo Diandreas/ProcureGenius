@@ -1,4 +1,5 @@
 import React from 'react';
+import i18n from '../i18n/config';
 
 /**
  * Frontière d'erreur globale.
@@ -52,20 +53,20 @@ class ErrorBoundary extends React.Component {
         <div style={styles.card}>
           <div style={styles.emoji} aria-hidden="true">{isChunkError ? '🔄' : '⚠️'}</div>
           <h1 style={styles.title}>
-            {isChunkError ? 'Une nouvelle version est disponible' : 'Une erreur est survenue'}
+            {isChunkError ? i18n.t('common:errorBoundary.newVersionTitle') : i18n.t('common:errorBoundary.errorTitle')}
           </h1>
           <p style={styles.text}>
             {isChunkError
-              ? "L'application a été mise à jour. Rechargez la page pour continuer."
-              : "Un problème inattendu est survenu. Vous pouvez recharger la page ; si le problème persiste, réessayez plus tard."}
+              ? i18n.t('common:errorBoundary.newVersionText')
+              : i18n.t('common:errorBoundary.errorText')}
           </p>
           <div style={styles.actions}>
             <button style={styles.primaryBtn} onClick={this.handleReload}>
-              Recharger la page
+              {i18n.t('common:errorBoundary.reload')}
             </button>
             {!isChunkError && (
               <button style={styles.secondaryBtn} onClick={this.handleHome}>
-                Retour à l'accueil
+                {i18n.t('common:errorBoundary.backHome')}
               </button>
             )}
           </div>

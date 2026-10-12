@@ -23,105 +23,36 @@ import {
     Gavel,
     Dashboard as DashboardIcon,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import Mascot from './Mascot';
 
-// Descriptions des modules
-const MODULE_INFO = {
-    dashboard: {
-        name: 'Tableau de bord',
-        icon: <DashboardIcon />,
-        description: 'Vue d\'ensemble de votre activité avec statistiques en temps réel',
-        features: [
-            'Statistiques de performance',
-            'Graphiques interactifs',
-            'Activité récente',
-            'Indicateurs clés (KPI)',
-        ],
-    },
-    suppliers: {
-        name: 'Fournisseurs',
-        icon: <Business />,
-        description: 'Gérez efficacement vos relations fournisseurs',
-        features: [
-            'Base de données fournisseurs',
-            'Évaluation des performances',
-            'Historique des commandes',
-            'Import/Export CSV',
-        ],
-    },
-    'purchase-orders': {
-        name: 'Bons de commande',
-        icon: <ShoppingCart />,
-        description: 'Créez et suivez vos bons de commande',
-        features: [
-            'Création de bons de commande',
-            'Suivi des livraisons',
-            'Approbations multi-niveaux',
-            'Génération de PDF',
-        ],
-    },
-    invoices: {
-        name: 'Factures',
-        icon: <Receipt />,
-        description: 'Gérez votre facturation et vos paiements',
-        features: [
-            'Création de factures',
-            'Suivi des paiements',
-            'Relances automatiques',
-            'Rapports comptables',
-        ],
-    },
-    products: {
-        name: 'Produits',
-        icon: <Inventory />,
-        description: 'Gérez votre catalogue produits et vos stocks',
-        features: [
-            'Catalogue produits',
-            'Gestion des stocks',
-            'Alertes de réapprovisionnement',
-            'Mouvements de stock',
-        ],
-    },
-    clients: {
-        name: 'Clients',
-        icon: <People />,
-        description: 'Gérez votre base clients',
-        features: [
-            'Base de données clients',
-            'Historique des transactions',
-            'Analyse du comportement',
-            'Segmentation',
-        ],
-    },
-    'e-sourcing': {
-        name: 'E-Sourcing',
-        icon: <CompareArrows />,
-        description: 'Gérez vos appels d\'offres et comparez les fournisseurs',
-        features: [
-            'Création de RFQ',
-            'Comparaison des offres',
-            'Évaluation des fournisseurs',
-            'Négociation en ligne',
-        ],
-    },
-    contracts: {
-        name: 'Contrats',
-        icon: <Gavel />,
-        description: 'Gérez vos contrats fournisseurs',
-        features: [
-            'Gestion des contrats',
-            'Extraction de clauses par IA',
-            'Alertes d\'expiration',
-            'Bibliothèque de templates',
-        ],
-    },
+// Icônes des modules ; nom, description et fonctionnalités dans
+// locales/<langue>/subscription.json (modules.items.<id>).
+const MODULE_ICONS = {
+    dashboard: <DashboardIcon />,
+    suppliers: <Business />,
+    'purchase-orders': <ShoppingCart />,
+    invoices: <Receipt />,
+    products: <Inventory />,
+    clients: <People />,
+    'e-sourcing': <CompareArrows />,
+    contracts: <Gavel />,
 };
 
 function ModuleActivationDialog({ open, moduleId, onClose, onActivate }) {
-    const moduleInfo = MODULE_INFO[moduleId] || {
-        name: 'Module',
+    const { t } = useTranslation(['subscription', 'common']);
+    const known = Boolean(MODULE_ICONS[moduleId]);
+    const base = `subscription:modules.items.${moduleId}`;
+    const features = known ? t(`${base}.features`, { returnObjects: true }) : [];
+    const moduleInfo = known ? {
+        name: t(`${base}.name`),
+        icon: MODULE_ICONS[moduleId],
+        description: t(`${base}.description`),
+        features: Array.isArray(features) ? features : [],
+    } : {
+        name: t('subscription:modules.fallback.name'),
         icon: <DashboardIcon />,
-        description: 'Description du module',
+        description: t('subscription:modules.fallback.description'),
         features: [],
     };
 
@@ -134,10 +65,10 @@ function ModuleActivationDialog({ open, moduleId, onClose, onActivate }) {
                     </Box>
                     <Box>
                         <Typography variant="h6">
-                            Activer {moduleInfo.name}
+                            {t('subscription:modules.activate', { module: moduleInfo.name })}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                            Ce module est actuellement désactivé
+                            {t('subscription:modules.currentlyDisabled')}
                         </Typography>
                     </Box>
                 </Box>
@@ -155,7 +86,7 @@ function ModuleActivationDialog({ open, moduleId, onClose, onActivate }) {
                 {moduleInfo.features.length > 0 && (
                     <>
                         <Typography variant="subtitle2" gutterBottom sx={{ mt: 2, mb: 1 }}>
-                            Fonctionnalités incluses:
+                            {t('subscription:modules.includedFeatures')}
                         </Typography>
                         <List dense>
                             {moduleInfo.features.map((feature, index) => (
@@ -179,21 +110,21 @@ function ModuleActivationDialog({ open, moduleId, onClose, onActivate }) {
                     borderColor: 'info.light'
                 }}>
                     <Typography variant="body2" color="info.main">
-                         Vous pourrez toujours désactiver ce module dans les paramètres
+                        {t('subscription:modules.canDisableLater')}
                     </Typography>
                 </Box>
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button onClick={onClose} color="inherit">
-                    Annuler
+                    {t('common:buttons.cancel')}
                 </Button>
                 <Button
                     onClick={() => onActivate(moduleId)}
                     variant="contained"
                     startIcon={<CheckCircle />}
                 >
-                    Activer maintenant
+                    {t('subscription:modules.activateNow')}
                 </Button>
             </DialogActions>
         </Dialog>

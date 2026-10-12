@@ -7,6 +7,7 @@ import useCurrency from '../../hooks/useCurrency';
 import '../../styles/Widgets.css';
 
 const TopClientsWidget = ({ period = 'last_30_days' }) => {
+  const { symbol } = useCurrency();
   const { t } = useTranslation(['common', 'dashboard']);
   const { format: formatCurrency } = useCurrency();
   const [data, setData] = useState(null);
@@ -46,7 +47,7 @@ const TopClientsWidget = ({ period = 'last_30_days' }) => {
         }}>
           <div style={{ fontWeight: 600, marginBottom: '4px', fontSize: '13px' }}>{client.name}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>
-            {client.total_invoices} {t('widgets.invoices_label', { ns: 'dashboard', defaultValue: 'facture(s)' })}
+            {client.total_invoices} {t('dashboard:widgets.invoices_label')}
           </div>
           <div style={{ fontSize: '13px', fontWeight: 500, color: '#2563eb', marginTop: '4px' }}>
             {formatCurrency(client.total_revenue)}
@@ -60,12 +61,12 @@ const TopClientsWidget = ({ period = 'last_30_days' }) => {
   // Formateur pour l'axe Y (montants)
   const formatYAxis = (value) => {
     if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)}M€`;
+      return `${(value / 1000000).toFixed(1)}M ${symbol}`;
     }
     if (value >= 1000) {
-      return `${(value / 1000).toFixed(0)}k€`;
+      return `${(value / 1000).toFixed(0)}k ${symbol}`;
     }
-    return `${value}€`;
+    return `${value} ${symbol}`;
   };
 
   // Couleurs pour les barres (du plus foncé au plus clair)
@@ -107,7 +108,7 @@ const TopClientsWidget = ({ period = 'last_30_days' }) => {
       ) : (
         <div className="widget-empty">
           <Award size={40} className="widget-empty-icon" />
-          <div className="widget-empty-text">{t('widgets.top_clients_empty', { ns: 'dashboard', defaultValue: 'Aucun client' })}</div>
+          <div className="widget-empty-text">{t('dashboard:widgets.top_clients_empty')}</div>
         </div>
       )}
     </>

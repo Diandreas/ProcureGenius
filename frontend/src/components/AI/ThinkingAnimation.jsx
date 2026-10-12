@@ -13,24 +13,26 @@ import {
   AutoAwesome,
   Lightbulb,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import Mascot from '../Mascot';
 
+// Clés de traduction (aiChat:thinking.messages.<clé> / aiChat:thinking.steps.<clé>)
 const THINKING_MESSAGES = [
-  "Je réfléchis à votre demande...",
-  "Analyse des informations en cours...",
-  "Recherche de la meilleure solution...",
-  "Préparation de la réponse...",
-  "Vérification des données...",
-  "Finalisation du traitement...",
+  'reflecting',
+  'analyzing',
+  'searching',
+  'preparing',
+  'verifying',
+  'finalizing',
 ];
 
 const PROCESSING_STEPS = [
-  "Validation des données",
-  "Recherche d'informations",
-  "Analyse contextuelle",
-  "Génération de la réponse",
-  "Vérification qualité",
-  "Finalisation"
+  'validation',
+  'research',
+  'contextAnalysis',
+  'generation',
+  'qualityCheck',
+  'finalization',
 ];
 
 /**
@@ -43,6 +45,7 @@ function ThinkingAnimation({
   duration = 3000,
   onComplete = null,
 }) {
+  const { t } = useTranslation('aiChat');
   const [currentStep, setCurrentStep] = useState(0);
   const [currentMessage, setCurrentMessage] = useState('');
   const [dots, setDots] = useState('');
@@ -129,7 +132,7 @@ function ThinkingAnimation({
 
       <Box sx={{ flexGrow: 1 }}>
         <Typography variant="body1" sx={{ fontWeight: 500 }}>
-          {currentMessage}{dots}
+          {currentMessage ? t(`aiChat:thinking.messages.${currentMessage}`) : ''}{dots}
         </Typography>
 
         <Box sx={{
@@ -186,7 +189,7 @@ function ThinkingAnimation({
           }}
         />
         <Typography variant="h6" color="secondary">
-          Traitement en cours
+          {t('aiChat:thinking.processingTitle')}
         </Typography>
       </Box>
 
@@ -203,7 +206,7 @@ function ThinkingAnimation({
       </Box>
 
       <Typography variant="body2" color="text.secondary">
-        Étape {currentStep + 1}/{PROCESSING_STEPS.length}: {PROCESSING_STEPS[currentStep]}
+        {t('aiChat:thinking.stepProgress', { current: currentStep + 1, total: PROCESSING_STEPS.length, step: t(`aiChat:thinking.steps.${PROCESSING_STEPS[currentStep]}`) })}
       </Typography>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
@@ -259,11 +262,11 @@ function ThinkingAnimation({
       </Box>
 
       <Typography variant="body1" align="center">
-        {message || "Analyse approfondie en cours..."}
+        {message || t('aiChat:thinking.analyzingDefault')}
       </Typography>
 
       <Typography variant="caption" color="text.secondary">
-        Cela peut prendre quelques instants
+        {t('aiChat:thinking.mayTakeMoment')}
       </Typography>
     </Box>
   );
@@ -285,7 +288,7 @@ function ThinkingAnimation({
           size={40}
         />
         <Typography variant="body1" sx={{ fontWeight: 500 }}>
-          {message || "Action terminée avec succès !"}
+          {message || t('aiChat:thinking.celebrationDefault')}
         </Typography>
       </Box>
     </Slide>

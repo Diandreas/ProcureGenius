@@ -17,7 +17,8 @@
     "expired": "Expiré",
     "pending": "En attente de signature",
     "archived": "Archivé",
-    "terminated": "Résilié"
+    "terminated": "Résilié",
+    "approved": "Approuvé"
   },
   "labels": {
     "contractNumber": "Contrat N°",
@@ -120,7 +121,71 @@
       "delete": "Supprimer",
       "approve": "Approuver",
       "activate": "Activer",
-      "extractClauses": "Extraire les clauses (IA)"
+      "extractClauses": "Extraire les clauses (IA)",
+      "generateInvoice": "Générer une facture",
+      "send": "Envoyer",
+      "createInvoice": "Créer facture"
+    },
+    "riskLevel": "Niveau de risque",
+    "sectionsTitle": "Sections du contrat",
+    "articlesCount": "{{count}} articles",
+    "daysShort": "{{days}}j",
+    "messages": {
+      "renewSuccess": "Contrat renouvelé avec succès.",
+      "renewError": "Erreur lors du renouvellement du contrat.",
+      "extractEmpty": "Aucune clause n'a pu être extraite. Vérifiez le texte du contrat.",
+      "invoiceDraftCreated": "Facture brouillon créée à partir du contrat.",
+      "invoiceError": "Erreur lors de la génération de la facture.",
+      "templatesLoadError": "Erreur lors du chargement des modèles",
+      "selectTemplate": "Veuillez sélectionner un modèle",
+      "invalidJson": "Le contexte JSON est invalide",
+      "documentGenerated": "Document généré avec succès",
+      "generateError": "Erreur lors de la génération",
+      "generateFirst": "Veuillez d'abord générer le document",
+      "pdfExportSuccess": "Export PDF réussi",
+      "pdfExportError": "Erreur lors de l'export PDF",
+      "wordExportSuccess": "Export Word réussi",
+      "wordExportError": "Erreur lors de l'export Word",
+      "recipientRequired": "Email destinataire requis",
+      "emailSent": "Email envoyé avec succès",
+      "emailError": "Erreur lors de l'envoi de l'email",
+      "pdfImportError": "Erreur import PDF",
+      "importError": "Erreur lors de l'import",
+      "signatureSaved": "Signature enregistrée",
+      "counterpartSignatureSaved": "Signature contrepartie enregistrée",
+      "signatureError": "Erreur mise à jour signature"
+    },
+    "documents": {
+      "title": "Documents & Signatures",
+      "signedPdfImported": "PDF signé importé",
+      "previewTitle": "Aperçu du contrat signé",
+      "loadingPreview": "Chargement de l'aperçu…",
+      "signaturesHeading": "SIGNATURES",
+      "signed": "Signé",
+      "notSigned": "Non signé",
+      "signerPrompt": "Nom du signataire :",
+      "counterpartSignerPrompt": "Nom du signataire (contrepartie) :"
+    },
+    "generateDialog": {
+      "title": "Générer un document depuis un modèle",
+      "selectTemplate": "Sélectionner un modèle",
+      "contextLabel": "Contexte additionnel (JSON optionnel)",
+      "contextHelper": "Les données du contrat seront automatiquement incluses.",
+      "generating": "Génération du document en cours par l'IA...",
+      "result": "Résultat :",
+      "exportWord": "Exporter en Word",
+      "exportPdf": "Exporter en PDF",
+      "generatingShort": "Génération...",
+      "generate": "Générer"
+    },
+    "emailDialog": {
+      "title": "Envoyer le contrat par email",
+      "recipient": "Email destinataire",
+      "recipientPlaceholder": "client@exemple.com",
+      "message": "Message personnalisé (optionnel)",
+      "messagePlaceholder": "Bonjour, veuillez trouver ci-joint le contrat...",
+      "sending": "Envoi en cours...",
+      "sendingShort": "Envoi..."
     }
   },
   "messages": {
@@ -213,6 +278,205 @@
       "medium": "Moyen",
       "low": "Faible",
       "unknown": "Non évalué"
+    },
+    "riskCount": "{{label}} : {{value}}"
+  },
+  "tabs": {
+    "templates": "Modèles"
+  },
+  "wizard": {
+    "templates": {
+      "service": {
+        "label": "Contrat de services",
+        "description": "Prestations de services professionnels",
+        "prompt": "Contrat de prestation de services professionnels"
+      },
+      "purchase": {
+        "label": "Contrat d'achat",
+        "description": "Achat de produits ou matières premières",
+        "prompt": "Contrat d'achat de marchandises"
+      },
+      "nda": {
+        "label": "Accord de confidentialité",
+        "description": "Protection des informations confidentielles",
+        "prompt": "Accord de non-divulgation bilatéral"
+      },
+      "maintenance": {
+        "label": "Contrat de maintenance",
+        "description": "Maintenance et support technique",
+        "prompt": "Contrat de maintenance avec SLA"
+      },
+      "lease": {
+        "label": "Contrat de location",
+        "description": "Location de locaux ou équipements",
+        "prompt": "Contrat de location"
+      },
+      "partnership": {
+        "label": "Accord de partenariat",
+        "description": "Partenariat commercial ou stratégique",
+        "prompt": "Accord de partenariat commercial"
+      },
+      "freelance": {
+        "label": "Contrat freelance",
+        "description": "Mission freelance avec livrables",
+        "prompt": "Contrat de mission freelance"
+      },
+      "distribution": {
+        "label": "Contrat de distribution",
+        "description": "Distribution de produits",
+        "prompt": "Contrat de distribution"
+      }
+    },
+    "steps": {
+      "type": "Type & description",
+      "info": "Informations",
+      "articles": "Rédaction des articles",
+      "finalize": "Finalisation"
+    },
+    "template": {
+      "editModeInfo": "Vous modifiez un contrat existant. Les sections sont éditables à l'étape 3.",
+      "selectType": "Sélectionnez un type de contrat. L'IA générera chaque section selon les bonnes pratiques juridiques.",
+      "describeDetails": "Décrivez brièvement les détails du contrat. L'IA s'en servira pour personnaliser chaque section :",
+      "descriptionPlaceholder": "Ex : maintenance du parc informatique d'une pharmacie à Douala, 600 000 FCFA par an, 4 visites, paiement trimestriel...",
+      "nextToInfo": "Suivant — Informations du contrat"
+    },
+    "sections": {
+      "fillTitleFirst": "Remplissez le titre ou la description d'abord (étape 2)",
+      "generatedCount": "{{count}} sections générées ({{tokens}} tokens)",
+      "generateError": "Erreur lors de la génération des sections",
+      "regenerated": "Section \"{{title}}\" régénérée",
+      "regenerateError": "Erreur lors de la régénération",
+      "title": "Sections du contrat ({{count}} articles)",
+      "subtitle": "Chaque article est pré-rempli avec du texte juridique standard. Utilisez l'IA pour personnaliser selon vos besoins.",
+      "personalizing": "Personnalisation en cours...",
+      "repersonalizeAll": "Re-personnaliser tout",
+      "personalizeWithAI": "Personnaliser avec IA",
+      "generatingCount": "Génération des {{count}} sections en cours...",
+      "totalTokens": "Total tokens utilisés :",
+      "aiGeneratedCount": "{{done}}/{{total}} sections générées par IA",
+      "noSections": "Aucune section définie. Revenez à l'étape 1 pour sélectionner un type de contrat.",
+      "internalNotes": "Notes internes (non incluses dans le contrat)",
+      "internalNotesPlaceholder": "Notes confidentielles..."
+    },
+    "editor": {
+      "article": "Art. {{order}}",
+      "aiChip": "IA",
+      "empty": "Vide",
+      "aiRunning": "IA en cours...",
+      "repersonalize": "Re-personnaliser IA",
+      "emptyHint": "Cliquez sur \"Générer avec IA\" pour remplir cette section automatiquement"
+    },
+    "signatures": {
+      "title": "Signatures des parties",
+      "ourOrganization": "Notre organisation",
+      "signedByUs": "Signé de notre côté",
+      "signerName": "Nom du signataire",
+      "signatureDate": "Date de signature",
+      "counterparty": "Contrepartie",
+      "signedByCounterparty": "Signé par la contrepartie",
+      "pdfImported": "PDF signé importé avec succès",
+      "replace": "Remplacer",
+      "importSignedPdf": "Importer le PDF signé",
+      "acceptedFormats": "Formats acceptés: PDF",
+      "browse": "Parcourir..."
+    },
+    "validation": {
+      "titleRequired": "Le titre du contrat est requis",
+      "endBeforeStart": "La date de fin doit être postérieure ou égale à la date de début."
+    },
+    "messages": {
+      "createSuccess": "Contrat créé avec succès ! Vous pouvez maintenant importer le PDF signé.",
+      "saveError": "Erreur lors de la sauvegarde"
+    },
+    "fields": {
+      "title": "Titre du contrat",
+      "titlePlaceholder": "Ex: Contrat de prestation — Développement App Mobile",
+      "language": "Langue du contrat",
+      "counterpartyTitle": "Contrepartie du contrat",
+      "client": "Client",
+      "selectClient": "Sélectionner un client",
+      "counterpartName": "Nom de la contrepartie",
+      "counterpartPlaceholder": "Nom de l'entreprise ou de la personne",
+      "description": "Description de l'objet du contrat",
+      "descriptionPlaceholder": "Décrivez l'objet et le contexte du contrat...",
+      "paymentTermsPlaceholder": "Ex: 50% à la signature, 50% à la livraison — Net 30 jours"
+    },
+    "finalize": {
+      "renewalAndAlerts": "Renouvellement & Alertes",
+      "renewalNotice": "Préavis de renouvellement (jours)",
+      "summary": "Résumé du contrat",
+      "title": "Titre",
+      "type": "Type",
+      "language": "Langue",
+      "counterparty": "Contrepartie",
+      "duration": "Durée",
+      "value": "Valeur",
+      "sections": "Sections",
+      "sectionsGenerated": "{{done}}/{{total}} générées",
+      "signaturesInfo": "Les signatures et l'import du PDF signé se font depuis la <strong>vue détail</strong> du contrat, après sa création."
+    },
+    "header": {
+      "editTitle": "Modifier le contrat",
+      "newTitle": "Nouveau contrat",
+      "editSubtitle": "Mettez à jour les informations du contrat",
+      "newSubtitle": "Créez un contrat professionnel avec génération IA section par section"
+    },
+    "actions": {
+      "save": "Sauvegarder",
+      "create": "Créer le contrat"
+    }
+  },
+  "templates": {
+    "newTemplate": "Nouveau Modèle",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "noDescription": "Aucune description",
+    "types": {
+      "contract": "Contrat standard",
+      "payment": "Contrat de paiement",
+      "receipt": "Reçu de paiement",
+      "quote": "Devis",
+      "other": "Autre"
+    },
+    "empty": {
+      "title": "Aucun modèle de contrat",
+      "description": "Vous n'avez pas encore créé de modèle de contrat, de paiement ou de devis.",
+      "action": "Créer un modèle"
+    },
+    "columns": {
+      "type": "Type",
+      "actions": "Actions"
+    },
+    "tooltips": {
+      "view": "Aperçu / Voir"
+    },
+    "dialog": {
+      "editTitle": "Modifier le modèle",
+      "newTitle": "Nouveau modèle"
+    },
+    "fields": {
+      "name": "Nom du modèle",
+      "documentType": "Type de document",
+      "description": "Description",
+      "content": "Contenu du modèle (HTML/Markdown)",
+      "contentHelper": "Insérez le texte du modèle",
+      "aiInstructions": "Instructions pour l'IA (Optionnel)",
+      "aiInstructionsHelper": "Ex: 'Utilise le prénom et le nom du fournisseur pour générer la signature finale.'",
+      "status": "Statut"
+    },
+    "view": {
+      "content": "Contenu du modèle :",
+      "aiInstructions": "Instructions IA :"
+    },
+    "messages": {
+      "loadError": "Erreur lors du chargement des modèles",
+      "nameContentRequired": "Le nom et le contenu sont requis",
+      "updateSuccess": "Modèle mis à jour avec succès",
+      "createSuccess": "Modèle créé avec succès",
+      "saveError": "Erreur lors de la sauvegarde du modèle",
+      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce modèle ?",
+      "deleteSuccess": "Modèle supprimé avec succès",
+      "deleteError": "Erreur lors de la suppression du modèle"
     }
   }
 }

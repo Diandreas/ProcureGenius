@@ -8,6 +8,7 @@ import {
 import { Add, Visibility, CheckCircle, Cancel, OpenInNew, FileDownload } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 import { useModules } from '../../contexts/ModuleContext';
 import { formatDate } from '../../utils/formatters';
@@ -16,14 +17,7 @@ import { getNeumorphicShadow } from '../../styles/neumorphism/mixins';
 import AccountingNav from './AccountingNav';
 
 const STATUS_COLORS = { draft: 'default', posted: 'success', cancelled: 'error' };
-const STATUS_LABELS = { draft: 'Brouillon', posted: 'Validée', cancelled: 'Annulée' };
-const SOURCE_LABELS = {
-  manual: 'Saisie',
-  invoice: 'Facture',
-  invoice_reversal: 'Extourne',
-  payment: 'Paiement',
-  purchase_order: 'BC',
-};
+// Libellés traduits au rendu : accounting:status.<status> et accounting:entries.source.<source>
 const SOURCE_COLORS = {
   manual: 'default',
   invoice: 'primary',
@@ -57,6 +51,9 @@ export default function JournalEntries() {
   const { enqueueSnackbar } = useSnackbar();
   const { hasFeature } = useModules();
   const { format } = useCurrency();
+  const { t } = useTranslation(['accounting', 'common']);
+  const statusLabel = (status) => t(`accounting:status.${status}`);
+  const sourceLabel = (source) => t(`accounting:entries.source.${source}`, { defaultValue: source });
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
@@ -72,7 +69,7 @@ export default function JournalEntries() {
     if (f.search) params.search = f.search;
     accountingAPI.getEntries(params)
       .then((r) => { setEntries(r.data); setError(null); })
-      .catch(() => setError('Erreur chargement des écritures'))
+      .catch(() => setError(t('accounting:entries.loadError')))
       .finally(() => setLoading(false));
   };
 
@@ -90,21 +87,21 @@ export default function JournalEntries() {
   const handlePost = async (id) => {
     try {
       await accountingAPI.postEntry(id);
-      enqueueSnackbar('Écriture validée', { variant: 'success' });
+      enqueueSnackbar(t('accounting:entries.posted'), { variant: 'success' });
       load();
     } catch (err) {
-      enqueueSnackbar(err?.response?.data?.error || 'Erreur validation', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.error || t('accounting:entries.postError'), { variant: 'error' });
     }
   };
 
   const handleCancel = async (id) => {
-    if (!window.confirm('Annuler cette écriture ? Une contrepassation sera créée.')) return;
+    if (!window.confirm(t('accounting:entries.confirmCancel'))) return;
     try {
       await accountingAPI.cancelEntry(id);
-      enqueueSnackbar('Écriture annulée', { variant: 'warning' });
+      enqueueSnackbar(t('accounting:entries.cancelled'), { variant: 'warning' });
       load();
     } catch (err) {
-      enqueueSnackbar(err?.response?.data?.error || 'Erreur annulation', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.error || t('accounting:entries.cancelError'), { variant: 'error' });
     }
   };
 
@@ -127,9 +124,9 @@ export default function JournalEntries() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      enqueueSnackbar('Export FEC téléchargé', { variant: 'success' });
+      enqueueSnackbar(t('accounting:entries.fecDownloaded'), { variant: 'success' });
     } catch (err) {
-      enqueueSnackbar(err?.response?.data?.error || 'Erreur export FEC', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.error || t('accounting:entries.fecError'), { variant: 'error' });
     } finally {
       setExporting(false);
     }
@@ -138,12 +135,12 @@ export default function JournalEntries() {
   return (
     <Box p={{ xs: 2, sm: 3 }}>
       <AccountingNav
-        title="Écritures Comptables"
-        subtitle={`${entries.length} écriture(s)`}
+        title={t('accounting:entries.title')}
+        subtitle={t('accounting:entries.subtitle', { count: entries.length })}
         action={
           <Box display="flex" gap={1}>
             {hasFeature('advanced_exports') && (
-              <Tooltip title="Fichier des Écritures Comptables (écritures validées de la période filtrée)">
+              <Tooltip title={t('accounting:entries.fecTooltip')}>
                 <Button
                   variant="outlined"
                   startIcon={<FileDownload />}
@@ -151,7 +148,7 @@ export default function JournalEntries() {
                   onClick={handleExportFEC}
                   disabled={exporting}
                 >
-                  {exporting ? 'Export…' : 'Export FEC'}
+                  {exporting ? t('accounting:entries.exporting') : t('accounting:entries.exportFec')}
                 </Button>
               </Tooltip>
             )}
@@ -161,7 +158,7 @@ export default function JournalEntries() {
               size={isMobile ? 'small' : 'medium'}
               onClick={() => navigate('/accounting/entries/new')}
             >
-              {isMobile ? 'Nouvelle' : 'Nouvelle écriture'}
+              {isMobile ? t('accounting:entries.newShort') : t('accounting:entries.newEntry')}
             </Button>
           </Box>
         }
@@ -170,31 +167,31 @@ export default function JournalEntries() {
       {/* Filtres */}
       <Box display="flex" gap={1.5} mb={2} flexWrap="wrap">
         <TextField
-          size="small" placeholder="Rechercher..."
+          size="small" placeholder={t('accounting:entries.searchPlaceholder')}
           value={filters.search} onChange={(e) => setFilter('search', e.target.value)}
           sx={{ flex: '1 1 160px' }}
         />
         <FormControl size="small" sx={{ flex: '1 1 140px' }}>
-          <InputLabel>Journal</InputLabel>
-          <Select value={filters.journal} onChange={(e) => setFilter('journal', e.target.value)} label="Journal">
-            <MenuItem value="">Tous</MenuItem>
+          <InputLabel>{t('accounting:common.journal')}</InputLabel>
+          <Select value={filters.journal} onChange={(e) => setFilter('journal', e.target.value)} label={t('accounting:common.journal')}>
+            <MenuItem value="">{t('accounting:common.all')}</MenuItem>
             {journals.map((j) => <MenuItem key={j.id} value={j.id}>{j.code} — {j.name}</MenuItem>)}
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ flex: '1 1 120px' }}>
-          <InputLabel>Statut</InputLabel>
-          <Select value={filters.status} onChange={(e) => setFilter('status', e.target.value)} label="Statut">
-            <MenuItem value="">Tous</MenuItem>
-            <MenuItem value="draft">Brouillon</MenuItem>
-            <MenuItem value="posted">Validée</MenuItem>
-            <MenuItem value="cancelled">Annulée</MenuItem>
+          <InputLabel>{t('accounting:common.status')}</InputLabel>
+          <Select value={filters.status} onChange={(e) => setFilter('status', e.target.value)} label={t('accounting:common.status')}>
+            <MenuItem value="">{t('accounting:common.all')}</MenuItem>
+            <MenuItem value="draft">{statusLabel('draft')}</MenuItem>
+            <MenuItem value="posted">{statusLabel('posted')}</MenuItem>
+            <MenuItem value="cancelled">{statusLabel('cancelled')}</MenuItem>
           </Select>
         </FormControl>
-        <TextField size="small" type="date" label="Du" InputLabelProps={{ shrink: true }}
+        <TextField size="small" type="date" label={t('accounting:common.from')} InputLabelProps={{ shrink: true }}
           value={filters.start_date} onChange={(e) => setFilter('start_date', e.target.value)}
           sx={{ flex: '1 1 130px', maxWidth: 170 }}
         />
-        <TextField size="small" type="date" label="Au" InputLabelProps={{ shrink: true }}
+        <TextField size="small" type="date" label={t('accounting:common.to')} InputLabelProps={{ shrink: true }}
           value={filters.end_date} onChange={(e) => setFilter('end_date', e.target.value)}
           sx={{ flex: '1 1 130px', maxWidth: 170 }}
         />
@@ -209,7 +206,7 @@ export default function JournalEntries() {
           <Stack spacing={1.5}>
             {entries.length === 0 ? (
               <Typography variant="body2" color="text.secondary" textAlign="center" py={4}>
-                Aucune écriture trouvée
+                {t('accounting:entries.noEntries')}
               </Typography>
             ) : entries.map((e) => (
               <Card key={e.id} elevation={0} sx={{ border: 'none', borderRadius: 2.5, bgcolor: 'background.paper', boxShadow: neu }}>
@@ -221,7 +218,7 @@ export default function JournalEntries() {
                           {e.entry_number}
                         </Typography>
                         <Chip label={e.journal_code} size="small" variant="outlined" />
-                        <Chip label={STATUS_LABELS[e.status]} size="small" color={STATUS_COLORS[e.status]} />
+                        <Chip label={statusLabel(e.status)} size="small" color={STATUS_COLORS[e.status]} />
                       </Box>
                       <Typography variant="body2" fontWeight={600} noWrap>{e.description}</Typography>
                       {e.reference && (
@@ -240,7 +237,7 @@ export default function JournalEntries() {
                       const url = getSourceUrl(e);
                       return url ? (
                         <Chip
-                          label={SOURCE_LABELS[e.source] || e.source}
+                          label={sourceLabel(e.source)}
                           size="small"
                           color={SOURCE_COLORS[e.source] || 'default'}
                           variant="outlined"
@@ -250,25 +247,25 @@ export default function JournalEntries() {
                         />
                       ) : (
                         <Typography variant="caption" color="text.secondary">
-                          {SOURCE_LABELS[e.source] || e.source}
+                          {sourceLabel(e.source)}
                         </Typography>
                       );
                     })()}
                     <Box>
-                      <Tooltip title="Voir détail">
+                      <Tooltip title={t('accounting:entries.viewDetail')}>
                         <IconButton size="small" onClick={() => navigate(`/accounting/entries/${e.id}`)}>
                           <Visibility fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       {e.status === 'draft' && (
-                        <Tooltip title="Valider">
+                        <Tooltip title={t('accounting:entries.post')}>
                           <IconButton size="small" color="success" onClick={() => handlePost(e.id)}>
                             <CheckCircle fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       )}
                       {e.status === 'posted' && (
-                        <Tooltip title="Annuler (contrepassation)">
+                        <Tooltip title={t('accounting:entries.cancelReversal')}>
                           <IconButton size="small" color="error" onClick={() => handleCancel(e.id)}>
                             <Cancel fontSize="small" />
                           </IconButton>
@@ -286,14 +283,14 @@ export default function JournalEntries() {
             <Table size="small" sx={{ minWidth: 700 }}>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>N° écriture</strong></TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>Date</strong></TableCell>
-                  <TableCell><strong>Libellé</strong></TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>Journal</strong></TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>Source</strong></TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>Montant</strong></TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>Statut</strong></TableCell>
-                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><strong>Actions</strong></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.entryNumber')}</strong></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.date')}</strong></TableCell>
+                  <TableCell><strong>{t('accounting:common.description')}</strong></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.journal')}</strong></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.source')}</strong></TableCell>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.amount')}</strong></TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.status')}</strong></TableCell>
+                  <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}><strong>{t('accounting:common.actions')}</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -313,7 +310,7 @@ export default function JournalEntries() {
                         const url = getSourceUrl(e);
                         return url ? (
                           <Chip
-                            label={SOURCE_LABELS[e.source] || e.source}
+                            label={sourceLabel(e.source)}
                             size="small"
                             color={SOURCE_COLORS[e.source] || 'default'}
                             variant="outlined"
@@ -322,7 +319,7 @@ export default function JournalEntries() {
                             sx={{ cursor: 'pointer', fontSize: '0.7rem' }}
                           />
                         ) : (
-                          <Chip label={SOURCE_LABELS[e.source] || e.source} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
+                          <Chip label={sourceLabel(e.source)} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
                         );
                       })()}
                     </TableCell>
@@ -330,23 +327,23 @@ export default function JournalEntries() {
                       <Typography variant="body2" fontWeight={600}>{format(parseFloat(e.total_debit || 0))}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip label={STATUS_LABELS[e.status]} size="small" color={STATUS_COLORS[e.status]} />
+                      <Chip label={statusLabel(e.status)} size="small" color={STATUS_COLORS[e.status]} />
                     </TableCell>
                     <TableCell align="center">
-                      <Tooltip title="Voir détail">
+                      <Tooltip title={t('accounting:entries.viewDetail')}>
                         <IconButton size="small" onClick={() => navigate(`/accounting/entries/${e.id}`)}>
                           <Visibility fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       {e.status === 'draft' && (
-                        <Tooltip title="Valider">
+                        <Tooltip title={t('accounting:entries.post')}>
                           <IconButton size="small" color="success" onClick={() => handlePost(e.id)}>
                             <CheckCircle fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       )}
                       {e.status === 'posted' && (
-                        <Tooltip title="Annuler (contrepassation)">
+                        <Tooltip title={t('accounting:entries.cancelReversal')}>
                           <IconButton size="small" color="error" onClick={() => handleCancel(e.id)}>
                             <Cancel fontSize="small" />
                           </IconButton>
@@ -358,7 +355,7 @@ export default function JournalEntries() {
                 {entries.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={8} align="center">
-                      <Typography variant="body2" color="text.secondary" py={3}>Aucune écriture trouvée</Typography>
+                      <Typography variant="body2" color="text.secondary" py={3}>{t('accounting:entries.noEntries')}</Typography>
                     </TableCell>
                   </TableRow>
                 )}

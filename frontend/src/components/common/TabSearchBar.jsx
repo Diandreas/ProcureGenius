@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { TextField, InputAdornment, Box } from '@mui/material';
 import { Search } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Composant de recherche réutilisable pour les vues avec onglets
  * Affiche une barre de recherche uniquement si le nombre d'éléments dépasse un seuil
  */
-function TabSearchBar({ items, onSearch, threshold = 10, placeholder = "Rechercher..." }) {
+function TabSearchBar({ items, onSearch, threshold = 10, placeholder }) {
+  const { t } = useTranslation('common');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Afficher uniquement si le nombre d'éléments dépasse le seuil
@@ -25,7 +27,7 @@ function TabSearchBar({ items, onSearch, threshold = 10, placeholder = "Recherch
       <TextField
         fullWidth
         size="small"
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('common:search')}
         value={searchTerm}
         onChange={handleSearch}
         InputProps={{

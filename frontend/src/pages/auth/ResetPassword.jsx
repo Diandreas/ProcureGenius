@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { Lock as LockIcon, Visibility, VisibilityOff, ArrowBack } from '@mui/icons-material';
 import { authAPI } from '../../services/api';
+import { useTranslation, Trans } from 'react-i18next';
 
 const BG = '#e0e5ec';
 const SHADOW_OUT = '12px 12px 30px #b8bec7, -12px -12px 30px #ffffff';
@@ -16,6 +17,7 @@ const SHADOW_IN = 'inset 4px 4px 10px #b8bec7, inset -4px -4px 10px #ffffff';
 const ACCENT = '#2563eb';
 
 export default function ResetPassword() {
+  const { t } = useTranslation(['auth', 'common']);
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const token = params.get('token') || '';
@@ -33,15 +35,15 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (pwd.length < 8) { setError('Le mot de passe doit contenir au moins 8 caracteres.'); return; }
-    if (pwd !== confirm) { setError('Les mots de passe ne correspondent pas.'); return; }
+    if (pwd.length < 8) { setError(t('auth:resetPassword.page.passwordMinLength')); return; }
+    if (pwd !== confirm) { setError(t('auth:resetPassword.page.passwordsMismatch')); return; }
     setLoading(true);
     try {
       await authAPI.resetPassword({ email, token, new_password: pwd });
       setDone(true);
       setTimeout(() => navigate('/login'), 2500);
     } catch (err) {
-      setError(err?.response?.data?.error || 'Lien invalide ou expire.');
+      setError(err?.response?.data?.error || t('auth:resetPassword.page.invalidOrExpired'));
     } finally {
       setLoading(false);
     }
@@ -57,23 +59,23 @@ export default function ResetPassword() {
         background: BG, boxShadow: SHADOW_OUT,
       }}>
         <Typography variant="h5" sx={{ fontWeight: 800, color: '#2c3344', mb: 1 }}>
-          Nouveau mot de passe
+          {t('auth:resetPassword.page.title')}
         </Typography>
 
         {invalidLink ? (
           <Alert severity="error" sx={{ borderRadius: '14px', mt: 2,
             background: BG, boxShadow: SHADOW_IN, border: 'none' }}>
-            Lien invalide. Veuillez refaire une demande depuis "Mot de passe oublie".
+            {t('auth:resetPassword.page.invalidLink')}
           </Alert>
         ) : done ? (
           <Alert severity="success" sx={{ borderRadius: '14px', mt: 2,
             background: BG, boxShadow: SHADOW_IN, border: 'none' }}>
-            Mot de passe modifie ! Redirection vers la connexion...
+            {t('auth:resetPassword.page.success')}
           </Alert>
         ) : (
           <Box component="form" onSubmit={handleSubmit}>
             <Typography sx={{ color: '#7b8499', mb: 3, fontSize: '0.9rem' }}>
-              Pour le compte <strong>{email}</strong>.
+              <Trans t={t} i18nKey="auth:resetPassword.page.forAccount" values={{ email }} components={{ strong: <strong /> }} />
             </Typography>
             {error && (
               <Alert severity="error" sx={{ borderRadius: '14px', mb: 2,
@@ -83,7 +85,7 @@ export default function ResetPassword() {
             )}
             <TextField
               fullWidth required type={show ? 'text' : 'password'}
-              label="Nouveau mot de passe" value={pwd}
+              label={t('auth:resetPassword.page.newPassword')} value={pwd}
               onChange={(e) => setPwd(e.target.value)} autoFocus
               InputProps={{
                 startAdornment: (
@@ -103,7 +105,7 @@ export default function ResetPassword() {
             />
             <TextField
               fullWidth required type={show ? 'text' : 'password'}
-              label="Confirmer le mot de passe" value={confirm}
+              label={t('auth:resetPassword.page.confirmPassword')} value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               InputProps={{
                 startAdornment: (
@@ -122,7 +124,7 @@ export default function ResetPassword() {
                 textTransform: 'none', '&:active': { boxShadow: SHADOW_IN },
               }}
             >
-              {loading ? <CircularProgress size={22} /> : 'Reinitialiser'}
+              {loading ? <CircularProgress size={22} /> : t('auth:resetPassword.page.submit')}
             </Button>
           </Box>
         )}
@@ -133,7 +135,7 @@ export default function ResetPassword() {
             color: '#7b8499', textDecoration: 'none', fontSize: '0.85rem',
             fontWeight: 600,
           }}>
-            <ArrowBack sx={{ fontSize: 16 }} /> Retour a la connexion
+            <ArrowBack sx={{ fontSize: 16 }} /> {t('auth:resetPassword.page.backToLogin')}
           </Link>
         </Box>
       </Box>

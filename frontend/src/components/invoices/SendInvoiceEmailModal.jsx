@@ -25,7 +25,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
   const [recipientEmail, setRecipientEmail] = useState(invoice?.client?.email || '');
-  const [subject, setSubject] = useState(`Facture ${invoice?.invoice_number || ''} - ProcureGenius`);
+  const [subject, setSubject] = useState(t('invoices:dialogs.sendEmail.defaultSubject', { number: invoice?.invoice_number || '' }));
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
@@ -121,7 +121,7 @@ function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
               {t('invoices:dialogs.sendEmail.invoiceDetails', 'Détails de la facture')}:
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {t('invoices:invoiceNumber')}: {invoice.invoice_number || 'N/A'}
+              {t('invoices:invoiceNumber')}: {invoice.invoice_number || t('invoices:labels.notAvailable')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {t('invoices:labels.total')}: {invoice.total_amount?.toFixed(2) || '0.00'} {invoice.currency || 'XAF'}

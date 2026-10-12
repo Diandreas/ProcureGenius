@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PAYMENT_METHODS } from '../../constants/paymentMethods';
+import { getPaymentMethods } from '../../constants/paymentMethods';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -145,11 +145,11 @@ function InvoiceForm() {
     })));
     setFormData((prev) => ({
       ...prev,
-      title: prev.title || `Facture ${demo.client?.name || ''}`.trim(),
+      title: prev.title || t('invoices:form.demoTitle', { name: demo.client?.name || '' }).trim(),
       tax_rate: demo.tax_rate ?? prev.tax_rate,
       status: 'sent',
     }));
-    enqueueSnackbar('Votre facture de la démo est pré-remplie : vérifiez-la puis enregistrez', { variant: 'info' });
+    enqueueSnackbar(t('invoices:messages.demoPrefilled'), { variant: 'info' });
   }, [fromDemo, isEdit]);
 
   // Pre-select client from URL
@@ -407,7 +407,7 @@ function InvoiceForm() {
               payment_method: formData.payment_method || 'cash',
             });
           }
-          enqueueSnackbar('Hors ligne : facture enregistrée sur cet appareil, elle partira dès le retour du réseau', { variant: 'info' });
+          enqueueSnackbar(t('invoices:messages.offlineSaved'), { variant: 'info' });
         } else if (targetId && formData.status === 'paid' && (totalAmount || 0) > 0) {
           try {
             await invoicesAPI.addPayment(targetId, {
@@ -476,7 +476,7 @@ function InvoiceForm() {
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.75}>
           <Box>
             <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
-              {item.product_reference || 'N/A'}
+              {item.product_reference || t('invoices:labels.notAvailable')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.4 }}>
               {item.description}
@@ -632,7 +632,7 @@ function InvoiceForm() {
               endIcon={showAdvanced ? <ExpandLess /> : <ExpandMore />}
               sx={{ mb: 2, borderRadius: 2, textTransform: 'none', justifyContent: 'space-between', color: 'text.secondary', borderColor: 'divider' }}
             >
-              {showAdvanced ? 'Masquer les options' : "Plus d'options (titre, dates, taxe, remise…)"}
+              {showAdvanced ? t('invoices:form.hideOptions') : t('invoices:form.moreOptions')}
             </Button>
 
             {/* Basic Information Mobile (replie) */}
@@ -725,7 +725,7 @@ function InvoiceForm() {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Sélectionner un client"
+                      label={t('invoices:fields.selectClient')}
                       size="small"
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
@@ -747,7 +747,7 @@ function InvoiceForm() {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Lier à un contrat"
+                        label={t('invoices:fields.linkContract')}
                         size="small"
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                       />
@@ -927,7 +927,7 @@ function InvoiceForm() {
                       sx={{ borderRadius: 2 }}
                     >
                       <MenuItem value="">{t('invoices:paymentMethods.none')}</MenuItem>
-                      {PAYMENT_METHODS.map((m) => (
+                      {getPaymentMethods(t).map((m) => (
                         <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>
                       ))}
                     </Select>
@@ -1002,7 +1002,7 @@ function InvoiceForm() {
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Articles
+                      {t('invoices:labels.items')}
                     </Typography>
                     <Button
                       variant="contained"
@@ -1085,7 +1085,7 @@ function InvoiceForm() {
               <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Résumé financier
+                    {t('invoices:labels.financialSummary')}
                   </Typography>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={3}>
@@ -1094,7 +1094,7 @@ function InvoiceForm() {
                           {formatCurrency(calculateSubtotal())}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Sous-total
+                          {t('invoices:labels.subtotal')}
                         </Typography>
                       </Box>
                     </Grid>
@@ -1104,7 +1104,7 @@ function InvoiceForm() {
                           {formatCurrency(calculateTaxAmount())}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          TVA ({formData.tax_rate}%)
+                          {t('invoices:labels.vatRate', { rate: formData.tax_rate })}
                         </Typography>
                       </Box>
                     </Grid>
@@ -1114,7 +1114,7 @@ function InvoiceForm() {
                           {formatCurrency(calculateTotal())}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Total TTC
+                          {t('invoices:labels.totalTTC')}
                         </Typography>
                       </Box>
                     </Grid>
@@ -1189,7 +1189,7 @@ function InvoiceForm() {
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Client
+                      {t('invoices:labels.client')}
                     </Typography>
                     <IconButton
                       size="small"
@@ -1254,7 +1254,7 @@ function InvoiceForm() {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Sélectionner un contrat"
+                          label={t('invoices:fields.selectContract')}
                           sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                           InputProps={{
                             ...params.InputProps,
@@ -1301,36 +1301,36 @@ function InvoiceForm() {
               <Card sx={{ borderRadius: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Statut & paiement
+                    {t('invoices:labels.statusAndPayment')}
                   </Typography>
                   <Stack spacing={2}>
                     <FormControl fullWidth>
-                      <InputLabel>Statut de la facture</InputLabel>
+                      <InputLabel>{t('invoices:labels.invoiceStatusField')}</InputLabel>
                       <Select
                         value={formData.status}
-                        label="Statut de la facture"
+                        label={t('invoices:labels.invoiceStatusField')}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         sx={{ borderRadius: 2 }}
                       >
-                        <MenuItem value="quote">Devis</MenuItem>
-                        <MenuItem value="draft">Brouillon</MenuItem>
-                        <MenuItem value="sent">Envoyée</MenuItem>
-                        <MenuItem value="pending">En attente</MenuItem>
-                        <MenuItem value="paid">Payée</MenuItem>
-                        <MenuItem value="cancelled">Annulée</MenuItem>
+                        <MenuItem value="quote">{t('invoices:status.quote')}</MenuItem>
+                        <MenuItem value="draft">{t('invoices:status.draft')}</MenuItem>
+                        <MenuItem value="sent">{t('invoices:status.sent')}</MenuItem>
+                        <MenuItem value="pending">{t('invoices:status.pending')}</MenuItem>
+                        <MenuItem value="paid">{t('invoices:status.paid')}</MenuItem>
+                        <MenuItem value="cancelled">{t('invoices:status.cancelled')}</MenuItem>
                       </Select>
                     </FormControl>
                     {formData.status === 'paid' && (
                     <FormControl fullWidth>
-                      <InputLabel>Méthode de paiement</InputLabel>
+                      <InputLabel>{t('invoices:labels.paymentMethod')}</InputLabel>
                       <Select
                         value={formData.payment_method || ''}
-                        label="Méthode de paiement"
+                        label={t('invoices:labels.paymentMethod')}
                         onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                         sx={{ borderRadius: 2 }}
                       >
-                        <MenuItem value="">— Non spécifiée —</MenuItem>
-                        {PAYMENT_METHODS.map((m) => (
+                        <MenuItem value="">{t('invoices:paymentMethods.none')}</MenuItem>
+                        {getPaymentMethods(t).map((m) => (
                           <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>
                         ))}
                       </Select>
@@ -1388,7 +1388,7 @@ function InvoiceForm() {
         fields={serviceFields}
         createFunction={productsAPI.quickCreate}
         contextData={{ product_type: 'service', source_type: 'manufactured' }}
-        title="Nouveau service"
+        title={t('invoices:dialogs.quickCreateService')}
       />
       </Box>
     </Box>

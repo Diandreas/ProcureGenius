@@ -7,6 +7,7 @@ import {
     Close as CloseIcon, Cameraswitch as SwitchIcon,
 } from '@mui/icons-material';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { useTranslation } from 'react-i18next';
 
 // Formats courants en commerce : QR (étiquettes Procura), DataMatrix (GS1, médicaments),
 // EAN-13/EAN-8 et UPC (code-barres des produits du commerce), Code 128/39 (logistique).
@@ -34,7 +35,8 @@ const ZONE_ID = 'zone-scanner-camera';
  * La camera est toujours arretee a la fermeture — une camera laissee allumee
  * vide la batterie et bloque la camera pour les autres applications.
  */
-const CameraScanner = ({ open, onClose, onDetected, title = 'Scanner un code' }) => {
+const CameraScanner = ({ open, onClose, onDetected, title }) => {
+    const { t } = useTranslation(['stock']);
     const scannerRef = useRef(null);
     const dejaLuRef = useRef(false);
     const [erreur, setErreur] = useState('');
@@ -66,7 +68,7 @@ const CameraScanner = ({ open, onClose, onDetected, title = 'Scanner un code' })
                 const liste = await Html5Qrcode.getCameras();
                 if (annule) return;
                 if (!liste || liste.length === 0) {
-                    setErreur("Aucune caméra détectée sur cet appareil.");
+                    setErreur(t('stock:scanner.noCamera'));
                     return;
                 }
                 setCameras(liste);
@@ -106,20 +108,20 @@ const CameraScanner = ({ open, onClose, onDetected, title = 'Scanner un code' })
                 if (annule) return;
                 const msg = String(e?.message || e || '');
                 if (/permission|NotAllowed/i.test(msg)) {
-                    setErreur("L'accès à la caméra a été refusé. Autorisez la caméra pour ce site dans les réglages du navigateur, puis réessayez.");
+                    setErreur(t('stock:scanner.permissionDenied'));
                 } else if (/NotReadable|in use|Could not start/i.test(msg)) {
-                    setErreur("La caméra est utilisée par une autre application. Fermez-la puis réessayez.");
+                    setErreur(t('stock:scanner.cameraInUse'));
                 } else {
-                    setErreur("Impossible de démarrer la caméra : " + msg);
+                    setErreur(t('stock:scanner.startError', { message: msg }));
                 }
             }
         };
 
         // Laisse le Dialog monter la zone video avant d'y attacher la camera.
-        const t = setTimeout(demarrer, 150);
+        const timer = setTimeout(demarrer, 150);
         return () => {
             annule = true;
-            clearTimeout(t);
+            clearTimeout(timer);
             arreter();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -138,13 +140,13 @@ const CameraScanner = ({ open, onClose, onDetected, title = 'Scanner un code' })
         <Dialog open={open} onClose={fermer} fullWidth maxWidth="sm"
             PaperProps={{ sx: { m: { xs: 1, sm: 3 } } }}>
             <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, pb: 1 }}>
-                <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>{title}</Typography>
+                <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>{title || t('stock:scanner.title')}</Typography>
                 {cameras.length > 1 && (
-                    <Tooltip title="Changer de caméra">
-                        <IconButton onClick={changerCamera}><SwitchIcon /></IconButton>
+                    <Tooltip title={t('stock:scanner.switchCamera')}>
+                        <IconButton onClick={changerCamera} aria-label={t('stock:scanner.switchCamera')}><SwitchIcon /></IconButton>
                     </Tooltip>
                 )}
-                <IconButton onClick={fermer}><CloseIcon /></IconButton>
+                <IconButton onClick={fermer} aria-label={t('stock:scanner.close')}><CloseIcon /></IconButton>
             </DialogTitle>
             <DialogContent sx={{ px: { xs: 1, sm: 3 } }}>
                 {erreur ? (
@@ -160,13 +162,13 @@ const CameraScanner = ({ open, onClose, onDetected, title = 'Scanner un code' })
                             }}
                         />
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, textAlign: 'center' }}>
-                            Placez le code-barres ou le QR dans le cadre. La lecture est automatique.
+                            {t('stock:scanner.hint')}
                         </Typography>
                     </>
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={fermer}>Fermer</Button>
+                <Button onClick={fermer}>{t('stock:scanner.close')}</Button>
             </DialogActions>
         </Dialog>
     );

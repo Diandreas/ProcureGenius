@@ -38,10 +38,10 @@ const SearchBar = ({ autoFocus = false, onResultClick }) => {
 
   // Recherches populaires
   const popularSearches = [
-    'créer facture',
-    'nouveau fournisseur',
-    'gestion stock',
-    'bon de commande',
+    t('help:search.popularTerms.createInvoice'),
+    t('help:search.popularTerms.newSupplier'),
+    t('help:search.popularTerms.stockManagement'),
+    t('help:search.popularTerms.purchaseOrder'),
   ];
 
   // Recherche en temps réel

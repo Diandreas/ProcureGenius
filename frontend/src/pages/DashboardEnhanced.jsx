@@ -62,6 +62,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { analyticsAPI } from '../services/analyticsAPI';
 import { isNativePlatform } from '../utils/platform';
 import { cacheOne, readOne, isOffline } from '../services/offline';
@@ -85,12 +86,12 @@ ChartJS.register(
 );
 
 const PERIOD_OPTIONS = [
-  { value: 'today', label: "Aujourd'hui" },
-  { value: 'last_7_days', label: '7 jours' },
-  { value: 'last_30_days', label: '30 jours' },
-  { value: 'last_90_days', label: '90 jours' },
-  { value: 'this_month', label: 'Ce mois' },
-  { value: 'this_year', label: 'Cette année' },
+  { value: 'today', labelKey: 'dashboard:periods.today' },
+  { value: 'last_7_days', labelKey: 'dashboard:dashboardPage.periodShort.last_7_days' },
+  { value: 'last_30_days', labelKey: 'dashboard:dashboardPage.periodShort.last_30_days' },
+  { value: 'last_90_days', labelKey: 'dashboard:dashboardPage.periodShort.last_90_days' },
+  { value: 'this_month', labelKey: 'dashboard:periods.this_month' },
+  { value: 'this_year', labelKey: 'dashboard:periods.this_year' },
 ];
 
 function TabPanel(props) {
@@ -115,6 +116,7 @@ function TabPanel(props) {
 
 function DashboardEnhanced() {
   const navigate = useNavigate();
+  const { t } = useTranslation(['dashboard', 'common']);
   const { format: formatCurrency } = useCurrency();
   const [currentTab, setCurrentTab] = useState(0);
   const [stats, setStats] = useState(null);
@@ -162,13 +164,13 @@ function DashboardEnhanced() {
   const getFallbackWelcome = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
-      return { greeting: 'Bonjour', message: 'Excellente journée à vous !', pose: 'excited' };
+      return { greeting: t('dashboard:welcome.morning.greeting'), message: t('dashboard:welcome.morning.message'), pose: 'excited' };
     } else if (hour >= 12 && hour < 18) {
-      return { greeting: 'Bon après-midi', message: 'Continuez sur cette lancée !', pose: 'reading' };
+      return { greeting: t('dashboard:welcome.afternoon.greeting'), message: t('dashboard:welcome.afternoon.message'), pose: 'reading' };
     } else if (hour >= 18 && hour < 22) {
-      return { greeting: 'Bonsoir', message: 'Bonne fin de journée !', pose: 'happy' };
+      return { greeting: t('dashboard:welcome.evening.greeting'), message: t('dashboard:welcome.evening.message'), pose: 'happy' };
     } else {
-      return { greeting: 'Bonne nuit', message: 'Il se fait tard !', pose: 'thinking' };
+      return { greeting: t('dashboard:welcome.night.greeting'), message: t('dashboard:welcome.night.message'), pose: 'thinking' };
     }
   };
 
@@ -276,7 +278,7 @@ function DashboardEnhanced() {
     // autres pages — évite l'overlay fixe qui « saute » vers le contenu.
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', p: 3 }}>
-        <LoadingState message="Chargement de votre tableau de bord..." />
+        <LoadingState message={t('dashboard:loading')} />
       </Box>
     );
   }
@@ -284,7 +286,7 @@ function DashboardEnhanced() {
   if (!stats) {
     return (
       <Box p={3}>
-        <Alert severity="error">Impossible de charger les statistiques</Alert>
+        <Alert severity="error">{t('dashboard:error')}</Alert>
       </Box>
     );
   }
@@ -298,21 +300,21 @@ function DashboardEnhanced() {
   const statsCards = [
     // Resume financier : toujours visible (coeur du tableau de bord).
     {
-      title: 'Revenu Total',
+      title: t('dashboard:stats.totalRevenue'),
       value: formatCurrency(financialStats.revenue || 0),
       previous: financialStats.comparison?.previous_revenue,
       icon: <AttachMoney />,
       color: '#10B981',
     },
     {
-      title: 'Dépenses',
+      title: t('dashboard:stats.expenses'),
       value: formatCurrency(financialStats.expenses || 0),
       previous: financialStats.comparison?.previous_expenses,
       icon: <ShoppingCart />,
       color: '#EF4444',
     },
     {
-      title: 'Profit Net',
+      title: t('dashboard:widgets.financial_summary_metrics.net_profit'),
       value: formatCurrency(financialStats.net_profit || 0),
       previous: financialStats.comparison?.previous_profit,
       icon: <TrendingUp />,
@@ -320,7 +322,7 @@ function DashboardEnhanced() {
     },
     // Cartes liees aux modules : masquees si le module est desactive.
     showInvoices && {
-      title: 'Factures Imp.',
+      title: t('dashboard:dashboardPage.unpaidInvoicesShort'),
       value: (invoiceStats.by_status?.overdue || 0) + (invoiceStats.by_status?.sent || 0),
       total: invoiceStats.total || 0,
       icon: <Receipt />,
@@ -329,15 +331,15 @@ function DashboardEnhanced() {
     showPurchaseOrders && {
       // Afficher le nombre TOTAL de bons de commande (et non seulement ceux de
       // la période) : un BC créé hors période ne doit pas faire afficher 0.
-      title: 'Bons de commande',
+      title: t('dashboard:dashboardPage.purchaseOrders'),
       value: poStats.total || 0,
-      subtitle: poStats.period?.count ? `dont ${poStats.period.count} sur la période` : null,
+      subtitle: poStats.period?.count ? t('dashboard:dashboardPage.inPeriod', { count: poStats.period.count }) : null,
       previous: poStats.comparison?.previous_count,
       icon: <Business />,
       color: '#8B5CF6',
     },
     showClients && {
-      title: 'Nouv. Clients',
+      title: t('dashboard:dashboardPage.newClientsShort'),
       value: clientStats.new_in_period || 0,
       previous: clientStats.comparison?.previous_new,
       icon: <People />,
@@ -351,7 +353,7 @@ function DashboardEnhanced() {
     const datasets = [];
     if (showInvoices) {
       datasets.push({
-        label: 'Factures',
+        label: t('dashboard:labels.invoices'),
         data: trends.invoices || [],
         borderColor: '#10B981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -360,7 +362,7 @@ function DashboardEnhanced() {
     }
     if (showPurchaseOrders) {
       datasets.push({
-        label: 'Bons de commande',
+        label: t('dashboard:dashboardPage.purchaseOrders'),
         data: trends.purchase_orders || [],
         borderColor: '#3B82F6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -372,7 +374,7 @@ function DashboardEnhanced() {
 
   const prepareDonutData = () => {
     return {
-      labels: ['Payées', 'En attente', 'En retard'],
+      labels: [t('dashboard:dashboardPage.invoiceStatus.paid'), t('dashboard:dashboardPage.invoiceStatus.pending'), t('dashboard:dashboardPage.invoiceStatus.overdue')],
       datasets: [
         {
           data: [
@@ -431,7 +433,7 @@ function DashboardEnhanced() {
               sx={{ width: 110, '& .MuiInputBase-root': { height: 32, fontSize: '0.75rem', borderRadius: 2 } }}
             >
               {PERIOD_OPTIONS.map((o) => (
-                <MenuItem key={o.value} value={o.value} sx={{ fontSize: '0.8rem' }}>{o.label}</MenuItem>
+                <MenuItem key={o.value} value={o.value} sx={{ fontSize: '0.8rem' }}>{t(o.labelKey)}</MenuItem>
               ))}
             </TextField>
             <IconButton size="small" onClick={fetchDashboardData} sx={{ border: '1px solid', borderColor: 'divider', width: 32, height: 32 }}>
@@ -455,10 +457,10 @@ function DashboardEnhanced() {
             }}
           >
             {[
-              { section: 0, label: 'Aperçu', icon: <TrendingUp sx={{ fontSize: 18 }} /> },
-              showInvoices && { section: 1, label: 'Factures', icon: <Receipt sx={{ fontSize: 18 }} /> },
-              showClients && { section: 2, label: 'Clients', icon: <People sx={{ fontSize: 18 }} /> },
-              { section: 3, label: 'Alertes', icon: <Warning sx={{ fontSize: 18 }} />, badge: stats.alerts?.length },
+              { section: 0, label: t('dashboard:dashboardPage.tabs.overview'), icon: <TrendingUp sx={{ fontSize: 18 }} /> },
+              showInvoices && { section: 1, label: t('dashboard:labels.invoices'), icon: <Receipt sx={{ fontSize: 18 }} /> },
+              showClients && { section: 2, label: t('common:navigation.clients'), icon: <People sx={{ fontSize: 18 }} /> },
+              { section: 3, label: t('dashboard:dashboardPage.tabs.alerts'), icon: <Warning sx={{ fontSize: 18 }} />, badge: stats.alerts?.length },
             ].filter(Boolean).map((s) => {
               const selected = mobileSection === s.section;
               return (
@@ -540,7 +542,7 @@ function DashboardEnhanced() {
             {/* Graphique tendances (masque si aucune serie active) */}
             {lineChartData.datasets.length > 0 && (
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5, mb: 1.5 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Tendances</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>{t('dashboard:dashboardPage.trends')}</Typography>
               <Line data={lineChartData} options={{
                 responsive: true,
                 plugins: {
@@ -558,7 +560,7 @@ function DashboardEnhanced() {
             {/* Top clients mini (masque si module Clients desactive) */}
             {showClients && (
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top clients</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>{t('dashboard:dashboardPage.topClients')}</Typography>
               {(clientStats.top_clients || []).slice(0, 3).map((c, i, arr) => (
                 <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.75, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                   <Avatar sx={{ width: 28, height: 28, fontSize: '0.7rem', fontWeight: 700, bgcolor: 'primary.main', borderRadius: 1 }}>
@@ -569,7 +571,7 @@ function DashboardEnhanced() {
                 </Box>
               ))}
               {(clientStats.top_clients || []).length === 0 && (
-                <Typography variant="caption" color="text.secondary">Aucun client</Typography>
+                <Typography variant="caption" color="text.secondary">{t('dashboard:widgets.top_clients_empty')}</Typography>
               )}
             </Box>
             )}
@@ -581,19 +583,19 @@ function DashboardEnhanced() {
           <Box sx={{ px: 1.5 }}>
             {/* Donut */}
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5, mb: 1.5 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>État des factures</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>{t('dashboard:dashboardPage.invoiceStatusTitle')}</Typography>
               <Box sx={{ height: 180, width: '100%', maxWidth: 220, mx: 'auto', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
                 <Doughnut data={donutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }, cutout: '68%' }} />
               </Box>
             </Box>
             {/* Résumé */}
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Résumé</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>{t('dashboard:dashboardPage.summary')}</Typography>
               {[
-                { label: 'Factures émises', value: invoiceStats.period?.count || 0, color: 'text.primary' },
-                { label: 'Montant payé', value: formatCurrency(invoiceStats.period?.paid_amount || 0), color: 'success.main' },
-                { label: 'En attente', value: formatCurrency(invoiceStats.period?.pending_amount || 0), color: 'warning.main' },
-                { label: 'Taux de paiement', value: `${(invoiceStats.period?.payment_rate || 0).toFixed(1)}%`, color: 'info.main' },
+                { label: t('dashboard:dashboardPage.invoicesIssued'), value: invoiceStats.period?.count || 0, color: 'text.primary' },
+                { label: t('dashboard:dashboardPage.amountPaid'), value: formatCurrency(invoiceStats.period?.paid_amount || 0), color: 'success.main' },
+                { label: t('dashboard:dashboardPage.invoiceStatus.pending'), value: formatCurrency(invoiceStats.period?.pending_amount || 0), color: 'warning.main' },
+                { label: t('dashboard:dashboardPage.paymentRate'), value: `${(invoiceStats.period?.payment_rate || 0).toFixed(1)}%`, color: 'info.main' },
               ].map((row, i, arr) => (
                 <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.875, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                   <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{row.label}</Typography>
@@ -608,9 +610,9 @@ function DashboardEnhanced() {
         {mobileSection === 2 && (
           <Box sx={{ px: 1.5 }}>
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5, mb: 1.5 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top clients</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>{t('dashboard:dashboardPage.topClients')}</Typography>
               {(clientStats.top_clients || []).length === 0
-                ? <Typography variant="caption" color="text.secondary">Aucun client pour la période</Typography>
+                ? <Typography variant="caption" color="text.secondary">{t('dashboard:dashboardPage.noClientsForPeriod')}</Typography>
                 : (clientStats.top_clients || []).map((c, i, arr) => (
                   <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, py: 1, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                     <Avatar sx={{ width: 34, height: 34, fontSize: '0.78rem', fontWeight: 700, bgcolor: 'primary.main', borderRadius: 1.5 }}>
@@ -618,7 +620,7 @@ function DashboardEnhanced() {
                     </Avatar>
                     <Box flex={1} minWidth={0}>
                       <Typography sx={{ fontSize: '0.83rem', fontWeight: 600 }} noWrap>{c.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{c.total_invoices || 0} facture(s)</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('dashboard:dashboardPage.invoiceCount', { count: c.total_invoices || 0 })}</Typography>
                     </Box>
                     <Typography sx={{ fontSize: '0.83rem', fontWeight: 700, color: 'primary.main' }} noWrap>{formatCurrency(c.total_revenue || 0)}</Typography>
                   </Box>
@@ -626,9 +628,9 @@ function DashboardEnhanced() {
               }
             </Box>
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>Top fournisseurs</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', mb: 1 }}>{t('dashboard:dashboardPage.topSuppliers')}</Typography>
               {(stats.suppliers?.top_suppliers || []).length === 0
-                ? <Typography variant="caption" color="text.secondary">Aucun fournisseur pour la période</Typography>
+                ? <Typography variant="caption" color="text.secondary">{t('dashboard:dashboardPage.noSuppliersForPeriod')}</Typography>
                 : (stats.suppliers?.top_suppliers || []).map((s, i, arr) => (
                   <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, py: 1, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                     <Avatar sx={{ width: 34, height: 34, fontSize: '0.78rem', fontWeight: 700, bgcolor: 'success.main', borderRadius: 1.5 }}>
@@ -636,7 +638,7 @@ function DashboardEnhanced() {
                     </Avatar>
                     <Box flex={1} minWidth={0}>
                       <Typography sx={{ fontSize: '0.83rem', fontWeight: 600 }} noWrap>{s.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">{s.total_orders || 0} BC</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('dashboard:dashboardPage.poCount', { count: s.total_orders || 0 })}</Typography>
                     </Box>
                     <Typography sx={{ fontSize: '0.83rem', fontWeight: 700, color: 'success.main' }} noWrap>{formatCurrency(s.total_amount || 0)}</Typography>
                   </Box>
@@ -652,12 +654,12 @@ function DashboardEnhanced() {
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5, mb: 1.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                 <ErrorOutline color="error" sx={{ fontSize: 18 }} />
-                <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Alertes ({stats.alerts?.length || 0})</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{t('dashboard:dashboardPage.alertsCount', { count: stats.alerts?.length || 0 })}</Typography>
               </Box>
               {(stats.alerts || []).length === 0
                 ? <Box sx={{ py: 3, textAlign: 'center' }}>
                     <CheckCircle sx={{ fontSize: 36, color: 'success.main', mb: 0.5 }} />
-                    <Typography variant="caption" color="text.secondary" display="block">Aucune alerte active</Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">{t('dashboard:dashboardPage.noActiveAlerts')}</Typography>
                   </Box>
                 : (stats.alerts || []).map((alert, i, arr) => (
                   <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25, py: 1, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
@@ -670,12 +672,12 @@ function DashboardEnhanced() {
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: neuShadow, p: 1.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                 <Inventory2 color="info" sx={{ fontSize: 18 }} />
-                <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Stock</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{t('dashboard:dashboardPage.stock')}</Typography>
               </Box>
               {[
-                { label: 'Produits en rupture', value: productStats.stock?.out_of_stock || 0, color: 'error.main' },
-                { label: 'Stock faible', value: productStats.stock?.low_stock || 0, color: 'warning.main' },
-                { label: 'Valeur totale', value: formatCurrency(productStats.stock?.total_value || 0), color: 'info.main' },
+                { label: t('dashboard:dashboardPage.outOfStock'), value: productStats.stock?.out_of_stock || 0, color: 'error.main' },
+                { label: t('dashboard:dashboardPage.lowStock'), value: productStats.stock?.low_stock || 0, color: 'warning.main' },
+                { label: t('dashboard:dashboardPage.totalValue'), value: formatCurrency(productStats.stock?.total_value || 0), color: 'info.main' },
               ].map((row, i, arr) => (
                 <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.875, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                   <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{row.label}</Typography>
@@ -699,7 +701,7 @@ function DashboardEnhanced() {
             {welcome.greeting} 
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {aiGreeting ? cleanAiMessage(aiGreeting.greeting) : `${welcome.message} Voici un aperçu de votre activité.`}
+            {aiGreeting ? cleanAiMessage(aiGreeting.greeting) : t('dashboard:dashboardPage.welcomeSubtitle', { message: welcome.message })}
           </Typography>
         </Box>
 
@@ -718,16 +720,16 @@ function DashboardEnhanced() {
                   '&:hover': { color: 'text.primary' },
                 }}
               >
-                {option.label}
+                {t(option.labelKey)}
               </Box>
             ))}
           </Box>
-          <MuiTooltip title="Exporter">
+          <MuiTooltip title={t('common:buttons.export')}>
             <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)} disabled={exporting} sx={{ border: '1px solid', borderColor: 'divider' }}>
               {exporting ? <CircularProgress size={16} /> : <GetApp fontSize="small" />}
             </IconButton>
           </MuiTooltip>
-          <MuiTooltip title="Actualiser">
+          <MuiTooltip title={t('common:buttons.refresh')}>
             <IconButton size="small" onClick={fetchDashboardData} sx={{ border: '1px solid', borderColor: 'divider' }}>
               <Refresh fontSize="small" />
             </IconButton>
@@ -736,8 +738,8 @@ function DashboardEnhanced() {
       </Box>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-        <MenuItem onClick={() => handleExport('pdf')}><PictureAsPdf sx={{ mr: 1 }} fontSize="small" />Exporter en PDF</MenuItem>
-        <MenuItem onClick={() => handleExport('excel')}><TableChart sx={{ mr: 1 }} fontSize="small" />Exporter en Excel</MenuItem>
+        <MenuItem onClick={() => handleExport('pdf')}><PictureAsPdf sx={{ mr: 1 }} fontSize="small" />{t('dashboard:actions.exportPDF')}</MenuItem>
+        <MenuItem onClick={() => handleExport('excel')}><TableChart sx={{ mr: 1 }} fontSize="small" />{t('dashboard:actions.exportExcel')}</MenuItem>
       </Menu>
 
       {/* Bandeau d'essai / alertes de quota (s'affiche seulement si pertinent) */}
@@ -749,12 +751,12 @@ function DashboardEnhanced() {
       {/* Tabs Navigation */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
         <Tabs value={currentTab} onChange={(e, v) => setCurrentTab(v)} variant="scrollable" scrollButtons="auto">
-          <Tab label="Aperçu Général" />
-          <Tab label="Facturation" />
-          <Tab label="Performances" />
+          <Tab label={t('dashboard:dashboardPage.tabs.generalOverview')} />
+          <Tab label={t('dashboard:dashboardPage.tabs.billing')} />
+          <Tab label={t('dashboard:dashboardPage.tabs.performance')} />
           <Tab label={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              Produits & Alertes
+              {t('dashboard:dashboardPage.tabs.productsAlerts')}
               {(stats.alerts?.length > 0) && (
                 <Chip size="small" color="error" label={stats.alerts.length} sx={{ height: 20, fontSize: '0.7rem', '& .MuiChip-label': { px: 1, py: 0 } }} />
               )}
@@ -818,13 +820,13 @@ function DashboardEnhanced() {
                 <TrendingUp sx={{ color: '#10b981' }} />
               </Box>
               <Box>
-                <Typography variant="subtitle2" fontWeight={700}>Marges & bénéfice brut</Typography>
+                <Typography variant="subtitle2" fontWeight={700}>{t('dashboard:dashboardPage.marginsTitle')}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Calcul automatique : ventes − prix d'achat de vos produits
+                  {t('dashboard:dashboardPage.marginsSubtitle')}
                 </Typography>
               </Box>
             </Box>
-            <Button size="small" variant="text">Consulter →</Button>
+            <Button size="small" variant="text">{t('dashboard:dashboardPage.view')}</Button>
           </CardContent>
         </Card>
 
@@ -832,7 +834,7 @@ function DashboardEnhanced() {
           <Grid item xs={12} md={8}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', height: '100%' }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={2}>Tendances quotidiennes</Typography>
+                <Typography variant="subtitle1" fontWeight={700} mb={2}>{t('dashboard:dashboardPage.dailyTrends')}</Typography>
                 <Line data={lineChartData} options={{
                   responsive: true,
                   plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 12, font: { size: 11 } } }, tooltip: { mode: 'index', intersect: false, padding: 8 } },
@@ -848,12 +850,12 @@ function DashboardEnhanced() {
           <Grid item xs={12} md={4}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', height: '100%' }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={2}>Facturation</Typography>
+                <Typography variant="subtitle1" fontWeight={700} mb={2}>{t('dashboard:dashboardPage.tabs.billing')}</Typography>
                 {[
-                  { label: 'Factures émises', value: invoiceStats.period?.count || 0, color: 'text.primary' },
-                  { label: 'Montant payé', value: formatCurrency(invoiceStats.period?.paid_amount || 0), color: 'success.main' },
-                  { label: 'En attente', value: formatCurrency(invoiceStats.period?.pending_amount || 0), color: 'warning.main' },
-                  { label: 'Taux de paiement', value: `${(invoiceStats.period?.payment_rate || 0).toFixed(1)}%`, color: 'info.main' },
+                  { label: t('dashboard:dashboardPage.invoicesIssued'), value: invoiceStats.period?.count || 0, color: 'text.primary' },
+                  { label: t('dashboard:dashboardPage.amountPaid'), value: formatCurrency(invoiceStats.period?.paid_amount || 0), color: 'success.main' },
+                  { label: t('dashboard:dashboardPage.invoiceStatus.pending'), value: formatCurrency(invoiceStats.period?.pending_amount || 0), color: 'warning.main' },
+                  { label: t('dashboard:dashboardPage.paymentRate'), value: `${(invoiceStats.period?.payment_rate || 0).toFixed(1)}%`, color: 'info.main' },
                 ].map((row, i, arr) => (
                   <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.25, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                     <Typography variant="body2" color="text.secondary">{row.label}</Typography>
@@ -874,15 +876,15 @@ function DashboardEnhanced() {
           <Grid item xs={12} md={6}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>Top clients</Typography>
+                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>{t('dashboard:dashboardPage.topClients')}</Typography>
                 {(clientStats.top_clients || []).length === 0
-                  ? <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>Aucun client pour la période</Typography>
+                  ? <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>{t('dashboard:dashboardPage.noClientsForPeriod')}</Typography>
                   : (clientStats.top_clients || []).map((client, i, arr) => (
                     <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                       <Avatar sx={{ width: 32, height: 32, fontSize: '0.78rem', fontWeight: 700, bgcolor: 'primary.main', borderRadius: 1.5 }}>{(client.name || '?')[0].toUpperCase()}</Avatar>
                       <Box flex={1} minWidth={0}>
                         <Typography variant="body2" fontWeight={600} noWrap>{client.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{client.total_invoices || 0} facture(s)</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('dashboard:dashboardPage.invoiceCount', { count: client.total_invoices || 0 })}</Typography>
                       </Box>
                       <Typography variant="body2" fontWeight={700} color="primary.main" noWrap>{formatCurrency(client.total_revenue || 0)}</Typography>
                     </Box>
@@ -896,15 +898,15 @@ function DashboardEnhanced() {
           <Grid item xs={12} md={6}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>Top fournisseurs</Typography>
+                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>{t('dashboard:dashboardPage.topSuppliers')}</Typography>
                 {(stats.suppliers?.top_suppliers || []).length === 0
-                  ? <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>Aucun fournisseur pour la période</Typography>
+                  ? <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>{t('dashboard:dashboardPage.noSuppliersForPeriod')}</Typography>
                   : (stats.suppliers?.top_suppliers || []).map((s, i, arr) => (
                     <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                       <Avatar sx={{ width: 32, height: 32, fontSize: '0.78rem', fontWeight: 700, bgcolor: 'success.main', borderRadius: 1.5 }}>{(s.name || '?')[0].toUpperCase()}</Avatar>
                       <Box flex={1} minWidth={0}>
                         <Typography variant="body2" fontWeight={600} noWrap>{s.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{s.total_orders || 0} BC</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('dashboard:dashboardPage.poCount', { count: s.total_orders || 0 })}</Typography>
                       </Box>
                       <Typography variant="body2" fontWeight={700} color="success.main" noWrap>{formatCurrency(s.total_amount || 0)}</Typography>
                     </Box>
@@ -923,7 +925,7 @@ function DashboardEnhanced() {
           <Grid item xs={12} md={5}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', height: '100%' }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={2}>État des factures</Typography>
+                <Typography variant="subtitle1" fontWeight={700} mb={2}>{t('dashboard:dashboardPage.invoiceStatusTitle')}</Typography>
                 <Box sx={{ height: 240, display: 'flex', justifyContent: 'center' }}>
                   <Doughnut data={donutData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }, cutout: '68%' }} />
                 </Box>
@@ -933,12 +935,12 @@ function DashboardEnhanced() {
           <Grid item xs={12} md={7}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider', height: '100%' }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>Résumé facturation</Typography>
+                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>{t('dashboard:dashboardPage.billingSummary')}</Typography>
                 {[
-                  { label: 'Total factures', value: invoiceStats.period?.count || 0, note: 'période sélectionnée' },
-                  { label: 'Montant payé', value: formatCurrency(invoiceStats.period?.paid_amount || 0), color: 'success.main' },
-                  { label: 'Montant en attente', value: formatCurrency(invoiceStats.period?.pending_amount || 0), color: 'warning.main' },
-                  { label: 'Taux de paiement', value: `${(invoiceStats.period?.payment_rate || 0).toFixed(1)}%`, color: 'info.main' },
+                  { label: t('dashboard:dashboardPage.totalInvoices'), value: invoiceStats.period?.count || 0, note: t('dashboard:dashboardPage.selectedPeriod') },
+                  { label: t('dashboard:dashboardPage.amountPaid'), value: formatCurrency(invoiceStats.period?.paid_amount || 0), color: 'success.main' },
+                  { label: t('dashboard:dashboardPage.amountPending'), value: formatCurrency(invoiceStats.period?.pending_amount || 0), color: 'warning.main' },
+                  { label: t('dashboard:dashboardPage.paymentRate'), value: `${(invoiceStats.period?.payment_rate || 0).toFixed(1)}%`, color: 'info.main' },
                 ].map((row, i, arr) => (
                   <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                     <Box>
@@ -960,15 +962,15 @@ function DashboardEnhanced() {
           <Grid item xs={12} md={6}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>Top 5 Clients</Typography>
+                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>{t('dashboard:labels.topClients')}</Typography>
                 {(clientStats.top_clients || []).length === 0
-                  ? <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>Aucun client pour la période</Typography>
+                  ? <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>{t('dashboard:dashboardPage.noClientsForPeriod')}</Typography>
                   : (clientStats.top_clients || []).map((client, i, arr) => (
                     <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                       <Avatar sx={{ width: 36, height: 36, fontSize: '0.8rem', fontWeight: 700, bgcolor: 'primary.main', borderRadius: 1.5 }}>{(client.name || '?')[0].toUpperCase()}</Avatar>
                       <Box flex={1} minWidth={0}>
                         <Typography variant="body2" fontWeight={600} noWrap>{client.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{client.total_invoices || 0} facture(s)</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('dashboard:dashboardPage.invoiceCount', { count: client.total_invoices || 0 })}</Typography>
                       </Box>
                       <Typography variant="body2" fontWeight={700} color="primary.main">{formatCurrency(client.total_revenue || 0)}</Typography>
                     </Box>
@@ -980,15 +982,15 @@ function DashboardEnhanced() {
           <Grid item xs={12} md={6}>
             <Card elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
               <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>Top 5 Fournisseurs</Typography>
+                <Typography variant="subtitle1" fontWeight={700} mb={1.5}>{t('dashboard:labels.topSuppliers')}</Typography>
                 {(stats.suppliers?.top_suppliers || []).length === 0
-                  ? <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>Aucun fournisseur pour la période</Typography>
+                  ? <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>{t('dashboard:dashboardPage.noSuppliersForPeriod')}</Typography>
                   : (stats.suppliers?.top_suppliers || []).map((s, i, arr) => (
                     <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.25, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                       <Avatar sx={{ width: 36, height: 36, fontSize: '0.8rem', fontWeight: 700, bgcolor: 'success.main', borderRadius: 1.5 }}>{(s.name || '?')[0].toUpperCase()}</Avatar>
                       <Box flex={1} minWidth={0}>
                         <Typography variant="body2" fontWeight={600} noWrap>{s.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">{s.total_orders || 0} BC</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('dashboard:dashboardPage.poCount', { count: s.total_orders || 0 })}</Typography>
                       </Box>
                       <Typography variant="body2" fontWeight={700} color="success.main">{formatCurrency(s.total_amount || 0)}</Typography>
                     </Box>
@@ -1008,12 +1010,12 @@ function DashboardEnhanced() {
               <CardContent sx={{ p: 2.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                   <ErrorOutline color="error" fontSize="small" />
-                  <Typography variant="subtitle1" fontWeight={700}>Alertes ({stats.alerts?.length || 0})</Typography>
+                  <Typography variant="subtitle1" fontWeight={700}>{t('dashboard:dashboardPage.alertsCount', { count: stats.alerts?.length || 0 })}</Typography>
                 </Box>
                 {(stats.alerts || []).length === 0
                   ? <Box sx={{ py: 4, textAlign: 'center' }}>
                       <CheckCircle sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-                      <Typography variant="body2" color="text.secondary">Aucune alerte active</Typography>
+                      <Typography variant="body2" color="text.secondary">{t('dashboard:dashboardPage.noActiveAlerts')}</Typography>
                     </Box>
                   : (stats.alerts || []).map((alert, i, arr) => (
                     <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, py: 1.25, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
@@ -1030,12 +1032,12 @@ function DashboardEnhanced() {
               <CardContent sx={{ p: 2.5 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                   <Inventory2 color="info" fontSize="small" />
-                  <Typography variant="subtitle1" fontWeight={700}>Stock</Typography>
+                  <Typography variant="subtitle1" fontWeight={700}>{t('dashboard:dashboardPage.stock')}</Typography>
                 </Box>
                 {[
-                  { label: 'Produits en rupture', value: productStats.stock?.out_of_stock || 0, color: 'error.main' },
-                  { label: 'Stock faible', value: productStats.stock?.low_stock || 0, color: 'warning.main' },
-                  { label: 'Valeur totale du stock', value: formatCurrency(productStats.stock?.total_value || 0), color: 'info.main' },
+                  { label: t('dashboard:dashboardPage.outOfStock'), value: productStats.stock?.out_of_stock || 0, color: 'error.main' },
+                  { label: t('dashboard:dashboardPage.lowStock'), value: productStats.stock?.low_stock || 0, color: 'warning.main' },
+                  { label: t('dashboard:dashboardPage.totalStockValue'), value: formatCurrency(productStats.stock?.total_value || 0), color: 'info.main' },
                 ].map((row, i, arr) => (
                   <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, borderBottom: i < arr.length - 1 ? '1px solid' : 'none', borderColor: 'divider' }}>
                     <Typography variant="body2" color="text.secondary">{row.label}</Typography>
@@ -1050,16 +1052,16 @@ function DashboardEnhanced() {
 
       {/* Dialog */}
       <Dialog open={customDateDialog} onClose={() => setCustomDateDialog(false)}>
-        <DialogTitle>Sélectionner une période personnalisée</DialogTitle>
+        <DialogTitle>{t('dashboard:dashboardPage.customPeriodTitle')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 2, minWidth: 300 }}>
-            <TextField label="Date de début" type="date" value={customDates.start_date} onChange={(e) => setCustomDates({ ...customDates, start_date: e.target.value })} InputLabelProps={{ shrink: true }} fullWidth />
-            <TextField label="Date de fin" type="date" value={customDates.end_date} onChange={(e) => setCustomDates({ ...customDates, end_date: e.target.value })} InputLabelProps={{ shrink: true }} fullWidth />
+            <TextField label={t('dashboard:dashboardPage.startDate')} type="date" value={customDates.start_date} onChange={(e) => setCustomDates({ ...customDates, start_date: e.target.value })} InputLabelProps={{ shrink: true }} fullWidth />
+            <TextField label={t('dashboard:dashboardPage.endDate')} type="date" value={customDates.end_date} onChange={(e) => setCustomDates({ ...customDates, end_date: e.target.value })} InputLabelProps={{ shrink: true }} fullWidth />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCustomDateDialog(false)}>Annuler</Button>
-          <Button onClick={handleCustomDateApply} variant="contained" disabled={!customDates.start_date || !customDates.end_date}>Appliquer</Button>
+          <Button onClick={() => setCustomDateDialog(false)}>{t('common:buttons.cancel')}</Button>
+          <Button onClick={handleCustomDateApply} variant="contained" disabled={!customDates.start_date || !customDates.end_date}>{t('common:buttons.apply')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

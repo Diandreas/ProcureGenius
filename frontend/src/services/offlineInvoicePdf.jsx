@@ -7,6 +7,10 @@
 
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
+import i18n from '../i18n/config';
+
+// Libelles traduits dans la langue courante de l'interface
+const t = (key, options) => i18n.t(`invoices:offlinePdf.${key}`, options);
 
 const styles = StyleSheet.create({
   page: { padding: 36, fontSize: 10, color: '#1f2733', fontFamily: 'Helvetica' },
@@ -53,28 +57,28 @@ const InvoiceDoc = ({ invoice, currency }) => {
         <View style={styles.header}>
           <View>
             <Text style={styles.brand}>Procura</Text>
-            <Text style={styles.title}>FACTURE</Text>
-            {isDraft && <Text style={styles.draftTag}>VERSION RAPIDE — brouillon hors-ligne, non synchronisé</Text>}
+            <Text style={styles.title}>{t('title')}</Text>
+            {isDraft && <Text style={styles.draftTag}>{t('draftTag')}</Text>}
           </View>
           <View style={styles.meta}>
-            <Text>N° {invoice.invoice_number || '—'}</Text>
-            {invoice.issue_date && <Text>Date : {invoice.issue_date}</Text>}
-            {invoice.due_date && <Text>Échéance : {invoice.due_date}</Text>}
-            {invoice.status && <Text>Statut : {invoice.status}</Text>}
+            <Text>{t('number', { number: invoice.invoice_number || '—' })}</Text>
+            {invoice.issue_date && <Text>{t('date', { date: invoice.issue_date })}</Text>}
+            {invoice.due_date && <Text>{t('dueDate', { date: invoice.due_date })}</Text>}
+            {invoice.status && <Text>{t('status', { status: i18n.t(`invoices:status.${invoice.status}`, { defaultValue: invoice.status }) })}</Text>}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Facturé à</Text>
+          <Text style={styles.label}>{t('billedTo')}</Text>
           <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{clientName}</Text>
           {invoice.title ? <Text style={{ color: '#5a6478', marginTop: 2 }}>{invoice.title}</Text> : null}
         </View>
 
         <View style={[styles.section, styles.th]}>
-          <Text style={styles.cDesc}>Description</Text>
-          <Text style={styles.cQty}>Qté</Text>
-          <Text style={styles.cPrice}>P.U.</Text>
-          <Text style={styles.cTotal}>Total</Text>
+          <Text style={styles.cDesc}>{t('description')}</Text>
+          <Text style={styles.cQty}>{t('qty')}</Text>
+          <Text style={styles.cPrice}>{t('unitPrice')}</Text>
+          <Text style={styles.cTotal}>{t('total')}</Text>
         </View>
         {items.map((it, i) => (
           <View style={styles.row} key={i}>
@@ -87,25 +91,25 @@ const InvoiceDoc = ({ invoice, currency }) => {
 
         <View style={styles.totals}>
           <View style={styles.totalRow}>
-            <Text>Sous-total</Text>
+            <Text>{t('subtotal')}</Text>
             <Text>{money(subtotal, currency)}</Text>
           </View>
           {invoice.tax_amount != null && (
             <View style={styles.totalRow}>
-              <Text>Taxes</Text>
+              <Text>{t('taxes')}</Text>
               <Text>{money(invoice.tax_amount, currency)}</Text>
             </View>
           )}
           <View style={styles.grandTotal}>
-            <Text>TOTAL</Text>
+            <Text>{t('grandTotal')}</Text>
             <Text>{money(total, currency)}</Text>
           </View>
         </View>
 
         <Text style={styles.footer}>
           {isDraft
-            ? 'Document provisoire généré hors-ligne. Le numéro définitif sera attribué à la synchronisation.'
-            : 'Merci de votre confiance.'}
+            ? t('draftFooter')
+            : t('thanks')}
         </Text>
       </Page>
     </Document>

@@ -1,275 +1,503 @@
 {
-    "title": "Dashboard",
-    "editMode": "Mode Édition",
-    "customize": "Personnaliser",
-    "refresh": "Rafraîchir",
-    "addWidget": "Ajouter Widget",
-    "addAllWidgets": "Afficher tous les widgets",
-    "addAllWidgetsTooltip": "Ajouter tous les widgets disponibles au dashboard",
-    "addAllWidgetsConfirm": "{{count}} widgets seront ajoutés. Continuer?",
-    "addAllInLibrary": "Ajouter tous",
-    "allWidgetsAdded": "Tous les widgets sont déjà ajoutés",
-    "preview": "Aperçu",
-    "save": "Sauvegarder",
-    "saving": "Sauvegarde...",
-    "saved": "Sauvegardé",
-    "saveSuccess": "Dashboard sauvegardé avec succès!",
-    "saveError": "Erreur lors de la sauvegarde",
-    "confirmSave": "Voulez-vous sauvegarder vos modifications?",
-    "widgetAlreadyExists": "Ce widget est déjà sur votre tableau de bord",
-    "emptyState": {
-        "title": "Votre dashboard est vide",
-        "description": "Commencez par ajouter des widgets pour visualiser vos données",
-        "button": "Ajouter mon premier widget"
-    },
-    "editHint": "Glissez-déposez les widgets pour les réorganiser, tirez les coins pour les redimensionner",
-    "widgetPlaceholder": "Widget \"{{code}}\" en développement",
-    "periods": {
-        "today": "Aujourd'hui",
-        "yesterday": "Hier",
-        "last_7_days": "7 derniers jours",
-        "last_30_days": "30 derniers jours",
-        "last_90_days": "90 derniers jours",
-        "this_month": "Ce mois",
-        "this_year": "Cette année"
-    },
-    "library": {
-        "title": "Bibliothèque de Widgets",
-        "searchPlaceholder": "Rechercher un widget...",
-        "all": "Tous",
-        "noResults": "Aucun widget trouvé",
-        "add": "Ajouter",
-        "added": "Ajouté",
-        "addAll": "Ajouter tous",
-        "allAdded": "Tous les widgets sont déjà ajoutés",
-        "modules": {
-            "global": "Global",
-            "products": "Produits",
-            "clients": "Clients",
-            "invoices": "Factures",
-            "purchase_orders": "Achats",
-            "ai": "Assistant IA"
-        }
-    },
-    "widgets": {
-        "financial_summary": "Vue Financière Globale",
-        "recent_activity": "Activité Récente",
-        "alerts_notifications": "Alertes et Notifications",
-        "global_performance": "Performance Globale",
-        "products_overview": "Aperçu Stock",
-        "top_selling_products": "Produits les Plus Vendus",
-        "stock_alerts": "Alertes Stock",
-        "margin_analysis": "Analyse Marges",
-        "stock_movements": "Mouvements de Stock",
-        "clients_overview": "Aperçu Clients",
-        "top_clients": "Top Clients",
-        "clients_at_risk": "Clients à Risque",
-        "client_acquisition": "Acquisition Clients",
-        "client_segmentation": "Segmentation Clients",
-        "invoices_overview": "Aperçu Factures",
-        "invoices_status": "Statut Factures",
-        "revenue_chart": "Revenus",
-        "overdue_invoices": "Factures en Retard",
-        "payment_performance": "Performance Paiements",
-        "recent_invoices": "Factures Récentes",
-        "po_overview": "Aperçu Achats",
-        "po_status": "Statut Achats",
-        "expenses_chart": "Dépenses Achats",
-        "overdue_po": "Achats en Retard",
-        "supplier_performance": "Performance Fournisseurs",
-        "pending_approvals": "Approbations en Attente",
-        "budget_tracking": "Suivi Budget",
-        "ai_usage": "Utilisation IA",
-        "ai_documents": "Documents Traités",
-        "ai_last_conversation": "Dernière Conversation",
-        "ai_suggestions": "Suggestions IA",
-        "financial_summary_metrics": {
-            "revenue": "Revenus",
-            "expenses": "Dépenses",
-            "net_profit": "Profit Net",
-            "margin": "Marge"
-        },
-        "global_performance_metrics": {
-            "total_revenue": "CA Total",
-            "clients": "Clients"
-        },
-        "clients_overview_metrics": {
-            "total": "Total",
-            "active": "Actifs",
-            "new": "Nouveaux"
-        },
-        "client_acquisition_metrics": {
-            "new_clients": "Nouveaux Clients"
-        },
-        "recent_activity_empty": "Aucune activité",
-        "alerts_empty": "Aucune alerte",
-        "top_clients_empty": "Aucun client",
-        "clients_at_risk_empty": "Aucun client à risque",
-        "client_segmentation_empty": "Aucune donnée",
-        "invoices_label": "facture(s)",
-        "overdue_invoices_label": "facture(s) en retard",
-        "invoices_status_draft": "Brouillon",
-        "invoices_status_sent": "Envoyées",
-        "invoices_status_paid": "Payées",
-        "invoices_status_overdue": "En retard",
-        "invoices_total": "factures",
-        "po_status_draft": "Brouillon",
-        "po_status_pending": "En attente",
-        "po_status_approved": "Approuvés",
-        "po_status_received": "Reçus",
-        "po_status_cancelled": "Annulés",
-        "po_total": "achats",
-        "pareto_title": "Analyse Pareto 80/20",
-        "pareto_subtitle": "Concentration du chiffre d'affaires",
-        "pareto_clients_label": "des clients",
-        "pareto_revenue_label": "du CA",
-        "pareto_high_concentration": "Forte concentration - Risque client",
-        "pareto_normal": "Distribution normale",
-        "pareto_diversified": "Portefeuille diversifié",
-        "pareto_clients_empty": "Aucune donnée Pareto",
-        "pareto_clients_title": "Analyse Pareto Clients",
-        "pareto_clients_summary": "{{topClientsPercent}}% des clients génèrent {{revenuePercent}}% du CA",
-        "pareto_clients_count": "{{count}} clients sur {{total}}",
-        "pareto_revenue_amount": "{{topRevenue}} sur {{totalRevenue}}",
-        "cash_flow_title": "Trésorerie",
-        "cash_flow_summary_title": "Résumé Trésorerie",
-        "cash_flow_receivable": "À recevoir",
-        "cash_flow_payable": "À payer",
-        "cash_flow_balance": "Balance nette",
-        "cash_flow_empty": "Aucune donnée",
-        "top_selling_products_empty": "Aucun produit",
-        "stock_alerts_empty": "Aucune alerte stock",
-        "margin_analysis_empty": "Aucune donnée de marge",
-        "overdue_invoices_empty": "Aucune facture en retard",
-        "overdue_po_empty": "Aucun achat en retard",
-        "supplier_performance_empty": "Aucun fournisseur",
-        "pending_approvals_empty": "Aucune approbation en attente"
-    },
-    "actions": {
-        "remove": "Supprimer",
-        "export": "Exporter",
-        "exportPDF": "Exporter en PDF",
-        "exportExcel": "Exporter en Excel"
-    },
-    "loading": "Chargement de votre tableau de bord...",
-    "error": "Impossible de charger les statistiques",
-    "welcome": {
-        "morning": {
-            "greeting": "Bonjour",
-            "message": "Excellente journée à vous !"
-        },
-        "afternoon": {
-            "greeting": "Bon après-midi",
-            "message": "Continuez sur cette lancée !"
-        },
-        "evening": {
-            "greeting": "Bonsoir",
-            "message": "Bonne fin de journée !"
-        },
-        "night": {
-            "greeting": "Bonne nuit",
-            "message": "Il se fait tard !"
-        }
-    },
-    "stats": {
-        "totalRevenue": "Revenu Total",
-        "expenses": "Dépenses",
-        "unpaidInvoices": "Factures Impayées"
-    },
-    "labels": {
-        "invoices": "Factures",
-        "topClients": "Top 5 Clients",
-        "topSuppliers": "Top 5 Fournisseurs",
-        "noClients": "Aucun client trouvé",
-        "noSuppliers": "Aucun fournisseur trouvé",
-        "loading": "Chargement...",
-        "noData": "Aucune donnée disponible",
-        "error": "Erreur de chargement"
-    },
-    "messages": {
-        "loadingError": "Erreur lors du chargement des données",
-        "noDataAvailable": "Aucune donnée disponible pour cette période",
-        "widgetError": "Impossible de charger ce widget",
-        "refreshSuccess": "Données actualisées avec succès",
-        "saveLayoutSuccess": "Configuration sauvegardée",
-        "saveLayoutError": "Erreur lors de la sauvegarde",
-        "widgetAdded": "Widget ajouté au tableau de bord",
-        "widgetRemoved": "Widget supprimé du tableau de bord",
-        "allWidgetsAdded": "Tous les widgets ont été ajoutés"
-    },
-    "tooltips": {
-        "refresh": "Actualiser les données",
-        "customize": "Personnaliser le tableau de bord",
-        "addWidget": "Ajouter un widget",
-        "removeWidget": "Supprimer ce widget",
-        "expandWidget": "Agrandir ce widget",
-        "exportData": "Exporter les données",
-        "changePeriod": "Changer la période"
-    },
-    "gettingStarted": {
-        "title": "Premiers pas avec ProcureGenius",
-        "congratulations": "Bravo ! Vous avez terminé la configuration",
-        "ready": "Vous êtes maintenant prêt à utiliser ProcureGenius à son plein potentiel !",
-        "reviewTutorial": "Revoir le tutoriel",
-        "dismiss": "Masquer ce message",
-        "actionsCompleted": "{{completed}} / {{total}} actions complétées",
-        "start": "Commencer",
-        "blockedBy": "Complétez d'abord: {{actions}}",
-        "blockedByPrevious": "Complétez d'abord les étapes précédentes",
-        "showMore": "Afficher plus d'actions",
-        "showLess": "Afficher moins d'actions",
-        "completed": "Complété",
-        "optional": "Optionnel",
-        "startTutorial": "Lancer le tutoriel interactif",
-        "refresh": "Actualiser",
-        "recommendedActions": "Actions recommandées pour démarrer :",
-        "viewAllActions": "Voir toutes les actions ({{count}})",
-        "hideForNow": "Masquer pour l'instant",
-        "actions": {
-            "add_first_supplier": {
-                "title": "Ajouter votre premier fournisseur",
-                "description": "Créez une fiche fournisseur pour commencer à passer des commandes"
-            },
-            "import_suppliers": {
-                "title": "Importer des fournisseurs",
-                "description": "Importez vos fournisseurs depuis un fichier Excel"
-            },
-            "add_first_client": {
-                "title": "Ajouter votre premier client",
-                "description": "Enregistrez vos clients pour faciliter la facturation"
-            },
-            "create_first_po": {
-                "title": "Créer un achat",
-                "description": "Passez votre première commande auprès d'un fournisseur"
-            },
-            "create_first_invoice": {
-                "title": "Créer votre première facture",
-                "description": "Facturez vos clients en quelques clics"
-            },
-            "add_first_product": {
-                "title": "Ajouter un produit",
-                "description": "Créez votre catalogue de produits ou services"
-            },
-            "configure_company": {
-                "title": "Configurer votre entreprise",
-                "description": "Ajoutez les informations et le logo de votre entreprise"
-            },
-            "configure_email": {
-                "title": "Configurer l'email",
-                "description": "Paramétrez le SMTP pour envoyer les factures automatiquement"
-            },
-            "complete_profile": {
-                "title": "Compléter votre profil",
-                "description": "Ajoutez les informations et le logo de votre entreprise"
-            },
-            "create_first_rfq": {
-                "title": "Créer un événement d'approvisionnement",
-                "description": "Lancez votre première demande de devis"
-            },
-            "create_first_contract": {
-                "title": "Créer un contrat",
-                "description": "Gérez votre premier contrat fournisseur"
-            }
-        }
+  "title": "Dashboard",
+  "editMode": "Mode Édition",
+  "customize": "Personnaliser",
+  "refresh": "Rafraîchir",
+  "addWidget": "Ajouter Widget",
+  "addAllWidgets": "Afficher tous les widgets",
+  "addAllWidgetsTooltip": "Ajouter tous les widgets disponibles au dashboard",
+  "addAllWidgetsConfirm": "{{count}} widgets seront ajoutés. Continuer?",
+  "addAllInLibrary": "Ajouter tous",
+  "allWidgetsAdded": "Tous les widgets sont déjà ajoutés",
+  "preview": "Aperçu",
+  "save": "Sauvegarder",
+  "saving": "Sauvegarde...",
+  "saved": "Sauvegardé",
+  "saveSuccess": "Dashboard sauvegardé avec succès!",
+  "saveError": "Erreur lors de la sauvegarde",
+  "confirmSave": "Voulez-vous sauvegarder vos modifications?",
+  "widgetAlreadyExists": "Ce widget est déjà sur votre tableau de bord",
+  "emptyState": {
+    "title": "Votre dashboard est vide",
+    "description": "Commencez par ajouter des widgets pour visualiser vos données",
+    "button": "Ajouter mon premier widget"
+  },
+  "editHint": "Glissez-déposez les widgets pour les réorganiser, tirez les coins pour les redimensionner",
+  "widgetPlaceholder": "Widget \"{{code}}\" en développement",
+  "periods": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "last_7_days": "7 derniers jours",
+    "last_30_days": "30 derniers jours",
+    "last_90_days": "90 derniers jours",
+    "this_month": "Ce mois",
+    "this_year": "Cette année"
+  },
+  "library": {
+    "title": "Bibliothèque de Widgets",
+    "searchPlaceholder": "Rechercher un widget...",
+    "all": "Tous",
+    "noResults": "Aucun widget trouvé",
+    "add": "Ajouter",
+    "added": "Ajouté",
+    "addAll": "Ajouter tous",
+    "allAdded": "Tous les widgets sont déjà ajoutés",
+    "modules": {
+      "global": "Global",
+      "products": "Produits",
+      "clients": "Clients",
+      "invoices": "Factures",
+      "purchase_orders": "Achats",
+      "ai": "Assistant IA"
     }
+  },
+  "widgets": {
+    "financial_summary": "Vue Financière Globale",
+    "recent_activity": "Activité Récente",
+    "alerts_notifications": "Alertes et Notifications",
+    "global_performance": "Performance Globale",
+    "products_overview": "Aperçu Stock",
+    "top_selling_products": "Produits les Plus Vendus",
+    "stock_alerts": "Alertes Stock",
+    "margin_analysis": "Analyse Marges",
+    "stock_movements": "Mouvements de Stock",
+    "clients_overview": "Aperçu Clients",
+    "top_clients": "Top Clients",
+    "clients_at_risk": "Clients à Risque",
+    "client_acquisition": "Acquisition Clients",
+    "client_segmentation": "Segmentation Clients",
+    "invoices_overview": "Aperçu Factures",
+    "invoices_status": "Statut Factures",
+    "revenue_chart": "Revenus",
+    "overdue_invoices": "Factures en Retard",
+    "payment_performance": "Performance Paiements",
+    "recent_invoices": "Factures Récentes",
+    "po_overview": "Aperçu Achats",
+    "po_status": "Statut Achats",
+    "expenses_chart": "Dépenses Achats",
+    "overdue_po": "Achats en Retard",
+    "supplier_performance": "Performance Fournisseurs",
+    "pending_approvals": "Approbations en Attente",
+    "budget_tracking": "Suivi Budget",
+    "ai_usage": "Utilisation IA",
+    "ai_documents": "Documents Traités",
+    "ai_last_conversation": "Dernière Conversation",
+    "ai_suggestions": "Suggestions IA",
+    "financial_summary_metrics": {
+      "revenue": "Revenus",
+      "expenses": "Dépenses",
+      "net_profit": "Profit Net",
+      "margin": "Marge"
+    },
+    "global_performance_metrics": {
+      "total_revenue": "CA Total",
+      "clients": "Clients"
+    },
+    "clients_overview_metrics": {
+      "total": "Total",
+      "active": "Actifs",
+      "new": "Nouveaux"
+    },
+    "client_acquisition_metrics": {
+      "new_clients": "Nouveaux Clients"
+    },
+    "recent_activity_empty": "Aucune activité",
+    "alerts_empty": "Aucune alerte",
+    "top_clients_empty": "Aucun client",
+    "clients_at_risk_empty": "Aucun client à risque",
+    "client_segmentation_empty": "Aucune donnée",
+    "invoices_label": "facture(s)",
+    "overdue_invoices_label": "facture(s) en retard",
+    "invoices_status_draft": "Brouillon",
+    "invoices_status_sent": "Envoyées",
+    "invoices_status_paid": "Payées",
+    "invoices_status_overdue": "En retard",
+    "invoices_total": "factures",
+    "po_status_draft": "Brouillon",
+    "po_status_pending": "En attente",
+    "po_status_approved": "Approuvés",
+    "po_status_received": "Reçus",
+    "po_status_cancelled": "Annulés",
+    "po_total": "achats",
+    "pareto_title": "Analyse Pareto 80/20",
+    "pareto_subtitle": "Concentration du chiffre d'affaires",
+    "pareto_clients_label": "des clients",
+    "pareto_revenue_label": "du CA",
+    "pareto_high_concentration": "Forte concentration - Risque client",
+    "pareto_normal": "Distribution normale",
+    "pareto_diversified": "Portefeuille diversifié",
+    "pareto_clients_empty": "Aucune donnée Pareto",
+    "pareto_clients_title": "Analyse Pareto Clients",
+    "pareto_clients_summary": "{{topClientsPercent}}% des clients génèrent {{revenuePercent}}% du CA",
+    "pareto_clients_count": "{{count}} clients sur {{total}}",
+    "pareto_revenue_amount": "{{topRevenue}} sur {{totalRevenue}}",
+    "cash_flow_title": "Trésorerie",
+    "cash_flow_summary_title": "Résumé Trésorerie",
+    "cash_flow_receivable": "À recevoir",
+    "cash_flow_payable": "À payer",
+    "cash_flow_balance": "Balance nette",
+    "cash_flow_empty": "Aucune donnée",
+    "top_selling_products_empty": "Aucun produit",
+    "stock_alerts_empty": "Aucune alerte stock",
+    "margin_analysis_empty": "Aucune donnée de marge",
+    "overdue_invoices_empty": "Aucune facture en retard",
+    "overdue_po_empty": "Aucun achat en retard",
+    "supplier_performance_empty": "Aucun fournisseur",
+    "pending_approvals_empty": "Aucune approbation en attente",
+    "shared": {
+      "error": "Erreur",
+      "loadFailed": "Échec du chargement des données",
+      "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
+      "days_one": "{{count}} jours",
+      "days_other": "{{count}} jours"
+    },
+    "aiSuggestions": {
+      "loadError": "Impossible de charger les suggestions",
+      "empty": "Aucune suggestion pour le moment",
+      "stayTuned": "Nous vous tiendrons informé des nouvelles fonctionnalités!",
+      "types": {
+        "learning": "Apprentissage",
+        "feature": "Nouvelle fonctionnalité",
+        "best_practice": "Bonne pratique",
+        "optimization": "Optimisation"
+      }
+    },
+    "alertModules": {
+      "invoices": "Factures",
+      "products": "Produits",
+      "purchase_orders": "Bons de commande"
+    },
+    "cashFlow": {
+      "loadError": "Impossible de charger les données de trésorerie",
+      "calculating": "Calcul en cours...",
+      "unavailable": "Données indisponibles",
+      "monthlyAvg": "Moy. mensuelle : {{value}}",
+      "days30": "30j",
+      "days60": "60j",
+      "expectedInflows": "Entrées prévues",
+      "committedOutflows": "Sorties engagées",
+      "netBalance": "Solde net",
+      "inflows": "Entrées",
+      "outflows": "Sorties",
+      "tooltipValue": "{{name}} : {{value}}"
+    },
+    "financialSummary": {
+      "netLoss": "Perte Nette",
+      "dayShort": "J{{n}}",
+      "profit": "Profit",
+      "trendTitle": "Évolution Financière",
+      "compositionTitle": "Composition Revenus/Dépenses",
+      "deficit": "Situation déficitaire"
+    },
+    "marginAnalysis": {
+      "empty": "Aucune analyse de marge disponible",
+      "marginValue": "Marge: {{value}}%"
+    },
+    "overduePO": {
+      "empty": "Aucun bon de commande en retard"
+    },
+    "pareto": {
+      "highConcentration": "Forte concentration"
+    },
+    "smartAlerts": {
+      "loadError": "Impossible de charger les alertes",
+      "analyzing": "Analyse en cours...",
+      "allClear": "Tout est en ordre",
+      "noPriority": "Aucune action prioritaire pour le moment"
+    },
+    "stockAlerts": {
+      "allGood": "Tous les stocks sont en ordre",
+      "tabs": {
+        "lowStock": "Stock bas",
+        "expiring": "Expirent bientôt",
+        "expired": "Périmés"
+      },
+      "stockLabel": "Stock:",
+      "minStock": "(Min: {{value}})",
+      "batch": "Lot",
+      "expiresOn": "expire le {{date}}",
+      "expiredOn": "périmé le {{date}}",
+      "unitsParen_one": "({{count}} unités)",
+      "unitsParen_other": "({{count}} unités)",
+      "unitsToRemove_one": "{{count}} unités à retirer",
+      "unitsToRemove_other": "{{count}} unités à retirer",
+      "noneExpiring": "Aucun lot n'expire bientôt",
+      "noneExpired": "Aucun lot périmé"
+    },
+    "supplierPerformance": {
+      "ordersCount_one": "{{count}} commande(s)",
+      "ordersCount_other": "{{count}} commande(s)"
+    },
+    "topSellingProducts": {
+      "empty": "Aucun produit vendu",
+      "soldCount_one": "{{count}} vendus",
+      "soldCount_other": "{{count}} vendus"
+    }
+  },
+  "actions": {
+    "remove": "Supprimer",
+    "export": "Exporter",
+    "exportPDF": "Exporter en PDF",
+    "exportExcel": "Exporter en Excel"
+  },
+  "loading": "Chargement de votre tableau de bord...",
+  "error": "Impossible de charger les statistiques",
+  "welcome": {
+    "morning": {
+      "greeting": "Bonjour",
+      "message": "Excellente journée à vous !"
+    },
+    "afternoon": {
+      "greeting": "Bon après-midi",
+      "message": "Continuez sur cette lancée !"
+    },
+    "evening": {
+      "greeting": "Bonsoir",
+      "message": "Bonne fin de journée !"
+    },
+    "night": {
+      "greeting": "Bonne nuit",
+      "message": "Il se fait tard !"
+    }
+  },
+  "stats": {
+    "totalRevenue": "Revenu Total",
+    "expenses": "Dépenses",
+    "unpaidInvoices": "Factures Impayées"
+  },
+  "labels": {
+    "invoices": "Factures",
+    "topClients": "Top 5 Clients",
+    "topSuppliers": "Top 5 Fournisseurs",
+    "noClients": "Aucun client trouvé",
+    "noSuppliers": "Aucun fournisseur trouvé",
+    "loading": "Chargement...",
+    "noData": "Aucune donnée disponible",
+    "error": "Erreur de chargement"
+  },
+  "messages": {
+    "loadingError": "Erreur lors du chargement des données",
+    "noDataAvailable": "Aucune donnée disponible pour cette période",
+    "widgetError": "Impossible de charger ce widget",
+    "refreshSuccess": "Données actualisées avec succès",
+    "saveLayoutSuccess": "Configuration sauvegardée",
+    "saveLayoutError": "Erreur lors de la sauvegarde",
+    "widgetAdded": "Widget ajouté au tableau de bord",
+    "widgetRemoved": "Widget supprimé du tableau de bord",
+    "allWidgetsAdded": "Tous les widgets ont été ajoutés"
+  },
+  "tooltips": {
+    "refresh": "Actualiser les données",
+    "customize": "Personnaliser le tableau de bord",
+    "addWidget": "Ajouter un widget",
+    "removeWidget": "Supprimer ce widget",
+    "expandWidget": "Agrandir ce widget",
+    "exportData": "Exporter les données",
+    "changePeriod": "Changer la période"
+  },
+  "gettingStarted": {
+    "title": "Premiers pas avec ProcureGenius",
+    "congratulations": "Bravo ! Vous avez terminé la configuration",
+    "ready": "Vous êtes maintenant prêt à utiliser ProcureGenius à son plein potentiel !",
+    "reviewTutorial": "Revoir le tutoriel",
+    "dismiss": "Masquer ce message",
+    "actionsCompleted": "{{completed}} / {{total}} actions complétées",
+    "start": "Commencer",
+    "blockedBy": "Complétez d'abord: {{actions}}",
+    "blockedByPrevious": "Complétez d'abord les étapes précédentes",
+    "showMore": "Afficher plus d'actions",
+    "showLess": "Afficher moins d'actions",
+    "completed": "Complété",
+    "optional": "Optionnel",
+    "startTutorial": "Lancer le tutoriel interactif",
+    "refresh": "Actualiser",
+    "recommendedActions": "Actions recommandées pour démarrer :",
+    "viewAllActions": "Voir toutes les actions ({{count}})",
+    "hideForNow": "Masquer pour l'instant",
+    "actions": {
+      "add_first_supplier": {
+        "title": "Ajouter votre premier fournisseur",
+        "description": "Créez une fiche fournisseur pour commencer à passer des commandes"
+      },
+      "import_suppliers": {
+        "title": "Importer des fournisseurs",
+        "description": "Importez vos fournisseurs depuis un fichier Excel"
+      },
+      "add_first_client": {
+        "title": "Ajouter votre premier client",
+        "description": "Enregistrez vos clients pour faciliter la facturation"
+      },
+      "create_first_po": {
+        "title": "Créer un achat",
+        "description": "Passez votre première commande auprès d'un fournisseur"
+      },
+      "create_first_invoice": {
+        "title": "Créer votre première facture",
+        "description": "Facturez vos clients en quelques clics"
+      },
+      "add_first_product": {
+        "title": "Ajouter un produit",
+        "description": "Créez votre catalogue de produits ou services"
+      },
+      "configure_company": {
+        "title": "Configurer votre entreprise",
+        "description": "Ajoutez les informations et le logo de votre entreprise"
+      },
+      "configure_email": {
+        "title": "Configurer l'email",
+        "description": "Paramétrez le SMTP pour envoyer les factures automatiquement"
+      },
+      "complete_profile": {
+        "title": "Compléter votre profil",
+        "description": "Ajoutez les informations et le logo de votre entreprise"
+      },
+      "create_first_rfq": {
+        "title": "Créer un événement d'approvisionnement",
+        "description": "Lancez votre première demande de devis"
+      },
+      "create_first_contract": {
+        "title": "Créer un contrat",
+        "description": "Gérez votre premier contrat fournisseur"
+      }
+    }
+  },
+  "dashboardPage": {
+    "periodShort": {
+      "last_7_days": "7 jours",
+      "last_30_days": "30 jours",
+      "last_90_days": "90 jours"
+    },
+    "welcomeSubtitle": "{{message}} Voici un aperçu de votre activité.",
+    "unpaidInvoicesShort": "Factures Imp.",
+    "purchaseOrders": "Bons de commande",
+    "inPeriod": "dont {{count}} sur la période",
+    "newClientsShort": "Nouv. Clients",
+    "invoiceStatus": {
+      "paid": "Payées",
+      "pending": "En attente",
+      "overdue": "En retard"
+    },
+    "tabs": {
+      "overview": "Aperçu",
+      "alerts": "Alertes",
+      "generalOverview": "Aperçu Général",
+      "billing": "Facturation",
+      "performance": "Performances",
+      "productsAlerts": "Produits & Alertes"
+    },
+    "trends": "Tendances",
+    "dailyTrends": "Tendances quotidiennes",
+    "topClients": "Top clients",
+    "topSuppliers": "Top fournisseurs",
+    "invoiceStatusTitle": "État des factures",
+    "summary": "Résumé",
+    "billingSummary": "Résumé facturation",
+    "invoicesIssued": "Factures émises",
+    "totalInvoices": "Total factures",
+    "selectedPeriod": "période sélectionnée",
+    "amountPaid": "Montant payé",
+    "amountPending": "Montant en attente",
+    "paymentRate": "Taux de paiement",
+    "noClientsForPeriod": "Aucun client pour la période",
+    "noSuppliersForPeriod": "Aucun fournisseur pour la période",
+    "invoiceCount": "{{count}} facture(s)",
+    "poCount": "{{count}} BC",
+    "alertsCount": "Alertes ({{count}})",
+    "noActiveAlerts": "Aucune alerte active",
+    "stock": "Stock",
+    "outOfStock": "Produits en rupture",
+    "lowStock": "Stock faible",
+    "totalValue": "Valeur totale",
+    "totalStockValue": "Valeur totale du stock",
+    "marginsTitle": "Marges & bénéfice brut",
+    "marginsSubtitle": "Calcul automatique : ventes − prix d'achat de vos produits",
+    "view": "Consulter →",
+    "customPeriodTitle": "Sélectionner une période personnalisée",
+    "startDate": "Date de début",
+    "endDate": "Date de fin"
+  },
+  "demoInvoiceRestore": {
+    "title": "Votre facture de la démo vous attend",
+    "summary": "{{client}} · {{lines}} ligne(s) · {{total}}. Vérifiez-la, puis enregistrez : elle aura son vrai numéro et votre logo.",
+    "open": "Ouvrir ma facture",
+    "dismiss": "Ignorer"
+  },
+  "metricDetail": {
+    "currentValue": "Valeur actuelle",
+    "vsPreviousPeriod": "vs période précédente",
+    "trend30Days": "Évolution sur 30 jours"
+  },
+  "periodSelector": {
+    "lastMonth": "Mois dernier",
+    "customRange": "Plage personnalisée",
+    "selectRange": "Sélectionner une plage"
+  },
+  "dashboardWithAds": {
+    "monthlyStats": "Statistiques du mois",
+    "recentActivities": "Activités récentes",
+    "charts": "Graphiques",
+    "quickActions": "Actions rapides"
+  },
+  "adminStats": {
+    "title": "Statistiques produit",
+    "subtitle": "Acquisition, activation, usage réel et revenu — pour savoir quoi améliorer.",
+    "daysShort": "{{days}} j",
+    "noData": "Aucune donnée",
+    "errors": {
+      "forbidden": "Accès réservé aux administrateurs (superuser).",
+      "loadFailed": "Impossible de charger les statistiques."
+    },
+    "kpi": {
+      "users": "Utilisateurs",
+      "usersSub": "+{{added}} sur {{days}} j · {{growth}}",
+      "activationRate": "Taux d'activation",
+      "activationSub": "{{acted}} / {{signedUp}} ont agi",
+      "activeUsers": "Actifs (WAU / MAU)",
+      "stickiness": "Stickiness {{value}}",
+      "mrr": "MRR estimé",
+      "mrrSub": "{{active}} actifs · churn {{churn}}"
+    },
+    "acquisition": {
+      "title": "Acquisition",
+      "uniqueVisitors": "visiteurs uniques",
+      "visitToSignup": "visite → inscription",
+      "visitorJourney": "Parcours des visiteurs",
+      "trafficSources": "Sources de trafic",
+      "empty": "Aucune visite enregistrée pour l'instant. Le tracking démarre dès les prochaines visites de la landing."
+    },
+    "signups": {
+      "title": "Inscriptions ({{days}} j)",
+      "last24h": "24h : {{value}}",
+      "last7d": "7j : {{value}}"
+    },
+    "featureUsage": "Usage par fonctionnalité",
+    "volumes": {
+      "title": "Volume de données créées",
+      "invoices": "Factures",
+      "purchaseOrders": "Bons de commande",
+      "products": "Produits",
+      "clients": "Clients",
+      "suppliers": "Fournisseurs",
+      "aiConversations": "Conversations IA",
+      "aiMessages": "Messages IA ({{days}} j)"
+    },
+    "subscriptions": {
+      "title": "Abonnements & revenu",
+      "active": "actifs",
+      "trial": "en essai",
+      "cancelled": "annulés",
+      "arr": "ARR estimé",
+      "trialsEnding": "Essais finissant sous 7 j"
+    },
+    "aiFeedback": {
+      "title": "Satisfaction assistant IA ({{days}} j)",
+      "total_one": "{{total}} retour au total",
+      "total_other": "{{total}} retours au total",
+      "recentNegative": "Retours négatifs récents",
+      "user": "Utilisateur",
+      "quotedExcerpt": "« {{text}} »",
+      "noNegative": "Aucun retour négatif sur cette période."
+    },
+    "generatedAt": "Généré le {{date}}"
+  }
 }

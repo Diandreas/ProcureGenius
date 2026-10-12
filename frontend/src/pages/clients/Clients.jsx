@@ -232,11 +232,11 @@ function Clients() {
       <NeumorphicCard
         index={index}
         accentColor={accent}
-        status={{ label: isVip ? 'VIP' : isActive ? 'Actif' : 'Inactif', color: accent }}
+        status={{ label: isVip ? t('clients:filters.vip') : isActive ? t('clients:status.active') : t('clients:status.inactive'), color: accent }}
         title={client.name}
         subtitle={client.contact_person || client.email || ''}
         amount={client.total_sales_amount ? formatCurrency(client.total_sales_amount) : null}
-        footer={(client.total_invoices || 0) + ' facture(s)'}
+        footer={t('clients:labels.invoiceCount', { count: client.total_invoices || 0 })}
         onClick={(e) => handleCardClick(e, client)}
         badge={<OfflineBadge record={client} compact />}
         actions={(
@@ -295,7 +295,7 @@ function Clients() {
 
   const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
-    const fname = `rapport-clients-${new Date().getTime()}.pdf`;
+    const fname = t('clients:report.fileName', { timestamp: new Date().getTime() });
 
     if (action === 'download') {
       await pdfViewer.download(generatedPdfBlob, fname);
@@ -303,10 +303,10 @@ function Clients() {
         variant: 'success',
       });
     } else if (action === 'preview') {
-      pdfViewer.preview(generatedPdfBlob, fname, 'Rapport clients');
+      pdfViewer.preview(generatedPdfBlob, fname, t('clients:report.viewerTitle'));
     } else if (action === 'print') {
       if (IS_NATIVE) {
-        pdfViewer.preview(generatedPdfBlob, fname, 'Rapport clients');
+        pdfViewer.preview(generatedPdfBlob, fname, t('clients:report.viewerTitle'));
         return;
       }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
@@ -333,18 +333,18 @@ function Clients() {
         activeKey={quickFilter}
         onSelect={handleQuickFilterClick}
         kpis={[
-          { key: '', label: 'Chiffre clients', value: formatCurrency(totalRevenue), sub: totalClients + ' client(s)', color: '#2563eb' },
-          { key: 'active', label: 'Actifs', value: activeClients, sub: 'en activite', color: '#10b981' },
-          { key: 'vip', label: 'VIP', value: vipClients, sub: '+ 10k', color: '#8b5cf6' },
-          { key: 'new', label: 'Nouveaux', value: newClients, sub: 'ce mois', color: '#3b82f6' },
-          { key: 'inactive', label: 'Inactifs', value: inactiveClients, sub: 'dormants', color: '#94a3b8' },
+          { key: '', label: t('clients:kpi.revenue'), value: formatCurrency(totalRevenue), sub: t('clients:kpi.clientCount', { count: totalClients }), color: '#2563eb' },
+          { key: 'active', label: t('clients:kpi.active'), value: activeClients, sub: t('clients:kpi.activeSub'), color: '#10b981' },
+          { key: 'vip', label: t('clients:kpi.vip'), value: vipClients, sub: t('clients:kpi.vipSub'), color: '#8b5cf6' },
+          { key: 'new', label: t('clients:kpi.new'), value: newClients, sub: t('clients:kpi.newSub'), color: '#3b82f6' },
+          { key: 'inactive', label: t('clients:kpi.inactive'), value: inactiveClients, sub: t('clients:kpi.inactiveSub'), color: '#94a3b8' },
         ]}
       />
 
       <NeumorphicSearch
         value={searchTerm}
         onChange={setSearchTerm}
-        placeholder="Rechercher un client, un contact, un email..."
+        placeholder={t('clients:search.placeholderFull')}
       />
 
       {filteredClients.length === 0 ? (
@@ -379,14 +379,14 @@ function Clients() {
           <Box sx={{ pt: 2 }}>
             {/* Période */}
             <Typography variant="subtitle2" gutterBottom fontWeight="bold">
-               Période (optionnel)
+               {t('clients:report.period')}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-              Filtrer par période - laisser vide pour tout inclure
+              {t('clients:report.periodHelp')}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
               <TextField
-                label="Date de début"
+                label={t('clients:report.dateStart')}
                 type="date"
                 value={reportFilters.dateStart}
                 onChange={(e) => setReportFilters({ ...reportFilters, dateStart: e.target.value })}
@@ -396,7 +396,7 @@ function Clients() {
                 inputProps={{ max: reportFilters.dateEnd || undefined }}
               />
               <TextField
-                label="Date de fin"
+                label={t('clients:report.dateEnd')}
                 type="date"
                 value={reportFilters.dateEnd}
                 onChange={(e) => setReportFilters({ ...reportFilters, dateEnd: e.target.value })}
@@ -412,12 +412,12 @@ function Clients() {
             {/* Sélection de clients */}
             <Box>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                 Clients à inclure
+                 {t('clients:report.itemsToInclude')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                 {reportFilters.selectedClients.length > 0
-                  ? `${reportFilters.selectedClients.length} client(s) sélectionné(s)`
-                  : 'Tous les clients filtrés seront inclus'}
+                  ? t('clients:report.selectedCount', { count: reportFilters.selectedClients.length })
+                  : t('clients:report.allIncluded')}
               </Typography>
               
               <Box sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
@@ -465,13 +465,13 @@ function Clients() {
                     size="small"
                     onClick={() => setReportFilters({ ...reportFilters, selectedClients: filteredClients.map(c => c.id) })}
                   >
-                    Tout sélectionner
+                    {t('clients:report.selectAll')}
                   </Button>
                   <Button
                     size="small"
                     onClick={() => setReportFilters({ ...reportFilters, selectedClients: [] })}
                   >
-                    Tout désélectionner
+                    {t('clients:report.deselectAll')}
                   </Button>
                 </Box>
               )}
@@ -480,9 +480,9 @@ function Clients() {
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="caption">
                 {reportFilters.selectedClients.length > 0
-                  ? `Un rapport sera généré avec ${reportFilters.selectedClients.length} client(s) sélectionné(s)`
-                  : `Un rapport sera généré avec tous les clients (${filteredClients.length})`}
-                {(reportFilters.dateStart || reportFilters.dateEnd) && ' pour la période spécifiée'}
+                  ? t('clients:report.summarySelected', { count: reportFilters.selectedClients.length })
+                  : t('clients:report.summaryAll', { count: filteredClients.length })}
+                {(reportFilters.dateStart || reportFilters.dateEnd) && t('clients:report.forPeriod')}
                 .
               </Typography>
             </Alert>
@@ -490,7 +490,7 @@ function Clients() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setReportConfigOpen(false)}>
-            Annuler
+            {t('clients:buttons.cancel')}
           </Button>
           <Button
             onClick={handleConfigureReport}
@@ -498,7 +498,7 @@ function Clients() {
             color="success"
             startIcon={<PictureAsPdf />}
           >
-            Générer le Rapport
+            {t('clients:report.generate')}
           </Button>
         </DialogActions>
       </Dialog>

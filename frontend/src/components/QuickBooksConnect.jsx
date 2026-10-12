@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -22,6 +23,7 @@ import {
 import { quickbooksAPI } from '../services/api';
 
 function QuickBooksConnect({ onConnectionChange }) {
+  const { t } = useTranslation(['dataImport', 'common']);
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,7 +90,7 @@ function QuickBooksConnect({ onConnectionChange }) {
       }, 1000);
 
     } catch (err) {
-      setError('Erreur lors de la connexion à QuickBooks');
+      setError(t('dataImport:quickbooks.errors.connect'));
       setLoading(false);
     }
   };
@@ -103,7 +105,7 @@ function QuickBooksConnect({ onConnectionChange }) {
         onConnectionChange(false);
       }
     } catch (err) {
-      setError('Erreur lors de la déconnexion');
+      setError(t('dataImport:quickbooks.errors.disconnect'));
     } finally {
       setLoading(false);
     }
@@ -114,9 +116,9 @@ function QuickBooksConnect({ onConnectionChange }) {
       setLoading(true);
       setError(null);
       await quickbooksAPI.testConnection();
-      alert('Connexion QuickBooks OK!');
+      alert(t('dataImport:quickbooks.testOk'));
     } catch (err) {
-      setError('Test de connexion échoué');
+      setError(t('dataImport:quickbooks.errors.testFailed'));
     } finally {
       setLoading(false);
     }
@@ -154,14 +156,14 @@ function QuickBooksConnect({ onConnectionChange }) {
                 {status?.connected ? (
                   <Chip
                     icon={<CheckCircle />}
-                    label="Connecté"
+                    label={t('dataImport:quickbooks.connected')}
                     size="small"
                     color="success"
                   />
                 ) : (
                   <Chip
                     icon={<LinkOff />}
-                    label="Non connecté"
+                    label={t('dataImport:quickbooks.notConnected')}
                     size="small"
                     color="default"
                   />
@@ -179,7 +181,7 @@ function QuickBooksConnect({ onConnectionChange }) {
                     onClick={handleTest}
                     disabled={loading}
                   >
-                    Tester
+                    {t('dataImport:quickbooks.test')}
                   </Button>
                   <Button
                     variant="outlined"
@@ -188,7 +190,7 @@ function QuickBooksConnect({ onConnectionChange }) {
                     onClick={() => setDisconnectDialog(true)}
                     disabled={loading}
                   >
-                    Déconnecter
+                    {t('dataImport:quickbooks.disconnect')}
                   </Button>
                 </>
               ) : (
@@ -199,7 +201,7 @@ function QuickBooksConnect({ onConnectionChange }) {
                   onClick={handleConnect}
                   disabled={loading}
                 >
-                  Connecter
+                  {t('dataImport:quickbooks.connect')}
                 </Button>
               )}
             </Box>
@@ -208,17 +210,17 @@ function QuickBooksConnect({ onConnectionChange }) {
           {status?.connected && (
             <Box sx={{ bgcolor: 'success.50', p: 2, borderRadius: 1 }}>
               <Typography variant="body2" gutterBottom>
-                <strong>Entreprise:</strong> {status.company_name || 'Chargement...'}
+                <strong>{t('dataImport:quickbooks.company')}</strong> {status.company_name || t('dataImport:quickbooks.loading')}
               </Typography>
               <Typography variant="body2">
-                <strong>Connecté le:</strong>{' '}
+                <strong>{t('dataImport:quickbooks.connectedOn')}</strong>{' '}
                 {status.connected_at
                   ? new Date(status.connected_at).toLocaleDateString('fr-CA')
                   : '-'}
               </Typography>
               {status.last_sync_at && (
                 <Typography variant="body2">
-                  <strong>Dernière sync:</strong>{' '}
+                  <strong>{t('dataImport:quickbooks.lastSync')}</strong>{' '}
                   {new Date(status.last_sync_at).toLocaleDateString('fr-CA')}
                 </Typography>
               )}
@@ -227,8 +229,7 @@ function QuickBooksConnect({ onConnectionChange }) {
 
           {!status?.connected && (
             <Alert severity="info" sx={{ mt: 2 }}>
-              Connectez QuickBooks pour importer directement vos fournisseurs, clients, produits
-              et factures sans passer par Excel/CSV.
+              {t('dataImport:quickbooks.info')}
             </Alert>
           )}
         </CardContent>
@@ -236,17 +237,16 @@ function QuickBooksConnect({ onConnectionChange }) {
 
       {/* Dialog de confirmation de déconnexion */}
       <Dialog open={disconnectDialog} onClose={() => setDisconnectDialog(false)}>
-        <DialogTitle>Déconnecter QuickBooks?</DialogTitle>
+        <DialogTitle>{t('dataImport:quickbooks.disconnectTitle')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Êtes-vous sûr de vouloir déconnecter QuickBooks? Vous devrez vous reconnecter pour
-            importer des données à nouveau.
+            {t('dataImport:quickbooks.disconnectConfirm')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDisconnectDialog(false)}>Annuler</Button>
+          <Button onClick={() => setDisconnectDialog(false)}>{t('dataImport:actions.cancel')}</Button>
           <Button onClick={handleDisconnect} color="error" variant="contained">
-            Déconnecter
+            {t('dataImport:quickbooks.disconnect')}
           </Button>
         </DialogActions>
       </Dialog>

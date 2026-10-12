@@ -64,8 +64,8 @@ function ProductSelectionDialog({
   // Message affiché quand la liste est vide : distinguer une vraie absence de
   // produit d'une erreur de chargement (ex. liste produits inaccessible).
   const noOptionsText = productsLoadError
-    ? t('invoices:messages.loadProductsError', 'Impossible de charger les produits. Réessayez ou rechargez la page.')
-    : t('common:noOptions', 'Aucun produit. Créez-en un avec le bouton +.');
+    ? t('invoices:messages.loadProductsError')
+    : t('invoices:messages.noProductsCreateOne');
 
   // Séparer les produits par type
   const physicalProducts = useMemo(
@@ -238,7 +238,7 @@ function ProductSelectionDialog({
                   />
                   <IconButton
                     onClick={() => (tabValue === 1 ? onCreateService : onCreateProduct)?.()}
-                    title={tabValue === 1 ? 'Nouveau service' : 'Nouveau produit'}
+                    title={tabValue === 1 ? t('invoices:dialogs.quickCreateService') : t('invoices:buttons.newProduct')}
                     sx={{
                       bgcolor: 'primary.main',
                       color: 'white',
@@ -260,7 +260,12 @@ function ProductSelectionDialog({
                 <Grid item xs={12}>
                   <Autocomplete
                     options={newItem.product.batches}
-                    getOptionLabel={(option) => option ? `${option.batch_number} ${option.warehouse_name ? `(${option.warehouse_name})` : ''} - Exp: ${option.expiration_date ? new Date(option.expiration_date).toLocaleDateString() : 'N/A'}, Qté: ${option.current_quantity}` : ''}
+                    getOptionLabel={(option) => option ? t('invoices:labels.batchOption', {
+                      batch: option.batch_number,
+                      warehouse: option.warehouse_name ? `(${option.warehouse_name})` : '',
+                      expiration: option.expiration_date ? new Date(option.expiration_date).toLocaleDateString() : t('invoices:labels.notAvailable'),
+                      quantity: option.current_quantity,
+                    }) : ''}
                     value={newItem.batch || null}
                     onChange={(event, newValue) => {
                       setNewItem({ ...newItem, batch: newValue, batch_number: newValue ? newValue.batch_number : '' });
@@ -276,10 +281,10 @@ function ProductSelectionDialog({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label={t('invoices:labels.selectBatchRequired', "Sélectionner un lot *")}
+                        label={t('invoices:labels.selectBatchRequired')}
                         required={true}
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                        helperText={!newItem.batch ? t('invoices:messages.batchRequired', "Veuillez sélectionner un lot pour ce produit") : ''}
+                        helperText={!newItem.batch ? t('invoices:messages.batchRequired') : ''}
                         error={!newItem.batch}
                       />
                     )}
@@ -398,7 +403,7 @@ function ProductSelectionDialog({
                   />
                   <IconButton
                     onClick={() => (tabValue === 1 ? onCreateService : onCreateProduct)?.()}
-                    title={tabValue === 1 ? 'Nouveau service' : 'Nouveau produit'}
+                    title={tabValue === 1 ? t('invoices:dialogs.quickCreateService') : t('invoices:buttons.newProduct')}
                     sx={{
                       bgcolor: 'primary.main',
                       color: 'white',

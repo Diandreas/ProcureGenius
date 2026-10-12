@@ -10,6 +10,7 @@ import useCurrency from '../../hooks/useCurrency';
 import '../../styles/Widgets.css';
 
 const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
+  const { symbol } = useCurrency();
   const { t } = useTranslation(['common', 'dashboard']);
   const { format: formatCurrency } = useCurrency();
   const [data, setData] = useState(null);
@@ -53,14 +54,14 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
 
   const metrics = [
     {
-      label: t('widgets.financial_summary_metrics.revenue', { ns: 'dashboard', defaultValue: 'Revenus' }),
+      label: t('dashboard:widgets.financial_summary_metrics.revenue'),
       value: data.revenue || 0,
       change: data.comparison?.revenue_percent_change,
       color: '#2563eb',
       icon: DollarSign
     },
     {
-      label: t('widgets.financial_summary_metrics.expenses', { ns: 'dashboard', defaultValue: 'Dépenses' }),
+      label: t('dashboard:widgets.financial_summary_metrics.expenses'),
       value: data.expenses || 0,
       change: data.comparison?.expenses_change,
       isExpense: true,
@@ -69,8 +70,8 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
     },
     {
       label: profitValue >= 0
-        ? t('widgets.financial_summary_metrics.net_profit', { ns: 'dashboard', defaultValue: 'Profit Net' })
-        : 'Perte Nette',
+        ? t('dashboard:widgets.financial_summary_metrics.net_profit')
+        : t('dashboard:widgets.financialSummary.netLoss'),
       value: profitValue,
       change: data.comparison?.profit_percent_change,
       color: profitColor,
@@ -78,7 +79,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
       isNegative: profitValue < 0
     },
     {
-      label: t('widgets.financial_summary_metrics.margin', { ns: 'dashboard', defaultValue: 'Marge' }),
+      label: t('dashboard:widgets.financial_summary_metrics.margin'),
       value: `${marginValue.toFixed(1)}%`,
       isPercentage: true,
       color: marginColor,
@@ -105,7 +106,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
       const prevProfit = profit / (1 + profitChange / 100);
 
       return {
-        day: `J${i + 1}`,
+        day: t('dashboard:widgets.financialSummary.dayShort', { n: i + 1 }),
         Revenus: prevRevenue + (revenue - prevRevenue) * progress,
         Dépenses: prevExpenses + (expenses - prevExpenses) * progress,
         Profit: prevProfit + (profit - prevProfit) * progress
@@ -118,24 +119,24 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
   const pieData = profitValue < 0
     ? [
         {
-          name: t('widgets.financial_summary_metrics.expenses', { ns: 'dashboard', defaultValue: 'Dépenses' }),
+          name: t('dashboard:widgets.financial_summary_metrics.expenses'),
           value: data.expenses || 0,
           color: '#ef4444'
         },
         {
-          name: t('widgets.financial_summary_metrics.revenue', { ns: 'dashboard', defaultValue: 'Revenus' }),
+          name: t('dashboard:widgets.financial_summary_metrics.revenue'),
           value: data.revenue || 0,
           color: '#2563eb'
         }
       ]
     : [
         {
-          name: t('widgets.financial_summary_metrics.revenue', { ns: 'dashboard', defaultValue: 'Revenus' }),
+          name: t('dashboard:widgets.financial_summary_metrics.revenue'),
           value: data.revenue || 0,
           color: '#2563eb'
         },
         {
-          name: t('widgets.financial_summary_metrics.expenses', { ns: 'dashboard', defaultValue: 'Dépenses' }),
+          name: t('dashboard:widgets.financial_summary_metrics.expenses'),
           value: data.expenses || 0,
           color: '#ef4444'
         }
@@ -167,9 +168,9 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
   };
 
   const formatYAxis = (value) => {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M€`;
-    if (value >= 1000) return `${(value / 1000).toFixed(0)}k€`;
-    return `${value}€`;
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M ${symbol}`;
+    if (value >= 1000) return `${(value / 1000).toFixed(0)}k ${symbol}`;
+    return `${value} ${symbol}`;
   };
 
   // Générer des données sparkline pour chaque métrique
@@ -194,7 +195,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
     const step = (currentValue - previousValue) / 29;
 
     return Array(30).fill(0).map((_, i) => ({
-      day: `J${i + 1}`,
+      day: t('dashboard:widgets.financialSummary.dayShort', { n: i + 1 }),
       value: previousValue + (step * i)
     }));
   };
@@ -294,7 +295,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
           border: '1px solid #e5e7eb'
         }}>
           <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-            Évolution Financière
+            {t('dashboard:widgets.financialSummary.trendTitle')}
           </div>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={trendData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
@@ -306,6 +307,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
               <Area
                 type="monotone"
                 dataKey="Revenus"
+                name={t('dashboard:widgets.financial_summary_metrics.revenue')}
                 stackId="1"
                 stroke="#2563eb"
                 fill="#2563eb"
@@ -314,6 +316,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
               <Area
                 type="monotone"
                 dataKey="Profit"
+                name={t('dashboard:widgets.financialSummary.profit')}
                 stackId="2"
                 stroke="#10b981"
                 fill="#10b981"
@@ -331,7 +334,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
           border: '1px solid #e5e7eb'
         }}>
           <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#374151' }}>
-            Composition Revenus/Dépenses
+            {t('dashboard:widgets.financialSummary.compositionTitle')}
           </div>
           {profitValue < 0 && (
             <div style={{
@@ -340,7 +343,7 @@ const FinancialSummaryWidget = ({ period = 'last_30_days', onMetricClick }) => {
               marginBottom: '4px',
               fontWeight: 500
             }}>
-               Situation déficitaire
+               {t('dashboard:widgets.financialSummary.deficit')}
             </div>
           )}
           <ResponsiveContainer width="100%" height={180}>

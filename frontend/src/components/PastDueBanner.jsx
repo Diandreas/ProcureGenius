@@ -9,10 +9,12 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button, alpha, useTheme } from '@mui/material';
 import { WarningAmber } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import subscriptionAPI from '../services/subscriptionAPI';
 
 export default function PastDueBanner() {
   const theme = useTheme();
+  const { t } = useTranslation(['subscription', 'common']);
   const [isPastDue, setIsPastDue] = useState(false);
   const [opening, setOpening] = useState(false);
 
@@ -56,7 +58,7 @@ export default function PastDueBanner() {
     >
       <WarningAmber sx={{ fontSize: 18, color: 'error.main' }} />
       <Typography variant="body2" sx={{ color: 'error.dark', fontWeight: 600 }}>
-        Le paiement de votre abonnement a échoué. Mettez à jour votre moyen de paiement pour conserver l'accès.
+        {t('subscription:pastDue.message')}
       </Typography>
       <Button
         size="small"
@@ -66,7 +68,7 @@ export default function PastDueBanner() {
         onClick={handleManage}
         sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, whiteSpace: 'nowrap' }}
       >
-        {opening ? 'Ouverture…' : 'Mettre à jour le paiement'}
+        {opening ? t('subscription:pastDue.opening') : t('subscription:pastDue.updatePayment')}
       </Button>
     </Box>
   );

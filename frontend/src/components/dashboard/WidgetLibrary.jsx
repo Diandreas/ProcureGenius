@@ -172,7 +172,7 @@ const WidgetLibrary = ({ availableWidgets, currentWidgets, onAddWidget, onClose 
                           {getIcon(widget.icon)}
                         </div>
                         <div className="widget-card-content">
-                          <h4 className="widget-card-title">{widget.name}</h4>
+                          <h4 className="widget-card-title">{t(`widgets.${widget.code}`, { defaultValue: widget.name })}</h4>
                           <p className="widget-card-description">{widget.description}</p>
                           <div className="widget-card-meta">
                             <span className="widget-type">{widget.type}</span>

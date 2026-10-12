@@ -21,11 +21,11 @@ const ParetoClientsWidget = ({ period = 'last_30_days' }) => {
         if (response.success) {
           setData(response.data);
         } else {
-          setError('Failed to load data');
+          setError(t('dashboard:widgets.shared.loadFailed'));
         }
       } catch (err) {
         console.error('Error fetching pareto clients:', err);
-        setError(err.message || 'Error loading data');
+        setError(err.message || t('dashboard:messages.loadingError'));
       } finally {
         setLoading(false);
       }
@@ -51,7 +51,7 @@ const ParetoClientsWidget = ({ period = 'last_30_days' }) => {
       <div className="widget-empty">
         <Users size={40} className="widget-empty-icon" />
         <div className="widget-empty-text">
-          {t('widgets.pareto_clients_empty', { ns: 'dashboard', defaultValue: 'Aucune donnée Pareto' })}
+          {t('dashboard:widgets.pareto_clients_empty')}
         </div>
       </div>
     );
@@ -77,10 +77,10 @@ const ParetoClientsWidget = ({ period = 'last_30_days' }) => {
     <div className="pareto-widget">
       <div className="pareto-header">
         <div className="pareto-title">
-          {t('widgets.pareto_title', { ns: 'dashboard', defaultValue: 'Analyse Pareto' })}
+          {t('dashboard:widgets.pareto_title')}
         </div>
         <div className="pareto-subtitle">
-          {t('widgets.pareto_subtitle', { ns: 'dashboard', defaultValue: 'Concentration CA' })}
+          {t('dashboard:widgets.pareto_subtitle')}
         </div>
       </div>
 
@@ -90,7 +90,7 @@ const ParetoClientsWidget = ({ period = 'last_30_days' }) => {
             {topPercent.toFixed(0)}%
           </span>
           <span className="pareto-label">
-            {t('widgets.pareto_clients_label', { ns: 'dashboard', defaultValue: 'clients' })}
+            {t('dashboard:widgets.pareto_clients_label')}
           </span>
         </div>
         <div className="pareto-arrow">→</div>
@@ -99,7 +99,7 @@ const ParetoClientsWidget = ({ period = 'last_30_days' }) => {
             {revenuePercent.toFixed(0)}%
           </span>
           <span className="pareto-label">
-            {t('widgets.pareto_revenue_label', { ns: 'dashboard', defaultValue: 'du CA' })}
+            {t('dashboard:widgets.pareto_revenue_label')}
           </span>
         </div>
       </div>
@@ -118,17 +118,17 @@ const ParetoClientsWidget = ({ period = 'last_30_days' }) => {
         {topPercent <= 20 ? (
           <>
             <AlertTriangle size={16} />
-            <span>Forte concentration</span>
+            <span>{t('dashboard:widgets.pareto.highConcentration')}</span>
           </>
         ) : topPercent <= 35 ? (
           <>
             <BarChart3 size={16} />
-            <span>Distribution normale</span>
+            <span>{t('dashboard:widgets.pareto_normal')}</span>
           </>
         ) : (
           <>
             <CheckCircle size={16} />
-            <span>Portefeuille diversifié</span>
+            <span>{t('dashboard:widgets.pareto_diversified')}</span>
           </>
         )}
       </div>

@@ -73,19 +73,19 @@ const TYPE_CONFIG = {
   physical: {
     color: '#2196F3',
     icon: Inventory,
-    label: 'Physique',
+    labelKey: 'products:typeLabels.physical',
     bgColor: 'rgba(33, 150, 243, 0.1)'
   },
   service: {
     color: '#4CAF50',
     icon: Build,
-    label: 'Service',
+    labelKey: 'products:typeLabels.service',
     bgColor: 'rgba(76, 175, 80, 0.1)'
   },
   digital: {
     color: '#9C27B0',
     icon: CloudDownload,
-    label: 'Digital',
+    labelKey: 'products:typeLabels.digital',
     bgColor: 'rgba(156, 39, 176, 0.1)'
   },
 };
@@ -187,17 +187,17 @@ function ProductDetail() {
 
   const handlePdfAction = async (action) => {
     if (!generatedPdfBlob) return;
-    const fname = `rapport-produit-${product.name}.pdf`;
+    const fname = `${t('products:pdf.fileName', 'rapport-produit')}-${product.name}.pdf`;
 
     if (action === 'download') {
       await pdfViewer.download(generatedPdfBlob, fname);
       enqueueSnackbar(t('products:messages.pdfDownloaded', 'Rapport PDF téléchargé avec succès'), { variant: 'success' });
     } else if (action === 'preview') {
-      pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${product.name}`);
+      pdfViewer.preview(generatedPdfBlob, fname, t('products:pdf.previewTitle', { name: product.name }));
       return;
     } else if (action === 'print') {
       if (IS_NATIVE) {
-        pdfViewer.preview(generatedPdfBlob, fname, `Rapport ${product.name}`);
+        pdfViewer.preview(generatedPdfBlob, fname, t('products:pdf.previewTitle', { name: product.name }));
         return;
       }
       const pdfUrl = URL.createObjectURL(generatedPdfBlob);
@@ -228,7 +228,7 @@ function ProductDetail() {
   const swipeHandlers = useSwipeTabs(activeTab, tabsCount, setActiveTab, IS_NATIVE);
 
   if (loading) {
-    return <LoadingState message={t('products:messages.loading', 'Chargement du produit...')} />;
+    return <LoadingState message={t('products:messages.loadingProduct', 'Chargement du produit...')} />;
   }
 
   if (!product) {
@@ -255,7 +255,7 @@ function ProductDetail() {
     { icon: Info, label: t('products:tabs.info') },
     { icon: Receipt, label: t('products:tabs.invoices') },
     { icon: People, label: t('products:tabs.clients') },
-    ...(isPhysical ? [{ icon: Warehouse, label: 'Lots' }] : []),
+    ...(isPhysical ? [{ icon: Warehouse, label: t('products:tabs.batches') }] : []),
     ...(isPhysical ? [{ icon: History, label: t('products:tabs.movements') }] : []),
   ];
 
@@ -359,14 +359,14 @@ function ProductDetail() {
                       <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.05rem', sm: '1.4rem' }, lineHeight: 1.2 }}>{product.name}</Typography>
                       {/* Actions (mobile + desktop) */}
                       <Stack direction="row" spacing={0.5} sx={{ flexShrink: 0 }}>
-                        <IconButton size="small" onClick={() => setPdfDialogOpen(true)} sx={{ borderRadius: 2, color: 'success.main', boxShadow: th => neuShadows.shadowInset(th) }}><PictureAsPdf sx={{ fontSize: 18 }} /></IconButton>
-                        <IconButton size="small" onClick={() => navigate(`/products/${id}/edit`)} sx={{ borderRadius: 2, color: 'primary.main', boxShadow: th => neuShadows.shadowInset(th) }}><Edit sx={{ fontSize: 18 }} /></IconButton>
-                        <IconButton size="small" onClick={handleDelete} sx={{ borderRadius: 2, color: 'error.main', boxShadow: th => neuShadows.shadowInset(th) }}><Delete sx={{ fontSize: 18 }} /></IconButton>
+                        <IconButton size="small" aria-label={t('products:tooltips.downloadPdfReport')} onClick={() => setPdfDialogOpen(true)} sx={{ borderRadius: 2, color: 'success.main', boxShadow: th => neuShadows.shadowInset(th) }}><PictureAsPdf sx={{ fontSize: 18 }} /></IconButton>
+                        <IconButton size="small" aria-label={t('products:tooltips.editProduct')} onClick={() => navigate(`/products/${id}/edit`)} sx={{ borderRadius: 2, color: 'primary.main', boxShadow: th => neuShadows.shadowInset(th) }}><Edit sx={{ fontSize: 18 }} /></IconButton>
+                        <IconButton size="small" aria-label={t('products:tooltips.deleteProduct')} onClick={handleDelete} sx={{ borderRadius: 2, color: 'error.main', boxShadow: th => neuShadows.shadowInset(th) }}><Delete sx={{ fontSize: 18 }} /></IconButton>
                       </Stack>
                     </Box>
                     <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', mt: 0.25 }}>{t('products:labels.reference')}: {product.reference || product.sku || '—'}</Typography>
                     <Stack direction="row" spacing={0.75} sx={{ mt: 1, flexWrap: 'wrap', gap: 0.5 }}>
-                      <Chip icon={<TypeIcon sx={{ color: 'white !important', fontSize: 14 }} />} label={typeConfig.label} size="small" sx={{ bgcolor: typeConfig.color, color: 'white', fontWeight: 600, height: 24 }} />
+                      <Chip icon={<TypeIcon sx={{ color: 'white !important', fontSize: 14 }} />} label={t(typeConfig.labelKey)} size="small" sx={{ bgcolor: typeConfig.color, color: 'white', fontWeight: 600, height: 24 }} />
                       <Chip label={product.is_active ? t('products:status.active') : t('products:status.inactive')} color={product.is_active ? 'success' : 'default'} size="small" sx={{ height: 24 }} />
                       {product.category && <Chip icon={<Category sx={{ fontSize: 14 }} />} label={product.category.name} variant="outlined" size="small" sx={{ height: 24 }} />}
                     </Stack>
@@ -375,7 +375,7 @@ function ProductDetail() {
                 {/* Prix en avant */}
                 <Box sx={{ mt: 2, p: 1.5, borderRadius: 3, display: 'flex', alignItems: 'baseline', gap: 1.5, boxShadow: th => neuShadows.shadowInset(th) }}>
                   <Typography sx={{ fontWeight: 800, fontSize: { xs: '1.4rem', sm: '1.8rem' }, color: 'text.primary', letterSpacing: '-0.02em' }}>{formatCurrency(product.price)}</Typography>
-                  <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>prix de vente</Typography>
+                  <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>{t('products:detail.sellingPriceCaption')}</Typography>
                 </Box>
                 {product.description && (
                   <Box sx={{ mt: 2 }}>
@@ -388,7 +388,7 @@ function ProductDetail() {
               {/* Infos détaillées */}
               {(product.supplier_name || product.warehouse_name) && (
                 <NeumorphicPanel sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 2, sm: 2.5 } }}>
-                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>Informations</Typography>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>{t('products:detail.information')}</Typography>
                   <Grid container spacing={1.5}>
                     {product.supplier_name && (
                       <Grid item xs={12} sm={6}>
@@ -406,7 +406,7 @@ function ProductDetail() {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.25, borderRadius: 2.5, boxShadow: th => neuShadows.shadowInset(th) }}>
                           <Avatar sx={{ bgcolor: 'warning.main', width: 32, height: 32 }}><Warehouse sx={{ fontSize: 18 }} /></Avatar>
                           <Box sx={{ minWidth: 0 }}>
-                            <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>Entrepôt</Typography>
+                            <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('products:labels.warehouse')}</Typography>
                             <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.warehouse_code ? `${product.warehouse_code} - ${product.warehouse_name}` : product.warehouse_name}</Typography>
                           </Box>
                         </Box>
@@ -418,11 +418,11 @@ function ProductDetail() {
 
               {/* Prix & marge */}
               <NeumorphicPanel sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 2, sm: 2.5 } }}>
-                <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>Tarification</Typography>
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>{t('products:labels.pricing')}</Typography>
                 <Grid container spacing={1.5}>
                   <Grid item xs={product.cost_price > 0 ? 4 : 12}>
                     <Box sx={{ p: 1.5, borderRadius: 2.5, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
-                      <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>Prix</Typography>
+                      <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('products:labels.price')}</Typography>
                       <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: 'primary.main' }}>{formatCurrency(product.price)}</Typography>
                     </Box>
                   </Grid>
@@ -430,13 +430,13 @@ function ProductDetail() {
                     <>
                       <Grid item xs={4}>
                         <Box sx={{ p: 1.5, borderRadius: 2.5, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
-                          <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>Coût</Typography>
+                          <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('products:detail.cost')}</Typography>
                           <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: 'warning.main' }}>{formatCurrency(product.cost_price)}</Typography>
                         </Box>
                       </Grid>
                       <Grid item xs={4}>
                         <Box sx={{ p: 1.5, borderRadius: 2.5, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
-                          <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>Marge</Typography>
+                          <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('products:detail.margin')}</Typography>
                           <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: 'success.main' }}>{Math.round(((product.price - product.cost_price) / product.price) * 100)}%</Typography>
                         </Box>
                       </Grid>
@@ -448,17 +448,17 @@ function ProductDetail() {
               {/* Statistiques de vente */}
               {statistics?.sales_summary && (
                 <NeumorphicPanel sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 2, sm: 2.5 } }}>
-                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>Performance</Typography>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>{t('products:detail.performance')}</Typography>
                   <Grid container spacing={1.5}>
                     <Grid item xs={6}>
                       <Box sx={{ p: 1.5, borderRadius: 2.5, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
-                        <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>Factures</Typography>
+                        <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('products:statistics.invoices')}</Typography>
                         <Typography sx={{ fontWeight: 800, fontSize: '1.2rem' }}>{statistics.sales_summary.total_invoices || 0}</Typography>
                       </Box>
                     </Grid>
                     <Grid item xs={6}>
                       <Box sx={{ p: 1.5, borderRadius: 2.5, textAlign: 'center', boxShadow: th => neuShadows.shadowInset(th) }}>
-                        <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>CA généré</Typography>
+                        <Typography sx={{ fontSize: '0.62rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('products:detail.revenueGenerated')}</Typography>
                         <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: 'success.main' }}>{formatCurrency(statistics.sales_summary.total_sales_amount || 0)}</Typography>
                       </Box>
                     </Grid>
@@ -471,10 +471,10 @@ function ProductDetail() {
             <Grid item xs={12} md={4}>
               {product.product_type === 'physical' && product.stock_quantity !== null && product.stock_quantity !== undefined && (
                 <NeumorphicPanel accent={theme.palette[stockStatus].main} sx={{ mb: isMobile ? 1.5 : 2.5, p: { xs: 2, sm: 2.5 }, textAlign: 'center' }}>
-                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>Stock</Typography>
+                  <Typography sx={{ fontSize: '0.7rem', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em', mb: 1.5 }}>{t('products:labels.stock')}</Typography>
                   <Box sx={{ width: 110, height: 110, mx: 'auto', borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: th => neuShadows.shadowInset(th), mb: 1.5 }}>
                     <Typography sx={{ fontWeight: 800, fontSize: '2rem', color: `${stockStatus}.main`, lineHeight: 1 }}>{product.stock_quantity}</Typography>
-                    <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', textTransform: 'uppercase' }}>unités</Typography>
+                    <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('products:detail.units')}</Typography>
                   </Box>
                   <Chip
                     label={product.stock_quantity === 0 ? t('products:stockStatus.outOfStock') : product.stock_quantity <= 10 ? t('products:stockStatus.low') : t('products:filters.inStock')}
@@ -532,7 +532,7 @@ function ProductDetail() {
           <NeumorphicPanel accent={typeConfig.color} sx={{ p: { xs: 1.5, sm: 2.5 } }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Warehouse sx={{ color: typeConfig.color, fontSize: 22 }} />
-              <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>Lots</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>{t('products:tabs.batches')}</Typography>
             </Box>
             <ProductBatchesTab productId={id} onStockChange={fetchProduct} />
           </NeumorphicPanel>
@@ -570,7 +570,7 @@ function ProductDetail() {
             <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={3}>
               <CircularProgress size={40} />
               <Typography variant="body2" color="text.secondary">
-                {t('common:labels.generating', 'Génération du PDF en cours...')}
+                {t('products:pdf.generating', 'Génération du PDF en cours...')}
               </Typography>
             </Box>
           ) : generatedPdfBlob ? (
@@ -585,7 +585,7 @@ function ProductDetail() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClosePdfDialog}>
-            {t('common:buttons.cancel', 'Annuler')}
+            {t('products:buttons.cancel', 'Annuler')}
           </Button>
           <Button
             onClick={() => handlePdfAction('preview')}
@@ -593,7 +593,7 @@ function ProductDetail() {
             disabled={generatingPdf || !generatedPdfBlob}
             startIcon={<Receipt />}
           >
-            {t('common:buttons.preview', 'Aperçu')}
+            {t('products:buttons.preview', 'Aperçu')}
           </Button>
           {!IS_NATIVE && (
             <Button
@@ -603,7 +603,7 @@ function ProductDetail() {
               disabled={generatingPdf || !generatedPdfBlob}
               startIcon={<Print />}
             >
-              {t('common:buttons.print', 'Imprimer')}
+              {t('products:buttons.print', 'Imprimer')}
             </Button>
           )}
           {!IS_NATIVE && (
@@ -613,7 +613,7 @@ function ProductDetail() {
               disabled={generatingPdf || !generatedPdfBlob}
               startIcon={<Download />}
             >
-              {t('common:buttons.download', 'Télécharger')}
+              {t('products:buttons.download', 'Télécharger')}
             </Button>
           )}
         </DialogActions>

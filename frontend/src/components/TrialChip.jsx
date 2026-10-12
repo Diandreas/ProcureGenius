@@ -8,10 +8,13 @@ import React, { useEffect, useState } from 'react';
 import { Chip, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { Bolt, WarningAmber } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import subscriptionAPI from '../services/subscriptionAPI';
+import { nomPlan } from '../hooks/usePlansTarifs';
 
 export default function TrialChip() {
   const navigate = useNavigate();
+  const { t } = useTranslation(['subscription', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [trial, setTrial] = useState(null);
@@ -26,6 +29,7 @@ export default function TrialChip() {
           setTrial({
             days: sub.trial_days_remaining ?? 0,
             plan: sub.plan?.name || 'Pro',
+            code: sub.plan?.code || null,
           });
         }
       } catch { /* silencieux : pas de chip si erreur/offline */ }
@@ -36,13 +40,14 @@ export default function TrialChip() {
   if (!trial) return null;
 
   const active = trial.days > 0;
+  const plan = nomPlan(t, trial.code, trial.plan);
   // Mobile : compact (icone + "N j"). Desktop : libelle complet.
   const label = isMobile
-    ? (active ? `${trial.days} j` : 'Expiré')
-    : (active ? `Essai ${trial.plan} — ${trial.days} j` : `Essai ${trial.plan} expiré`);
+    ? (active ? t('subscription:trialChip.mobileDays', { days: trial.days }) : t('subscription:trialChip.mobileExpired'))
+    : (active ? t('subscription:trialChip.active', { plan, days: trial.days }) : t('subscription:trialChip.expired', { plan }));
 
   return (
-    <Tooltip title={active ? `Essai ${trial.plan} — ${trial.days} jour(s) restant(s)` : 'Essai expiré — gérer votre abonnement'} arrow>
+    <Tooltip title={active ? t('subscription:trialChip.tooltipActive', { plan, count: trial.days }) : t('subscription:trialChip.tooltipExpired')} arrow>
       <Chip
         icon={isMobile ? <WarningAmber sx={{ fontSize: 14 }} /> : <Bolt sx={{ fontSize: 15 }} />}
         label={label}
