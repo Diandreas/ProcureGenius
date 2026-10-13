@@ -518,10 +518,15 @@ class CrmPatientProfileView(_ProvenanceView):
                 if not campagne:
                     return Response({'error': 'Campagne inconnue.'}, status=status.HTTP_400_BAD_REQUEST)
                 profil.campaign = campagne
-                # Un patient venu d'une campagne sans provenance saisie : on la déduit.
+                # Un patient venu d'une campagne sans provenance saisie : on la déduit,
+                # « Porte-à-porte » pour une campagne de porte-à-porte, sinon « Campagne ».
                 if not profil.origin_id and not profil.unknown:
-                    profil.origin = PatientOrigin.objects.filter(
-                        organization=organization, code='campaign', is_active=True).first()
+                    codes = ['door_to_door', 'campaign'] if campagne.kind == 'door_to_door' else ['campaign']
+                    for code in codes:
+                        profil.origin = PatientOrigin.objects.filter(
+                            organization=organization, code=code, is_active=True).first()
+                        if profil.origin:
+                            break
             else:
                 profil.campaign = None
         if 'detail' in donnees:
