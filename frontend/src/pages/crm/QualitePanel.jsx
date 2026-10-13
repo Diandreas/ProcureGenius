@@ -118,12 +118,12 @@ export default function QualitePanel({ peutOuvrirDossier, onOuvrirPatient }) {
                 onClick={() => c.applicable && filtrer({ critere: actif ? '' : c.code })}
                 sx={{ cursor: c.applicable ? 'pointer' : 'default', borderRadius: 1, px: 0.5,
                   bgcolor: actif ? 'action.selected' : 'transparent', '&:hover': { bgcolor: c.applicable ? 'action.hover' : 'transparent' } }}>
-                <Typography variant="body2" sx={{ width: 160, flexShrink: 0, fontWeight: actif ? 700 : 400 }}>{c.label}</Typography>
+                <Typography variant="body2" sx={{ width: { xs: 100, sm: 160 }, flexShrink: 0, fontWeight: actif ? 700 : 400 }}>{c.label}</Typography>
                 {c.applicable ? (
                   <>
                     <LinearProgress variant="determinate" value={c.rate || 0} color={couleur(c.rate)} sx={{ flex: 1, height: 10, borderRadius: 5 }} />
-                    <Typography variant="body2" fontWeight={700} sx={{ width: 70, textAlign: 'right', flexShrink: 0 }}>{pc(c.rate)}</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ width: 150, flexShrink: 0 }}>
+                    <Typography variant="body2" fontWeight={700} sx={{ width: { xs: 58, sm: 70 }, textAlign: 'right', flexShrink: 0 }}>{pc(c.rate)}</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ width: 150, flexShrink: 0, display: { xs: 'none', sm: 'block' } }}>
                       {c.missing ? `${c.missing} manquant${c.missing > 1 ? 's' : ''}` : ''}
                       {c.missing && c.invalid ? ' · ' : ''}
                       {c.invalid ? `${c.invalid} invalide${c.invalid > 1 ? 's' : ''}` : ''}

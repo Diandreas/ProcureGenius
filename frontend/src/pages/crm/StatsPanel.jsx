@@ -383,10 +383,10 @@ export default function StatsPanel({ peutVoirMontants }) {
     <Stack spacing={0.75}>
       {lignes.map((l) => (
         <Box key={l.label} display="flex" alignItems="center" gap={1}>
-          <Typography variant="body2" sx={{ width: 150, flexShrink: 0 }}>{l.label}</Typography>
+          <Typography variant="body2" sx={{ width: { xs: 96, sm: 150 }, flexShrink: 0 }}>{l.label}</Typography>
           <LinearProgress variant="determinate" value={Math.min(l.rate || 0, 100)} color={(l.rate || 0) >= 40 ? 'success' : (l.rate || 0) >= 25 ? 'warning' : 'error'}
             sx={{ flex: 1, height: 10, borderRadius: 5 }} />
-          <Typography variant="body2" fontWeight={700} sx={{ width: 120, textAlign: 'right', flexShrink: 0 }}>
+          <Typography variant="body2" fontWeight={700} sx={{ width: { xs: 92, sm: 120 }, textAlign: 'right', flexShrink: 0 }}>
             {pc(l.rate)} <Typography component="span" variant="caption" color="text.secondary">({l.returned}/{l.patients})</Typography>
           </Typography>
         </Box>
@@ -432,9 +432,9 @@ export default function StatsPanel({ peutVoirMontants }) {
             <Stack spacing={0.75}>
               {r.gap_buckets.map((b) => (
                 <Box key={b.label} display="flex" alignItems="center" gap={1}>
-                  <Typography variant="body2" sx={{ width: 150, flexShrink: 0 }}>{b.label}</Typography>
+                  <Typography variant="body2" sx={{ width: { xs: 96, sm: 150 }, flexShrink: 0 }}>{b.label}</Typography>
                   <LinearProgress variant="determinate" value={(100 * b.count) / total} sx={{ flex: 1, height: 10, borderRadius: 5 }} />
-                  <Typography variant="body2" fontWeight={700} sx={{ width: 90, textAlign: 'right', flexShrink: 0 }}>{b.count} ({Math.round((100 * b.count) / total)} %)</Typography>
+                  <Typography variant="body2" fontWeight={700} sx={{ width: { xs: 76, sm: 90 }, textAlign: 'right', flexShrink: 0 }}>{b.count} ({Math.round((100 * b.count) / total)} %)</Typography>
                 </Box>
               ))}
             </Stack>
@@ -467,7 +467,7 @@ export default function StatsPanel({ peutVoirMontants }) {
           <Stack spacing={0.75}>
             {vp.by_reason.map((r) => (
               <Box key={r.code} display="flex" alignItems="center" gap={1}>
-                <Typography variant="body2" sx={{ width: 230, flexShrink: 0 }}>{r.label}</Typography>
+                <Typography variant="body2" sx={{ width: { xs: 120, sm: 230 }, flexShrink: 0 }}>{r.label}</Typography>
                 <LinearProgress variant="determinate" value={vp.lost ? (100 * r.count) / vp.lost : 0} color="warning"
                   sx={{ flex: 1, height: 10, borderRadius: 5 }} />
                 <Typography variant="body2" fontWeight={700} sx={{ width: 40, textAlign: 'right' }}>{r.count}</Typography>
