@@ -431,6 +431,18 @@ def api_organization_settings(request):
         })
 
     elif request.method in ['POST', 'PUT']:
+        # Nom, fiscalité et modules actifs valent pour toute l'organisation : seul un
+        # administrateur les modifie, ou le tout premier compte d'une structure qui se crée
+        # (assistant de démarrage). Sans ce contrôle, n'importe quel compte, même limité au
+        # Suivi patients, pouvait réécrire la liste des modules de tout le centre.
+        droits = getattr(user, 'permissions', None)
+        fondateur = not CustomUser.objects.filter(organization=user.organization).exclude(pk=user.pk).exists()
+        if not (user.is_superuser or getattr(user, 'role', '') in ('admin', 'manager', 'owner')
+                or getattr(droits, 'can_manage_settings', False) or fondateur):
+            return Response(
+                {'error': "Seul un administrateur peut modifier les paramètres de l'organisation."},
+                status=status.HTTP_403_FORBIDDEN
+            )
         try:
             # Update organization settings
             # Handle text fields

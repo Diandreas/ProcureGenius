@@ -23,11 +23,17 @@ def create_user_preferences_and_permissions(sender, instance, created, **kwargs)
 
         # Créer les préférences avec modules par défaut selon le rôle
         default_modules = _get_default_modules_for_role(instance.role, instance.organization)
+        # Un compte ajouté à une organisation déjà en place (par un administrateur ou un
+        # script) ne passe pas par l'assistant de démarrage : celui-ci réécrit les paramètres
+        # de toute l'organisation (nom, fiscalité, modules actifs). Seul le premier compte
+        # d'une nouvelle structure le voit.
+        deja_en_place = bool(instance.organization_id) and User.objects.filter(
+            organization_id=instance.organization_id).exclude(pk=instance.pk).exists()
         UserPreferences.objects.get_or_create(
             user=instance,
             defaults={
                 'enabled_modules': default_modules,
-                'onboarding_completed': False,  # Important: nouveau utilisateur doit passer par l'onboarding
+                'onboarding_completed': deja_en_place,
                 'onboarding_data': {},
                 'dashboard_layout': {},
                 'notification_settings': {},
