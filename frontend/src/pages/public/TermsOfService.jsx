@@ -3,6 +3,7 @@ import { Box, Container, Typography, useTheme, Divider, Chip } from '@mui/materi
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import GavelIcon from '@mui/icons-material/Gavel';
+import usePageMeta from '../../hooks/usePageMeta';
 
 const SECTIONS_ORDER = [
   'acceptance',
@@ -20,9 +21,9 @@ export default function TermsOfService() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { t } = useTranslation(['public']);
+  usePageMeta({ page: 'terms', path: '/terms' });
 
   useEffect(() => {
-    document.title = `${t('public:terms.title')} | ProcureGenius`;
     window.scrollTo(0, 0);
   }, [t]);
 

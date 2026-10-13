@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import ReCAPTCHA from 'react-google-recaptcha';
 import api from '../../services/api';
+import usePageMeta from '../../hooks/usePageMeta';
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
 
@@ -15,6 +16,7 @@ export default function PublicSupport() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { t } = useTranslation(['public']);
+  usePageMeta({ page: 'support', path: '/support' });
   const recaptchaRef = useRef(null);
 
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
@@ -23,7 +25,6 @@ export default function PublicSupport() {
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
-    document.title = `${t('public:support.title')} | Procura`;
   }, [t]);
 
   const handleChange = (e) => {

@@ -28,11 +28,7 @@ export default function Blog() {
   const { t } = useTranslation(['public']);
   const categoryLabel = (c) => (CATEGORY_KEYS[c] ? t(`public:blog.categories.${CATEGORY_KEYS[c]}`) : c);
 
-  usePageMeta({
-    title: t('public:blog.metaTitle'),
-    description: t('public:blog.metaDescription'),
-    path: '/blog',
-  });
+  usePageMeta({ page: 'blog', path: '/blog' });
 
   useEffect(() => {
     window.scrollTo(0, 0);

@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
+import seoPrerender from './seo-prerender.mjs'
 
 // Injecte dans build/service-worker.js la liste des fichiers JS/CSS du build et
 // un identifiant de version : l'app entiere s'ouvre hors ligne, et chaque
@@ -45,7 +46,7 @@ export default defineConfig(({ mode }) => {
   // #endregion
 
   return {
-    plugins: [react(), precacheServiceWorker()],
+    plugins: [react(), precacheServiceWorker(), seoPrerender()],
     server: {
       port: 3000,
       host: 'localhost',

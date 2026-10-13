@@ -76,11 +76,7 @@ const Pricing = () => {
   const prix = (montant, devise = deviseFacturation) => formatPrice(montant, devise);
   const facture = (montant, devise = deviseFacturation) => formatPriceCurrency(montant, devise);
 
-  usePageMeta({
-    title: t('subscription:pricing.metaTitle'),
-    description: t('subscription:pricing.metaDescription'),
-    path: '/pricing',
-  });
+  usePageMeta({ page: 'pricing', path: '/pricing' });
 
   const getPrice = (plan) => {
     if (plan.priceMonthly === null) return null;

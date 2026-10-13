@@ -1,0 +1,41 @@
+{
+  "siteName": "Procura",
+  "imageAlt": "Procura — all your business management in one AI-powered app",
+  "ogImage": {
+    "badge": "AI-powered management",
+    "line1": "All your business.",
+    "line2": "One single app.",
+    "subtitle": "Invoices, quotes, stock, cash flow, accounting: you talk, the AI does the work.",
+    "cta": "Free trial · 1 month"
+  },
+  "pages": {
+    "home": {
+      "title": "Procura — AI-powered invoicing, stock and accounting",
+      "description": "Invoices, quotes, stock, purchasing and accounting in one app, driven by AI. Mobile Money, works offline. 1-month free trial, no card required."
+    },
+    "pricing": {
+      "title": "Procura pricing — Free, Pro and Business plans",
+      "description": "Start for free, then move to Pro or Business as your business grows. No commitment, one-month free trial."
+    },
+    "blog": {
+      "title": "Procura blog — Management tips for small businesses",
+      "description": "Invoicing, stock, cash flow and payment reminders: practical tips to run your business."
+    },
+    "documentation": {
+      "title": "Procura documentation — Guides and help",
+      "description": "Getting started, invoices, stock, purchasing, accounting and the AI assistant: every guide to using Procura."
+    },
+    "support": {
+      "title": "Procura support — Contact our team",
+      "description": "A question about Procura? Write to us or reach us on WhatsApp, we answer quickly."
+    },
+    "privacy": {
+      "title": "Privacy policy — Procura",
+      "description": "How Procura collects, protects and uses your data, and what your rights are."
+    },
+    "terms": {
+      "title": "Terms of service — Procura",
+      "description": "The terms of service of the Procura business management software."
+    }
+  }
+}

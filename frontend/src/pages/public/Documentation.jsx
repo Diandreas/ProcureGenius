@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
 import { Box, Container, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import usePageMeta from '../../hooks/usePageMeta';
 
 export default function Documentation() {
   const { t } = useTranslation(['public']);
+  usePageMeta({ page: 'documentation', path: '/documentation' });
 
   useEffect(() => {
-    document.title = t('public:documentation.pageTitle');
   }, [t]);
 
   return (

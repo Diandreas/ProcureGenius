@@ -1,0 +1,41 @@
+{
+  "siteName": "Procura",
+  "imageAlt": "Procura — Ihre gesamte Verwaltung in einer KI-gestützten App",
+  "ogImage": {
+    "badge": "KI-gestützte Verwaltung",
+    "line1": "Ihre ganze Verwaltung.",
+    "line2": "Eine einzige App.",
+    "subtitle": "Rechnungen, Angebote, Lager, Buchhaltung: Sie sprechen, die KI erledigt es.",
+    "cta": "1 Monat gratis testen"
+  },
+  "pages": {
+    "home": {
+      "title": "Procura — Rechnungen, Lager und Buchhaltung mit KI",
+      "description": "Rechnungen, Angebote, Lager, Einkauf und Buchhaltung in einer App, gesteuert per KI. Mobile Money, funktioniert offline. 1 Monat gratis, ohne Kreditkarte."
+    },
+    "pricing": {
+      "title": "Procura Preise — Kostenlos, Pro und Business",
+      "description": "Starten Sie kostenlos und wechseln Sie zu Pro oder Business, wenn Ihr Unternehmen wächst. Ohne Vertragsbindung, ein Monat gratis testen."
+    },
+    "blog": {
+      "title": "Procura Blog — Tipps für kleine Unternehmen",
+      "description": "Rechnungen, Lager, Liquidität und Mahnungen: praktische Tipps für Ihr Unternehmen."
+    },
+    "documentation": {
+      "title": "Procura Dokumentation — Anleitungen und Hilfe",
+      "description": "Erste Schritte, Rechnungen, Lager, Einkauf, Buchhaltung und KI-Assistent: alle Anleitungen zu Procura."
+    },
+    "support": {
+      "title": "Procura Support — Kontaktieren Sie uns",
+      "description": "Eine Frage zu Procura? Schreiben Sie uns oder kontaktieren Sie uns per WhatsApp, wir antworten schnell."
+    },
+    "privacy": {
+      "title": "Datenschutzerklärung — Procura",
+      "description": "Wie Procura Ihre Daten erhebt, schützt und verwendet, und welche Rechte Sie haben."
+    },
+    "terms": {
+      "title": "Nutzungsbedingungen — Procura",
+      "description": "Die Nutzungsbedingungen der Verwaltungssoftware Procura."
+    }
+  }
+}

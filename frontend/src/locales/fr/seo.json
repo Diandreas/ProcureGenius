@@ -1,0 +1,41 @@
+{
+  "siteName": "Procura",
+  "imageAlt": "Procura — toute votre gestion dans une seule application pilotée par l'IA",
+  "ogImage": {
+    "badge": "Gestion pilotée par l'IA",
+    "line1": "Toute votre gestion.",
+    "line2": "Une seule app.",
+    "subtitle": "Factures, devis, stock, trésorerie, compta : vous parlez, l'IA exécute.",
+    "cta": "Essai gratuit · 1 mois"
+  },
+  "pages": {
+    "home": {
+      "title": "Procura — Facturation, stock et comptabilité avec l'IA",
+      "description": "Factures, devis, stock, achats et comptabilité SYSCOHADA en FCFA, pilotés par l'IA. Mobile Money, fonctionne hors ligne. Essai gratuit 1 mois, sans carte."
+    },
+    "pricing": {
+      "title": "Tarifs Procura — Gratuit, Pro et Business",
+      "description": "Commencez gratuitement, puis passez au plan Pro ou Business quand votre activité grandit. Prix en FCFA, sans engagement, un mois d'essai offert."
+    },
+    "blog": {
+      "title": "Blog Procura — Conseils de gestion pour PME et indépendants",
+      "description": "Facturation, stock, trésorerie, relances : des conseils concrets pour gérer votre entreprise sans y passer vos soirées."
+    },
+    "documentation": {
+      "title": "Documentation Procura — Guides et aide",
+      "description": "Prise en main, factures, stock, achats, comptabilité et assistant IA : tous les guides pour utiliser Procura."
+    },
+    "support": {
+      "title": "Support Procura — Contactez notre équipe",
+      "description": "Une question sur Procura ? Écrivez-nous ou contactez-nous sur WhatsApp, nous vous répondons rapidement."
+    },
+    "privacy": {
+      "title": "Politique de confidentialité — Procura",
+      "description": "Comment Procura collecte, protège et utilise vos données, et quels sont vos droits."
+    },
+    "terms": {
+      "title": "Conditions d'utilisation — Procura",
+      "description": "Les conditions générales d'utilisation du logiciel de gestion Procura."
+    }
+  }
+}

@@ -49,6 +49,7 @@ import { usePricingCurrency, memeMonnaie } from '../utils/visitorCurrency';
 import usePlansTarifs from '../hooks/usePlansTarifs';
 import usePageMeta from '../hooks/usePageMeta';
 import LiveAIDemo from '../components/landing/LiveAIDemo';
+import useLienPublic from '../hooks/useLienPublic';
 
 // Enregistrer les plugins GSAP une seule fois (côté client).
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -187,11 +188,8 @@ export default function Landing() {
   // un visiteur anglophone voyait un titre d'onglet traduit mais des balises
   // OG/Twitter de partage encore en français.
   const defaultWord = words[0] || 'entreprise';
-  usePageMeta({
-    title: `${t('hero.titleStart')} ${defaultWord}`,
-    description: t('hero.subtitle'),
-    path: '/landing',
-  });
+  usePageMeta({ page: 'home', path: '/landing' });
+  const lien = useLienPublic();
 
   // ─── Animations GSAP (hero choréographié + parallaxe/profondeur) ───
   const pageRef = useRef(null);
@@ -752,7 +750,7 @@ export default function Landing() {
                 </Typography>
               )}
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', mt: 4 }}>
-                <Button variant="contained" size="large" onClick={() => navigate('/pricing')}
+                <Button variant="contained" size="large" onClick={() => navigate(lien('/pricing'))}
                   sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, px: 4, py: 1.5, borderRadius: 2, textTransform: 'none', fontWeight: 700, fontSize: '1rem' }}>
                   {t('pricingTeaser.viewPricing')}
                 </Button>
@@ -809,7 +807,7 @@ export default function Landing() {
               <Button
                 variant="text"
                 endIcon={<ArrowForward />}
-                onClick={() => navigate('/faq')}
+                onClick={() => navigate('/help/faq')}
                 sx={{ textTransform: 'none', fontWeight: 600, color: '#2563eb' }}
               >
                 {t('faq.seeAll')}

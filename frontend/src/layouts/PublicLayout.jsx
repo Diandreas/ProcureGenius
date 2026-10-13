@@ -7,9 +7,11 @@ import { Box, Container, Typography, Button, Divider, useTheme } from '@mui/mate
 import { LightMode, DarkMode, Translate, SpaceDashboard } from '@mui/icons-material';
 import { useColorMode } from '../App';
 import LanguageSwitcher from '../components/common/LanguageSwitcher';
+import useLienPublic from '../hooks/useLienPublic';
 
 export default function PublicLayout() {
   const { t, i18n } = useTranslation(['landing', 'public']);
+  const lien = useLienPublic();
   const navigate = useNavigate();
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const theme = useTheme();
@@ -63,7 +65,7 @@ export default function PublicLayout() {
           <Container maxWidth="lg">
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
               
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={() => navigate('/landing')}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={() => navigate(lien('/landing'))}>
                 <img 
                   src="/main.png" 
                   alt={t('landing:nav.logoAlt')} 
@@ -90,7 +92,7 @@ export default function PublicLayout() {
                 </Button>
                 <Button 
                   component="a"
-                  href="/landing#pricing-section"
+                  href={lien('/landing#pricing-section')}
                   sx={{ 
                     color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
                     textTransform: 'none', 
@@ -241,17 +243,17 @@ export default function PublicLayout() {
             <Box sx={{ display: 'flex', gap: { xs: 4, sm: 8 } }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>{t('landing:footer.product')}</Typography>
-                <Typography component="a" href="/landing#demo-section" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:footer.features')}</Typography>
-                <Typography component="a" href="/landing#pricing-section" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:pricing.title')}</Typography>
-                <Typography component="a" href="/privacy" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('public:privacy.title')}</Typography>
-                <Typography component="a" href="/terms" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('public:terms.title')}</Typography>
+                <Typography component="a" href={lien('/landing#demo-section')} sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:footer.features')}</Typography>
+                <Typography component="a" href={lien('/landing#pricing-section')} sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:pricing.title')}</Typography>
+                <Typography component="a" href={lien('/privacy')} sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('public:privacy.title')}</Typography>
+                <Typography component="a" href={lien('/terms')} sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('public:terms.title')}</Typography>
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Typography sx={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 700, fontSize: '0.9rem', mb: 1 }}>{t('landing:footer.resources')}</Typography>
                 <Typography component="a" href="/blog" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:nav.blog')}</Typography>
                 <Typography component="a" href="/help" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:nav.documentation')}</Typography>
                 <Typography component="a" href="/help/faq" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:footer.faq')}</Typography>
-                <Typography component="a" href="/support" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:footer.support')}</Typography>
+                <Typography component="a" href={lien('/support')} sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.6)', fontSize: '0.85rem', textDecoration: 'none', '&:hover': { color: '#2563eb' } }}>{t('landing:footer.support')}</Typography>
               </Box>
             </Box>
           </Box>

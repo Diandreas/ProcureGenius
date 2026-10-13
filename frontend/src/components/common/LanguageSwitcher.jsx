@@ -3,6 +3,8 @@ import { Button, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from '@mu
 import { Check, Translate } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { cheminLangue, estMultilingue } from '../../seo/site';
 import { LANGUES } from '../../i18n/config';
 import { changeLanguage } from '../../store/slices/settingsSlice';
 
@@ -16,6 +18,8 @@ export default function LanguageSwitcher({ sx }) {
   const dispatch = useDispatch();
   const connecte = useSelector((state) => state.auth?.isAuthenticated);
   const [ancre, setAncre] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   const actuelle = (i18n.resolvedLanguage || i18n.language || 'fr').slice(0, 2);
 
   const choisir = (code) => {
@@ -26,6 +30,10 @@ export default function LanguageSwitcher({ sx }) {
     } else {
       i18n.changeLanguage(code);
       try { localStorage.setItem('appLanguage', code); } catch { /* stockage bloqué */ }
+    }
+    // Page publique : aller à son adresse dans la langue choisie (/pricing -> /en/pricing)
+    if (estMultilingue(location.pathname)) {
+      navigate(`${cheminLangue(location.pathname, code)}${location.hash || ''}`);
     }
   };
 

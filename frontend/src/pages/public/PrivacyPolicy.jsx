@@ -3,6 +3,7 @@ import { Box, Container, Typography, useTheme, Divider, Chip } from '@mui/materi
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import ShieldIcon from '@mui/icons-material/Shield';
+import usePageMeta from '../../hooks/usePageMeta';
 
 const SECTIONS_ORDER = [
   'intro',
@@ -19,9 +20,9 @@ export default function PrivacyPolicy() {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { t } = useTranslation(['public']);
+  usePageMeta({ page: 'privacy', path: '/privacy' });
 
   useEffect(() => {
-    document.title = `${t('public:privacy.title')} | ProcureGenius`;
     window.scrollTo(0, 0);
   }, [t]);
 

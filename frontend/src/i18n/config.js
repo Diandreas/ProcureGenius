@@ -37,7 +37,10 @@ i18n
     // Détection de la langue
     detection: {
       // Ordre de détection: localStorage > navigateur
-      order: ['localStorage', 'navigator'],
+      // Choix mémorisé, sinon la langue de la page (<html lang> des pages pré-générées).
+      // Pas la langue du navigateur : Google visite en anglais et doit voir le français
+      // sur les adresses françaises, l'anglais sur /en/…, l'allemand sur /de/…
+      order: ['localStorage', 'htmlTag'],
 
       // Clé pour localStorage
       lookupLocalStorage: 'appLanguage',

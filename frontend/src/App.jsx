@@ -122,6 +122,7 @@ import ModuleRoute from './components/guards/ModuleRoute';
 import FeatureGate from './components/common/FeatureGate';
 
 import PublicLayout from './layouts/PublicLayout';
+import LangueUrl from './components/seo/LangueUrl';
 
 // PWA
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -898,6 +899,18 @@ function App() {
                           <Route path="/help/:articleId" element={<Help />} />
                           <Route path="/help/faq" element={<FAQ />} />
                           <Route path="/help/shortcuts" element={<KeyboardShortcuts />} />
+                          {/* Pages publiques en anglais et en allemand : une adresse par langue (référencement) */}
+                          {['en', 'de'].map((lng) => (
+                            <Route key={lng} path={`/${lng}`} element={<LangueUrl langue={lng} />}>
+                              <Route index element={NATIVE_APP ? <Navigate to="/login" replace /> : <Landing />} />
+                              <Route path="pricing" element={<Pricing />} />
+                              <Route path="documentation" element={<Documentation />} />
+                              <Route path="support" element={<PublicSupport />} />
+                              <Route path="privacy" element={<PrivacyPolicy />} />
+                              <Route path="terms" element={<TermsOfService />} />
+                              <Route path="*" element={<Navigate to={`/${lng}`} replace />} />
+                            </Route>
+                          ))}
                         </Route>
 
                         {/* Auth Routes — inaccessibles si déjà connecté (-> dashboard) */}
