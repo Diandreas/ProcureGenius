@@ -8,7 +8,10 @@
 // l'app React prend ensuite le relais normalement.
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+
+// Charge un module ESM sans import (site.js, blogPosts.js) quel que soit Node :
+// Node 18 traiterait ces .js comme CommonJS (pas de "type": "module" dans package.json).
+const importerModule = (fichier) => import(`data:text/javascript;charset=utf-8,${encodeURIComponent(fs.readFileSync(fichier, 'utf-8'))}`);
 
 const ici = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 
@@ -79,8 +82,8 @@ export default function seoPrerender() {
     apply: 'build',
     configResolved(config) { dossierBuild = path.resolve(config.root, config.build.outDir); },
     async closeBundle() {
-      const site = await import(pathToFileURL(path.join(ici, 'src', 'seo', 'site.js')).href);
-      const { BLOG_POSTS } = await import(pathToFileURL(path.join(ici, 'src', 'data', 'blogPosts.js')).href);
+      const site = await importerModule(path.join(ici, 'src', 'seo', 'site.js'));
+      const { BLOG_POSTS } = await importerModule(path.join(ici, 'src', 'data', 'blogPosts.js'));
       const { SITE, LANGUES_SEO, OG_LOCALE, PAGES_MULTILINGUES, PAGES_FR, cheminLangue, imagePartage } = site;
       const gabaritPath = path.join(dossierBuild, 'index.html');
       const gabarit = fs.readFileSync(gabaritPath, 'utf-8');
