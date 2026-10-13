@@ -139,7 +139,7 @@ function PageTransition({ locationKey, children }) {
 }
 
 function MainLayout() {
-  const { t } = useTranslation(['navigation', 'common']);
+  const { t, i18n } = useTranslation(['navigation', 'common']);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
@@ -379,7 +379,7 @@ function MainLayout() {
       return headerConfig;
     }
     return getContextualActions();
-  }, [headerConfig, location.pathname, isMobile, dashboardPeriod]);
+  }, [headerConfig, location.pathname, isMobile, dashboardPeriod, i18n.language]);
 
   const drawer = (
     <Box sx={{
@@ -1218,7 +1218,8 @@ function MainLayout() {
           <Box sx={{ maxWidth: '1400px', mx: 'auto' }}>
             <LayoutGroup>
               <PageTransition locationKey={location.pathname}>
-                <Outlet />
+                {/* Changement de langue : la page se recharge pour que son titre et ses textes suivent */}
+                <Outlet key={i18n.language} />
               </PageTransition>
             </LayoutGroup>
           </Box>
