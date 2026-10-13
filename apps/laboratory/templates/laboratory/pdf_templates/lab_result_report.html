@@ -311,16 +311,16 @@
 
 <div class="signature-section">
     <div class="sig-block">
-        <div class="info-label">Les Techniciens :</div>
+        {% if lab_technicians %}
+        <div class="info-label">{% if lab_technicians|length > 1 %}Les Techniciens :{% else %}Le Technicien :{% endif %}</div>
         <div style="font-weight: bold; font-size: 9pt; margin-top: 2px; line-height: 1.4;">
-            SAMIRA LORAINE BIALA MENGUE<br>
-            DJOUKOUA TALLA DELVICHE<br>
-            DONFACK ERNESTINE
+            {% for nom in lab_technicians %}{{ nom }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
         </div>
+        {% endif %}
     </div>
     <div class="sig-block" style="text-align: right;">
         <div class="info-label">Le Biologiste :</div>
-        <div style="font-weight: bold; font-size: 9pt; margin-top: 2px;">KELL MAHOP Emmanuel Philippe</div>
+        <div style="font-weight: bold; font-size: 9pt; margin-top: 2px;">{{ lab_biologist }}</div>
         <div style="margin-top: 30px; border-top: 1px dotted #9ca3af; width: 180px; font-size: 7pt; margin-left: auto; padding-top: 2px;">Signature & Cachet</div>
     </div>
 </div>

@@ -88,6 +88,9 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'stock_barcode_enabled',
             'stock_reception_enabled',
             'stock_inventory_enabled',
+            # Noms sur les résultats de laboratoire
+            'lab_technician_names',
+            'lab_biologist_name',
             'created_at',
             'updated_at',
         ]

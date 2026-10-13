@@ -1340,6 +1340,43 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
             </AccordionDetails>
           </Accordion>
         </Grid>
+
+        {/* Noms imprimés en bas des résultats de laboratoire. Réglés une fois : ils
+            remplacent le compte qui a saisi / validé, sur tous les résultats (anciens compris). */}
+        <Grid item xs={12}>
+          <Accordion defaultExpanded={false}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Laboratoire — noms sur les résultats</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Ces noms sont imprimés en bas de tous les résultats de laboratoire, y compris ceux de
+                sous-traitance et les anciens, et affichés sur la fiche de chaque demande. Laissez vide
+                pour afficher le nom de la personne qui a saisi ou validé.
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={7}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    label="Techniciens (un nom par ligne)"
+                    value={settings.labTechnicianNames ?? ''}
+                    onChange={(e) => onUpdate('labTechnicianNames', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={5}>
+                  <TextField
+                    fullWidth
+                    label="Biologiste"
+                    value={settings.labBiologistName ?? ''}
+                    onChange={(e) => onUpdate('labBiologistName', e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+        </Grid>
       </Grid>
     </Box>
   );

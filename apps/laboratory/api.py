@@ -2222,6 +2222,8 @@ class LabExamStatsDetailView(APIView):
         from django.core.paginator import Paginator
 
         org = request.user.organization
+        from .signataires import signataires
+        _, biologiste_fixe = signataires(org)
         try:
             test = LabTest.objects.get(id=test_id, organization=org)
         except LabTest.DoesNotExist:
@@ -2264,7 +2266,7 @@ class LabExamStatsDetailView(APIView):
                 'patient_id': str(patient.id) if patient else None,
                 'ordonne_par': order.ordered_by.get_full_name() if order.ordered_by else '-',
                 'prescripteur': order.prescriber.full_name if order.prescriber else None,
-                'biologiste': order.results_verified_by.get_full_name() if order.results_verified_by else None,
+                'biologiste': (biologiste_fixe or order.results_verified_by.get_full_name()) if order.results_verified_by else None,
                 'sous_traitant': order.subcontractor.name if order.subcontractor else None,
                 'statut': order.status,
                 'prix': float(item.price or 0),
@@ -2377,6 +2379,8 @@ class LabPanelStatsDetailView(APIView):
         from django.core.paginator import Paginator
 
         org = request.user.organization
+        from .signataires import signataires
+        _, biologiste_fixe = signataires(org)
         try:
             panel = LabTestPanel.objects.get(id=panel_id, organization=org)
         except LabTestPanel.DoesNotExist:
@@ -2419,7 +2423,7 @@ class LabPanelStatsDetailView(APIView):
                 'patient_id': str(patient.id) if patient else None,
                 'ordonne_par': order.ordered_by.get_full_name() if order.ordered_by else '-',
                 'prescripteur': order.prescriber.full_name if order.prescriber else None,
-                'biologiste': order.results_verified_by.get_full_name() if order.results_verified_by else None,
+                'biologiste': (biologiste_fixe or order.results_verified_by.get_full_name()) if order.results_verified_by else None,
                 'statut': order.status,
                 'prix': float(item.panel_price or 0),
             })

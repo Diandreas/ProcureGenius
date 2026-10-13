@@ -205,6 +205,19 @@ class OrganizationSettings(models.Model):
         help_text=_("Mode comptage : saisie du stock reel compte, ecarts et ajustement trace")
     )
 
+    # Noms affichés sur les résultats de laboratoire (voir apps/laboratory/signataires.py).
+    # Vides : on affiche le compte qui a saisi / validé, comme avant.
+    lab_technician_names = models.TextField(
+        blank=True, default='',
+        verbose_name=_("Techniciens affichés sur les résultats de laboratoire"),
+        help_text=_("Un nom par ligne. Remplace le nom du compte qui a saisi, sur tous les résultats.")
+    )
+    lab_biologist_name = models.CharField(
+        max_length=150, blank=True, default='',
+        verbose_name=_("Biologiste affiché sur les résultats de laboratoire"),
+        help_text=_("Remplace le nom du compte qui a validé, sur tous les résultats.")
+    )
+
     # Taxation
     default_tax_rate = models.DecimalField(
         max_digits=5,

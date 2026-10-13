@@ -55,6 +55,14 @@ class OrganizationSettingsViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
         elif request.method == 'PATCH':
+            # Paramètres de toute l'organisation (fiscalité, carte privilège, noms imprimés sur
+            # les résultats de laboratoire...) : réservés aux administrateurs.
+            user = request.user
+            droits = getattr(user, 'permissions', None)
+            if not (user.is_superuser or getattr(user, 'role', '') in ('admin', 'manager', 'owner')
+                    or getattr(droits, 'can_manage_settings', False)):
+                return Response({'error': "Seul un administrateur peut modifier les paramètres."},
+                                status=status.HTTP_403_FORBIDDEN)
             serializer = self.get_serializer(settings, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()

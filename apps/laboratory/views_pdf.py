@@ -231,6 +231,13 @@ class LabResultPDFView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTem
 
         context['categories'] = categories_data.values()
         context['pending_items'] = pending_items
+
+        # Noms en bas du rapport : ceux réglés dans Paramètres > Laboratoire (équipe fixe, sur
+        # tous les résultats, anciens compris) ; sinon les comptes qui ont saisi et validé.
+        from .signataires import signataires, nom_compte
+        techniciens, biologiste = signataires(lab_order.organization)
+        context['lab_technicians'] = techniciens or [n for n in [nom_compte(lab_order.results_entered_by)] if n]
+        context['lab_biologist'] = biologiste or nom_compte(lab_order.results_verified_by) or ''
         return context
 
 

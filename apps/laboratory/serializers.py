@@ -447,8 +447,9 @@ class LabOrderSerializer(serializers.ModelSerializer):
     patient_age = serializers.SerializerMethodField()
     ordered_by_name = serializers.SerializerMethodField()
     sample_collected_by_name = serializers.CharField(source='sample_collected_by.get_full_name', read_only=True, default=None)
-    results_entered_by_name = serializers.CharField(source='results_entered_by.get_full_name', read_only=True, default=None)
-    results_verified_by_name = serializers.CharField(source='results_verified_by.get_full_name', read_only=True, default=None)
+    # Mêmes noms que sur le PDF : l'équipe réglée dans Paramètres > Laboratoire, sinon le compte.
+    results_entered_by_name = serializers.SerializerMethodField()
+    results_verified_by_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -525,6 +526,28 @@ class LabOrderSerializer(serializers.ModelSerializer):
             'diagnosed_at'
         ]
     
+    def _signataires(self, obj):
+        # Une seule lecture des paramètres par requête, même pour une liste de demandes.
+        from .signataires import signataires
+        cache = self.context.setdefault('_signataires_labo', {})
+        if obj.organization_id not in cache:
+            cache[obj.organization_id] = signataires(obj.organization)
+        return cache[obj.organization_id]
+
+    def get_results_entered_by_name(self, obj):
+        from .signataires import nom_compte
+        if not obj.results_entered_by_id and not obj.results_completed_at:
+            return None
+        techniciens, _ = self._signataires(obj)
+        return ', '.join(techniciens) if techniciens else nom_compte(obj.results_entered_by)
+
+    def get_results_verified_by_name(self, obj):
+        from .signataires import nom_compte
+        if not obj.results_verified_by_id and not obj.results_verified_at:
+            return None
+        _, biologiste = self._signataires(obj)
+        return biologiste or nom_compte(obj.results_verified_by)
+
     def get_is_subcontracted(self, obj):
         return obj.subcontractor_id is not None
 
