@@ -113,23 +113,31 @@ def avec_activite(qs):
     )
 
 
+def prochain_anniversaire(naissance, aujourdhui):
+    """Date du prochain anniversaire (aujourd'hui compris), ou None sans date de naissance."""
+    if not naissance:
+        return None
+    for annee in (aujourdhui.year, aujourdhui.year + 1):
+        try:
+            prochain = naissance.replace(year=annee)
+        except ValueError:  # 29 fevrier : on le fete le 28 les annees non bissextiles
+            prochain = naissance.replace(year=annee, day=28)
+        if prochain >= aujourdhui:
+            return prochain
+    return None
+
+
+def jours_avant_anniversaire(naissance, aujourdhui=None):
+    """0 le jour de l'anniversaire, 1 la veille... None sans date de naissance."""
+    aujourdhui = aujourdhui or date.today()
+    prochain = prochain_anniversaire(naissance, aujourdhui)
+    return (prochain - aujourdhui).days if prochain else None
+
+
 def _ids_anniversaire(qs, aujourdhui, jours=7):
     """Patients dont l'anniversaire tombe dans les `jours` prochains jours."""
-    fin = aujourdhui + timedelta(days=jours)
-    ids = []
-    for pk, naissance in qs.filter(date_of_birth__isnull=False).values_list('id', 'date_of_birth'):
-        try:
-            prochain = naissance.replace(year=aujourdhui.year)
-        except ValueError:  # 29 fevrier : on le fete le 28 les annees non bissextiles
-            prochain = naissance.replace(year=aujourdhui.year, day=28)
-        if prochain < aujourdhui:
-            try:
-                prochain = naissance.replace(year=aujourdhui.year + 1)
-            except ValueError:
-                prochain = naissance.replace(year=aujourdhui.year + 1, day=28)
-        if aujourdhui <= prochain <= fin:
-            ids.append(pk)
-    return ids
+    return [pk for pk, naissance in qs.filter(date_of_birth__isnull=False).values_list('id', 'date_of_birth')
+            if jours_avant_anniversaire(naissance, aujourdhui) <= jours]
 
 
 def _ids_vaccin_a_rappeler(organization, aujourdhui):
@@ -283,7 +291,9 @@ def services_par_patient(ids):
     resultat = {}
     for r in (Invoice.objects.filter(client_id__in=ids)
               .exclude(status='cancelled').exclude(invoice_type='credit_note')
-              .values('client_id', 'invoice_type').distinct()):
+              # order_by() vide : sinon le tri par défaut d'Invoice entre dans le DISTINCT
+              # et chaque facture redonne le même service (« Vente de produits » ×3).
+              .order_by().values('client_id', 'invoice_type').distinct()):
         resultat.setdefault(r['client_id'], []).append(
             {'value': r['invoice_type'], 'label': str(libelles.get(r['invoice_type'], r['invoice_type']))})
     return resultat

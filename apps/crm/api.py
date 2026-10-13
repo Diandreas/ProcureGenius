@@ -121,6 +121,8 @@ class CrmPatientListView(_CrmView):
                 'phone_shared': compte_numeros[numeros[0]] if numeros else 0,
                 'gender': c.gender,
                 'age': services.age_en_annees(c.date_of_birth),
+                'date_of_birth': c.date_of_birth,
+                'birthday_in': services.jours_avant_anniversaire(c.date_of_birth),
                 'address': c.address,
                 'has_privilege_card': c.has_privilege_card,
                 'created_at': c.created_at,

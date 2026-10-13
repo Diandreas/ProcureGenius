@@ -16,6 +16,7 @@ import {
   Download as DownloadIcon,
   Settings as SettingsIcon,
   ChatBubbleOutline as RelanceIcon,
+  Cake as CakeIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import MonthlyReportButton from '../../components/crm/MonthlyReportButton';
@@ -130,6 +131,28 @@ const depuis = (jours) => {
 };
 
 const fmt = (n) => `${Number(n || 0).toLocaleString('fr-FR')} F`;
+
+// « 699721804 / 677 00 11 22 » -> « 699 72 18 04 / 677 00 11 22 » : lisible et facile à dicter.
+const telephoneLisible = (brut) => (brut || '').split('/').map((morceau) => {
+  let chiffres = morceau.replace(/\D/g, '');
+  if (chiffres.length === 12 && chiffres.startsWith('237')) chiffres = chiffres.slice(3);
+  return chiffres.length === 9
+    ? `${chiffres.slice(0, 3)} ${chiffres.slice(3, 5)} ${chiffres.slice(5, 7)} ${chiffres.slice(7)}`
+    : morceau.trim();
+}).filter(Boolean).join(' / ');
+
+// « 1990-03-12 » -> « 12/03/1990 », sans passer par Date (pas de décalage de fuseau).
+const dateNaissance = (iso) => {
+  const [a, m, j] = String(iso).slice(0, 10).split('-');
+  return `${j}/${m}/${a}`;
+};
+
+const anniversaireProche = (jours) => {
+  if (jours === 0) return " · anniversaire aujourd'hui";
+  if (jours === 1) return ' · anniversaire demain';
+  if (jours != null && jours <= 7) return ` · anniversaire dans ${jours} j`;
+  return '';
+};
 
 const lireMemoire = (cle) => {
   try { return window.localStorage.getItem(cle); } catch (e) { return null; }
@@ -355,6 +378,32 @@ export default function SuiviPatients() {
         {[p.age != null ? `${p.age} ans` : null, p.gender === 'F' ? 'Femme' : p.gender === 'M' ? 'Homme' : null,
           p.quartier || (p.address ? p.address.split('\n')[0].slice(0, 28) : null)].filter(Boolean).join(' · ')}
       </Typography>
+      {(p.phone || p.date_of_birth) && (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 1.5, rowGap: 0.25, mt: 0.25 }}>
+          {p.phone && (
+            <Typography
+              component="a" href={`tel:${p.phone.split('/')[0].trim()}`} variant="caption"
+              sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'text.primary', fontWeight: 600, textDecoration: 'none' }}
+            >
+              <PhoneIcon sx={{ fontSize: 14 }} />
+              {telephoneLisible(p.phone)}
+            </Typography>
+          )}
+          {p.date_of_birth && (
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'inline-flex', alignItems: 'center', gap: 0.5,
+                color: p.birthday_in != null && p.birthday_in <= 7 ? 'primary.main' : 'text.secondary',
+                fontWeight: p.birthday_in != null && p.birthday_in <= 7 ? 700 : 400,
+              }}
+            >
+              <CakeIcon sx={{ fontSize: 14 }} />
+              {dateNaissance(p.date_of_birth)}{anniversaireProche(p.birthday_in)}
+            </Typography>
+          )}
+        </Box>
+      )}
       {(p.last_contact || p.do_not_contact) && (
         <Box mt={0.5} display="flex" gap={0.5} flexWrap="wrap">
           {p.last_contact && (
