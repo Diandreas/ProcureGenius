@@ -191,7 +191,7 @@
     "titleStart": "Kostenlos starten,",
     "titleHighlight": "im eigenen Tempo wachsen",
     "subtitle": "Ein kostenloser Tarif für den Einstieg, der Pro-Tarif für {{price}}/Monat mit einem Gratismonat (ohne Karte) und alles unbegrenzt ab dem Business-Tarif.",
-    "currencyNote": "Richtpreis umgerechnet in {{currency}} · Abrechnung in CFA-Franc (XAF)",
+    "currencyNote": "Richtpreis umgerechnet in {{currency}} · Abrechnung in {{billingCurrency}}",
     "viewPricing": "Preise ansehen",
     "tryFree": "Kostenlos testen"
   },

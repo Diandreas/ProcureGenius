@@ -746,7 +746,7 @@ export default function Landing() {
               </Typography>
               {!memeMonnaie(currency, planPro.currency) && (
                 <Typography sx={{ mt: 1.5, color: pal.faint, fontSize: '0.82rem' }}>
-                  {t('pricingTeaser.currencyNote', { currency })}
+                  {t('pricingTeaser.currencyNote', { currency: ['XAF', 'XOF'].includes(currency) ? 'FCFA' : currency, billingCurrency: t(`subscription:currencyNames.${planPro.currency}`, { defaultValue: planPro.currency }) })}
                 </Typography>
               )}
               <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', mt: 4 }}>

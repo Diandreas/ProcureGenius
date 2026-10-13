@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import { CloudOff, CloudSync, ErrorOutline } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import { onPendingChange, syncNow, notifyPending } from '../../services/offline/syncEngine';
 import { onConnectivityChange } from '../../services/offline/connectivity';
 import { failedMutations, removeMutation, retryMutation } from '../../services/offline/mutationQueue';
@@ -60,6 +61,8 @@ export default function OfflineBanner() {
   const [failed, setFailed] = useState(0);
   const [open, setOpen] = useState(false);
   const [failedList, setFailedList] = useState([]);
+  // Visiteur non connecté (site public) : rien à synchroniser, pas de bandeau
+  const connecte = useSelector((state) => state.auth?.isAuthenticated);
 
   useEffect(() => onConnectivityChange((isOnline) => setOffline(!isOnline)), []);
   useEffect(() => onPendingChange((p, f) => { setPending(p); setFailed(f || 0); }), []);
@@ -104,7 +107,9 @@ export default function OfflineBanner() {
   );
 
   let banner = null;
-  if (offline) {
+  if (!connecte) {
+    banner = null;
+  } else if (offline) {
     banner = (
       <Box sx={bar('#5a6478')} role="status">
         <CloudOff sx={{ fontSize: 18 }} />
