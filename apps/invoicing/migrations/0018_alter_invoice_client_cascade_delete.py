@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('invoicing', '0017_printconfiguration_organization_and_more'),
-        ('accounts', '__latest__'),
+        ('accounts', '0014_change_payment_terms_default_to_cash'),  # était __latest__ : cassait l'historique à chaque nouvelle migration accounts
     ]
 
     operations = [
