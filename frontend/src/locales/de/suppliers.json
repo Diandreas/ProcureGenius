@@ -1,0 +1,184 @@
+{
+  "title": "Lieferanten",
+  "newSupplier": "Neuer Lieferant",
+  "editSupplier": "Lieferant bearbeiten",
+  "search": {
+    "placeholder": "Lieferant suchen...",
+    "placeholderFull": "Lieferant oder Ansprechpartner suchen..."
+  },
+  "filters": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "local": "Lokal",
+    "international": "Internat.",
+    "internationalFull": "International",
+    "topRated": "Top bewertet (≥4★)",
+    "all": "Alle",
+    "activeFilter": "Aktiver Filter:",
+    "statusLabel": "Status"
+  },
+  "status": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "pending": "Ausstehend",
+    "blocked": "Gesperrt"
+  },
+  "diversity": {
+    "minority": "Minderheit",
+    "woman": "Frau",
+    "indigenous": "Indigen"
+  },
+  "messages": {
+    "noSuppliers": "Keine Lieferanten",
+    "noSuppliersDescription": "Keine Lieferanten entsprechen Ihren Suchkriterien.",
+    "loadingError": "Fehler beim Laden der Lieferanten",
+    "supplierDeleted": "Lieferant gelöscht",
+    "deleteError": "Fehler beim Löschen des Lieferanten",
+    "supplierNotFound": "Lieferant nicht gefunden",
+    "deleteConfirmation": "{{name}} löschen?",
+    "createSuccess": "Lieferant erfolgreich erstellt",
+    "updateSuccess": "Lieferant erfolgreich aktualisiert",
+    "saveError": "Fehler beim Speichern des Lieferanten",
+    "statisticsError": "Fehler beim Laden der Statistiken",
+    "reportGenerating": "{{format}}-Bericht wird erstellt...",
+    "reportGenerated": "Bericht erfolgreich erstellt!",
+    "reportInProgress": "Der Bericht wird erstellt...",
+    "reportError": "Fehler beim Erstellen des Berichts",
+    "loading": "Lieferanten werden geladen...",
+    "noSuppliersSelected": "Keine Lieferanten für den Bericht vorhanden",
+    "pdfDownloaded": "PDF erfolgreich heruntergeladen",
+    "pdfError": "Fehler beim Erstellen des PDFs",
+    "reportPdfDownloaded": "PDF-Bericht erfolgreich heruntergeladen",
+    "printWindowOpened": "Druckfenster geöffnet",
+    "cannotOpenPrintWindow": "Das Druckfenster kann nicht geöffnet werden",
+    "supplierNotFoundDescription": "Der gesuchte Lieferant existiert nicht oder wurde gelöscht."
+  },
+  "actions": {
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "quickActions": "Schnellaktionen",
+    "newPurchaseOrder": "Neue Bestellung",
+    "addProducts": "Produkte hinzufügen",
+    "generateReport": "Bericht erstellen",
+    "downloadPdf": "PDF-Bericht herunterladen"
+  },
+  "tabs": {
+    "info": "Infos",
+    "orders": "Bestellungen",
+    "products": "Produkte"
+  },
+  "labels": {
+    "local": "Lokal",
+    "contactPerson": "Ansprechpartner",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "totalSpent": "Gesamtausgaben",
+    "orders": "Bestellungen",
+    "averageValue": "Durchschnittswert",
+    "diversity": "Diversität",
+    "localSupplier": "Lokaler Lieferant",
+    "minorityOwned": "Im Besitz einer Minderheit",
+    "womanOwned": "Im Besitz einer Frau",
+    "indigenousOwned": "Indigenes Unternehmen",
+    "categories": "Kategorien",
+    "systemInfo": "Systeminformationen",
+    "createdOn": "Erstellt am",
+    "modifiedOn": "Geändert am",
+    "purchaseOrders": "Bestellungen",
+    "totalOrders": "{{count}} Bestellung(en) insgesamt",
+    "topProducts": "Meistgekaufte Produkte",
+    "totalProducts": "{{count}} Produkt(e)",
+    "noOrders": "Keine Bestellungen für diesen Lieferanten",
+    "noProducts": "Keine Produkte von diesem Lieferanten gekauft",
+    "autoRatingTitle": "Automatische Bewertung",
+    "autoRatingDescription": "Bewertungsdetails basierend auf der Leistung",
+    "punctuality": "Pünktlichkeit",
+    "quality": "Qualität",
+    "payment": "Zahlung",
+    "ofScore": "der Bewertung",
+    "top": "Top",
+    "international": "International",
+    "autoCalculated": "Automatisch berechnet",
+    "performance": "Leistung",
+    "quantityOrdered": "Bestellte Menge",
+    "ratingDetails": "Bewertungsdetails"
+  },
+  "form": {
+    "title": {
+      "new": "Neuer Lieferant",
+      "edit": "Lieferant bearbeiten"
+    },
+    "subtitle": {
+      "new": "Fügen Sie Ihrem System einen neuen Lieferanten hinzu",
+      "edit": "Lieferantendaten bearbeiten"
+    },
+    "sections": {
+      "generalInfo": "Allgemeine Informationen",
+      "rating": "Bewertung",
+      "diversity": "Diversität"
+    },
+    "fields": {
+      "supplierName": "Lieferantenname",
+      "contactPerson": "Ansprechpartner",
+      "status": "Status",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "address": "Adresse",
+      "city": "Stadt",
+      "province": "Provinz",
+      "none": "Keine"
+    },
+    "buttons": {
+      "cancel": "Abbrechen",
+      "create": "Erstellen",
+      "save": "Speichern"
+    },
+    "validation": {
+      "nameRequired": "Name ist erforderlich",
+      "invalidEmail": "Ungültige E-Mail-Adresse",
+      "emailRequired": "E-Mail ist erforderlich",
+      "statusRequired": "Status ist erforderlich"
+    },
+    "saving": "Wird gespeichert..."
+  },
+  "provinces": {
+    "QC": "Québec",
+    "ON": "Ontario",
+    "BC": "Britisch-Kolumbien",
+    "AB": "Alberta",
+    "MB": "Manitoba",
+    "SK": "Saskatchewan",
+    "NS": "Neuschottland",
+    "NB": "New Brunswick",
+    "NL": "Neufundland und Labrador",
+    "PE": "Prinz-Edward-Insel",
+    "NT": "Nordwest-Territorien",
+    "YT": "Yukon",
+    "NU": "Nunavut"
+  },
+  "pdf": {
+    "title": "Lieferanten-PDF-Bericht",
+    "description": "PDF-Bericht wird erstellt...",
+    "ready": "Der PDF-Bericht ist fertig. Wählen Sie eine Aktion:",
+    "generating": "PDF wird erstellt..."
+  },
+  "kpi": {
+    "total": "Lieferanten",
+    "totalSub": "insgesamt",
+    "active": "Aktiv",
+    "activeSub": "derzeit aktiv",
+    "topRated": "Top bewertet",
+    "topRatedSub": "4+ Sterne",
+    "local": "Lokal",
+    "localSub": "in der Nähe",
+    "international": "Internat.",
+    "internationalSub": "im Ausland"
+  },
+  "report": {
+    "fileName": "lieferantenbericht-{{timestamp}}.pdf",
+    "viewerTitle": "Lieferantenbericht",
+    "supplierFileName": "lieferantenbericht-{{name}}.pdf",
+    "supplierViewerTitle": "Bericht {{name}}"
+  }
+}

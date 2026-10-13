@@ -2,110 +2,34 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Import translations
-import commonFr from '../locales/fr/common.json';
-import commonEn from '../locales/en/common.json';
-import settingsFr from '../locales/fr/settings.json';
-import settingsEn from '../locales/en/settings.json';
-import invoicesFr from '../locales/fr/invoices.json';
-import invoicesEn from '../locales/en/invoices.json';
-import purchaseOrdersFr from '../locales/fr/purchaseOrders.json';
-import purchaseOrdersEn from '../locales/en/purchaseOrders.json';
-import clientsFr from '../locales/fr/clients.json';
-import clientsEn from '../locales/en/clients.json';
-import productsFr from '../locales/fr/products.json';
-import productsEn from '../locales/en/products.json';
-import dashboardFr from '../locales/fr/dashboard.json';
-import dashboardEn from '../locales/en/dashboard.json';
-import navigationFr from '../locales/fr/navigation.json';
-import navigationEn from '../locales/en/navigation.json';
-import suppliersFr from '../locales/fr/suppliers.json';
-import suppliersEn from '../locales/en/suppliers.json';
-import aiChatFr from '../locales/fr/aiChat.json';
-import aiChatEn from '../locales/en/aiChat.json';
-import contractsFr from '../locales/fr/contracts.json';
-import contractsEn from '../locales/en/contracts.json';
-import eSourcingFr from '../locales/fr/eSourcing.json';
-import eSourcingEn from '../locales/en/eSourcing.json';
-import authFr from '../locales/fr/auth.json';
-import authEn from '../locales/en/auth.json';
-import helpFr from '../locales/fr/help.json';
-import helpEn from '../locales/en/help.json';
-import accountingFr from '../locales/fr/accounting.json';
-import accountingEn from '../locales/en/accounting.json';
-import stockFr from '../locales/fr/stock.json';
-import stockEn from '../locales/en/stock.json';
-import onboardingFr from '../locales/fr/onboarding.json';
-import onboardingEn from '../locales/en/onboarding.json';
-import dataImportFr from '../locales/fr/dataImport.json';
-import dataImportEn from '../locales/en/dataImport.json';
-import subscriptionFr from '../locales/fr/subscription.json';
-import subscriptionEn from '../locales/en/subscription.json';
-import offlineFr from '../locales/fr/offline.json';
-import offlineEn from '../locales/en/offline.json';
-import landingFr from '../locales/fr/landing.json';
-import landingEn from '../locales/en/landing.json';
-import publicFr from '../locales/fr/public.json';
-import publicEn from '../locales/en/public.json';
+// Toutes les traductions : locales/<langue>/<namespace>.json, chargées automatiquement.
+// Ajouter une langue = ajouter son dossier et la déclarer dans LANGUES.
+const fichiers = import.meta.glob('../locales/*/*.json', { eager: true });
+const resources = {};
+for (const [chemin, module] of Object.entries(fichiers)) {
+  const [, langue, ns] = chemin.match(/locales\/([^/]+)\/([^/]+)\.json$/);
+  (resources[langue] ||= {})[ns] = module.default || module;
+}
+
+/** Langues proposées dans l'app (code, nom dans sa propre langue). */
+export const LANGUES = [
+  { code: 'fr', nom: 'Français' },
+  { code: 'en', nom: 'English' },
+  { code: 'de', nom: 'Deutsch' },
+];
 
 // Configuration i18next
 i18n
   .use(LanguageDetector) // Détecte la langue du navigateur
   .use(initReactI18next) // Passe i18n à react-i18next
   .init({
-    resources: {
-      fr: {
-        common: commonFr,
-        settings: settingsFr,
-        invoices: invoicesFr,
-        purchaseOrders: purchaseOrdersFr,
-        clients: clientsFr,
-        products: productsFr,
-        dashboard: dashboardFr,
-        navigation: navigationFr,
-        suppliers: suppliersFr,
-        aiChat: aiChatFr,
-        contracts: contractsFr,
-        eSourcing: eSourcingFr,
-        auth: authFr,
-        help: helpFr,
-        landing: landingFr,
-        public: publicFr,
-        accounting: accountingFr,
-        stock: stockFr,
-        onboarding: onboardingFr,
-        dataImport: dataImportFr,
-        subscription: subscriptionFr,
-        offline: offlineFr,
-      },
-      en: {
-        common: commonEn,
-        settings: settingsEn,
-        invoices: invoicesEn,
-        purchaseOrders: purchaseOrdersEn,
-        clients: clientsEn,
-        products: productsEn,
-        dashboard: dashboardEn,
-        navigation: navigationEn,
-        suppliers: suppliersEn,
-        aiChat: aiChatEn,
-        contracts: contractsEn,
-        eSourcing: eSourcingEn,
-        auth: authEn,
-        help: helpEn,
-        landing: landingEn,
-        public: publicEn,
-        accounting: accountingEn,
-        stock: stockEn,
-        onboarding: onboardingEn,
-        dataImport: dataImportEn,
-        subscription: subscriptionEn,
-        offline: offlineEn,
-      },
-    },
+    resources,
 
     // Langue par défaut
-    fallbackLng: 'fr',
+    supportedLngs: LANGUES.map((l) => l.code),
+    nonExplicitSupportedLngs: true, // de-DE, en-GB… -> de, en
+    // Texte manquant : l'allemand retombe sur l'anglais, l'anglais sur le français
+    fallbackLng: { de: ['en', 'fr'], en: ['fr'], default: ['fr'] },
 
     // Namespace par défaut
     defaultNS: 'common',
@@ -128,7 +52,7 @@ i18n
     },
 
     // Support des namespaces séparés
-    ns: ['common', 'settings', 'invoices', 'purchaseOrders', 'clients', 'products', 'dashboard', 'navigation', 'suppliers', 'aiChat', 'contracts', 'eSourcing', 'auth', 'help', 'landing', 'public', 'accounting', 'stock', 'onboarding', 'dataImport', 'subscription', 'offline'],
+    ns: Object.keys(resources.fr || {}),
 
     // Mode debug (désactiver en production)
     debug: process.env.NODE_ENV === 'development',

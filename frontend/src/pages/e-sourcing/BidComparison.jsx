@@ -22,7 +22,7 @@ import { ArrowBack, Visibility } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { compareBids } from '../../store/slices/eSourcingSlice';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { fr, enUS, de } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 function BidComparison() {
@@ -39,7 +39,7 @@ function BidComparison() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return format(new Date(dateString), 'dd MMM yyyy HH:mm', { locale: i18n.language?.startsWith('en') ? enUS : fr });
+    return format(new Date(dateString), 'dd MMM yyyy HH:mm', { locale: ({ en: enUS, de }[i18n.language?.slice(0, 2)] || fr) });
   };
 
   const getBidStatusLabel = (status) => {

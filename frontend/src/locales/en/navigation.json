@@ -35,7 +35,8 @@
     "importAlt": "Import",
     "openDrawer": "Open menu",
     "lightMode": "Light mode",
-    "darkMode": "Dark mode"
+    "darkMode": "Dark mode",
+    "language": "Language"
   },
   "userMenu": {
     "profile": "Profile",

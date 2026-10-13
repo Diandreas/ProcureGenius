@@ -1,0 +1,266 @@
+{
+  "plans": {
+    "free": {
+      "name": "Kostenlos",
+      "tagline": "Zum Einstieg und Kennenlernen von Procura, ganz ohne Verpflichtung.",
+      "cta": "Jetzt starten",
+      "features": ["1 Benutzer", "30 Rechnungen / Monat", "20 Kunden", "50 Produkte", "Dashboard", "PDF-Export"],
+      "missing": ["Bestellungen", "Lieferanten", "Buchhaltung", "Verträge", "KI-Assistent"]
+    },
+    "pro": {
+      "name": "Pro",
+      "badge": "Am beliebtesten",
+      "tagline": "Für KMU, die schnell und effizient arbeiten möchten.",
+      "cta": "Pro wählen",
+      "features": [
+        "2 Benutzer inklusive (+{siege}/Benutzer)",
+        "Unbegrenzt Rechnungen, Kunden & Produkte",
+        "Unbegrenzt Bestellungen & Lieferanten",
+        "Basis-Buchhaltung (Journal, Buchungen)",
+        "Verträge",
+        "KI-Assistent — 100 Anfragen / Monat",
+        "Werbefrei"
+      ],
+      "missing": ["Erweiterte Buchhaltung (Kennzahlen, Bilanz)", "Margenanalyse", "Nachbestellprognose", "E-Sourcing"]
+    },
+    "business": {
+      "name": "Business",
+      "badge": "Am umfangreichsten",
+      "tagline": "Für Teams, die ihr gesamtes Geschäft durchgängig steuern.",
+      "cta": "Business wählen",
+      "features": [
+        "10 Benutzer inklusive (+{siege}/Benutzer)",
+        "Alles aus Pro, ohne Limits",
+        "Vollständige Buchhaltung (Kennzahlen, Bilanz, Gewinn- und Verlustrechnung)",
+        "Margen- & Rohertragsanalyse",
+        "Nachbestellprognose",
+        "E-Sourcing & Ausschreibungen",
+        "Unbegrenzter KI-Assistent",
+        "Priorisierter Support + persönliches Onboarding",
+        "50 GB Speicher"
+      ]
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "tagline": "Individuelle Bereitstellung für große Organisationen.",
+      "cta": "Kontakt aufnehmen",
+      "features": ["Alles aus Business", "Persönliches Onboarding", "Individuelle Integrationen", "Garantiertes SLA", "Persönlicher Ansprechpartner"]
+    }
+  },
+  "billing": {
+    "monthly": "Monatlich",
+    "yearly": "Jährlich"
+  },
+  "price": {
+    "onQuote": "Individuelles Angebot",
+    "free": "Kostenlos",
+    "perMonth": "/Monat",
+    "perYear": "/Jahr",
+    "billedMonthly": "Monatliche Abrechnung: {{amount}}",
+    "billedYearly": "Jährliche Abrechnung: {{amount}}"
+  },
+  "currencyNames": {
+    "EUR": "Euro",
+    "XAF": "CFA-Franc",
+    "XOF": "CFA-Franc",
+    "USD": "Dollar"
+  },
+  "redirecting": "Weiterleitung…",
+  "enterpriseWhatsappMessage": "Hallo, ich interessiere mich für den Procura-Plan Enterprise.",
+  "internalPricing": {
+    "mySubscription": "Mein Abonnement",
+    "trialDays": "Testphase — {{days}} T.",
+    "cancelScheduled": "Kündigung vorgemerkt",
+    "activeUntilNotRenewed": "Aktiv bis {{date}} — wird nicht verlängert.",
+    "nextRenewal": "Nächste Verlängerung am {{date}}.",
+    "cancelSubscription": "Abonnement kündigen",
+    "title": "Ihr Abonnement",
+    "subtitle": "1 Monat kostenlos testen bei Pro und Business — keine Karte erforderlich. Jederzeit wechseln oder kündigen.",
+    "currentPlan": "Aktueller Plan",
+    "yourPlan": "Ihr Plan",
+    "securePayment": "Sichere Zahlung über Stripe. Nach der Zahlung wird Ihr Konto automatisch aktiviert und Sie werden zu Ihrem Dashboard weitergeleitet.",
+    "cancelledSuccess": "Abonnement gekündigt. Aktiv bis {{date}}.",
+    "cancelError": "Das Abonnement konnte nicht gekündigt werden.",
+    "freeActivated": "Kostenloser Plan aktiviert.",
+    "actionFailed": "Aktion fehlgeschlagen.",
+    "checkoutError": "Die Zahlung konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
+    "downgrade": {
+      "title": "Wechsel bestätigen",
+      "losingAccess": "Mit dem Wechsel zum Plan <strong>{{plan}}</strong> verlieren Sie den Zugriff auf:",
+      "quotasReduced": "Ihre Kontingente (Rechnungen, Kunden, Benutzer…) werden entsprechend dem Plan {{plan}} reduziert.",
+      "dataKept": "Ihre Daten bleiben erhalten, diese Funktionen sind jedoch erst nach einem Upgrade wieder verfügbar.",
+      "confirm": "Wechsel zu {{plan}} bestätigen"
+    },
+    "cancelDialog": {
+      "title": "Abonnement kündigen?",
+      "warning": "Ihr Abonnement bleibt <strong>bis {{date}} aktiv</strong>. Danach wechseln Sie zurück zum kostenlosen Plan und verlieren den Zugriff auf kostenpflichtige Funktionen (Ihre Daten bleiben erhalten).",
+      "reasonPrompt": "Ein Grund? (optional — hilft uns, besser zu werden)",
+      "reasonPlaceholder": "Zu teuer, ich nutze es zu wenig…",
+      "keep": "Abonnement behalten",
+      "cancelling": "Wird gekündigt…",
+      "confirm": "Kündigung bestätigen"
+    }
+  },
+  "seats": {
+    "title": "Plätze verwalten",
+    "paidPlanRequired": "Für zusätzliche Plätze ist ein kostenpflichtiger Plan erforderlich. Wechseln Sie zu <strong>Pro</strong> oder <strong>Business</strong>, um Ihr Team einzuladen (danach Plätze für {{price}}/Benutzer hinzufügen).",
+    "viewPlans": "Pläne ansehen",
+    "intro_one": "Ihr Plan umfasst <strong>{{count}}</strong> Benutzer. Fügen Sie zusätzliche Plätze für je <strong>{{price}}/Monat</strong> hinzu (anteilige Abrechnung).",
+    "intro_other": "Ihr Plan umfasst <strong>{{count}}</strong> Benutzer. Fügen Sie zusätzliche Plätze für je <strong>{{price}}/Monat</strong> hinzu (anteilige Abrechnung).",
+    "extraSeats_one": "zusätzlicher Platz",
+    "extraSeats_other": "zusätzliche Plätze",
+    "totalCapacity": "Gesamtkapazität",
+    "totalUsers_one": "{{count}} Benutzer",
+    "totalUsers_other": "{{count}} Benutzer",
+    "seatCost": "Kosten der Plätze",
+    "costPerMonth": "+{{price}}/Monat",
+    "minimum": "Minimum {{min}} (bereits belegte Plätze). Deaktivieren Sie Benutzer, um zu reduzieren.",
+    "updated": "Plätze aktualisiert: insgesamt {{total}}.",
+    "updateError": "Die Plätze konnten nicht aktualisiert werden.",
+    "updating": "Wird aktualisiert…"
+  },
+  "status": {
+    "viewPlans": "Pläne ansehen",
+    "noActive": "Kein aktives Abonnement",
+    "unlimited": "Unbegrenzt",
+    "trialBanner_one": "Testphase - noch {{count}} Tag",
+    "trialBanner_other": "Testphase - noch {{count}} Tage",
+    "subscribe": "Abonnieren",
+    "upgrade": "Plan upgraden",
+    "quotaAlmostReached": "Kontingent fast erreicht",
+    "quotaWarning": "Kontingentwarnung",
+    "title": "Abonnement {{plan}}",
+    "trialChip_one": "Testphase - noch {{count}} Tag",
+    "trialChip_other": "Testphase - noch {{count}} Tage",
+    "quotasNearLimit_one": "{{count}} Kontingent nahe am Limit",
+    "quotasNearLimit_other": "{{count}} Kontingente nahe am Limit",
+    "showLess": "Weniger anzeigen",
+    "showAllQuotas": "Alle Kontingente anzeigen",
+    "statuses": {
+      "trial": "Testphase",
+      "active": "Aktiv",
+      "past_due": "Zahlung überfällig",
+      "cancelled": "Gekündigt",
+      "expired": "Abgelaufen"
+    },
+    "quotas": {
+      "invoices": "Rechnungen",
+      "purchase_orders": "Bestellungen",
+      "ai_requests": "KI-Anfragen",
+      "clients": "Kunden",
+      "suppliers": "Lieferanten",
+      "products": "Produkte"
+    }
+  },
+  "trialChip": {
+    "mobileDays": "{{days}} T.",
+    "mobileExpired": "Abgelaufen",
+    "active": "Testphase {{plan}} — {{days}} T.",
+    "expired": "Testphase {{plan}} abgelaufen",
+    "tooltipActive_one": "Testphase {{plan}} — noch {{count}} Tag",
+    "tooltipActive_other": "Testphase {{plan}} — noch {{count}} Tage",
+    "tooltipExpired": "Testphase abgelaufen — Abonnement verwalten"
+  },
+  "pastDue": {
+    "message": "Die Zahlung Ihres Abonnements ist fehlgeschlagen. Aktualisieren Sie Ihre Zahlungsmethode, um den Zugriff zu behalten.",
+    "opening": "Wird geöffnet…",
+    "updatePayment": "Zahlung aktualisieren"
+  },
+  "modules": {
+    "activate": "{{module}} aktivieren",
+    "currentlyDisabled": "Dieses Modul ist derzeit deaktiviert",
+    "includedFeatures": "Enthaltene Funktionen:",
+    "canDisableLater": "Sie können dieses Modul jederzeit in den Einstellungen deaktivieren",
+    "activateNow": "Jetzt aktivieren",
+    "fallback": {
+      "name": "Modul",
+      "description": "Modulbeschreibung"
+    },
+    "items": {
+      "dashboard": {
+        "name": "Dashboard",
+        "description": "Überblick über Ihr Geschäft mit Echtzeit-Statistiken",
+        "features": ["Leistungsstatistiken", "Interaktive Diagramme", "Letzte Aktivitäten", "Leistungskennzahlen (KPIs)"]
+      },
+      "suppliers": {
+        "name": "Lieferanten",
+        "description": "Verwalten Sie Ihre Lieferantenbeziehungen effizient",
+        "features": ["Lieferantendatenbank", "Leistungsbewertung", "Bestellhistorie", "CSV-Import/-Export"]
+      },
+      "purchase-orders": {
+        "name": "Bestellungen",
+        "description": "Erstellen und verfolgen Sie Ihre Bestellungen",
+        "features": ["Erstellung von Bestellungen", "Lieferverfolgung", "Mehrstufige Freigaben", "PDF-Erstellung"]
+      },
+      "invoices": {
+        "name": "Rechnungen",
+        "description": "Verwalten Sie Ihre Rechnungsstellung und Zahlungen",
+        "features": ["Rechnungserstellung", "Zahlungsverfolgung", "Automatische Mahnungen", "Buchhaltungsberichte"]
+      },
+      "products": {
+        "name": "Produkte",
+        "description": "Verwalten Sie Ihren Produktkatalog und Ihren Lagerbestand",
+        "features": ["Produktkatalog", "Lagerverwaltung", "Nachbestellwarnungen", "Lagerbewegungen"]
+      },
+      "clients": {
+        "name": "Kunden",
+        "description": "Verwalten Sie Ihren Kundenstamm",
+        "features": ["Kundendatenbank", "Transaktionshistorie", "Verhaltensanalyse", "Segmentierung"]
+      },
+      "e-sourcing": {
+        "name": "E-Sourcing",
+        "description": "Verwalten Sie Ihre Ausschreibungen und vergleichen Sie Lieferanten",
+        "features": ["RFQ-Erstellung", "Angebotsvergleich", "Lieferantenbewertung", "Online-Verhandlung"]
+      },
+      "contracts": {
+        "name": "Verträge",
+        "description": "Verwalten Sie Ihre Lieferantenverträge",
+        "features": ["Vertragsverwaltung", "KI-Extraktion von Klauseln", "Ablaufwarnungen", "Vorlagenbibliothek"]
+      }
+    }
+  },
+  "pricing": {
+    "metaTitle": "Preise",
+    "metaDescription": "Klare Pläne ohne Überraschungen: kostenlos starten, upgraden, wenn Ihr Geschäft wächst. 30 Tage Testphase, keine Karte erforderlich.",
+    "eyebrow": "Procura-Preise",
+    "heroTitle": "Faire Preise,<br/><accent>Wachstum</accent> ohne Reibung.",
+    "intro": "Kostenlos starten. Ein Monat kostenlose Testphase für kostenpflichtige Pläne — keine Kreditkarte erforderlich.",
+    "indicativePrices": "Preise in {{currency}} nur zur Orientierung; das Abonnement wird in {{billingCurrency}} abgerechnet.",
+    "yearlyEquivalent": "d. h. {{monthly}}/Monat · {{saved}} gespart",
+    "checkoutError": "Beim Erstellen der Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "africa": {
+      "eyebrow": "Für Afrika entwickelt",
+      "title": "Lokale Rechnungsstellung, vertraute Regeln.",
+      "body": "Rechnungen in FCFA, CDF, XOF, MAD. Verträge nach OHADA-Recht. MwSt. Kamerun 19,25 %, Senegal 18 %, Côte d'Ivoire 18 %. Französischsprachige Oberfläche, optimiert für Mobilfunknetze.",
+      "talkToAdvisor": "Mit einem Berater sprechen"
+    },
+    "comparison": {
+      "title": "Alle Details, Zeile für Zeile",
+      "subtitle": "Jede Funktion im Vergleich, Plan für Plan.",
+      "feature": "Funktion",
+      "rows": {
+        "invoicesPerMonth": "Rechnungen / Monat",
+        "clients": "Kunden",
+        "products": "Produkte",
+        "purchaseOrders": "Bestellungen",
+        "suppliers": "Lieferanten",
+        "accounting": "Buchhaltung",
+        "aiAssistant": "KI-Assistent",
+        "contracts": "Verträge",
+        "eSourcing": "E-Sourcing",
+        "advancedAnalytics": "Erweiterte Analysen",
+        "adFree": "Werbefrei",
+        "prioritySupport": "Priorisierter Support"
+      },
+      "values": {
+        "unlimited": "Unbegrenzt",
+        "aiPerMonth": "100 / Monat"
+      }
+    },
+    "contact": {
+      "title": "Noch Fragen vor dem Start?",
+      "subtitle": "Unser Team antwortet in weniger als 2 Stunden, Montag bis Samstag, 8 bis 20 Uhr (WAT).",
+      "email": "E-Mail senden"
+    }
+  }
+}

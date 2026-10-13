@@ -1,0 +1,718 @@
+{
+  "title": "KI-Assistent",
+  "drawer": {
+    "conversations": "Unterhaltungen"
+  },
+  "welcome": {
+    "greeting": "Hallo! Ich bin Procura 👋",
+    "description": "Ich helfe Ihnen bei der Verwaltung Ihrer Lieferanten, Rechnungen, Bestellungen und mehr."
+  },
+  "messages": {
+    "voiceTranscribed": "Sprachnachricht erfolgreich transkribiert!",
+    "loadConversationError": "Fehler beim Laden der Unterhaltung",
+    "actionExecutedSuccess": "Aktion erfolgreich ausgeführt",
+    "sendMessageError": "Fehler beim Senden der Nachricht",
+    "scanInDevelopment": "Die Scan-Funktion befindet sich noch in Entwicklung",
+    "assistantThinking": "Der Assistent denkt nach...",
+    "feedbackThanks": "Danke, Ihr Feedback hilft uns, den Assistenten zu verbessern.",
+    "feedbackUp": "Hilfreiche Antwort",
+    "feedbackDown": "Nicht hilfreich"
+  },
+  "message": {
+    "thinking": "Die KI denkt nach...",
+    "actionsAvailable": "Verfügbare Aktionen:",
+    "processing": "Wird verarbeitet...",
+    "success": "Erfolgreich",
+    "error": "Fehler"
+  },
+  "actionResult": {
+    "actionExecuted": "Aktion ausgeführt",
+    "details": "Details:"
+  },
+  "documentUploader": {
+    "unsupportedFileType": "Nicht unterstützter Dateityp. Verwenden Sie PNG, JPG oder PDF.",
+    "fileTooLarge": "Datei zu groß. Maximale Größe: 10 MB.",
+    "analyzeSuccess": "Dokument erfolgreich analysiert",
+    "uploadError": "Fehler beim Hochladen der Datei",
+    "clickToSelect": "Klicken Sie, um ein Dokument auszuwählen",
+    "allowedFormats": "PNG, JPG, PDF (max. 10 MB)",
+    "uploadingProgress": "Wird hochgeladen und analysiert... {{progress}} %",
+    "analyzeDocument": "Dokument analysieren"
+  },
+  "input": {
+    "placeholder": "Nachricht eingeben...",
+    "attach": "Anhängen",
+    "voiceMessage": "Sprachnachricht (Echtzeit)",
+    "send": "Senden",
+    "stop": "Stopp"
+  },
+  "quickActions": {
+    "title": "Schnellaktionen",
+    "createSupplier": "Lieferant anlegen",
+    "searchSupplier": "Lieferant suchen",
+    "createInvoice": "Rechnung erstellen",
+    "createPurchaseOrder": "Bestellung",
+    "viewStatistics": "Statistiken",
+    "monthlyReport": "Monatsbericht",
+    "prompts": {
+      "createSupplier": "Ich möchte einen neuen Lieferanten anlegen",
+      "searchSupplier": "Suche einen Lieferanten",
+      "createInvoice": "Ich möchte eine neue Rechnung erstellen",
+      "createPurchaseOrder": "Ich möchte eine Bestellung erstellen",
+      "viewStatistics": "Zeig mir die Statistiken",
+      "monthlyReport": "Erstelle einen Monatsbericht"
+    }
+  },
+  "sidebar": {
+    "history": "Verlauf"
+  },
+  "proactiveConversations": {
+    "title": "Proaktive Unterhaltungen",
+    "accept": "Annehmen",
+    "dismiss": "Verwerfen",
+    "startConversation": "Unterhaltung beginnen"
+  },
+  "suggestions": {
+    "emailActions": {
+      "sendInvoice": "Rechnung senden",
+      "sendPurchaseOrder": "Bestellung senden",
+      "followupInvoice": "Zahlungserinnerung senden"
+    }
+  },
+  "topBar": {
+    "newConversation": "Neu"
+  },
+  "chatPage": {
+    "suggestionsPanel": {
+      "title": "Intelligente Vorschläge",
+      "empty": "Derzeit keine Vorschläge"
+    },
+    "history": {
+      "deleteConfirm": "Möchten Sie diese Unterhaltung wirklich löschen?",
+      "deleted": "Unterhaltung gelöscht",
+      "deleteError": "Fehler beim Löschen der Unterhaltung",
+      "conversationCount_zero": "{{count}} Unterhaltungen",
+      "conversationCount_one": "{{count}} Unterhaltung",
+      "conversationCount_other": "{{count}} Unterhaltungen",
+      "todayCount": "{{count}} heute",
+      "messageCount": "{{count}} Nachr.",
+      "newConversation": "Neue Unterhaltung",
+      "noResults": "Keine Ergebnisse",
+      "noConversations": "Keine Unterhaltungen",
+      "startNew": "Neue Unterhaltung beginnen",
+      "older": "Älter"
+    },
+    "quickActions": {
+      "help_me": {
+        "title": "Hilf mir",
+        "prompt": "Kannst du mir bei meinen täglichen Aufgaben helfen?"
+      },
+      "analyze_data": {
+        "title": "Meine Daten analysieren",
+        "prompt": "Analysiere meine Daten und gib mir relevante Erkenntnisse für mein Geschäft."
+      },
+      "optimize": {
+        "title": "Optimierungen",
+        "prompt": "Welche Optimierungen kann ich in meinem Unternehmen vornehmen, um effizienter zu werden und Kosten zu senken?"
+      },
+      "create_invoice": {
+        "title": "Rechnung erstellen",
+        "prompt": "Ich möchte eine neue Rechnung erstellen. Kannst du mich durch den Ablauf führen?"
+      },
+      "create_quote": {
+        "title": "Angebot erstellen",
+        "prompt": "Ich möchte ein Angebot für einen Kunden erstellen. Kannst du mir helfen?"
+      },
+      "create_purchase_order": {
+        "title": "Bestellung",
+        "prompt": "Ich muss eine neue Bestellung erstellen. Wie gehe ich vor?"
+      },
+      "create_supplier": {
+        "title": "Lieferant hinzufügen",
+        "prompt": "Ich möchte einen neuen Lieferanten in mein System aufnehmen. Wie gehe ich vor?"
+      },
+      "verify_price": {
+        "title": "Preis prüfen",
+        "prompt": "Prüfe den Marktpreis für ein Produkt, das ich kaufen möchte."
+      },
+      "three_way_match": {
+        "title": "3-Wege-Abgleich",
+        "prompt": "Führe einen 3-Wege-Abgleich zwischen einer Rechnung, einer Bestellung und einem Wareneingang durch."
+      },
+      "smart_reminder": {
+        "title": "Kundenerinnerung",
+        "prompt": "Ich möchte eine Zahlungserinnerung für eine unbezahlte Rechnung senden. Kannst du eine Erinnerungs-E-Mail verfassen?"
+      },
+      "predict_cashflow": {
+        "title": "KI-Cashflow",
+        "prompt": "Erstelle eine Prognose meines Cashflows für die nächsten 60 Tage."
+      },
+      "get_statistics": {
+        "title": "Dashboard",
+        "prompt": "Zeig mir die wichtigsten Kennzahlen meines Unternehmens für diesen Monat."
+      },
+      "product_analysis": {
+        "title": "Produktleistung",
+        "prompt": "Analysiere die Leistung meiner meistverkauften Produkte in diesem Quartal."
+      },
+      "client_analysis": {
+        "title": "Kundenanalyse",
+        "prompt": "Analysiere das Verhalten und die Kaufgewohnheiten meiner Kunden."
+      }
+    },
+    "chips": {
+      "quote": {
+        "label": "Angebot",
+        "prompt": "Ich möchte ein Angebot für einen Kunden erstellen"
+      },
+      "verifyPrice": {
+        "label": "Preis prüfen",
+        "prompt": "Prüfe den Marktpreis für ein Produkt"
+      },
+      "remindClient": {
+        "label": "Kunden erinnern",
+        "prompt": "Verfasse eine Zahlungserinnerung für eine unbezahlte Rechnung"
+      },
+      "cashFlow": {
+        "label": "Cashflow",
+        "prompt": "Erstelle eine 60-Tage-Prognose meines Cashflows"
+      }
+    },
+    "notifications": "Benachrichtigungen",
+    "visualizations": "Visualisierungen",
+    "serverError": "Serverfehler (500). Prüfen Sie die Django-Logs für weitere Details.",
+    "confirmCreation": "Erstellung bestätigen",
+    "toolInterrupted": "unterbrochen",
+    "generationInterrupted": "_Generierung gestoppt._",
+    "conversationStarted": "Unterhaltung gestartet!",
+    "conversationStartError": "Fehler beim Starten der Unterhaltung",
+    "conversationDismissError": "Fehler beim Verwerfen der Unterhaltung",
+    "refreshing": "Wird aktualisiert...",
+    "onlineStatus": "Procura KI · Online",
+    "importDocument": "Dokument importieren",
+    "pendingImports": "Ausstehende Importe",
+    "proactiveTitle": "Die KI möchte mit Ihnen sprechen",
+    "chartAdded": "Diagramm zu den Visualisierungen hinzugefügt"
+  },
+  "documentImport": {
+    "types": {
+      "expense": "Beleg / Ausgabe",
+      "invoice": "Ausgangsrechnung",
+      "purchase_order": "Bestellung",
+      "supplier_list": "Lieferantenverzeichnis",
+      "product_catalog": "Produktkatalog",
+      "contract": "Vertrag",
+      "financial_report": "Finanzbericht",
+      "mixed_document": "Komplexes Dokument"
+    },
+    "unsupportedFormat": "Nicht unterstütztes Dateiformat. Verwenden Sie JPG, PNG, WebP oder PDF.",
+    "fileTooLarge": "Datei zu groß. Maximal 10 MB.",
+    "selectTypeAndFile": "Bitte wählen Sie einen Dokumenttyp und eine Datei aus.",
+    "analyzeSuccess": "Dokument erfolgreich analysiert! Prüfen Sie Ihre ausstehenden Importe.",
+    "uploadError": "Fehler beim Hochladen des Dokuments.",
+    "fileSizeUnits": {
+      "bytes": "Byte",
+      "kb": "KB",
+      "mb": "MB",
+      "gb": "GB"
+    },
+    "title": "KI-Import",
+    "subtitle": "Analysieren Sie Ihre Dokumente mit künstlicher Intelligenz",
+    "documentType": "Dokumenttyp",
+    "fileToAnalyze": "Zu analysierende Datei",
+    "dropHere": "Datei hierher ziehen und ablegen",
+    "clickToSelect": "oder klicken Sie zum Auswählen • JPG, PNG, PDF (max. 10 MB)",
+    "analyzingAI": "KI-Analyse läuft...",
+    "uploading": "Wird hochgeladen...",
+    "info": "Die KI analysiert Ihr Dokument und legt eine Prüfung an, die Sie bestätigen, bevor der Eintrag erstellt wird.",
+    "analyzingShort": "Wird analysiert...",
+    "analyze": "Analysieren",
+    "extracting": "Daten werden intelligent extrahiert...",
+    "preparing": "Ihr Dokument wird vorbereitet..."
+  },
+  "importReviews": {
+    "loadError": "Fehler beim Laden der Importe",
+    "approveSuccess": "Import erfolgreich freigegeben",
+    "approveError": "Fehler beim Freigeben des Imports",
+    "rejectSuccess": "Import abgelehnt",
+    "rejectError": "Fehler beim Ablehnen des Imports",
+    "entityTypes": {
+      "expense": "Ausgabe",
+      "invoice": "Ausgangsrechnung",
+      "purchase_order": "Bestellung",
+      "supplier": "Lieferant",
+      "product": "Produkt"
+    },
+    "previewInvoice": "Rechnung {{number}} - {{client}}",
+    "previewPurchaseOrder": "Bestellung {{number}} - {{supplier}}",
+    "unknownClient": "Unbekannter Kunde",
+    "unknownSupplier": "Unbekannter Lieferant",
+    "extractedData": "Extrahierte Daten",
+    "title": "Zu prüfende Importe",
+    "count_one": "{{count}} Import",
+    "count_other": "{{count}} Importe",
+    "status": {
+      "pending": "Ausstehend",
+      "modified": "Geändert",
+      "approved": "Freigegeben",
+      "rejected": "Abgelehnt"
+    },
+    "emptyPending": "Keine ausstehenden Importe",
+    "emptyWithStatus": "Keine Importe mit dem Status \"{{status}}\"",
+    "approve": "Freigeben",
+    "reject": "Ablehnen"
+  },
+  "messageContent": {
+    "visualization": "Visualisierung",
+    "tapToExpand": "Zum Vergrößern tippen",
+    "chartLine": "Liniendiagramm",
+    "chartBar": "Balkendiagramm",
+    "chartPie": "Kreisdiagramm",
+    "chartArea": "Flächendiagramm",
+    "fullscreen": "Vollbild",
+    "pinToVisualizations": "An Visualisierungen anheften",
+    "expand": "Vergrößern",
+    "verifyAndConfirm": "Prüfen und bestätigen",
+    "entityVerification": "Eintrag prüfen",
+    "associatedEntities": "Zugehörige Einträge, die erstellt werden:",
+    "modalTitles": {
+      "client_one": "Kunde gefunden",
+      "client_other": "Kunden gefunden",
+      "supplier_one": "Lieferant gefunden",
+      "supplier_other": "Lieferanten gefunden",
+      "invoice_one": "Rechnung gefunden",
+      "invoice_other": "Rechnungen gefunden",
+      "purchase_order_one": "Bestellung gefunden",
+      "purchase_order_other": "Bestellungen gefunden",
+      "product_one": "Produkt gefunden",
+      "product_other": "Produkte gefunden",
+      "results": "Ergebnisse"
+    },
+    "viewResults_one": "{{count}} Ergebnis anzeigen",
+    "viewResults_other": "{{count}} Ergebnisse anzeigen",
+    "priority": "Priorität: {{priority}}/10",
+    "invoiceNumber": "Nr. {{number}}",
+    "suggestedActions": "Vorgeschlagene Aktionen",
+    "tapAnywhereToClose": "Zum Schließen beliebig tippen"
+  },
+  "agentTimeline": {
+    "thinking": "Denkt nach",
+    "reasoningSteps_one": "Überlegung · {{count}} Schritt",
+    "reasoningSteps_other": "Überlegung · {{count}} Schritte",
+    "preparing": "Wird vorbereitet…"
+  },
+  "artifactsPanel": {
+    "title": "Visualisierungen",
+    "tabActive": "Aktiv ({{n}})",
+    "tabHistory": "Verlauf ({{n}})",
+    "emptyActive": "Keine aktiven Visualisierungen",
+    "emptyHistory": "Noch nichts im Verlauf",
+    "emptyActiveHint": "Bitten Sie die KI, Diagramme zu erstellen – sie erscheinen dann hier",
+    "emptyHistoryHint": "Entfernte Visualisierungen erscheinen hier",
+    "untitled": "Ohne Titel",
+    "chartTypes": {
+      "line": "Linie",
+      "bar": "Balken",
+      "pie": "Kreis",
+      "area": "Fläche"
+    },
+    "justNow": "Gerade eben",
+    "minutesAgo": "vor {{n}} Min.",
+    "hoursAgo": "vor {{n}} Std.",
+    "fullscreen": "Vollbild",
+    "refresh": "Aktualisieren"
+  },
+  "chartRenderer": {
+    "noData": "Keine Daten zum Anzeigen",
+    "unsupportedType": "Nicht unterstützter Diagrammtyp: {{type}}"
+  },
+  "confirmationModal": {
+    "entities": {
+      "invoice": {
+        "title": "Rechnung",
+        "subtitle": "Prüfen Sie die Rechnungsdetails vor dem Abschluss"
+      },
+      "client": {
+        "title": "Kunde",
+        "subtitle": "Neuen Kunden anlegen"
+      },
+      "supplier": {
+        "title": "Lieferant",
+        "subtitle": "Neuen Lieferanten anlegen"
+      },
+      "purchase_order": {
+        "title": "Bestellung",
+        "subtitle": "Prüfen Sie die Bestelldetails"
+      },
+      "product": {
+        "title": "Produkt",
+        "subtitle": "Neues Produkt zum Katalog hinzufügen"
+      }
+    },
+    "fields": {
+      "client": "Kunde",
+      "clientEmail": "E-Mail des Kunden",
+      "clientPhone": "Telefon des Kunden",
+      "invoiceTitle": "Rechnungstitel",
+      "totalAmount": "Gesamtbetrag",
+      "dueDate": "Fälligkeitsdatum",
+      "email": "E-Mail",
+      "contactPerson": "Ansprechpartner",
+      "paymentTerms": "Zahlungsbedingungen",
+      "taxId": "Steuernummer",
+      "supplier": "Lieferant",
+      "expectedDeliveryDate": "Voraussichtliches Lieferdatum",
+      "productName": "Produktname",
+      "reference": "Artikelnummer"
+    },
+    "verification": "Prüfung: {{entity}}",
+    "aiPrepared": "Die KI hat diese Angaben vorbereitet. Sie können sie vor dem Bestätigen der Erstellung bearbeiten.",
+    "itemsTitle": "Artikel & Leistungen",
+    "lines_one": "{{count}} Position",
+    "lines_other": "{{count}} Positionen",
+    "colDesignation": "Artikel",
+    "colQty": "Menge",
+    "colUnitPrice": "Stückpreis",
+    "subtotal": "Zwischensumme (netto):",
+    "addLineManually": "Position manuell hinzufügen",
+    "productService": "Produkt / Leistung",
+    "productOption": "Art.-Nr.: {{reference}} - {{price}}",
+    "qty": "Menge",
+    "priceWithSymbol": "Preis ({{symbol}})",
+    "help": "Brauchen Sie Hilfe? Wenden Sie sich an den KI-Support.",
+    "finalize": "Erstellung abschließen"
+  },
+  "listModal": {
+    "draft": "Entwurf",
+    "pending": "Ausstehend",
+    "clientLabel": "Kunde: {{name}}",
+    "noClient": "Kein Kunde angegeben",
+    "supplierLabel": "Lieferant: {{name}}",
+    "noSupplier": "Kein Lieferant angegeben",
+    "match": "{{score}} % Übereinstimmung",
+    "reference": "Art.-Nr.: {{reference}}",
+    "stock": "Bestand: {{qty}}",
+    "unnamed": "Unbenannter Eintrag",
+    "downloadPdf": "PDF herunterladen",
+    "results_zero": "{{count}} Ergebnisse",
+    "results_one": "{{count}} Ergebnis",
+    "results_other": "{{count}} Ergebnisse",
+    "found_zero": "in Ihrer Datenbank gefunden",
+    "found_one": "in Ihrer Datenbank gefunden",
+    "found_other": "in Ihrer Datenbank gefunden",
+    "filterPlaceholder": "Ergebnisse filtern...",
+    "noResults": "Keine Ergebnisse",
+    "noMatch": "Wir haben nichts zu \"{{query}}\" gefunden",
+    "clearSearch": "Suche zurücksetzen",
+    "tip": "Tipp: Klicken Sie auf eine Karte, um direkt zum vollständigen Eintrag zu gelangen.",
+    "done": "Fertig"
+  },
+  "previewCard": {
+    "defaultClient": "Kunde",
+    "defaultSupplier": "Lieferant",
+    "invoiceTitle": "Rechnung für {{name}}",
+    "invoiceSubtitle": "Betrag: {{amount}} • Fällig: {{dueDate}}",
+    "newClient": "Neuer Kunde",
+    "newSupplier": "Neuer Lieferant",
+    "newProduct": "Neues Produkt",
+    "noContact": "Kein Ansprechpartner",
+    "contactPrefix": "Ansprechpartner: {{name}}",
+    "poTitle": "Bestellung für {{name}}",
+    "poSubtitle": "Betrag: {{amount}} • Lieferung: {{date}}",
+    "productSubtitle": "Art.-Nr.: {{reference}} • Preis: {{price}}",
+    "fields": {
+      "client": "Kunde",
+      "email": "E-Mail",
+      "dueDate": "Fälligkeitsdatum",
+      "contactPerson": "Ansprechpartner",
+      "paymentTerms": "Zahlungsbedingungen",
+      "supplier": "Lieferant",
+      "deliveryDate": "Lieferdatum",
+      "reference": "Artikelnummer"
+    },
+    "toConfirm": "Bestätigung ausstehend",
+    "itemsCount": "Artikel ({{n}})",
+    "defaultItem": "Artikel",
+    "nestedDefault": "Dieser Eintrag wird automatisch erstellt"
+  },
+  "contextualPanel": {
+    "openFullChat": "Vollständigen Chat öffnen",
+    "openFullChatLink": "Vollständigen Chat öffnen →",
+    "chartAvailable": "Diagramm verfügbar – öffnen Sie den vollständigen Chat",
+    "placeholder": "Stellen Sie eine Frage...",
+    "replyReceived": "Antwort erhalten.",
+    "error": "Leider ist etwas schiefgelaufen. Versuchen Sie es erneut oder öffnen Sie den vollständigen Chat.",
+    "contexts": {
+      "dashboard": {
+        "label": "Dashboard",
+        "greeting": "Hier ist ein Überblick über Ihr Geschäft. Ich kann Ihre Kennzahlen analysieren oder eine Cashflow-Prognose erstellen.",
+        "actions": {
+          "analyzePeriod": {
+            "label": "Zeitraum analysieren",
+            "prompt": "Analysiere die Finanzkennzahlen in meinem Dashboard und nenne mir die wichtigsten Erkenntnisse."
+          },
+          "cashForecast": {
+            "label": "Cashflow-Prognose",
+            "prompt": "Erstelle eine Cashflow-Prognose auf Basis meiner aktuellen Daten."
+          },
+          "priorityAlerts": {
+            "label": "Dringende Warnungen",
+            "prompt": "Welche Warnungen sollte ich heute vorrangig bearbeiten?"
+          }
+        }
+      },
+      "invoices": {
+        "label": "Rechnungen",
+        "greeting": "Ich helfe Ihnen, Ihre Rechnungen zu verwalten, offene Posten zu analysieren oder Zahlungserinnerungen zu verfassen.",
+        "actions": {
+          "analyzeUnpaid": {
+            "label": "Offene Rechnungen analysieren",
+            "prompt": "Analysiere meine unbezahlten Rechnungen und schlage einen Mahnplan vor."
+          },
+          "remindClient": {
+            "label": "Kunden erinnern",
+            "prompt": "Verfasse eine professionelle und höfliche Erinnerungs-E-Mail an einen Kunden, der mit seiner Zahlung im Verzug ist."
+          },
+          "optimizeTerms": {
+            "label": "Zahlungsfristen verkürzen",
+            "prompt": "Wie kann ich meine Einzugsquote verbessern und die Zahlungsfristen verkürzen?"
+          }
+        }
+      },
+      "contracts": {
+        "label": "Verträge",
+        "greeting": "Ich kann Vertragsabschnitte erstellen, Risiken analysieren oder Sie beim Verfassen unterstützen.",
+        "actions": {
+          "generateClause": {
+            "label": "Klausel erstellen",
+            "prompt": "Erstelle eine professionelle Vertraulichkeitsklausel auf Deutsch, angepasst an das OHADA-Recht."
+          },
+          "analyzeRisks": {
+            "label": "Risiken analysieren",
+            "prompt": "Auf welche typischen Vertragsrisiken sollte ich bei meinen laufenden Verträgen achten?"
+          },
+          "contractTemplate": {
+            "label": "Vertragsvorlage",
+            "prompt": "Welche Vertragsart empfiehlst du für eine wiederkehrende Dienstleistungsvereinbarung?"
+          }
+        }
+      },
+      "purchaseOrders": {
+        "label": "Bestellungen",
+        "greeting": "Ich helfe Ihnen, Bestellungen zu verfassen, Lieferanten zu vergleichen oder Ihren Einkauf zu optimieren.",
+        "actions": {
+          "compareSuppliers": {
+            "label": "Lieferanten vergleichen",
+            "prompt": "Wie kann ich meine Lieferanten wirksam bewerten und vergleichen, um das beste Preis-Leistungs-Verhältnis zu erzielen?"
+          },
+          "optimizePurchases": {
+            "label": "Einkauf optimieren",
+            "prompt": "Mit welchen Strategien kann ich meine Einkaufskosten senken?"
+          },
+          "paymentTerms": {
+            "label": "Zahlungsbedingungen",
+            "prompt": "Welche Zahlungsbedingungen sind in einer B2B-Bestellung üblich?"
+          }
+        }
+      },
+      "products": {
+        "label": "Produkte",
+        "greeting": "Ich kann Ihren Lagerbestand analysieren, Nachbestellungen vorschlagen oder Ihren Katalog optimieren.",
+        "actions": {
+          "analyzeStock": {
+            "label": "Lager analysieren",
+            "prompt": "Analysiere meine Lagerbestände und ermittle Produkte, die nicht vorrätig oder überbevorratet sind."
+          },
+          "restock": {
+            "label": "Nachbestellung",
+            "prompt": "Welche Produkte sollte ich zuerst nachbestellen, und in welcher Menge?"
+          },
+          "optimizeCatalog": {
+            "label": "Katalog optimieren",
+            "prompt": "Wie kann ich meinen Produktkatalog optimieren, um meine Margen zu verbessern?"
+          }
+        }
+      },
+      "clients": {
+        "label": "Kunden",
+        "greeting": "Ich kann Ihren Kundenstamm analysieren, die profitabelsten Kunden ermitteln oder Ihnen bei der Kundenbindung helfen.",
+        "actions": {
+          "topClients": {
+            "label": "Top-Kunden",
+            "prompt": "Wer sind meine profitabelsten Kunden und wie kann ich sie langfristig binden?"
+          },
+          "atRiskClients": {
+            "label": "Gefährdete Kunden",
+            "prompt": "Bei welchen Kunden besteht ein Risiko von Zahlungsausfall oder Inaktivität?"
+          },
+          "loyaltyStrategy": {
+            "label": "Kundenbindungsstrategie",
+            "prompt": "Schlage eine Kundenbindungsstrategie vor, die auf meine aktuellen Kunden zugeschnitten ist."
+          }
+        }
+      },
+      "suppliers": {
+        "label": "Lieferanten",
+        "greeting": "Ich helfe Ihnen, Ihre Lieferanten zu bewerten, bessere Konditionen auszuhandeln oder Ihre Bezugsquellen zu diversifizieren.",
+        "actions": {
+          "evaluateSupplier": {
+            "label": "Lieferant bewerten",
+            "prompt": "Nach welchen Kriterien sollte ich die Zuverlässigkeit eines Lieferanten beurteilen?"
+          },
+          "negotiatePrices": {
+            "label": "Preise verhandeln",
+            "prompt": "Nenne mir Strategien, um mit meinen Lieferanten bessere Konditionen auszuhandeln."
+          },
+          "reduceRisks": {
+            "label": "Risiken senken",
+            "prompt": "Wie kann ich meine Abhängigkeit von einem einzigen Lieferanten verringern und meine Bezugsquellen diversifizieren?"
+          }
+        }
+      },
+      "default": {
+        "label": "Procura",
+        "greeting": "Hallo! Ich bin Ihr Procura-Assistent. Fragen Sie mich alles rund um Ihr Geschäft.",
+        "actions": {
+          "createInvoice": {
+            "label": "Rechnung erstellen",
+            "prompt": "Führe mich durch die Erstellung einer professionellen Rechnung."
+          },
+          "activitySummary": {
+            "label": "Aktivitätsübersicht",
+            "prompt": "Gib mir eine Zusammenfassung meiner letzten Aktivitäten und allem, was Aufmerksamkeit erfordert."
+          },
+          "dailyTip": {
+            "label": "Tipp des Tages",
+            "prompt": "Gib mir einen praktischen Tipp, wie ich mein Geschäft besser führen kann."
+          }
+        }
+      }
+    }
+  },
+  "importReviewModal": {
+    "saveSuccess": "Änderungen gespeichert",
+    "saveError": "Fehler beim Speichern",
+    "invoiceNumber": "Rechnungsnummer",
+    "issueDate": "Ausstellungsdatum",
+    "client": "Kunde",
+    "clientEmail": "E-Mail des Kunden",
+    "totalAmount": "Gesamtbetrag",
+    "itemsCount": "Artikel ({{count}})",
+    "poNumber": "Bestellnummer",
+    "orderDate": "Bestelldatum",
+    "supplier": "Lieferant",
+    "supplierEmail": "E-Mail des Lieferanten",
+    "label": "Bezeichnung",
+    "totalInclTax": "Gesamtbetrag (brutto)",
+    "recoverableVat": "davon abziehbare Vorsteuer",
+    "category": "Kategorie",
+    "otherExpenses": "Sonstige Ausgaben",
+    "alreadyPaid": "Bereits bezahlt",
+    "toPay": "Zu bezahlen",
+    "paidBy": "Bezahlt mit",
+    "expenseInfo": "Bei Freigabe wird die Ausgabe mit dem Belegfoto erfasst und die Buchung vorgenommen.",
+    "editingSoon": "Die Bearbeitung der Felder für diesen Eintragstyp ist bald verfügbar.",
+    "title": "Importprüfung - {{type}}",
+    "entityTypes": {
+      "expense": "Ausgabe",
+      "invoice": "Ausgangsrechnung",
+      "purchase_order": "Bestellung"
+    },
+    "status": {
+      "pending": "Ausstehend",
+      "modified": "Geändert",
+      "approved": "Freigegeben",
+      "rejected": "Abgelehnt"
+    },
+    "notesPlaceholder": "Notizen zu diesem Import hinzufügen...",
+    "saveChanges": "Änderungen speichern",
+    "reject": "Ablehnen",
+    "approveAndCreate": "Freigeben und erstellen"
+  },
+  "thinking": {
+    "messages": {
+      "reflecting": "Ihre Anfrage wird durchdacht...",
+      "analyzing": "Informationen werden analysiert...",
+      "searching": "Die beste Lösung wird gesucht...",
+      "preparing": "Antwort wird vorbereitet...",
+      "verifying": "Daten werden geprüft...",
+      "finalizing": "Wird abgeschlossen..."
+    },
+    "steps": {
+      "validation": "Datenvalidierung",
+      "research": "Informationssuche",
+      "contextAnalysis": "Kontextanalyse",
+      "generation": "Antwortgenerierung",
+      "qualityCheck": "Qualitätsprüfung",
+      "finalization": "Abschluss"
+    },
+    "processingTitle": "Verarbeitung",
+    "stepProgress": "Schritt {{current}}/{{total}}: {{step}}",
+    "analyzingDefault": "Tiefgehende Analyse läuft...",
+    "mayTakeMoment": "Dies kann einen Moment dauern",
+    "celebrationDefault": "Aktion erfolgreich abgeschlossen!"
+  },
+  "floatingAssistant": {
+    "welcome": {
+      "suppliers": "Ich helfe Ihnen bei der Verwaltung Ihrer Lieferanten: anlegen, suchen, bearbeiten oder ihre Leistung analysieren.",
+      "invoices": "Ich kann Rechnungen erstellen, Zahlungen verfolgen oder Ihren Umsatz analysieren.",
+      "purchaseOrders": "Ich kann Bestellungen erstellen, Lieferungen verfolgen oder Ihren Einkauf analysieren.",
+      "default": "Wie kann ich Ihnen bei der Führung Ihres Geschäfts helfen?"
+    },
+    "sendingToAI": "Wird an die KI gesendet...",
+    "executionError": "Fehler bei der Ausführung",
+    "modeContext": "Modus {{page}}",
+    "modeGeneral": "Allgemeiner Modus"
+  },
+  "assistantToggle": {
+    "aiMode": "KI-Modus",
+    "manualMode": "Manueller Modus",
+    "smart": "Smart",
+    "aiDescription": "Die KI schlägt vor, gibt Empfehlungen und automatisiert Aufgaben für Sie",
+    "manualDescription": "Sie behalten mit den klassischen Oberflächen die volle Kontrolle",
+    "switchToManual": "Zum manuellen Modus wechseln",
+    "enableAssistant": "KI-Assistenten aktivieren"
+  },
+  "documentScanner": {
+    "captureOrUpload": "Bitte nehmen Sie ein Bild auf oder laden Sie eines hoch",
+    "analysisError": "Fehler bei der Analyse",
+    "processingError": "Fehler bei der Verarbeitung des Dokuments",
+    "title": "Dokument scannen",
+    "documentType": "Dokumenttyp",
+    "types": {
+      "invoice": "Rechnung",
+      "purchase_order": "Bestellung",
+      "supplier_list": "Lieferantenliste"
+    },
+    "autoCreate": "Automatisch erstellen",
+    "camera": "Kamera",
+    "upload": "Hochladen",
+    "capture": "Aufnehmen",
+    "dropHere": "Datei hier ablegen",
+    "dragOrClick": "Datei hierher ziehen oder klicken, um sie auszuwählen",
+    "supportedFormats": "Unterstützte Formate: JPEG, PNG, GIF, BMP, TIFF (max. 10 MB)",
+    "capturedAlt": "Aufgenommenes Dokument",
+    "retake": "Neu aufnehmen",
+    "analyzing": "Wird analysiert...",
+    "analyze": "Analysieren",
+    "success": "Dokument erfolgreich analysiert!",
+    "extractedData": "Extrahierte Daten",
+    "ocrText": "Extrahierter Text (OCR)",
+    "scanAnother": "Weiteres Dokument scannen"
+  },
+  "voiceRecorder": {
+    "notSupported": "Spracherkennung wird von Ihrem Browser nicht unterstützt. Verwenden Sie Chrome, Edge oder Safari.",
+    "noSpeech": "Keine Sprache erkannt. Bitte sprechen Sie lauter.",
+    "micDenied": "Der Zugriff auf das Mikrofon wurde verweigert.",
+    "errorGeneric": "Fehler: {{error}}",
+    "startFailed": "Zuhören konnte nicht gestartet werden.",
+    "notSupportedTitle": "Funktion nicht unterstützt",
+    "listening": "Hört zu...",
+    "title": "Sprachnachricht",
+    "speakNow": "Sprechen Sie jetzt...",
+    "pressMic": "Tippen Sie auf das Mikrofon, um zu beginnen",
+    "realtime": "Die Transkription erfolgt in Echtzeit",
+    "clickSend": "Klicken Sie auf Senden, um diesen Text zu verwenden",
+    "browserHint": "Spracherkennung in Echtzeit - Chrome, Edge, Safari"
+  }
+}

@@ -155,7 +155,7 @@ function OnboardingSetup() {
     logo: null,
     defaultCurrency: 'XAF',
     country: 'CM',
-    language: (i18n.language || 'fr').startsWith('en') ? 'en' : 'fr',
+    language: ['en', 'de'].includes((i18n.language || 'fr').slice(0, 2)) ? (i18n.language || 'fr').slice(0, 2) : 'fr',
     // Champs optionnels (section repliee) — non bloquants.
     email: '',
     phone: '',
@@ -443,6 +443,7 @@ function OnboardingSetup() {
                       >
                         <MenuItem value="fr">Français</MenuItem>
                         <MenuItem value="en">English</MenuItem>
+                        <MenuItem value="de">Deutsch</MenuItem>
                       </Select>
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.5 }}>
                         {t('onboarding:setup.company.languageHint')}

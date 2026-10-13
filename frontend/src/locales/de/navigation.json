@@ -1,0 +1,59 @@
+{
+  "menu": {
+    "dashboard": "Dashboard",
+    "suppliers": "Lieferanten",
+    "purchaseOrders": "Bestellungen",
+    "invoices": "Rechnungen",
+    "products": "Produkte",
+    "clients": "Kunden",
+    "eSourcing": "E-Sourcing (RFQ)",
+    "contracts": "Verträge",
+    "aiAssistant": "KI-Assistent",
+    "modules": "Module",
+    "users": "Benutzer",
+    "settings": "Einstellungen",
+    "accounting": "Buchhaltung",
+    "collapse": "Menü einklappen",
+    "expand": "Menü ausklappen",
+    "includedInPro": "In Pro enthalten"
+  },
+  "topBar": {
+    "newSupplier": "Neuer Lieferant",
+    "newPurchaseOrder": "Neue Bestellung",
+    "newInvoice": "Neue Rechnung",
+    "newProduct": "Neues Produkt",
+    "newClient": "Neuer Kunde",
+    "newRfqEvent": "Neue Ausschreibung (RFQ)",
+    "newContract": "Neuer Vertrag",
+    "newConversation": "Neue Unterhaltung",
+    "newImport": "Neuer Import",
+    "new": "Neu",
+    "importWizard": "Import-Assistent",
+    "dataImport": "Datenimport",
+    "customizeDashboard": "Dashboard anpassen",
+    "report": "Bericht",
+    "importAlt": "Importieren",
+    "openDrawer": "Menü öffnen",
+    "lightMode": "Heller Modus",
+    "darkMode": "Dunkler Modus",
+    "language": "Sprache"
+  },
+  "userMenu": {
+    "profile": "Profil",
+    "settings": "Einstellungen",
+    "logout": "Abmelden",
+    "notifications": "KI-Benachrichtigungen"
+  },
+  "mobile": {
+    "dashboard": "Dashboard",
+    "suppliers": "Lieferanten",
+    "orders": "Bestellungen",
+    "invoices": "Rechnungen",
+    "products": "Produkte",
+    "clients": "Kunden",
+    "ai": "KI",
+    "contracts": "Verträge",
+    "accounting": "Buchhaltung",
+    "more": "Mehr"
+  }
+}

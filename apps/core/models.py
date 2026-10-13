@@ -322,6 +322,7 @@ class OrganizationSettings(models.Model):
         choices=[
             ('fr', 'Français'),
             ('en', 'English'),
+            ('de', 'Deutsch'),
         ],
         verbose_name=_("Langue")
     )

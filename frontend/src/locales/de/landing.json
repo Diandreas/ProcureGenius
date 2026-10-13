@@ -1,0 +1,279 @@
+{
+  "nav": {
+    "login": "Anmelden",
+    "pricing": "Preise",
+    "freeTrial": "Kostenlos testen",
+    "goToDashboard": "Dashboard",
+    "logoAlt": "Procura-Logo",
+    "switchLanguage": "Sprache wechseln / Switch language",
+    "documentation": "Dokumentation",
+    "blog": "Blog"
+  },
+  "hero": {
+    "badge": "Direkt hier testen, ohne Konto",
+    "titleStart": "Künstliche Intelligenz für Ihr ",
+    "words": [
+      "Geschäft",
+      "Unternehmen",
+      "Start-up",
+      "Wachstum"
+    ],
+    "subtitle": "Bitten Sie die KI direkt hier um eine Rechnung: Sie erstellt sie in Sekunden, in Ihrer Währung, inklusive MwSt. Rechnungen, Lager, Einkauf und Mobile Money in einer App.",
+    "ctaPrimary": "Testphase starten",
+    "ctaSecondary": "Rechnung mit KI erstellen",
+    "trust1": "1 Monat gratis, ohne Karte",
+    "trust2": "Sichere Daten",
+    "trust3": "OHADA-konform",
+    "statChipValue": "-30 %",
+    "statChipLabel": "Verwaltungsaufwand"
+  },
+  "stats": {
+    "companies": "Aktive Unternehmen",
+    "documents": "Verarbeitete Dokumente",
+    "uptime": "Verfügbarkeit",
+    "timeSaved": "Pro Woche gespart"
+  },
+  "platform": {
+    "badge": "Die Komplettplattform",
+    "titleStart": "Alles ",
+    "titleHighlight": "vereint",
+    "titleEnd": ", alles im Griff",
+    "subtitle": "Ersetzen Sie Ihre 5 bisherigen Tools durch eine einzige Plattform. Procura verbindet Einkauf, Verkauf und Business Intelligence auf intuitive Weise.",
+    "features": {
+      "ai": {
+        "title": "KI-Copilot",
+        "desc": "Erstellen Sie Berichte, stellen Sie Fragen zu Ihren Daten und automatisieren Sie Ihre Abläufe – einfach im Chat."
+      },
+      "invoices": {
+        "title": "Intelligente Rechnungsstellung",
+        "desc": "Erstellung mit einem Klick. Automatischer Abgleich mit Bestellungen und Zahlungen."
+      },
+      "ocr": {
+        "title": "OCR-Erfassung",
+        "desc": "Nie wieder Rechnungen von Hand abtippen. Unsere KI liest Ihre PDFs und extrahiert die Daten sofort."
+      },
+      "inventory": {
+        "title": "Lagerverwaltung",
+        "desc": "Echtzeit-Überblick über mehrere Lager, Warnungen bei Mindestbeständen und automatische Bewertung."
+      },
+      "purchasing": {
+        "title": "Einkauf & Ausgaben",
+        "desc": "Interaktive Bestellungen, Freigabe-Workflows und Budgetkontrolle."
+      },
+      "suppliers": {
+        "title": "Lieferantenportal",
+        "desc": "Arbeiten Sie direkt mit Ihren Partnern zusammen. Angebotsanfragen und zentrale Dokumentenablage."
+      },
+      "analytics": {
+        "title": "Business Intelligence",
+        "desc": "Dynamische Dashboards. Margen, Ausgaben und Leistung auf einen Blick."
+      },
+      "sync": {
+        "title": "Synchronisiert",
+        "desc": "Aus Angeboten werden Aufträge, aus Aufträgen Rechnungen, und diese aktualisieren Ihren Lagerbestand. Automatisch."
+      },
+      "multi": {
+        "title": "Mehrere Währungen",
+        "desc": "Wickeln Sie internationale Geschäfte ab – mit Umrechnung in Echtzeit und Verwaltung der Wechselkurse."
+      }
+    }
+  },
+  "pricing": {
+    "badge": "Transparente Preise",
+    "title": "Eine Investition, die sich lohnt",
+    "subtitle": "Wählen Sie den Tarif, der zur Größe und zu den Zielen Ihres Teams passt.",
+    "freeUntil": "14 Tage Testphase inklusive",
+    "cta": "Jetzt starten",
+    "ctaContact": "Kontakt aufnehmen",
+    "plans": {
+      "essential": {
+        "name": "Starter",
+        "price": "10 €",
+        "desc": "Für Selbstständige, die sich besser organisieren möchten.",
+        "f1": "2 Benutzer",
+        "f2": "100 Rechnungen / Monat",
+        "f3": "Unbegrenzte Produkte im Lager",
+        "f4": "Support per E-Mail"
+      },
+      "business": {
+        "name": "Business KI",
+        "popular": "Am beliebtesten",
+        "price": "45 €",
+        "desc": "Für KMU, die mit KI schneller wachsen möchten.",
+        "f1": "10 Benutzer inklusive",
+        "f2": "Unbegrenzte Rechnungen und Einkäufe",
+        "f3": "Vollständiger KI-Assistent",
+        "f4": "Unbegrenzte OCR-Erfassung",
+        "f5": "Vorhersage von Lagerengpässen",
+        "f6": "Priorisierter Support rund um die Uhr"
+      },
+      "enterprise": {
+        "name": "Individuell",
+        "price": "Auf Anfrage",
+        "desc": "Für große Organisationen mit komplexen Anforderungen.",
+        "f1": "Unbegrenzte Benutzer",
+        "f2": "Bereitstellung auf eigenem Server",
+        "f3": "KI, trainiert auf Ihren Daten",
+        "f4": "API- & ERP-Integration",
+        "f5": "Persönlicher Account Manager"
+      }
+    }
+  },
+  "interface": {
+    "badge": "Einheitliche Oberfläche",
+    "title": "Mehr Klarheit mit einem interaktiven Dashboard",
+    "desc": "Bündeln Sie Einkauf, Rechnungen und Aktivitäten in einer einzigen Ansicht. Schluss mit Tabellen – treffen Sie schnelle Entscheidungen mit Sicherheit.",
+    "imageAlt": "Procura-Oberfläche"
+  },
+  "footer": {
+    "title": "Die Zukunft Ihrer Verwaltung beginnt hier.",
+    "subtitle": "Schließen Sie sich Hunderten von Unternehmen an, die den Schritt bereits gewagt haben.",
+    "cta": "Testphase starten",
+    "rights": "© 2026 Procura. Alle Rechte vorbehalten.",
+    "product": "Produkt",
+    "features": "Funktionen",
+    "resources": "Ressourcen",
+    "faq": "FAQ",
+    "support": "Support & Kontakt",
+    "allRightsReserved": "Alle Rechte vorbehalten."
+  },
+  "trust": {
+    "offline": {
+      "title": "Funktioniert offline",
+      "desc": "Kein Internet? Die mobile App arbeitet weiter und synchronisiert alles, sobald Sie wieder online sind."
+    },
+    "currency": {
+      "title": "FCFA und mehrere Währungen",
+      "desc": "Rechnungen in FCFA, EUR, USD… mit automatisch berechneter lokaler MwSt."
+    },
+    "ohada": {
+      "title": "OHADA-konform",
+      "desc": "MwSt. für Kamerun, Senegal, Elfenbeinküste. Doppelte Buchführung inklusive."
+    },
+    "support": {
+      "title": "Persönlicher Support",
+      "desc": "Ein echtes Team auf WhatsApp, Antwort innerhalb von 2 Stunden."
+    }
+  },
+  "howItWorks": {
+    "eyebrow": "3 einfache Schritte",
+    "titleStart": "Von der Frage zur Aktion,",
+    "titleHighlight": "ganz mühelos",
+    "step1": {
+      "title": "Sie fragen",
+      "desc": "Stellen Sie eine Frage in Alltagssprache: „Welche Produkte gehen bald aus?“"
+    },
+    "step2": {
+      "title": "Procura analysiert",
+      "desc": "Die KI prüft Lager, Verkäufe und Margen und zeigt, was wirklich zählt."
+    },
+    "step3": {
+      "title": "Sie bestätigen",
+      "desc": "Eine Bestellung, eine Rechnung, eine Zahlungserinnerung – erstellt und bereit mit einem Klick."
+    }
+  },
+  "aiShowcase": {
+    "badge": "Der KI-Vorteil",
+    "titleStart": "Ihr persönlicher Analyst,",
+    "titleHighlight": "rund um die Uhr",
+    "subtitle": "Die KI von Procura ist keine Spielerei: Sie analysiert laufend Ihre Verkäufe, Lagerbestände und Margen und schlägt konkrete Maßnahmen vor.",
+    "oneClick": {
+      "title": "Aktionen mit einem Klick",
+      "desc": "Machen Sie aus einer Lagerwarnung direkt im Chat eine Bestellung."
+    },
+    "alerts": {
+      "title": "Intelligente Warnungen",
+      "desc": "Lassen Sie sich benachrichtigen, wenn eine Marge unter Ihren Schwellenwert fällt oder eine Rechnung offen bleibt."
+    }
+  },
+  "pricingTeaser": {
+    "badge": "Transparente Preise",
+    "titleStart": "Kostenlos starten,",
+    "titleHighlight": "im eigenen Tempo wachsen",
+    "subtitle": "Ein kostenloser Tarif für den Einstieg, der Pro-Tarif für {{price}}/Monat mit einem Gratismonat (ohne Karte) und alles unbegrenzt ab dem Business-Tarif.",
+    "currencyNote": "Richtpreis umgerechnet in {{currency}} · Abrechnung in CFA-Franc (XAF)",
+    "viewPricing": "Preise ansehen",
+    "tryFree": "Kostenlos testen"
+  },
+  "interfaceCta": "Kostenlos testen",
+  "faq": {
+    "eyebrow": "Häufig gestellte Fragen",
+    "titleStart": "Ehrliche Antworten,",
+    "titleHighlight": "ohne Kleingedrucktes",
+    "seeAll": "Alle Fragen ansehen",
+    "q1": "Was kostet es?",
+    "a1": "Es gibt einen kostenlosen Tarif ohne zeitliche Begrenzung. Der Pro-Tarif kostet 9 €/Monat mit einem Gratismonat, keine Kreditkarte erforderlich. Alle Details finden Sie auf der Preisseite.",
+    "q2": "Funktioniert es ohne Internetverbindung?",
+    "a2": "Ja. Die mobile App funktioniert offline: Ihre Kunden, Produkte und Rechnungen bleiben verfügbar, und alles wird automatisch synchronisiert, sobald Sie wieder online sind.",
+    "q3": "Kann ich in FCFA abrechnen?",
+    "a3": "Ja, ebenso in EUR, USD, MAD und weiteren Währungen. Die lokale MwSt. (Kamerun, Senegal, Elfenbeinküste…) wird automatisch angewendet.",
+    "q4": "Sind meine Daten sicher?",
+    "a4": "Ihre Daten werden verschlüsselt und gesichert und gehören weiterhin Ihnen. Sie können sie jederzeit exportieren.",
+    "q5": "Brauche ich Buchhaltungskenntnisse?",
+    "a5": "Nein. Sie erstellen Rechnungen und Bestellungen wie gewohnt; die Buchungen werden im Hintergrund automatisch erzeugt."
+  },
+  "finalCta": {
+    "titleStart": "Bereit für mehr",
+    "titleHighlight": "Zeit",
+    "subtitle": "Erstellen Sie Ihr Konto in 2 Minuten. Ein Monat gratis, ohne Karte.",
+    "start": "Kostenlos starten",
+    "login": "Anmelden",
+    "questionMark": "?"
+  },
+  "liveDemo": {
+    "title": "Procura-Assistent – Live-Test",
+    "company": "Beispieldaten: Fournitures Wouri SARL, Douala",
+    "live": "Live",
+    "intro": "Hallo! Ich bin der Procura-Assistent. Bitten Sie mich um eine Rechnung, und ich erstelle sie vor Ihren Augen, oder stellen Sie eine Frage zu diesem Demo-Unternehmen: Lager, offene Rechnungen, Kunden, Liquidität…",
+    "suggestions": [
+      "Erstelle eine Rechnung für Hôtel Akwa Plaza: 10 Ries A4-Papier und 2 Bürostühle",
+      "Welche Produkte gehen bald aus?",
+      "Welche Rechnungen sind überfällig?",
+      "Wer sind meine besten Kunden?"
+    ],
+    "placeholder": "z. B. 5 HP-Patronen an Clinique Les Palmiers in Rechnung stellen",
+    "send": "Senden",
+    "thinking": "Der Assistent denkt nach",
+    "cta": "Mit Ihren eigenen Daten testen – kostenloses Konto",
+    "remaining_one": "Heute noch {{count}} kostenlose Frage",
+    "remaining_other": "Heute noch {{count}} kostenlose Fragen",
+    "disclaimer": "Demo mit Beispieldaten, kein Konto erforderlich.",
+    "error": "Die Demo ist vorübergehend nicht verfügbar. Bitte versuchen Sie es gleich noch einmal.",
+    "limit": "Sie haben die kostenlosen Fragen für heute aufgebraucht. Erstellen Sie ein kostenloses Konto, um mit Ihren eigenen Daten weiterzumachen.",
+    "ctaInvoice": "Diese Rechnung erhalten – kostenloses Konto",
+    "invoice": {
+      "watermark": "VORSCHAU",
+      "title": "RECHNUNG",
+      "issued": "Ausgestellt am {{date}}",
+      "due": "Fällig am {{date}}",
+      "billedTo": "Rechnung an",
+      "item": "Artikel",
+      "qty": "Menge",
+      "unitPrice": "Stückpreis",
+      "total": "Gesamt",
+      "subtotal": "Zwischensumme",
+      "tax": "MwSt. {{rate}} %",
+      "totalDue": "Fälliger Betrag",
+      "download": "PDF herunterladen",
+      "whatsapp": "Per WhatsApp senden",
+      "save": "Diese Rechnung behalten",
+      "unknown": "Kein Preis gefunden für: {{items}} (nennen Sie der KI den Preis)"
+    },
+    "gate": {
+      "title_pdf": "Ihr PDF ist fertig",
+      "title_whatsapp": "Bereit zum Versand per WhatsApp",
+      "title_save": "Ihre Rechnung ist fertig",
+      "subtitle": "Rechnung für {{client}}, {{total}}. Erstellen Sie Ihr kostenloses Konto: Sie wartet dort auf Sie, Sie müssen sie nur noch bestätigen.",
+      "points": [
+        "PDF mit Ihrem Logo und einer offiziellen Rechnungsnummer",
+        "Senden Sie sie Ihrem Kunden mit einem Klick per WhatsApp oder E-Mail",
+        "Zahlungsverfolgung: bar, Orange Money, MTN MoMo",
+        "Die KI für Ihre eigenen Kunden, Produkte und Lagerbestände"
+      ],
+      "primary": "Konto erstellen und Rechnung erhalten",
+      "reassure": "1 Minute · 1 Monat gratis · keine Karte nötig",
+      "login": "Ich habe bereits ein Konto – anmelden",
+      "close": "Schließen"
+    }
+  }
+}

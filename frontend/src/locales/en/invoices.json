@@ -226,7 +226,8 @@
       "send": "Send",
       "pdfAttachment": "The invoice will be sent as a PDF attachment.",
       "invoiceDetails": "Invoice details",
-      "defaultSubject": "Invoice {{number}} - ProcureGenius"
+      "defaultSubject": "Invoice {{number}} - {{company}}",
+      "defaultSubjectShort": "Invoice {{number}}"
     },
     "quickCreateService": "New service",
     "editItem": "Edit item"

@@ -293,7 +293,7 @@ class UserPreferences(models.Model):
     preferred_language = models.CharField(
         max_length=10,
         default='fr',
-        choices=[('fr', 'Français'), ('en', 'English')],
+        choices=[('fr', 'Français'), ('en', 'English'), ('de', 'Deutsch')],
         verbose_name=_("Langue préférée")
     )
     created_at = models.DateTimeField(auto_now_add=True)

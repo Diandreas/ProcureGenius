@@ -32,8 +32,14 @@ def test_inscription_en_anglais_garde_l_anglais():
 
 @pytest.mark.django_db
 def test_inscription_sans_langue_reconnue_en_francais():
-    u = _inscrire('xx@example.com', HTTP_ACCEPT_LANGUAGE='de-DE,de;q=0.9')
+    u = _inscrire('xx@example.com', HTTP_ACCEPT_LANGUAGE='es-ES,es;q=0.9')
     assert UserPreferences.objects.get(user=u).preferred_language == 'fr'
+
+
+@pytest.mark.django_db
+def test_inscription_en_allemand():
+    u = _inscrire('de@example.com', HTTP_ACCEPT_LANGUAGE='de-DE,de;q=0.9')
+    assert UserPreferences.objects.get(user=u).preferred_language == 'de'
 
 
 @pytest.mark.django_db
@@ -49,4 +55,5 @@ def test_langue_propre_a_chaque_personne():
     assert r.status_code == 200 and r.data['language'] == 'en'
     assert ca.get('/api/v1/settings/all/').data['language'] == 'en'
     assert cb.get('/api/v1/settings/all/').data['language'] == 'fr'
-    assert ca.patch('/api/v1/settings/all/', {'language': 'de'}, format='json').status_code == 400
+    assert ca.patch('/api/v1/settings/all/', {'language': 'de'}, format='json').data['language'] == 'de'
+    assert ca.patch('/api/v1/settings/all/', {'language': 'es'}, format='json').status_code == 400

@@ -29,7 +29,7 @@ import { ArrowBack, Edit, CheckCircle, Cancel } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import api from '../../services/api';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { fr, enUS, de } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 
 function BidDetail() {
@@ -111,7 +111,7 @@ function BidDetail() {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return format(new Date(dateString), t('eSourcing:dateFormats.dateTime'), { locale: i18n.language?.startsWith('en') ? enUS : fr });
+    return format(new Date(dateString), t('eSourcing:dateFormats.dateTime'), { locale: ({ en: enUS, de }[i18n.language?.slice(0, 2)] || fr) });
   };
 
   if (loading || !bid) {

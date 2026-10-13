@@ -1,0 +1,482 @@
+{
+  "title": "Verträge",
+  "newContract": "Neuer Vertrag",
+  "search": {
+    "placeholder": "Nach Nummer, Titel, Lieferant suchen..."
+  },
+  "filters": {
+    "all": "Alle",
+    "active": "Aktiv",
+    "expired": "Abgelaufen",
+    "pending": "Ausstehend",
+    "archived": "Archiviert"
+  },
+  "status": {
+    "draft": "Entwurf",
+    "active": "Aktiv",
+    "expired": "Abgelaufen",
+    "pending": "Unterschrift ausstehend",
+    "archived": "Archiviert",
+    "terminated": "Gekündigt",
+    "approved": "Genehmigt"
+  },
+  "labels": {
+    "contractNumber": "Vertragsnr.",
+    "title": "Titel",
+    "supplier": "Lieferant",
+    "startDate": "Beginn",
+    "endDate": "Ende",
+    "value": "Wert",
+    "status": "Status",
+    "daysRemaining": "Tage verbleibend",
+    "daysOverdue": "Tage überfällig",
+    "expiresIn": "Läuft ab in",
+    "expiredSince": "Abgelaufen seit",
+    "noContracts": "Keine Verträge gefunden",
+    "noContractsDescription": "Keine Verträge entsprechen Ihren Suchkriterien.",
+    "totalContracts": "Gesamt",
+    "activeContracts": "Aktiv",
+    "expiringContracts": "Laufen bald ab",
+    "expiringSoon": "Zu verlängern",
+    "totalValue": "Gesamtwert"
+  },
+  "form": {
+    "title": {
+      "new": "Neuer Vertrag",
+      "edit": "Vertrag bearbeiten"
+    },
+    "fields": {
+      "contractNumber": "Vertragsnummer",
+      "contractTitle": "Vertragstitel",
+      "supplier": "Lieferant",
+      "selectSupplier": "Lieferant auswählen",
+      "startDate": "Beginn",
+      "endDate": "Ende",
+      "value": "Vertragswert",
+      "totalValue": "Gesamtwert",
+      "status": "Status",
+      "description": "Beschreibung",
+      "terms": "Allgemeine Geschäftsbedingungen",
+      "attachments": "Anhänge",
+      "contractType": "Vertragsart",
+      "paymentTerms": "Zahlungsbedingungen",
+      "autoRenewal": "Automatische Verlängerung",
+      "renewalNoticeDays": "Kündigungsfrist vor Verlängerung (Tage)",
+      "alertDaysBeforeExpiry": "Erinnerung vor Ablauf (Tage)",
+      "internalNotes": "Interne Notizen",
+      "generalInfo": "Allgemeine Informationen",
+      "datesAndAmounts": "Termine und Beträge",
+      "termsSection": "Geschäftsbedingungen",
+      "renewalAndAlerts": "Verlängerung und Erinnerungen",
+      "purchase_contract": "Kaufvertrag",
+      "service_contract": "Dienstleistungsvertrag",
+      "maintenance_contract": "Wartungsvertrag",
+      "lease_contract": "Mietvertrag",
+      "nda_contract": "Geheimhaltungsvereinbarung",
+      "partnership_contract": "Partnerschaftsvertrag",
+      "other_contract": "Sonstige",
+      "descriptionPlaceholder": "Beschreiben Sie Zweck und Umfang des Vertrags...",
+      "termsPlaceholder": "Beschreiben Sie die Geschäftsbedingungen im Detail...",
+      "paymentTermsPlaceholder": "z. B. 30 Tage netto",
+      "notesPlaceholder": "Private Notizen (für den Lieferanten nicht sichtbar)..."
+    },
+    "validation": {
+      "numberRequired": "Vertragsnummer ist erforderlich",
+      "titleRequired": "Titel ist erforderlich",
+      "supplierRequired": "Lieferant ist erforderlich",
+      "startDateRequired": "Beginn ist erforderlich",
+      "endDateRequired": "Ende ist erforderlich",
+      "valueRequired": "Vertragswert ist erforderlich",
+      "endDateAfterStart": "Das Ende muss nach dem Beginn liegen"
+    }
+  },
+  "detail": {
+    "title": "Vertragsdetails",
+    "tabs": {
+      "overview": "Übersicht",
+      "documents": "Dokumente",
+      "amendments": "Nachträge",
+      "history": "Verlauf"
+    },
+    "sections": {
+      "description": "Beschreibung",
+      "terms": "Geschäftsbedingungen",
+      "paymentTerms": "Zahlungsbedingungen",
+      "keyInformation": "Wichtige Informationen",
+      "contractType": "Vertragsart",
+      "startDate": "Beginn",
+      "endDate": "Ende",
+      "daysUntilExpiry": "Tage bis zum Ablauf",
+      "totalValue": "Gesamtwert",
+      "autoRenewal": "Automatische Verlängerung",
+      "purchase": "Kauf",
+      "service": "Dienstleistung"
+    },
+    "actions": {
+      "edit": "Bearbeiten",
+      "renew": "Verlängern",
+      "terminate": "Kündigen",
+      "archive": "Archivieren",
+      "download": "PDF herunterladen",
+      "delete": "Löschen",
+      "approve": "Genehmigen",
+      "activate": "Aktivieren",
+      "extractClauses": "Klauseln extrahieren (KI)",
+      "generateInvoice": "Rechnung erstellen",
+      "send": "Senden",
+      "createInvoice": "Rechnung erstellen"
+    },
+    "riskLevel": "Risikostufe",
+    "sectionsTitle": "Vertragsabschnitte",
+    "articlesCount": "{{count}} Klauseln",
+    "daysShort": "{{days}} T.",
+    "messages": {
+      "renewSuccess": "Vertrag erfolgreich verlängert.",
+      "renewError": "Fehler beim Verlängern des Vertrags.",
+      "extractEmpty": "Es konnten keine Klauseln extrahiert werden. Bitte prüfen Sie den Vertragstext.",
+      "invoiceDraftCreated": "Rechnungsentwurf aus dem Vertrag erstellt.",
+      "invoiceError": "Fehler beim Erstellen der Rechnung.",
+      "templatesLoadError": "Fehler beim Laden der Vorlagen",
+      "selectTemplate": "Bitte wählen Sie eine Vorlage aus",
+      "invalidJson": "Der JSON-Kontext ist ungültig",
+      "documentGenerated": "Dokument erfolgreich erstellt",
+      "generateError": "Fehler bei der Erstellung",
+      "generateFirst": "Bitte erstellen Sie zuerst das Dokument",
+      "pdfExportSuccess": "PDF-Export erfolgreich",
+      "pdfExportError": "Fehler beim PDF-Export",
+      "wordExportSuccess": "Word-Export erfolgreich",
+      "wordExportError": "Fehler beim Export des Word-Dokuments",
+      "recipientRequired": "E-Mail-Adresse des Empfängers ist erforderlich",
+      "emailSent": "E-Mail erfolgreich gesendet",
+      "emailError": "Fehler beim Senden der E-Mail",
+      "pdfImportError": "Fehler beim Hochladen des PDFs",
+      "importError": "Fehler beim Hochladen",
+      "signatureSaved": "Unterschrift erfasst",
+      "counterpartSignatureSaved": "Unterschrift des Vertragspartners erfasst",
+      "signatureError": "Fehler beim Aktualisieren der Unterschrift"
+    },
+    "documents": {
+      "title": "Dokumente & Unterschriften",
+      "signedPdfImported": "Unterschriebenes PDF hochgeladen",
+      "previewTitle": "Vorschau des unterschriebenen Vertrags",
+      "loadingPreview": "Vorschau wird geladen…",
+      "signaturesHeading": "UNTERSCHRIFTEN",
+      "signed": "Unterschrieben",
+      "notSigned": "Nicht unterschrieben",
+      "signerPrompt": "Name des Unterzeichners:",
+      "counterpartSignerPrompt": "Name des Unterzeichners (Vertragspartner):"
+    },
+    "generateDialog": {
+      "title": "Dokument aus einer Vorlage erstellen",
+      "selectTemplate": "Vorlage auswählen",
+      "contextLabel": "Zusätzlicher Kontext (optional, JSON)",
+      "contextHelper": "Die Vertragsdaten werden automatisch einbezogen.",
+      "generating": "Die KI erstellt das Dokument...",
+      "result": "Ergebnis:",
+      "exportWord": "Als Word exportieren",
+      "exportPdf": "Als PDF exportieren",
+      "generatingShort": "Wird erstellt...",
+      "generate": "Erstellen"
+    },
+    "emailDialog": {
+      "title": "Vertrag per E-Mail senden",
+      "recipient": "E-Mail des Empfängers",
+      "recipientPlaceholder": "kunde@beispiel.de",
+      "message": "Persönliche Nachricht (optional)",
+      "messagePlaceholder": "Guten Tag, anbei erhalten Sie den Vertrag...",
+      "sending": "Wird gesendet...",
+      "sendingShort": "Wird gesendet..."
+    }
+  },
+  "messages": {
+    "loading": "Verträge werden geladen...",
+    "loadingError": "Fehler beim Laden der Verträge",
+    "createSuccess": "Vertrag erfolgreich erstellt",
+    "createError": "Fehler beim Erstellen des Vertrags",
+    "updateSuccess": "Vertrag erfolgreich aktualisiert",
+    "updateError": "Fehler beim Aktualisieren des Vertrags",
+    "deleteSuccess": "Vertrag erfolgreich gelöscht",
+    "deleteError": "Fehler beim Löschen des Vertrags",
+    "deleteConfirmation": "Möchten Sie den Vertrag „{{title}}“ wirklich löschen?",
+    "approveSuccess": "Vertrag erfolgreich genehmigt",
+    "approveError": "Fehler beim Genehmigen des Vertrags",
+    "activateSuccess": "Vertrag erfolgreich aktiviert",
+    "activateError": "Fehler beim Aktivieren des Vertrags",
+    "terminateSuccess": "Vertrag erfolgreich gekündigt",
+    "terminateError": "Fehler beim Kündigen des Vertrags",
+    "extractSuccess": "Klauseln erfolgreich von der KI extrahiert",
+    "extractError": "Fehler beim Extrahieren der Klauseln",
+    "enterContractText": "Bitte geben Sie den Vertragstext ein",
+    "verifySuccess": "Klausel geprüft",
+    "verifyError": "Fehler beim Prüfen der Klausel"
+  },
+  "risk": {
+    "low": "Geringes Risiko",
+    "medium": "Mittleres Risiko",
+    "high": "Hohes Risiko",
+    "critical": "Kritisches Risiko",
+    "notEvaluated": "Nicht bewertet"
+  },
+  "contractStatus": {
+    "draft": "Entwurf",
+    "pending_review": "In Prüfung",
+    "pending_approval": "Genehmigung ausstehend",
+    "approved": "Genehmigt",
+    "active": "Aktiv",
+    "expiring_soon": "Läuft bald ab",
+    "expired": "Abgelaufen",
+    "terminated": "Gekündigt",
+    "renewed": "Verlängert"
+  },
+  "clauses": {
+    "title": "Klauseln",
+    "extractionIA": "KI-Extraktion",
+    "noClauses": "Keine Klauseln extrahiert. Verwenden Sie die Schaltfläche „Klauseln extrahieren (KI)“, um den Vertrag zu analysieren.",
+    "verified": "Geprüft",
+    "aiAnalysis": "KI-Analyse:",
+    "recommendations": "Empfehlungen:",
+    "aiConfidence": "KI-Konfidenz:",
+    "verifyClause": "Diese Klausel prüfen"
+  },
+  "milestones": {
+    "title": "Meilensteine",
+    "dueDate": "Fälligkeitsdatum",
+    "amount": "Betrag",
+    "status": "Status",
+    "pending": "Ausstehend",
+    "completed": "Abgeschlossen",
+    "delayed": "Verzögert",
+    "cancelled": "Storniert"
+  },
+  "extraction": {
+    "title": "KI-Klauselextraktion mit Mistral",
+    "info": "Fügen Sie unten den vollständigen Vertragstext ein. Mistral AI analysiert ihn automatisch und extrahiert alle wichtigen Klauseln mit Risikobewertung.",
+    "contractText": "Vertragstext",
+    "placeholder": "Fügen Sie hier den vollständigen Vertragstext ein...",
+    "extracting": "Wird extrahiert... Dies kann einige Sekunden dauern.",
+    "cancel": "Abbrechen",
+    "extract": "Klauseln extrahieren",
+    "extracting_button": "Wird extrahiert..."
+  },
+  "analyzer": {
+    "cta": "Vertrag analysieren",
+    "title": "Vertrag analysieren",
+    "subtitle": "Fügen Sie einen von Dritten erhaltenen Vertrag ein, um seine Klauseln und Risiken vor der Annahme zu prüfen. Es wird nichts gespeichert.",
+    "placeholder": "Fügen Sie hier den vollständigen zu prüfenden Vertragstext ein…",
+    "analyze": "Klauseln analysieren",
+    "analyzing": "Wird analysiert…",
+    "tooShort": "Fügen Sie den vollständigen Vertragstext ein (mindestens einige Zeilen).",
+    "error": "Fehler bei der Analyse.",
+    "summary": "Zusammenfassung",
+    "globalRisk": "Gesamtrisikobewertung",
+    "clauses": "Erkannte Klauseln",
+    "analysis": "Analyse",
+    "recommendation": "Empfehlung",
+    "risk": {
+      "critical": "Kritisch",
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Gering",
+      "unknown": "Nicht bewertet"
+    },
+    "riskCount": "{{label}}: {{value}}"
+  },
+  "tabs": {
+    "templates": "Vorlagen"
+  },
+  "wizard": {
+    "templates": {
+      "service": {
+        "label": "Dienstleistungsvertrag",
+        "description": "Professionelle Dienstleistungen",
+        "prompt": "Vertrag über professionelle Dienstleistungen"
+      },
+      "purchase": {
+        "label": "Kaufvertrag",
+        "description": "Kauf von Waren oder Rohstoffen",
+        "prompt": "Vertrag über den Kauf von Waren"
+      },
+      "nda": {
+        "label": "Geheimhaltungsvereinbarung",
+        "description": "Schutz vertraulicher Informationen",
+        "prompt": "Gegenseitige Geheimhaltungsvereinbarung"
+      },
+      "maintenance": {
+        "label": "Wartungsvertrag",
+        "description": "Wartung und technischer Support",
+        "prompt": "Wartungsvertrag mit SLA"
+      },
+      "lease": {
+        "label": "Mietvertrag",
+        "description": "Miete von Räumlichkeiten oder Ausrüstung",
+        "prompt": "Mietvertrag"
+      },
+      "partnership": {
+        "label": "Partnerschaftsvertrag",
+        "description": "Geschäftliche oder strategische Partnerschaft",
+        "prompt": "Vertrag über eine geschäftliche Partnerschaft"
+      },
+      "freelance": {
+        "label": "Freelancer-Vertrag",
+        "description": "Freiberuflicher Auftrag mit Liefergegenständen",
+        "prompt": "Vertrag über einen freiberuflichen Auftrag"
+      },
+      "distribution": {
+        "label": "Vertriebsvertrag",
+        "description": "Vertrieb von Produkten",
+        "prompt": "Vertriebsvertrag"
+      }
+    },
+    "steps": {
+      "type": "Art & Beschreibung",
+      "info": "Details",
+      "articles": "Klauseln verfassen",
+      "finalize": "Abschluss"
+    },
+    "template": {
+      "editModeInfo": "Sie bearbeiten einen bestehenden Vertrag. Die Abschnitte können in Schritt 3 bearbeitet werden.",
+      "selectType": "Wählen Sie eine Vertragsart. Die KI verfasst jeden Abschnitt nach rechtlichen Best Practices.",
+      "describeDetails": "Beschreiben Sie kurz die Vertragsdetails. Die KI nutzt sie, um jeden Abschnitt anzupassen:",
+      "descriptionPlaceholder": "z. B. Wartung der IT-Ausstattung einer Apotheke in Douala, 600.000 FCFA pro Jahr, 4 Einsätze, vierteljährliche Zahlung...",
+      "nextToInfo": "Weiter — Vertragsdetails"
+    },
+    "sections": {
+      "fillTitleFirst": "Füllen Sie zuerst den Titel oder die Beschreibung aus (Schritt 2)",
+      "generatedCount": "{{count}} Abschnitte erstellt ({{tokens}} Tokens)",
+      "generateError": "Fehler beim Erstellen der Abschnitte",
+      "regenerated": "Abschnitt „{{title}}“ neu erstellt",
+      "regenerateError": "Fehler beim Neuerstellen des Abschnitts",
+      "title": "Vertragsabschnitte ({{count}} Klauseln)",
+      "subtitle": "Jede Klausel ist mit juristischen Standardformulierungen vorausgefüllt. Nutzen Sie die KI, um sie an Ihre Bedürfnisse anzupassen.",
+      "personalizing": "Anpassung läuft...",
+      "repersonalizeAll": "Alle neu anpassen",
+      "personalizeWithAI": "Mit KI anpassen",
+      "generatingCount": "{{count}} Abschnitte werden erstellt...",
+      "totalTokens": "Insgesamt verwendete Tokens:",
+      "aiGeneratedCount": "{{done}}/{{total}} Abschnitte von der KI erstellt",
+      "noSections": "Keine Abschnitte definiert. Gehen Sie zurück zu Schritt 1, um eine Vertragsart auszuwählen.",
+      "internalNotes": "Interne Notizen (nicht im Vertrag enthalten)",
+      "internalNotesPlaceholder": "Vertrauliche Notizen..."
+    },
+    "editor": {
+      "article": "Art. {{order}}",
+      "aiChip": "KI",
+      "empty": "Leer",
+      "aiRunning": "KI arbeitet...",
+      "repersonalize": "Mit KI neu anpassen",
+      "emptyHint": "Klicken Sie auf „Mit KI erstellen“, um diesen Abschnitt automatisch auszufüllen"
+    },
+    "signatures": {
+      "title": "Unterschriften der Parteien",
+      "ourOrganization": "Unsere Organisation",
+      "signedByUs": "Von uns unterschrieben",
+      "signerName": "Name des Unterzeichners",
+      "signatureDate": "Datum der Unterschrift",
+      "counterparty": "Vertragspartner",
+      "signedByCounterparty": "Vom Vertragspartner unterschrieben",
+      "pdfImported": "Unterschriebenes PDF erfolgreich hochgeladen",
+      "replace": "Ersetzen",
+      "importSignedPdf": "Unterschriebenes PDF hochladen",
+      "acceptedFormats": "Akzeptierte Formate: PDF",
+      "browse": "Durchsuchen..."
+    },
+    "validation": {
+      "titleRequired": "Vertragstitel ist erforderlich",
+      "endBeforeStart": "Das Ende muss am oder nach dem Beginn liegen."
+    },
+    "messages": {
+      "createSuccess": "Vertrag erfolgreich erstellt! Sie können jetzt das unterschriebene PDF hochladen.",
+      "saveError": "Fehler beim Speichern"
+    },
+    "fields": {
+      "title": "Vertragstitel",
+      "titlePlaceholder": "z. B. Dienstleistungsvertrag — Entwicklung einer mobilen App",
+      "language": "Vertragssprache",
+      "counterpartyTitle": "Vertragspartner",
+      "client": "Kunde",
+      "selectClient": "Kunde auswählen",
+      "counterpartName": "Name des Vertragspartners",
+      "counterpartPlaceholder": "Name des Unternehmens oder der Person",
+      "description": "Vertragsgegenstand",
+      "descriptionPlaceholder": "Beschreiben Sie Gegenstand und Kontext des Vertrags...",
+      "paymentTermsPlaceholder": "z. B. 50 % bei Unterzeichnung, 50 % bei Lieferung — 30 Tage netto"
+    },
+    "finalize": {
+      "renewalAndAlerts": "Verlängerung & Erinnerungen",
+      "renewalNotice": "Kündigungsfrist vor Verlängerung (Tage)",
+      "summary": "Vertragsübersicht",
+      "title": "Titel",
+      "type": "Art",
+      "language": "Sprache",
+      "counterparty": "Vertragspartner",
+      "duration": "Laufzeit",
+      "value": "Wert",
+      "sections": "Abschnitte",
+      "sectionsGenerated": "{{done}}/{{total}} erstellt",
+      "signaturesInfo": "Unterschriften und das Hochladen des unterschriebenen PDFs erfolgen in der <strong>Detailansicht</strong> des Vertrags, sobald dieser erstellt wurde."
+    },
+    "header": {
+      "editTitle": "Vertrag bearbeiten",
+      "newTitle": "Neuer Vertrag",
+      "editSubtitle": "Vertragsdaten aktualisieren",
+      "newSubtitle": "Erstellen Sie einen professionellen Vertrag, Abschnitt für Abschnitt mit KI verfasst"
+    },
+    "actions": {
+      "save": "Speichern",
+      "create": "Vertrag erstellen"
+    }
+  },
+  "templates": {
+    "newTemplate": "Neue Vorlage",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "noDescription": "Keine Beschreibung",
+    "types": {
+      "contract": "Standardvertrag",
+      "payment": "Zahlungsvereinbarung",
+      "receipt": "Zahlungsbeleg",
+      "quote": "Angebot",
+      "other": "Sonstige"
+    },
+    "empty": {
+      "title": "Keine Vertragsvorlagen",
+      "description": "Sie haben noch keine Vorlagen für Verträge, Zahlungen oder Angebote erstellt.",
+      "action": "Vorlage erstellen"
+    },
+    "columns": {
+      "type": "Art",
+      "actions": "Aktionen"
+    },
+    "tooltips": {
+      "view": "Vorschau / Anzeigen"
+    },
+    "dialog": {
+      "editTitle": "Vorlage bearbeiten",
+      "newTitle": "Neue Vorlage"
+    },
+    "fields": {
+      "name": "Vorlagenname",
+      "documentType": "Dokumentart",
+      "description": "Beschreibung",
+      "content": "Vorlageninhalt (HTML/Markdown)",
+      "contentHelper": "Geben Sie den Vorlagentext ein",
+      "aiInstructions": "Anweisungen für die KI (optional)",
+      "aiInstructionsHelper": "z. B. „Verwende Vor- und Nachnamen des Lieferanten für die abschließende Unterschrift.“",
+      "status": "Status"
+    },
+    "view": {
+      "content": "Vorlageninhalt:",
+      "aiInstructions": "KI-Anweisungen:"
+    },
+    "messages": {
+      "loadError": "Fehler beim Laden der Vorlagen",
+      "nameContentRequired": "Name und Inhalt sind erforderlich",
+      "updateSuccess": "Vorlage erfolgreich aktualisiert",
+      "createSuccess": "Vorlage erfolgreich erstellt",
+      "saveError": "Fehler beim Speichern der Vorlage",
+      "deleteConfirm": "Möchten Sie diese Vorlage wirklich löschen?",
+      "deleteSuccess": "Vorlage erfolgreich gelöscht",
+      "deleteError": "Fehler beim Löschen der Vorlage"
+    }
+  }
+}

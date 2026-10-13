@@ -329,7 +329,7 @@ class Orchestrator:
         # Règle produit : aucun emoji dans les réponses (positionnement premium).
         return prompt + ("\n\nRÈGLE DE STYLE : n'utilise jamais d'emoji dans tes réponses. "
                          "Réponds toujours dans la langue du dernier message de l'utilisateur "
-                         "(en anglais s'il écrit en anglais, sinon en français).")
+                         "(anglais, allemand ou français ; en français par défaut).")
 
     # ------------------------------------------------------------------ run
     async def run(

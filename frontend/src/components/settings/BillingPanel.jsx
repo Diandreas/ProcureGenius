@@ -80,7 +80,7 @@ export default function BillingPanel() {
   const hasStripe = !!(sub?.payment_method === 'stripe');
   const quotas = data?.quotas || {};
 
-  const fmtDate = (d) => d ? new Date(d).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-US' : 'fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString(({ en: 'en-US', de: 'de-DE' }[String(i18n.language || 'fr').slice(0, 2)] || 'fr-FR'), { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
 
   return (
     <Box>

@@ -17,7 +17,7 @@ export const getCurrentDocumentation = () => {
   const currentLanguage = i18n.language || 'fr';
 
   // Return English documentation if language is 'en', otherwise French
-  if (currentLanguage === 'en') {
+  if (currentLanguage.startsWith('en') || currentLanguage.startsWith('de')) {
     return {
       categories: docEN.documentationCategories,
       articles: docEN.documentationArticles,

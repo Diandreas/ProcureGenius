@@ -209,6 +209,14 @@ def reponse_facture(facture, langue='fr'):
     lignes = len(facture['items'])
     client = facture['client']['name']
     inconnus = ', '.join(facture.get('unknown_items') or [])
+    if langue == 'de':
+        total = f"{round(facture['total']):,}".replace(',', '.')
+        texte = (f"Fertig: Die Rechnung für **{client}** ist bereit, {lignes} Position{'en' if lignes > 1 else ''}, "
+                 f"**{total} {devise} inkl. MwSt.** Um sie als PDF herunterzuladen, per WhatsApp an Ihren Kunden "
+                 "zu senden und zu behalten, erstellen Sie Ihr kostenloses Konto: eine Minute, ein Monat gratis.")
+        if inconnus:
+            texte += f" Für folgende Artikel habe ich keinen Preis gefunden: {inconnus}. Nennen Sie mir den Preis."
+        return texte
     if langue == 'en':
         total = f"{round(facture['total']):,}"
         texte = (f"Done: the invoice for **{client}** is ready, {lignes} line{'s' if lignes > 1 else ''}, "
@@ -287,8 +295,8 @@ def _consommer(cle, limite):
 
 def _langue(request):
     """Langue de la page d'accueil du visiteur (en-tête envoyé par l'app)."""
-    entete = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
-    return 'en' if entete.split(',')[0].strip().lower().startswith('en') else 'fr'
+    entete = request.META.get('HTTP_ACCEPT_LANGUAGE', '').split(',')[0].strip().lower()[:2]
+    return entete if entete in ('en', 'de') else 'fr'
 
 
 def _historique(brut):

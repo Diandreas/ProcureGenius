@@ -1,0 +1,404 @@
+{
+  "actions": {
+    "start": "Jetzt starten",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "finish": "Fertigstellen",
+    "skip": "Überspringen",
+    "continue": "Weiter",
+    "back": "Zurück"
+  },
+  "setup": {
+    "steps": {
+      "company": "Ihr Unternehmen",
+      "activity": "Ihre Tätigkeit",
+      "plan": "Ihr Plan"
+    },
+    "taxRegions": {
+      "international": "International",
+      "cameroon": "Kamerun (OHADA)",
+      "ohada": "OHADA-Raum",
+      "eu": "Europäische Union",
+      "usa": "Vereinigte Staaten",
+      "canada": "Kanada"
+    },
+    "useCases": {
+      "sell": {
+        "title": "Verkaufen & abrechnen",
+        "desc": "Kunden, Angebote, Rechnungen, Zahlungen"
+      },
+      "buy": {
+        "title": "Einkauf & Lieferanten",
+        "desc": "Lieferanten, Bestellungen, Verträge"
+      },
+      "stock": {
+        "title": "Lager verwalten",
+        "desc": "Produktkatalog und Lagerbestände"
+      },
+      "all": {
+        "title": "Alles verwalten",
+        "desc": "Das gesamte Geschäft: Verkauf, Einkauf, Lager, Buchhaltung"
+      }
+    },
+    "plans": {
+      "free": {
+        "name": "Kostenlos",
+        "tag": "Für den Einstieg",
+        "seats": "1 Benutzer",
+        "features": {
+          "clientsProducts": "Kunden & Produkte",
+          "basicInvoicing": "Einfache Rechnungsstellung",
+          "dashboard": "Dashboard"
+        },
+        "cta": "Kostenlos bleiben (ohne Testphase)"
+      },
+      "pro": {
+        "name": "Pro",
+        "tag": "30 Tage kostenlos",
+        "seats": "2 Benutzer inklusive (+{siege}/Benutzer)",
+        "features": {
+          "allFree": "Alles aus Kostenlos",
+          "suppliersPo": "Lieferanten & Bestellungen",
+          "accountingAiContracts": "Basis-Buchhaltung, KI & Verträge"
+        },
+        "cta": "Pro-Testphase starten"
+      },
+      "business": {
+        "name": "Business",
+        "tag": "30 Tage kostenlos",
+        "seats": "10 Benutzer inklusive (+{siege}/Benutzer)",
+        "features": {
+          "fullAccounting": "Vollständige Buchhaltung + Margen & Nachbestellung",
+          "eSourcing": "E-Sourcing (Ausschreibungen)",
+          "prioritySupport": "Priorisierter Support"
+        },
+        "cta": "Business-Testphase starten"
+      }
+    },
+    "errors": {
+      "companyNameRequired": "Firmenname ist erforderlich",
+      "chooseActivity": "Wählen Sie mindestens eine Tätigkeit",
+      "unknown": "Unbekannter Fehler",
+      "generic": "Fehler: {{message}}"
+    },
+    "header": {
+      "title": "Willkommen bei Procura",
+      "subtitle": "Ein paar kurze Schritte, um Ihren Arbeitsbereich einzurichten"
+    },
+    "progress": "Schritt {{current}} von {{total}} — {{label}}",
+    "company": {
+      "title": "Ihr Unternehmen",
+      "subtitle": "Diese Angaben erscheinen auf Ihren Rechnungen und Dokumenten.",
+      "logoOptional": "Logo (optional)",
+      "companyName": "Firmenname",
+      "companyNamePlaceholder": "z. B. ACME GmbH",
+      "prefilled": "Aus Ihrer Registrierung übernommen",
+      "country": "Land",
+      "countryHint": "MwSt. {{rate}} % · Buchhaltung: {{standard}} — später änderbar",
+      "accountingStandards": {
+        "syscohada": "SYSCOHADA (OHADA)",
+        "pcg": "Französischer Kontenrahmen",
+        "us_gaap": "US GAAP",
+        "ca": "Kanadisch"
+      },
+      "address": "Ort / Adresse (optional)",
+      "addressPlaceholder": "z. B. Akwa, Douala",
+      "currency": "Währung",
+      "currencies": {
+        "XAF": "XAF — CFA-Franc (Zentralafrika)",
+        "XOF": "XOF — CFA-Franc (Westafrika)",
+        "EUR": "EUR — Euro",
+        "USD": "USD — US-Dollar",
+        "CAD": "CAD — Kanadischer Dollar"
+      },
+      "language": "Sprache",
+      "languageHint": "Sprache der App und Ihrer Dokumente.",
+      "moreInfo": "Weitere Angaben",
+      "optional": "(optional)",
+      "email": "E-Mail",
+      "emailPlaceholder": "contact@company.com",
+      "phone": "Telefon",
+      "website": "Website",
+      "taxRegion": "Steuerregion",
+      "taxNumber": "Steuernummer (TIN)",
+      "editableLater": "All dies können Sie jederzeit in den Einstellungen ändern."
+    },
+    "activity": {
+      "title": "Was möchten Sie verwalten?",
+      "subtitle": "Wählen Sie aus, was auf Sie zutrifft — wir aktivieren die passenden Funktionen. Sie können dies jederzeit ändern."
+    },
+    "plan": {
+      "title": "Ihr Plan",
+      "trialNotice": "<strong>30 Tage Pro kostenlos testen</strong>, keine Kreditkarte erforderlich. Sie können auch beim Plan <strong>Kostenlos</strong> bleiben — jederzeit wechselbar.",
+      "recommended": "Empfohlen"
+    },
+    "activating": "Wird aktiviert…",
+    "start": "Starten",
+    "noCardRequired": "Keine Kreditkarte erforderlich. Jederzeit kündbar."
+  },
+  "wizard": {
+    "steps": {
+      "welcome": "Willkommen",
+      "companyType": "Unternehmenstyp",
+      "useCase": "Anwendungsfall",
+      "team": "Team",
+      "modules": "Module",
+      "done": "Fertig"
+    },
+    "profiles": {
+      "basic": {
+        "name": "Basis",
+        "description": "Für einfachen Einkauf und Rechnungsstellung"
+      },
+      "advanced": {
+        "name": "Erweitert",
+        "description": "KMU mit Sourcing und Vertragsverwaltung"
+      },
+      "complete": {
+        "name": "Komplett",
+        "description": "Alle Funktionen für große Unternehmen"
+      }
+    },
+    "modules": {
+      "dashboard": {
+        "name": "Dashboard",
+        "description": "Überblick und Statistiken"
+      },
+      "suppliers": {
+        "name": "Lieferanten",
+        "description": "Lieferantenverwaltung"
+      },
+      "purchaseOrders": {
+        "name": "Bestellungen",
+        "description": "Einkaufsverwaltung"
+      },
+      "invoices": {
+        "name": "Rechnungen",
+        "description": "Rechnungsstellung und Zahlungen"
+      },
+      "products": {
+        "name": "Produkte",
+        "description": "Produktkatalog und Lager"
+      },
+      "clients": {
+        "name": "Kunden",
+        "description": "Kundenverwaltung"
+      },
+      "eSourcing": {
+        "name": "E-Sourcing",
+        "description": "Ausschreibungen (RFQ)"
+      },
+      "contracts": {
+        "name": "Verträge",
+        "description": "Vertragsverwaltung"
+      }
+    },
+    "messages": {
+      "success": "Einrichtung erfolgreich abgeschlossen!",
+      "error": "Fehler bei der Einrichtung"
+    },
+    "welcome": {
+      "title": "Willkommen bei ProcureGenius!",
+      "text": "Ich helfe Ihnen gern, Ihren Arbeitsbereich einzurichten. In wenigen Schritten passen wir die App an Ihre Bedürfnisse an."
+    },
+    "company": {
+      "title": "Erzählen Sie uns von Ihrem Unternehmen",
+      "type": "Unternehmenstyp",
+      "types": {
+        "sme": "KMU (kleine und mittlere Unternehmen)",
+        "large": "Großunternehmen",
+        "startup": "Startup",
+        "nonprofit": "Gemeinnützige Organisation"
+      },
+      "sector": "Branche",
+      "sectorPlaceholder": "z. B. Technologie, Einzelhandel, Dienstleistungen..."
+    },
+    "useCase": {
+      "title": "Was ist Ihr Hauptbedarf?",
+      "simplePurchases": {
+        "title": "Einfacher Einkauf und Rechnungsstellung",
+        "desc": "Lieferanten verwalten, Bestellungen erstellen und Rechnungen verfolgen"
+      },
+      "sourcing": {
+        "title": "E-Sourcing und Ausschreibungen",
+        "desc": "Lieferantenangebote vergleichen, RFQs verwalten und den Einkauf optimieren"
+      },
+      "complete": {
+        "title": "Komplette Verwaltung",
+        "desc": "Alle Funktionen: Einkauf, Lager, Verträge, Rechnungsstellung, Analysen"
+      }
+    },
+    "team": {
+      "title": "Ihr Team",
+      "size": "Teamgröße",
+      "sizes": {
+        "small": "1-10 Mitarbeitende",
+        "medium": "11-50 Mitarbeitende",
+        "large": "51-200 Mitarbeitende",
+        "xlarge": "Mehr als 200 Mitarbeitende"
+      },
+      "rolesTitle": "Hauptrollen in Ihrem Team",
+      "roles": {
+        "purchasing": "Einkauf",
+        "accounting": "Buchhaltung",
+        "management": "Geschäftsführung",
+        "sales": "Vertrieb",
+        "logistics": "Logistik"
+      }
+    },
+    "modulesStep": {
+      "title": "Wählen Sie Ihre Module",
+      "profileHint": "Wählen Sie ein vordefiniertes Profil oder passen Sie Ihre Module an",
+      "customize": "Module anpassen",
+      "customHint": "Wählen Sie die Module aus, die Sie nutzen möchten",
+      "backToProfiles": "Zurück zu den vordefinierten Profilen"
+    },
+    "done": {
+      "title": "Einrichtung abgeschlossen!",
+      "text": "Ihr Arbeitsbereich ist bereit. Sie können diese Einstellungen jederzeit später ändern.",
+      "start": "ProcureGenius jetzt nutzen"
+    }
+  },
+  "checklist": {
+    "title": "Schnellstart",
+    "progress": "{{done}}/{{total}} Aufgaben erledigt",
+    "allDoneTitle": "Alles erledigt!",
+    "allDoneText": "Ihr Procura-Arbeitsbereich ist eingerichtet.",
+    "tasks": {
+      "companyProfile": {
+        "title": "Firmenprofil einrichten",
+        "subtitle": "Name, Logo, rechtliche Angaben"
+      },
+      "firstSupplier": {
+        "title": "Ersten Lieferanten hinzufügen",
+        "subtitle": "Name, Kontakt, Konditionen"
+      },
+      "firstProduct": {
+        "title": "Produkt oder Dienstleistung anlegen",
+        "subtitle": "Artikelnummer, Preis, Anfangsbestand"
+      },
+      "firstPo": {
+        "title": "Bestellung erstellen",
+        "subtitle": "Ihr erster Einkauf beim Lieferanten"
+      },
+      "exploreAi": {
+        "title": "KI-Assistenten ausprobieren",
+        "subtitle": "Stellen Sie Ihre erste Frage"
+      }
+    }
+  },
+  "tutorial": {
+    "stepOf": "Schritt {{current}} von {{total}}",
+    "skipTutorial": "Tutorial überspringen",
+    "simple": {
+      "welcome": {
+        "title": "Willkommen bei Procura!",
+        "description": "Wir zeigen Ihnen, wie es funktioniert. Das dauert 2 Minuten. Folgen Sie den Schritten, dann können Sie direkt loslegen."
+      },
+      "dashboard": {
+        "title": "Ihre Startseite",
+        "description": "Hier sehen Sie alles, was gerade passiert: heutige Bestellungen, offene Rechnungen und wichtige Warnungen."
+      },
+      "suppliers": {
+        "title": "Ihre Lieferanten",
+        "description": "Hier erfassen Sie Ihre Händler und Lieferanten. Wenn Sie eine Bestellung aufgeben, finden Sie sie schnell wieder."
+      },
+      "purchaseOrders": {
+        "title": "Bestellungen",
+        "description": "Erstellen Sie eine Bestellung für einen Lieferanten. Sie können auch prüfen, ob der Preis fair ist — die App vergleicht die Marktpreise für Sie."
+      },
+      "invoices": {
+        "title": "Ihre Rechnungen",
+        "description": "Erstellen Sie Ihre Rechnungen und senden Sie sie per E-Mail an Ihre Kunden. Sehen Sie, wer bezahlt hat und wer Ihnen noch Geld schuldet."
+      },
+      "products": {
+        "title": "Ihre Produkte",
+        "description": "Erfassen Sie Ihre Produkte und deren Bestand. Wenn ein Artikel knapp wird, warnt Sie die App rechtzeitig."
+      },
+      "contracts": {
+        "title": "Verträge",
+        "description": "Bewahren Sie eine Kopie Ihrer Vereinbarungen mit Lieferanten auf. So haben Sie bei Preisänderungen oder Problemen einen schriftlichen Nachweis."
+      },
+      "accounting": {
+        "title": "Buchhaltung",
+        "description": "Sehen Sie auf einen Blick, wie viel Sie ausgegeben und eingenommen haben und ob Ihr Geschäft rentabel ist."
+      },
+      "aiAssistant": {
+        "title": "Ihr KI-Assistent",
+        "description": "Stellen Sie ihm eine Frage in einfachen Worten — \"Zeig mir die Rechnungen dieses Monats\" oder \"Wer ist mein bester Lieferant?\" — und er antwortet sofort."
+      },
+      "settings": {
+        "title": "Einstellungen",
+        "description": "Hinterlegen Sie den Namen Ihres Geschäfts, Ihr Logo und Ihre Währung. Hier fügen Sie auch weitere Personen aus Ihrem Team hinzu."
+      },
+      "complete": {
+        "title": "Los geht's!",
+        "description": "Sie haben das Wichtigste gesehen. Tragen Sie zuerst den Namen Ihres Geschäfts in den Einstellungen ein und fügen Sie dann Ihren ersten Lieferanten hinzu."
+      }
+    },
+    "provider": {
+      "welcome": {
+        "title": "Willkommen bei ProcureGenius!",
+        "description": "Ich bin Procury, Ihr Assistent. Ich führe Sie durch die wichtigsten Funktionen der Plattform."
+      },
+      "dashboard": {
+        "title": "Das Dashboard",
+        "description": "Dies ist Ihre Kommandozentrale. Hier finden Sie einen Überblick über Ihr Geschäft, Ihre Warnungen und Ihre Statistiken in Echtzeit."
+      },
+      "sidebar": {
+        "title": "Die Seitenleiste",
+        "description": "Wechseln Sie mühelos zwischen den Modulen der App. Welche Module angezeigt werden, hängt von Ihrer Konfiguration ab."
+      },
+      "suppliers": {
+        "title": "Lieferantenverwaltung",
+        "description": "Fügen Sie Ihre Lieferanten hinzu und verwalten Sie sie. Sie können aus Excel importieren, Visitenkarten scannen und ihre Leistung verfolgen."
+      },
+      "purchaseOrders": {
+        "title": "Bestellungen",
+        "description": "Erstellen Sie professionelle Bestellungen mit wenigen Klicks. Die KI kann Ihnen beim Verfassen des Inhalts helfen."
+      },
+      "invoices": {
+        "title": "Rechnungsstellung",
+        "description": "Verwalten Sie Ihre Kundenrechnungen. Versenden Sie sie per E-Mail und verfolgen Sie Zahlungen in Echtzeit."
+      },
+      "clients": {
+        "title": "Kundenverwaltung",
+        "description": "Verfolgen Sie Ihre Kunden, deren Kaufhistorie und offene Beträge."
+      },
+      "products": {
+        "title": "Produkte & Lager",
+        "description": "Verwalten Sie Ihren Produktkatalog, verfolgen Sie Ihren Lagerbestand und erhalten Sie Nachbestellwarnungen."
+      },
+      "settings": {
+        "title": "Einstellungen",
+        "description": "Passen Sie Ihre Umgebung an: Firmendaten, Module, Druck, Benachrichtigungen und mehr."
+      },
+      "aiAssistant": {
+        "title": "KI-Assistent",
+        "description": "Ihr intelligenter Assistent beantwortet Ihre Fragen, erstellt Dokumente und hilft Ihnen bei Ihren täglichen Aufgaben."
+      },
+      "complete": {
+        "title": "Sie sind startklar!",
+        "description": "Sie kennen jetzt die Grundlagen von ProcureGenius. Erkunden Sie die App nach Belieben und starten Sie dieses Tutorial bei Bedarf über das Hilfemenü neu."
+      }
+    },
+    "button": {
+      "tutorial": "Tutorial",
+      "help": "Hilfe",
+      "tooltip": "Hilfe & Tutorial",
+      "needHelp": "Brauchen Sie Hilfe?",
+      "launch": "Tutorial starten",
+      "guidedTour": "Geführte Tour durch die App",
+      "interactiveTour": "Interaktive geführte Tour",
+      "new": "Neu",
+      "replay": "Tutorial wiederholen",
+      "restartFromStart": "Von vorne beginnen",
+      "restartTour": "Tour neu starten",
+      "documentation": "Dokumentation",
+      "helpCenter": "Vollständiges Hilfecenter",
+      "faq": "FAQ",
+      "shortcuts": "Tastenkürzel",
+      "contactSupport": "Support kontaktieren"
+    }
+  }
+}

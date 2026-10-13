@@ -1,0 +1,147 @@
+{
+  "title": "Hilfe-Center",
+  "subtitle": "Finden Sie Antworten und lernen Sie, ProcureGenius zu nutzen",
+  "quickActions": {
+    "tutorial": "Interaktives Tutorial",
+    "faq": "FAQ",
+    "shortcuts": "Tastenkürzel",
+    "support": "Support kontaktieren",
+    "title": "Schnellaktionen",
+    "startTutorial": "Interaktives Tutorial starten",
+    "viewFaq": "FAQ ansehen",
+    "keyboardShortcuts": "Tastenkürzel",
+    "contactSupport": "Support kontaktieren"
+  },
+  "search": {
+    "placeholder": "Hilfe durchsuchen...",
+    "popular": "Beliebte Suchanfragen",
+    "noResults": "Keine Ergebnisse gefunden für",
+    "tryDifferent": "Versuchen Sie andere Suchbegriffe",
+    "noResultsDescription": "Versuchen Sie andere Suchbegriffe oder durchsuchen Sie die Kategorien unten",
+    "popularTerms": {
+      "createInvoice": "Rechnung erstellen",
+      "newSupplier": "neuer Lieferant",
+      "stockManagement": "Lagerverwaltung",
+      "purchaseOrder": "Bestellung"
+    }
+  },
+  "needMoreHelp": {
+    "title": "Brauchen Sie weitere Hilfe?",
+    "description": "Unser Support-Team hilft Ihnen gerne",
+    "contact": "Support kontaktieren",
+    "startTutorial": "Tutorial starten"
+  },
+  "article": {
+    "notFound": "Artikel nicht gefunden",
+    "backToHelp": "Zurück zur Hilfe",
+    "wasHelpful": "War dieser Artikel hilfreich?",
+    "thanksFeedback": "Danke für Ihr Feedback!",
+    "sorryNotHelpful": "Das tut uns leid. Wenden Sie sich für weitere Hilfe an den Support.",
+    "relatedTopics": "Verwandte Artikel",
+    "previous": "Zurück",
+    "next": "Weiter"
+  },
+  "breadcrumb": {
+    "help": "Hilfe"
+  },
+  "faq": {
+    "title": "Häufig gestellte Fragen",
+    "subtitle": "Schnelle Antworten auf häufige Fragen",
+    "backToHelp": "Zurück zum Hilfe-Center",
+    "searchPlaceholder": "Nach einer Frage suchen...",
+    "noResults": "Keine Fragen gefunden",
+    "tryDifferent": "Versuchen Sie andere Suchbegriffe oder Kategorien",
+    "stillNeedHelp": "Keine Antwort gefunden?",
+    "contactUs": "Unser Support-Team hilft Ihnen gerne",
+    "contactSupport": "Support kontaktieren"
+  },
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "subtitle": "Sparen Sie Zeit mit Tastenkürzeln",
+    "macDetected": "Mac-Tastenkürzel erkannt",
+    "windowsDetected": "Windows-Tastenkürzel erkannt",
+    "tipTitle": "Tipp",
+    "tipContent": "Drücken Sie jederzeit Strg+/ (Cmd+/ auf dem Mac), um die kontextbezogene Hilfe und die auf der aktuellen Seite verfügbaren Tastenkürzel anzuzeigen.",
+    "print": "Diese Seite drucken",
+    "backToHelp": "Zurück zum Hilfe-Center"
+  },
+  "categories": {
+    "all": "Alle",
+    "gettingStarted": {
+      "title": "Erste Schritte",
+      "description": "Ihre ersten Schritte mit ProcureGenius"
+    },
+    "suppliers": {
+      "title": "Lieferanten",
+      "description": "Verwalten Sie Ihre Lieferanten"
+    },
+    "purchaseOrders": {
+      "title": "Bestellungen",
+      "description": "Erstellen und verfolgen Sie Ihre Bestellungen"
+    },
+    "invoices": {
+      "title": "Rechnungen",
+      "description": "Verwalten Sie Ihre Rechnungen"
+    },
+    "clients": {
+      "title": "Kunden",
+      "description": "Verwalten Sie Ihren Kundenstamm"
+    },
+    "products": {
+      "title": "Produkte",
+      "description": "Produktkatalog und -verwaltung"
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "description": "Konfiguration der Anwendung"
+    },
+    "tips": {
+      "title": "Tipps & Tricks",
+      "description": "Tipps und bewährte Vorgehensweisen"
+    }
+  },
+  "articles": {
+    "title": "Hilfeartikel",
+    "readMore": "Weiterlesen",
+    "relatedArticles": "Verwandte Artikel",
+    "helpful": "War das hilfreich?",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "support": {
+    "title": "Brauchen Sie Hilfe?",
+    "subtitle": "Wir sind für Sie da",
+    "whatsapp": {
+      "title": "WhatsApp-Support",
+      "description": "Kontaktieren Sie uns direkt über WhatsApp für schnelle Hilfe",
+      "button": "WhatsApp öffnen"
+    },
+    "email": {
+      "title": "E-Mail-Support",
+      "description": "Schreiben Sie uns eine E-Mail, wir melden uns so schnell wie möglich",
+      "button": "E-Mail senden"
+    },
+    "youtube": {
+      "title": "Video-Tutorials",
+      "description": "Lernen Sie ProcureGenius mit unseren Video-Tutorials kennen",
+      "placeholder": "Fügen Sie hier die URL Ihres YouTube-Tutorials ein...",
+      "button": "Öffnen",
+      "note": "Hinweis: Mit dieser Funktion können Sie das YouTube-Video Ihrer Wahl direkt öffnen"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "faq": "FAQ",
+      "faqDescription": "Häufig gestellte Fragen",
+      "documentation": "Dokumentation",
+      "documentationDescription": "Vollständige Anleitung zur Anwendung",
+      "shortcuts": "Tastenkürzel",
+      "shortcutsDescription": "Liste der verfügbaren Tastenkürzel",
+      "tutorial": "Interaktives Tutorial",
+      "tutorialDescription": "Entdecken Sie die Anwendung Schritt für Schritt"
+    }
+  },
+  "messages": {
+    "feedbackThankYou": "Vielen Dank für Ihr Feedback!",
+    "copiedToClipboard": "In die Zwischenablage kopiert"
+  }
+}

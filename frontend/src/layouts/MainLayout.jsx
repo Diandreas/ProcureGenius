@@ -30,6 +30,8 @@ import {
   Add,
   SupervisorAccount,
   Tune,
+  School,
+  HelpOutline as HelpOutlineIcon,
   Refresh,
   DarkMode,
   LightMode,
@@ -56,7 +58,7 @@ import { useHeader } from '../contexts/HeaderContext';
 import MobileBottomNav from '../components/MobileBottomNav';
 import ModuleActivationDialog from '../components/ModuleActivationDialog';
 import IconImage from '../components/IconImage';
-import TutorialButton from '../components/tutorial/TutorialButton';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import SimpleTutorial from '../components/tutorial/SimpleTutorial';
 import AINotificationProvider, { useAINotifications } from '../components/AI/AINotificationProvider';
 import InstallPWAPrompt from '../components/InstallPWAPrompt';
@@ -1004,8 +1006,8 @@ function MainLayout() {
               </IconButton>
             )}
 
-            {/* Tutorial Button - Visible partout */}
-            <TutorialButton variant="icon" size="small" />
+            {/* Langue (enregistrée dans le compte de la personne) */}
+            <LanguageSwitcher sx={{ mr: { xs: 0.5, sm: 1 } }} />
 
             {/* Theme Toggle - Design Premium (compact sur mobile) */}
             <Tooltip title={mode === 'dark' ? t('navigation:topBar.lightMode') : t('navigation:topBar.darkMode')}>
@@ -1103,6 +1105,24 @@ function MainLayout() {
                   <Tune fontSize="small" />
                 </ListItemIcon>
                 {t('navigation:userMenu.settings')}
+              </MenuItem>
+              <MenuItem
+                onClick={() => { handleMenuClose(); window.dispatchEvent(new CustomEvent('start-tutorial')); }}
+                sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  <School fontSize="small" />
+                </ListItemIcon>
+                {t('onboarding:tutorial.button.launch')}
+              </MenuItem>
+              <MenuItem
+                onClick={() => { navigate('/help'); handleMenuClose(); }}
+                sx={{ py: 1.5, px: 2, fontSize: '0.875rem', gap: 1.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  <HelpOutlineIcon fontSize="small" />
+                </ListItemIcon>
+                {t('onboarding:tutorial.button.documentation')}
               </MenuItem>
               
               <Divider sx={{ my: 0.5 }} />

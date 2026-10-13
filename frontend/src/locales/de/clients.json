@@ -1,0 +1,240 @@
+{
+  "title": "Kunden",
+  "newClient": "Neuer Kunde",
+  "editClient": "Kunde bearbeiten",
+  "search": {
+    "placeholder": "Kunde suchen...",
+    "placeholderFull": "Kunde, Ansprechpartner oder E-Mail suchen..."
+  },
+  "filters": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "vip": "VIP",
+    "new": "Neu",
+    "all": "Alle",
+    "activeFilter": "Aktiver Filter:",
+    "statusLabel": "Status",
+    "paymentTermsLabel": "Zahlungsbedingungen",
+    "allPaymentTerms": "Alle"
+  },
+  "tabs": {
+    "info": "Infos",
+    "invoices": "Rechnungen",
+    "products": "Produkte"
+  },
+  "labels": {
+    "contactPerson": "Ansprechpartner",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "conditions": "Konditionen",
+    "paymentTerms": "Zahlungsbedingungen",
+    "creditLimit": "Kreditlimit",
+    "quickActions": "Schnellaktionen",
+    "createdOn": "Erstellt am",
+    "updatedOn": "Aktualisiert am",
+    "systemInfo": "Systeminformationen",
+    "generalInfo": "Allgemeine Informationen",
+    "contactInfo": "Kontaktdaten",
+    "commercialConditions": "Geschäftsbedingungen",
+    "statusAndOptions": "Status und Optionen",
+    "name": "Kundenname",
+    "legalName": "Firmenname (optional)",
+    "businessNumber": "Handelsregisternummer (optional)",
+    "billingAddress": "Rechnungsadresse",
+    "activeClient": "Aktiver Kunde",
+    "aiInfo": "KI-Informationen",
+    "aiInfoDescription": "Zahlungsrisiko-Scores und Verhaltensmuster werden automatisch von der KI berechnet, sobald der Kunde angelegt ist und eine Transaktionshistorie hat.",
+    "productUnavailable": "Produkt nicht verfügbar",
+    "ref": "Ref.",
+    "generatingLabel": "Bericht wird erstellt...",
+    "lastActivity": "Letzte Aktivität",
+    "autoStatusTitle": "Automatischer Status",
+    "autoStatusDescription": "Der Kundenstatus wird automatisch anhand der jüngsten Aktivität berechnet.",
+    "manualStatus": "Status manuell festlegen",
+    "invoiceCount": "{{count}} Rechnung(en)",
+    "autoInactiveSince": "Inaktiv seit",
+    "performance": "Leistung",
+    "totalInvoices": "Rechnungen",
+    "totalRevenue": "Erzielter Umsatz",
+    "averageInvoice": "Durchschn. Warenkorb",
+    "uniqueProducts": "Produkte",
+    "paymentConditions": "Konditionen",
+    "call": "Anrufen",
+    "dates": "Daten",
+    "createdAt": "Erstellt am",
+    "updatedAt": "Aktualisiert am",
+    "notAvailable": "k. A."
+  },
+  "stats": {
+    "totalRevenue": "Gesamtumsatz",
+    "productsPurchased": "Gekaufte Produkte",
+    "averageBasket": "Durchschn. Warenkorb"
+  },
+  "actions": {
+    "createInvoice": "Rechnung erstellen",
+    "sendEmail": "E-Mail senden",
+    "call": "Anrufen",
+    "cancel": "Abbrechen",
+    "create": "Erstellen",
+    "modify": "Bearbeiten",
+    "save": "Speichern",
+    "generateReport": "PDF-Bericht",
+    "deletePermanently": "Endgültig löschen"
+  },
+  "report": {
+    "title": "Kundenbericht erstellen",
+    "itemLabel": "Kunde",
+    "itemsLabel": "Kunden",
+    "fileName": "kundenbericht-{{timestamp}}.pdf",
+    "viewerTitle": "Kundenbericht",
+    "period": "Zeitraum (optional)",
+    "periodHelp": "Nach Zeitraum filtern – leer lassen, um alles einzuschließen",
+    "dateStart": "Startdatum",
+    "dateEnd": "Enddatum",
+    "itemsToInclude": "Einzuschließende Kunden",
+    "selectedCount": "{{count}} Kunde(n) ausgewählt",
+    "allIncluded": "Alle gefilterten Kunden werden eingeschlossen",
+    "selectAll": "Alle auswählen",
+    "deselectAll": "Auswahl aufheben",
+    "summarySelected": "Es wird ein Bericht mit {{count}} ausgewählten Kunde(n) erstellt",
+    "summaryAll": "Es wird ein Bericht mit allen Kunden ({{count}}) erstellt",
+    "forPeriod": " für den angegebenen Zeitraum",
+    "generate": "Bericht erstellen",
+    "clientFileName": "kundenbericht-{{name}}.pdf",
+    "clientViewerTitle": "Bericht {{name}}"
+  },
+  "buttons": {
+    "preview": "Vorschau",
+    "print": "Drucken",
+    "download": "Herunterladen",
+    "cancel": "Abbrechen"
+  },
+  "dialogs": {
+    "generatePdf": "Bericht als PDF erstellen"
+  },
+  "tooltips": {
+    "editClient": "Kunde bearbeiten",
+    "deleteClient": "Kunde löschen",
+    "downloadPdfReport": "PDF-Bericht herunterladen"
+  },
+  "pdf": {
+    "title": "Kunden-PDF-Bericht",
+    "ready": "Der PDF-Bericht ist fertig. Wählen Sie eine Aktion:",
+    "description": "PDF-Bericht wird erstellt...",
+    "generating": "PDF wird erstellt..."
+  },
+  "status": {
+    "active": "Aktiv",
+    "inactive": "Inaktiv"
+  },
+  "table": {
+    "invoiceNumber": "Rechnungsnr.",
+    "title": "Titel",
+    "status": "Status",
+    "amount": "Betrag",
+    "creationDate": "Erstellungsdatum",
+    "dueDate": "Fälligkeitsdatum",
+    "product": "Produkt",
+    "reference": "Referenz",
+    "totalQuantity": "Gesamtmenge",
+    "purchaseCount": "Anzahl Käufe",
+    "totalSpent": "Gesamtausgaben"
+  },
+  "messages": {
+    "noClients": "Keine Kunden",
+    "noClientsDescription": "Keine Kunden entsprechen Ihren Suchkriterien.",
+    "loadingError": "Fehler beim Laden der Kunden",
+    "loadClientError": "Fehler beim Laden des Kunden",
+    "clientDeleted": "Kunde gelöscht",
+    "deleteError": "Fehler beim Löschen des Kunden",
+    "clientNotFound": "Kunde nicht gefunden",
+    "deleteConfirmation": "{{name}} löschen?",
+    "deleteWarningTitle": "⚠️ Achtung: Endgültige Löschung",
+    "deleteWarningMessage": "Möchten Sie den Kunden „{{name}}“ wirklich löschen?\n\n❌ ALLE RECHNUNGEN DIESES KUNDEN WERDEN EBENFALLS ENDGÜLTIG GELÖSCHT.\n\nDiese Aktion kann nicht rückgängig gemacht werden.",
+    "createSuccess": "Kunde erfolgreich erstellt",
+    "updateSuccess": "Kunde erfolgreich aktualisiert",
+    "saveError": "Fehler beim Speichern des Kunden",
+    "noInvoicesForClient": "Keine Rechnungen für diesen Kunden",
+    "noProductsPurchased": "Keine gekauften Produkte",
+    "reportError": "Fehler beim Erstellen des Berichts",
+    "reportGenerated": "Bericht erfolgreich erstellt! Wählen Sie unten eine Aktion.",
+    "pdfGenerationHelpText": "Sie können den Bericht direkt anzeigen, herunterladen oder drucken.",
+    "pdfDownloadedSuccess": "PDF erfolgreich heruntergeladen",
+    "printWindowOpened": "Druckfenster geöffnet",
+    "loading": "Kunden werden geladen...",
+    "invoicesWillBeDeleted": "{{count}} Rechnung(en) werden gelöscht",
+    "pdfError": "Fehler beim Erstellen des PDFs",
+    "pdfDownloaded": "PDF-Bericht erfolgreich heruntergeladen",
+    "cannotOpenPrintWindow": "Das Druckfenster kann nicht geöffnet werden",
+    "loadingErrorDescription": "Die Kunden konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "clientNotFoundDescription": "Der gesuchte Kunde existiert nicht oder wurde gelöscht."
+  },
+  "validation": {
+    "nameRequired": "Name ist erforderlich",
+    "emailInvalid": "Ungültige E-Mail-Adresse",
+    "emailRequired": "E-Mail ist erforderlich",
+    "phoneRequired": "Telefon ist erforderlich",
+    "contactPersonRequired": "Ansprechpartner ist erforderlich",
+    "billingAddressRequired": "Rechnungsadresse ist erforderlich",
+    "paymentTermsRequired": "Zahlungsbedingungen sind erforderlich",
+    "creditLimitPositive": "Das Kreditlimit muss positiv sein"
+  },
+  "paymentTerms": {
+    "net15": "Netto 15 – Zahlung innerhalb von 15 Tagen",
+    "net30": "Netto 30 – Zahlung innerhalb von 30 Tagen",
+    "net45": "Netto 45 – Zahlung innerhalb von 45 Tagen",
+    "net60": "Netto 60 – Zahlung innerhalb von 60 Tagen",
+    "cash": "BAR – Barzahlung",
+    "discount2_10Net30": "2/10 Netto 30 – 2 % Skonto bei Zahlung innerhalb von 10 Tagen, sonst 30 Tage"
+  },
+  "fields": {
+    "name": "Kundenname *",
+    "contactPerson": "Ansprechpartner",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse"
+  },
+  "kpi": {
+    "revenue": "Kundenumsatz",
+    "clientCount": "{{count}} Kunde(n)",
+    "active": "Aktiv",
+    "activeSub": "derzeit aktiv",
+    "vip": "VIP",
+    "vipSub": "+ 10k",
+    "new": "Neu",
+    "newSub": "diesen Monat",
+    "inactive": "Inaktiv",
+    "inactiveSub": "ruhend"
+  },
+  "form": {
+    "newClient": "Neuer Kunde",
+    "editSubtitle": "Kundendaten aktualisieren",
+    "newSubtitle": "Geben Sie die wichtigsten Informationen ein",
+    "identity": "Identität",
+    "tradeName": "Handelsname",
+    "additionalDetails": "Weitere Angaben",
+    "taxId": "Steuernummer / Unternehmens-ID",
+    "taxIdHelp": "Handelsregisternummer oder Steuer-ID",
+    "saving": "Wird gespeichert...",
+    "createClient": "Kunde anlegen",
+    "validation": {
+      "nameRequired": "Name erforderlich"
+    },
+    "paymentTermOptions": {
+      "cash": "Bar",
+      "net15": "Netto 15 Tage",
+      "net30": "Netto 30 Tage",
+      "net45": "Netto 45 Tage",
+      "net60": "Netto 60 Tage",
+      "discount2_10Net30": "2 % 10 Tage, netto 30"
+    }
+  },
+  "statistics": {
+    "title": "Kundenstatistiken",
+    "totalInvoices": "Rechnungen gesamt",
+    "revenue": "Umsatz",
+    "paidAmount": "Bezahlter Betrag",
+    "outstanding": "Offen"
+  }
+}

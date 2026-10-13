@@ -226,7 +226,8 @@
       "send": "Envoyer",
       "pdfAttachment": "La facture sera envoyée en PDF en pièce jointe.",
       "invoiceDetails": "Détails de la facture",
-      "defaultSubject": "Facture {{number}} - ProcureGenius"
+      "defaultSubject": "Facture {{number}} - {{company}}",
+      "defaultSubjectShort": "Facture {{number}}"
     },
     "quickCreateService": "Nouveau service",
     "editItem": "Modifier l'article"

@@ -1,0 +1,37 @@
+{
+  "badge": {
+    "pendingUpdate": "Aktualisierung ausstehend",
+    "toSync": "Zu synchronisieren",
+    "tooltip": "Wird bei der nächsten Online-Verbindung synchronisiert"
+  },
+  "banner": {
+    "offlinePending_one": "Offline — {{count}} Eintrag wartet auf Übertragung",
+    "offlinePending_other": "Offline — {{count}} Einträge warten auf Übertragung",
+    "offlineSaved": "Offline — Ihre Eingaben werden auf diesem Gerät gespeichert",
+    "pending_one": "{{count}} Eintrag zu senden — zum Wiederholen tippen",
+    "pending_other": "{{count}} Einträge zu senden — zum Wiederholen tippen",
+    "failed_one": "{{count}} Eintrag vom Server abgelehnt — anzeigen",
+    "failed_other": "{{count}} Einträge vom Server abgelehnt — anzeigen"
+  },
+  "failedDialog": {
+    "title": "Nicht gesendete Einträge",
+    "description": "Diese Einträge wurden offline erfasst und vom Server abgelehnt. Korrigieren Sie sie bei Bedarf und versuchen Sie es erneut, oder verwerfen Sie sie.",
+    "retry": "Erneut versuchen",
+    "discard": "Verwerfen",
+    "item": "{{entity}} — {{op}}",
+    "itemWithName": "{{entity}} — {{op}} „{{name}}“"
+  },
+  "entities": {
+    "clients": "Kunde",
+    "suppliers": "Lieferant",
+    "products": "Produkt",
+    "invoices": "Rechnung",
+    "purchaseOrders": "Bestellung"
+  },
+  "operations": {
+    "create": "Erstellung",
+    "update": "Aktualisierung",
+    "delete": "Löschung",
+    "settle": "Zahlung"
+  }
+}

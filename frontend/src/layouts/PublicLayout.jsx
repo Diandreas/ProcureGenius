@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Container, Typography, Button, Divider, useTheme } from '@mui/material';
 import { LightMode, DarkMode, Translate, SpaceDashboard } from '@mui/icons-material';
 import { useColorMode } from '../App';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 
 export default function PublicLayout() {
   const { t, i18n } = useTranslation(['landing', 'public']);
@@ -75,19 +76,7 @@ export default function PublicLayout() {
               </Box>
 
               <Box sx={{ display: 'flex', gap: { xs: 1, sm: 2 }, alignItems: 'center' }}>
-                <Button 
-                  onClick={() => i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr')}
-                  title={t('landing:nav.switchLanguage')}
-                  sx={{ 
-                    minWidth: 'auto', p: 1, 
-                    color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)', 
-                    '&:hover': { color: isDark ? '#fff' : '#000', bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }, 
-                    borderRadius: 2 
-                  }}
-                >
-                  <Translate fontSize="small" sx={{ mr: 0.5 }} />
-                  <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase' }}>{i18n.language}</Typography>
-                </Button>
+                <LanguageSwitcher sx={{ color: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)' }} />
                 <Button 
                   onClick={toggleColorMode} 
                   sx={{ 

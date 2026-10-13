@@ -19,13 +19,18 @@ import {
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import api from '../../services/api';
 
 function SendInvoiceEmailModal({ open, onClose, invoice, onSent }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
   const [recipientEmail, setRecipientEmail] = useState(invoice?.client?.email || '');
-  const [subject, setSubject] = useState(t('invoices:dialogs.sendEmail.defaultSubject', { number: invoice?.invoice_number || '' }));
+  // Objet vu par le client : le nom de l'entreprise de l'utilisateur, pas celui du logiciel
+  const entreprise = useSelector((state) => state.settings?.data?.company_name || '');
+  const [subject, setSubject] = useState(entreprise
+    ? t('invoices:dialogs.sendEmail.defaultSubject', { number: invoice?.invoice_number || '', company: entreprise })
+    : t('invoices:dialogs.sendEmail.defaultSubjectShort', { number: invoice?.invoice_number || '' }));
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 

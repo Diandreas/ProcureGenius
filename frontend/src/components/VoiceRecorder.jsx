@@ -44,7 +44,7 @@ function VoiceRecorder({ onVoiceMessage, onClose }) {
     const recognition = new SpeechRecognition();
     recognition.continuous = true; // Continue d'écouter
     recognition.interimResults = true; // Résultats en temps réel
-    recognition.lang = (i18n.language || 'fr').startsWith('en') ? 'en-US' : 'fr-FR'; // langue de l'interface
+    recognition.lang = ({ en: 'en-US', de: 'de-DE' }[String(i18n.language || 'fr').slice(0, 2)] || 'fr-FR'); // langue de l'interface
     recognition.maxAlternatives = 1;
 
     // Événement: résultat de la transcription

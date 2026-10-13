@@ -34,13 +34,16 @@ from django.utils import timezone
 from datetime import timedelta
 
 
+LANGUES_APP = ('fr', 'en', 'de')
+
+
 def langue_demandee(request):
     """Langue de l'app au moment de l'inscription : champ `language`, sinon en-tête Accept-Language."""
     langue = str(request.data.get('language') or '').lower()[:2] if hasattr(request, 'data') else ''
-    if langue not in ('fr', 'en'):
+    if langue not in LANGUES_APP:
         entete = request.META.get('HTTP_ACCEPT_LANGUAGE', '')
         langue = entete.split(',')[0].strip().lower()[:2]
-    return langue if langue in ('fr', 'en') else 'fr'
+    return langue if langue in LANGUES_APP else 'fr'
 
 
 @api_view(['POST'])

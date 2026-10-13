@@ -421,6 +421,7 @@ function Settings() {
                 >
                   <MenuItem value="fr">{t('settings:general.languageFr')}</MenuItem>
                   <MenuItem value="en">{t('settings:general.languageEn')}</MenuItem>
+                  <MenuItem value="de">Deutsch</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

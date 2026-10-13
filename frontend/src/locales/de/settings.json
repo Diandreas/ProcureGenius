@@ -1,0 +1,750 @@
+{
+  "title": "Einstellungen",
+  "subtitle": "Verwalten Sie die Einstellungen Ihrer Organisation",
+  "saveSuccess": "Einstellungen erfolgreich gespeichert",
+  "saveError": "Fehler beim Speichern der Einstellungen",
+  "loading": "Einstellungen werden geladen...",
+  "loadingError": "Fehler beim Laden der Einstellungen",
+  "errorMessage": "Die Einstellungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+  "logoUpdateSuccess": "Logo erfolgreich aktualisiert",
+  "logoUploadError": "Fehler beim Hochladen des Logos",
+  "brandColorAutoExtracted": "Markenfarbe automatisch übernommen: {{color}}",
+  "exportInProgress": "Export {{format}} läuft...",
+  "exportSuccess": "Export {{format}} erfolgreich abgeschlossen",
+  "importInProgress": "Datei {{filename}} wird importiert...",
+  "importSuccess": "Import erfolgreich abgeschlossen",
+  "tabs": {
+    "general": "Allgemein",
+    "billing": "Abrechnung",
+    "print": "Druck",
+    "notifications": "Benachrichtigungen",
+    "appearance": "Darstellung",
+    "security": "Sicherheit",
+    "backup": "Datensicherung"
+  },
+  "general": {
+    "title": "Firmendaten",
+    "preview": "Vorschau des Dokumentkopfs",
+    "previewHelper": "Diese Vorschau zeigt genau, was auf Ihren Rechnungen und Dokumenten erscheint (mit Ihrer Markenfarbe)",
+    "companyNameLabel": "Firmenname",
+    "companyNamePlaceholder": "Name Ihres Unternehmens",
+    "organizationName": "Name der Organisation",
+    "organizationNamePlaceholder": "Name Ihres Unternehmens",
+    "language": "Sprache",
+    "languageFr": "Français",
+    "languageEn": "English",
+    "currency": "Währung",
+    "taxRate": "Steuersatz (%)",
+    "address": "Adresse",
+    "addressPlaceholder": "Vollständige Firmenadresse",
+    "phone": "Telefon",
+    "phonePlaceholder": "+1 (XXX) XXX-XXXX",
+    "phoneLabel": "Tel.",
+    "email": "E-Mail",
+    "emailPlaceholder": "contact@company.com",
+    "emailLabel": "E-Mail",
+    "website": "Website",
+    "websitePlaceholder": "https://www.company.com",
+    "websiteInvalid": "Geben Sie eine gültige URL ein (z. B. https://www.example.com)",
+    "invoicePreview": "RECHNUNG",
+    "invoiceNumber": "Nr.",
+    "dateLabel": "Datum",
+    "legalInfo": "Rechtliche und steuerliche Angaben",
+    "taxRegion": "Steuerregion",
+    "taxRegions": {
+      "international": "International (universell)",
+      "cameroon": "Kamerun (OHADA)",
+      "ohada": "OHADA (frankophones Afrika)",
+      "canada": "Kanada",
+      "usa": "Vereinigte Staaten",
+      "eu": "Europäische Union"
+    },
+    "defaultCurrency": "Standardwährung",
+    "niu": "NIU (eindeutige Identifikationsnummer)",
+    "niuHelper": "Pflichtangabe in Kamerun - eindeutige Steuer-ID",
+    "rcNumber": "Handelsregisternummer (RC)",
+    "rcHelper": "Eintragungsnummer im Handelsregister",
+    "rccmNumber": "RCCM-Nummer",
+    "rccmHelper": "Handels- und Mobiliarkreditregister (OHADA)",
+    "neq": "NEQ (Unternehmensnummer Québec)",
+    "neqHelper": "Pflichtangabe für Unternehmen in Québec",
+    "gstNumber": "GST/HST-Nummer",
+    "gstHelper": "GST/HST-Registrierungsnummer (Pflicht in Kanada ab > 30.000 CA$/Jahr)",
+    "qstNumber": "QST-Nummer",
+    "qstHelper": "QST-Registrierungsnummer (Pflicht in Québec ab > 30.000 CA$/Jahr)",
+    "taxNumber": "Steuernummer (TIN)",
+    "taxNumberHelper": "Steuer-Identifikationsnummer (TIN)",
+    "vatNumber": "USt-IdNr.",
+    "vatHelper": "Umsatzsteuer-Identifikationsnummer (z. B. DE123456789)",
+    "bankInfo": "Bankverbindung (optional)",
+    "bankName": "Name der Bank",
+    "bankNamePlaceholder": "Name Ihrer Bank",
+    "bankAccount": "Kontonummer",
+    "bankAccountPlaceholder": "Kontonummer oder IBAN",
+    "bankSwift": "SWIFT/BIC-Code",
+    "bankSwiftPlaceholder": "SWIFT/BIC-Code",
+    "bankSwiftHelper": "Bankleitcode (internationale Transaktionen)",
+    "logoAndBrand": "Logo & Marke",
+    "logoPreview": "Vorschau",
+    "examplePlaceholder": "z. B. {{value}}"
+  },
+  "billing": {
+    "title": "Steuern und Abrechnung",
+    "gstHstRate": "GST/HST-Satz (%)",
+    "qstRate": "QST-Satz (%)",
+    "defaultTaxRate": "Standardsteuersatz (%)",
+    "enableTaxCalculation": "Automatische Steuerberechnung aktivieren",
+    "paymentTerms": "Zahlungsziel (Tage)",
+    "paymentTermsHelper": "Anzahl der Tage bis zur Fälligkeit",
+    "invoicePrefix": "Rechnungspräfix",
+    "invoicePrefixPlaceholder": "RE",
+    "quotePrefix": "Angebotspräfix",
+    "quotePrefixPlaceholder": "AN",
+    "poPrefix": "Bestellpräfix",
+    "poPrefixPlaceholder": "BE",
+    "defaultCurrency": "Standardwährung",
+    "invoiceTemplate": "Rechnungsvorlage",
+    "templates": {
+      "modern": "Modern",
+      "classic": "Klassisch",
+      "minimal": "Minimalistisch",
+      "professional": "Professionell",
+      "creative": "Kreativ",
+      "elegant": "Elegant"
+    },
+    "footerText": "Fußzeilentext",
+    "footerTextPlaceholder": "Eigener Text am Ende der Rechnung",
+    "footerTextHelper": "Erscheint am Ende aller Ihrer Rechnungen",
+    "bankDetails": "Bankverbindung",
+    "bankDetailsPlaceholder": "Kontonummer, IBAN, BIC usw.",
+    "bankDetailsHelper": "Zahlungsinformationen"
+  },
+  "print": {
+    "title": "Druckeinstellungen",
+    "templateSettings": "Vorlageneinstellungen",
+    "printConfiguration": "Druckkonfiguration",
+    "infoMessage": "Mit Druckvorlagen passen Sie das Erscheinungsbild Ihrer Rechnungen und Bestellungen an.",
+    "documentHeader": "Dokumentkopf",
+    "primaryColor": "Primärfarbe",
+    "showQrCode": "QR-Code anzeigen",
+    "paperConfiguration": "Papierkonfiguration",
+    "margins": "Ränder",
+    "orientation": "Ausrichtung",
+    "portrait": "Hochformat",
+    "landscape": "Querformat",
+    "paperSize": "Papierformat",
+    "headerFooter": "Kopf- und Fußzeile",
+    "showHeader": "Kopfzeile anzeigen",
+    "showFooter": "Fußzeile anzeigen",
+    "showPageNumbers": "Seitenzahlen anzeigen",
+    "thermal80": "Thermo 80 mm (Beleg)",
+    "thermal58": "Thermo 58 mm (Beleg)",
+    "showQrCodeLabel": "QR-Code anzeigen",
+    "showQrCodeHelper": "Fügt gedruckten Dokumenten einen QR-Code hinzu",
+    "showBarcode": "Barcode anzeigen",
+    "showBarcodeHelper": "Fügt gedruckten Dokumenten einen Barcode hinzu"
+  },
+  "appearance": {
+    "title": "Darstellung und Lokalisierung",
+    "theme": "Design",
+    "themeLight": "Hell",
+    "themeDark": "Dunkel",
+    "themeAuto": "Automatisch",
+    "dateFormat": "Datumsformat",
+    "timeFormat": "Zeitformat",
+    "timeFormat24": "24 Stunden",
+    "timeFormat12": "12 Stunden (AM/PM)",
+    "brandColor": "Markenfarbe",
+    "brandColorHelper": "Diese Farbe wird in Dokumenten und in der Oberfläche verwendet. Sie wird automatisch aus dem Logo übernommen, kann aber manuell geändert werden.",
+    "brandColorCode": "Farbcode",
+    "brandColorCodePlaceholder": "#2563eb",
+    "brandColorCodeHelper": "Format: #RRGGBB (Beispiel: #2563eb für Blau)",
+    "presetColors": "Vordefinierte Farben:",
+    "colors": {
+      "blue": "Blau",
+      "purple": "Violett",
+      "green": "Grün",
+      "red": "Rot",
+      "orange": "Orange",
+      "pink": "Rosa",
+      "indigo": "Indigo",
+      "black": "Schwarz"
+    }
+  },
+  "notificationsSection": {
+    "title": "Benachrichtigungen",
+    "emailNotifications": "E-Mail-Benachrichtigungen",
+    "invoiceReminders": "Zahlungserinnerungen",
+    "lowStockAlerts": "Warnungen bei niedrigem Bestand",
+    "orderStatusUpdates": "Aktualisierungen des Bestellstatus",
+    "inAppAlerts": "Hinweise in der App"
+  },
+  "security": {
+    "title": "Sicherheit und Authentifizierung",
+    "sessionTimeoutLabel": "Sitzungs-Timeout (Minuten)",
+    "sessionTimeoutHelper": "Dauer der Inaktivität bis zur automatischen Abmeldung",
+    "loginAttemptsLabel": "Maximale Anmeldeversuche",
+    "loginAttemptsHelper": "Anzahl der Versuche bis zur Kontosperrung",
+    "requireStrongPasswordsLabel": "Sichere Passwörter erzwingen",
+    "requireStrongPasswordsHelper": "Passwörter müssen Groß- und Kleinbuchstaben, Ziffern und Sonderzeichen enthalten",
+    "enableTwoFactorLabel": "Zwei-Faktor-Authentifizierung",
+    "enableTwoFactorHelper": "Erhöht die Sicherheit durch einen zweiten Prüfschritt",
+    "twoFactor": "Zwei-Faktor-Authentifizierung",
+    "twoFactorEnabled": "Aktiviert",
+    "twoFactorDisabled": "Deaktiviert",
+    "passwordPolicy": "Passwortrichtlinie",
+    "sessionTimeout": "Sitzungs-Timeout",
+    "sessionTimeoutMinutes": "Minuten",
+    "ipWhitelist": "IP-Whitelist",
+    "auditLog": "Audit-Protokoll"
+  },
+  "backup": {
+    "title": "Automatische Datensicherungen",
+    "autoBackupLabel": "Automatische Datensicherungen aktivieren",
+    "autoBackupHelper": "Sichert Ihre Daten regelmäßig",
+    "frequencyLabel": "Sicherungshäufigkeit",
+    "frequencyHelper": "Wie oft automatische Sicherungen durchgeführt werden",
+    "retentionLabel": "Aufbewahrung (Tage)",
+    "retentionHelper": "Anzahl der Tage, die Sicherungen aufbewahrt werden",
+    "frequencies": {
+      "hourly": "Stündlich",
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich"
+    },
+    "frequency": "Häufigkeit",
+    "frequencyDaily": "Täglich",
+    "frequencyWeekly": "Wöchentlich",
+    "frequencyMonthly": "Monatlich",
+    "retention": "Aufbewahrung",
+    "retentionDays": "Tage",
+    "lastBackup": "Letzte Sicherung",
+    "nextBackup": "Nächste Sicherung",
+    "backupNow": "Jetzt sichern",
+    "restoreBackup": "Sicherung wiederherstellen"
+  },
+  "logo": {
+    "title": "Firmenlogo",
+    "upload": "Logo hochladen",
+    "change": "Logo ändern",
+    "remove": "Logo entfernen",
+    "choose": "Logo auswählen",
+    "drag": "Ziehen Sie Ihr Logo hierher oder",
+    "browse": "durchsuchen",
+    "formats": "PNG, JPG oder SVG (max. 2 MB)",
+    "helper": "Sie können das Bild vor dem Speichern zuschneiden. Für Transparenz wird das PNG-Format empfohlen.",
+    "cropping": "Bild zuschneiden",
+    "cropImage": "Bild zuschneiden",
+    "zoom": "Zoom",
+    "apply": "Übernehmen",
+    "cancel": "Abbrechen",
+    "aspectRatio": "Seitenverhältnis (standardmäßig quadratisch)",
+    "formatOptions": {
+      "square": "Quadratisch",
+      "landscape": "Querformat",
+      "portrait": "Hochformat",
+      "original": "Original",
+      "freeHint": "frei"
+    }
+  },
+  "data": {
+    "title": "Import / Export und Migration",
+    "exportSection": {
+      "title": "Meine Daten exportieren",
+      "description": "Exportieren Sie alle Ihre Daten (Rechnungen, Kunden, Produkte, Lieferanten) in verschiedenen Formaten.",
+      "exportJson": "Als JSON exportieren",
+      "exportCsv": "Als CSV exportieren",
+      "exportExcel": "Als Excel exportieren",
+      "exportPdf": "Vollständiger PDF-Bericht"
+    },
+    "importSection": {
+      "title": "Daten importieren",
+      "warning": "Achtung: Beim Import werden Ihre vorhandenen Daten ersetzt. Stellen Sie sicher, dass Sie vorher eine Datensicherung erstellt haben.",
+      "chooseFile": "Datei zum Importieren auswählen",
+      "acceptedFormats": "Unterstützte Formate: JSON, CSV, Excel"
+    },
+    "migrationSection": {
+      "title": "Migration aus anderen Systemen",
+      "description": "Übernehmen Sie Ihre Daten einfach aus anderen Verwaltungssystemen.",
+      "quickbooks": {
+        "title": "QuickBooks",
+        "description": "Importieren Sie Ihre Rechnungen, Kunden und Produkte aus QuickBooks",
+        "configure": "Migration konfigurieren"
+      },
+      "sage": {
+        "title": "Sage",
+        "description": "Übernehmen Sie Ihre Buchhaltungsdaten aus Sage",
+        "configure": "Migration konfigurieren"
+      },
+      "generic": {
+        "title": "Excel / CSV allgemein",
+        "description": "Importieren Sie Ihre Daten aus Excel- oder CSV-Dateien",
+        "configure": "Import-Assistent"
+      }
+    }
+  },
+  "buttons": {
+    "save": "Änderungen speichern",
+    "saving": "Wird gespeichert...",
+    "cancel": "Abbrechen",
+    "reset": "Zurücksetzen",
+    "apply": "Übernehmen",
+    "close": "Schließen"
+  },
+  "userManagement": {
+    "title": "Benutzerverwaltung",
+    "inviteUser": "Benutzer einladen",
+    "noUsers": "Noch keine Benutzer in Ihrer Organisation.",
+    "permissionDenied": "Sie sind nicht berechtigt, Benutzer zu verwalten",
+    "loadingError": "Fehler beim Laden der Benutzer",
+    "roles": {
+      "admin": "Administrator",
+      "manager": "Manager",
+      "buyer": "Einkäufer",
+      "accountant": "Buchhalter",
+      "viewer": "Betrachter"
+    },
+    "modules": {
+      "dashboard": "Dashboard",
+      "suppliers": "Lieferanten",
+      "purchase-orders": "Bestellungen",
+      "invoices": "Rechnungen",
+      "products": "Produkte",
+      "clients": "Kunden",
+      "e-sourcing": "E-Sourcing",
+      "contracts": "Verträge"
+    },
+    "table": {
+      "user": "Benutzer",
+      "email": "E-Mail",
+      "role": "Rolle",
+      "modules": "Module",
+      "modulesCount": "Module",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "status": {
+      "active": "Aktiv",
+      "pending": "Ausstehend",
+      "inactive": "Inaktiv"
+    },
+    "menu": {
+      "editPermissions": "Berechtigungen bearbeiten",
+      "deactivate": "Deaktivieren",
+      "activate": "Aktivieren",
+      "delete": "Löschen",
+      "reactivate": "Reaktivieren",
+      "reactivateSuccess": "Benutzer reaktiviert",
+      "reactivateError": "Fehler beim Reaktivieren des Benutzers"
+    },
+    "permissions": {
+      "manageUsers": "Benutzer verwalten",
+      "manageSettings": "Einstellungen verwalten",
+      "viewAnalytics": "Analysen ansehen",
+      "approvePurchases": "Einkäufe freigeben"
+    },
+    "inviteDialog": {
+      "title": "Neuen Benutzer einladen",
+      "email": "E-Mail",
+      "emailPlaceholder": "user@company.com",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "role": "Rolle",
+      "emailInfo": "Der Benutzer erhält eine Einladungs-E-Mail mit einem Link, um sein Passwort festzulegen.",
+      "invite": "Einladen",
+      "inviteSuccess": "Einladung erfolgreich gesendet",
+      "inviteError": "Fehler beim Senden der Einladung",
+      "inviteSuccessWithEmail": "Benutzer angelegt — eine E-Mail mit den Anmeldedaten wurde gesendet."
+    },
+    "permissionsDialog": {
+      "title": "Berechtigungen bearbeiten",
+      "specialPermissions": "Sonderberechtigungen",
+      "moduleAccess": "Modulzugriff",
+      "saveSuccess": "Berechtigungen erfolgreich aktualisiert",
+      "saveError": "Fehler beim Aktualisieren der Berechtigungen"
+    },
+    "deleteDialog": {
+      "title": "Deaktivierung bestätigen",
+      "confirmMessage": "Möchten Sie den Benutzer \"{{name}}\" wirklich deaktivieren?",
+      "deactivate": "Deaktivieren",
+      "deleteSuccess": "Benutzer erfolgreich deaktiviert",
+      "deleteError": "Fehler beim Deaktivieren des Benutzers"
+    },
+    "seatLimitInvite": "Platzlimit erreicht. Wechseln Sie zu einem höheren Plan, um Benutzer hinzuzufügen.",
+    "seatLimitReactivate": "Platzlimit erreicht. Wechseln Sie zu einem höheren Plan, um diesen Benutzer zu reaktivieren.",
+    "seatsCount": "{{active}} / {{limit}} Plätze",
+    "addSeats": "Plätze hinzufügen",
+    "stats": {
+      "admins": "Administratoren"
+    },
+    "rolePreview": {
+      "title": "Diese Rolle kann:",
+      "viewOnly": "Nur ansehen.",
+      "access": "Zugriff: {{count}} Modul(e). Nach dem Anlegen anpassbar."
+    }
+  },
+  "moduleSettings": {
+    "title": "Modulverwaltung",
+    "subtitle": "Passen Sie Ihre aktiven Module an",
+    "changeProfile": "Ändern",
+    "active": "Aktiv",
+    "activeModules": "Aktiv",
+    "noProfile": "Kein Profil",
+    "selectProfile": "Profil auswählen",
+    "modules": "Module",
+    "modulesCount": "Module",
+    "available": "Verfügbar",
+    "installedModules": "Installierte Module",
+    "notActivated": "Nicht aktiviert",
+    "locked": "Gesperrt",
+    "premiumFeatures": "Premium-Funktionen",
+    "selectProfileTitle": "Profil auswählen",
+    "selectProfileSubtitle": "Wählen Sie das Profil, das zu Ihren geschäftlichen Anforderungen passt",
+    "profileInfo": "Ihre Module werden entsprechend dem gewählten Profil automatisch aktiviert. Sie können Ihr Profil jederzeit ändern.",
+    "profileChangeTitle": "✓ Profilwechsel",
+    "profileChangeMessage": "Ihre aktiven Module werden entsprechend dem neuen Profil aktualisiert. Die Seite wird automatisch neu geladen, um die Änderungen zu übernehmen.",
+    "updateSuccess": "Profil erfolgreich aktualisiert",
+    "updateError": "Fehler beim Aktualisieren des Profils",
+    "loadingError": "Fehler beim Laden der Daten",
+    "cancel": "Abbrechen",
+    "activateProfile": "Dieses Profil aktivieren",
+    "activating": "Wird aktiviert...",
+    "otherModules": "weitere Module"
+  },
+  "errorDescription": "Die Einstellungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+  "pageSubtitle": "Verwalten Sie Ihre Organisation, Ihre Präferenzen und Ihr Konto.",
+  "nav": {
+    "groups": {
+      "company": "Unternehmen",
+      "customization": "Anpassung",
+      "account": "Konto"
+    },
+    "general": {
+      "description": "Name, Kontaktdaten, Logo"
+    },
+    "modules": {
+      "label": "Module",
+      "description": "Module aktivieren / deaktivieren"
+    },
+    "print": {
+      "description": "Format, Dokumentvorlagen"
+    },
+    "notifications": {
+      "label": "Benachrichtigungen",
+      "description": "E-Mail- und Push-Benachrichtigungen"
+    },
+    "email": {
+      "label": "E-Mail / SMTP",
+      "description": "Postausgangsserver"
+    },
+    "subscription": {
+      "label": "Abonnement",
+      "description": "Plan, Kontingente, Abrechnung"
+    },
+    "profile": {
+      "label": "Profil & Sicherheit",
+      "description": "Persönliche Daten, Passwort"
+    },
+    "appearance": {
+      "label": "Darstellung",
+      "description": "Sprache, Design, Formate"
+    },
+    "data": {
+      "label": "Daten",
+      "description": "Import, Export, Migration"
+    }
+  },
+  "currencies": {
+    "CAD": "Kanadischer Dollar",
+    "USD": "US-Dollar",
+    "EUR": "Euro",
+    "GBP": "Britisches Pfund",
+    "XAF": "CFA-Franc (Zentralafrika)",
+    "XOF": "CFA-Franc (Westafrika)",
+    "MAD": "Marokkanischer Dirham",
+    "TND": "Tunesischer Dinar",
+    "NGN": "Nigerianischer Naira",
+    "GNF": "Guinea-Franc",
+    "CDF": "Kongo-Franc",
+    "DZD": "Algerischer Dinar",
+    "CHF": "Schweizer Franken"
+  },
+  "profile": {
+    "genericError": "Fehler",
+    "updateSuccess": "Profil erfolgreich aktualisiert.",
+    "passwordMismatch": "Die Passwörter stimmen nicht überein.",
+    "passwordChanged": "Passwort erfolgreich geändert.",
+    "personalInfo": "Persönliche Daten",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail-Adresse",
+    "phone": "Telefon",
+    "saveProfile": "Profil speichern",
+    "changePasswordTitle": "Passwort ändern",
+    "googleInfo": "Sie sind mit Google angemeldet. Legen Sie ein Passwort fest, um sich auch mit Ihrer E-Mail-Adresse anmelden zu können.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "showPasswords": "Passwörter anzeigen",
+    "changePassword": "Passwort ändern"
+  },
+  "dataSection": {
+    "importTypes": {
+      "suppliers": {
+        "label": "Lieferanten",
+        "description": "Importieren Sie Ihre Lieferantenliste"
+      },
+      "products": {
+        "label": "Produkte",
+        "description": "Importieren Sie Ihren Produktkatalog"
+      },
+      "clients": {
+        "label": "Kunden",
+        "description": "Importieren Sie Ihren Kundenstamm"
+      }
+    },
+    "exportTypes": {
+      "suppliers": "Lieferanten",
+      "clients": "Kunden",
+      "products": "Produkte"
+    },
+    "exportInProgress": "Export von {{type}} läuft...",
+    "exportSuccess": "Export von {{type}} erfolgreich abgeschlossen!",
+    "exportError": "Fehler beim Export von {{type}}",
+    "exportForbidden": "Ihnen fehlen die erforderlichen Berechtigungen für den Export. Prüfen Sie, ob das entsprechende Modul aktiviert ist.",
+    "exportServerError": "Serverfehler beim Export von {{type}}. Bitte versuchen Sie es erneut oder wenden Sie sich an den Support.",
+    "exportHttpError": "Fehler {{status}} beim Export von {{type}}",
+    "openImportWizard": "Import-Assistenten öffnen",
+    "exportTitle": "Ihre Daten exportieren",
+    "exportSuppliersCsv": "Lieferanten (CSV)",
+    "exportClientsCsv": "Kunden (CSV)",
+    "exportProductsCsv": "Produkte (CSV)",
+    "importHistory": "Importverlauf",
+    "viewFullHistory": "Vollständigen Verlauf anzeigen"
+  },
+  "emailConfig": {
+    "loadError": "Fehler beim Laden der E-Mail-Konfiguration",
+    "saved": "E-Mail-Konfiguration gespeichert",
+    "saveError": "Fehler beim Speichern",
+    "testSent": "Test-E-Mail an {{email}} gesendet",
+    "sendError": "Fehler beim Senden",
+    "testError": "Fehler beim Senden der Test-E-Mail",
+    "verifySuccess": "SMTP-Verbindung erfolgreich geprüft",
+    "connectionError": "Verbindungsfehler",
+    "verifyError": "Fehler bei der Prüfung",
+    "smtpTitle": "SMTP-Konfiguration",
+    "smtpHost": "SMTP-Server",
+    "smtpPort": "SMTP-Port",
+    "username": "Benutzername",
+    "usernamePlaceholder": "you@email.com",
+    "password": "Passwort",
+    "useTls": "TLS verwenden",
+    "useSsl": "SSL verwenden",
+    "fromEmail": "Absender-E-Mail",
+    "fromEmailPlaceholder": "noreply@yourdomain.com",
+    "fromName": "Absendername",
+    "fromNamePlaceholder": "Ihr Unternehmen",
+    "verified": "Geprüft",
+    "notVerified": "Nicht geprüft",
+    "lastVerified": "Zuletzt geprüft: {{date}}",
+    "save": "Speichern",
+    "verifyConnection": "Verbindung prüfen",
+    "testEmail": "Test-E-Mail",
+    "sendTest": "Test senden"
+  },
+  "billingPanel": {
+    "plans": {
+      "free": "Kostenlos"
+    },
+    "status": {
+      "active": "Aktiv",
+      "trial": "Testphase",
+      "past_due": "Zahlung überfällig",
+      "cancelled": "Gekündigt",
+      "expired": "Abgelaufen"
+    },
+    "quotas": {
+      "invoices": "Rechnungen (dieser Monat)",
+      "clients": "Kunden",
+      "products": "Produkte",
+      "purchase_orders": "Bestellungen (dieser Monat)",
+      "suppliers": "Lieferanten",
+      "ai_requests": "KI-Anfragen (dieser Monat)"
+    },
+    "noPaidSubscription": "Sie haben noch kein kostenpflichtiges Abonnement. Wählen Sie einen Plan, um die Abrechnung zu aktivieren.",
+    "trialRemaining_one": "Testphase — noch {{count}} Tag",
+    "trialRemaining_other": "Testphase — noch {{count}} Tage",
+    "trialEnds": "Ihre Testphase endet am {{date}}.",
+    "freePlan": "Kostenloser Plan, ohne Verpflichtung.",
+    "nextRenewal": "Nächste Verlängerung am {{date}}.",
+    "choosePlan": "Plan wählen",
+    "changePlan": "Plan wechseln",
+    "manageBilling": "Abrechnung verwalten",
+    "usage": "Nutzung",
+    "unlimited": "Unbegrenzt",
+    "portal": "Portal",
+    "stripeManaged": "Ihre Abrechnung wird über Stripe verwaltet: Rechnungen, Zahlungsmethode und Kündigung im Portal.",
+    "trialOffer": "1 Monat kostenlos testen bei Pro und Business, keine Karte erforderlich. Die Abrechnung beginnt mit Ihrem ersten kostenpflichtigen Abonnement."
+  },
+  "modulesManager": {
+    "modules": {
+      "dashboard": "Dashboard",
+      "invoices": "Rechnungsstellung",
+      "purchase-orders": "Bestellungen",
+      "suppliers": "Lieferanten",
+      "clients": "Kunden",
+      "products": "Produkte",
+      "contracts": "Verträge",
+      "analytics": "Analysen"
+    },
+    "loadError": "Fehler beim Laden der Module",
+    "saveSuccess": "Module erfolgreich aktualisiert",
+    "saveError": "Fehler beim Speichern: {{error}}",
+    "title": "Aktive Module",
+    "description": "Aktivieren oder deaktivieren Sie die Module Ihrer Organisation. Ein Neuladen ist erforderlich."
+  },
+  "push": {
+    "categories": {
+      "critique": {
+        "label": " Kritisch",
+        "description": "Nicht deaktivierbar — Lagerengpässe, erreichtes Kontingent, stark überfällige Rechnungen"
+      },
+      "important": {
+        "label": " Wichtig",
+        "description": "Standardmäßig aktiviert, deaktivierbar"
+      },
+      "resume": {
+        "label": " Wochenübersicht",
+        "description": "Eine einzige Push-Nachricht am Montagmorgen mit der Zusammenfassung der Woche"
+      }
+    },
+    "fields": {
+      "push_stock_rupture": "Nicht vorrätig",
+      "push_quota_atteint": "Plan-Kontingent erreicht (90 %+)",
+      "push_facture_retard": "Rechnung 7+ Tage überfällig",
+      "push_stock_bas": "Niedriger Bestand (Warnschwelle)",
+      "push_facture_brouillon": "Rechnung seit 24 h+ im Entwurf",
+      "push_bc_retard": "Überfällige Bestellung",
+      "push_lot_expirant": "Produktcharge läuft innerhalb von 30 Tagen ab",
+      "push_insight_ia": "Wichtiger KI-Hinweis (Priorität ≥ 8)",
+      "push_resume_hebdo": "Wochenübersicht (Montag 8 Uhr)"
+    },
+    "saved": "Einstellungen gespeichert",
+    "saveError": "Fehler beim Speichern",
+    "blockedInBrowser": "Benachrichtigungen sind im Browser blockiert. Ändern Sie die Berechtigungen in den Website-Einstellungen.",
+    "notSupported": "Ihr Browser unterstützt keine Push-Benachrichtigungen. Versuchen Sie es mit Chrome oder Firefox.",
+    "title": "Push-Benachrichtigungen",
+    "subtitle": "Erhalten Sie Hinweise direkt auf Ihrem Gerät — auch wenn Procura geschlossen ist.",
+    "enabled": "Benachrichtigungen aktiviert",
+    "disabled": "Benachrichtigungen deaktiviert",
+    "enabledHelper": "Dieses Gerät empfängt Push-Benachrichtigungen von Procura.",
+    "disabledHelper": "Klicken Sie, um auf diesem Gerät Benachrichtigungen zu erhalten.",
+    "disable": "Deaktivieren",
+    "enable": "Benachrichtigungen aktivieren",
+    "deniedAlert": "Benachrichtigungen sind in Ihrem Browser blockiert. Klicken Sie auf das Schloss-Symbol in der Adressleiste, um sie zuzulassen.",
+    "alwaysActive": "Immer aktiv",
+    "enableToConfigure": "Aktivieren Sie Benachrichtigungen, um Ihre Einstellungen festzulegen."
+  },
+  "legacySettings": {
+    "saveSuccess": "Einstellungen erfolgreich gespeichert!",
+    "invalidImage": "Bitte wählen Sie eine gültige Bilddatei aus",
+    "fileTooLarge": "Die Datei ist zu groß (max. 5 MB)",
+    "ratioConfirm": "Die Proportionen Ihres Bildes sind für einen Rechnungskopf nicht optimal (empfohlenes Verhältnis: 2,6:1). Möchten Sie fortfahren?",
+    "importTab": "Import",
+    "subtitle": "Konfigurieren Sie die Anwendung nach Ihren Bedürfnissen",
+    "uploadLogo": "Logo hochladen",
+    "logoFormats": "Unterstützte Formate: PNG, JPG, SVG (max. 2 MB)",
+    "localization": "Lokalisierungseinstellungen",
+    "documentNumbering": "Dokumentnummerierung",
+    "defaultPaymentTerms": "Standard-Zahlungsziel",
+    "taxConfiguration": "Steuerkonfiguration",
+    "defaultRate": "Standardsatz (%)",
+    "invoiceHeader": "Rechnungskopf",
+    "invoiceHeaderInfo": "Konfigurieren Sie das Erscheinungsbild Ihres Rechnungskopfs. Empfohlenes Verhältnis: 2,6:1 (210 mm x 80 mm für A4).",
+    "headerType": "Art des Kopfbereichs",
+    "headerTypes": {
+      "simple": "Einfach (nur Text)",
+      "custom": "Benutzerdefiniert",
+      "uploaded": "Hochgeladenes Bild"
+    },
+    "uploadHeader": "Kopfbereich hochladen",
+    "headerFormats": "Unterstützte Formate: PNG, JPG, SVG (max. 5 MB) - Optimales Verhältnis: 2,6:1",
+    "headerPreview": "Vorschau des Kopfbereichs",
+    "headerPreviewAlt": "Vorschau des Kopfbereichs",
+    "logoPosition": "Logoposition",
+    "positions": {
+      "left": "Links",
+      "center": "Mitte",
+      "right": "Rechts"
+    },
+    "logoSize": "Logogröße",
+    "sizes": {
+      "small": "Klein",
+      "medium": "Mittel",
+      "large": "Groß"
+    },
+    "backgroundColor": "Hintergrundfarbe:",
+    "textColor": "Textfarbe:",
+    "showCompanyInfo": "Firmendaten anzeigen",
+    "showLogo": "Logo anzeigen",
+    "customHeaderPreview": "Vorschau des benutzerdefinierten Kopfbereichs",
+    "width": "Breite (mm)",
+    "widthHelper": "Empfohlene Breite: 210 mm (A4)",
+    "height": "Höhe (mm)",
+    "heightHelper": "Empfohlene Höhe: 80 mm",
+    "marginOptions": {
+      "narrow": "Schmal",
+      "normal": "Normal",
+      "wide": "Breit"
+    },
+    "includeQrCode": "QR-Code auf Dokumenten einfügen",
+    "printColors": "Farbdruck",
+    "notifications": {
+      "general": "Allgemeine Benachrichtigungen",
+      "generalHelper": "Wichtige Benachrichtigungen per E-Mail erhalten",
+      "invoiceRemindersHelper": "Automatische Erinnerungen bei überfälligen Rechnungen",
+      "lowStockHelper": "Benachrichtigungen, wenn Produkte nicht mehr vorrätig sind",
+      "orderUpdates": "Bestellaktualisierungen",
+      "orderUpdatesHelper": "Benachrichtigungen bei Änderungen des Bestellstatus"
+    },
+    "emailConfig": "E-Mail-Konfiguration",
+    "emailConfigInfo": "Konfigurieren Sie Ihre SMTP-Einstellungen, um automatische E-Mails zu versenden.",
+    "port": "Port",
+    "senderEmail": "Absender-E-Mail",
+    "useSslTls": "SSL/TLS verwenden",
+    "themeAndColors": "Design und Farben",
+    "customColors": "Eigene Farben",
+    "secondaryColor": "Sekundärfarbe",
+    "securitySettings": "Sicherheitseinstellungen",
+    "loginAttempts": "Maximale Anmeldeversuche",
+    "enableTwoFactor": "Zwei-Faktor-Authentifizierung aktivieren",
+    "auditLogInfo": "Das Audit-Protokoll erfasst alle wichtigen Aktionen im System.",
+    "autoBackup": "Automatische Datensicherung",
+    "enableAutoBackup": "Automatische Datensicherung aktivieren",
+    "backupRetention": "Aufbewahrung der Sicherungen (Tage)",
+    "manualBackup": "Manuelle Datensicherung",
+    "createBackupNow": "Jetzt eine Sicherung erstellen",
+    "manageBackups": "Sicherungen verwalten",
+    "restoreFromBackup": "Aus einer Sicherung wiederherstellen",
+    "dataExport": "Datenexport",
+    "dataExportWarning": "Der Datenexport kann je nach Größe Ihrer Datenbank mehrere Minuten dauern.",
+    "exportAll": "Alle Daten exportieren",
+    "exportInvoices": "Rechnungen exportieren",
+    "exportPurchaseOrders": "Bestellungen exportieren",
+    "exportSuppliers": "Lieferanten exportieren",
+    "importInfo": "Importieren Sie Ihre Daten ganz einfach aus Excel- oder CSV-Dateien oder aus Ihren Telefonkontakten.",
+    "importClients": "Kunden importieren",
+    "importClientsDesc": "Importieren Sie Ihre Kundenliste aus einer Excel- oder CSV-Datei",
+    "importProducts": "Produkte importieren",
+    "importProductsDesc": "Fügen Sie Ihre Produkte mit Artikelnummern und Preisen in großen Mengen hinzu",
+    "phoneContacts": "Telefonkontakte",
+    "phoneContactsDesc": "Direkt aus Ihren Telefonkontakten importieren",
+    "importTemplates": "Importvorlagen",
+    "importTemplatesDesc": "Laden Sie unsere Excel-Vorlagen herunter, um den Import Ihrer Daten zu erleichtern.",
+    "clientsTemplate": "Kundenvorlage (CSV)",
+    "productsTemplate": "Produktvorlage (CSV)",
+    "importHistory": "Importverlauf",
+    "importHistoryComingSoon": "Demnächst verfügbar - Der Importverlauf wird in Kürze bereitstehen.",
+    "saveSettings": "Einstellungen speichern"
+  }
+}

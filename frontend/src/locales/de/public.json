@@ -1,0 +1,186 @@
+{
+  "support": {
+    "title": "Support & Kontakt",
+    "subtitle": "Unser Team unterstützt Sie gern bei der Nutzung von Procura.",
+    "intro": "Unser Team aus Ingenieuren und Fachleuten beantwortet gern alle Ihre technischen, kaufmännischen oder funktionalen Fragen.",
+    "badge": "Immer für Sie da",
+    "email": {
+      "title": "Per E-Mail",
+      "desc": "Schreiben Sie uns jederzeit zu Ihren Fragen oder Fehlermeldungen. Schnelle Antwort garantiert."
+    },
+    "whatsapp": {
+      "title": "WhatsApp-Support",
+      "desc": "Sie brauchen dringend Hilfe? Chatten Sie direkt per WhatsApp mit einem technischen Experten."
+    },
+    "youtube": {
+      "title": "Schulungen und Tutorials auf YouTube",
+      "desc": "Exklusive Videos, wie Sie unsere KI-Tools beherrschen und Procura in Ihr Unternehmen integrieren.",
+      "comingSoon": "(Kanal in Kürze verfügbar)"
+    },
+    "form": {
+      "title": "Nachricht senden",
+      "subtitle": "Füllen Sie das folgende Formular aus, und wir melden uns so schnell wie möglich bei Ihnen.",
+      "name": "Vollständiger Name",
+      "email": "E-Mail-Adresse",
+      "subject": "Betreff",
+      "message": "Ihre Nachricht",
+      "messagePlaceholder": "Beschreiben Sie Ihr Anliegen ausführlich...",
+      "submit": "Nachricht senden",
+      "sending": "Wird gesendet...",
+      "successTitle": "Nachricht gesendet!",
+      "successDesc": "Wir haben Ihre Nachricht erhalten und melden uns in Kürze bei Ihnen.",
+      "errorTitle": "Fehler beim Senden",
+      "recaptchaRequired": "Bitte bestätigen Sie das reCAPTCHA.",
+      "sendAnother": "Weitere Nachricht senden"
+    }
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "lastUpdated": "Zuletzt aktualisiert: {{date}}",
+    "intro": "Bei ProcureGenius haben die Sicherheit und Vertraulichkeit Ihrer Daten höchste Priorität. Diese Datenschutzerklärung erläutert, welche Informationen wir erheben, wie wir sie verwenden und welche strengen Maßnahmen wir zu ihrem Schutz ergreifen.",
+    "sections": {
+      "intro": {
+        "title": "1. Einleitung und Geltungsbereich",
+        "content": "Diese Datenschutzerklärung gilt für alle von ProcureGenius angebotenen Dienste, einschließlich der ERP-Plattform, des Finanzverwaltungsmoduls, des Einkaufs- und Lieferantenverwaltungssystems sowie des KI-Assistenten „Copilote“. Mit dem Zugriff auf unsere Dienste bestätigen Sie, diese Erklärung gelesen zu haben, und akzeptieren sie vollständig. ProcureGenius ist der Verantwortliche für die Verarbeitung Ihrer personenbezogenen Daten im Sinne der Datenschutz-Grundverordnung (DSGVO – Verordnung (EU) 2016/679)."
+      },
+      "data": {
+        "title": "2. Erhobene Daten",
+        "content": "Im Rahmen der Erbringung unserer Dienste erheben wir folgende Kategorien von Informationen:",
+        "items": [
+          "Geschäftliche Identifikationsdaten: Firmenname, Registernummern, USt-IdNr., Geschäftsanschrift.",
+          "Benutzerinformationen: E-Mail-Adressen, Vor- und Nachnamen, Berufsbezeichnungen und Rollen innerhalb der Organisation.",
+          "Finanz- und Buchhaltungsdaten: Rechnungen, Bestellungen, Kontoauszüge, Zahlungsinformationen (verarbeitet über PCI-DSS-zertifizierte Anbieter).",
+          "Importierte Dokumente: PDF-Dateien, Belegbilder, von der KI verarbeitete Nachweise.",
+          "Analytische Nutzungsdaten: Verbindungsprotokolle, IP-Adressen, Interaktionen mit dem KI-Assistenten, Sitzungsdauer.",
+          "Kommunikationsdaten: An den Support gesendete Nachrichten, Feedback und Zufriedenheitsumfragen."
+        ]
+      },
+      "usage": {
+        "title": "3. Zwecke der Verarbeitung",
+        "content": "Ihre Daten werden ausschließlich zu folgenden Zwecken erhoben und verarbeitet: Bereitstellung, Verbesserung und Personalisierung unserer ERP-Dienste; Verwaltung Ihres Kontos und Abonnements; Versand funktionaler Benachrichtigungen und Berichte; Erkennung und Verhinderung von Betrug; Erfüllung unserer gesetzlichen und regulatorischen Pflichten. Wir verkaufen, vermieten oder teilen Ihre Daten niemals zu kommerziellen Zwecken mit Dritten."
+      },
+      "ai": {
+        "title": "4. Künstliche Intelligenz und automatisierte Verarbeitung",
+        "content": "Der KI-Assistent „Copilote“ von ProcureGenius nutzt Ihre Betriebsdaten ausschließlich, um Ihnen innerhalb Ihres Arbeitsbereichs Analysen, Empfehlungen und Automatisierungen bereitzustellen. Ihre vertraulichen Daten werden niemals zum Training öffentlicher KI-Modelle verwendet oder zu Zwecken des maschinellen Lernens an Dritte weitergegeben. Die automatisierte Verarbeitung bleibt unter Ihrer Kontrolle, und Sie haben jederzeit das Recht, ihr zu widersprechen."
+      },
+      "security": {
+        "title": "5. Sicherheit und Hosting",
+        "content": "Alle Ihre Daten werden ausschließlich in Europa in DSGVO-konformen Rechenzentren gehostet. Wir wenden folgende Sicherheitsmaßnahmen an: AES-256-Verschlüsselung im Ruhezustand und TLS 1.3 bei der Übertragung, Zwei-Faktor-Authentifizierung (2FA), rollenbasierte Zugriffskontrolle (RBAC), regelmäßige Sicherheitsaudits und umfassende Zugriffsprotokollierung."
+      },
+      "rights": {
+        "title": "6. Ihre Rechte",
+        "content": "Gemäß DSGVO haben Sie folgende Rechte in Bezug auf Ihre personenbezogenen Daten: Recht auf Auskunft, Recht auf Berichtigung, Recht auf Löschung („Recht auf Vergessenwerden“), Recht auf Einschränkung der Verarbeitung, Recht auf Datenübertragbarkeit, Widerspruchsrecht. Um diese Rechte auszuüben, wenden Sie sich an unseren Datenschutzbeauftragten unter: privacy@procuregenius.com. Wir verpflichten uns, jede Anfrage innerhalb von 30 Tagen zu beantworten."
+      },
+      "cookies": {
+        "title": "7. Cookies und Tracker",
+        "content": "Wir verwenden Cookies, die für den Betrieb der Plattform unbedingt erforderlich sind, sowie (anonymisierte) Analyse-Cookies zur Verbesserung der Benutzererfahrung. Werbe-Cookies von Drittanbietern werden nicht verwendet. Sie können Ihre Cookie-Einstellungen jederzeit in Ihren Kontoeinstellungen verwalten."
+      },
+      "contact": {
+        "title": "8. Kontakt und Beschwerden",
+        "content": "Bei Fragen zu dieser Erklärung oder zur Verarbeitung Ihrer personenbezogenen Daten erreichen Sie uns unter: privacy@procuregenius.com. Bei ungelösten Streitigkeiten haben Sie das Recht, Beschwerde bei Ihrer nationalen Datenschutzbehörde einzulegen."
+      }
+    },
+    "gdprBadge": "DSGVO-konform",
+    "labelSeparator": ":",
+    "footer": {
+      "protected": "Ihre Daten sind geschützt und werden in Europa gehostet",
+      "exerciseRights": "Um Ihre DSGVO-Rechte auszuüben:"
+    }
+  },
+  "terms": {
+    "title": "Nutzungsbedingungen",
+    "lastUpdated": "Zuletzt aktualisiert: {{date}}",
+    "sections": {
+      "acceptance": {
+        "title": "1. Annahme der Bedingungen",
+        "content": "Durch den Zugriff auf die ProcureGenius-Plattform und die Nutzung unserer Dienste erklären Sie sich mit diesen Nutzungsbedingungen einverstanden. Wenn Sie diese Bedingungen nicht akzeptieren, müssen Sie die Nutzung unserer Dienste sofort einstellen. Diese Bedingungen stellen eine rechtsverbindliche Vereinbarung zwischen Ihnen (oder Ihrer Organisation) und ProcureGenius dar."
+      },
+      "services": {
+        "title": "2. Beschreibung der Dienste",
+        "content": "ProcureGenius bietet eine SaaS-Plattform für die Unternehmensverwaltung mit: einem vollständigen ERP-Modul (Einkauf, Lager, Lieferanten), einem Finanz- und Buchhaltungssystem, dem KI-Assistenten „Copilote“ für Analysen und Automatisierung, Reporting- und Dashboard-Tools sowie einem Benachrichtigungs- und Warnsystem. Die Dienste sind über Webbrowser und mobile App zugänglich. Wir behalten uns vor, unsere Funktionen weiterzuentwickeln, sofern die Benutzer mit angemessener Frist informiert werden."
+      },
+      "accounts": {
+        "title": "3. Benutzerkonten und Verantwortlichkeiten",
+        "content": "Sie allein sind für die Vertraulichkeit Ihrer Anmeldedaten und für alle über Ihr Konto ausgeführten Aktivitäten verantwortlich. Sie verpflichten sich, ProcureGenius unverzüglich über jede unbefugte Nutzung Ihres Kontos zu informieren. Jeder Benutzer muss eine reale Person sein; von mehreren Personen gemeinsam genutzte Konten sind ohne ausdrückliche Genehmigung untersagt. Der Administrator der Organisation ist für die Verwaltung der Zugänge seiner Teammitglieder verantwortlich."
+      },
+      "usage_rules": {
+        "title": "4. Richtlinie zur zulässigen Nutzung",
+        "content": "Mit der Nutzung von ProcureGenius verpflichten Sie sich, Folgendes zu unterlassen: die Plattform für illegale oder betrügerische Zwecke zu nutzen; zu versuchen, auf Daten anderer Organisationen zuzugreifen; Viren, Malware oder anderen schädlichen Code einzuschleusen; unsere Software zurückzuentwickeln oder zu dekompilieren; nicht autorisierte automatisierte Bots oder Skripte einzusetzen. Jeder Verstoß gegen diese Regeln kann zur sofortigen Sperrung Ihres Kontos führen."
+      },
+      "subscription": {
+        "title": "5. Abonnement und Abrechnung",
+        "content": "Der Zugang zu ProcureGenius setzt die Zahlung eines monatlichen oder jährlichen Abonnements gemäß dem gewählten Plan voraus. Die Preise verstehen sich zuzüglich Steuern und der jeweils geltenden MwSt. Die Verlängerung erfolgt automatisch, sofern nicht vor dem Fälligkeitsdatum gekündigt wird. Bei Zahlungsverzug kann der Zugang zu den Diensten nach einer Kulanzfrist von 7 Tagen gesperrt werden. Bei Neuanmeldungen werden Rückerstattungen innerhalb von 14 Tagen nach Abschluss des Abonnements gewährt."
+      },
+      "intellectual_property": {
+        "title": "6. Geistiges Eigentum",
+        "content": "Alle Bestandteile der ProcureGenius-Plattform (Software, Oberfläche, Marken, Logos, KI-Algorithmen, Dokumentation) sind ausschließliches Eigentum von ProcureGenius und durch das Recht des geistigen Eigentums geschützt. Sie behalten das volle Eigentum an allen Daten, die Sie auf der Plattform importieren oder erstellen. ProcureGenius beansprucht keinerlei Eigentumsrechte an Ihren Geschäftsdaten."
+      },
+      "liability": {
+        "title": "7. Haftungsbeschränkung",
+        "content": "ProcureGenius verpflichtet sich zu einer Dienstverfügbarkeit von 99,5 % pro Monat (SLA). Im Falle einer Unterbrechung ist unsere Haftung auf eine anteilige Rückerstattung für den Ausfallzeitraum beschränkt. ProcureGenius haftet nicht für indirekte Schäden, entgangenen Gewinn oder immaterielle Schäden. Die KI-Unterstützung dient nur zur Orientierung; geschäftliche Entscheidungen liegen vollständig in Ihrer Verantwortung."
+      },
+      "termination": {
+        "title": "8. Kündigung",
+        "content": "Sie können Ihr Abonnement jederzeit in Ihren Kontoeinstellungen kündigen. Die Kündigung wird zum Ende des laufenden Abrechnungszeitraums wirksam. ProcureGenius behält sich das Recht vor, Ihren Zugang bei Verstößen gegen diese Bedingungen, Zahlungsverzug oder betrügerischer Nutzung zu kündigen oder zu sperren. Nach der Kündigung bleiben Ihre Daten 90 Tage lang exportierbar und werden danach sicher gelöscht."
+      },
+      "governing_law": {
+        "title": "9. Anwendbares Recht und Gerichtsstand",
+        "content": "Diese Bedingungen unterliegen französischem Recht. Im Streitfall vereinbaren die Parteien, vor jedem gerichtlichen Verfahren eine gütliche Einigung anzustreben. Kommt keine gütliche Einigung zustande, unterliegt jeder Rechtsstreit der ausschließlichen Zuständigkeit der Gerichte in Paris. Bei Fragen zu diesen Bedingungen: legal@procuregenius.com."
+      }
+    },
+    "legalBadge": "Rechtsdokument",
+    "footer": {
+      "questions": "Fragen zu diesen Bedingungen?",
+      "contactUs": "Kontaktieren Sie uns unter"
+    }
+  },
+  "documentation": {
+    "pageTitle": "Dokumentation & API | Procura",
+    "title": "Procura-Dokumentation",
+    "intro": "Willkommen in der offiziellen Procura-Dokumentation. Hier finden Sie alle Anleitungen, Integrations-Tutorials und API-Referenzen, die Sie für den Einstieg benötigen.",
+    "quickStart": {
+      "title": "Schnellstart-Anleitung",
+      "desc": "Erfahren Sie, wie Sie Ihr Unternehmen einrichten, Ihr Team einladen und Ihre erste Rechnung in weniger als 5 Minuten erstellen."
+    },
+    "aiManual": {
+      "title": "KI-Benutzerhandbuch",
+      "desc": "Wie Sie Ihre Prompts und Anfragen an den privaten Analysten von Procura formulieren, um die bestmöglichen Berichte zu erhalten."
+    },
+    "apiReference": {
+      "title": "API-Referenz",
+      "desc": "Verbinden Sie Procura mit Ihren bestehenden ERP-Tools und arbeiten Sie über unsere RESTful-Endpunkte mit Ihren Daten."
+    }
+  },
+  "blog": {
+    "metaTitle": "Blog",
+    "metaDescription": "Ratschläge, Praxiserfahrungen und Tipps, um Rechnungen, Lager und Liquidität zu verwalten, ohne Ihre Abende damit zu verbringen.",
+    "badge": "Der Procura-Blog",
+    "title": "Übernehmen Sie wieder die Kontrolle über Ihr Geschäft",
+    "subtitle": "Praktische Tipps, um Ihr Geschäft zu führen, ohne sich zu verzetteln — und ein Blick hinter die Kulissen der KI, die für Sie arbeitet.",
+    "audiences": {
+      "all": "Alle",
+      "freelance": "Freiberufler & Selbstständige",
+      "artisan": "Handwerk & Einzelhandel",
+      "service": "Dienstleister",
+      "tpe": "Kleinst- & Kleinunternehmen"
+    },
+    "categories": {
+      "management": "Unternehmensführung",
+      "branding": "Markenbildung",
+      "ai": "Künstliche Intelligenz",
+      "cashFlow": "Liquidität",
+      "stock": "Lager",
+      "accounting": "Buchhaltung",
+      "productivity": "Produktivität",
+      "invoicing": "Rechnungsstellung"
+    },
+    "notFound": "Artikel nicht gefunden",
+    "backToBlog": "Zurück zum Blog",
+    "allArticles": "Alle Artikel",
+    "related": "Das könnte Sie auch interessieren",
+    "cta": {
+      "title": "Bereit, wieder die Kontrolle zu übernehmen?",
+      "trial": "30 Tage kostenlos testen — keine Kreditkarte erforderlich"
+    }
+  }
+}

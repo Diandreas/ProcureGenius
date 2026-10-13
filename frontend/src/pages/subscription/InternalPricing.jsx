@@ -56,7 +56,7 @@ export default function InternalPricing() {
   const sub = subStatus?.subscription || null;
   const isPaidPlan = current === 'pro' || current === 'business';
   const cancelScheduled = Boolean(sub?.cancelled_at) && sub?.status !== 'cancelled';
-  const fmtDate = (d) => d ? new Date(d).toLocaleDateString(i18n.language?.startsWith('en') ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString(({ en: 'en-GB', de: 'de-DE' }[String(i18n.language || 'fr').slice(0, 2)] || 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
 
   const confirmCancel = async () => {
     setCancelling(true);

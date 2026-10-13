@@ -56,7 +56,7 @@ export function getAccountingHelp(standard = 'syscohada', t, lng = 'fr') {
   const std = PLANS[standard] ? standard : 'syscohada';
   const p = PLANS[std];
   const tr = (key, options) => t(`accounting:help.${key}`, options);
-  const locale = String(lng || 'fr').startsWith('en') ? 'en-US' : 'fr-FR';
+  const locale = ({ en: 'en-US', de: 'de-DE' }[String(lng || 'fr').slice(0, 2)] || 'fr-FR');
   const n = (v) => Math.round(v).toLocaleString(locale);
   const nom = tr(`plans.${std}.name`);
   const classes = tr(`plans.${std}.classes`);
