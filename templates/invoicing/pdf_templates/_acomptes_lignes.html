@@ -1,0 +1,8 @@
+{% comment %}
+Acomptes et paiements partiels reçus, puis reste à payer. Inclus sous le TOTAL de chaque modèle de facture.
+mode="table" : lignes <tr> d'un tableau de totaux ; sinon lignes <div class="total-line"> (ticket thermique).
+{% endcomment %}
+{% with paiements=invoice.paiements_recus %}{% if paiements %}
+{% for p in paiements %}{% if mode == 'table' %}<tr><td>{% if invoice.reste_a_payer > 0 %}Acompte{% else %}Paiement{% endif %} du {{ p.payment_date|date:"d/m/Y" }}</td><td>-{{ p.amount|floatformat:0 }} {{ organization.currency|default:"XAF" }}</td></tr>{% else %}<div class="total-line"><span>{% if invoice.reste_a_payer > 0 %}Acompte{% else %}Paiement{% endif %} {{ p.payment_date|date:"d/m/Y" }}:</span><span>-{{ p.amount|floatformat:0 }} {{ organization.currency|default:"XAF" }}</span></div>{% endif %}{% endfor %}
+{% if invoice.reste_a_payer > 0 %}{% if mode == 'table' %}<tr><td><strong>Reste à payer</strong></td><td><strong>{{ invoice.reste_a_payer|floatformat:0 }} {{ organization.currency|default:"XAF" }}</strong></td></tr>{% else %}<div class="total-line final"><span>RESTE A PAYER:</span><span>{{ invoice.reste_a_payer|floatformat:0 }} {{ organization.currency|default:"XAF" }}</span></div>{% endif %}{% endif %}
+{% endif %}{% endwith %}

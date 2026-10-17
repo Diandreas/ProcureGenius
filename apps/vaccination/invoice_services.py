@@ -57,6 +57,10 @@ class VaccinationInvoiceService:
             total_price=vaccine_type.price,
         )
 
+        # Carte privilège : taux « autres produits et services ».
+        from apps.accounts.privilege_card import apply_privilege_card_discount
+        apply_privilege_card_discount(invoice, record.patient, 'other')
+
         invoice.recalculate_totals()
 
         record.invoice = invoice

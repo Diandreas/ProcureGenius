@@ -1284,6 +1284,18 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
                     disabled={!settings.privilegeCardEnabled}
                   />
                 </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Autres produits et services (%)"
+                    type="number"
+                    value={settings.privilegeCardOtherDiscountPercent ?? 0}
+                    onChange={(e) => onUpdate('privilegeCardOtherDiscountPercent', parseFloat(e.target.value))}
+                    disabled={!settings.privilegeCardEnabled}
+                    helperText="Maternité, vaccination, soins, ventes"
+                  />
+                </Grid>
               </Grid>
             </AccordionDetails>
           </Accordion>

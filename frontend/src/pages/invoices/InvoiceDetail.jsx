@@ -136,6 +136,8 @@ function InvoiceDetail() {
   const [encaisserSaving, setEncaisserSaving] = useState(false);
   const [encaisserPaymentMethod, setEncaisserPaymentMethod] = useState('cash');
   const [encaisserAmount, setEncaisserAmount] = useState('');
+  // Date réelle du versement (un acompte peut avoir été reçu avant la saisie).
+  const [encaisserDate, setEncaisserDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [deletingPaymentId, setDeletingPaymentId] = useState(null);
   const [privilegeCardSaving, setPrivilegeCardSaving] = useState(false);
   const [associateCardDialogOpen, setAssociateCardDialogOpen] = useState(false);
@@ -414,6 +416,7 @@ function InvoiceDetail() {
 
   const handleOpenEncaisser = () => {
     setEncaisserAmount(String(balanceDue));
+    setEncaisserDate(new Date().toISOString().slice(0, 10));
     setEncaisserDialogOpen(true);
   };
 
@@ -429,11 +432,13 @@ function InvoiceDetail() {
     }
     setEncaisserSaving(true);
     try {
-      const response = await invoicesAPI.markPaid(id, { payment_method: encaisserPaymentMethod, amount });
+      const response = await invoicesAPI.markPaid(id, {
+        payment_method: encaisserPaymentMethod, amount, payment_date: encaisserDate || undefined,
+      });
       setInvoice(response.data);
       setEncaisserDialogOpen(false);
       enqueueSnackbar(
-        amount < balanceDue ? 'Paiement partiel enregistré' : 'Facture encaissée avec succès',
+        amount < balanceDue ? 'Acompte enregistré' : 'Facture encaissée avec succès',
         { variant: 'success' }
       );
     } catch (err) {
@@ -1508,7 +1513,7 @@ Cordialement`
                             }
                           >
                             <ListItemText
-                              primary={`${new Intl.NumberFormat('fr-FR').format(p.amount)} ${invoice.currency || 'XAF'} — ${formatDate(p.payment_date)}`}
+                              primary={`${balanceDue > 0 ? 'Acompte · ' : ''}${new Intl.NumberFormat('fr-FR').format(p.amount)} ${invoice.currency || 'XAF'} — ${formatDate(p.payment_date)}`}
                               secondary={`${p.payment_method}${p.created_by_name ? ' · ' + p.created_by_name : ''}`}
                             />
                           </ListItem>
@@ -1791,8 +1796,8 @@ Cordialement`
         <DialogTitle>Encaisser la facture</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Cette action enregistre le paiement daté d'aujourd'hui. Le montant peut être
-            partiel — le solde restant reste dû sur la facture.
+            Le montant peut être partiel : c'est alors un acompte, et le reste demeure dû sur
+            la facture. Indiquez la date à laquelle l'argent a été reçu.
           </Typography>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -1812,9 +1817,20 @@ Cordialement`
             InputProps={{ endAdornment: <InputAdornment position="end">{invoice?.currency || 'XAF'}</InputAdornment> }}
             helperText={
               parseFloat(encaisserAmount) > 0 && parseFloat(encaisserAmount) < balanceDue
-                ? `Paiement partiel — il restera ${new Intl.NumberFormat('fr-FR').format(balanceDue - parseFloat(encaisserAmount))} ${invoice?.currency || 'XAF'} dû`
+                ? `Acompte — il restera ${new Intl.NumberFormat('fr-FR').format(balanceDue - parseFloat(encaisserAmount))} ${invoice?.currency || 'XAF'} à payer`
                 : ''
             }
+          />
+
+          <TextField
+            fullWidth
+            type="date"
+            label="Date du versement"
+            value={encaisserDate}
+            onChange={e => setEncaisserDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ max: new Date().toISOString().slice(0, 10) }}
+            sx={{ mb: 2 }}
           />
 
           <FormControl fullWidth sx={{ mb: 2 }}>

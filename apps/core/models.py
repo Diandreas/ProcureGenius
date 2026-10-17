@@ -173,6 +173,11 @@ class OrganizationSettings(models.Model):
         max_digits=5, decimal_places=2, default=20.00,
         verbose_name=_("Réduction carte privilège — Imagerie (%)")
     )
+    # Maternité, vaccination, soins / hospitalisation, ventes : tout ce qui n'a pas son propre taux.
+    privilege_card_other_discount_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        verbose_name=_("Réduction carte privilège — Autres produits et services (%)")
+    )
     privilege_card_manual_toggle_enabled = models.BooleanField(
         default=False,
         verbose_name=_("Activation/désactivation manuelle de la carte privilège"),

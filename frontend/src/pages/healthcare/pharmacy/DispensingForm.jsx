@@ -173,12 +173,10 @@ const DispensingForm = () => {
         }, 0);
     };
 
-    // Carte Privilège : uniquement sur les articles de catégorie "Médicaments"
-    // (miroir de is_medication_item côté backend, apps/accounts/privilege_card.py).
+    // Carte Privilège : sur tous les produits délivrés (règle du 16/10/2026).
     const privilegeCardDiscount = () => {
         if (!privilegeCardSettings.enabled || !formData.patient?.has_privilege_card) return 0;
         const medicationTotal = formData.items.reduce((sum, item) => {
-            if (!isMedicationItem(item)) return sum;
             const quantity = parseFloat(item.quantity) || 0;
             const price = parseFloat(item.price) || 0;
             return sum + (quantity * price);
@@ -284,7 +282,7 @@ const DispensingForm = () => {
 
                             {formData.patient?.has_privilege_card && (
                                 <Alert severity="success" sx={{ mt: 2 }}>
-                                    Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur les médicaments (n'affecte pas les consommables/matériel).
+                                    Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur tous les produits.
                                 </Alert>
                             )}
                         </CardContent>
@@ -304,7 +302,7 @@ const DispensingForm = () => {
                             {privilegeCardDiscount() > 0 && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                     <Typography variant="body2" color="success.main">
-                                        Réduction Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}% sur médicaments) :
+                                        Réduction Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}%) :
                                     </Typography>
                                     <Typography variant="body2" color="success.main" fontWeight="bold">
                                         −{new Intl.NumberFormat('fr-FR').format(privilegeCardDiscount())} XAF
@@ -365,11 +363,7 @@ const DispensingForm = () => {
                                                         disableClearable
                                                     />
                                                     {formData.patient?.has_privilege_card && item.medication && (
-                                                        isMedicationItem(item) ? (
-                                                            <Chip size="small" color="success" label="Médicament — carte privilège applicable" sx={{ mt: 0.5, fontSize: '0.65rem' }} />
-                                                        ) : (
-                                                            <Chip size="small" color="default" label={`Non éligible (${item.medication.category_name || 'sans catégorie'})`} sx={{ mt: 0.5, fontSize: '0.65rem' }} />
-                                                        )
+                                                        <Chip size="small" color="success" label="Carte privilège applicable" sx={{ mt: 0.5, fontSize: '0.65rem' }} />
                                                     )}
                                                 </TableCell>
                                                 <TableCell>

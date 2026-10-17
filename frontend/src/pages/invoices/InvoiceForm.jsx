@@ -64,6 +64,7 @@ import ProvenanceChips from '../../components/crm/ProvenanceChips';
 import RelancesEnAttente from '../../components/crm/RelancesEnAttente';
 import InvoiceCrmPanel, { INFO_VIDE } from '../../components/crm/InvoiceCrmPanel';
 import crmAPI from '../../services/crmAPI';
+import AcompteFields, { ACOMPTE_VIDE } from '../../components/invoices/AcompteFields';
 import dayjs from 'dayjs';
 
 const UNIT_LABELS = {
@@ -102,6 +103,7 @@ function InvoiceForm() {
   const isEdit = Boolean(id);
   const [crmInfo, setCrmInfo] = useState(INFO_VIDE);
   const [relanceLiee, setRelanceLiee] = useState('');
+  const [acompte, setAcompte] = useState(ACOMPTE_VIDE);
   const clientIdFromUrl = searchParams.get('clientId');
 
   const [loading, setLoading] = useState(false);
@@ -170,7 +172,8 @@ function InvoiceForm() {
     settingsAPI.getAll().then(res => {
       setPrivilegeCardSettings({
         enabled: !!res.data.privilegeCardEnabled,
-        pharmacyDiscountPercent: parseFloat(res.data.privilegeCardPharmacyDiscountPercent) || 0,
+        // Facture créée ici = type « vente » : taux « autres produits et services ».
+        pharmacyDiscountPercent: parseFloat(res.data.privilegeCardOtherDiscountPercent) || 0,
       });
     }).catch(() => {});
   }, []);
@@ -290,9 +293,8 @@ function InvoiceForm() {
 
   const privilegeCardDiscount = () => {
     if (!privilegeCardSettings.enabled || !formData.client?.has_privilege_card) return 0;
-    const medicationTotal = items.reduce((sum, item) => (
-      isMedicationItem(item) ? sum + (item.total_price || 0) : sum
-    ), 0);
+    // Toutes les lignes sont éligibles depuis le 16/10/2026.
+    const medicationTotal = items.reduce((sum, item) => sum + (item.total_price || 0), 0);
     return Math.round(medicationTotal * privilegeCardSettings.pharmacyDiscountPercent) / 100;
   };
 
@@ -473,6 +475,22 @@ function InvoiceForm() {
       return;
     }
 
+    const montantAcompte = !isEdit && acompte.actif ? (parseFloat(acompte.montant) || 0) : 0;
+    if (!isEdit && acompte.actif) {
+      if (montantAcompte <= 0) {
+        enqueueSnackbar("Indiquez le montant de l'acompte", { variant: 'warning' });
+        return;
+      }
+      if (montantAcompte >= calculateTotal()) {
+        enqueueSnackbar("L'acompte couvre toute la facture : désactivez l'acompte, la facture sera payée.", { variant: 'warning' });
+        return;
+      }
+      if (!acompte.date) {
+        enqueueSnackbar("Indiquez la date du versement de l'acompte", { variant: 'warning' });
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const subtotal = calculateSubtotal();
@@ -503,6 +521,8 @@ function InvoiceForm() {
         global_discount_label: formData.global_discount_label || '',
         global_discount_amount: discountAmount
       };
+      // Avec un acompte, la facture est « à régler » : l'acompte en est le premier paiement.
+      if (montantAcompte > 0) payload.status = 'sent';
 
       if (isEdit) {
         await invoicesAPI.update(id, payload);
@@ -511,6 +531,16 @@ function InvoiceForm() {
       } else {
         const response = await invoicesAPI.create(payload);
         const invoiceId = response.data.id;
+        if (montantAcompte > 0) {
+          try {
+            await invoicesAPI.markPaid(invoiceId, {
+              amount: montantAcompte, payment_date: acompte.date, payment_method: acompte.mode,
+              notes: 'Acompte',
+            });
+          } catch (e) {
+            enqueueSnackbar("Facture créée, mais l'acompte n'a pas pu être enregistré : ajoutez-le depuis la facture (« Encaisser »).", { variant: 'warning' });
+          }
+        }
         // Suivi patients : n'empêche jamais la facture si l'enregistrement échoue.
         if (crmInfo.upsold || crmInfo.came_for || crmInfo.note || crmInfo.revisit_date) {
           await crmAPI.saveInvoiceInfoAfterCreate(invoiceId, {
@@ -587,11 +617,7 @@ function InvoiceForm() {
               {item.description}
             </Typography>
             {formData.client?.has_privilege_card && item.product && (
-              isMedicationItem(item) ? (
-                <Chip size="small" color="success" label="Médicament — carte privilège" sx={{ height: 16, fontSize: '0.6rem', mt: 0.5 }} />
-              ) : (
-                <Chip size="small" label={`Non éligible (${item.product.category_name || 'sans catégorie'})`} sx={{ height: 16, fontSize: '0.6rem', mt: 0.5 }} />
-              )
+              <Chip size="small" color="success" label="Carte privilège" sx={{ height: 16, fontSize: '0.6rem', mt: 0.5 }} />
             )}
           </Box>
           <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 600, letterSpacing: '-0.01em' }}>
@@ -834,7 +860,7 @@ function InvoiceForm() {
                   )}
                   {formData.client?.has_privilege_card && (
                     <Alert severity="success" sx={{ mt: 1.5, fontSize: '0.8rem' }}>
-                      Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur les médicaments de la facture.
+                      Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur toute la facture.
                     </Alert>
                   )}
                 </CardContent>
@@ -968,7 +994,7 @@ function InvoiceForm() {
                             -{formatCurrency(privilegeCardDiscount())}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                            Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}% médicaments)
+                            Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}%)
                           </Typography>
                         </Box>
                       </Grid>
@@ -1020,6 +1046,9 @@ function InvoiceForm() {
                         ))}
                       </Select>
                     </FormControl>
+                    {!isEdit && (
+                      <AcompteFields value={acompte} onChange={setAcompte} total={calculateTotal()} />
+                    )}
                   </Stack>
                 </CardContent>
               </Card>
@@ -1104,11 +1133,7 @@ function InvoiceForm() {
                               <TableCell>
                                 {item.description}
                                 {formData.client?.has_privilege_card && item.product && (
-                                  isMedicationItem(item) ? (
-                                    <Chip size="small" color="success" label="Médicament — carte privilège" sx={{ height: 18, fontSize: '0.65rem', ml: 1 }} />
-                                  ) : (
-                                    <Chip size="small" label={`Non éligible (${item.product.category_name || 'sans catégorie'})`} sx={{ height: 18, fontSize: '0.65rem', ml: 1 }} />
-                                  )
+                                  <Chip size="small" color="success" label="Carte privilège" sx={{ height: 18, fontSize: '0.65rem', ml: 1 }} />
                                 )}
                               </TableCell>
                               <TableCell>
@@ -1257,7 +1282,7 @@ function InvoiceForm() {
                               -{formatCurrency(privilegeCardDiscount())}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}% médicaments)
+                              Carte Privilège ({privilegeCardSettings.pharmacyDiscountPercent}%)
                             </Typography>
                           </Box>
                         </Grid>
@@ -1370,7 +1395,7 @@ function InvoiceForm() {
                     )}
                     {formData.client?.has_privilege_card && (
                       <Alert severity="success" sx={{ mt: 2 }}>
-                        Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur les médicaments de la facture.
+                        Carte Privilège active — {privilegeCardSettings.pharmacyDiscountPercent}% appliqué automatiquement sur toute la facture.
                       </Alert>
                     )}
                   </CardContent>
@@ -1408,6 +1433,9 @@ function InvoiceForm() {
                           ))}
                         </Select>
                       </FormControl>
+                      {!isEdit && (
+                        <AcompteFields value={acompte} onChange={setAcompte} total={calculateTotal()} />
+                      )}
                     </Stack>
                   </CardContent>
                 </Card>

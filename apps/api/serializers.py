@@ -777,12 +777,13 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         for item_data in items_data:
             InvoiceItem.objects.create(invoice=invoice, **item_data)
 
-        # Carte privilège : réduction automatique si le client en est titulaire —
-        # uniquement sur les produits de catégorie "Médicaments" (les factures
-        # génériques peuvent contenir n'importe quel produit, pas que des médicaments).
+        # Carte privilège : réduction automatique si le client en est titulaire, au taux
+        # du type de facture (laboratoire, pharmacie... ou « autres produits et services »).
         if invoice.client_id:
-            from apps.accounts.privilege_card import apply_privilege_card_discount, is_medication_item
-            apply_privilege_card_discount(invoice, invoice.client, 'pharmacy', item_filter=is_medication_item)
+            from apps.accounts.privilege_card import apply_privilege_card_discount, get_module_for_invoice
+            module = get_module_for_invoice(invoice)
+            if module:
+                apply_privilege_card_discount(invoice, invoice.client, module)
 
         # Recalculer les totaux
         invoice.recalculate_totals()
@@ -933,8 +934,10 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
                 # viennent d'être recréés à neuf (voir apply_privilege_card_discount,
                 # idempotent — remplace le journal d'usage existant pour cette facture).
                 if instance.client_id:
-                    from apps.accounts.privilege_card import apply_privilege_card_discount, is_medication_item
-                    apply_privilege_card_discount(instance, instance.client, 'pharmacy', item_filter=is_medication_item)
+                    from apps.accounts.privilege_card import apply_privilege_card_discount, get_module_for_invoice
+                    module = get_module_for_invoice(instance)
+                    if module:
+                        apply_privilege_card_discount(instance, instance.client, module)
 
                 # Recalculer les totaux une seule fois à la fin
                 instance.recalculate_totals()

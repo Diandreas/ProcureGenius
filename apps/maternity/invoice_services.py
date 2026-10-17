@@ -59,6 +59,9 @@ class MaternityInvoiceService:
             unit_price=product.price,
             total_price=product.price,
         )
+        # Carte privilège : taux « autres produits et services ».
+        from apps.accounts.privilege_card import apply_privilege_card_discount
+        apply_privilege_card_discount(invoice, patient, 'other')
         invoice.recalculate_totals()
         return invoice
 

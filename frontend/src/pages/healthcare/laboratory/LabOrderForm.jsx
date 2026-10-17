@@ -282,12 +282,11 @@ const LabOrderForm = () => {
         return 0;
     };
 
-    // Carte Privilège : uniquement sur les bilans/packs, jamais sur les examens individuels
-    // (miroir exact de la règle appliquée côté backend dans apply_privilege_card_discount).
+    // Carte Privilège : sur toutes les analyses, examens et bilans (miroir de
+    // apply_privilege_card_discount côté serveur, règle du 16/10/2026).
     const privilegeCardDiscount = () => {
         if (!privilegeCardSettings.enabled || !formData.patient?.has_privilege_card) return 0;
-        const panelsTotal = formData.panels.reduce((sum, panel) => sum + (parseFloat(panel.net_price || panel.price) || 0), 0);
-        return Math.round(panelsTotal * privilegeCardSettings.laboratoryDiscountPercent) / 100;
+        return Math.round(calculateSubtotal() * privilegeCardSettings.laboratoryDiscountPercent) / 100;
     };
 
     const calculateTotal = () => {
@@ -498,7 +497,7 @@ const LabOrderForm = () => {
                             {formData.patient?.has_privilege_card && (
                                 <Box sx={{ mt: 2 }}>
                                     <Alert severity="success" sx={{ mb: 1 }}>
-                                        Carte Privilège active — {privilegeCardSettings.laboratoryDiscountPercent}% appliqué automatiquement sur les bilans/packs sélectionnés (n'affecte pas les examens individuels).
+                                        Carte Privilège active — {privilegeCardSettings.laboratoryDiscountPercent}% appliqué automatiquement sur toutes les analyses.
                                     </Alert>
                                     <TextField
                                         select size="small" fullWidth
@@ -734,7 +733,7 @@ const LabOrderForm = () => {
                             {privilegeCardDiscount() > 0 && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                     <Typography variant="body2" color="success.main">
-                                        Réduction Carte Privilège ({privilegeCardSettings.laboratoryDiscountPercent}% sur bilans/packs) :
+                                        Réduction Carte Privilège ({privilegeCardSettings.laboratoryDiscountPercent}% sur les analyses) :
                                     </Typography>
                                     <Typography variant="body2" color="success.main" fontWeight="bold">
                                         −{new Intl.NumberFormat('fr-FR').format(privilegeCardDiscount())} XAF
@@ -771,9 +770,10 @@ const LabOrderForm = () => {
                     <Card>
                         <CardContent>
                             <Tabs value={selectionTab} onChange={(_, v) => setSelectionTab(v)} sx={{ mb: 2 }}>
-                                <Tab label={`Examens Labo (${formData.tests.length} sélectionnés)`} />
-                                <Tab label={`Imagerie (${formData.exam_types.length} sélectionnés)`} />
-                                <Tab label={`Bilans (${formData.panels.length} sélectionnés)`} />
+                                <Tab value={0} label={`Examens Labo (${formData.tests.length} sélectionnés)`} />
+                                {/* Plus d'examens d'imagerie dans une demande de laboratoire (demande de la
+                                    direction) : l'imagerie se prescrit depuis le module Imagerie. */}
+                                <Tab value={2} label={`Bilans (${formData.panels.length} sélectionnés)`} />
                             </Tabs>
 
                             {/* Tab 0: Examens individuels */}

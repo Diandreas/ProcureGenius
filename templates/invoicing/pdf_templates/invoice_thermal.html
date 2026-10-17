@@ -245,6 +245,7 @@
             <span>TOTAL:</span>
             <span>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</span>
         </div>
+        {% include 'invoicing/pdf_templates/_acomptes_lignes.html' with mode='div' %}
     </div>
 
     <!-- Footer -->

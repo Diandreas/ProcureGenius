@@ -10,6 +10,7 @@ MODULE_DISCOUNT_FIELDS = {
     'imaging': 'privilege_card_imaging_discount_percent',
     'pharmacy': 'privilege_card_pharmacy_discount_percent',
     'consultation': 'privilege_card_consultation_discount_percent',
+    'other': 'privilege_card_other_discount_percent',
 }
 
 # Correspondance type de facture -> module carte privilège, pour retrouver le
@@ -20,6 +21,11 @@ INVOICE_TYPE_TO_MODULE = {
     'healthcare_imaging': 'imaging',
     'healthcare_pharmacy': 'pharmacy',
     'healthcare_consultation': 'consultation',
+    # Tout le reste (sauf les avoirs) : taux « autres produits et services ».
+    'healthcare_maternity': 'other',
+    'healthcare_vaccination': 'other',
+    'healthcare_services': 'other',
+    'standard': 'other',
 }
 
 # Noms de catégorie de produit considérés comme "médicament" pour la réduction
@@ -149,13 +155,10 @@ def get_module_for_invoice(invoice):
 
 
 def get_item_filter_for_module(module):
-    """Retourne le filtre d'éligibilité des lignes pour ce module (même
-    logique que celle utilisée à la création de facture), ou None si toutes
-    les lignes sont éligibles."""
-    if module == 'laboratory':
-        return lambda item: item.description.startswith('Bilan : ')
-    if module == 'pharmacy':
-        return is_medication_item
+    """Filtre d'éligibilité des lignes pour ce module, ou None si toutes les lignes
+    sont éligibles. Depuis le 16/10/2026 (règle de la direction : -10 % analyses,
+    -5 % tout le reste), toutes les lignes le sont : plus de « bilans seulement » en
+    laboratoire ni de « médicaments seulement » en pharmacie."""
     return None
 
 

@@ -535,6 +535,7 @@
                 <td>TOTAL DÛ</td>
                 <td>{{ total_amount|floatformat:2 }} {{ organization.currency|default:"CAD" }}</td>
             </tr>
+            {% include 'invoicing/pdf_templates/_acomptes_lignes.html' with mode='table' %}
         </table>
     </div>
 
@@ -551,8 +552,7 @@
                 <td class="footer-info">
                     <div class="footer-text">
                         {% if organization.name %}<strong>{{ organization.name }}</strong><br>{% endif %}
-                        {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif
-                        %}
+                        {% if organization.address %}{{ organization.address|striptags|truncatewords:15 }}<br>{% endif %}
                         {% if organization.phone %}Tél: {{ organization.phone }}{% endif %}
                         {% if organization.email %} • Email: {{ organization.email }}{% endif %}
                         {# Coordonnées bancaires (optionnel) #}

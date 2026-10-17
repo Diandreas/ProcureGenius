@@ -1183,6 +1183,21 @@ class Invoice(models.Model):
 
         return f"{prefix}{next_number:04d}"
     
+    @property
+    def paiements_recus(self):
+        """Paiements réussis (acomptes compris), du plus ancien au plus récent."""
+        return list(self.payments.filter(status='success').order_by('payment_date', 'created_at'))
+
+    @property
+    def reste_a_payer(self):
+        """Reste dû après acomptes. Une facture « payée » ne doit plus rien : le statut fait foi
+        (la plupart des factures patients sont soldées sans ligne de paiement)."""
+        from decimal import Decimal
+        if self.status in ('paid', 'cancelled'):
+            return Decimal('0')
+        recu = sum((Decimal(str(p.amount)) for p in self.paiements_recus), Decimal('0'))
+        return max(Decimal(str(self.total_amount or 0)) - recu, Decimal('0'))
+
     def get_balance_due(self):
         """Calcule le solde restant à payer"""
         from decimal import Decimal
