@@ -259,7 +259,11 @@
     "supplierOptional": "Fournisseur (optionnel)",
     "recoverableVat": "dont TVA récupérable (optionnel)",
     "replaceReceipt": "Remplacer le reçu",
-    "attachReceipt": "Joindre la photo du reçu"
+    "attachReceipt": "Joindre la photo du reçu",
+    "vatRate": "Taux de TVA",
+    "vatRateManual": "Montant saisi à la main",
+    "vatIncludedHint": "Calculée sur le montant payé TTC ; modifiable.",
+    "vatNotDeductibleSmallBusiness": "Petite entreprise exonérée : la TVA payée n'est pas déductible, toute la dépense est passée en charge."
   },
   "help": {
     "plans": {
@@ -282,6 +286,12 @@
       "procura": {
         "name": "le plan Procura",
         "classes": "Classe 1 : Capitaux | 2 : Immobilisations | 4 : Tiers | 5 : Trésorerie | 6 : Charges | 7 : Produits."
+      },
+      "skr03": {
+        "name": "le plan SKR03 (DATEV)",
+        "classes": "Classe 0 : Immobilisations et capitaux | 1 : Trésorerie, tiers, TVA (Kasse 1000, Bank 1200, Forderungen 1400, Verbindlichkeiten 1600, Vorsteuer 1571/1576, Umsatzsteuer 1771/1776) | 2 : Charges et produits hors exploitation | 3 : Achats et stocks (Wareneingang 3400) | 4 : Charges d'exploitation (Bürobedarf 4930, Miete 4210) | 8 : Produits (Erlöse 8400 à 19 %, 8300 à 7 %) | 9 : Comptes de report et statistiques.",
+        "aboutTitle": "Qu'est-ce que le SKR03 ?",
+        "about": "Le SKR03 (Standardkontenrahmen 03) est le plan comptable de DATEV, le plus utilisé par les PME allemandes et leurs conseillers fiscaux (Steuerberater). Les comptes ont 4 chiffres et suivent le déroulement de l'activité. La TVA a un compte par taux : Umsatzsteuer 1776 (19 %) et 1771 (7 %) sur les ventes, Vorsteuer 1576 (19 %) et 1571 (7 %) sur les achats. Montants en euros (€)."
       }
     },
     "accounts": {
@@ -291,7 +301,10 @@
       "bureau": "Fournitures de bureau",
       "tvaD": "TVA récupérable",
       "mobile": "Mobile Money",
-      "banque": "Banque"
+      "banque": "Banque",
+      "tvaCReduced": "TVA collectée à taux réduit (7 %)",
+      "tvaDReduced": "TVA récupérable à taux réduit (7 %)",
+      "ventesReduced": "Ventes à taux réduit (7 %)"
     },
     "frequent": {
       "capital": "Capital",
@@ -362,7 +375,9 @@
         "examplePayment": "Règlement du client Dupont reçu en banque",
         "tip1": "Si l'écriture n'est pas équilibrée, le système vous le signale en rouge.",
         "tip2": "Les factures, paiements et réceptions de commandes créés dans Procura passent leurs écritures automatiquement.",
-        "tip3": "Choisissez le journal adapté : Achats (ACH), Ventes (VTE), Banque (BNQ), Caisse et Mobile Money (CAI), Opérations diverses (OD)."
+        "tip3": "Choisissez le journal adapté : Achats (ACH), Ventes (VTE), Banque (BNQ), Caisse et Mobile Money (CAI), Opérations diverses (OD).",
+        "exampleSaleReduced": "Vente au taux réduit de {{rate}} % (livres, alimentation…) : {{ht}} HT + TVA {{vat}}",
+        "examplePurchaseBank": "Achat de fournitures de bureau {{amount}} payé par virement bancaire"
       },
       "chart_of_accounts": {
         "title": "Plan comptable — guide rapide",
@@ -438,7 +453,8 @@
     "balanceSheet": "Bilan",
     "sig": "SIG",
     "defaultTitle": "Comptabilité",
-    "help": "Aide comptabilité"
+    "help": "Aide comptabilité",
+    "vat": "TVA"
   },
   "sig": {
     "rows": {
@@ -505,5 +521,104 @@
     "debitBalanceHeader": "Solde Débiteur",
     "creditBalanceHeader": "Solde Créditeur",
     "total": "TOTAL"
+  },
+  "vatReport": {
+    "title": "Déclaration de TVA",
+    "subtitle": "TVA collectée, TVA déductible et montant à payer pour la période",
+    "loadError": "Impossible de charger la déclaration de TVA",
+    "exportError": "L'export CSV a échoué",
+    "exportCsv": "Export CSV",
+    "rate": "Taux",
+    "netBase": "Base HT",
+    "vat": "TVA",
+    "year": "Année",
+    "month": "Mois",
+    "quarter": "Trimestre",
+    "quarterShort": "T{{quarter}}",
+    "quarterLabel": "T{{quarter}} {{year}}",
+    "kinds": {
+      "month": "Mois",
+      "quarter": "Trimestre",
+      "year": "Année"
+    },
+    "periodOf": "Période : {{period}}",
+    "deadline": "Date limite de déclaration",
+    "noSales": "Aucune vente sur la période",
+    "noPurchases": "Aucun achat avec TVA sur la période",
+    "result": {
+      "pay": "TVA à payer",
+      "refund": "Crédit de TVA (remboursement)",
+      "none": "Aucune TVA à payer",
+      "formula": "TVA collectée {{output}} − TVA déductible {{input}}"
+    },
+    "smallBusiness": {
+      "kleinunternehmer": {
+        "title": "Petite entreprise (Kleinunternehmer, § 19 UStG)",
+        "text": "Vous ne facturez pas de TVA et ne pouvez pas déduire la TVA de vos achats : aucune TVA à payer. Surveillez votre chiffre d'affaires, qui doit rester sous le seuil du régime."
+      },
+      "franchise_en_base": {
+        "title": "Franchise en base de TVA (art. 293 B du CGI)",
+        "text": "Vous ne facturez pas de TVA et ne pouvez pas la récupérer sur vos achats : aucune TVA à payer. Surveillez votre chiffre d'affaires, qui doit rester sous les seuils de la franchise."
+      },
+      "small_business": {
+        "title": "Entreprise exonérée de TVA",
+        "text": "Votre organisation est déclarée exonérée de TVA : aucune TVA collectée ni déductible, rien à payer."
+      }
+    },
+    "warnings": {
+      "foreign_currency_invoices_one": "{{count}} facture dans une autre devise que {{currency}} n'est pas comptée. Déclarez-la à part, convertie en {{currency}}.",
+      "foreign_currency_invoices_other": "{{count}} factures dans une autre devise que {{currency}} ne sont pas comptées. Déclarez-les à part, converties en {{currency}}.",
+      "foreign_currency_credit_notes_one": "{{count}} avoir dans une autre devise que {{currency}} n'est pas compté.",
+      "foreign_currency_credit_notes_other": "{{count}} avoirs dans une autre devise que {{currency}} ne sont pas comptés.",
+      "foreign_currency_expenses_one": "{{count}} dépense dans une autre devise que {{currency}} n'est pas comptée.",
+      "foreign_currency_expenses_other": "{{count}} dépenses dans une autre devise que {{currency}} ne sont pas comptées."
+    },
+    "output": {
+      "title": "TVA collectée",
+      "subtitle_one": "Sur {{count}} facture émise",
+      "subtitle_other": "Sur {{count}} factures émises",
+      "creditNotes_one": "Avoir ({{count}})",
+      "creditNotes_other": "Avoirs ({{count}})",
+      "total": "TVA collectée nette"
+    },
+    "input": {
+      "title": "TVA déductible",
+      "subtitle": "TVA payée sur vos achats, à déduire",
+      "notDeductible": "Non déductible pour une entreprise exonérée (affichée pour information)",
+      "purchaseOrders_one": "Bon de commande ({{count}})",
+      "purchaseOrders_other": "Bons de commande ({{count}})",
+      "expenses_one": "Dépense ({{count}})",
+      "expenses_other": "Dépenses ({{count}})",
+      "total": "Total TVA déductible"
+    },
+    "ustva": {
+      "title": "Umsatzsteuer-Voranmeldung (Allemagne)",
+      "subtitle": "Les cases (Kennzahlen) à remplir dans ELSTER",
+      "kz81": "Ventes imposables à 19 % (base HT, en euros entiers)",
+      "kz86": "Ventes imposables à 7 % (base HT, en euros entiers)",
+      "kz35": "Ventes à d'autres taux (base HT / taxe)",
+      "kz66": "TVA déductible (Vorsteuer)",
+      "kz83": "Solde à payer (négatif = remboursement)",
+      "taxLine": "Taxe : {{amount}}",
+      "taxFree": "Ventes à 0 % : {{amount}}. Selon leur nature (export, livraison intracommunautaire, opération exonérée), elles vont dans une autre case : demandez à votre conseiller fiscal.",
+      "extension": "Avec une prolongation permanente du délai (Dauerfristverlängerung) : {{date}}.",
+      "rounding": "ELSTER recalcule la taxe à partir des bases en euros entiers : un écart de quelques centimes est normal."
+    },
+    "howTo": {
+      "title": "Que faire de ces chiffres ?",
+      "de": "Connectez-vous à ELSTER (Mein ELSTER), ouvrez l'Umsatzsteuer-Voranmeldung de la période et recopiez les cases Kz 81, 86 et 66 ; ELSTER calcule la case 83. Envoyez avant la date limite et payez le montant au Finanzamt (ou attendez le remboursement).",
+      "fr": "Reportez ces montants dans votre déclaration de TVA (CA3 mensuelle ou trimestrielle, CA12 annuelle) sur impots.gouv.fr, espace professionnel, puis payez le solde avant la date limite.",
+      "generic": "Reportez ces montants sur la déclaration de TVA de l'administration fiscale de votre pays (en ligne ou au guichet) et payez le solde avant la date limite. En cas de doute, faites-les vérifier par votre comptable.",
+      "sources": "Calcul : factures émises (hors brouillons, devis et annulations sans avoir), moins les avoirs émis, moins la TVA des bons de commande et des dépenses de la période."
+    }
+  },
+  "chartStandard": {
+    "about": {
+      "syscohada": "SYSCOHADA : plan comptable commun aux 17 pays de l'OHADA (Afrique de l'Ouest et centrale). Comptes en classes 1 à 9, montants en FCFA.",
+      "pcg": "PCG : Plan comptable général français, utilisé aussi en Belgique et au Maghreb. Comptes en classes 1 à 7.",
+      "skr03": "SKR03 (DATEV) : plan comptable standard des PME allemandes, connu de tous les Steuerberater. Comptes à 4 chiffres ; TVA par taux (Umsatzsteuer 1776/1771, Vorsteuer 1576/1571) ; montants en euros.",
+      "us_gaap": "US GAAP : plan type d'une petite entreprise américaine (1xxx actifs, 2xxx dettes, 4xxx produits, 5xxx-7xxx charges).",
+      "ca": "Canada (ASPE) : plan type d'une petite entreprise canadienne, avec TPS/TVH et TVQ."
+    }
   }
 }

@@ -33,6 +33,11 @@ const accountingAPI = {
   // ── Exports (plan max) ──────────────────────────────────────────
   exportFEC: (params = {}) => api.get(`${BASE}/exports/fec/`, { params, responseType: 'blob' }),
 
+  // ── Déclaration de TVA ──────────────────────────────────────────
+  // params : { period: 'month'|'quarter'|'year', year, index } (vide = période par défaut de l'organisation)
+  getVatReport: (params = {}) => api.get(`${BASE}/vat-report/`, { params }),
+  exportVatReportCSV: (params = {}) => api.get(`${BASE}/vat-report/`, { params: { ...params, format: 'csv' }, responseType: 'blob' }),
+
   // ── Dashboard ───────────────────────────────────────────────────
   getDashboard: () => api.get(`${BASE}/dashboard/`),
 

@@ -27,6 +27,9 @@ urlpatterns = [
     # Exports (plan max : advanced_exports)
     path('exports/fec/', FECExportView.as_view(), name='fec-export'),
 
+    # Déclaration de TVA (mois / trimestre / année, JSON ou CSV)
+    path('vat-report/', views.VatReportView.as_view(), name='vat-report'),
+
     # Dashboard
     path('dashboard/', views.AccountingDashboardView.as_view(), name='accounting-dashboard'),
 

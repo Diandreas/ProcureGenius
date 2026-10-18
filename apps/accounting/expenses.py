@@ -8,13 +8,15 @@ Dépenses : création (saisie, assistant IA, import d'un reçu) et écriture com
         ou fournisseur (dépense à payer)                 401
 Plan historique Procura : même logique avec ses comptes ; sans compte de TVA récupérable,
 la TVA reste dans la charge (TTC).
+Petite entreprise exonérée (franchise en base, Kleinunternehmerregelung § 19 UStG) : la TVA
+payée n'est pas déductible, toute la dépense (TTC) va en charge.
 """
 from datetime import date as date_type
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
 
-from .charts import EXPENSE_CATEGORIES, PAYMENT_ROLE, account_for_role
+from .charts import EXPENSE_CATEGORIES, PAYMENT_ROLE, account_for_role, entry_label, journal_name
 
 CATEGORY_KEYS = {k for k, _ in EXPENSE_CATEGORIES}
 
@@ -77,10 +79,40 @@ def to_decimal(value, default=Decimal('0')):
         return default
 
 
+def vat_exempt(org):
+    """Vrai si l'organisation relève du régime des petites entreprises (TVA non déductible)."""
+    try:
+        return bool(org.settings.vat_exempt_small_business)
+    except Exception:
+        return False
+
+
+def deductible_vat_account(org, total, tax, net=None):
+    """Compte de TVA récupérable d'une dépense ou d'un achat TTC `total` contenant `tax`.
+
+    None si la TVA n'est pas déductible (petite entreprise exonérée) ou s'il n'y a pas de TVA.
+    Taux inférieur au taux normal (ex. 7 % en Allemagne) : compte du taux réduit
+    (SKR03 1571 au lieu de 1576), le compte du taux normal à défaut. `net` : base HT servant
+    à reconnaître le taux (par défaut total − TVA).
+    """
+    total, tax = Decimal(total or 0), Decimal(tax or 0)
+    if not (0 < tax < total) or vat_exempt(org):
+        return None
+    base = Decimal(net) if net and Decimal(net) > 0 else total - tax
+    rate = tax * 100 / base
+    try:
+        normal = Decimal(str(org.settings.default_tax_rate or 0))
+    except Exception:
+        normal = Decimal('0')
+    if normal > 0 and rate < normal - Decimal('0.5'):
+        return account_for_role(org, 'vat_deductible_reduced') or account_for_role(org, 'vat_deductible')
+    return account_for_role(org, 'vat_deductible')
+
+
 def _journal(org, code, name, jtype):
     from .models import AccountingJournal
     journal, _ = AccountingJournal.objects.get_or_create(
-        organization=org, code=code, defaults={'name': name, 'journal_type': jtype})
+        organization=org, code=code, defaults={'name': journal_name(org, code, name), 'journal_type': jtype})
     return journal
 
 
@@ -93,7 +125,7 @@ def _lines_for(expense):
         return None, "Plan comptable incomplet : aucun compte de charge."
     total = Decimal(expense.amount)
     tax = Decimal(expense.tax_amount or 0)
-    vat = account_for_role(org, 'vat_deductible') if 0 < tax < total else None
+    vat = deductible_vat_account(org, total, tax)
     if expense.is_paid:
         counter = account_for_role(org, PAYMENT_ROLE.get(expense.payment_method, 'cash')) or account_for_role(org, 'cash')
     else:
@@ -121,7 +153,7 @@ def post_expense_entry(expense, user=None):
         journal = _journal(org, 'BNQ', 'Journal de Banque', 'bank')
     else:
         journal = _journal(org, 'CAI', 'Journal de Caisse', 'cash')
-    label = f"Dépense — {expense.description}"[:300]
+    label = f"{entry_label(org, 'expense')} — {expense.description}"[:300]
 
     with transaction.atomic():
         entry = expense.journal_entry

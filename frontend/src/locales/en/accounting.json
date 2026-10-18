@@ -259,7 +259,11 @@
     "supplierOptional": "Supplier (optional)",
     "recoverableVat": "of which recoverable VAT (optional)",
     "replaceReceipt": "Replace receipt",
-    "attachReceipt": "Attach a photo of the receipt"
+    "attachReceipt": "Attach a photo of the receipt",
+    "vatRate": "VAT rate",
+    "vatRateManual": "Amount entered manually",
+    "vatIncludedHint": "Calculated from the gross amount paid; editable.",
+    "vatNotDeductibleSmallBusiness": "VAT-exempt small business: VAT paid is not deductible, the full amount is booked as an expense."
   },
   "help": {
     "plans": {
@@ -282,6 +286,12 @@
       "procura": {
         "name": "the Procura chart of accounts",
         "classes": "Class 1: Capital | 2: Fixed assets | 4: Third parties | 5: Cash | 6: Expenses | 7: Revenue."
+      },
+      "skr03": {
+        "name": "the SKR03 chart (DATEV)",
+        "classes": "Class 0: Fixed assets and capital | 1: Cash, receivables, payables, VAT (Kasse 1000, Bank 1200, Forderungen 1400, Verbindlichkeiten 1600, Vorsteuer 1571/1576, Umsatzsteuer 1771/1776) | 2: Non-operating income and expenses | 3: Purchases and inventory (Wareneingang 3400) | 4: Operating expenses (Bürobedarf 4930, Miete 4210) | 8: Revenue (Erlöse 8400 at 19%, 8300 at 7%) | 9: Carry-forward and statistical accounts.",
+        "aboutTitle": "What is SKR03?",
+        "about": "SKR03 (Standardkontenrahmen 03) is the DATEV chart of accounts, the most widely used by German small businesses and their tax advisers (Steuerberater). Accounts have 4 digits and follow the business process. VAT has one account per rate: output VAT (Umsatzsteuer) 1776 (19%) and 1771 (7%), input VAT (Vorsteuer) 1576 (19%) and 1571 (7%). Amounts in euros (€)."
       }
     },
     "accounts": {
@@ -291,7 +301,10 @@
       "bureau": "Office supplies",
       "tvaD": "Recoverable VAT",
       "mobile": "Mobile Money",
-      "banque": "Bank"
+      "banque": "Bank",
+      "tvaCReduced": "Output VAT, reduced rate (7%)",
+      "tvaDReduced": "Input VAT, reduced rate (7%)",
+      "ventesReduced": "Sales at reduced rate (7%)"
     },
     "frequent": {
       "capital": "Capital",
@@ -362,7 +375,9 @@
         "examplePayment": "Payment from customer Dupont received in the bank",
         "tip1": "If the entry is not balanced, the system flags it in red.",
         "tip2": "Invoices, payments and goods receipts created in Procura post their journal entries automatically.",
-        "tip3": "Choose the right journal: Purchases (ACH), Sales (VTE), Bank (BNQ), Cash and Mobile Money (CAI), Miscellaneous (OD)."
+        "tip3": "Choose the right journal: Purchases (ACH), Sales (VTE), Bank (BNQ), Cash and Mobile Money (CAI), Miscellaneous (OD).",
+        "exampleSaleReduced": "Sale at the reduced {{rate}}% rate (books, food…): {{ht}} net + VAT {{vat}}",
+        "examplePurchaseBank": "Purchase of office supplies {{amount}} paid by bank transfer"
       },
       "chart_of_accounts": {
         "title": "Chart of accounts — quick guide",
@@ -438,7 +453,8 @@
     "balanceSheet": "Balance sheet",
     "sig": "SIG",
     "defaultTitle": "Accounting",
-    "help": "Accounting help"
+    "help": "Accounting help",
+    "vat": "VAT"
   },
   "sig": {
     "rows": {
@@ -505,5 +521,104 @@
     "debitBalanceHeader": "Debit balance",
     "creditBalanceHeader": "Credit balance",
     "total": "TOTAL"
+  },
+  "vatReport": {
+    "title": "VAT return",
+    "subtitle": "Output VAT, input VAT and the amount to pay for the period",
+    "loadError": "Could not load the VAT return",
+    "exportError": "CSV export failed",
+    "exportCsv": "Export CSV",
+    "rate": "Rate",
+    "netBase": "Net amount",
+    "vat": "VAT",
+    "year": "Year",
+    "month": "Month",
+    "quarter": "Quarter",
+    "quarterShort": "Q{{quarter}}",
+    "quarterLabel": "Q{{quarter}} {{year}}",
+    "kinds": {
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year"
+    },
+    "periodOf": "Period: {{period}}",
+    "deadline": "Filing deadline",
+    "noSales": "No sales in this period",
+    "noPurchases": "No purchases with VAT in this period",
+    "result": {
+      "pay": "VAT to pay",
+      "refund": "VAT refund",
+      "none": "No VAT to pay",
+      "formula": "Output VAT {{output}} − input VAT {{input}}"
+    },
+    "smallBusiness": {
+      "kleinunternehmer": {
+        "title": "Small business (Kleinunternehmer, § 19 UStG)",
+        "text": "You do not charge VAT and cannot reclaim VAT on purchases, so there is no VAT to pay. Keep an eye on your turnover: it must stay below the scheme's threshold."
+      },
+      "franchise_en_base": {
+        "title": "VAT exemption for small businesses (art. 293 B CGI)",
+        "text": "You do not charge VAT and cannot reclaim it on purchases, so there is no VAT to pay. Keep an eye on your turnover: it must stay below the exemption thresholds."
+      },
+      "small_business": {
+        "title": "VAT-exempt business",
+        "text": "Your organisation is set as VAT-exempt: no output or input VAT, nothing to pay."
+      }
+    },
+    "warnings": {
+      "foreign_currency_invoices_one": "{{count}} invoice in a currency other than {{currency}} is not included. Declare it separately, converted to {{currency}}.",
+      "foreign_currency_invoices_other": "{{count}} invoices in a currency other than {{currency}} are not included. Declare them separately, converted to {{currency}}.",
+      "foreign_currency_credit_notes_one": "{{count}} credit note in a currency other than {{currency}} is not included.",
+      "foreign_currency_credit_notes_other": "{{count}} credit notes in a currency other than {{currency}} are not included.",
+      "foreign_currency_expenses_one": "{{count}} expense in a currency other than {{currency}} is not included.",
+      "foreign_currency_expenses_other": "{{count}} expenses in a currency other than {{currency}} are not included."
+    },
+    "output": {
+      "title": "Output VAT",
+      "subtitle_one": "From {{count}} issued invoice",
+      "subtitle_other": "From {{count}} issued invoices",
+      "creditNotes_one": "Credit note ({{count}})",
+      "creditNotes_other": "Credit notes ({{count}})",
+      "total": "Net output VAT"
+    },
+    "input": {
+      "title": "Input VAT",
+      "subtitle": "VAT paid on your purchases, to deduct",
+      "notDeductible": "Not deductible for a VAT-exempt business (shown for information)",
+      "purchaseOrders_one": "Purchase order ({{count}})",
+      "purchaseOrders_other": "Purchase orders ({{count}})",
+      "expenses_one": "Expense ({{count}})",
+      "expenses_other": "Expenses ({{count}})",
+      "total": "Total input VAT"
+    },
+    "ustva": {
+      "title": "Umsatzsteuer-Voranmeldung (Germany)",
+      "subtitle": "The boxes (Kennzahlen) to fill in on ELSTER",
+      "kz81": "Taxable sales at 19% (net, whole euros)",
+      "kz86": "Taxable sales at 7% (net, whole euros)",
+      "kz35": "Sales at other rates (net / tax)",
+      "kz66": "Deductible input VAT (Vorsteuer)",
+      "kz83": "Remaining payment (negative = refund)",
+      "taxLine": "Tax: {{amount}}",
+      "taxFree": "Sales at 0%: {{amount}}. Depending on their nature (export, intra-EU supply, exempt transaction) they go in a different box: ask your tax adviser.",
+      "extension": "With a permanent filing extension (Dauerfristverlängerung): {{date}}.",
+      "rounding": "ELSTER recalculates the tax from the whole-euro amounts, so a difference of a few cents is normal."
+    },
+    "howTo": {
+      "title": "What to do with these numbers",
+      "de": "Log in to ELSTER (Mein ELSTER), open the Umsatzsteuer-Voranmeldung for the period and copy boxes Kz 81, 86 and 66; ELSTER works out box 83. Submit before the deadline and pay the amount to the Finanzamt (or wait for the refund).",
+      "fr": "Enter these amounts in your VAT return (monthly or quarterly CA3, annual CA12) in your professional account on impots.gouv.fr, then pay the balance before the deadline.",
+      "generic": "Enter these amounts on your country's VAT return (online or at the tax office) and pay the balance before the deadline. If in doubt, have your accountant check them.",
+      "sources": "How it is calculated: issued invoices (excluding drafts, quotes and cancellations without a credit note), minus credit notes issued, minus VAT on the period's purchase orders and expenses."
+    }
+  },
+  "chartStandard": {
+    "about": {
+      "syscohada": "SYSCOHADA: the common chart of accounts of the 17 OHADA countries (West and Central Africa). Classes 1 to 9, amounts in FCFA.",
+      "pcg": "PCG: the French General Chart of Accounts, also used in Belgium and North Africa. Classes 1 to 7.",
+      "skr03": "SKR03 (DATEV): the standard chart of accounts of German small businesses, known to every Steuerberater. 4-digit accounts; VAT per rate (Umsatzsteuer 1776/1771, Vorsteuer 1576/1571); amounts in euros.",
+      "us_gaap": "US GAAP: a typical small US business chart (1xxx assets, 2xxx liabilities, 4xxx revenue, 5xxx-7xxx expenses).",
+      "ca": "Canada (ASPE): a typical small Canadian business chart, with GST/HST and QST."
+    }
   }
 }

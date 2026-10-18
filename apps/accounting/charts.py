@@ -13,6 +13,7 @@ Référentiels :
   pcg       — Plan comptable général (France, Belgique, Maghreb)
   us_gaap   — plan type d'une petite entreprise américaine
   ca        — plan type d'une petite entreprise canadienne (ASPE)
+  skr03     — Standardkontenrahmen 03 (DATEV), le plan le plus courant des PME allemandes
 """
 from decimal import Decimal
 
@@ -110,6 +111,51 @@ CHARTS = {
         ('707', 'Produits accessoires', 'revenue', None),
         ('758', 'Produits divers', 'revenue', 'other_income'),
         ('771', 'Intérêts de prêts', 'revenue', None),
+    ],
+    'skr03': [
+        ('0800', 'Gezeichnetes Kapital', 'equity', 'capital'),
+        ('0860', 'Gewinnvortrag vor Verwendung', 'equity', 'retained_earnings'),
+        ('0630', 'Verbindlichkeiten gegenüber Kreditinstituten', 'liability', 'loans'),
+        ('0320', 'Pkw', 'asset', None),
+        ('0420', 'Technische Anlagen und Maschinen', 'asset', None),
+        ('0490', 'Sonstige Betriebs- und Geschäftsausstattung', 'asset', None),
+        ('0650', 'Büroeinrichtung', 'asset', None),
+        ('1000', 'Kasse', 'asset', 'cash'),
+        ('1200', 'Bank', 'asset', 'bank'),
+        ('1210', 'Zahlungsdienstleister (PayPal, Mobile Money)', 'asset', 'mobile_money'),
+        ('1400', 'Forderungen aus Lieferungen und Leistungen', 'asset', 'customers'),
+        ('1571', 'Abziehbare Vorsteuer 7 %', 'asset', 'vat_deductible_reduced'),
+        ('1576', 'Abziehbare Vorsteuer 19 %', 'asset', 'vat_deductible'),
+        ('1600', 'Verbindlichkeiten aus Lieferungen und Leistungen', 'liability', 'suppliers'),
+        ('1740', 'Verbindlichkeiten aus Lohn und Gehalt', 'liability', 'staff_payable'),
+        ('1742', 'Verbindlichkeiten im Rahmen der sozialen Sicherheit', 'liability', 'social_payable'),
+        ('1771', 'Umsatzsteuer 7 %', 'liability', 'vat_collected_reduced'),
+        ('1776', 'Umsatzsteuer 19 %', 'liability', 'vat_collected'),
+        ('1780', 'Umsatzsteuer-Vorauszahlungen', 'liability', 'vat_payable'),
+        ('3980', 'Bestand Waren', 'asset', 'stock'),
+        ('2100', 'Zinsen und ähnliche Aufwendungen', 'expense', 'exp_interest'),
+        ('3300', 'Wareneingang 7 % Vorsteuer', 'expense', None),
+        ('3400', 'Wareneingang 19 % Vorsteuer', 'expense', 'exp_goods'),
+        ('4120', 'Gehälter', 'expense', 'exp_salaries'),
+        ('4130', 'Gesetzliche soziale Aufwendungen', 'expense', 'exp_social'),
+        ('4210', 'Miete', 'expense', 'exp_rent'),
+        ('4240', 'Gas, Strom, Wasser', 'expense', 'exp_utilities'),
+        ('4320', 'Gewerbesteuer', 'expense', 'exp_taxes'),
+        ('4360', 'Versicherungen', 'expense', 'exp_insurance'),
+        ('4530', 'Laufende Kfz-Betriebskosten', 'expense', 'exp_transport'),
+        ('4600', 'Werbekosten', 'expense', 'exp_advertising'),
+        ('4805', 'Reparaturen und Instandhaltung', 'expense', 'exp_repairs'),
+        ('4830', 'Abschreibungen auf Sachanlagen', 'expense', 'exp_depreciation'),
+        ('4900', 'Sonstige betriebliche Aufwendungen', 'expense', 'exp_other'),
+        ('4920', 'Telefon', 'expense', 'exp_telecom'),
+        ('4930', 'Bürobedarf', 'expense', 'exp_office'),
+        ('4950', 'Rechts- und Beratungskosten', 'expense', 'exp_fees'),
+        ('4970', 'Nebenkosten des Geldverkehrs', 'expense', 'exp_bank_fees'),
+        ('4980', 'Sonstiger Betriebsbedarf', 'expense', 'exp_supplies'),
+        ('8195', 'Erlöse als Kleinunternehmer (§ 19 UStG)', 'revenue', 'sales_exempt'),
+        ('8300', 'Erlöse 7 % USt', 'revenue', 'sales_reduced'),
+        ('8400', 'Erlöse 19 % USt', 'revenue', 'sales'),
+        ('2700', 'Sonstige Erträge', 'revenue', 'other_income'),
     ],
     'pcg': [
         ('101', 'Capital', 'equity', 'capital'),
@@ -246,6 +292,7 @@ ACCOUNTING_STANDARD_LABELS = {
     'pcg': 'Plan comptable général (France / Europe)',
     'us_gaap': 'US GAAP (États-Unis)',
     'ca': 'Canada (ASPE)',
+    'skr03': 'SKR03 (Deutschland, DATEV)',
 }
 
 JOURNALS = [
@@ -260,6 +307,9 @@ JOURNALS = [
 FALLBACK = {
     'sales_goods': 'sales', 'sales_services': 'sales', 'sales': 'sales_goods',
     'mobile_money': 'cash',
+    # Taux réduit (Allemagne 7 %) : à défaut de compte dédié, le compte du taux normal
+    'vat_collected_reduced': 'vat_collected', 'vat_deductible_reduced': 'vat_deductible',
+    'sales_reduced': 'sales', 'sales_exempt': 'sales',
     'exp_transport': 'exp_other', 'exp_telecom': 'exp_utilities', 'exp_insurance': 'exp_other',
     'exp_advertising': 'exp_other', 'exp_fees': 'exp_other', 'exp_taxes': 'exp_other',
     'exp_social': 'exp_salaries', 'exp_interest': 'exp_bank_fees', 'exp_depreciation': 'exp_other',
@@ -294,6 +344,36 @@ PAYMENT_ROLE = {
     'mobile_money': 'mobile_money', 'orange_money': 'mobile_money', 'mtn_momo': 'mobile_money', 'wave': 'mobile_money',
     'bank_transfer': 'bank', 'check': 'bank', 'credit_card': 'bank', 'paypal': 'bank',
 }
+
+
+# Libellés des écritures automatiques et des journaux, dans la langue du référentiel.
+# Les codes de journaux (VTE, ACH…) ne changent jamais : ils servent de clés.
+ENTRY_LABELS = {
+    'sale': {'fr': 'Vente', 'de': 'Ausgangsrechnung'},
+    'payment': {'fr': 'Encaissement', 'de': 'Zahlungseingang'},
+    'reversal': {'fr': 'Extourne', 'de': 'Storno'},
+    'credit_note': {'fr': 'Avoir', 'de': 'Gutschrift'},
+    'po_receipt': {'fr': 'Réception BC', 'de': 'Wareneingang'},
+    'expense': {'fr': 'Dépense', 'de': 'Ausgabe'},
+}
+JOURNAL_NAMES_DE = {
+    'VTE': 'Ausgangsrechnungen', 'ACH': 'Eingangsrechnungen', 'CAI': 'Kasse', 'BNQ': 'Bank',
+    'OD': 'Sonstige Buchungen',
+}
+GERMAN_STANDARDS = ('skr03',)
+
+
+def entry_label(organization, key):
+    """Libellé d'une écriture automatique : allemand pour un plan allemand, sinon français."""
+    lang = 'de' if org_standard(organization) in GERMAN_STANDARDS else 'fr'
+    return ENTRY_LABELS[key][lang]
+
+
+def journal_name(organization, code, default):
+    """Nom d'un journal à sa création (les journaux existants ne sont jamais renommés)."""
+    if org_standard(organization) in GERMAN_STANDARDS:
+        return JOURNAL_NAMES_DE.get(code, default)
+    return default
 
 
 def org_standard(organization):
@@ -338,7 +418,8 @@ def install_chart(organization, standard):
         created += int(new)
     for code, name, jtype in JOURNALS:
         AccountingJournal.objects.get_or_create(
-            organization=organization, code=code, defaults={'name': name, 'journal_type': jtype, 'is_active': True})
+            organization=organization, code=code,
+            defaults={'name': journal_name(organization, code, name), 'journal_type': jtype, 'is_active': True})
     return created
 
 

@@ -99,7 +99,8 @@
         "syscohada": "SYSCOHADA (OHADA)",
         "pcg": "French chart of accounts",
         "us_gaap": "US GAAP",
-        "ca": "Canadian"
+        "ca": "Canadian",
+        "skr03": "SKR03 (DATEV, Germany)"
       },
       "address": "City / address (optional)",
       "addressPlaceholder": "e.g. Akwa, Douala",

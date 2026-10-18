@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import AccountingNav from './AccountingNav';
 import accountingAPI from '../../services/accountingAPI';
 import useCurrency from '../../hooks/useCurrency';
+import useOrgTaxSettings, { vatFromGross } from '../../hooks/useOrgTaxSettings';
 import { PAYMENT_METHODS, paymentMethodLabel } from '../../constants/paymentMethods';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -30,9 +31,14 @@ export default function Expenses() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { format } = useCurrency();
-  const { t } = useTranslation(['accounting', 'common']);
+  const { t, i18n } = useTranslation(['accounting', 'common']);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const taxSettings = useOrgTaxSettings();
+  // Petite entreprise exonérée : TVA payée non déductible, 0 % par défaut
+  const defaultVatRate = taxSettings.vatExempt ? 0 : taxSettings.defaultRate;
+  const vatRateOptions = [...new Set([...(taxSettings.vatRates || []), 0])].sort((a, b) => b - a);
+  const fmtRate = (r) => `${Number(r).toLocaleString(undefined, { maximumFractionDigits: 3 })} %`;
 
   const [items, setItems] = useState([]);
   const [summary, setSummary] = useState({ total: '0', by_category: [] });
@@ -64,6 +70,10 @@ export default function Expenses() {
   }, []);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  // TVA contenue dans le montant payé (TTC) : montant × taux / (100 + taux) ; reste modifiable à la main
+  const withVat = (f) => (f.vat_rate === 'manual' ? f : { ...f, tax_amount: f.amount ? String(vatFromGross(f.amount, f.vat_rate)) : '' });
+  const setAmount = (v) => setForm((f) => withVat({ ...f, amount: v }));
+  const setVatRate = (v) => setForm((f) => withVat({ ...f, vat_rate: v }));
 
   const save = async () => {
     if (!form.description.trim() || !(parseFloat(form.amount) > 0)) {
@@ -102,12 +112,21 @@ export default function Expenses() {
     }
   };
 
+  // Taux d'une dépense enregistrée, retrouvé à partir de ses montants ('manual' si aucun taux ne correspond)
+  const rateOf = (amount, tax) => {
+    const a = parseFloat(amount) || 0;
+    const tx = parseFloat(tax) || 0;
+    if (!(tx > 0)) return 0;
+    const match = vatRateOptions.find((r) => r > 0 && Math.abs(vatFromGross(a, r) - tx) < 0.015);
+    return match ?? 'manual';
+  };
   const edit = (exp) => setForm({
     ...EMPTY, ...exp, amount: exp.amount, tax_amount: exp.tax_amount === '0.00' ? '' : exp.tax_amount, receipt: null,
+    vat_rate: rateOf(exp.amount, exp.tax_amount),
   });
 
   const openImport = () => navigate('/ai-chat/document-import?type=expense');
-  const openNew = () => setForm({ ...EMPTY });
+  const openNew = () => setForm({ ...EMPTY, vat_rate: defaultVatRate });
   const actions = (
     <Stack direction="row" spacing={1}>
       <Button variant="outlined" startIcon={<CameraAlt />} onClick={openImport}>{t('accounting:expenses.importReceiptAi')}</Button>
@@ -163,7 +182,7 @@ export default function Expenses() {
                   <Box minWidth={0}>
                     <Typography fontWeight={700} noWrap>{e.description}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {new Date(e.date).toLocaleDateString('fr-FR')} · {e.category_display}
+                      {new Date(e.date).toLocaleDateString(i18n.language)} · {e.category_display}
                     </Typography>
                   </Box>
                   <Box textAlign="right">
@@ -194,7 +213,7 @@ export default function Expenses() {
             <TableBody>
               {items.map((e) => (
                 <TableRow key={e.id} hover>
-                  <TableCell>{new Date(e.date).toLocaleDateString('fr-FR')}</TableCell>
+                  <TableCell>{new Date(e.date).toLocaleDateString(i18n.language)}</TableCell>
                   <TableCell>
                     {e.description}
                     {e.source !== 'manual' && <Chip size="small" label={t(`accounting:expenses.source.${e.source}`, { defaultValue: e.source })} sx={{ ml: 1 }} />}
@@ -236,7 +255,7 @@ export default function Expenses() {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField fullWidth label={t('accounting:expenses.amountPaid')} type="number" value={form.amount}
-                    onChange={(e) => set('amount', e.target.value)} inputProps={{ min: 0 }} />
+                    onChange={(e) => setAmount(e.target.value)} inputProps={{ min: 0 }} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField fullWidth label={t('accounting:common.date')} type="date" value={form.date} InputLabelProps={{ shrink: true }}
@@ -269,8 +288,19 @@ export default function Expenses() {
                     onChange={(e) => set('supplier_name', e.target.value)} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel id="exp-taux-tva">{t('accounting:expenses.vatRate')}</InputLabel>
+                    <Select labelId="exp-taux-tva" label={t('accounting:expenses.vatRate')} value={form.vat_rate ?? 'manual'}
+                      onChange={(e) => setVatRate(e.target.value)}>
+                      {vatRateOptions.map((r) => <MenuItem key={r} value={r}>{fmtRate(r)}</MenuItem>)}
+                      <MenuItem value="manual">{t('accounting:expenses.vatRateManual')}</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6}>
                   <TextField fullWidth label={t('accounting:expenses.recoverableVat')} type="number" value={form.tax_amount}
-                    onChange={(e) => set('tax_amount', e.target.value)} inputProps={{ min: 0 }} />
+                    onChange={(e) => setForm((f) => ({ ...f, tax_amount: e.target.value, vat_rate: 'manual' }))} inputProps={{ min: 0 }}
+                    helperText={taxSettings.vatExempt ? t('accounting:expenses.vatNotDeductibleSmallBusiness') : t('accounting:expenses.vatIncludedHint')} />
                 </Grid>
                 <Grid item xs={12}>
                   <Button component="label" variant="outlined" startIcon={<CameraAlt />}>

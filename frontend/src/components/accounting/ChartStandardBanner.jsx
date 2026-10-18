@@ -7,8 +7,11 @@ import { useSnackbar } from 'notistack';
 import { useTranslation, Trans } from 'react-i18next';
 import accountingAPI from '../../services/accountingAPI';
 
+// Référentiels décrits dans la boîte de dialogue (accounting:chartStandard.about.<référentiel>)
+const STANDARDS_ABOUT = ['syscohada', 'pcg', 'skr03', 'us_gaap', 'ca'];
+
 /**
- * Propose de passer au plan comptable du pays de l'organisation (SYSCOHADA, PCG…).
+ * Propose de passer au plan comptable du pays de l'organisation (SYSCOHADA, PCG, SKR03…).
  * Affichée seulement si le pays est connu et que le plan actuel est différent.
  * Le passage recode les comptes : les écritures existantes restent attachées aux mêmes comptes.
  */
@@ -58,6 +61,11 @@ export default function ChartStandardBanner({ onChanged }) {
       <Dialog open={open} onClose={() => !saving && setOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>{t('accounting:banner.switchTo', { standard: info.country_standard_label })}</DialogTitle>
         <DialogContent>
+          {STANDARDS_ABOUT.includes(info.country_standard) && (
+            <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+              {t(`accounting:chartStandard.about.${info.country_standard}`)}
+            </Alert>
+          )}
           <Typography variant="body2" color="text.secondary" mb={2}>
             {t('accounting:banner.dialogText')}
           </Typography>

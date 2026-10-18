@@ -1,17 +1,24 @@
 import { format, parseISO } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { fr, enUS, de } from 'date-fns/locale';
 import i18n from '../i18n/config';
 
 // Helper pour obtenir la locale date-fns basée sur la langue actuelle
 const getDateLocale = () => {
   const currentLang = i18n.language || 'fr';
-  return currentLang.startsWith('en') ? enUS : fr;
+  if (currentLang.startsWith('en')) return enUS;
+  if (currentLang.startsWith('de')) return de;
+  return fr;
 };
+
+// Allemand : « 18. Oktober 2026 »
+const datePattern = () => ((i18n.language || '').startsWith('de') ? 'dd. MMMM yyyy' : 'dd MMMM yyyy');
 
 // Helper pour obtenir le code locale NumberFormat basé sur la langue actuelle
 const getNumberLocale = () => {
   const currentLang = i18n.language || 'fr';
-  return currentLang.startsWith('en') ? 'en-CA' : 'fr-CA';
+  if (currentLang.startsWith('en')) return 'en-CA';
+  if (currentLang.startsWith('de')) return 'de-DE';
+  return 'fr-CA';
 };
 
 export const formatCurrency = (amount, currency = 'CAD') => {
@@ -44,13 +51,13 @@ export const formatCurrency = (amount, currency = 'CAD') => {
 export const formatDate = (date) => {
   if (!date) return '';
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, 'dd MMMM yyyy', { locale: getDateLocale() });
+  return format(dateObj, datePattern(), { locale: getDateLocale() });
 };
 
 export const formatDateTime = (date) => {
   if (!date) return '';
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, 'dd MMMM yyyy HH:mm', { locale: getDateLocale() });
+  return format(dateObj, `${datePattern()} HH:mm`, { locale: getDateLocale() });
 };
 
 export const formatPhoneNumber = (phone) => {
@@ -82,23 +89,28 @@ export const getStatusColor = (status) => {
   return statusColors[status] || 'default';
 };
 
+const STATUS_LABELS = {
+  fr: {
+    active: 'Actif', pending: 'En attente', inactive: 'Inactif', blocked: 'Bloqué', quote: 'Devis',
+    draft: 'Brouillon', sent: 'Envoyée', paid: 'Payée', overdue: 'En retard', cancelled: 'Annulée',
+    approved: 'Approuvé', received: 'Reçu',
+  },
+  en: {
+    active: 'Active', pending: 'Pending', inactive: 'Inactive', blocked: 'Blocked', quote: 'Quote',
+    draft: 'Draft', sent: 'Sent', paid: 'Paid', overdue: 'Overdue', cancelled: 'Cancelled',
+    approved: 'Approved', received: 'Received',
+  },
+  de: {
+    active: 'Aktiv', pending: 'Ausstehend', inactive: 'Inaktiv', blocked: 'Gesperrt', quote: 'Angebot',
+    draft: 'Entwurf', sent: 'Versendet', paid: 'Bezahlt', overdue: 'Überfällig', cancelled: 'Storniert',
+    approved: 'Genehmigt', received: 'Erhalten',
+  },
+};
+
 export const getStatusLabel = (status) => {
-  const statusLabels = {
-    active: 'Actif',
-    pending: 'En attente',
-    inactive: 'Inactif',
-    blocked: 'Bloqué',
-    quote: 'Devis',
-    draft: 'Brouillon',
-    sent: 'Envoyée',
-    pending: 'En attente',
-    paid: 'Payée',
-    overdue: 'En retard',
-    cancelled: 'Annulée',
-    approved: 'Approuvé',
-    received: 'Reçu',
-  };
-  return statusLabels[status] || status;
+  const lang = (i18n.language || 'fr').slice(0, 2);
+  const labels = STATUS_LABELS[lang] || STATUS_LABELS.fr;
+  return labels[status] || STATUS_LABELS.fr[status] || status;
 };
 
 export const getPerformanceBadgeColor = (badgeClass) => {

@@ -1,7 +1,8 @@
 /**
  * Contenu du tutoriel comptabilité intégré (AccountingTooltip, AccountingHelpDrawer).
  * Les numéros de comptes et la devise des exemples suivent le plan de l'organisation
- * (SYSCOHADA par défaut — marché OHADA ; PCG pour la France / l'Europe ; US et Canada).
+ * (SYSCOHADA par défaut — marché OHADA ; PCG pour la France / l'Europe ; SKR03 pour
+ * l'Allemagne ; US et Canada).
  * Les textes sont traduits au rendu (namespace accounting, clés accounting:help.*).
  */
 
@@ -31,6 +32,14 @@ const PLANS = {
     clients: '1200', fournisseurs: '2000', banque: '1060', caisse: '1000', mobile: '1070',
     ventes: '4000', services: '4100', achats: '5000', bureau: '5400', salaires: '5300', loyer: '5100',
     telecom: '5810', tvaC: '2310', tvaD: '2315', capital: '3000', materiel: '1500',
+  },
+  // SKR03 (DATEV) : Umsatzsteuer/Vorsteuer au taux normal (19 %) et réduit (7 %)
+  skr03: {
+    cur: '€', vat: 19, about: true, payWith: 'banque',
+    clients: '1400', fournisseurs: '1600', banque: '1200', caisse: '1000', mobile: '1210',
+    ventes: '8400', services: '8400', achats: '3400', bureau: '4930', salaires: '4120', loyer: '4210',
+    telecom: '4920', tvaC: '1776', tvaD: '1576', capital: '0800', materiel: '0650',
+    ventesReduced: '8300', tvaCReduced: '1771', tvaDReduced: '1571',
   },
   procura: {
     cur: 'FCFA', vat: 19.25,
@@ -75,7 +84,9 @@ export function getAccountingHelp(standard = 'syscohada', t, lng = 'fr') {
   if (tva) venteLines.push({ account: acc(p.tvaC, 'tvaC'), debit: '', credit: n(tva) });
   const achatLines = [{ account: acc(p.bureau, 'bureau'), debit: n(p.tvaD ? bureauHt : bureauHt + bureauTva), credit: '' }];
   if (p.tvaD && bureauTva) achatLines.push({ account: acc(p.tvaD, 'tvaD'), debit: n(bureauTva), credit: '' });
-  achatLines.push({ account: acc(p.mobile, 'mobile'), debit: '', credit: n(bureauHt + bureauTva) });
+  // payé par Mobile Money (Afrique) ou par la banque (Allemagne)
+  const pay = p.payWith || 'mobile';
+  achatLines.push({ account: acc(p[pay], pay), debit: '', credit: n(bureauHt + bureauTva) });
 
   const tvaText = p.vat
     ? [
@@ -112,13 +123,18 @@ export function getAccountingHelp(standard = 'syscohada', t, lng = 'fr') {
     `${p.clients} ${tr('frequent.clients')}`,
     `${p.banque} ${tr('frequent.banque')}`,
     `${p.caisse} ${tr('frequent.caisse')}`,
-    `${p.mobile} ${tr('frequent.mobile')}`,
+    // Mobile Money : pertinent en Afrique, pas pour un plan payé par la banque (SKR03)
+    ...(p.payWith === 'banque' ? [] : [`${p.mobile} ${tr('frequent.mobile')}`]),
     `${p.achats} ${tr('frequent.achats')}`,
     `${p.ventes} ${tr('frequent.ventes')}`,
     `${p.salaires} ${tr('frequent.salaires')}`,
   ];
   if (p.tvaC) comptesFrequents.push(`${p.tvaC} ${tr('accounts.tvaC')}`);
   if (p.tvaD) comptesFrequents.push(`${p.tvaD} ${tr('accounts.tvaD')}`);
+  if (p.tvaCReduced) comptesFrequents.push(`${p.tvaCReduced} ${tr('accounts.tvaCReduced')}`);
+  if (p.tvaDReduced) comptesFrequents.push(`${p.tvaDReduced} ${tr('accounts.tvaDReduced')}`);
+  if (p.ventesReduced) comptesFrequents.push(`${p.ventesReduced} ${tr('accounts.ventesReduced')}`);
+  if (p.bureau && p.about) comptesFrequents.push(`${p.bureau} ${tr('accounts.bureau')}`);
 
   const content = {
     journal_entry: {
@@ -142,7 +158,20 @@ export function getAccountingHelp(standard = 'syscohada', t, lng = 'fr') {
             : tr('content.journal_entry.exampleSaleNoVat', { ht: m(ht) }),
           lines: venteLines,
         },
-        { label: tr('content.journal_entry.examplePurchase', { amount: m(bureauHt + bureauTva) }), lines: achatLines },
+        // Allemagne : vente au taux réduit (7 %), comptes dédiés
+        ...(p.ventesReduced ? [{
+          label: tr('content.journal_entry.exampleSaleReduced', { ht: m(ht), vat: m(ht * 0.07), rate: (7).toLocaleString(locale) }),
+          lines: [
+            { account: acc(p.clients, 'clients'), debit: n(ht * 1.07), credit: '' },
+            { account: acc(p.ventesReduced, 'ventesReduced'), debit: '', credit: n(ht) },
+            { account: acc(p.tvaCReduced, 'tvaCReduced'), debit: '', credit: n(ht * 0.07) },
+          ],
+        }] : []),
+        {
+          label: tr(pay === 'banque' ? 'content.journal_entry.examplePurchaseBank' : 'content.journal_entry.examplePurchase',
+            { amount: m(bureauHt + bureauTva) }),
+          lines: achatLines,
+        },
         {
           label: tr('content.journal_entry.examplePayment'),
           lines: [
@@ -162,6 +191,7 @@ export function getAccountingHelp(standard = 'syscohada', t, lng = 'fr') {
       title: tr('content.chart_of_accounts.title'),
       intro: tr('content.chart_of_accounts.intro', { plan: nom }),
       concepts: [
+        ...(p.about ? [{ title: tr(`plans.${std}.aboutTitle`), text: tr(`plans.${std}.about`) }] : []),
         { title: tr('content.chart_of_accounts.structureTitle'), text: classes },
         {
           title: tr('content.chart_of_accounts.frequentTitle'),

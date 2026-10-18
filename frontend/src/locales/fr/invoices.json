@@ -382,5 +382,30 @@
     "share": "Partager",
     "download": "Télécharger",
     "loadError": "Impossible d'afficher le PDF."
+  },
+  "vat": {
+    "rate": "Taux de TVA",
+    "lineRate": "Taux de TVA de la ligne",
+    "rateColumn": "TVA",
+    "rateShort": "TVA {{rate}} %",
+    "customRate": "Autre taux…",
+    "customRateValue": "Taux (%)",
+    "applyToAll": "Taux de TVA (toutes les lignes)",
+    "applyToAllHint": "Le taux choisi s'applique à toutes les lignes ; vous pouvez le modifier ligne par ligne.",
+    "mixedRatesHint": "Les lignes ont des taux différents : choisir un taux ici l'applique à toutes les lignes.",
+    "mixedRates": "TVA (plusieurs taux)",
+    "breakdownLine": "TVA {{rate}} % sur {{base}}",
+    "netAtRate": "Base HT {{rate}} %",
+    "vatAtRate": "TVA {{rate}} %",
+    "vatId": "N° TVA",
+    "taxNumber": "N° fiscal",
+    "exemptShort": "TVA non applicable",
+    "exemptInfo": "Votre entreprise relève du régime des petites entreprises (franchise en base de TVA) : aucune TVA n'est facturée et la mention légale est ajoutée à la facture.",
+    "legal": {
+      "de": "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.",
+      "at": "Umsatzsteuerbefreit – Kleinunternehmer gem. § 6 Abs. 1 Z 27 UStG",
+      "fr": "TVA non applicable, art. 293 B du CGI",
+      "generic": "TVA non applicable (régime des petites entreprises)"
+    }
   }
 }

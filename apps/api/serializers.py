@@ -479,6 +479,8 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
     # Champs simples pour rétrocompatibilité
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    # Total des taxes (TVA, ou TPS/TVH + TVQ au Canada) pour l'affichage
+    tax_amount = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
 
     # Hide supplier fields if suppliers module is disabled
     module_dependent_fields = {
@@ -490,7 +492,7 @@ class PurchaseOrderSerializer(ModuleAwareSerializerMixin, serializers.ModelSeria
         fields = [
             'id', 'po_number', 'title', 'description', 
             'supplier', 'supplier_name', 'supplier_detail',
-            'status', 'priority', 'subtotal', 'tax_gst_hst', 'tax_qst',
+            'status', 'priority', 'subtotal', 'tax_gst_hst', 'tax_qst', 'tax_amount',
             'total_amount', 'required_date', 'expected_delivery_date',
             'delivery_address', 'notes', 'ai_insights',
             'created_by', 'created_by_name', 'created_by_detail',
@@ -568,9 +570,14 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
         model = InvoiceItem
         fields = [
             'id', 'product', 'product_reference', 'product_name', 'batch', 'batch_number', 'description', 'quantity',
-            'unit_price', 'discount_percent', 'total_price'
+            'unit_price', 'discount_percent', 'tax_rate', 'total_price'
         ]
         read_only_fields = ['id', 'total_price', 'product_name', 'batch_number']
+
+    def validate_tax_rate(self, value):
+        if value is not None and (value < 0 or value > 100):
+            raise serializers.ValidationError("Le taux de TVA doit être compris entre 0 et 100.")
+        return value
     
     def validate(self, attrs):
         """Valider la disponibilité du stock pour les produits physiques"""
@@ -738,6 +745,12 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
         validated_data.setdefault('subtotal', 0)
         validated_data.setdefault('total_amount', 0)
 
+        # Petite entreprise exonérée (Kleinunternehmer § 19 UStG, franchise en base) : jamais de TVA
+        if self._org_vat_exempt():
+            validated_data['tax_amount'] = Decimal('0')
+            for item_data in items_data:
+                item_data['tax_rate'] = Decimal('0')
+
         # Créer la facture
         invoice = Invoice.objects.create(**validated_data)
 
@@ -753,6 +766,14 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
     def update(self, instance, validated_data):
         items_data = validated_data.pop('items', None)
 
+        # Petite entreprise exonérée : jamais de TVA (montant et taux des lignes forcés à 0).
+        # Uniquement quand les montants sont modifiés : un simple changement de statut ne touche
+        # pas une facture émise avant le passage au régime des petites entreprises.
+        if (items_data is not None or 'tax_amount' in validated_data) and self._org_vat_exempt():
+            validated_data['tax_amount'] = Decimal('0')
+            for item_data in items_data or []:
+                item_data['tax_rate'] = Decimal('0')
+
         # Mettre à jour la facture
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -767,10 +788,26 @@ class InvoiceSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
             for item_data in items_data:
                 InvoiceItem.objects.create(invoice=instance, **item_data)
 
-            # Recalculer les totaux
+            # Recalculer les totaux (la TVA est recalculée à partir des taux des lignes)
             instance.recalculate_totals()
+        elif 'tax_amount' in validated_data:
+            # TVA modifiée sans les lignes : total = sous-total − remise + TVA (sous-total inchangé)
+            instance.total_amount = instance.subtotal - instance.discount_amount + instance.tax_amount
+            instance.save(update_fields=['total_amount'])
 
         return instance
+
+    def _org_vat_exempt(self):
+        """Vrai si l'organisation de l'utilisateur relève du régime des petites entreprises (pas de TVA)."""
+        from apps.invoicing.vat import is_small_business_exempt
+        from apps.core.models import OrganizationSettings
+        request = self.context.get('request')
+        org = getattr(getattr(request, 'user', None), 'organization', None)
+        if org is None and self.instance is not None:
+            org = self.instance.organization
+        if org is None:
+            return False
+        return is_small_business_exempt(OrganizationSettings.objects.filter(organization=org).first())
 
 
 # Serializers pour ProductCategory et Warehouse

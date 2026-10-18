@@ -664,13 +664,37 @@ class Invoice(models.Model):
         """Recalcule les totaux basés sur les items et la remise globale.
 
         Le sous-total reflète les lignes (remises par ligne incluses). La remise
-        globale réduit ensuite la base, puis les taxes (fournies par l'appelant,
-        calculées sur la base après remise) sont ajoutées.
+        globale réduit ensuite la base, puis les taxes sont ajoutées.
+
+        TVA : si au moins une ligne porte un taux (TVA par ligne, ex. 19 % et 7 %
+        en Allemagne), la TVA est recalculée à partir des lignes (cf. apps/invoicing/vat.py).
+        Sinon (factures historiques, taux global) le montant fourni par l'appelant est conservé.
         """
-        items = self.items.all()
-        self.subtotal = sum(item.total_price for item in items)
-        self.total_amount = self.subtotal - self.discount_amount + self.tax_amount
-        self.save(update_fields=['subtotal', 'total_amount'])
+        from decimal import Decimal
+        from .vat import has_line_rates, compute_tax_amount
+        items = list(self.items.all())
+        self.subtotal = sum((item.total_price for item in items), Decimal('0'))
+        fields = ['subtotal', 'total_amount']
+        if has_line_rates(items):
+            self.tax_amount = compute_tax_amount(items, self.subtotal, self.discount_amount)
+            fields.append('tax_amount')
+        self.total_amount = self.subtotal - self.discount_amount + (self.tax_amount or Decimal('0'))
+        self.save(update_fields=fields)
+
+    def adopt_legacy_rate_on_lines(self, exclude_pk=None):
+        """Facture historique (TVA globale, lignes sans taux) qui reçoit une ligne avec un taux :
+        on reporte d'abord le taux effectif sur les lignes existantes, sinon le recalcul à partir
+        des lignes ferait disparaître la TVA déjà facturée."""
+        from .vat import has_line_rates, derive_legacy_rate
+        others = self.items.all()
+        if exclude_pk is not None:
+            others = others.exclude(pk=exclude_pk)
+        others = list(others)
+        if not others or has_line_rates(others):
+            return
+        rate = derive_legacy_rate(self.tax_amount, self.subtotal, self.discount_amount)
+        if rate is not None:
+            self.items.filter(pk__in=[i.pk for i in others]).update(tax_rate=rate)
 
     def generate_qr_code(self):
         """Génère un QR code pour la facture"""
@@ -1303,6 +1327,10 @@ class InvoiceItem(models.Model):
                 is_finalized = self.invoice.status in ['sent', 'paid', 'overdue']
             except Exception:
                 pass
+
+        # Ligne avec un taux de TVA ajoutée à une facture historique (TVA globale) : conserver la TVA existante
+        if self.invoice_id and self.tax_rate and self.tax_rate > 0:
+            self.invoice.adopt_legacy_rate_on_lines(exclude_pk=self.pk)
 
         super().save(*args, **kwargs)
         # Recalculer les totaux de la facture seulement si elle existe déjà

@@ -7,7 +7,7 @@ Les taux sont les taux standard en vigueur ; l'organisation peut toujours les mo
 """
 
 # code ISO -> (nom, devise, TVA %, fuseau, région fiscale, plan comptable)
-# plan comptable : 'syscohada' (OHADA), 'pcg' (France / Europe francophone), 'us_gaap', 'ca'
+# plan comptable : 'syscohada' (OHADA), 'pcg' (France / Europe francophone), 'skr03' (Allemagne), 'us_gaap', 'ca'
 COUNTRIES = {
     # CEMAC (franc CFA BEAC, XAF)
     'CM': ('Cameroun', 'XAF', 19.25, 'Africa/Douala', 'cameroon', 'syscohada'),
@@ -35,6 +35,8 @@ COUNTRIES = {
     'DZ': ('Algérie', 'DZD', 19.0, 'Africa/Algiers', 'international', 'pcg'),
     # Europe
     'FR': ('France', 'EUR', 20.0, 'Europe/Paris', 'eu', 'pcg'),
+    'DE': ('Allemagne', 'EUR', 19.0, 'Europe/Berlin', 'eu', 'skr03'),
+    'AT': ('Autriche', 'EUR', 20.0, 'Europe/Vienna', 'eu', 'skr03'),
     'BE': ('Belgique', 'EUR', 21.0, 'Europe/Brussels', 'eu', 'pcg'),
     'LU': ('Luxembourg', 'EUR', 17.0, 'Europe/Luxembourg', 'eu', 'pcg'),
     'CH': ('Suisse', 'CHF', 8.1, 'Europe/Zurich', 'eu', 'pcg'),
@@ -50,7 +52,31 @@ ACCOUNTING_STANDARDS = {
     'pcg': 'Plan comptable général (France / Europe)',
     'us_gaap': 'US GAAP (États-Unis)',
     'ca': 'Canada (ASPE)',
+    'skr03': 'SKR03 (Deutschland, DATEV)',
 }
+
+# Taux de TVA en vigueur par pays (le premier est le taux normal). Proposés sur chaque ligne de facture.
+VAT_RATES = {
+    'DE': [19.0, 7.0, 0.0],
+    'AT': [20.0, 13.0, 10.0, 0.0],
+    'FR': [20.0, 10.0, 5.5, 2.1, 0.0],
+    'BE': [21.0, 12.0, 6.0, 0.0],
+    'LU': [17.0, 14.0, 8.0, 3.0, 0.0],
+    'CH': [8.1, 3.8, 2.6, 0.0],
+    'MA': [20.0, 14.0, 10.0, 7.0, 0.0],
+    'TN': [19.0, 13.0, 7.0, 0.0],
+    'DZ': [19.0, 9.0, 0.0],
+    'CA': [5.0, 13.0, 15.0, 0.0],
+}
+
+
+def vat_rates(code):
+    """Taux de TVA proposés pour un pays : taux connus, sinon [taux normal, 0]."""
+    code = (code or '').upper()
+    if code in VAT_RATES:
+        return list(VAT_RATES[code])
+    row = COUNTRIES.get(code)
+    return sorted({row[2], 0.0}, reverse=True) if row else [0.0]
 
 
 def country_profile(code):
@@ -62,6 +88,7 @@ def country_profile(code):
     return {
         'code': code.upper(), 'name': name, 'currency': currency, 'vat_rate': vat,
         'timezone': tz, 'tax_region': region, 'accounting_standard': chart,
+        'vat_rates': vat_rates(code),
     }
 
 

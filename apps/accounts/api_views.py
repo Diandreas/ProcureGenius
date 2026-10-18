@@ -496,6 +496,9 @@ def api_organization_settings(request):
             'country': org_settings.country,
             'timezone': org_settings.timezone,
             'accounting_standard': org_settings.accounting_standard,
+            'vat_exempt_small_business': org_settings.vat_exempt_small_business,
+            'vat_filing_period': org_settings.vat_filing_period,
+            'vat_rates': __import__('apps.core.countries', fromlist=['vat_rates']).vat_rates(org_settings.country),
             'enabled_modules': user.organization.enabled_modules or [],
             'subscription_type': user.organization.subscription_type,
         })
@@ -515,6 +518,13 @@ def api_organization_settings(request):
             for field in text_fields:
                 if field in request.data:
                     setattr(org_settings, field, request.data[field])
+
+            # TVA : régime des petites entreprises (pas de TVA facturée) et fréquence de déclaration
+            if 'vat_exempt_small_business' in request.data:
+                valeur = request.data['vat_exempt_small_business']
+                org_settings.vat_exempt_small_business = str(valeur).lower() in ('1', 'true', 'on', 'yes')
+            if request.data.get('vat_filing_period') in ('monthly', 'quarterly', 'yearly'):
+                org_settings.vat_filing_period = request.data['vat_filing_period']
 
             # Handle numeric fields
             if 'default_tax_rate' in request.data:

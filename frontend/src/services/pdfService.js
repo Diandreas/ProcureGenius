@@ -57,13 +57,15 @@ export const generateInvoicePDF = async (invoiceData, selectedTemplate = 'classi
   if (isOffline() || isDraft) {
     const { buildOfflineInvoicePdf } = await import('./offlineInvoicePdf.jsx');
     let currency = 'FCFA';
+    let orgSettings = null; // TVA (ventilation, mention d'exonération) et identifiants fiscaux
     try {
       if (!isOffline()) {
         const s = await api.get('/accounts/organization/settings/');
         currency = s.data.defaultCurrency || s.data.default_currency || 'FCFA';
+        orgSettings = s.data;
       }
     } catch { /* ignore, garde FCFA */ }
-    return await buildOfflineInvoicePdf(invoiceData, currency);
+    return await buildOfflineInvoicePdf(invoiceData, currency, orgSettings);
   }
   try {
     console.log('Generating invoice PDF for:', invoiceData);

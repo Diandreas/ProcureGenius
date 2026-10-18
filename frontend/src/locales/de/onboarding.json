@@ -99,7 +99,8 @@
         "syscohada": "SYSCOHADA (OHADA)",
         "pcg": "Französischer Kontenrahmen",
         "us_gaap": "US GAAP",
-        "ca": "Kanadisch"
+        "ca": "Kanadisch",
+        "skr03": "SKR03 (DATEV)"
       },
       "address": "Ort / Adresse (optional)",
       "addressPlaceholder": "z. B. Akwa, Douala",

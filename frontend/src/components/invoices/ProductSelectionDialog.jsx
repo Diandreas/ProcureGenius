@@ -28,6 +28,7 @@ import {
 import useCurrency from '../../hooks/useCurrency';
 import { useTranslation } from 'react-i18next';
 import PriceHistoryHint from '../common/PriceHistoryHint';
+import VatRateSelect from './VatRateSelect';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -55,6 +56,9 @@ function ProductSelectionDialog({
   onCreateService,
   editingItemIndex,
   supplierId,
+  showVat = false,
+  vatRates = [],
+  vatExempt = false,
 }) {
   const { t } = useTranslation(['invoices', 'products', 'common']);
   const { format: formatCurrency } = useCurrency();
@@ -485,6 +489,27 @@ function ProductSelectionDialog({
             </Grid>
           </TabPanel>
         </Grid>
+
+        {/* Taux de TVA de la ligne (ex. 19 % ou 7 % en Allemagne) */}
+        {showVat && (
+          <Box sx={{ mt: 2 }}>
+            {vatExempt ? (
+              <Alert severity="info" sx={{ borderRadius: 2 }}>{t('invoices:vat.exemptInfo')}</Alert>
+            ) : (
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <VatRateSelect
+                    value={newItem.tax_rate ?? 0}
+                    onChange={(rate) => setNewItem((prev) => ({ ...prev, tax_rate: rate }))}
+                    rates={vatRates}
+                    label={t('invoices:vat.lineRate')}
+                    size="medium"
+                  />
+                </Grid>
+              </Grid>
+            )}
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ borderRadius: 2, textTransform: 'none' }}>

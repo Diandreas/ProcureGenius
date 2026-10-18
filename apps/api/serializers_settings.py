@@ -29,6 +29,8 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             'country',
             'timezone',
             'accounting_standard',
+            'vat_exempt_small_business',
+            'vat_filing_period',
             # Identifiants fiscaux (Cameroun/OHADA)
             'company_niu',
             'company_rc_number',

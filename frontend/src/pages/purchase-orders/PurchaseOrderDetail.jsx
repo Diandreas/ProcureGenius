@@ -90,6 +90,7 @@ import { offlineData } from '../../services/offline/entities';
 import { settingsAPI } from '../../services/settingsAPI';
 import { getStatusColor, getStatusLabel, formatDate } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import useOrgTaxSettings from '../../hooks/useOrgTaxSettings';
 import { generatePurchaseOrderPDF, downloadPDF, openPDFInNewTab, TEMPLATE_TYPES } from '../../services/pdfService';
 import { useHeader } from '../../contexts/HeaderContext';
 import usePdfViewer from '../../hooks/usePdfViewer';
@@ -109,6 +110,7 @@ function PurchaseOrderDetail() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['purchaseOrders', 'common']);
   const { format: formatCurrency } = useCurrency();
+  const { isCanada } = useOrgTaxSettings();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -992,10 +994,23 @@ function PurchaseOrderDetail() {
                             <Typography variant="body2" color="text.secondary">{t('purchaseOrders:labels.subtotal')}</Typography>
                             <Typography variant="body2">{formatCurrency(purchaseOrder.subtotal || 0)}</Typography>
                           </Box>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Typography variant="body2" color="text.secondary">{t('purchaseOrders:labels.taxes')}</Typography>
-                            <Typography variant="body2">{formatCurrency(purchaseOrder.tax_amount || 0)}</Typography>
-                          </Box>
+                          {isCanada ? (
+                            <>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="body2" color="text.secondary">{t('purchaseOrders:tax.gstHst')}</Typography>
+                                <Typography variant="body2">{formatCurrency(purchaseOrder.tax_gst_hst || 0)}</Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="body2" color="text.secondary">{t('purchaseOrders:tax.qst')}</Typography>
+                                <Typography variant="body2">{formatCurrency(purchaseOrder.tax_qst || 0)}</Typography>
+                              </Box>
+                            </>
+                          ) : (
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="body2" color="text.secondary">{t('purchaseOrders:tax.vat')}</Typography>
+                              <Typography variant="body2">{formatCurrency(purchaseOrder.tax_amount || 0)}</Typography>
+                            </Box>
+                          )}
                           <Divider sx={{ mb: 1 }} />
                         </>
                       )}
@@ -1232,7 +1247,7 @@ function PurchaseOrderDetail() {
                       {formatCurrency(purchaseOrder.tax_amount || 0)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                      {t('purchaseOrders:labels.taxes')}
+                      {isCanada ? t('purchaseOrders:labels.taxes') : t('purchaseOrders:tax.vat')}
                     </Typography>
                   </Box>
                 </Grid>

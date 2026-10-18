@@ -190,6 +190,7 @@ function OnboardingSetup() {
     syscohada: 'onboarding:setup.company.accountingStandards.syscohada',
     pcg: 'onboarding:setup.company.accountingStandards.pcg',
     us_gaap: 'onboarding:setup.company.accountingStandards.us_gaap',
+    skr03: 'onboarding:setup.company.accountingStandards.skr03',
   };
   const accountingStandardLabel = (std) => t(ACCOUNTING_STANDARD_KEYS[std] || 'onboarding:setup.company.accountingStandards.ca');
   const handleCountry = (code) => {

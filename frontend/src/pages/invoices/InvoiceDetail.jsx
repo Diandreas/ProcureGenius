@@ -80,6 +80,9 @@ import { useHeader } from '../../contexts/HeaderContext';
 import usePdfViewer from '../../hooks/usePdfViewer';
 import PdfViewerDialog from '../../components/pdf/PdfViewerDialog';
 import { isNativePlatform } from '../../utils/platform';
+import useVatSettings from '../../hooks/useVatSettings';
+import VatRateSelect from '../../components/invoices/VatRateSelect';
+import { computeVat, exemptionMentionKey, formatRate, hasLineRates, toNumber, LEGAL_MENTION_DEFAULTS } from '../../utils/vat';
 
 const IS_NATIVE = isNativePlatform();
 import { NeumorphicPanel, neuShadows } from '../../components/neumorphic/NeumorphicList';
@@ -134,6 +137,59 @@ function InvoiceDetail() {
     unit_price: 0,
     product_reference: ''
   });
+
+  // TVA : ventilation par taux (obligatoire en Allemagne) et mention des petites entreprises exonérées
+  const vatSettings = useVatSettings();
+  const vatRateOptions = vatSettings.vatRates.length ? vatSettings.vatRates : [toNumber(vatSettings.defaultTaxRate), 0];
+  const invoiceTax = toNumber(invoice?.tax_amount);
+  const showExemptMention = vatSettings.vatExempt && !(invoiceTax > 0);
+  const vatBreakdown = invoice && !showExemptMention
+    ? computeVat(invoice.items || [], invoice.subtotal, invoice.discount_amount).breakdown
+    : [];
+  const invoiceHasLineRates = hasLineRates(invoice?.items || []);
+  // Taux proposé pour une ligne ajoutée : taux commun des lignes existantes, sinon taux par défaut
+  const defaultNewLineRate = () => {
+    if (vatSettings.vatExempt) return 0;
+    const items = invoice?.items || [];
+    if (invoiceHasLineRates) {
+      const first = toNumber(items[0]?.tax_rate);
+      if (items.every((it) => toNumber(it.tax_rate) === first)) return first;
+    }
+    return toNumber(vatSettings.defaultTaxRate);
+  };
+
+  const renderTaxRows = (labelSx, valueSx, mb) => {
+    if (vatBreakdown.length > 0) {
+      return vatBreakdown.map((g) => (
+        <React.Fragment key={g.rate}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.25 }}>
+            <Typography sx={{ ...labelSx, color: 'text.secondary' }}>{t('invoices:vat.netAtRate', { rate: formatRate(g.rate, i18n.language) })}</Typography>
+            <Typography sx={{ ...valueSx, fontWeight: 500 }}>{formatCurrency(g.base)}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb }}>
+            <Typography sx={{ ...labelSx, color: 'text.secondary' }}>{t('invoices:vat.vatAtRate', { rate: formatRate(g.rate, i18n.language) })}</Typography>
+            <Typography sx={{ ...valueSx, fontWeight: 600 }}>{formatCurrency(g.vat)}</Typography>
+          </Box>
+        </React.Fragment>
+      ));
+    }
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb }}>
+        <Typography sx={{ ...labelSx, color: 'text.secondary' }}>{showExemptMention ? t('invoices:vat.exemptShort') : t('invoices:labels.taxes')}</Typography>
+        <Typography sx={{ ...valueSx, fontWeight: 600 }}>{formatCurrency(invoice.tax_amount || 0)}</Typography>
+      </Box>
+    );
+  };
+
+  const renderExemptMention = (fontSize) => {
+    if (!showExemptMention) return null;
+    const key = exemptionMentionKey(vatSettings.country);
+    return (
+      <Typography sx={{ mt: 1, fontSize, fontStyle: 'italic', color: 'text.secondary', textAlign: 'right' }}>
+        {t(key, { defaultValue: LEGAL_MENTION_DEFAULTS[key] })}
+      </Typography>
+    );
+  };
 
   const { setPageHeader } = useHeader();
 
@@ -339,7 +395,10 @@ function InvoiceDetail() {
 
   const handleAddItem = async () => {
     try {
-      const response = await invoicesAPI.addItem(id, newItem);
+      const response = await invoicesAPI.addItem(id, {
+        ...newItem,
+        tax_rate: vatSettings.vatExempt ? 0 : toNumber(newItem.tax_rate ?? defaultNewLineRate()),
+      });
       await fetchInvoice(); // Reload to get updated totals
       enqueueSnackbar(t('invoices:messages.itemAddedSuccess'), { variant: 'success' });
       setAddItemDialogOpen(false);
@@ -779,7 +838,10 @@ function InvoiceDetail() {
                     onClick={() => item.product && navigate(`/products/${item.product}`)}>
                     {item.description}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled' }}>{item.quantity} × {formatCurrency(item.unit_price)}</Typography>
+                  <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled' }}>
+                    {item.quantity} × {formatCurrency(item.unit_price)}
+                    {invoiceHasLineRates && ` · ${t('invoices:vat.rateShort', { rate: formatRate(item.tax_rate, i18n.language) })}`}
+                  </Typography>
                 </Box>
                 <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{formatCurrency(item.total_price)}</Typography>
               </Box>
@@ -798,15 +860,13 @@ function InvoiceDetail() {
                   <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'error.main' }}>−{formatCurrency(invoice.discount_amount || 0)}</Typography>
                 </Box>
               )}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
-                <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{t('invoices:labels.taxes')}</Typography>
-                <Typography sx={{ fontSize: '0.78rem', fontWeight: 600 }}>{formatCurrency(invoice.tax_amount || 0)}</Typography>
-              </Box>
+              {renderTaxRows({ fontSize: '0.75rem' }, { fontSize: '0.78rem' }, 0.75)}
               <Divider sx={{ mb: 0.75 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <Typography sx={{ fontWeight: 700, fontSize: '0.82rem' }}>{t('invoices:labels.total')}</Typography>
                 <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: 'primary.main' }}>{formatCurrency(invoice.total_amount || 0)}</Typography>
               </Box>
+              {renderExemptMention('0.7rem')}
             </Box>
           </NeumorphicPanel>
 
@@ -919,6 +979,9 @@ function InvoiceDetail() {
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.72rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('invoices:columns.description')}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.72rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('invoices:columns.quantity')}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.72rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('invoices:columns.unitPrice')}</TableCell>
+                      {invoiceHasLineRates && (
+                        <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.72rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('invoices:vat.rateColumn')}</TableCell>
+                      )}
                       <TableCell align="right" sx={{ fontWeight: 700, fontSize: '0.72rem', color: 'text.secondary', textTransform: 'uppercase' }}>{t('invoices:columns.total')}</TableCell>
                     </TableRow>
                   </TableHead>
@@ -937,6 +1000,9 @@ function InvoiceDetail() {
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: '0.82rem' }}>{item.quantity}</TableCell>
                         <TableCell align="right" sx={{ fontSize: '0.82rem' }}>{formatCurrency(item.unit_price)}</TableCell>
+                        {invoiceHasLineRates && (
+                          <TableCell align="right" sx={{ fontSize: '0.82rem' }}>{formatRate(item.tax_rate, i18n.language)} %</TableCell>
+                        )}
                         <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 700 }}>{formatCurrency(item.total_price)}</TableCell>
                       </TableRow>
                     ))}
@@ -958,15 +1024,13 @@ function InvoiceDetail() {
                       <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'error.main' }}>−{formatCurrency(invoice.discount_amount || 0)}</Typography>
                     </Box>
                   )}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography sx={{ fontSize: '0.82rem', color: 'text.secondary' }}>{t('invoices:labels.taxes')}</Typography>
-                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>{formatCurrency(invoice.tax_amount || 0)}</Typography>
-                  </Box>
+                  {renderTaxRows({ fontSize: '0.82rem' }, { fontSize: '0.85rem' }, 1)}
                   <Divider sx={{ mb: 1 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <Typography sx={{ fontWeight: 700 }}>{t('invoices:labels.total')}</Typography>
                     <Typography sx={{ fontWeight: 800, fontSize: '1.3rem', color: 'primary.main', letterSpacing: '-0.02em' }}>{formatCurrency(invoice.total_amount || 0)}</Typography>
                   </Box>
+                  {renderExemptMention('0.78rem')}
                 </Box>
               </Box>
             </NeumorphicPanel>
@@ -1304,6 +1368,19 @@ function InvoiceDetail() {
                 value={newItem.unit_price}
                 onChange={(e) => setNewItem({ ...newItem, unit_price: parseFloat(e.target.value) || 0 })}
               />
+            </Grid>
+            <Grid item xs={12}>
+              {vatSettings.vatExempt ? (
+                <Alert severity="info">{t('invoices:vat.exemptInfo')}</Alert>
+              ) : (
+                <VatRateSelect
+                  value={newItem.tax_rate ?? defaultNewLineRate()}
+                  onChange={(rate) => setNewItem((prev) => ({ ...prev, tax_rate: rate }))}
+                  rates={vatRateOptions}
+                  label={t('invoices:vat.lineRate')}
+                  size="medium"
+                />
+              )}
             </Grid>
           </Grid>
         </DialogContent>

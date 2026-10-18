@@ -746,5 +746,20 @@
     "importHistory": "Historique des importations",
     "importHistoryComingSoon": "Fonctionnalité à venir - L'historique des importations sera disponible prochainement.",
     "saveSettings": "Sauvegarder les paramètres"
+  },
+  "vat": {
+    "smallBusiness": "Petite entreprise exonérée de TVA",
+    "smallBusinessHint": "Vos factures sont émises sans TVA et la TVA de vos achats n'est pas récupérable.",
+    "smallBusinessHintDE": "Kleinunternehmerregelung (§ 19 UStG) : factures sans TVA, avec la mention de l'exonération ; la TVA des achats (Vorsteuer) n'est pas déductible.",
+    "smallBusinessHintFR": "Franchise en base de TVA (art. 293 B du CGI) : factures sans TVA avec la mention « TVA non applicable, art. 293 B du CGI » ; la TVA des achats n'est pas récupérable.",
+    "smallBusinessHintCH": "Entreprise non assujettie à la TVA (chiffre d'affaires sous le seuil) : factures sans TVA ; la TVA des achats n'est pas récupérable.",
+    "filingPeriod": "Fréquence de déclaration de TVA",
+    "periods": {
+      "monthly": "Mensuelle",
+      "quarterly": "Trimestrielle",
+      "yearly": "Annuelle"
+    },
+    "countryRates": "Taux de TVA en vigueur ({{country}}) :",
+    "countryRatesHint": "Cliquez sur un taux pour en faire le taux par défaut. Les autres restent proposés sur chaque ligne."
   }
 }

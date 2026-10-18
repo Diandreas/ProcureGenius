@@ -8,9 +8,12 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
 import i18n from '../i18n/config';
+import { computeVat, exemptionMentionKey, formatRate, toNumber, LEGAL_MENTION_DEFAULTS } from '../utils/vat';
+import { getCachedVatSettings, normaliser } from '../hooks/useVatSettings';
 
 // Libelles traduits dans la langue courante de l'interface
 const t = (key, options) => i18n.t(`invoices:offlinePdf.${key}`, options);
+const tv = (key, options) => i18n.t(`invoices:vat.${key}`, options);
 
 const styles = StyleSheet.create({
   page: { padding: 36, fontSize: 10, color: '#1f2733', fontFamily: 'Helvetica' },
@@ -33,6 +36,8 @@ const styles = StyleSheet.create({
   totals: { marginTop: 14, alignSelf: 'flex-end', width: '45%' },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
   grandTotal: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#1f2733', fontWeight: 'bold', fontSize: 13 },
+  sellerId: { color: '#5a6478', fontSize: 8, marginTop: 2 },
+  exemptMention: { marginTop: 8, fontSize: 8, fontStyle: 'italic', color: '#5a6478', textAlign: 'right' },
   footer: { position: 'absolute', bottom: 28, left: 36, right: 36, textAlign: 'center', color: '#9aa3b5', fontSize: 8 },
 });
 
@@ -41,7 +46,7 @@ const money = (v, currency = 'FCFA') => {
   return `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 };
 
-const InvoiceDoc = ({ invoice, currency }) => {
+const InvoiceDoc = ({ invoice, currency, vat }) => {
   const items = invoice.items || [];
   const isDraft = !invoice.invoice_number || String(invoice.invoice_number).startsWith('BROUILLON');
   const clientName = invoice.client_detail?.name || invoice.client_name || invoice.client?.name || '—';
@@ -51,12 +56,23 @@ const InvoiceDoc = ({ invoice, currency }) => {
     : items.reduce((s, it) => s + Number(it.quantity || 0) * Number(it.unit_price || 0), 0);
   const total = invoice.total_amount != null ? invoice.total_amount : subtotal;
 
+  // TVA : ventilation par taux (obligatoire en Allemagne) ou mention des petites entreprises exonérées
+  const lang = i18n.language;
+  const taxAmount = toNumber(invoice.tax_amount);
+  const discountAmount = toNumber(invoice.discount_amount);
+  const showExempt = Boolean(vat?.vatExempt) && !(taxAmount > 0);
+  const vatItems = items.map((it) => ({ ...it, total_price: it.total_price ?? toNumber(it.quantity) * toNumber(it.unit_price) }));
+  const breakdown = showExempt ? [] : computeVat(vatItems, subtotal, discountAmount).breakdown;
+  const mentionKey = exemptionMentionKey(vat?.country);
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View>
             <Text style={styles.brand}>Procura</Text>
+            {vat?.vatNumber ? <Text style={styles.sellerId}>{tv('vatId')} : {vat.vatNumber}</Text> : null}
+            {vat?.taxNumber ? <Text style={styles.sellerId}>{tv('taxNumber')} : {vat.taxNumber}</Text> : null}
             <Text style={styles.title}>{t('title')}</Text>
             {isDraft && <Text style={styles.draftTag}>{t('draftTag')}</Text>}
           </View>
@@ -94,7 +110,24 @@ const InvoiceDoc = ({ invoice, currency }) => {
             <Text>{t('subtotal')}</Text>
             <Text>{money(subtotal, currency)}</Text>
           </View>
-          {invoice.tax_amount != null && (
+          {discountAmount > 0 && (
+            <View style={styles.totalRow}>
+              <Text>{i18n.t('invoices:discount.title')}</Text>
+              <Text>-{money(discountAmount, currency)}</Text>
+            </View>
+          )}
+          {breakdown.length > 0 ? breakdown.map((g) => (
+            <View key={g.rate}>
+              <View style={styles.totalRow}>
+                <Text>{tv('netAtRate', { rate: formatRate(g.rate, lang) })}</Text>
+                <Text>{money(g.base, currency)}</Text>
+              </View>
+              <View style={styles.totalRow}>
+                <Text>{tv('vatAtRate', { rate: formatRate(g.rate, lang) })}</Text>
+                <Text>{money(g.vat, currency)}</Text>
+              </View>
+            </View>
+          )) : invoice.tax_amount != null && (
             <View style={styles.totalRow}>
               <Text>{t('taxes')}</Text>
               <Text>{money(invoice.tax_amount, currency)}</Text>
@@ -104,6 +137,11 @@ const InvoiceDoc = ({ invoice, currency }) => {
             <Text>{t('grandTotal')}</Text>
             <Text>{money(total, currency)}</Text>
           </View>
+          {showExempt && (
+            <Text style={styles.exemptMention}>
+              {i18n.t(mentionKey, { defaultValue: LEGAL_MENTION_DEFAULTS[mentionKey] })}
+            </Text>
+          )}
         </View>
 
         <Text style={styles.footer}>
@@ -117,6 +155,11 @@ const InvoiceDoc = ({ invoice, currency }) => {
 };
 
 /** Genere un Blob PDF de la facture cote client. */
-export const buildOfflineInvoicePdf = async (invoice, currency = 'FCFA') => {
-  return await pdf(<InvoiceDoc invoice={invoice} currency={currency} />).toBlob();
+export const buildOfflineInvoicePdf = async (invoice, currency = 'FCFA', orgSettings = null) => {
+  // Réglages TVA : ceux reçus du serveur, sinon les derniers connus sur l'appareil (hors ligne)
+  let vat = null;
+  try {
+    vat = orgSettings ? normaliser(orgSettings) : getCachedVatSettings();
+  } catch (e) { /* PDF sans TVA détaillée */ }
+  return await pdf(<InvoiceDoc invoice={invoice} currency={currency} vat={vat} />).toBlob();
 };

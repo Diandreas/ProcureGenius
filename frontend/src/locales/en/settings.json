@@ -746,5 +746,20 @@
     "importHistory": "Import history",
     "importHistoryComingSoon": "Coming soon - Import history will be available shortly.",
     "saveSettings": "Save settings"
+  },
+  "vat": {
+    "smallBusiness": "VAT-exempt small business",
+    "smallBusinessHint": "Your invoices are issued without VAT and VAT on your purchases cannot be reclaimed.",
+    "smallBusinessHintDE": "Kleinunternehmerregelung (§ 19 UStG): invoices without VAT, with the exemption note; input VAT (Vorsteuer) on purchases is not deductible.",
+    "smallBusinessHintFR": "Franchise en base de TVA (art. 293 B CGI): invoices without VAT, stating \"TVA non applicable, art. 293 B du CGI\"; VAT on purchases cannot be reclaimed.",
+    "smallBusinessHintCH": "Business not registered for VAT (turnover below the threshold): invoices without VAT; VAT on purchases cannot be reclaimed.",
+    "filingPeriod": "VAT return frequency",
+    "periods": {
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly"
+    },
+    "countryRates": "VAT rates in force ({{country}}):",
+    "countryRatesHint": "Click a rate to make it the default. The other rates remain available on each line."
   }
 }

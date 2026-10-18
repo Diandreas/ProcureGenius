@@ -52,6 +52,7 @@ import { useTranslation } from 'react-i18next';
 import { purchaseOrdersAPI, suppliersAPI, warehousesAPI, aiChatAPI } from '../../services/api';
 import { offlineData } from '../../services/offline/entities';
 import useCurrency from '../../hooks/useCurrency';
+import useOrgTaxSettings, { vatFromNet, loadOrgTaxSettings } from '../../hooks/useOrgTaxSettings';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { supplierFields } from '../../config/quickCreateFields';
 import POItemDialog from '../../components/purchase-orders/POItemDialog';
@@ -62,6 +63,7 @@ function PurchaseOrderForm() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(['purchaseOrders', 'common']);
   const { format: formatCurrency } = useCurrency();
+  const taxSettings = useOrgTaxSettings();
   const [searchParams] = useSearchParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -162,11 +164,35 @@ function PurchaseOrderForm() {
   // Quick Create states
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
 
-  // Totals calculation
-  const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.quantity) * parseFloat(item.unit_price)), 0);
-  const taxRate = 0.20; // 20% TVA standard
-  const taxAmount = subtotal * taxRate;
-  const total = subtotal + taxAmount;
+  // Taxes : TVA (USt.) au taux choisi ; au Canada TPS/TVH + TVQ.
+  // La TVA est enregistrée dans tax_gst_hst (tax_qst = 0 hors Canada).
+  const [taxRate, setTaxRate] = useState(null); // taux TVA / TPS-TVH (%)
+  const [qstRate, setQstRate] = useState(null); // taux TVQ (%), Canada seulement
+  // Montants enregistrés d'un BC existant : conservés tant que ni les articles ni les taux ne changent
+  const [storedTax, setStoredTax] = useState(null);
+
+  useEffect(() => {
+    if (!taxSettings.loaded) return;
+    if (taxRate === null) setTaxRate(isEdit ? 0 : taxSettings.defaultRate);
+    if (qstRate === null) setQstRate(isEdit || !taxSettings.isCanada || !taxSettings.hasQst ? 0 : 9.975);
+  }, [taxSettings.loaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+  const subtotal = round2(items.reduce((sum, item) => sum + (parseFloat(item.quantity) * parseFloat(item.unit_price)), 0));
+  const keepStored = storedTax && storedTax.subtotal === subtotal
+    && storedTax.rate === taxRate && storedTax.qstRate === qstRate;
+  const taxGstHst = keepStored ? storedTax.gst : vatFromNet(subtotal, taxRate || 0);
+  const taxQst = taxSettings.isCanada
+    ? (keepStored ? storedTax.qst : vatFromNet(subtotal, qstRate || 0))
+    : (keepStored ? storedTax.qst : 0);
+  const taxAmount = round2(taxGstHst + taxQst);
+  const total = round2(subtotal + taxAmount);
+
+  // Taux proposés : ceux du pays, plus le taux d'un BC existant s'il n'y figure pas
+  const rateOptions = [...new Set([...(taxSettings.vatRates || []), ...(taxRate !== null ? [taxRate] : [])])]
+    .sort((a, b) => b - a);
+  const qstOptions = [...new Set([9.975, 0, ...(qstRate !== null ? [qstRate] : [])])].sort((a, b) => b - a);
+  const fmtRate = (r) => `${Number(r).toLocaleString(undefined, { maximumFractionDigits: 3 })} %`;
 
   useEffect(() => {
     fetchSuppliers();
@@ -225,6 +251,18 @@ function PurchaseOrderForm() {
         status: po.status,
       });
       setItems(po.items || []);
+      // Taux déduits des montants enregistrés (montants inchangés tant que l'on n'y touche pas)
+      const sub = round2(parseFloat(po.subtotal) || 0);
+      const gst = round2(parseFloat(po.tax_gst_hst) || 0);
+      const qst = round2(parseFloat(po.tax_qst) || 0);
+      const rateOf = (tax) => (sub > 0 ? Math.round((tax / sub) * 100000) / 1000 : 0);
+      const snap = (r, list) => list.find((x) => Math.abs(x - r) < 0.05) ?? r;
+      const ts = await loadOrgTaxSettings();
+      const rate = gst > 0 ? snap(rateOf(gst), ts.vatRates || []) : 0;
+      const rq = qst > 0 ? snap(rateOf(qst), [9.975]) : 0;
+      setTaxRate(rate);
+      setQstRate(rq);
+      setStoredTax({ subtotal: sub, gst, qst, rate, qstRate: rq });
     } catch (error) {
       enqueueSnackbar(t('purchaseOrders:messages.poFormLoadError'), { variant: 'error' });
       navigate('/purchase-orders');
@@ -322,7 +360,8 @@ function PurchaseOrderForm() {
           product: product?.id ?? null,
         })),
         subtotal,
-        tax_amount: taxAmount,
+        tax_gst_hst: taxGstHst.toFixed(2),
+        tax_qst: taxQst.toFixed(2),
         total_amount: total,
       };
 
@@ -795,10 +834,43 @@ function PurchaseOrderForm() {
                   <Typography>{t('purchaseOrders:labels.subtotalLabel')}</Typography>
                   <Typography>{formatCurrency(subtotal)}</Typography>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>{t('purchaseOrders:labels.taxesLabel')}</Typography>
-                  <Typography>{formatCurrency(taxAmount)}</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel id="po-tax-rate">
+                      {taxSettings.isCanada ? t('purchaseOrders:tax.gstHstRate') : t('purchaseOrders:tax.vatRate')}
+                    </InputLabel>
+                    <Select
+                      labelId="po-tax-rate"
+                      label={taxSettings.isCanada ? t('purchaseOrders:tax.gstHstRate') : t('purchaseOrders:tax.vatRate')}
+                      value={taxRate ?? ''}
+                      onChange={(e) => setTaxRate(Number(e.target.value))}
+                    >
+                      {rateOptions.map((r) => <MenuItem key={r} value={r}>{fmtRate(r)}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <Typography>{formatCurrency(taxGstHst)}</Typography>
                 </Box>
+                {taxSettings.isCanada && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                      <InputLabel id="po-qst-rate">{t('purchaseOrders:tax.qstRate')}</InputLabel>
+                      <Select
+                        labelId="po-qst-rate"
+                        label={t('purchaseOrders:tax.qstRate')}
+                        value={qstRate ?? ''}
+                        onChange={(e) => setQstRate(Number(e.target.value))}
+                      >
+                        {qstOptions.map((r) => <MenuItem key={r} value={r}>{fmtRate(r)}</MenuItem>)}
+                      </Select>
+                    </FormControl>
+                    <Typography>{formatCurrency(taxQst)}</Typography>
+                  </Box>
+                )}
+                {taxSettings.vatExempt && !taxSettings.isCanada && (
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                    {t('purchaseOrders:tax.smallBusinessHint')}
+                  </Typography>
+                )}
                 <Divider sx={{ my: 1 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="h6">{t('purchaseOrders:labels.totalLabel')}</Typography>

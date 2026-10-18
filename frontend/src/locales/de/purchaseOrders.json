@@ -268,5 +268,14 @@
     "quantity": "Menge",
     "unitPrice": "Stückpreis netto",
     "lineTotal": "Zeilensumme netto"
+  },
+  "tax": {
+    "vat": "USt.",
+    "vatRate": "USt.-Satz",
+    "gstHst": "GST/HST",
+    "gstHstRate": "GST/HST-Satz",
+    "qst": "QST",
+    "qstRate": "QST-Satz",
+    "smallBusinessHint": "Kleinunternehmer (§ 19 UStG): Die an den Lieferanten gezahlte Umsatzsteuer ist nicht als Vorsteuer abziehbar und zählt zu den Anschaffungskosten."
   }
 }

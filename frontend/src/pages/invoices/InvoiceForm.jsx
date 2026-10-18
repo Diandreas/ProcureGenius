@@ -63,10 +63,25 @@ import useCurrency from '../../hooks/useCurrency';
 import QuickCreateDialog from '../../components/common/QuickCreateDialog';
 import { clientFields, getProductFields, serviceFields } from '../../config/quickCreateFields';
 import ProductSelectionDialog from '../../components/invoices/ProductSelectionDialog';
+import VatRateSelect from '../../components/invoices/VatRateSelect';
+import useVatSettings from '../../hooks/useVatSettings';
+import { computeVat, deriveLegacyRate, formatRate, hasLineRates, roundMoney, toNumber } from '../../utils/vat';
 
 function InvoiceForm() {
-  const { t } = useTranslation(['invoices', 'common']);
+  const { t, i18n } = useTranslation(['invoices', 'common']);
   const { format: formatCurrency } = useCurrency();
+  // TVA par ligne : taux proposés selon le pays de l'organisation (ex. 19 %, 7 %, 0 % en Allemagne)
+  const vatSettings = useVatSettings();
+  const vatExempt = vatSettings.vatExempt; // petite entreprise exonérée : jamais de TVA
+  const vatRateOptions = vatSettings.vatRates.length ? vatSettings.vatRates : [toNumber(vatSettings.defaultTaxRate), 0];
+  // Dernier taux appliqué à toutes les lignes (ou taux effectif d'une ancienne facture) :
+  // sert de taux par défaut des nouvelles lignes, sinon le taux par défaut de l'organisation.
+  const [bulkRate, setBulkRate] = useState(null);
+  const defaultLineRate = vatExempt ? 0 : (bulkRate ?? toNumber(vatSettings.defaultTaxRate));
+  const emptyItem = () => ({
+    description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, batch: null, batch_number: '',
+    discount_percent: 0, tax_rate: defaultLineRate,
+  });
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -92,7 +107,6 @@ function InvoiceForm() {
     contract: null,
     issue_date: new Date().toISOString().split('T')[0],
     due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +30 jours
-    tax_rate: 0, // taxe 0 par defaut (ajustable)
     discount_type: 'percent',
     discount_value: 0,
     status: 'paid',
@@ -134,6 +148,8 @@ function InvoiceForm() {
     if (!fromDemo || isEdit) return;
     const demo = loadDemoInvoice();
     if (!demo) return;
+    const demoRate = demo.tax_rate ?? null;
+    if (demoRate !== null) setBulkRate(toNumber(demoRate));
     setItems((demo.items || []).map((l) => ({
       product: null,
       batch: null,
@@ -142,11 +158,11 @@ function InvoiceForm() {
       quantity: l.quantity,
       unit_price: l.unit_price,
       total_price: l.total,
+      tax_rate: demoRate !== null ? toNumber(demoRate) : defaultLineRate,
     })));
     setFormData((prev) => ({
       ...prev,
       title: prev.title || t('invoices:form.demoTitle', { name: demo.client?.name || '' }).trim(),
-      tax_rate: demo.tax_rate ?? prev.tax_rate,
       status: 'sent',
     }));
     enqueueSnackbar(t('invoices:messages.demoPrefilled'), { variant: 'info' });
@@ -221,13 +237,30 @@ function InvoiceForm() {
         contract: invoice.contract,
         issue_date: invoice.issue_date ? invoice.issue_date.split('T')[0] : new Date().toISOString().split('T')[0],
         due_date: invoice.due_date ? invoice.due_date.split('T')[0] : '',
-        tax_rate: invoice.tax_rate ?? 0,
         discount_type: invoice.discount_type || 'percent',
         discount_value: invoice.discount_value || 0,
         status: invoice.status || 'paid',
         payment_method: invoice.payment_method || '',
       });
-      setItems(invoice.items || []);
+      // Montants reçus en chaînes ("100.00") : conversion en nombres pour les calculs
+      let loadedItems = (invoice.items || []).map((item) => ({
+        ...item,
+        quantity: toNumber(item.quantity),
+        unit_price: toNumber(item.unit_price),
+        total_price: toNumber(item.total_price),
+        discount_percent: toNumber(item.discount_percent),
+        tax_rate: toNumber(item.tax_rate),
+      }));
+      // Ancienne facture (taux global, lignes sans taux) : on reporte le taux effectif sur chaque
+      // ligne pour que l'enregistrement ne modifie pas les montants.
+      if (!hasLineRates(loadedItems)) {
+        const legacyRate = deriveLegacyRate(invoice.tax_amount, invoice.subtotal, invoice.discount_amount);
+        if (legacyRate !== null) {
+          loadedItems = loadedItems.map((item) => ({ ...item, tax_rate: legacyRate }));
+          setBulkRate(legacyRate);
+        }
+      }
+      setItems(loadedItems);
     } catch (error) {
       enqueueSnackbar(t('invoices:messages.loadInvoiceFormError'), { variant: 'error' });
       navigate('/invoices');
@@ -237,7 +270,7 @@ function InvoiceForm() {
   };
 
   const calculateSubtotal = () => {
-    const subtotal = items.reduce((sum, item) => sum + (item.total_price || 0), 0);
+    const subtotal = items.reduce((sum, item) => sum + toNumber(item.total_price), 0);
     return isNaN(subtotal) ? 0 : subtotal;
   };
 
@@ -252,17 +285,84 @@ function InvoiceForm() {
     return Math.min(discount, subtotal);
   };
 
-  const calculateTaxAmount = () => {
-    const taxRate = formData.tax_rate || 0;
-    // La taxe s'applique sur la base après remise
-    const base = calculateSubtotal() - calculateDiscount();
-    const taxAmount = (base * taxRate) / 100;
-    return isNaN(taxAmount) ? 0 : taxAmount;
+  // TVA par ligne : base = total de la ligne − sa part de la remise globale ; TVA = base × taux
+  // (même règle que le serveur, cf. utils/vat.js). Petite entreprise exonérée : pas de TVA.
+  const calculateVat = () => {
+    if (vatExempt) return { taxAmount: 0, breakdown: [] };
+    return computeVat(items, calculateSubtotal(), calculateDiscount());
   };
+
+  const calculateTaxAmount = () => calculateVat().taxAmount;
 
   const calculateTotal = () => {
     const total = calculateSubtotal() - calculateDiscount() + calculateTaxAmount();
-    return isNaN(total) ? 0 : total;
+    return isNaN(total) ? 0 : roundMoney(total);
+  };
+
+  // Taux commun à toutes les lignes (null si les taux diffèrent)
+  const commonLineRate = () => {
+    if (items.length === 0) return defaultLineRate;
+    const first = toNumber(items[0].tax_rate);
+    return items.every((it) => toNumber(it.tax_rate) === first) ? first : null;
+  };
+
+  // « Appliquer ce taux à toutes les lignes » (utilisateurs à taux unique)
+  const applyRateToAllLines = (rate) => {
+    const r = rate === '' ? 0 : toNumber(rate);
+    setBulkRate(r);
+    setItems((prev) => prev.map((it) => ({ ...it, tax_rate: r })));
+  };
+
+  const taxLabel = () => {
+    if (vatExempt) return t('invoices:vat.exemptShort');
+    const { breakdown } = calculateVat();
+    const withVat = breakdown.filter((g) => g.rate > 0);
+    if (breakdown.length > 1) return t('invoices:vat.mixedRates');
+    const rate = withVat.length === 1 ? withVat[0].rate : (commonLineRate() ?? 0);
+    return t('invoices:labels.vatRate', { rate: formatRate(rate, i18n.language) });
+  };
+
+  // Ventilation par taux (affichée dès qu'il y a plusieurs taux)
+  const renderVatBreakdown = () => {
+    if (vatExempt) return null;
+    const { breakdown } = calculateVat();
+    if (breakdown.length < 2) return null;
+    return (
+      <Box sx={{ mt: 1.5, px: 0.5 }}>
+        {breakdown.map((g) => (
+          <Box key={g.rate} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {t('invoices:vat.breakdownLine', { rate: formatRate(g.rate, i18n.language), base: formatCurrency(g.base) })}
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatCurrency(g.vat)}</Typography>
+          </Box>
+        ))}
+      </Box>
+    );
+  };
+
+  // Contrôle « taux pour toutes les lignes » (remplace l'ancien champ de taux unique)
+  const renderBulkVatControl = (size = 'small') => {
+    if (vatExempt) {
+      return (
+        <Alert severity="info" sx={{ mt: 1.5, borderRadius: 2 }}>{t('invoices:vat.exemptInfo')}</Alert>
+      );
+    }
+    const common = commonLineRate();
+    return (
+      <Box sx={{ mt: 1.5 }}>
+        <VatRateSelect
+          value={common ?? defaultLineRate}
+          onChange={applyRateToAllLines}
+          rates={vatRateOptions}
+          label={t('invoices:vat.applyToAll')}
+          size={size}
+        />
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, px: 0.5 }}>
+          {common === null ? t('invoices:vat.mixedRatesHint') : t('invoices:vat.applyToAllHint')}
+        </Typography>
+      </Box>
+    );
   };
 
   // Quick Create handlers
@@ -299,11 +399,14 @@ function InvoiceForm() {
       return;
     }
 
+    const lineDiscount = toNumber(newItem.discount_percent);
     const item = {
       ...newItem,
       quantity: qty,
       unit_price: unitPrice,
-      total_price: qty * unitPrice,
+      discount_percent: lineDiscount,
+      total_price: roundMoney(qty * unitPrice * (1 - lineDiscount / 100)),
+      tax_rate: vatExempt ? 0 : toNumber(newItem.tax_rate),
     };
 
     if (editingItemIndex >= 0) {
@@ -315,7 +418,7 @@ function InvoiceForm() {
       setItems(prev => [...prev, item]);
     }
 
-    setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, batch: null, batch_number: '' });
+    setNewItem(emptyItem());
     setItemDialogOpen(false);
   };
 
@@ -379,10 +482,12 @@ function InvoiceForm() {
           quantity: item.quantity,
           unit_price: item.unit_price,
           product_reference: item.product_reference,
+          discount_percent: toNumber(item.discount_percent),
+          tax_rate: vatExempt ? 0 : toNumber(item.tax_rate),
           total_price: item.total_price
         })),
         subtotal: subtotal || 0,
-        tax_amount: taxAmount || 0,
+        tax_amount: roundMoney(taxAmount || 0),
         total_amount: totalAmount || 0,
         discount_type: formData.discount_type || 'percent',
         discount_value: parseFloat(formData.discount_value) || 0
@@ -489,6 +594,7 @@ function InvoiceForm() {
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.75}>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem', lineHeight: 1.4 }}>
             {item.quantity} × {formatCurrency(item.unit_price)}
+            {!vatExempt && ` · ${t('invoices:vat.rateShort', { rate: formatRate(item.tax_rate, i18n.language) })}`}
           </Typography>
           <Stack direction="row" spacing={0.5}>
             <IconButton
@@ -780,7 +886,7 @@ function InvoiceForm() {
                     variant="contained"
                     startIcon={<Add />}
                     onClick={() => {
-                      setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, batch: null, batch_number: '' });
+                      setNewItem(emptyItem());
                       setEditingItemIndex(-1);
                       setItemDialogOpen(true);
                     }}
@@ -824,7 +930,7 @@ function InvoiceForm() {
                         {formatCurrency(calculateTaxAmount())}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        {t('invoices:labels.vatRate', { rate: formData.tax_rate })}
+                        {taxLabel()}
                       </Typography>
                     </Box>
                   </Grid>
@@ -839,17 +945,10 @@ function InvoiceForm() {
                     </Box>
                   </Grid>
                 </Grid>
+                {renderVatBreakdown()}
+                {vatExempt && renderBulkVatControl('small')}
                 <Collapse in={showAdvanced} unmountOnExit>
-                <TextField
-                  fullWidth
-                  label={t('invoices:labels.vatRateField')}
-                  type="number"
-                  value={formData.tax_rate}
-                  onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
-                  inputProps={{ min: 0, max: 100, step: 0.1 }}
-                  size="small"
-                  sx={{ mt: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                />
+                {!vatExempt && renderBulkVatControl('small')}
                 {/* Encart Remise dédié (mobile) */}
                 <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, border: '1px dashed', borderColor: 'divider', bgcolor: 'action.hover' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
@@ -1008,7 +1107,7 @@ function InvoiceForm() {
                       variant="contained"
                       startIcon={<Add />}
                       onClick={() => {
-                        setNewItem({ description: '', quantity: 1, unit_price: 0, product_reference: '', product: null, batch: null, batch_number: '' });
+                        setNewItem(emptyItem());
                         setEditingItemIndex(-1);
                         setItemDialogOpen(true);
                       }}
@@ -1026,6 +1125,9 @@ function InvoiceForm() {
                           <TableCell sx={{ fontWeight: 600 }}>{t('invoices:columns.description')}</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.quantity')}</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.unitPrice')}</TableCell>
+                          {!vatExempt && (
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:vat.rateColumn')}</TableCell>
+                          )}
                           <TableCell align="right" sx={{ fontWeight: 600 }}>{t('invoices:columns.total')}</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 600 }}>{t('invoices:columns.actions')}</TableCell>
                         </TableRow>
@@ -1036,8 +1138,11 @@ function InvoiceForm() {
                             <TableCell>{item.product_reference || '-'}</TableCell>
                             <TableCell>{item.description}</TableCell>
                             <TableCell align="right">{item.quantity}</TableCell>
-                            <TableCell align="right">{formatCurrency(item.unit_price)}</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 600 }}>{formatCurrency(item.total_price)}</TableCell>
+                            <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{formatCurrency(item.unit_price)}</TableCell>
+                            {!vatExempt && (
+                              <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{formatRate(item.tax_rate, i18n.language)}{' '}%</TableCell>
+                            )}
+                            <TableCell align="right" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{formatCurrency(item.total_price)}</TableCell>
                             <TableCell align="center">
                               <Stack direction="row" spacing={1} justifyContent="center">
                                 <IconButton
@@ -1068,7 +1173,7 @@ function InvoiceForm() {
                         ))}
                         {items.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                            <TableCell colSpan={vatExempt ? 6 : 7} align="center" sx={{ py: 3 }}>
                               <Typography color="text.secondary">
                                 {t('invoices:messages.noItemsDesktopMessage')}
                               </Typography>
@@ -1104,7 +1209,7 @@ function InvoiceForm() {
                           {formatCurrency(calculateTaxAmount())}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {t('invoices:labels.vatRate', { rate: formData.tax_rate })}
+                          {taxLabel()}
                         </Typography>
                       </Box>
                     </Grid>
@@ -1119,17 +1224,11 @@ function InvoiceForm() {
                       </Box>
                     </Grid>
                     <Grid item xs={12} sm={3}>
-                      <TextField
-                        fullWidth
-                        label={t('invoices:labels.vatRateField')}
-                        type="number"
-                        value={formData.tax_rate}
-                        onChange={(e) => setFormData({ ...formData, tax_rate: parseFloat(e.target.value) || 0 })}
-                        inputProps={{ min: 0, max: 100, step: 0.1 }}
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                      />
+                      {/* Taux pour toutes les lignes (remplace l'ancien taux unique) */}
+                      <Box sx={{ mt: -1.5 }}>{renderBulkVatControl('medium')}</Box>
                     </Grid>
                   </Grid>
+                  {renderVatBreakdown()}
 
                   {/* Encart Remise dédié (desktop) */}
                   <Box sx={{ mt: 2, p: 2, borderRadius: 2, border: '1px dashed', borderColor: 'divider', bgcolor: 'action.hover' }}>
@@ -1356,6 +1455,9 @@ function InvoiceForm() {
         onCreateProduct={() => setProductDialogOpen(true)}
         onCreateService={() => setServiceDialogOpen(true)}
         editingItemIndex={editingItemIndex}
+        showVat
+        vatRates={vatRateOptions}
+        vatExempt={vatExempt}
       />
 
       {/* Quick Create Dialogs */}

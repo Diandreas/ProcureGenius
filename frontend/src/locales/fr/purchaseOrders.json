@@ -268,5 +268,14 @@
     "quantity": "Quantité",
     "unitPrice": "Prix unitaire HT",
     "lineTotal": "Total ligne HT"
+  },
+  "tax": {
+    "vat": "TVA",
+    "vatRate": "Taux de TVA",
+    "gstHst": "TPS/TVH",
+    "gstHstRate": "Taux TPS/TVH",
+    "qst": "TVQ",
+    "qstRate": "Taux TVQ",
+    "smallBusinessHint": "Petite entreprise exonérée : la TVA payée au fournisseur n'est pas récupérable, elle est comptée dans le coût de l'achat."
   }
 }

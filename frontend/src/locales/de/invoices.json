@@ -382,5 +382,30 @@
     "share": "Teilen",
     "download": "Herunterladen",
     "loadError": "Das PDF kann nicht angezeigt werden."
+  },
+  "vat": {
+    "rate": "MwSt.-Satz",
+    "lineRate": "MwSt.-Satz der Position",
+    "rateColumn": "USt.",
+    "rateShort": "USt. {{rate}} %",
+    "customRate": "Anderer Satz…",
+    "customRateValue": "Satz (%)",
+    "applyToAll": "MwSt.-Satz (alle Positionen)",
+    "applyToAllHint": "Der gewählte Satz gilt für alle Positionen; Sie können ihn je Position ändern.",
+    "mixedRatesHint": "Die Positionen haben unterschiedliche Sätze: Ein hier gewählter Satz wird auf alle Positionen übertragen.",
+    "mixedRates": "USt. (mehrere Sätze)",
+    "breakdownLine": "USt. {{rate}} % auf {{base}}",
+    "netAtRate": "Nettobetrag {{rate}} %",
+    "vatAtRate": "USt. {{rate}} %",
+    "vatId": "USt-IdNr.",
+    "taxNumber": "Steuernummer",
+    "exemptShort": "Keine Umsatzsteuer",
+    "exemptInfo": "Ihr Unternehmen ist Kleinunternehmer: Es wird keine Umsatzsteuer berechnet, der gesetzliche Hinweis wird auf der Rechnung ergänzt.",
+    "legal": {
+      "de": "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.",
+      "at": "Umsatzsteuerbefreit – Kleinunternehmer gem. § 6 Abs. 1 Z 27 UStG",
+      "fr": "TVA non applicable, art. 293 B du CGI",
+      "generic": "Umsatzsteuerfrei (Kleinunternehmerregelung)"
+    }
   }
 }

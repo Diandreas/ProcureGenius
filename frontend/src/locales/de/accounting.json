@@ -259,7 +259,11 @@
     "supplierOptional": "Lieferant (optional)",
     "recoverableVat": "davon Vorsteuer (optional)",
     "replaceReceipt": "Beleg ersetzen",
-    "attachReceipt": "Foto des Belegs anhängen"
+    "attachReceipt": "Foto des Belegs anhängen",
+    "vatRate": "USt.-Satz",
+    "vatRateManual": "Betrag manuell eingegeben",
+    "vatIncludedHint": "Aus dem gezahlten Bruttobetrag berechnet; änderbar.",
+    "vatNotDeductibleSmallBusiness": "Kleinunternehmer (§ 19 UStG): Die gezahlte Umsatzsteuer ist nicht als Vorsteuer abziehbar, der volle Betrag wird als Aufwand gebucht."
   },
   "help": {
     "plans": {
@@ -282,6 +286,12 @@
       "procura": {
         "name": "den Procura-Kontenrahmen",
         "classes": "Klasse 1: Kapital | 2: Anlagevermögen | 4: Dritte | 5: Liquide Mittel | 6: Aufwendungen | 7: Erträge."
+      },
+      "skr03": {
+        "name": "den Standardkontenrahmen SKR03 (DATEV)",
+        "classes": "Klasse 0: Anlage- und Kapitalkonten | 1: Finanz- und Privatkonten (Kasse 1000, Bank 1200, Forderungen 1400, Verbindlichkeiten 1600, Vorsteuer 1571/1576, Umsatzsteuer 1771/1776) | 2: Abgrenzungskonten | 3: Wareneingangs- und Bestandskonten (Wareneingang 3400) | 4: Betriebliche Aufwendungen (Bürobedarf 4930, Miete 4210) | 8: Erlöskonten (Erlöse 8400 mit 19 %, 8300 mit 7 %) | 9: Vortrags- und statistische Konten.",
+        "aboutTitle": "Was ist der SKR03?",
+        "about": "Der SKR03 (Standardkontenrahmen 03) ist der Kontenrahmen von DATEV und wird von den meisten kleinen und mittleren Unternehmen in Deutschland und ihren Steuerberatern genutzt. Die Konten sind vierstellig und folgen dem Ablauf im Betrieb (Prozessgliederungsprinzip). Für die Umsatzsteuer gibt es ein Konto je Steuersatz: Umsatzsteuer 1776 (19 %) und 1771 (7 %), Vorsteuer 1576 (19 %) und 1571 (7 %). Beträge in Euro (€)."
       }
     },
     "accounts": {
@@ -291,7 +301,10 @@
       "bureau": "Büromaterial",
       "tvaD": "Vorsteuer",
       "mobile": "Mobile Money",
-      "banque": "Bank"
+      "banque": "Bank",
+      "tvaCReduced": "Umsatzsteuer 7 %",
+      "tvaDReduced": "Abziehbare Vorsteuer 7 %",
+      "ventesReduced": "Erlöse 7 % USt"
     },
     "frequent": {
       "capital": "Kapital",
@@ -362,7 +375,9 @@
         "examplePayment": "Zahlungseingang von Kunde Dupont auf dem Bankkonto",
         "tip1": "Ist die Buchung nicht ausgeglichen, markiert das System sie rot.",
         "tip2": "Für in Procura erstellte Rechnungen, Zahlungen und Wareneingänge werden die Buchungen automatisch gebucht.",
-        "tip3": "Wählen Sie das richtige Journal: Einkauf (ACH), Verkauf (VTE), Bank (BNQ), Kasse und Mobile Money (CAI), Sonstige (OD)."
+        "tip3": "Wählen Sie das richtige Journal: Einkauf (ACH), Verkauf (VTE), Bank (BNQ), Kasse und Mobile Money (CAI), Sonstige (OD).",
+        "exampleSaleReduced": "Verkauf zum ermäßigten Steuersatz von {{rate}} % (Bücher, Lebensmittel …): {{ht}} netto + USt. {{vat}}",
+        "examplePurchaseBank": "Kauf von Büromaterial {{amount}}, bezahlt per Banküberweisung"
       },
       "chart_of_accounts": {
         "title": "Kontenrahmen — Kurzanleitung",
@@ -438,7 +453,8 @@
     "balanceSheet": "Bilanz",
     "sig": "SIG",
     "defaultTitle": "Buchhaltung",
-    "help": "Hilfe zur Buchhaltung"
+    "help": "Hilfe zur Buchhaltung",
+    "vat": "Umsatzsteuer"
   },
   "sig": {
     "rows": {
@@ -505,5 +521,104 @@
     "debitBalanceHeader": "Sollsaldo",
     "creditBalanceHeader": "Habensaldo",
     "total": "SUMME"
+  },
+  "vatReport": {
+    "title": "Umsatzsteuer-Voranmeldung",
+    "subtitle": "Umsatzsteuer, Vorsteuer und Zahllast für den Zeitraum",
+    "loadError": "Die Umsatzsteuer-Voranmeldung konnte nicht geladen werden",
+    "exportError": "Der CSV-Export ist fehlgeschlagen",
+    "exportCsv": "CSV exportieren",
+    "rate": "Steuersatz",
+    "netBase": "Bemessungsgrundlage",
+    "vat": "Steuer",
+    "year": "Jahr",
+    "month": "Monat",
+    "quarter": "Quartal",
+    "quarterShort": "Q{{quarter}}",
+    "quarterLabel": "Q{{quarter}} {{year}}",
+    "kinds": {
+      "month": "Monat",
+      "quarter": "Quartal",
+      "year": "Jahr"
+    },
+    "periodOf": "Voranmeldungszeitraum: {{period}}",
+    "deadline": "Abgabefrist",
+    "noSales": "Keine Umsätze in diesem Zeitraum",
+    "noPurchases": "Keine Einkäufe mit Vorsteuer in diesem Zeitraum",
+    "result": {
+      "pay": "Zahllast",
+      "refund": "Erstattung (Überschuss)",
+      "none": "Keine Umsatzsteuer zu zahlen",
+      "formula": "Umsatzsteuer {{output}} − Vorsteuer {{input}}"
+    },
+    "smallBusiness": {
+      "kleinunternehmer": {
+        "title": "Kleinunternehmer (§ 19 UStG)",
+        "text": "Sie weisen keine Umsatzsteuer aus und haben keinen Vorsteuerabzug: Es ist keine Umsatzsteuer zu zahlen. Behalten Sie Ihren Umsatz im Blick, er muss unter der Kleinunternehmergrenze bleiben."
+      },
+      "franchise_en_base": {
+        "title": "Umsatzsteuerbefreiung für Kleinunternehmen (Art. 293 B CGI, Frankreich)",
+        "text": "Sie weisen keine Umsatzsteuer aus und haben keinen Vorsteuerabzug: Es ist keine Umsatzsteuer zu zahlen. Behalten Sie Ihren Umsatz im Blick, er muss unter den Grenzen bleiben."
+      },
+      "small_business": {
+        "title": "Von der Umsatzsteuer befreit",
+        "text": "Ihre Organisation ist als umsatzsteuerbefreit eingestellt: keine Umsatzsteuer, keine Vorsteuer, nichts zu zahlen."
+      }
+    },
+    "warnings": {
+      "foreign_currency_invoices_one": "{{count}} Rechnung in einer anderen Währung als {{currency}} ist nicht enthalten. Melden Sie sie gesondert, umgerechnet in {{currency}}.",
+      "foreign_currency_invoices_other": "{{count}} Rechnungen in einer anderen Währung als {{currency}} sind nicht enthalten. Melden Sie sie gesondert, umgerechnet in {{currency}}.",
+      "foreign_currency_credit_notes_one": "{{count}} Gutschrift in einer anderen Währung als {{currency}} ist nicht enthalten.",
+      "foreign_currency_credit_notes_other": "{{count}} Gutschriften in einer anderen Währung als {{currency}} sind nicht enthalten.",
+      "foreign_currency_expenses_one": "{{count}} Ausgabe in einer anderen Währung als {{currency}} ist nicht enthalten.",
+      "foreign_currency_expenses_other": "{{count}} Ausgaben in einer anderen Währung als {{currency}} sind nicht enthalten."
+    },
+    "output": {
+      "title": "Umsatzsteuer",
+      "subtitle_one": "Aus {{count}} gestellten Rechnung",
+      "subtitle_other": "Aus {{count}} gestellten Rechnungen",
+      "creditNotes_one": "Gutschrift ({{count}})",
+      "creditNotes_other": "Gutschriften ({{count}})",
+      "total": "Umsatzsteuer netto"
+    },
+    "input": {
+      "title": "Vorsteuer",
+      "subtitle": "Auf Ihre Einkäufe gezahlte Umsatzsteuer, abziehbar",
+      "notDeductible": "Für Kleinunternehmer nicht abziehbar (nur zur Information)",
+      "purchaseOrders_one": "Bestellung ({{count}})",
+      "purchaseOrders_other": "Bestellungen ({{count}})",
+      "expenses_one": "Ausgabe ({{count}})",
+      "expenses_other": "Ausgaben ({{count}})",
+      "total": "Vorsteuer gesamt"
+    },
+    "ustva": {
+      "title": "Kennzahlen der Umsatzsteuer-Voranmeldung",
+      "subtitle": "Diese Werte tragen Sie in ELSTER ein",
+      "kz81": "Steuerpflichtige Umsätze zu 19 % (Bemessungsgrundlage, volle Euro)",
+      "kz86": "Steuerpflichtige Umsätze zu 7 % (Bemessungsgrundlage, volle Euro)",
+      "kz35": "Umsätze zu anderen Steuersätzen (Bemessungsgrundlage / Steuer)",
+      "kz66": "Abziehbare Vorsteuerbeträge",
+      "kz83": "Verbleibende Umsatzsteuer-Vorauszahlung (negativ = Überschuss)",
+      "taxLine": "Steuer: {{amount}}",
+      "taxFree": "Umsätze zu 0 %: {{amount}}. Je nach Art (Ausfuhr, innergemeinschaftliche Lieferung, steuerfreier Umsatz) gehören sie in eine andere Kennzahl: Fragen Sie Ihre Steuerberatung.",
+      "extension": "Mit Dauerfristverlängerung: {{date}}.",
+      "rounding": "ELSTER berechnet die Steuer aus den Beträgen in vollen Euro neu, Abweichungen von wenigen Cent sind normal."
+    },
+    "howTo": {
+      "title": "Was tun mit diesen Zahlen?",
+      "de": "Melden Sie sich bei ELSTER (Mein ELSTER) an, öffnen Sie die Umsatzsteuer-Voranmeldung für den Zeitraum und übertragen Sie die Kennzahlen 81, 86 und 66; Kennzahl 83 berechnet ELSTER. Übermitteln Sie die Voranmeldung vor Ablauf der Abgabefrist und überweisen Sie die Zahllast an das Finanzamt (oder warten Sie auf die Erstattung).",
+      "fr": "Tragen Sie diese Beträge in Ihre französische Umsatzsteuererklärung (CA3 monatlich oder vierteljährlich, CA12 jährlich) im Profi-Bereich von impots.gouv.fr ein und zahlen Sie den Saldo vor Fristablauf.",
+      "generic": "Tragen Sie diese Beträge in die Umsatzsteuererklärung der Steuerverwaltung Ihres Landes ein und zahlen Sie den Saldo vor Fristablauf. Lassen Sie sie im Zweifel von Ihrer Steuerberatung prüfen.",
+      "sources": "Berechnung: gestellte Rechnungen (ohne Entwürfe, Angebote und Stornos ohne Gutschrift), abzüglich erteilter Gutschriften, abzüglich der Vorsteuer aus Bestellungen und Ausgaben des Zeitraums."
+    }
+  },
+  "chartStandard": {
+    "about": {
+      "syscohada": "SYSCOHADA: gemeinsamer Kontenrahmen der 17 OHADA-Staaten (West- und Zentralafrika). Kontenklassen 1 bis 9, Beträge in FCFA.",
+      "pcg": "PCG: französischer Kontenrahmen (Plan comptable général), auch in Belgien und im Maghreb verwendet. Kontenklassen 1 bis 7.",
+      "skr03": "SKR03 (DATEV): Standardkontenrahmen für kleine und mittlere Unternehmen in Deutschland, den jeder Steuerberater kennt. Vierstellige Konten; Umsatzsteuer je Steuersatz (Umsatzsteuer 1776/1771, Vorsteuer 1576/1571); Beträge in Euro.",
+      "us_gaap": "US GAAP: typischer Kontenrahmen eines kleinen US-Unternehmens (1xxx Aktiva, 2xxx Verbindlichkeiten, 4xxx Erlöse, 5xxx–7xxx Aufwendungen).",
+      "ca": "Kanada (ASPE): typischer Kontenrahmen eines kleinen kanadischen Unternehmens, mit GST/HST und QST."
+    }
   }
 }

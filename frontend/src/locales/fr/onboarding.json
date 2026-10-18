@@ -99,7 +99,8 @@
         "syscohada": "SYSCOHADA (OHADA)",
         "pcg": "plan comptable français",
         "us_gaap": "US GAAP",
-        "ca": "canadienne"
+        "ca": "canadienne",
+        "skr03": "SKR03 (DATEV, Allemagne)"
       },
       "address": "Ville / adresse (optionnel)",
       "addressPlaceholder": "Ex : Akwa, Douala",

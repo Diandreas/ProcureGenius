@@ -63,9 +63,20 @@ class OrganizationSettings(models.Model):
     accounting_standard = models.CharField(
         max_length=20, blank=True, default='',
         choices=[('syscohada', 'SYSCOHADA (OHADA)'), ('pcg', 'PCG (France / Europe)'),
-                 ('us_gaap', 'US GAAP'), ('ca', 'Canada (ASPE)')],
+                 ('us_gaap', 'US GAAP'), ('ca', 'Canada (ASPE)'), ('skr03', 'SKR03 (Deutschland)')],
         verbose_name=_("Référentiel comptable"),
         help_text=_("Vide = plan comptable historique de Procura (organisations créées avant octobre 2026)"),
+    )
+    # Régime des petites entreprises : pas de TVA facturée (Allemagne : Kleinunternehmer § 19 UStG ;
+    # France : franchise en base, art. 293 B du CGI). Les factures portent la mention légale.
+    vat_exempt_small_business = models.BooleanField(
+        default=False,
+        verbose_name=_("Petite entreprise exonérée de TVA"),
+    )
+    vat_filing_period = models.CharField(
+        max_length=10, default='monthly',
+        choices=[('monthly', _('Mensuelle')), ('quarterly', _('Trimestrielle')), ('yearly', _('Annuelle'))],
+        verbose_name=_("Fréquence de la déclaration de TVA"),
     )
 
     tax_region = models.CharField(

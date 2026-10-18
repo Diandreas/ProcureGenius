@@ -268,5 +268,14 @@
     "quantity": "Quantity",
     "unitPrice": "Unit price excl. tax",
     "lineTotal": "Line total excl. tax"
+  },
+  "tax": {
+    "vat": "VAT",
+    "vatRate": "VAT rate",
+    "gstHst": "GST/HST",
+    "gstHstRate": "GST/HST rate",
+    "qst": "QST",
+    "qstRate": "QST rate",
+    "smallBusinessHint": "VAT-exempt small business: VAT paid to the supplier cannot be reclaimed; it is part of the purchase cost."
   }
 }

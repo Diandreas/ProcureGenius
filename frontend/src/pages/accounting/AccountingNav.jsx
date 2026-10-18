@@ -16,6 +16,7 @@ import {
   HelpOutline as HelpIcon,
   Payments as ExpensesIcon,
   Lock as LockIcon,
+  RequestQuote as VatIcon,
 } from '@mui/icons-material';
 import BackButton from '../../components/navigation/BackButton';
 import { useHeader } from '../../contexts/HeaderContext';
@@ -34,6 +35,7 @@ const PATH_TO_CONTEXT = {
 const NAV_ITEMS = [
   { labelKey: 'dashboard', path: '/accounting', icon: <DashboardIcon />, exact: true },
   { labelKey: 'expenses', path: '/accounting/expenses', icon: <ExpensesIcon /> },
+  { labelKey: 'vat', path: '/accounting/vat', icon: <VatIcon /> },
   { labelKey: 'chartOfAccounts', path: '/accounting/chart-of-accounts', icon: <PlanIcon /> },
   { labelKey: 'entries', path: '/accounting/entries', icon: <EntriesIcon /> },
   { labelKey: 'trialBalance', path: '/accounting/reports/trial-balance', icon: <BalanceIcon /> },

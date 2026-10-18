@@ -83,6 +83,7 @@ import { useModules } from '../../contexts/ModuleContext';
 
 // Import API services
 import { settingsAPI } from '../../services/settingsAPI';
+import { refreshOrgTaxSettings } from '../../hooks/useOrgTaxSettings';
 import { printTemplatesAPI } from '../../services/printTemplatesAPI';
 import { printConfigurationsAPI } from '../../services/printConfigurationsAPI';
 import ModulesManager from '../../components/settings/ModulesManager';
@@ -200,6 +201,7 @@ const Settings = () => {
       }
 
       await Promise.all(promises);
+      refreshOrgTaxSettings(); // taux et régime de TVA utilisés par les achats et les dépenses
 
       showSnackbar(t('settings:saveSuccess'), 'success');
     } catch (error) {
@@ -1126,26 +1128,31 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
           </Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                size="small"
-                label={t('settings:billing.gstHstRate')}
-                type="number"
-                value={settings.gstHstRate || 5}
-                onChange={(e) => onUpdate('gstHstRate', parseFloat(e.target.value))}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                size="small"
-                label={t('settings:billing.qstRate')}
-                type="number"
-                value={settings.qstRate || 9.975}
-                onChange={(e) => onUpdate('qstRate', parseFloat(e.target.value))}
-              />
-            </Grid>
+            {/* TPS/TVH et TVQ : Canada seulement */}
+            {(settings.country === 'CA' || settings.taxRegion === 'canada') && (
+              <>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('settings:billing.gstHstRate')}
+                    type="number"
+                    value={settings.gstHstRate || 5}
+                    onChange={(e) => onUpdate('gstHstRate', parseFloat(e.target.value))}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={t('settings:billing.qstRate')}
+                    type="number"
+                    value={settings.qstRate || 9.975}
+                    onChange={(e) => onUpdate('qstRate', parseFloat(e.target.value))}
+                  />
+                </Grid>
+              </>
+            )}
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
@@ -1167,6 +1174,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect, logoFormat, setLogoF
                 label={t('settings:billing.enableTaxCalculation')}
               />
             </Grid>
+            <VatRegimeFields settings={settings} onUpdate={onUpdate} />
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -2107,6 +2115,83 @@ const EmailSection = ({ settings, showSnackbar }) => {
     </Box>
   );
 };
+
+// Régime de TVA : petite entreprise exonérée, fréquence de déclaration, taux du pays
+let paysCache = null;
+const chargerPays = () => {
+  if (!paysCache) {
+    paysCache = api.get('/accounts/countries/').then((r) => r.data.countries || []).catch(() => { paysCache = null; return []; });
+  }
+  return paysCache;
+};
+
+export function VatRegimeFields({ settings, onUpdate }) {
+  const { t, i18n } = useTranslation(['settings', 'common']);
+  const [countries, setCountries] = useState([]);
+  useEffect(() => { chargerPays().then(setCountries); }, []);
+  const country = (settings.country || '').toUpperCase();
+  const profil = countries.find((c) => c.code === country);
+  const rates = profil?.vat_rates || [];
+  const hintKey = ['DE', 'AT'].includes(country) ? 'smallBusinessHintDE'
+    : ['FR', 'BE', 'LU'].includes(country) ? 'smallBusinessHintFR'
+      : country === 'CH' ? 'smallBusinessHintCH' : 'smallBusinessHint';
+  const fmt = (r) => `${Number(r).toLocaleString(undefined, { maximumFractionDigits: 3 })} %`;
+  let countryName = profil?.name || country;
+  if (country && i18n.language && !i18n.language.startsWith('fr')) {
+    try { countryName = new Intl.DisplayNames([i18n.language], { type: 'region' }).of(country) || countryName; } catch { /* nom français */ }
+  }
+  return (
+    <>
+      <Grid item xs={12} md={6}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={Boolean(settings.vatExemptSmallBusiness)}
+              onChange={(e) => onUpdate('vatExemptSmallBusiness', e.target.checked)}
+            />
+          }
+          label={t('settings:vat.smallBusiness')}
+        />
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ ml: { xs: 0, sm: 6 } }}>
+          {t(`settings:vat.${hintKey}`)}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <FormControl fullWidth size="small">
+          <InputLabel>{t('settings:vat.filingPeriod')}</InputLabel>
+          <Select
+            value={settings.vatFilingPeriod || 'quarterly'}
+            label={t('settings:vat.filingPeriod')}
+            onChange={(e) => onUpdate('vatFilingPeriod', e.target.value)}
+          >
+            {['monthly', 'quarterly', 'yearly'].map((p) => (
+              <MenuItem key={p} value={p}>{t(`settings:vat.periods.${p}`)}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Grid>
+      {rates.length > 0 && (
+        <Grid item xs={12}>
+          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+            <Typography variant="body2" color="text.secondary">
+              {t('settings:vat.countryRates', { country: countryName })}
+            </Typography>
+            {rates.map((r) => (
+              <Chip
+                key={r}
+                size="small"
+                label={fmt(r)}
+                color={Number(r) === Number(settings.defaultTaxRate) ? 'primary' : 'default'}
+                onClick={() => onUpdate('defaultTaxRate', Number(r))}
+              />
+            ))}
+          </Stack>
+          <Typography variant="caption" color="text.secondary">{t('settings:vat.countryRatesHint')}</Typography>
+        </Grid>
+      )}
+    </>
+  );
+}
 
 // Pays de l'organisation : liste servie par l'API (apps/core/countries.py)
 function CountrySelect({ value, onChange }) {

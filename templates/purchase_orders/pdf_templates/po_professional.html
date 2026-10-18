@@ -402,7 +402,7 @@
                     {% endif %}
                     {% if po.tax_gst_hst > 0 %}
                     <div class="total-row">
-                        <span>TPS/TVH:</span>
+                        <span>{% get_current_language as po_vat_lang %}{% if organization.tax_region == 'canada' %}TPS/TVH{% elif po_vat_lang == 'de' %}USt.{% elif po_vat_lang == 'fr' %}TVA{% else %}VAT{% endif %}:</span>
                         <span>{{ po.tax_gst_hst }} {{ organization.currency|default:"CAD" }}</span>
                     </div>
                     {% endif %}

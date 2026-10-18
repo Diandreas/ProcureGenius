@@ -25,7 +25,7 @@ from apps.invoicing.models import Invoice, Payment
 from apps.purchase_orders.models import PurchaseOrder
 from apps.accounts.models import Organization
 
-from .charts import LEGACY, PAYMENT_ROLE, account_for_role, org_standard, split_amount
+from .charts import LEGACY, PAYMENT_ROLE, account_for_role, entry_label, journal_name, org_standard, split_amount
 
 
 # Mapping invoice_type → code compte produit
@@ -68,7 +68,7 @@ def _get_or_create_purchase_journal(organization):
     journal, _ = AccountingJournal.objects.get_or_create(
         organization=organization,
         code='ACH',
-        defaults={'name': "Journal des Achats", 'journal_type': 'purchases'}
+        defaults={'name': journal_name(organization, 'ACH', "Journal des Achats"), 'journal_type': 'purchases'}
     )
     return journal
 
@@ -80,7 +80,7 @@ def _get_or_create_sales_journal(organization):
         organization=organization,
         code='VTE',
         defaults={
-            'name': 'Journal des Ventes',
+            'name': journal_name(organization, 'VTE', 'Journal des Ventes'),
             'journal_type': 'sales',
         }
     )
@@ -97,7 +97,7 @@ def _get_or_create_cash_journal(organization, method='cash'):
     journal, _ = AccountingJournal.objects.get_or_create(
         organization=organization,
         code=code,
-        defaults={'name': name, 'journal_type': jtype}
+        defaults={'name': journal_name(organization, code, name), 'journal_type': jtype}
     )
     return journal
 
@@ -202,7 +202,7 @@ def create_invoice_entry(invoice, user=None):
         journal=journal,
         entry_number=JournalEntry.generate_entry_number(org, journal),
         date=invoice.created_at.date() if invoice.created_at else date_type.today(),
-        description=f"Vente — {invoice.invoice_number}",
+        description=f"{entry_label(org, 'sale')} — {invoice.invoice_number}",
         reference=invoice.invoice_number,
         status='posted',
         source='invoice',
@@ -251,7 +251,7 @@ def create_payment_entry(payment, user=None):
         journal=journal,
         entry_number=JournalEntry.generate_entry_number(org, journal),
         date=payment.payment_date or date_type.today(),
-        description=f"Encaissement — {ref}",
+        description=f"{entry_label(org, 'payment')} — {ref}",
         reference=ref,
         status='posted',
         source='payment',
@@ -294,7 +294,7 @@ def create_invoice_reversal(invoice):
         journal=journal,
         entry_number=JournalEntry.generate_entry_number(org, journal),
         date=date_type.today(),
-        description=f"Extourne — {invoice.invoice_number}",
+        description=f"{entry_label(org, 'reversal')} — {invoice.invoice_number}",
         reference=invoice.invoice_number,
         status='posted',
         source='invoice_reversal',
@@ -305,7 +305,7 @@ def create_invoice_reversal(invoice):
         JournalEntryLine.objects.create(
             entry=reversal,
             account=line.account,
-            description=f"Extourne {line.description}",
+            description=f"{entry_label(org, 'reversal')} {line.description}",
             debit=line.credit,
             credit=line.debit,
         )
@@ -342,7 +342,7 @@ def create_credit_note_entry(credit_note, user=None):
         journal=journal,
         entry_number=JournalEntry.generate_entry_number(org, journal),
         date=date_type.today(),
-        description=f"Avoir — {credit_note.credit_note_number} ({invoice.invoice_number})",
+        description=f"{entry_label(org, 'credit_note')} — {credit_note.credit_note_number} ({invoice.invoice_number})",
         reference=credit_note.credit_note_number,
         status='posted',
         source='credit_note',
@@ -384,7 +384,9 @@ def create_purchase_order_entry(po, user=None):
         if not expense_account or not supplier_account:
             return None
         tax = Decimal(getattr(po, 'tax_gst_hst', 0) or 0) + Decimal(getattr(po, 'tax_qst', 0) or 0)
-        vat = account_for_role(org, 'vat_deductible') if 0 < tax < amount else None
+        # Petite entreprise exonérée : TVA payée non déductible, l'achat est passé TTC
+        from .expenses import deductible_vat_account
+        vat = deductible_vat_account(org, amount, tax, net=po.subtotal)
         lines = [(expense_account, amount - tax if vat else amount, zero)]
         if vat:
             lines.append((vat, tax, zero))
@@ -396,7 +398,7 @@ def create_purchase_order_entry(po, user=None):
         journal=journal,
         entry_number=JournalEntry.generate_entry_number(org, journal),
         date=date_type.today(),
-        description=f"Réception BC — {po.po_number}",
+        description=f"{entry_label(org, 'po_receipt')} — {po.po_number}",
         reference=po.po_number,
         status='posted',
         source='purchase_order',

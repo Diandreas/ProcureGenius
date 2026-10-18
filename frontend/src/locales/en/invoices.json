@@ -382,5 +382,30 @@
     "share": "Share",
     "download": "Download",
     "loadError": "Unable to display the PDF."
+  },
+  "vat": {
+    "rate": "VAT rate",
+    "lineRate": "Line VAT rate",
+    "rateColumn": "VAT",
+    "rateShort": "VAT {{rate}}%",
+    "customRate": "Other rate…",
+    "customRateValue": "Rate (%)",
+    "applyToAll": "VAT rate (all lines)",
+    "applyToAllHint": "The selected rate applies to every line; you can still change it line by line.",
+    "mixedRatesHint": "Lines have different rates: picking a rate here applies it to all lines.",
+    "mixedRates": "VAT (several rates)",
+    "breakdownLine": "VAT {{rate}}% on {{base}}",
+    "netAtRate": "Net amount {{rate}}%",
+    "vatAtRate": "VAT {{rate}}%",
+    "vatId": "VAT ID",
+    "taxNumber": "Tax number",
+    "exemptShort": "No VAT charged",
+    "exemptInfo": "Your business uses the small business VAT exemption: no VAT is charged and the legal notice is added to the invoice.",
+    "legal": {
+      "de": "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.",
+      "at": "Umsatzsteuerbefreit – Kleinunternehmer gem. § 6 Abs. 1 Z 27 UStG",
+      "fr": "TVA non applicable, art. 293 B du CGI",
+      "generic": "VAT exempt (small business scheme)"
+    }
   }
 }

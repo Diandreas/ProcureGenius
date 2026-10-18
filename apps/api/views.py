@@ -1526,7 +1526,13 @@ class InvoiceViewSet(IdempotentCreateMixin, OrganizationFilterMixin, viewsets.Mo
         
         serializer = InvoiceItemSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(invoice=invoice)
+            # Petite entreprise exonérée de TVA : pas de taux sur les lignes
+            from decimal import Decimal
+            from apps.invoicing.vat import invoice_org_settings, is_small_business_exempt
+            if is_small_business_exempt(invoice_org_settings(invoice)):
+                serializer.save(invoice=invoice, tax_rate=Decimal('0'))
+            else:
+                serializer.save(invoice=invoice)
             invoice.recalculate_totals()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

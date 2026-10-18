@@ -746,5 +746,20 @@
     "importHistory": "Importverlauf",
     "importHistoryComingSoon": "Demnächst verfügbar - Der Importverlauf wird in Kürze bereitstehen.",
     "saveSettings": "Einstellungen speichern"
+  },
+  "vat": {
+    "smallBusiness": "Kleinunternehmer (keine Umsatzsteuer)",
+    "smallBusinessHint": "Ihre Rechnungen werden ohne Umsatzsteuer ausgestellt, die Vorsteuer aus Einkäufen ist nicht abziehbar.",
+    "smallBusinessHintDE": "Kleinunternehmerregelung (§ 19 UStG): Rechnungen ohne Umsatzsteuer mit Hinweis auf die Steuerbefreiung; die Vorsteuer aus Einkäufen ist nicht abziehbar.",
+    "smallBusinessHintFR": "Franchise en base de TVA (Art. 293 B CGI): Rechnungen ohne Umsatzsteuer mit dem Vermerk „TVA non applicable, art. 293 B du CGI“; die Vorsteuer ist nicht abziehbar.",
+    "smallBusinessHintCH": "Nicht mehrwertsteuerpflichtig (Umsatz unter der Grenze): Rechnungen ohne MWST; die Vorsteuer ist nicht abziehbar.",
+    "filingPeriod": "Zeitraum der Umsatzsteuer-Voranmeldung",
+    "periods": {
+      "monthly": "Monatlich",
+      "quarterly": "Vierteljährlich",
+      "yearly": "Jährlich"
+    },
+    "countryRates": "Geltende Umsatzsteuersätze ({{country}}):",
+    "countryRatesHint": "Klicken Sie auf einen Satz, um ihn als Standardsatz festzulegen. Die anderen Sätze stehen auf jeder Zeile zur Auswahl."
   }
 }

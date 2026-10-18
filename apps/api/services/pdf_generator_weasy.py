@@ -62,6 +62,14 @@ class InvoiceWeasyPDFGenerator:
             'paper_size': org_data.get('paper_size', 'A4'),  # Format de papier
         }
 
+        # TVA : ventilation par taux (obligatoire en Allemagne), mention des petites entreprises exonérées
+        try:
+            from apps.invoicing.vat import pdf_vat_context
+            context.update(pdf_vat_context(invoice, language))
+        except Exception as e:
+            print(f"✗ Erreur ventilation TVA: {e}")
+            context.update({'vat_breakdown': [], 'vat_exempt': False, 'vat_exempt_mention': '', 'vat_labels': {}})
+
         # Détecter le format thermal et utiliser le template approprié
         paper_size = org_data.get('paper_size', 'A4')
         print(f"\n{'='*80}")

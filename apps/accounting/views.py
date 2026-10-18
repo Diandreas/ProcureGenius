@@ -953,3 +953,76 @@ class ExpenseViewSet(viewsets.ModelViewSet):
             'by_category': [{'category': r['category'], 'label': labels.get(r['category'], r['category']),
                              'total': str(r['total'])} for r in rows],
         })
+
+
+# ─────────────────────────────────────────────
+#  Déclaration de TVA (VAT return / Umsatzsteuer-Voranmeldung)
+# ─────────────────────────────────────────────
+
+from rest_framework.renderers import BaseRenderer, JSONRenderer, BrowsableAPIRenderer
+
+
+class _CSVRenderer(BaseRenderer):
+    """Déclare le format « csv » pour que ?format=csv passe la négociation de DRF
+    (la vue renvoie elle-même la réponse CSV)."""
+    media_type = 'text/csv'
+    format = 'csv'
+    charset = 'utf-8'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data if isinstance(data, (bytes, str)) else b''
+
+
+class VatReportView(APIView):
+    """
+    GET /api/v1/accounting/vat-report/?period=month|quarter|year&year=2026&index=10[&format=csv][&lang=de]
+
+    Par défaut : la fréquence de déclaration de l'organisation (vat_filing_period)
+    et la dernière période entièrement écoulée.
+    """
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer, _CSVRenderer]
+
+    def get(self, request):
+        from django.http import HttpResponse
+        from .vat_report import (FILING_TO_KIND, build_vat_report, last_complete_period,
+                                 period_bounds, report_to_csv, serialize_report)
+
+        org = getattr(request.user, 'organization', None)
+        if not org:
+            return Response({'error': "Aucune organisation associée"}, status=400)
+
+        p = request.query_params
+        try:
+            filing = org.settings.vat_filing_period
+        except Exception:
+            filing = 'monthly'
+        kind = FILING_TO_KIND.get((p.get('period') or filing or 'monthly').lower())
+        if not kind:
+            return Response({'error': "period must be month, quarter or year"}, status=400)
+
+        default_year, default_index = last_complete_period(kind, timezone.localdate())
+        try:
+            year = int(p.get('year') or default_year)
+            index = None if kind == 'year' else int(p.get('index') or default_index)
+            if not 1900 <= year <= 2200:
+                raise ValueError
+            start, end = period_bounds(kind, year, index)
+        except (TypeError, ValueError):
+            return Response({'error': "Invalid year or index"}, status=400)
+
+        report = build_vat_report(org, start, end)
+
+        if p.get('format') == 'csv':
+            lang = (p.get('lang') or getattr(request, 'LANGUAGE_CODE', '')
+                    or getattr(request.user, 'preferred_language', '') or 'en')[:2].lower()
+            prefix = {'fr': 'declaration-tva', 'de': 'umsatzsteuer-voranmeldung'}.get(lang, 'vat-return')
+            suffix = f"{year}" if kind == 'year' else (f"{year}-Q{index}" if kind == 'quarter' else f"{year}-{index:02d}")
+            response = HttpResponse(report_to_csv(report, lang).encode('utf-8'),
+                                    content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="{prefix}_{suffix}.csv"'
+            return response
+
+        data = serialize_report(report)
+        data['period'].update({'kind': kind, 'year': year, 'index': index, 'filing_period': filing})
+        return Response(data)
