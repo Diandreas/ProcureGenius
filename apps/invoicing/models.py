@@ -667,6 +667,8 @@ class StockMovement(models.Model):
     LOSS_REASONS = [
         ('damaged', 'Produit endommagé'),
         ('expired', 'Produit périmé'),
+        # Le flacon ouvert a dépassé sa durée de vie après ouverture ; le reste du lot reste bon.
+        ('opened_expired', 'Périmé après ouverture'),
         ('stolen', 'Vol'),
         ('lost', 'Perte/Égarement'),
         ('quality_issue', 'Problème de qualité'),
@@ -779,6 +781,7 @@ class ProductBatch(models.Model):
     CLOSURE_REASONS = [
         ('depleted', 'Flacon terminé'),
         ('expired', 'Périmé'),
+        ('opened_expired', 'Périmé après ouverture'),
         ('contaminated', 'Contaminé / altéré'),
         ('qc_failed', 'Contrôle qualité non conforme'),
         ('other', 'Autre'),
@@ -830,6 +833,52 @@ class ProductBatch(models.Model):
     def is_expired(self):
         from django.utils import timezone
         return self.effective_expiry < timezone.now().date()
+
+    @property
+    def perime_apres_ouverture(self):
+        """Le flacon ouvert a dépassé sa durée de vie après ouverture, alors que la date du lot
+        (fabricant) n'est pas atteinte : seul ce flacon est perdu, pas le reste du lot."""
+        from django.utils import timezone
+        if not (self.opened_at and self.shelf_life_after_opening_days):
+            return False
+        limite_ouverture = (self.opened_at + timedelta(days=self.shelf_life_after_opening_days)).date()
+        aujourdhui = timezone.now().date()
+        return limite_ouverture < aujourdhui and self.expiry_date >= aujourdhui
+
+    def sortir_flacons(self, quantite, movement_type, loss_reason, libelle, note='', user=None):
+        """Sort `quantite` unité(s) du lot (par défaut le flacon ouvert) avec un mouvement tracé.
+
+        S'il reste des unités, elles sont fermées et toujours bonnes : le lot redevient « non ouvert »
+        (date d'ouverture effacée, elle reste dans la note du mouvement) et garde sa date du fabricant.
+        """
+        from django.utils import timezone
+        quantite = max(1, min(int(quantite or 1), self.quantity_remaining or 0))
+        ouvert_le = timezone.localtime(self.opened_at).strftime('%d/%m/%Y') if self.opened_at else None
+        details = libelle
+        if ouvert_le:
+            details += ' — flacon ouvert le %s' % ouvert_le
+            if self.shelf_life_after_opening_days:
+                details += ' (%s j après ouverture)' % self.shelf_life_after_opening_days
+        mouvement = self.product.adjust_stock(
+            quantity=-quantite, movement_type=movement_type,
+            reference_type='loss_report' if loss_reason else 'manual',
+            notes='Lot %s : %s unité(s) — %s%s' % (self.batch_number, quantite, details, (' : ' + note) if note else ''),
+            user=user, batch=self,
+        )
+        if mouvement and loss_reason:
+            mouvement.loss_reason = loss_reason
+            mouvement.loss_description = note
+            if self.product.cost_price:
+                mouvement.loss_value = self.product.cost_price * quantite
+            mouvement.save(update_fields=['loss_reason', 'loss_description', 'loss_value'])
+        self.refresh_from_db()
+        if self.quantity_remaining > 0:
+            self.opened_at = None
+            self.opened_by = None
+            self.tests_remaining = None
+            self.status = 'available'
+            self.save(update_fields=['opened_at', 'opened_by', 'tests_remaining', 'status'])
+        return mouvement
 
     @property
     def days_until_expiry(self):

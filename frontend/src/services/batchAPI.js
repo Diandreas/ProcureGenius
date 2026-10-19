@@ -73,8 +73,10 @@ const batchAPI = {
   },
 
   // Get opened reagents
-  getOpenedReagents: async (showAll = false) => {
-    const response = await api.get(`/batches/opened-reagents/?all=${showAll}`);
+  // etat : 'opened' | 'sealed' | 'all' (un booléen reste compris : true = tous)
+  getOpenedReagents: async (etat = 'opened') => {
+    const valeur = etat === true ? 'all' : etat === false ? 'opened' : etat;
+    const response = await api.get(`/batches/opened-reagents/?etat=${valeur}`);
     return response.data;
   },
 

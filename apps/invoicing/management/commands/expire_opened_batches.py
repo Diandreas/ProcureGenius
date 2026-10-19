@@ -41,6 +41,14 @@ class Command(BaseCommand):
 
         processed = 0
         for batch in expired_batches:
+            if batch.perime_apres_ouverture:
+                # Seul le flacon ouvert est perdu : 1 unité sort, le reste du lot redevient non ouvert.
+                with transaction.atomic():
+                    batch.sortir_flacons(1, 'loss', 'opened_expired', 'Périmé après ouverture (automatique)')
+                processed += 1
+                self.stdout.write(self.style.SUCCESS(
+                    f"  ✅ {batch.product.name} | lot {batch.batch_number} | 1 flacon périmé après ouverture"))
+                continue
             with transaction.atomic():
                 qty = batch.quantity_remaining
                 stock_before = batch.product.stock_quantity or 0

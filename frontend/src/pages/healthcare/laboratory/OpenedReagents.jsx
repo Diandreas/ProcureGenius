@@ -56,12 +56,20 @@ const aujourdhuiISO = () => {
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
+// parDefaut : 'un' = seul le flacon concerné sort (1), 'tout' = tout le reste du lot.
 const MOTIFS_CLOTURE = [
-    { value: 'depleted', label: 'Flacon terminé', aide: 'Le réactif a été entièrement utilisé.' },
-    { value: 'expired', label: 'Périmé', aide: 'Date limite dépassée : la quantité restante sort du stock en perte.' },
-    { value: 'contaminated', label: 'Contaminé / altéré', aide: 'La quantité restante sort du stock en perte.' },
-    { value: 'qc_failed', label: 'Contrôle qualité non conforme', aide: 'La quantité restante sort du stock en perte.' },
-    { value: 'other', label: 'Autre', aide: 'Précisez la raison dans la note.' },
+    { value: 'depleted', label: 'Flacon terminé', parDefaut: 'un', aide: 'Le flacon a été entièrement utilisé. Le reste du lot reste en stock, non ouvert.' },
+    { value: 'opened_expired', label: 'Périmé après ouverture', parDefaut: 'un', aide: 'Le flacon ouvert a dépassé sa durée de vie après ouverture. Seul ce flacon sort du stock (perte tracée « après ouverture ») ; le reste du lot reste bon.' },
+    { value: 'expired', label: 'Lot périmé (date du fabricant)', parDefaut: 'tout', aide: 'La date imprimée sur le lot est dépassée : tout le reste du lot sort du stock (perte tracée « date du lot »).' },
+    { value: 'contaminated', label: 'Contaminé / altéré', parDefaut: 'un', aide: 'Perte tracée.' },
+    { value: 'qc_failed', label: 'Contrôle qualité non conforme', parDefaut: 'tout', aide: 'Concerne tout le lot : perte tracée.' },
+    { value: 'other', label: 'Autre', parDefaut: 'un', aide: 'Précisez la raison dans la note.' },
+];
+
+const ETATS = [
+    { value: 'opened', label: 'Ouverts' },
+    { value: 'sealed', label: 'Non ouverts' },
+    { value: 'all', label: 'Tous' },
 ];
 
 const StatCard = ({ title, value, icon, color }) => (
@@ -96,7 +104,12 @@ const OpenedReagents = () => {
         batches: [], total: 0, opened_count: 0, expired_count: 0, expiring_soon_count: 0,
         low_tests_count: 0, untracked: [],
     });
-    const [showAll, setShowAll] = useState(false);
+    // Filtre de la liste : ouverts / non ouverts / tous, et recherche par nom ou lot.
+    const [etat, setEtat] = useState('opened');
+    const showAll = etat !== 'opened';
+    const [recherche, setRecherche] = useState('');
+    // Sorties par péremption : toutes / date du lot / après ouverture.
+    const [typeSortie, setTypeSortie] = useState('all');
 
     // Liste des reactifs (chargee une fois : ouverture et rattachement)
     const [reactifs, setReactifs] = useState(null);
@@ -111,6 +124,7 @@ const OpenedReagents = () => {
     // Cloture
     const [aCloturer, setACloturer] = useState(null);
     const [motif, setMotif] = useState('depleted');
+    const [quantiteSortie, setQuantiteSortie] = useState('1');
     const [noteCloture, setNoteCloture] = useState('');
     const [cloture, setCloture] = useState(false);
 
@@ -141,13 +155,13 @@ const OpenedReagents = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            setData(await batchAPI.getOpenedReagents(showAll));
+            setData(await batchAPI.getOpenedReagents(etat));
         } catch (error) {
             enqueueSnackbar('Erreur lors du chargement', { variant: 'error' });
         } finally {
             setLoading(false);
         }
-    }, [showAll, enqueueSnackbar]);
+    }, [etat, enqueueSnackbar]);
 
     const fetchExamens = useCallback(async () => {
         setChargementExamens(true);
@@ -229,15 +243,36 @@ const OpenedReagents = () => {
     // ── Cloture ──────────────────────────────────────────────────────────────
     const demanderCloture = (ligne) => {
         setACloturer(ligne);
-        setMotif(ligne.is_expired ? 'expired' : 'depleted');
+        // Flacon périmé : après ouverture si la date du lot n'est pas atteinte, sinon lot périmé.
+        const lotPerime = ligne.expiry_date && new Date(ligne.expiry_date) < new Date(new Date().toDateString());
+        const m = ligne.is_expired ? (lotPerime ? 'expired' : 'opened_expired') : 'depleted';
+        choisirMotif(m, ligne);
         setNoteCloture('');
     };
 
+    const choisirMotif = (m, ligne = aCloturer) => {
+        setMotif(m);
+        const def = MOTIFS_CLOTURE.find((x) => x.value === m);
+        const reste = ligne?.quantity_remaining || 0;
+        setQuantiteSortie(String(def?.parDefaut === 'tout' ? reste : Math.min(1, reste) || 1));
+    };
+
     const confirmerCloture = async () => {
+        const q = parseInt(quantiteSortie, 10);
+        const reste = aCloturer.quantity_remaining || 0;
+        if (reste > 0 && (!q || q < 1 || q > reste)) {
+            enqueueSnackbar(`Quantité entre 1 et ${reste}`, { variant: 'warning' });
+            return;
+        }
         setCloture(true);
         try {
-            await batchAPI.closeBatch(aCloturer.id, { reason: motif, notes: noteCloture });
-            enqueueSnackbar(`Lot ${aCloturer.batch_number} clôturé`, { variant: 'success' });
+            await batchAPI.closeBatch(aCloturer.id, { reason: motif, notes: noteCloture, quantity: q || undefined });
+            enqueueSnackbar(
+                q && q < reste
+                    ? `${q} unité(s) sortie(s) du lot ${aCloturer.batch_number} — le reste du lot reste en stock`
+                    : `Lot ${aCloturer.batch_number} clôturé`,
+                { variant: 'success' },
+            );
             setACloturer(null);
             fetchData();
         } catch (e) {
@@ -355,6 +390,11 @@ const OpenedReagents = () => {
     };
 
     const motifCourant = MOTIFS_CLOTURE.find((m) => m.value === motif);
+    const texteRecherche = recherche.trim().toLowerCase();
+    const lotsAffiches = (data.batches || []).filter((b) => !texteRecherche
+        || `${b.product_name} ${b.batch_number} ${b.lot_number || ''}`.toLowerCase().includes(texteRecherche));
+    const sorties = (data.sorties_peremption || []).filter((x) => (typeSortie === 'all' || x.kind === typeSortie)
+        && (!texteRecherche || `${x.product_name} ${x.batch_number}`.toLowerCase().includes(texteRecherche)));
     const examensPratiques = examens.filter((e) => e.volume > 0);
 
     return (
@@ -375,10 +415,16 @@ const OpenedReagents = () => {
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <FormControlLabel
-                            control={<Switch checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />}
-                            label={<Typography variant="body2" fontWeight={500}>Tous les lots</Typography>}
-                            sx={{ color: 'white', mr: 1 }}
+                        <TextField
+                            select size="small" value={etat} onChange={(e) => setEtat(e.target.value)}
+                            sx={{ minWidth: 150, bgcolor: 'white', borderRadius: 1 }}
+                        >
+                            {ETATS.map((x) => <MenuItem key={x.value} value={x.value}>{x.label}</MenuItem>)}
+                        </TextField>
+                        <TextField
+                            size="small" placeholder="Rechercher un réactif ou un lot" value={recherche}
+                            onChange={(e) => setRecherche(e.target.value)}
+                            sx={{ minWidth: 220, bgcolor: 'white', borderRadius: 1 }}
                         />
                         <Button startIcon={<RefreshIcon />} onClick={fetchData} variant="outlined"
                             sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}>
@@ -455,12 +501,13 @@ const OpenedReagents = () => {
                         <TableBody>
                             {loading ? (
                                 <TableRow><TableCell colSpan={8} align="center" sx={{ py: 6 }}><CircularProgress /></TableCell></TableRow>
-                            ) : data.batches.length === 0 ? (
+                            ) : lotsAffiches.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
                                         <ScienceIcon sx={{ fontSize: 64, color: 'grey.300', mb: 2 }} />
                                         <Typography variant="h6" color="text.secondary">
-                                            {showAll ? 'Aucun lot disponible' : 'Aucun réactif ouvert'}
+                                            {texteRecherche ? 'Aucun lot ne correspond à la recherche'
+                                                : etat === 'sealed' ? 'Aucun lot non ouvert' : showAll ? 'Aucun lot disponible' : 'Aucun réactif ouvert'}
                                         </Typography>
                                         {!showAll && (
                                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -469,7 +516,7 @@ const OpenedReagents = () => {
                                         )}
                                     </TableCell>
                                 </TableRow>
-                            ) : data.batches.map((b) => {
+                            ) : lotsAffiches.map((b) => {
                                 const progress = getDaysProgress(b.days_until_expiry, b.is_expired);
                                 const estOuvert = b.status === 'opened';
                                 return (
@@ -576,6 +623,53 @@ const OpenedReagents = () => {
                                     </TableRow>
                                 );
                             })}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Card>
+
+            {/* Traçabilité : sorties par péremption normale (date du lot) ou après ouverture */}
+            <Card sx={{ borderRadius: 3, mb: 3 }}>
+                <CardContent sx={{ pb: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                        <Typography variant="h6" fontWeight={700}>Sorties pour péremption</Typography>
+                        <TextField select size="small" value={typeSortie} onChange={(e) => setTypeSortie(e.target.value)} sx={{ minWidth: 200 }}>
+                            <MenuItem value="all">Toutes</MenuItem>
+                            <MenuItem value="expired">Péremption normale (date du lot)</MenuItem>
+                            <MenuItem value="opened_expired">Après ouverture</MenuItem>
+                        </TextField>
+                    </Box>
+                </CardContent>
+                <TableContainer sx={{ overflowX: 'auto' }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: 'grey.50' }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Réactif</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Lot</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Qté sortie</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Péremption</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Par</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {sorties.length === 0 ? (
+                                <TableRow><TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>Aucune sortie pour péremption</TableCell></TableRow>
+                            ) : sorties.map((x) => (
+                                <TableRow key={x.id} hover>
+                                    <TableCell>{new Date(x.date).toLocaleDateString('fr-FR')}</TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={600}>{x.product_name}</Typography>
+                                        {x.notes && <Typography variant="caption" color="text.secondary">{x.notes}</Typography>}
+                                    </TableCell>
+                                    <TableCell>{x.batch_number || '—'}</TableCell>
+                                    <TableCell>{x.quantity}</TableCell>
+                                    <TableCell>
+                                        <Chip size="small" label={x.kind_label} color={x.kind === 'opened_expired' ? 'warning' : 'error'} variant="outlined" />
+                                    </TableCell>
+                                    <TableCell>{x.by}</TableCell>
+                                </TableRow>
+                            ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -700,7 +794,7 @@ const OpenedReagents = () => {
                     <Typography variant="body2" color="text.secondary">{aCloturer?.product_name}</Typography>
                 </DialogTitle>
                 <DialogContent dividers>
-                    <RadioGroup value={motif} onChange={(e) => setMotif(e.target.value)}>
+                    <RadioGroup value={motif} onChange={(e) => choisirMotif(e.target.value)}>
                         {MOTIFS_CLOTURE.map((m) => (
                             <FormControlLabel key={m.value} value={m.value} control={<Radio size="small" />}
                                 label={<Typography variant="body2" fontWeight={600}>{m.label}</Typography>} />
@@ -708,10 +802,21 @@ const OpenedReagents = () => {
                     </RadioGroup>
                     {motifCourant && <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>{motifCourant.aide}</Typography>}
                     {aCloturer?.quantity_remaining > 0 && (
-                        <Alert severity={motif === 'depleted' ? 'info' : 'warning'} sx={{ mb: 2 }}>
-                            Il reste <strong>{aCloturer.quantity_remaining}</strong> unité(s) sur ce lot : elles sortiront du stock
-                            {motif === 'depleted' ? ' (ajustement).' : ' en perte tracée.'}
-                        </Alert>
+                        <>
+                            <TextField
+                                type="number" label="Quantité à sortir du stock" size="small" fullWidth sx={{ mb: 1 }}
+                                value={quantiteSortie} onChange={(e) => setQuantiteSortie(e.target.value)}
+                                inputProps={{ min: 1, max: aCloturer.quantity_remaining }}
+                                helperText={`Sur ${aCloturer.quantity_remaining} unité(s) restante(s) dans ce lot`}
+                            />
+                            <Alert severity={motif === 'depleted' ? 'info' : 'warning'} sx={{ mb: 2 }}>
+                                {parseInt(quantiteSortie, 10) < aCloturer.quantity_remaining
+                                    ? <><strong>{quantiteSortie}</strong> unité(s) sortent du stock{motif === 'depleted' ? ' (ajustement)' : ' en perte tracée'} ;
+                                        les <strong>{aCloturer.quantity_remaining - (parseInt(quantiteSortie, 10) || 0)}</strong> autres restent en stock, lot non ouvert.</>
+                                    : <>Tout le reste du lot (<strong>{aCloturer.quantity_remaining}</strong>) sort du stock
+                                        {motif === 'depleted' ? ' (ajustement)' : ' en perte tracée'} et le lot est clôturé.</>}
+                            </Alert>
+                        </>
                     )}
                     <TextField label="Note (facultatif)" fullWidth multiline minRows={2}
                         value={noteCloture} onChange={(e) => setNoteCloture(e.target.value)} />

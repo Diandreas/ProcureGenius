@@ -235,7 +235,8 @@ class BatchCloseView(APIView):
 
     MOTIFS = {
         'depleted': ('adjustment', None, 'Flacon terminé'),
-        'expired': ('loss', 'expired', 'Périmé'),
+        'expired': ('loss', 'expired', 'Périmé (date du lot)'),
+        'opened_expired': ('loss', 'opened_expired', 'Périmé après ouverture'),
         'contaminated': ('loss', 'damaged', 'Contaminé / altéré'),
         'qc_failed': ('loss', 'quality_issue', 'Contrôle qualité non conforme'),
         'other': ('loss', 'other', 'Autre'),
@@ -254,6 +255,21 @@ class BatchCloseView(APIView):
             return Response({'error': 'Motif de clôture invalide.'}, status=status.HTTP_400_BAD_REQUEST)
         note = str(request.data.get('notes') or '').strip()
         type_mouvement, raison_perte, libelle = self.MOTIFS[motif]
+
+        # Quantité sortie : par défaut tout le reste (ancien comportement), mais l'écran envoie 1
+        # pour un flacon terminé ou périmé après ouverture — le reste du lot n'est pas concerné.
+        restant_lot = batch.quantity_remaining or 0
+        try:
+            quantite = int(request.data.get('quantity') or restant_lot)
+        except (TypeError, ValueError):
+            return Response({'error': 'Quantité invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+        if restant_lot and quantite < 1:
+            return Response({'error': 'La quantité doit être au moins 1.'}, status=status.HTTP_400_BAD_REQUEST)
+        if 0 < quantite < restant_lot:
+            with transaction.atomic():
+                batch.sortir_flacons(quantite, type_mouvement, raison_perte, libelle, note=note, user=request.user)
+            batch.refresh_from_db()
+            return Response(ProductBatchSerializer(batch).data)
 
         with transaction.atomic():
             restant = batch.quantity_remaining or 0
@@ -278,7 +294,7 @@ class BatchCloseView(APIView):
             batch.closed_by = request.user
             batch.closure_reason = motif
             batch.closure_notes = note
-            batch.status = 'expired' if motif == 'expired' else 'depleted'
+            batch.status = 'expired' if motif in ('expired', 'opened_expired') else 'depleted'
             batch.tests_remaining = 0 if batch.tests_remaining is not None else None
             batch.save(update_fields=['closed_at', 'closed_by', 'closure_reason', 'closure_notes', 'status',
                                       'tests_remaining'])
@@ -378,15 +394,18 @@ class OpenedReagentsView(APIView):
 
     def get(self, request):
         organization = request.user.organization
-        show_all = request.query_params.get('all', 'false') == 'true'
+        # etat = opened (défaut) | sealed (non ouverts) | all ; « all=true » reste compris.
+        etat = request.query_params.get('etat') or ('all' if request.query_params.get('all') == 'true' else 'opened')
 
         filters = {
             'organization': organization,
             'quantity_remaining__gt': 0,
         }
 
-        if show_all:
+        if etat == 'all':
             filters['status__in'] = ['available', 'opened']
+        elif etat == 'sealed':
+            filters['status'] = 'available'
         else:
             filters['status'] = 'opened'
 
@@ -442,8 +461,30 @@ class OpenedReagentsView(APIView):
                 ),
             })
 
+        # Traçabilité : ce qui est sorti par péremption normale (date du lot) ou après ouverture.
+        from .models import StockMovement
+        mouvements = (StockMovement.objects
+                      .filter(product__organization=organization, movement_type='loss',
+                              loss_reason__in=['expired', 'opened_expired'])
+                      .filter(Q(product__category__name__icontains='labo')
+                              | Q(product__category__name__icontains='réactif')
+                              | Q(product__category__name__icontains='reactif'))
+                      .select_related('product', 'batch', 'created_by').order_by('-created_at')[:200])
+        sorties = [{
+            'id': str(m.id),
+            'date': m.created_at.isoformat(),
+            'product_name': m.product.name,
+            'batch_number': m.batch.batch_number if m.batch_id else '',
+            'quantity': abs(m.quantity),
+            'kind': m.loss_reason,
+            'kind_label': 'Après ouverture' if m.loss_reason == 'opened_expired' else 'Date du lot',
+            'notes': m.notes,
+            'by': (m.created_by.get_full_name() or m.created_by.username) if m.created_by_id else 'Automatique (nuit)',
+        } for m in mouvements]
+
         return Response({
             'batches': results,
+            'sorties_peremption': sorties,
             'total': len(results),
             'opened_count': sum(1 for b in results if b['status'] == 'opened'),
             'expired_count': sum(1 for b in results if b['is_expired']),
