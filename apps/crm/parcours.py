@@ -66,8 +66,8 @@ def _propre(texte):
         t = reste if reste.lower().startswith('bilan') else 'Bilan ' + reste
     if not t:
         return ''
-    t = t[0].upper() + t[1:]
-    return t[:60]
+    # même acte écrit « BILAN TROPICAL » ou « Bilan Tropical » : une seule casse
+    return t.capitalize()[:60]
 
 
 def _etapes_par_patient(organization, fin, patient_id=None, sans_pharmacie=False):
