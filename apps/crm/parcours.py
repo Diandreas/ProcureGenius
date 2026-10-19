@@ -140,6 +140,7 @@ def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie
     depart = defaultdict(set)           # a -> patients ayant une suite dans la période
     patients_actifs = set()
     chemins = Counter()
+    sequences = []                       # parcours complets (libellé principal) des patients de la période
     entrees = Counter()
     apres = defaultdict(lambda: [0, 0])  # acte -> [patients mûrs, revenus ensuite]
     vus_apres = set()
@@ -154,6 +155,7 @@ def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie
         dans_periode = [debut_dt <= e[0] <= fin_dt for e in seq]
         if any(dans_periode):
             patients_actifs.add(pid)
+            sequences.append([_principal(e, niveau) for e in seq[:NB_POSITIONS]])
         if seq and dans_periode[0] and etapes[0][0] >= debut_dt:
             entrees[_principal(seq[0], niveau)] += 1
         vues = set()
@@ -215,11 +217,75 @@ def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie
         'transitions': transitions[:400],
         'steps': [s for s, _ in etapes_connues.most_common(80)],
         'paths': [{'steps': list(k), 'patients': n} for k, n in chemins.most_common(20) if n >= 2],
+        'circuit': _circuit(sequences),
         'entries': [{'step': k, 'patients': n} for k, n in entrees.most_common(12)],
         'comes_back': sorted(
             [{'step': k, 'patients': v[0], 'came_back': v[1], 'rate': round(100 * v[1] / v[0], 1)}
              for k, v in apres.items() if v[0] >= 5],
             key=lambda x: (-x['patients']))[:25],
+    }
+
+
+NB_POSITIONS = 5
+PAR_COLONNE = 6     # étapes montrées par colonne du schéma ; le reste est regroupé dans « Autres »
+
+
+def _circuit(sequences):
+    """Circuit des actions, position par position depuis la toute première facture du patient.
+
+    - colonnes : pour la 1re, 2e... 5e action, les plus fréquentes (le reste en « Autres ») et combien
+      de patients se sont arrêtés là (pas d'action suivante) ;
+    - flux : combien de patients passent de telle action (position k) à telle autre (position k+1) ;
+    - dominant : le circuit le plus suivi, choisi pas à pas (la 1re action la plus fréquente, puis,
+      parmi ces patients, la 2e la plus fréquente, etc.), avec la part qui continue à chaque pas.
+    """
+    total = len(sequences)
+    colonnes, garder = [], []
+    for k in range(NB_POSITIONS):
+        compte = Counter(s[k] for s in sequences if len(s) > k)
+        tete = [x for x, _ in compte.most_common(PAR_COLONNE)]
+        garder.append(set(tete))
+        noeuds = [{'step': x, 'patients': compte[x]} for x in tete]
+        autres = sum(n for x, n in compte.items() if x not in garder[k])
+        if autres:
+            noeuds.append({'step': 'Autres', 'patients': autres})
+        if not noeuds:
+            break
+        arret = sum(1 for s in sequences if len(s) == k + 1)
+        colonnes.append({'position': k + 1, 'nodes': noeuds, 'patients': sum(compte.values()), 'stopped_here': arret})
+
+    def etiquette(s, k):
+        return s[k] if s[k] in garder[k] else 'Autres'
+
+    flux = Counter()
+    for s in sequences:
+        for k in range(min(len(s), len(colonnes)) - 1):
+            flux[(k + 1, etiquette(s, k), etiquette(s, k + 1))] += 1
+
+    def chaine(groupe, premiere):
+        """Circuit le plus suivi à partir d'une 1re action, choisi pas à pas."""
+        etapes, groupe = [], [s for s in groupe if s and s[0] == premiere]
+        depart = len(groupe)
+        for k in range(len(colonnes)):
+            compte = Counter(s[k] for s in groupe if len(s) > k)
+            if not compte:
+                break
+            etape, n = compte.most_common(1)[0]
+            etapes.append({'step': etape, 'patients': n,
+                           'share': round(100 * n / len(groupe), 1) if groupe else None})
+            groupe = [s for s in groupe if len(s) > k and s[k] == etape]
+            if n < 3:
+                break
+        return {'start': premiere, 'patients': depart, 'steps': etapes}
+
+    premieres = Counter(s[0] for s in sequences if s)
+    dominants = [chaine(sequences, x) for x, _ in premieres.most_common(3)]
+    return {
+        'patients': total,
+        'columns': colonnes,
+        'flows': [{'position': k, 'from': a, 'to': b, 'patients': n}
+                  for (k, a, b), n in sorted(flux.items(), key=lambda x: -x[1]) if n >= 1],
+        'dominants': dominants,
     }
 
 
