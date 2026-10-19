@@ -28,6 +28,7 @@ import CampagnesPanel from './CampagnesPanel';
 import QualitePanel from './QualitePanel';
 import ReglagesDialog from './ReglagesDialog';
 import RelanceDialog from '../../components/crm/RelanceDialog';
+import CircuitApercu from '../../components/crm/CircuitApercu';
 import Etiquettes from '../../components/crm/Etiquettes';
 import { chargerMotifs, ilYa, jourCourt } from '../../components/crm/crmData';
 import { useModules } from '../../contexts/ModuleContext';
@@ -510,6 +511,8 @@ export default function SuiviPatients() {
         )}
         </Box>
       </Box>
+
+      <CircuitApercu />
 
       <Tabs value={onglet} onChange={changerOnglet} sx={{ mb: 1.5 }}>
         {Object.entries(ONGLETS)

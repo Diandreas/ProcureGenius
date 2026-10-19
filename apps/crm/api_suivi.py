@@ -620,6 +620,32 @@ class CrmStatsView(APIView):
         return Response(stats.calculer_statistiques(user.organization, debut, fin, _admin(user)))
 
 
+class CrmOverviewView(APIView):
+    """Chiffres clés de plusieurs périodes côte à côte : ?p=AAAA-MM-JJ:AAAA-MM-JJ (répétable, 8 au plus)."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if not getattr(user, 'organization_id', None) or not user_can(user, Modules.CRM, 'view'):
+            return _refus()
+        if Modules.CRM not in (user.organization.enabled_modules or []) and not user.is_superuser:
+            return _refus()
+        periodes = []
+        for brut in request.query_params.getlist('p')[:8]:
+            try:
+                a, b = brut.split(':')
+                debut, fin = _date(a), _date(b)
+            except ValueError:
+                return _invalide('Période invalide : %s' % brut)
+            if not debut or not fin or debut > fin or (fin - debut).days > 800:
+                return _invalide('Période invalide : %s' % brut)
+            periodes.append((debut, fin))
+        if not periodes:
+            return _invalide('Choisissez au moins une période.')
+        from .tableau import comparer
+        return Response(comparer(user.organization, periodes, _admin(user)))
+
+
 class CrmJourneyView(APIView):
     """Parcours patients : enchaînements d'étapes (factures de tous les modules) sur une période."""
     permission_classes = [permissions.IsAuthenticated]

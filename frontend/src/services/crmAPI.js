@@ -106,6 +106,12 @@ const crmAPI = {
   getStats: async (params) => (await api.get('/crm/stats/', { params })).data,
   // Parcours patients : { start, end, level: 'service' | 'acte', pharmacy: '1' pour l'inclure }
   getJourney: async (params) => (await api.get('/crm/journey/', { params })).data,
+  // Vue d'ensemble : périodes « AAAA-MM-JJ:AAAA-MM-JJ », une colonne chacune
+  getOverview: async (periodes) => {
+    const q = new URLSearchParams();
+    periodes.forEach((p) => q.append('p', p));
+    return (await api.get(`/crm/overview/?${q.toString()}`)).data;
+  },
 
   // Passages : { days, reason, patient, page, page_size }
   listPassages: async (params = {}) => {

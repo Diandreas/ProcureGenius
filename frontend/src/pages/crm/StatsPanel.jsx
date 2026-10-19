@@ -6,6 +6,7 @@ import {
 import crmAPI from '../../services/crmAPI';
 import ProfilDepensesPanel from './ProfilDepensesPanel';
 import ParcoursPanel from './ParcoursPanel';
+import ApercuPanel from './ApercuPanel';
 
 // Date locale au format AAAA-MM-JJ (toISOString passerait en UTC et décalerait d'un jour).
 const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -22,6 +23,7 @@ const PERIODES = [
 ];
 
 const SECTIONS = [
+  { value: 'ensemble', label: "Vue d'ensemble" },
   { value: 'relances', label: 'Relances' },
   { value: 'campagnes', label: 'Campagnes' },
   { value: 'provenance', label: 'Provenance' },
@@ -118,7 +120,7 @@ export default function StatsPanel({ peutVoirMontants }) {
     const t = new Date();
     return { start: isoLocal(new Date(t.getFullYear(), t.getMonth(), 1)), end: isoLocal(t) };
   });
-  const [section, setSection] = useState('relances');
+  const [section, setSection] = useState('ensemble');
   const [donnees, setDonnees] = useState(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState('');
@@ -130,7 +132,7 @@ export default function StatsPanel({ peutVoirMontants }) {
   }, [choix, plage]);
 
   useEffect(() => {
-    if (section === 'depenses' || section === 'parcours' || !periode) return undefined;
+    if (['depenses', 'parcours', 'ensemble'].includes(section) || !periode) return undefined;
     let vivant = true;
     setChargement(true);
     setErreur('');
@@ -517,7 +519,7 @@ export default function StatsPanel({ peutVoirMontants }) {
             sx={{ fontWeight: section === s.value ? 700 : 400 }} />
         ))}
       </Box>
-      {!['depenses', 'fidelite'].includes(section) && (
+      {!['depenses', 'fidelite', 'ensemble'].includes(section) && (
         <Box display="flex" gap={1} flexWrap="wrap" alignItems="center" mb={1.5}>
           <Typography variant="caption" color="text.secondary">Période :</Typography>
           {PERIODES.map((p) => (
@@ -541,7 +543,9 @@ export default function StatsPanel({ peutVoirMontants }) {
         </Box>
       )}
 
-      {section === 'depenses' ? (
+      {section === 'ensemble' ? (
+        <ApercuPanel />
+      ) : section === 'depenses' ? (
         <ProfilDepensesPanel />
       ) : section === 'parcours' ? (
         periode ? <ParcoursPanel periode={periode} /> : <Alert severity="warning">Choisissez une date de début avant la date de fin.</Alert>
