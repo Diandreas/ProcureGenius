@@ -1,16 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Typography, Chip, Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress, Alert,
-  Stack, LinearProgress, Tooltip,
+  Stack, LinearProgress, Tooltip, TextField,
 } from '@mui/material';
 import crmAPI from '../../services/crmAPI';
 import ProfilDepensesPanel from './ProfilDepensesPanel';
+import ParcoursPanel from './ParcoursPanel';
+
+// Date locale au format AAAA-MM-JJ (toISOString passerait en UTC et décalerait d'un jour).
+const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 const PERIODES = [
-  { jours: 30, label: '30 jours' },
-  { jours: 90, label: '3 mois' },
-  { jours: 180, label: '6 mois' },
-  { jours: 365, label: '1 an' },
+  { code: 'semaine', label: 'Semaine en cours', calc: (t) => { const d = new Date(t); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return [d, t]; } },
+  { code: 'mois', label: 'Mois en cours', calc: (t) => [new Date(t.getFullYear(), t.getMonth(), 1), t] },
+  { code: 'mois_dernier', label: 'Mois dernier', calc: (t) => [new Date(t.getFullYear(), t.getMonth() - 1, 1), new Date(t.getFullYear(), t.getMonth(), 0)] },
+  { code: '30', label: '30 jours', calc: (t) => { const d = new Date(t); d.setDate(d.getDate() - 29); return [d, t]; } },
+  { code: '90', label: '3 mois', calc: (t) => { const d = new Date(t); d.setDate(d.getDate() - 89); return [d, t]; } },
+  { code: '180', label: '6 mois', calc: (t) => { const d = new Date(t); d.setDate(d.getDate() - 179); return [d, t]; } },
+  { code: '365', label: '1 an', calc: (t) => { const d = new Date(t); d.setDate(d.getDate() - 364); return [d, t]; } },
+  { code: 'plage', label: 'Dates précises…' },
 ];
 
 const SECTIONS = [
@@ -20,6 +28,7 @@ const SECTIONS = [
   { value: 'montee', label: 'Montée en gamme' },
   { value: 'fidelite', label: 'Fidélité' },
   { value: 'pertes', label: 'Ventes perdues' },
+  { value: 'parcours', label: 'Parcours patients' },
   { value: 'depenses', label: 'Qui dépense ?', montants: true },
 ];
 
@@ -104,21 +113,24 @@ function Semaines({ points }) {
 }
 
 export default function StatsPanel({ peutVoirMontants }) {
-  const [jours, setJours] = useState(90);
+  const [choix, setChoix] = useState('90');
+  const [plage, setPlage] = useState(() => {
+    const t = new Date();
+    return { start: isoLocal(new Date(t.getFullYear(), t.getMonth(), 1)), end: isoLocal(t) };
+  });
   const [section, setSection] = useState('relances');
   const [donnees, setDonnees] = useState(null);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState('');
 
   const periode = useMemo(() => {
-    const fin = new Date();
-    const debut = new Date();
-    debut.setDate(debut.getDate() - (jours - 1));
-    return { start: iso(debut), end: iso(fin) };
-  }, [jours]);
+    if (choix === 'plage') return plage.start && plage.end && plage.start <= plage.end ? { ...plage } : null;
+    const [debut, fin] = PERIODES.find((x) => x.code === choix).calc(new Date());
+    return { start: isoLocal(debut), end: isoLocal(fin) };
+  }, [choix, plage]);
 
   useEffect(() => {
-    if (section === 'depenses') return undefined;
+    if (section === 'depenses' || section === 'parcours' || !periode) return undefined;
     let vivant = true;
     setChargement(true);
     setErreur('');
@@ -509,14 +521,32 @@ export default function StatsPanel({ peutVoirMontants }) {
         <Box display="flex" gap={1} flexWrap="wrap" alignItems="center" mb={1.5}>
           <Typography variant="caption" color="text.secondary">Période :</Typography>
           {PERIODES.map((p) => (
-            <Chip key={p.jours} size="small" clickable label={p.label} onClick={() => setJours(p.jours)}
-              color={jours === p.jours ? 'secondary' : 'default'} variant={jours === p.jours ? 'filled' : 'outlined'} />
+            <Chip key={p.code} size="small" clickable label={p.label} onClick={() => setChoix(p.code)}
+              color={choix === p.code ? 'secondary' : 'default'} variant={choix === p.code ? 'filled' : 'outlined'} />
           ))}
+          {choix === 'plage' && (
+            <>
+              <TextField type="date" size="small" label="Du" value={plage.start} InputLabelProps={{ shrink: true }}
+                onChange={(e) => setPlage({ ...plage, start: e.target.value })} sx={{ width: 160 }} />
+              <TextField type="date" size="small" label="Au" value={plage.end} InputLabelProps={{ shrink: true }}
+                onChange={(e) => setPlage({ ...plage, end: e.target.value })} sx={{ width: 160 }}
+                error={Boolean(plage.start && plage.end && plage.start > plage.end)} />
+            </>
+          )}
+          {periode && (
+            <Typography variant="caption" color="text.secondary">
+              du {periode.start.split('-').reverse().join('/')} au {periode.end.split('-').reverse().join('/')}
+            </Typography>
+          )}
         </Box>
       )}
 
       {section === 'depenses' ? (
         <ProfilDepensesPanel />
+      ) : section === 'parcours' ? (
+        periode ? <ParcoursPanel periode={periode} /> : <Alert severity="warning">Choisissez une date de début avant la date de fin.</Alert>
+      ) : !periode ? (
+        <Alert severity="warning">Choisissez une date de début avant la date de fin.</Alert>
       ) : (
         <>
           {chargement && <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>}

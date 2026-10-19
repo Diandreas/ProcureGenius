@@ -67,6 +67,11 @@ export default function RelancesPatient({ patient }) {
               Prend souvent : {resume.usual.map((u) => u.label).join(' · ')}
             </Typography>
           )}
+          {(resume.journey || []).length > 1 && (
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.25 }}>
+              Parcours : {resume.journey.slice(-8).map((e) => `${e.services.filter((x) => x !== 'Pharmacie').join(' + ') || 'Pharmacie'} (${e.date.slice(8, 10)}/${e.date.slice(5, 7)})`).join(' → ')}
+            </Typography>
+          )}
         </Box>
       )}
       <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>

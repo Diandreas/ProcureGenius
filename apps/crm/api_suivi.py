@@ -513,7 +513,11 @@ class CrmPatientSummaryView(_ProvenanceView):
         patient = services.patients_du_centre(org, True).filter(pk=pk).first()
         if not patient:
             return _introuvable()
-        return Response(services.resume_patient(patient, org, _admin(request.user)))
+        resume = services.resume_patient(patient, org, _admin(request.user))
+        # Parcours : les dernières étapes du patient, tous modules confondus (ordre des factures).
+        from .parcours import parcours_patient
+        resume['journey'] = parcours_patient(patient)
+        return Response(resume)
 
 
 class CrmQuartierListView(_ProvenanceView):
@@ -614,6 +618,31 @@ class CrmStatsView(APIView):
         if (fin - debut).days > 800:
             return _invalide('Période trop longue.')
         return Response(stats.calculer_statistiques(user.organization, debut, fin, _admin(user)))
+
+
+class CrmJourneyView(APIView):
+    """Parcours patients : enchaînements d'étapes (factures de tous les modules) sur une période."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if not getattr(user, 'organization_id', None) or not user_can(user, Modules.CRM, 'view'):
+            return _refus()
+        if Modules.CRM not in (user.organization.enabled_modules or []) and not user.is_superuser:
+            return _refus()
+        params = request.query_params
+        try:
+            fin = _date(params.get('end')) or date.today()
+            debut = _date(params.get('start')) or (fin - timedelta(days=89))
+        except ValueError as e:
+            return _invalide(str(e))
+        if debut > fin:
+            return _invalide('La date de début suit la date de fin.')
+        if (fin - debut).days > 800:
+            return _invalide('Période trop longue.')
+        from .parcours import calculer_parcours
+        return Response(calculer_parcours(user.organization, debut, fin, params.get('level', 'service'),
+                                           sans_pharmacie=params.get('pharmacy') != '1'))
 
 
 # ── Qualité des fiches ────────────────────────────────────────────────────
