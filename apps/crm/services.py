@@ -56,6 +56,16 @@ def peut_voir_montants(user):
     return bool(user.is_superuser or getattr(user, 'role', '') in CRM_ADMIN_ROLES)
 
 
+def voit_montants(user):
+    """Affichage des montants (CA, panier moyen...) : administrateurs, ou droit explicite
+    « Voir les montants » du Suivi patients (ex. un commercial). Ne donne AUCUN autre pouvoir
+    d'administrateur : peut_voir_montants reste le contrôle des actions réservées."""
+    if peut_voir_montants(user):
+        return True
+    droits = getattr(getattr(user, 'permissions', None), 'module_permissions', None) or {}
+    return 'amounts' in (droits.get('crm') or [])
+
+
 # ── Segments ────────────────────────────────────────────────────────────────
 
 SEGMENTS = [

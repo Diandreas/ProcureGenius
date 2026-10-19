@@ -416,6 +416,7 @@ ACTION_LABELS = {
     'cancel': 'Annuler',
     'adjust_stock': 'Ajuster le stock',
     'export': 'Exporter',
+    'amounts': 'Voir les montants',
 }
 
 MODULE_ACTIONS = {
@@ -426,7 +427,7 @@ MODULE_ACTIONS = {
     Modules.IMAGING: ['view', 'create', 'edit', 'delete', 'validate'],
     Modules.PHARMACY: ['view', 'create', 'edit', 'dispense', 'adjust_stock'],
     Modules.MATERNITY: ['view', 'create', 'edit', 'delete'],
-    Modules.CRM: ['view', 'create', 'edit', 'export'],
+    Modules.CRM: ['view', 'create', 'edit', 'export', 'amounts'],
     Modules.VACCINATION: ['view', 'create', 'edit', 'delete'],
     # 'visits' est utilise comme identifiant de module (il figure bien dans
     # enabled_modules) mais n'a pas de constante dans Modules : on le cite en clair.

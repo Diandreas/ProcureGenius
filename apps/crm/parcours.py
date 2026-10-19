@@ -76,7 +76,7 @@ def _etapes_par_patient(organization, fin, patient_id=None, sans_pharmacie=False
     fin_dt = timezone.make_aware(datetime.combine(fin, time.max))
     factures = list(Invoice.objects.filter(organization=organization, client_id__in=base, created_at__lte=fin_dt)
                     .exclude(status__in=['draft', 'cancelled']).exclude(invoice_type='credit_note')
-                    .order_by().values('id', 'client_id', 'created_at', 'invoice_type'))
+                    .order_by().values('id', 'client_id', 'created_at', 'invoice_type', 'status', 'total_amount'))
     lignes = defaultdict(list)
     for it in (InvoiceItem.objects.filter(invoice_id__in=[f['id'] for f in factures]).order_by()
                .values('invoice_id', 'description', 'product__category__name', 'product__product_type')):
@@ -110,7 +110,8 @@ def _etapes_par_patient(organization, fin, patient_id=None, sans_pharmacie=False
             if not svc:
                 continue
             actes = actes or set(svc)
-        par_patient[f['client_id']].append((f['created_at'], frozenset(svc), frozenset(actes)))
+        encaisse = float(f['total_amount'] or 0) if f['status'] == 'paid' else 0.0
+        par_patient[f['client_id']].append((f['created_at'], frozenset(svc), frozenset(actes), encaisse))
     for liste in par_patient.values():
         liste.sort(key=lambda e: e[0])
     return par_patient
@@ -126,7 +127,7 @@ def _principal(etape, niveau):
     return ' + '.join(sorted(etape[1]))
 
 
-def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie=True):
+def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie=True, avec_montants=False):
     niveau = 'acte' if niveau == 'acte' else 'service'
     debut_dt = timezone.make_aware(datetime.combine(debut, time.min))
     fin_dt = timezone.make_aware(datetime.combine(fin, time.max))
@@ -141,6 +142,7 @@ def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie
     patients_actifs = set()
     chemins = Counter()
     sequences = []                       # parcours complets (libellé principal) des patients de la période
+    montants_seq = []                    # encaissé à chaque étape (même ordre que `sequences`)
     entrees = Counter()
     apres = defaultdict(lambda: [0, 0])  # acte -> [patients mûrs, revenus ensuite]
     vus_apres = set()
@@ -150,12 +152,15 @@ def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie
         seq = []
         for e in etapes:
             if seq and libelles(seq[-1]) == libelles(e):
+                # même étape répétée : une seule étape, mais tout ce qui a été encaissé compte
+                seq[-1] = (seq[-1][0], seq[-1][1], seq[-1][2], seq[-1][3] + e[3])
                 continue
             seq.append(e)
         dans_periode = [debut_dt <= e[0] <= fin_dt for e in seq]
         if any(dans_periode):
             patients_actifs.add(pid)
             sequences.append([_principal(e, niveau) for e in seq[:NB_POSITIONS]])
+            montants_seq.append([e[3] for e in seq[:NB_POSITIONS]])
         if seq and dans_periode[0] and etapes[0][0] >= debut_dt:
             entrees[_principal(seq[0], niveau)] += 1
         vues = set()
@@ -217,7 +222,7 @@ def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie
         'transitions': transitions[:400],
         'steps': [s for s, _ in etapes_connues.most_common(80)],
         'paths': [{'steps': list(k), 'patients': n} for k, n in chemins.most_common(20) if n >= 2],
-        'circuit': _circuit(sequences),
+        'circuit': _circuit(sequences, montants_seq if avec_montants else None),
         'entries': [{'step': k, 'patients': n} for k, n in entrees.most_common(12)],
         'comes_back': sorted(
             [{'step': k, 'patients': v[0], 'came_back': v[1], 'rate': round(100 * v[1] / v[0], 1)}
@@ -230,7 +235,7 @@ NB_POSITIONS = 5
 PAR_COLONNE = 6     # étapes montrées par colonne du schéma ; le reste est regroupé dans « Autres »
 
 
-def _circuit(sequences):
+def _circuit(sequences, montants=None):
     """Circuit des actions, position par position depuis la toute première facture du patient.
 
     - colonnes : pour la 1re, 2e... 5e action, les plus fréquentes (le reste en « Autres ») et combien
@@ -245,14 +250,30 @@ def _circuit(sequences):
         compte = Counter(s[k] for s in sequences if len(s) > k)
         tete = [x for x, _ in compte.most_common(PAR_COLONNE)]
         garder.append(set(tete))
-        noeuds = [{'step': x, 'patients': compte[x]} for x in tete]
+        # encaissé à cette position, par action (administrateurs / droit « voir les montants »)
+        ca = Counter()
+        if montants is not None:
+            for s, m in zip(sequences, montants):
+                if len(s) > k:
+                    ca[s[k] if s[k] in garder[k] else 'Autres'] += m[k]
+
+        def noeud(nom, n):
+            d = {'step': nom, 'patients': n, 'revenue': None, 'basket': None}
+            if montants is not None:
+                d['revenue'] = round(ca[nom])
+                d['basket'] = round(ca[nom] / n) if n else None
+            return d
+
+        noeuds = [noeud(x, compte[x]) for x in tete]
         autres = sum(n for x, n in compte.items() if x not in garder[k])
         if autres:
-            noeuds.append({'step': 'Autres', 'patients': autres})
+            noeuds.append(noeud('Autres', autres))
         if not noeuds:
             break
         arret = sum(1 for s in sequences if len(s) == k + 1)
-        colonnes.append({'position': k + 1, 'nodes': noeuds, 'patients': sum(compte.values()), 'stopped_here': arret})
+        colonnes.append({'position': k + 1, 'nodes': noeuds, 'patients': sum(compte.values()), 'stopped_here': arret,
+                         'revenue': round(sum(ca.values())) if montants is not None else None,
+                         'continue_rate': round(100 * (sum(compte.values()) - arret) / sum(compte.values()), 1) if compte else None})
 
     def etiquette(s, k):
         return s[k] if s[k] in garder[k] else 'Autres'

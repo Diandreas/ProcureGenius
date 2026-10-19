@@ -74,31 +74,6 @@ export default function ParcoursPanel({ periode }) {
             <Carte titre="Circuit des actions"
               aide="Depuis la toute première facture de chaque patient venu sur la période : la 1re action, puis la 2e, la 3e… Plus un bloc est haut, plus il y a de patients ; les bandes montrent qui passe d'une action à l'autre. Survolez pour les chiffres.">
               <CircuitSchema circuit={donnees.circuit} />
-              {(donnees.circuit.dominants || []).length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" fontWeight={700} gutterBottom>Circuits les plus suivis</Typography>
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-                    Pour chaque 1re action fréquente, l'action suivante la plus courante, puis la suivante… et la part des patients qui continuent à chaque pas.
-                  </Typography>
-                  <Stack spacing={1.25}>
-                    {donnees.circuit.dominants.map((d) => (
-                      <Box key={d.start} display="flex" gap={0.75} alignItems="center" flexWrap="wrap">
-                        {d.steps.map((e, i) => (
-                          <React.Fragment key={`${e.step}-${i}`}>
-                            {i > 0 && (
-                              <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-                                → {e.share} %
-                              </Typography>
-                            )}
-                            <Chip size="small" variant={i === 0 ? 'filled' : 'outlined'} color={i === 0 ? 'primary' : 'default'}
-                              label={`${i + 1}. ${e.step} (${e.patients})`} />
-                          </React.Fragment>
-                        ))}
-                      </Box>
-                    ))}
-                  </Stack>
-                </Box>
-              )}
             </Carte>
           )}
 

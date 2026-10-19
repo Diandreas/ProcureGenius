@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Chip, Stack, Typography, useTheme } from '@mui/material';
 
 /**
  * Schéma du circuit des actions : colonne 1 = 1re action du patient, colonne 2 = la suivante, etc.
@@ -10,12 +10,20 @@ import { Box, Typography, useTheme } from '@mui/material';
 const CLAIR = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6'];
 const SOMBRE = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9'];
 const RANG = ['1re', '2e', '3e', '4e', '5e'];
+// Montant court pour tenir sous un bloc : 1 893 300 -> « 1,9 M F », 192 700 -> « 193 k F ».
+const court = (n) => {
+  if (n === null || n === undefined) return '';
+  if (n >= 1e6) return `${(n / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} M F`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)} k F`;
+  return `${Math.round(n)} F`;
+};
+const plein = (n) => `${Math.round(n || 0).toLocaleString('fr-FR')} F`;
 
 const L = 980;          // largeur logique (viewBox)
 const HAUT = 340;       // hauteur de la colonne la plus pleine
 const ECART = 8;        // espace entre deux blocs d'une colonne
 const BARRE = 14;       // largeur d'un bloc
-const ENTETE = 46;
+const ENTETE = 62;
 const LIGNE = 16;       // place minimale d'un bloc : son libellé ne chevauche jamais le suivant
 
 export default function CircuitSchema({ circuit }) {
@@ -87,7 +95,10 @@ export default function CircuitSchema({ circuit }) {
               {RANG[k]} action
             </text>
             <text x={k * plan.pas + 4} y={33} fontSize={11} fill={encre2}>
-              {c.patients} patients{c.stopped_here ? ` · ${c.stopped_here} s'arrêtent là` : ''}
+              {c.patients} patients{c.revenue !== null && c.revenue !== undefined ? ` · ${court(c.revenue)}` : ''}
+            </text>
+            <text x={k * plan.pas + 4} y={49} fontSize={11} fill={encre2}>
+              {k < plan.cols.length - 1 ? `${c.continue_rate} % continuent · ${c.stopped_here} s'arrêtent` : `${c.stopped_here} s'arrêtent ici`}
             </text>
           </g>
         ))}
@@ -106,17 +117,37 @@ export default function CircuitSchema({ circuit }) {
           <g key={`${b.k}|${b.n.step}`}
             onMouseMove={(e) => setSurvol({
               cle: `n${b.k}|${b.n.step}`, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY,
-              texte: `${RANG[b.k]} action : ${b.n.step} — ${b.n.patients} patient${b.n.patients > 1 ? 's' : ''}`,
+              texte: `${RANG[b.k]} action : ${b.n.step} — ${b.n.patients} patient${b.n.patients > 1 ? 's' : ''}`
+                + (b.n.revenue !== null && b.n.revenue !== undefined ? ` · encaissé ${plein(b.n.revenue)} · panier moyen ${plein(b.n.basket)}` : ''),
             })}>
             <rect x={b.x} y={b.y} width={BARRE} height={b.h} rx={3} fill={couleur(b.n.step)}
               stroke={theme.palette.background.paper} strokeWidth={1} />
             <text x={b.x + BARRE + 6} y={b.y + Math.min(b.h / 2, 12) + 4} fontSize={11.5} fill={encre}>
-              {b.n.step.length > 26 ? `${b.n.step.slice(0, 25)}…` : b.n.step}
-              <tspan fill={encre2}>{` ${b.n.patients}`}</tspan>
+              {b.n.step.length > 20 ? `${b.n.step.slice(0, 19)}…` : b.n.step}
+              <tspan fill={encre2}>{` ${b.n.patients}`}{b.n.revenue ? ` · ${court(b.n.revenue)}` : ''}</tspan>
             </text>
           </g>
         ))}
       </svg>
+      {(circuit.dominants || []).length > 0 && (
+        <Stack spacing={1} sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" fontWeight={700}>Circuits les plus suivis</Typography>
+          <Typography variant="caption" color="text.secondary">
+            Pour chaque 1re action fréquente : l&apos;action suivante la plus courante, puis la suivante… et la part qui continue à chaque pas.
+          </Typography>
+          {circuit.dominants.map((d) => (
+            <Box key={d.start} display="flex" gap={0.75} alignItems="center" flexWrap="wrap">
+              {d.steps.map((e, i) => (
+                <React.Fragment key={`${e.step}-${i}`}>
+                  {i > 0 && <Typography variant="caption" color="text.secondary">→ {e.share} %</Typography>}
+                  <Chip size="small" variant={i === 0 ? 'filled' : 'outlined'} color={i === 0 ? 'primary' : 'default'}
+                    label={`${i + 1}. ${e.step} (${e.patients})`} />
+                </React.Fragment>
+              ))}
+            </Box>
+          ))}
+        </Stack>
+      )}
       {survol && (
         <Box sx={{
           position: 'absolute', left: survol.x + 12, top: survol.y + 12, pointerEvents: 'none',

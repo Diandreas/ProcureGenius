@@ -513,7 +513,7 @@ class CrmPatientSummaryView(_ProvenanceView):
         patient = services.patients_du_centre(org, True).filter(pk=pk).first()
         if not patient:
             return _introuvable()
-        resume = services.resume_patient(patient, org, _admin(request.user))
+        resume = services.resume_patient(patient, org, services.voit_montants(request.user))
         # Parcours : les dernières étapes du patient, tous modules confondus (ordre des factures).
         from .parcours import parcours_patient
         resume['journey'] = parcours_patient(patient)
@@ -617,7 +617,7 @@ class CrmStatsView(APIView):
             return _invalide('La date de début suit la date de fin.')
         if (fin - debut).days > 800:
             return _invalide('Période trop longue.')
-        return Response(stats.calculer_statistiques(user.organization, debut, fin, _admin(user)))
+        return Response(stats.calculer_statistiques(user.organization, debut, fin, services.voit_montants(user)))
 
 
 class CrmOverviewView(APIView):
@@ -643,7 +643,7 @@ class CrmOverviewView(APIView):
         if not periodes:
             return _invalide('Choisissez au moins une période.')
         from .tableau import comparer
-        return Response(comparer(user.organization, periodes, _admin(user)))
+        return Response(comparer(user.organization, periodes, services.voit_montants(user)))
 
 
 class CrmJourneyView(APIView):
@@ -668,7 +668,8 @@ class CrmJourneyView(APIView):
             return _invalide('Période trop longue.')
         from .parcours import calculer_parcours
         return Response(calculer_parcours(user.organization, debut, fin, params.get('level', 'service'),
-                                           sans_pharmacie=params.get('pharmacy') != '1'))
+                                           sans_pharmacie=params.get('pharmacy') != '1',
+                                           avec_montants=services.voit_montants(user)))
 
 
 # ── Qualité des fiches ────────────────────────────────────────────────────

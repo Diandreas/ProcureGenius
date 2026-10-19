@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Typography, Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress, Alert,
-  FormControlLabel, Checkbox, TextField, Button, IconButton,
+  FormControlLabel, Checkbox, TextField, Button, IconButton, MenuItem,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import crmAPI from '../../services/crmAPI';
+import CircuitSchema from './CircuitSchema';
 
 // Date locale AAAA-MM-JJ (toISOString passerait en UTC et décalerait d'un jour).
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -64,6 +65,10 @@ export default function ApercuPanel() {
   const [donnees, setDonnees] = useState(null);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState('');
+  // Schéma du circuit : une des périodes cochées
+  const [colSchema, setColSchema] = useState(0);
+  const [circuit, setCircuit] = useState(null);
+  const [chargeCircuit, setChargeCircuit] = useState(false);
 
   const colonnes = useMemo(() => {
     const t = new Date();
@@ -87,6 +92,18 @@ export default function ApercuPanel() {
       .finally(() => { if (vivant) setChargement(false); });
     return () => { vivant = false; };
   }, [colonnes]);
+
+  const periodeSchema = colonnes[Math.min(colSchema, colonnes.length - 1)];
+  useEffect(() => {
+    if (!periodeSchema) { setCircuit(null); return undefined; }
+    let vivant = true;
+    setChargeCircuit(true);
+    crmAPI.getJourney({ start: periodeSchema.start, end: periodeSchema.end, level: 'service', pharmacy: '0' })
+      .then((d) => { if (vivant) setCircuit(d.circuit); })
+      .catch(() => { if (vivant) setCircuit(null); })
+      .finally(() => { if (vivant) setChargeCircuit(false); });
+    return () => { vivant = false; };
+  }, [periodeSchema?.start, periodeSchema?.end]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const basculer = (code) => setCoches((l) => (l.includes(code) ? l.filter((x) => x !== code) : [...l, code]));
   const montants = Boolean(donnees?.amounts_visible);
@@ -190,6 +207,27 @@ export default function ApercuPanel() {
               {montants && bloc('Encaissé par mode de paiement', 'by_payment', modes, franc)}
             </TableBody>
           </Table>
+        </Paper>
+      )}
+      {colonnes.length > 0 && (
+        <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, mt: 2 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1} mb={1}>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700}>Circuit des actions des patients</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Patients venus sur la période, depuis leur toute première facture : 1re action, puis la 2e, la 3e…
+                {montants ? ' Sous chaque action : patients et encaissé (survol : panier moyen).' : ''}
+              </Typography>
+            </Box>
+            {colonnes.length > 1 && (
+              <TextField select size="small" label="Période du schéma" value={Math.min(colSchema, colonnes.length - 1)}
+                onChange={(e) => setColSchema(Number(e.target.value))} sx={{ minWidth: 200 }}>
+                {colonnes.map((c, i) => <MenuItem key={i} value={i}>{c.label}</MenuItem>)}
+              </TextField>
+            )}
+          </Box>
+          {chargeCircuit ? <Box display="flex" justifyContent="center" p={3}><CircularProgress size={28} /></Box>
+            : circuit && <CircuitSchema circuit={circuit} />}
         </Paper>
       )}
       {!montants && periodes.length > 0 && (

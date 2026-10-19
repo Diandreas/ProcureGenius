@@ -42,7 +42,7 @@ def _liste(request):
     """(organization, base, qs filtre et trie) — partage entre liste et export."""
     organization, base, qs = _base(request)
     params = request.query_params
-    montants = services.peut_voir_montants(request.user)
+    montants = services.voit_montants(request.user)
 
     qs = services.appliquer_segment(qs, params.get('segment') or 'all', organization)
     qs = services.appliquer_filtres(qs, params)
@@ -545,7 +545,7 @@ class CrmPatientProfileView(_ProvenanceView):
 
 def _peut_rapport(user):
     """Montants reserves aux roles admin ; module CRM (export) ou page Patients | Financier."""
-    if not services.peut_voir_montants(user):
+    if not services.voit_montants(user):
         return False
     return user_can(user, Modules.CRM, 'export') or user_can(user, Modules.CLIENTS, 'view')
 
