@@ -25,6 +25,7 @@ import {
     EditCalendar as PeremptionIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { useNavigate } from 'react-router-dom';
 import batchAPI from '../../../services/batchAPI';
 import { productsAPI } from '../../../services/api';
 import OpenBatchDialog, { imprimerEtiquetteOuverture } from '../../../components/stock/OpenBatchDialog';
@@ -95,8 +96,18 @@ const getDaysProgress = (days, isExpired) => {
 
 const formatDate = (s) => (s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-');
 
-const OpenedReagents = () => {
+// Page principale = aperçu (quelques lignes par tableau) ; « Voir tout » ouvre une page dédiée.
+const APERCU = 5;
+const BASE = '/healthcare/laboratory/opened-reagents';
+const TITRES = {
+    apercu: ['Réactifs & Lots', "Ouverture, date limite d'utilisation et clôture des réactifs de laboratoire"],
+    lots: ['Réactifs — tous les lots', 'Ouverts, non ouverts : filtrez et recherchez'],
+    sorties: ['Sorties pour péremption', 'Ce qui est sorti du stock par péremption normale (date du lot) ou après ouverture'],
+};
+
+const OpenedReagents = ({ vue = 'apercu' }) => {
     const { enqueueSnackbar } = useSnackbar();
+    const navigate = useNavigate();
     // Ouvrir et cloturer : tout le monde. Rattacher un reactif : administrateurs.
     const { isAdmin } = useCurrentUser();
     const [loading, setLoading] = useState(false);
@@ -393,8 +404,10 @@ const OpenedReagents = () => {
     const texteRecherche = recherche.trim().toLowerCase();
     const lotsAffiches = (data.batches || []).filter((b) => !texteRecherche
         || `${b.product_name} ${b.batch_number} ${b.lot_number || ''}`.toLowerCase().includes(texteRecherche));
+    const lotsVus = vue === 'apercu' ? lotsAffiches.slice(0, APERCU) : lotsAffiches;
     const sorties = (data.sorties_peremption || []).filter((x) => (typeSortie === 'all' || x.kind === typeSortie)
         && (!texteRecherche || `${x.product_name} ${x.batch_number}`.toLowerCase().includes(texteRecherche)));
+    const sortiesVues = vue === 'apercu' ? sorties.slice(0, APERCU) : sorties;
     const examensPratiques = examens.filter((e) => e.volume > 0);
 
     return (
@@ -408,19 +421,22 @@ const OpenedReagents = () => {
                     <Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
                             <ScienceIcon sx={{ fontSize: 40 }} />
-                            <Typography variant="h4" fontWeight={700}>Réactifs & Lots</Typography>
+                            <Typography variant="h4" fontWeight={700}>{TITRES[vue][0]}</Typography>
                         </Box>
-                        <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                            Ouverture, date limite d&apos;utilisation et clôture des réactifs de laboratoire
-                        </Typography>
+                        <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>{TITRES[vue][1]}</Typography>
+                        {vue !== 'apercu' && (
+                            <Button size="small" onClick={() => navigate(BASE)} sx={{ color: 'white', mt: 1, px: 0 }}>
+                                ← Retour aux réactifs
+                            </Button>
+                        )}
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <TextField
+                        {vue !== 'sorties' && <TextField
                             select size="small" value={etat} onChange={(e) => setEtat(e.target.value)}
                             sx={{ minWidth: 150, bgcolor: 'white', borderRadius: 1 }}
                         >
                             {ETATS.map((x) => <MenuItem key={x.value} value={x.value}>{x.label}</MenuItem>)}
-                        </TextField>
+                        </TextField>}
                         <TextField
                             size="small" placeholder="Rechercher un réactif ou un lot" value={recherche}
                             onChange={(e) => setRecherche(e.target.value)}
@@ -438,6 +454,7 @@ const OpenedReagents = () => {
                 </Box>
             </Box>
 
+            {vue === 'apercu' && (<>
             {/* Indicateurs */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={6} md={3}><StatCard title="Total lots" value={data.total} icon={<InventoryIcon />} color="#1976d2" /></Grid>
@@ -482,6 +499,9 @@ const OpenedReagents = () => {
                 </Alert>
             )}
 
+            </>)}
+
+            {vue !== 'sorties' && (<>
             {/* Tableau des lots */}
             <Card sx={{ borderRadius: 3, mb: 3 }}>
                 <TableContainer sx={{ overflowX: 'auto' }}>
@@ -516,7 +536,7 @@ const OpenedReagents = () => {
                                         )}
                                     </TableCell>
                                 </TableRow>
-                            ) : lotsAffiches.map((b) => {
+                            ) : lotsVus.map((b) => {
                                 const progress = getDaysProgress(b.days_until_expiry, b.is_expired);
                                 const estOuvert = b.status === 'opened';
                                 return (
@@ -628,6 +648,16 @@ const OpenedReagents = () => {
                 </TableContainer>
             </Card>
 
+            {vue === 'apercu' && lotsAffiches.length > APERCU && (
+                <Box sx={{ textAlign: 'center', mt: -2, mb: 3 }}>
+                    <Button variant="outlined" onClick={() => navigate(`${BASE}/lots`)}>
+                        Voir les {lotsAffiches.length} lots
+                    </Button>
+                </Box>
+            )}
+            </>)}
+
+            {vue !== 'lots' && (<>
             {/* Traçabilité : sorties par péremption normale (date du lot) ou après ouverture */}
             <Card sx={{ borderRadius: 3, mb: 3 }}>
                 <CardContent sx={{ pb: 1 }}>
@@ -655,7 +685,7 @@ const OpenedReagents = () => {
                         <TableBody>
                             {sorties.length === 0 ? (
                                 <TableRow><TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>Aucune sortie pour péremption</TableCell></TableRow>
-                            ) : sorties.map((x) => (
+                            ) : sortiesVues.map((x) => (
                                 <TableRow key={x.id} hover>
                                     <TableCell>{new Date(x.date).toLocaleDateString('fr-FR')}</TableCell>
                                     <TableCell>
@@ -675,6 +705,16 @@ const OpenedReagents = () => {
                 </TableContainer>
             </Card>
 
+            {vue === 'apercu' && sorties.length > APERCU && (
+                <Box sx={{ textAlign: 'center', mt: -2, mb: 3 }}>
+                    <Button variant="outlined" onClick={() => navigate(`${BASE}/sorties`)}>
+                        Voir les {sorties.length} sorties pour péremption
+                    </Button>
+                </Box>
+            )}
+            </>)}
+
+            {vue === 'apercu' && (<>
             {/* Examens sans reactif rattache */}
             <Card sx={{ borderRadius: 3 }}>
                 <CardContent>
@@ -727,6 +767,8 @@ const OpenedReagents = () => {
                     )}
                 </CardContent>
             </Card>
+
+            </>)}
 
             {/* Choix du lot a ouvrir */}
             <Dialog open={choixOuvert} onClose={() => setChoixOuvert(false)} maxWidth="md" fullWidth>

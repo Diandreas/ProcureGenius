@@ -892,6 +892,8 @@ function App() {
                               <Route path="/healthcare/laboratory/subcontractors/:id/prices" element={<ModuleRoute module="laboratory"><SubcontractorPrices /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/subcontractors/:id/patients" element={<ModuleRoute module="laboratory"><SubcontractorPatients /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/opened-reagents" element={<ModuleRoute module="laboratory"><OpenedReagents /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/opened-reagents/lots" element={<ModuleRoute module="laboratory"><OpenedReagents vue="lots" /></ModuleRoute>} />
+                              <Route path="/healthcare/laboratory/opened-reagents/sorties" element={<ModuleRoute module="laboratory"><OpenedReagents vue="sorties" /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/audit-log" element={<ModuleRoute module="laboratory"><LabAuditLog /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/exam-stats" element={<ModuleRoute module="laboratory"><LabExamStats /></ModuleRoute>} />
                               <Route path="/healthcare/laboratory/:id" element={<ModuleRoute module="laboratory"><LabOrderDetail /></ModuleRoute>} />
