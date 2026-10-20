@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import pytest
 from django.template.loader import render_to_string
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts.models import Organization, CustomUser, Client
@@ -117,7 +118,8 @@ class TestPerLineVat:
             assert 'Nettobetrag 19 %' in html, tpl
             assert 'USt-IdNr.' in html and 'DE123456789' in html, tpl
             assert 'Steuernummer' in html and '12/345/67890' in html, tpl
-            assert inv.created_at.strftime('%d/%m/%Y') in html, tpl
+            # date d'émission affichée dans le fuseau local (évite un échec juste après minuit)
+            assert timezone.localtime(inv.created_at).strftime('%d/%m/%Y') in html, tpl
 
 
 @pytest.mark.django_db

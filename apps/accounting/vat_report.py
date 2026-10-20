@@ -5,7 +5,8 @@ Déclaration de TVA (VAT return / Umsatzsteuer-Voranmeldung).
 collectée sur les ventes (factures moins avoirs), la TVA déductible sur les
 achats (bons de commande + dépenses) et le solde à payer (négatif = crédit /
 remboursement). Pour l'Allemagne, le bloc `ustva` donne directement les
-Kennzahlen à saisir dans ELSTER.
+Kennzahlen à saisir dans ELSTER ; pour la France (mois ou trimestre), le bloc
+`ca3` donne les lignes de la déclaration CA3 (formulaire 3310-CA3).
 
 Règles (contrat partagé avec le module factures) :
 - base d'une ligne = total_price de la ligne − sa part de la remise globale
@@ -349,10 +350,14 @@ def build_vat_report(organization, start, end):
         'is_refund': payable < 0,
         'warnings': warnings,
         'ustva': None,
+        'ca3': None,
     }
 
     if country == 'DE' and not small_business:
         report['ustva'] = _ustva_block(net_rows, input_vat, payable, end)
+    # CA3 : régime réel normal (mensuel ou trimestriel). Une année = régime simplifié (CA12), autres lignes.
+    if country == 'FR' and not small_business and (end - start).days < 100:
+        report['ca3'] = _ca3_block(net_rows, input_vat, end)
     return report
 
 
@@ -379,6 +384,40 @@ def _ustva_block(net_rows, input_vat, payable, end):
         'kz83': payable,                        # verbleibende Umsatzsteuer-Vorauszahlung / Überschuss (−)
         'deadline': _tenth_of_month_after(end, 1),
         'deadline_extended': _tenth_of_month_after(end, 2),  # avec Dauerfristverlängerung
+    }
+
+
+def _ca3_block(net_rows, input_vat, end):
+    """Lignes de la déclaration CA3 française (montants arrondis à l'euro le plus proche)."""
+    def euros(v):
+        return int(_d(v).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+
+    by = {r['rate']: r for r in net_rows}
+    empty = {'base': ZERO, 'vat': ZERO}
+    lines = {}
+    for code, rate in (('08', Decimal('20')), ('9B', Decimal('10')), ('09', Decimal('5.5'))):
+        r = by.get(rate, empty)
+        lines[code] = {'base': euros(r['base']), 'vat': euros(r['vat'])}
+    known = (Decimal('20'), Decimal('10'), Decimal('5.5'))
+    others = [r for r in net_rows if r['rate'] > 0 and r['rate'] not in known]
+    other = {'base': euros(sum((r['base'] for r in others), ZERO)), 'vat': euros(sum((r['vat'] for r in others), ZERO))}
+    l16 = sum(v['vat'] for v in lines.values()) + other['vat']          # total de la TVA brute due
+    l20 = euros(input_vat)                                               # TVA déductible : autres biens et services
+    l23 = l20                                                            # total de la TVA déductible
+    nxt = date(end.year + (end.month == 12), end.month % 12 + 1, 1)
+    return {
+        'a1': euros(sum((r['base'] for r in net_rows if r['rate'] > 0), ZERO)),   # ventes, prestations de services (HT)
+        'e2': euros(sum((r['base'] for r in net_rows if r['rate'] == 0), ZERO)),  # opérations non imposables
+        'lines': lines,
+        'other': other,                          # autres taux (2,1 %, DOM…) : ligne selon le taux
+        'l16': l16,
+        'l20': l20,
+        'l23': l23,
+        'l28': max(l16 - l23, 0),               # TVA nette due
+        'l25': max(l23 - l16, 0),               # crédit de TVA
+        # date limite propre à chaque entreprise, entre le 15 et le 24 du mois suivant
+        'deadline_from': nxt.replace(day=15),
+        'deadline_to': nxt.replace(day=24),
     }
 
 
@@ -432,7 +471,12 @@ def serialize_report(report):
         'is_refund': report['is_refund'],
         'warnings': report['warnings'],
         'ustva': None,
+        'ca3': None,
     }
+    c = report.get('ca3')
+    if c:
+        out['ca3'] = {**{k: c[k] for k in ('a1', 'e2', 'lines', 'other', 'l16', 'l20', 'l23', 'l28', 'l25')},
+                      'deadline_from': c['deadline_from'].isoformat(), 'deadline_to': c['deadline_to'].isoformat()}
     u = report.get('ustva')
     if u:
         out['ustva'] = {
@@ -455,7 +499,7 @@ CSV_LABELS = {
         'purchases': 'TVA déductible', 'po': 'Bons de commande', 'expenses': 'Dépenses',
         'totals': 'Totaux', 'output': 'TVA collectée nette', 'input': 'TVA déductible',
         'payable': 'TVA à payer', 'refund': 'Crédit de TVA', 'small': 'Petite entreprise exonérée : aucune TVA à payer',
-        'ustva': 'UStVA (Allemagne)', 'deadline': "Date limite de dépôt",
+        'ustva': 'UStVA (Allemagne)', 'deadline': "Date limite de dépôt", 'ca3': 'CA3',
     },
     'en': {
         'title': 'VAT return', 'period': 'Period', 'currency': 'Currency',
@@ -464,7 +508,7 @@ CSV_LABELS = {
         'purchases': 'Input VAT', 'po': 'Purchase orders', 'expenses': 'Expenses',
         'totals': 'Totals', 'output': 'Net output VAT', 'input': 'Input VAT',
         'payable': 'VAT payable', 'refund': 'VAT refund', 'small': 'VAT-exempt small business: no VAT due',
-        'ustva': 'UStVA (Germany)', 'deadline': 'Filing deadline',
+        'ustva': 'UStVA (Germany)', 'deadline': 'Filing deadline', 'ca3': 'CA3 (France)',
     },
     'de': {
         'title': 'Umsatzsteuer-Voranmeldung', 'period': 'Zeitraum', 'currency': 'Währung',
@@ -473,7 +517,7 @@ CSV_LABELS = {
         'purchases': 'Vorsteuer', 'po': 'Bestellungen', 'expenses': 'Ausgaben',
         'totals': 'Summen', 'output': 'Umsatzsteuer netto', 'input': 'Vorsteuer',
         'payable': 'Zahllast', 'refund': 'Erstattung', 'small': 'Kleinunternehmer (§ 19 UStG): keine Umsatzsteuer',
-        'ustva': 'UStVA', 'deadline': 'Abgabefrist',
+        'ustva': 'UStVA', 'deadline': 'Abgabefrist', 'ca3': 'CA3 (Frankreich)',
     },
 }
 
@@ -520,6 +564,16 @@ def report_to_csv(report, lang='en'):
     w.writerow([L['totals'], L['refund'] if report['is_refund'] else L['payable'], '', '', amt(report['payable'])])
     if report['small_business']:
         w.writerow([L['totals'], L['small']])
+    c = report.get('ca3')
+    if c:
+        w.writerow([])
+        w.writerow([L['ca3'], 'A1', '', str(c['a1']), ''])
+        for code, r in (('08', '20'), ('9B', '10'), ('09', '5.5')):
+            w.writerow([L['ca3'], code, r, str(c['lines'][code]['base']), str(c['lines'][code]['vat'])])
+        if c['other']['base'] or c['other']['vat']:
+            w.writerow([L['ca3'], '', '', str(c['other']['base']), str(c['other']['vat'])])
+        for code in ('16', '20', '23', '28', '25'):
+            w.writerow([L['ca3'], code, '', '', str(c[f'l{code}'])])
     u = report.get('ustva')
     if u:
         w.writerow([])

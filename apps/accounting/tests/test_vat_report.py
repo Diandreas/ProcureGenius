@@ -234,6 +234,31 @@ class TestOtherCountry:
         assert r['payable'] == D('25.50')
         assert r['ustva'] is None
 
+    def test_france_ca3_lines(self, db):
+        org, user = make_org('SARL CA3', country='FR')
+        make_invoice(org, user, [(1, D('1000.40'), D('20')), (2, D('100'), D('10')), (1, D('300'), D('5.5')),
+                                 (1, D('50'), D('0'))], tax=D('236.58'))
+        make_po(user, D('500'), D('100'))
+        make_expense(org, D('60.00'), D('10.00'))
+        r = build_vat_report(org, date(2026, 9, 1), date(2026, 9, 30))
+        c = r['ca3']
+        assert c['lines']['08'] == {'base': 1000, 'vat': 200}      # 1000,40 € / 200,08 € arrondis à l'euro
+        assert c['lines']['9B'] == {'base': 200, 'vat': 20}
+        assert c['lines']['09'] == {'base': 300, 'vat': 17}        # 16,50 € -> 17 €
+        assert c['a1'] == 1500 and c['e2'] == 50
+        assert c['l16'] == 237 and c['l20'] == 110 and c['l23'] == 110
+        assert c['l28'] == 127 and c['l25'] == 0
+        assert c['deadline_from'] == date(2026, 10, 15) and c['deadline_to'] == date(2026, 10, 24)
+        # une année = régime simplifié (CA12) : pas de lignes CA3
+        assert build_vat_report(org, date(2026, 1, 1), date(2026, 12, 31))['ca3'] is None
+
+    def test_france_ca3_credit(self, db):
+        org, user = make_org('SARL Credit', country='FR')
+        make_invoice(org, user, [(1, D('100'), D('20'))], tax=D('20'))
+        make_po(user, D('1000'), D('200'))
+        c = build_vat_report(org, date(2026, 9, 1), date(2026, 9, 30))['ca3']
+        assert c['l28'] == 0 and c['l25'] == 180
+
     def test_foreign_currency_excluded_and_flagged(self, db):
         org, user = make_org('Douala SA', country='CM', currency='XAF')
         inv = make_invoice(org, user, [(1, D('1000'), D('19.25'))], tax=D('192.50'))

@@ -204,13 +204,13 @@
     "total": "Total commandes",
     "poCount": "{{count}} BC",
     "approved": "Approuvés",
-    "approvedSub": "valides",
-    "sent": "Envoyes",
+    "approvedSub": "validés",
+    "sent": "Envoyés",
     "sentSub": "en attente",
     "drafts": "Brouillons",
-    "draftsSub": "a finaliser",
-    "cancelled": "Annules",
-    "cancelledSub": "clotures"
+    "draftsSub": "à finaliser",
+    "cancelled": "Annulés",
+    "cancelledSub": "clôturés"
   },
   "pdf": {
     "fileName": "bon-commande-{{number}}.pdf",

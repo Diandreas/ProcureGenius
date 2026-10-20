@@ -351,12 +351,12 @@
     "invoiceCount": "{{count}} facture(s)",
     "paid": "Payées",
     "paidSub": "encaissées",
-    "unpaid": "Impayees",
-    "unpaidSub": "envoyees",
+    "unpaid": "Impayées",
+    "unpaidSub": "envoyées",
     "overdue": "En retard",
     "overdueSub": "à relancer",
     "drafts": "Brouillons",
-    "draftsSub": "a finaliser"
+    "draftsSub": "à finaliser"
   },
   "smartUpload": {
     "invalidFile": "Veuillez glisser un fichier PDF ou image (PNG, JPG)",

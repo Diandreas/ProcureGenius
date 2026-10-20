@@ -610,6 +610,22 @@
       "fr": "Reportez ces montants dans votre déclaration de TVA (CA3 mensuelle ou trimestrielle, CA12 annuelle) sur impots.gouv.fr, espace professionnel, puis payez le solde avant la date limite.",
       "generic": "Reportez ces montants sur la déclaration de TVA de l'administration fiscale de votre pays (en ligne ou au guichet) et payez le solde avant la date limite. En cas de doute, faites-les vérifier par votre comptable.",
       "sources": "Calcul : factures émises (hors brouillons, devis et annulations sans avoir), moins les avoirs émis, moins la TVA des bons de commande et des dépenses de la période."
+    },
+    "ca3": {
+      "title": "Déclaration CA3",
+      "subtitle": "Les lignes à reporter sur impots.gouv.fr (espace professionnel), en euros arrondis",
+      "a1": "A1 — Ventes, prestations de services (HT)",
+      "rateLine": "Base HT au taux de {{rate}}",
+      "taxLine": "Taxe due : {{amount}}",
+      "other": "Autres taux (base HT) : ligne selon le taux",
+      "l16": "Total de la TVA brute due",
+      "l20": "TVA déductible : autres biens et services",
+      "l23": "Total de la TVA déductible",
+      "l28": "TVA nette due",
+      "l25": "Crédit de TVA",
+      "taxFree": "Opérations à 0 % : {{amount}}. Selon leur nature (export, livraison intracommunautaire, opération exonérée), elles vont dans une ligne du cadre A (E1, E2, F2…) : faites-les vérifier par votre comptable.",
+      "window": "entre le {{from}} et le {{to}}, selon la date fixée pour votre entreprise",
+      "rounding": "Sur la CA3, les montants sont arrondis à l'euro le plus proche : un écart de quelques centimes avec le total ci-dessus est normal."
     }
   },
   "chartStandard": {

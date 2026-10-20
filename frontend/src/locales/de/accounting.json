@@ -610,6 +610,22 @@
       "fr": "Tragen Sie diese Beträge in Ihre französische Umsatzsteuererklärung (CA3 monatlich oder vierteljährlich, CA12 jährlich) im Profi-Bereich von impots.gouv.fr ein und zahlen Sie den Saldo vor Fristablauf.",
       "generic": "Tragen Sie diese Beträge in die Umsatzsteuererklärung der Steuerverwaltung Ihres Landes ein und zahlen Sie den Saldo vor Fristablauf. Lassen Sie sie im Zweifel von Ihrer Steuerberatung prüfen.",
       "sources": "Berechnung: gestellte Rechnungen (ohne Entwürfe, Angebote und Stornos ohne Gutschrift), abzüglich erteilter Gutschriften, abzüglich der Vorsteuer aus Bestellungen und Ausgaben des Zeitraums."
+    },
+    "ca3": {
+      "title": "Umsatzsteuererklärung CA3 (Frankreich)",
+      "subtitle": "Die Zeilen für impots.gouv.fr (Unternehmensbereich), in gerundeten Euro",
+      "a1": "A1 — Lieferungen und Leistungen (netto)",
+      "rateLine": "Bemessungsgrundlage zu {{rate}}",
+      "taxLine": "Steuer: {{amount}}",
+      "other": "Andere Steuersätze (netto): Zeile je nach Satz",
+      "l16": "Umsatzsteuer gesamt",
+      "l20": "Abziehbare Vorsteuer: sonstige Waren und Leistungen",
+      "l23": "Vorsteuer gesamt",
+      "l28": "Zahllast",
+      "l25": "Vorsteuerüberhang",
+      "taxFree": "Umsätze zu 0 %: {{amount}}. Je nach Art (Ausfuhr, innergemeinschaftliche Lieferung, steuerfrei) gehören sie in eine Zeile von Teil A (E1, E2, F2…): lassen Sie sie von Ihrem Steuerberater prüfen.",
+      "window": "zwischen dem {{from}} und dem {{to}}, je nach dem für Ihr Unternehmen festgelegten Datum",
+      "rounding": "In der CA3 werden Beträge auf volle Euro gerundet: eine Abweichung von wenigen Cent zur Summe oben ist normal."
     }
   },
   "chartStandard": {

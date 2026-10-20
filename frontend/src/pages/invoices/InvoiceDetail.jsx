@@ -999,11 +999,11 @@ function InvoiceDetail() {
                           ) : item.description}
                         </TableCell>
                         <TableCell align="right" sx={{ fontSize: '0.82rem' }}>{item.quantity}</TableCell>
-                        <TableCell align="right" sx={{ fontSize: '0.82rem' }}>{formatCurrency(item.unit_price)}</TableCell>
+                        <TableCell align="right" sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{formatCurrency(item.unit_price)}</TableCell>
                         {invoiceHasLineRates && (
-                          <TableCell align="right" sx={{ fontSize: '0.82rem' }}>{formatRate(item.tax_rate, i18n.language)} %</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{formatRate(item.tax_rate, i18n.language)}{' '}%</TableCell>
                         )}
-                        <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 700 }}>{formatCurrency(item.total_price)}</TableCell>
+                        <TableCell align="right" sx={{ fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>{formatCurrency(item.total_price)}</TableCell>
                       </TableRow>
                     ))}
                     {(!invoice.items || invoice.items.length === 0) && (

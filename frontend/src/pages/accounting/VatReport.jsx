@@ -87,7 +87,7 @@ function KzRow({ kz, label, value, tax }) {
         <Typography variant="body2" sx={{ lineHeight: 1.3 }}>{label}</Typography>
         {tax && <Typography variant="caption" color="text.secondary">{tax}</Typography>}
       </Box>
-      <Typography variant="body2" fontWeight={700} sx={{ whiteSpace: 'nowrap', fontFamily: 'monospace' }}>{value}</Typography>
+      <Typography variant="body2" fontWeight={700} sx={{ whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{value}</Typography>
     </Box>
   );
 }
@@ -186,6 +186,7 @@ export default function VatReport() {
   const payable = num(data?.payable);
   const isDE = data?.country === 'DE';
   const ustva = data?.ustva;
+  const ca3 = data?.ca3;
   const status = data?.small_business ? 'none' : payable > 0 ? 'pay' : payable < 0 ? 'refund' : 'none';
   const statusColor = { pay: 'error.main', refund: 'success.main', none: 'text.secondary' }[status];
   const howToKey = isDE ? 'de' : data?.country === 'FR' ? 'fr' : 'generic';
@@ -274,6 +275,11 @@ export default function VatReport() {
                   <b>{t('accounting:vatReport.deadline')}:</b> {fmtDate(ustva.deadline)}
                 </Typography>
               )}
+              {ca3 && (
+                <Typography variant="body2" mt={1}>
+                  <b>{t('accounting:vatReport.deadline')}:</b> {t('accounting:vatReport.ca3.window', { from: fmtDate(ca3.deadline_from), to: fmtDate(ca3.deadline_to) })}
+                </Typography>
+              )}
             </CardContent>
           </Card>
 
@@ -353,6 +359,40 @@ export default function VatReport() {
               </Typography>
               <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
                 {t('accounting:vatReport.ustva.rounding')}
+              </Typography>
+            </SectionCard>
+          )}
+
+          {/* ── CA3 (France) ── */}
+          {ca3 && (
+            <SectionCard neu={neu} accent="primary.main" title={t('accounting:vatReport.ca3.title')} subtitle={t('accounting:vatReport.ca3.subtitle')}>
+              <Box mb={2}>
+                <KzRow kz="A1" label={t('accounting:vatReport.ca3.a1')} value={format(ca3.a1, 0)} />
+                {[['08', '20'], ['9B', '10'], ['09', '5.5']].map(([code, rate]) => (
+                  (ca3.lines[code].base !== 0 || code === '08') && (
+                    <KzRow key={code} kz={code} label={t('accounting:vatReport.ca3.rateLine', { rate: fmtRate(rate) })}
+                      value={format(ca3.lines[code].base, 0)} tax={t('accounting:vatReport.ca3.taxLine', { amount: format(ca3.lines[code].vat, 0) })} />
+                  )
+                ))}
+                {(ca3.other.base !== 0 || ca3.other.vat !== 0) && (
+                  <KzRow kz="…" label={t('accounting:vatReport.ca3.other')} value={format(ca3.other.base, 0)}
+                    tax={t('accounting:vatReport.ca3.taxLine', { amount: format(ca3.other.vat, 0) })} />
+                )}
+                <KzRow kz="16" label={t('accounting:vatReport.ca3.l16')} value={format(ca3.l16, 0)} />
+                <KzRow kz="20" label={t('accounting:vatReport.ca3.l20')} value={format(ca3.l20, 0)} />
+                <KzRow kz="23" label={t('accounting:vatReport.ca3.l23')} value={format(ca3.l23, 0)} />
+                {ca3.l25 > 0
+                  ? <KzRow kz="25" label={t('accounting:vatReport.ca3.l25')} value={format(ca3.l25, 0)} />
+                  : <KzRow kz="28" label={t('accounting:vatReport.ca3.l28')} value={format(ca3.l28, 0)} />}
+              </Box>
+              {ca3.e2 !== 0 && (
+                <Alert severity="info" sx={{ mb: 1.5 }}>{t('accounting:vatReport.ca3.taxFree', { amount: format(ca3.e2, 0) })}</Alert>
+              )}
+              <Typography variant="body2" mb={0.5}>
+                <b>{t('accounting:vatReport.deadline')}:</b> {t('accounting:vatReport.ca3.window', { from: fmtDate(ca3.deadline_from), to: fmtDate(ca3.deadline_to) })}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                {t('accounting:vatReport.ca3.rounding')}
               </Typography>
             </SectionCard>
           )}

@@ -610,6 +610,22 @@
       "fr": "Enter these amounts in your VAT return (monthly or quarterly CA3, annual CA12) in your professional account on impots.gouv.fr, then pay the balance before the deadline.",
       "generic": "Enter these amounts on your country's VAT return (online or at the tax office) and pay the balance before the deadline. If in doubt, have your accountant check them.",
       "sources": "How it is calculated: issued invoices (excluding drafts, quotes and cancellations without a credit note), minus credit notes issued, minus VAT on the period's purchase orders and expenses."
+    },
+    "ca3": {
+      "title": "CA3 return (France)",
+      "subtitle": "The lines to enter on impots.gouv.fr (business account), in rounded euros",
+      "a1": "A1 — Sales and services (net)",
+      "rateLine": "Net amount at {{rate}}",
+      "taxLine": "Tax due: {{amount}}",
+      "other": "Other rates (net): line depends on the rate",
+      "l16": "Total gross VAT due",
+      "l20": "Deductible VAT: other goods and services",
+      "l23": "Total deductible VAT",
+      "l28": "Net VAT due",
+      "l25": "VAT credit",
+      "taxFree": "0 % transactions: {{amount}}. Depending on their nature (export, intra-EU supply, exempt), they go on a line of section A (E1, E2, F2…): have your accountant check them.",
+      "window": "between {{from}} and {{to}}, depending on the date set for your business",
+      "rounding": "On the CA3, amounts are rounded to the nearest euro: a difference of a few cents from the total above is normal."
     }
   },
   "chartStandard": {
