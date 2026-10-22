@@ -334,6 +334,8 @@ class ContactLog(models.Model):
     )
     outcome = models.CharField(max_length=10, choices=OUTCOME_CHOICES, default='sent')
     note = models.CharField(max_length=300, blank=True)
+    # Texte réellement envoyé (WhatsApp), pour savoir ce qui a déjà été dit au patient.
+    message = models.TextField(blank=True, verbose_name='Message envoyé')
     # « À rappeler le … » (réponse « à rappeler ») ou « il compte venir le … » (réponse « d'accord »).
     follow_up_date = models.DateField(null=True, blank=True, verbose_name='Date prévue')
     contacted_at = models.DateTimeField(default=timezone.now)

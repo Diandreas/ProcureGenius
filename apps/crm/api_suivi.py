@@ -66,6 +66,7 @@ def _relance_dict(log, etat=None):
         'reason': _motif_dict(log.reason) if log.reason_id else None,
         'campaign': {'id': str(log.campaign_id), 'name': log.campaign.name} if log.campaign_id else None,
         'note': log.note,
+        'message': log.message,
         'follow_up_date': log.follow_up_date,
         'contacted_at': log.contacted_at,
         'days': (timezone.now() - log.contacted_at).days,
@@ -435,6 +436,7 @@ class CrmRelanceListCreateView(_ProvenanceView):
         log = ContactLog.objects.create(
             organization=org, patient=patient, channel=canal, outcome=issue, reason=motif, campaign=campagne,
             note=str(d.get('note') or '').strip()[:300], follow_up_date=prevue, created_by=request.user,
+            message=str(d.get('message') or '').strip()[:4000],
         )
         if d.get('do_not_contact'):
             profil, _ = PatientCRMProfile.objects.get_or_create(patient=patient, defaults={'organization': org})

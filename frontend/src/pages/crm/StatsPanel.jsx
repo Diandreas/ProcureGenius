@@ -24,6 +24,7 @@ const PERIODES = [
 
 const SECTIONS = [
   { value: 'ensemble', label: "Vue d'ensemble" },
+  { value: 'equipe', label: 'Équipe : qui convertit ?' },
   { value: 'relances', label: 'Relances' },
   { value: 'campagnes', label: 'Campagnes' },
   { value: 'provenance', label: 'Provenance' },
@@ -90,6 +91,64 @@ function TableauRelances({ lignes, premiere, montants }) {
         ))}
       </TableBody>
     </Table>
+  );
+}
+
+// Une étape de l'entonnoir : nombre + taux par rapport à l'étape précédente ; le meilleur taux
+// de chaque étape (au moins 5 personnes à l'étape précédente) est mis en avant.
+const ETAPES = [
+  { n: 'sent', label: 'Messages envoyés' },
+  { n: 'answered', t: 'answer_rate', label: 'Ont répondu', base: 'sent' },
+  { n: 'agreed', t: 'agree_rate', label: "D'accord pour venir", base: 'answered' },
+  { n: 'came', t: 'came_rate', label: 'Sont venus', base: 'agreed' },
+  { n: 'retained', t: 'retained_rate', label: 'Sont revenus ensuite', base: 'came' },
+];
+
+function TableauEquipe({ lignes, montants }) {
+  const actifs = lignes.filter((l) => l.sent > 0 || l.passages > 0 || l.upsold > 0);
+  if (!actifs.length) return <Typography variant="body2" color="text.secondary">Aucune action sur la période.</Typography>;
+  const meilleur = {};
+  ETAPES.filter((e) => e.t).forEach((e) => {
+    const candidats = actifs.filter((l) => l[e.base] >= 5 && l[e.t] != null);
+    if (candidats.length > 1) meilleur[e.t] = Math.max(...candidats.map((l) => l[e.t]));
+  });
+  const passagesOk = actifs.filter((l) => l.passages >= 5 && l.passage_rate != null);
+  if (passagesOk.length > 1) meilleur.passage_rate = Math.max(...passagesOk.map((l) => l.passage_rate));
+  const cellule = (l, n, t) => {
+    const top = t && meilleur[t] != null && l[t] === meilleur[t];
+    return (
+      <TableCell align="right" sx={{ whiteSpace: 'nowrap', ...(top ? { bgcolor: 'success.light', color: 'success.contrastText', fontWeight: 700 } : {}) }}>
+        {l[n]}{t && l[t] != null && <Typography component="span" variant="caption" sx={{ ml: 0.5, opacity: 0.85 }}>({l[t]} %)</Typography>}
+      </TableCell>
+    );
+  };
+  return (
+    <Box sx={{ overflowX: 'auto' }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Personne</TableCell>
+            {ETAPES.map((e) => <TableCell key={e.n} align="right">{e.label}</TableCell>)}
+            <TableCell align="right">Venus / envoyés</TableCell>
+            {montants && <TableCell align="right">Encaissé après relance</TableCell>}
+            <TableCell align="right">Passages → achat</TableCell>
+            <TableCell align="right">Montées en gamme</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {actifs.map((l) => (
+            <TableRow key={l.label}>
+              <TableCell><strong>{l.label}</strong></TableCell>
+              {ETAPES.map((e) => <React.Fragment key={e.n}>{cellule(l, e.n, e.t)}</React.Fragment>)}
+              <TableCell align="right"><strong>{pc(l.overall_rate)}</strong></TableCell>
+              {montants && <TableCell align="right">{fmt(l.revenue)}</TableCell>}
+              {cellule({ ...l, pb: `${l.passages_bought} / ${l.passages}` }, 'pb', 'passage_rate')}
+              <TableCell align="right">{l.upsold}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
   );
 }
 
@@ -327,8 +386,12 @@ export default function StatsPanel({ peutVoirMontants }) {
                 <TableCell align="right">Nouveaux (période)</TableCell>
                 <TableCell align="right">Actifs (période)</TableCell>
                 <TableCell align="right">Reviennent</TableCell>
+                <TableCell align="right">Visites / patient</TableCell>
                 {montants && <TableCell align="right">CA (période)</TableCell>}
                 {montants && <TableCell align="right">Moyenne / actif</TableCell>}
+                {montants && <TableCell align="right">Rapporte par patient (depuis toujours)</TableCell>}
+                {montants && <TableCell align="right">Panier moyen</TableCell>}
+                <TableCell>Ce qu'ils prennent</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -339,8 +402,18 @@ export default function StatsPanel({ peutVoirMontants }) {
                   <TableCell align="right">{p.new_patients}</TableCell>
                   <TableCell align="right">{p.active_patients}</TableCell>
                   <TableCell align="right">{pc(p.repeat_rate)}</TableCell>
+                  <TableCell align="right">{p.visits_per_patient ?? '—'}</TableCell>
                   {montants && <TableCell align="right">{fmt(p.revenue)}</TableCell>}
                   {montants && <TableCell align="right">{fmt(p.avg_per_active)}</TableCell>}
+                  {montants && (
+                    <TableCell align="right" sx={p.rank === 1 ? { bgcolor: 'success.light', color: 'success.contrastText', fontWeight: 700 } : undefined}>
+                      {fmt(p.revenue_per_patient)}{p.rank ? <Typography component="span" variant="caption" sx={{ ml: 0.5 }}>#{p.rank}</Typography> : null}
+                    </TableCell>
+                  )}
+                  {montants && <TableCell align="right">{fmt(p.basket)}</TableCell>}
+                  <TableCell>
+                    <Typography variant="caption">{(p.top_services || []).map((x) => x.label).join(', ') || '—'}</Typography>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -557,6 +630,16 @@ export default function StatsPanel({ peutVoirMontants }) {
           {erreur && <Alert severity="error">{erreur}</Alert>}
           {!chargement && !erreur && donnees && (
             <>
+              {section === 'equipe' && (
+                <Stack spacing={1.5}>
+                  <Carte
+                    titre="Qui convertit le mieux, étape par étape"
+                    note="Chaque pourcentage se calcule sur l'étape d'avant (ex. « Sont venus » = venus / d'accord). En vert : le meilleur taux de l'étape (au moins 5 personnes à l'étape d'avant). « Sont revenus ensuite » : une nouvelle visite après celle obtenue par la relance. « Passages → achat » : patients passés au centre (bouton « un patient est passé ») qui ont acheté."
+                  >
+                    <TableauEquipe lignes={donnees.team_conversion || []} montants={montants} />
+                  </Carte>
+                </Stack>
+              )}
               {section === 'relances' && relances}
               {section === 'campagnes' && campagnes}
               {section === 'provenance' && provenance}

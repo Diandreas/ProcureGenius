@@ -75,6 +75,7 @@ SEGMENTS = [
     ('loyal', 'Fidèles (4 visites et plus)'),
     ('vaccine_due', 'Vaccin à rappeler'),
     ('birthday_week', 'Anniversaire cette semaine'),
+    ('birthday_last_week', 'Anniversaire la semaine passée'),
     ('never_billed', 'Jamais facturés'),
     ('no_origin', 'Sans provenance'),
     ('golden', 'À relancer maintenant (3 à 6 semaines)'),
@@ -144,6 +145,27 @@ def jours_avant_anniversaire(naissance, aujourdhui=None):
     return (prochain - aujourdhui).days if prochain else None
 
 
+def jours_depuis_anniversaire(naissance, aujourdhui=None):
+    """0 le jour de l'anniversaire, 1 le lendemain... None sans date de naissance."""
+    aujourdhui = aujourdhui or date.today()
+    if not naissance:
+        return None
+    for annee in (aujourdhui.year, aujourdhui.year - 1):
+        try:
+            passe = naissance.replace(year=annee)
+        except ValueError:
+            passe = naissance.replace(year=annee, day=28)
+        if passe <= aujourdhui:
+            return (aujourdhui - passe).days
+    return None
+
+
+def _ids_anniversaire_passe(qs, aujourdhui, jours=7):
+    """Patients dont l'anniversaire est passé depuis 1 à `jours` jours (vœux en retard)."""
+    return [pk for pk, naissance in qs.filter(date_of_birth__isnull=False).values_list('id', 'date_of_birth')
+            if 1 <= (jours_depuis_anniversaire(naissance, aujourdhui) or 999) <= jours]
+
+
 def _ids_anniversaire(qs, aujourdhui, jours=7):
     """Patients dont l'anniversaire tombe dans les `jours` prochains jours."""
     return [pk for pk, naissance in qs.filter(date_of_birth__isnull=False).values_list('id', 'date_of_birth')
@@ -197,6 +219,8 @@ def appliquer_segment(qs, segment, organization, aujourdhui=None):
         return qs.filter(id__in=_ids_vaccin_a_rappeler(organization, aujourdhui))
     if segment == 'birthday_week':
         return qs.filter(id__in=_ids_anniversaire(qs, aujourdhui))
+    if segment == 'birthday_last_week':
+        return qs.filter(id__in=_ids_anniversaire_passe(qs, aujourdhui))
     if segment == 'never_billed':
         return qs.filter(crm_visits=0)
     if segment == 'awaited':

@@ -320,6 +320,13 @@ def calculer_statistiques(organization, debut, fin, avec_montants):
     profils = list(PatientCRMProfile.objects.filter(organization=organization, patient_id__in=ids_base)
                    .select_related('origin', 'campaign'))
     nouveaux_ids = set(base.filter(created_at__gte=d0, created_at__lte=d1).values_list('id', flat=True))
+    paye_total = defaultdict(float)       # patient -> encaissé depuis toujours
+    factures_payees = defaultdict(int)
+    for f in factures_par_id.values():
+        if f['status'] == 'paid':
+            paye_total[f['client_id']] += float(f['total_amount'] or 0)
+            factures_payees[f['client_id']] += 1
+    services_tous = services.services_par_patient([p.patient_id for p in profils])
     par_origine = OrderedDict()
     renseignes = set()
     for p in profils:
@@ -330,8 +337,14 @@ def calculer_statistiques(organization, debut, fin, avec_montants):
         else:
             continue
         renseignes.add(p.patient_id)
-        g = par_origine.setdefault(cle, {'patients': 0, 'new': 0, 'actifs': 0, 'paye': 0.0, 'reviennent': 0, 'avec_visite': 0})
+        g = par_origine.setdefault(cle, {'patients': 0, 'new': 0, 'actifs': 0, 'paye': 0.0, 'reviennent': 0, 'avec_visite': 0,
+                                         'paye_total': 0.0, 'visites': 0, 'factures_payees': 0, 'services': Counter()})
         g['patients'] += 1
+        g['paye_total'] += paye_total.get(p.patient_id, 0.0)
+        g['visites'] += len(visites.get(p.patient_id, ()))
+        g['factures_payees'] += factures_payees.get(p.patient_id, 0)
+        for s in services_tous.get(p.patient_id, []):
+            g['services'][s['label']] += 1
         if p.patient_id in nouveaux_ids:
             g['new'] += 1
         if p.patient_id in actifs_periode:
@@ -346,7 +359,19 @@ def calculer_statistiques(organization, debut, fin, avec_montants):
         'revenue': round(g['paye']) if avec_montants else None,
         'avg_per_active': (round(g['paye'] / g['actifs']) if (avec_montants and g['actifs']) else None),
         'repeat_rate': _pct(g['reviennent'], g['avec_visite']),
+        # Depuis toujours : ce que rapporte un patient venu par ce canal.
+        'revenue_lifetime': round(g['paye_total']) if avec_montants else None,
+        'revenue_per_patient': (round(g['paye_total'] / g['avec_visite']) if (avec_montants and g['avec_visite']) else None),
+        'basket': (round(g['paye_total'] / g['factures_payees']) if (avec_montants and g['factures_payees']) else None),
+        'visits_per_patient': round(g['visites'] / g['avec_visite'], 1) if g['avec_visite'] else None,
+        'never_came': g['patients'] - g['avec_visite'],
+        'top_services': [{'label': k2, 'count': v} for k2, v in g['services'].most_common(3)],
     } for k, g in par_origine.items()], key=lambda x: -x['patients'])
+    if avec_montants:
+        classes = sorted([p for p in provenance if p['revenue_per_patient'] and p['patients'] >= 3],
+                         key=lambda x: -x['revenue_per_patient'])
+        for rang, p in enumerate(classes, start=1):
+            p['rank'] = rang
     couverture = {
         'active_patients': len(actifs_periode),
         'with_origin': len(actifs_periode & renseignes),
@@ -417,6 +442,55 @@ def calculer_statistiques(organization, debut, fin, avec_montants):
                      for k, v in sorted(par_agent_up.items(), key=lambda x: -x[1]['count'])],
     }
 
+    # ── Conversion par personne de l'équipe, étape par étape ───────────────
+    # message envoyé → a répondu → d'accord → venu → revenu ensuite ; et en face :
+    # passages au centre transformés en achat, montées en gamme.
+    from .models import PatientInteraction
+    entonnoir = defaultdict(lambda: {'sent': 0, 'answered': 0, 'agreed': 0, 'came': 0, 'retained': 0,
+                                     'revenue': 0.0, 'passages': 0, 'passages_bought': 0, 'upsold': 0})
+
+    def nom(u):
+        return (u.get_full_name() or u.username) if u else 'Inconnu'
+
+    for log in logs:
+        e = entonnoir[nom(log.created_by)]
+        etat = etats[log.id]
+        e['sent'] += 1
+        if log.outcome in ('agreed', 'callback', 'declined') or etat['status'] == 'came':
+            e['answered'] += 1
+        if log.outcome == 'agreed' or etat['status'] == 'came':
+            e['agreed'] += 1
+        if etat['status'] == 'came':
+            e['came'] += 1
+            facture = etat['invoice']
+            if facture is not None:
+                if facture.status == 'paid':
+                    e['revenue'] += float(facture.total_amount or 0)
+                jour = timezone.localtime(facture.created_at).date()
+                if any(v > jour for v in visites.get(log.patient_id, ())):
+                    e['retained'] += 1
+    for p in (PatientInteraction.objects.filter(organization=organization, kind=PatientInteraction.KIND_PASSAGE,
+                                                occurred_at__gte=d0, occurred_at__lte=d1).select_related('created_by')):
+        e = entonnoir[nom(p.created_by)]
+        e['passages'] += 1
+        if not p.lost_reason:
+            e['passages_bought'] += 1
+    for i in montes:
+        entonnoir[nom(i.recorded_by)]['upsold'] += 1
+    conversion = []
+    for agent, e in entonnoir.items():
+        conversion.append({
+            'label': agent, **{k: v for k, v in e.items() if k != 'revenue'},
+            'revenue': round(e['revenue']) if avec_montants else None,
+            'answer_rate': _pct(e['answered'], e['sent']),
+            'agree_rate': _pct(e['agreed'], e['answered']),
+            'came_rate': _pct(e['came'], e['agreed']),
+            'retained_rate': _pct(e['retained'], e['came']),
+            'overall_rate': _pct(e['came'], e['sent']),
+            'passage_rate': _pct(e['passages_bought'], e['passages']),
+        })
+    conversion.sort(key=lambda x: (-(x['came']), -(x['sent'])))
+
     resolus = total['came'] + total['missed']
     return {
         'period': {'start': debut.isoformat(), 'end': fin.isoformat()},
@@ -434,6 +508,7 @@ def calculer_statistiques(organization, debut, fin, avec_montants):
         'by_reason': sorted([_finir(g, k, avec_montants) for k, g in par_motif.items()], key=lambda x: -x['contacts']),
         'by_channel': sorted([_finir(g, k, avec_montants) for k, g in par_canal.items()], key=lambda x: -x['contacts']),
         'by_agent': sorted([_finir(g, k, avec_montants) for k, g in par_agent.items()], key=lambda x: -x['contacts']),
+        'team_conversion': conversion,
         'by_outcome': [{'code': c, 'label': LIBELLES_ISSUE[c], 'count': issues.get(c, 0)} for c, _ in ContactLog.OUTCOME_CHOICES],
         'timeline': [{'week': k.isoformat(), **v} for k, v in sorted(semaines.items())],
         'to_follow': a_suivre[:30],

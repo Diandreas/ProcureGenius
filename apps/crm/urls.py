@@ -8,6 +8,7 @@ app_name = 'crm'
 urlpatterns = [
     path('patients/', api.CrmPatientListView.as_view(), name='patient-list'),
     path('patients/export/', api.CrmPatientExportView.as_view(), name='patient-export'),
+    path('export/all/', api.CrmExportAllView.as_view(), name='export-all'),
     path('patients/search/', api.CrmPatientSearchView.as_view(), name='patient-search'),
     path('passages/', api.CrmPassageListCreateView.as_view(), name='passage-list'),
     path('passages/<uuid:pk>/', api.CrmPassageDetailView.as_view(), name='passage-detail'),

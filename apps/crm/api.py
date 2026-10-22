@@ -86,9 +86,16 @@ class CrmPatientListView(_CrmView):
         # Dernière relance de chaque patient de la page, et sa suite (venu ? attendu ?).
         from .models import ContactLog
         dernieres = {}
+        envoyes = {}   # les 5 derniers messages de chaque patient : « déjà envoyé ? »
+        voeux = {}     # derniers vœux d'anniversaire envoyés
         for log in (ContactLog.objects.filter(patient_id__in=[c.id for c in lot])
                     .select_related('reason', 'campaign', 'created_by').order_by('-contacted_at')):
             dernieres.setdefault(log.patient_id, log)
+            liste = envoyes.setdefault(log.patient_id, [])
+            if len(liste) < 5:
+                liste.append(log)
+            if log.reason_id and 'anniv' in services.normaliser(log.reason.label):
+                voeux.setdefault(log.patient_id, log)
         etats_relances = services.calculer_venues(dernieres.values())
         nb_relances = Counter(ContactLog.objects.filter(patient_id__in=[c.id for c in lot])
                               .values_list('patient_id', flat=True))
@@ -162,6 +169,19 @@ class CrmPatientListView(_CrmView):
                     'invoice_number': (etats_relances[dernieres[c.id].id]['invoice'].invoice_number
                                        if etats_relances[dernieres[c.id].id]['invoice'] else ''),
                 } if c.id in dernieres else None),
+                'recent_messages': [{
+                    'at': l.contacted_at, 'days': (maintenant - l.contacted_at).days,
+                    'channel': l.get_channel_display(), 'reason': l.reason.label if l.reason_id else '',
+                    'outcome_label': l.get_outcome_display(), 'message': l.message[:300],
+                    'by': (l.created_by.get_full_name() or l.created_by.username) if l.created_by_id else '',
+                } for l in envoyes.get(c.id, [])],
+                # Vœux envoyés pour l'anniversaire en cours (envoyés au plus 30 jours avant/après).
+                'birthday_wished': ({
+                    'at': voeux[c.id].contacted_at,
+                    'by': (voeux[c.id].created_by.get_full_name() or voeux[c.id].created_by.username)
+                          if voeux[c.id].created_by_id else '',
+                } if c.id in voeux and (maintenant - voeux[c.id].contacted_at).days <= 40 else None),
+                'birthday_since': services.jours_depuis_anniversaire(c.date_of_birth),
                 'last_passage': ({
                     'at': c.crm_last_passage,
                     'days': (maintenant - c.crm_last_passage).days,
@@ -249,6 +269,21 @@ class CrmPatientExportView(_CrmView):
             tampon.getvalue(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         reponse['Content-Disposition'] = 'attachment; filename="suivi-patients-%s.xlsx"' % date.today()
+        return reponse
+
+
+class CrmExportAllView(_CrmView):
+    """« Tout télécharger » : patients, messages, infos factures, passages, campagnes, statistiques."""
+
+    def get(self, request):
+        if not user_can(request.user, Modules.CRM, 'export'):
+            return Response({'error': "Vous n'avez pas le droit d'exporter."},
+                            status=status.HTTP_403_FORBIDDEN)
+        from .export import classeur_complet
+        reponse = HttpResponse(
+            classeur_complet(request.user.organization, request.user),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        reponse['Content-Disposition'] = 'attachment; filename="suivi-patients-complet-%s.xlsx"' % date.today()
         return reponse
 
 

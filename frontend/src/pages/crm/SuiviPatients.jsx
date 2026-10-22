@@ -5,7 +5,7 @@ import {
   Card, CardContent, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper,
   Pagination, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
   ToggleButton, ToggleButtonGroup, MenuItem, FormControlLabel, Switch, Stack, Badge,
-  useMediaQuery, useTheme,
+  useMediaQuery, useTheme, Alert,
 } from '@mui/material';
 import {
   Groups as GroupsIcon,
@@ -17,6 +17,7 @@ import {
   Settings as SettingsIcon,
   ChatBubbleOutline as RelanceIcon,
   Cake as CakeIcon,
+  CloudDownload as ToutIcon,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import MonthlyReportButton from '../../components/crm/MonthlyReportButton';
@@ -39,7 +40,7 @@ const TAILLE_PAGE = 30;
 const ONGLETS = {
   suivre: {
     label: 'À suivre',
-    segments: ['golden', 'not_back_60', 'to_call_back', 'revisit_due', 'awaited', 'promised_missing', 'new_month', 'vaccine_due', 'birthday_week', 'loyal'],
+    segments: ['golden', 'not_back_60', 'to_call_back', 'revisit_due', 'awaited', 'promised_missing', 'new_month', 'vaccine_due', 'birthday_week', 'birthday_last_week', 'loyal'],
     defaut: 'golden',
   },
   patients: {
@@ -86,6 +87,7 @@ const MOTIF_PAR_SEGMENT = {
   new_month: 'Rappel de suivi',
   vaccine_due: 'Vaccination',
   birthday_week: 'Vœux / anniversaire',
+  birthday_last_week: 'Vœux / anniversaire',
 };
 
 const COULEUR_ETAT = { came: 'success', waiting: 'info', missed: 'warning' };
@@ -100,6 +102,7 @@ const MODELES_MESSAGE = {
   new_month: "Bonjour {nom}, merci d'avoir choisi {centre}. Comment vous sentez-vous depuis votre visite ?",
   vaccine_due: "Bonjour {nom}, ici {centre}. Nous vous rappelons que votre prochain vaccin approche. Passez nous voir pour le faire.",
   birthday_week: "Bonjour {nom}, toute l'équipe de {centre} vous souhaite un joyeux anniversaire !",
+  birthday_last_week: "Bonjour {nom}, avec un petit retard, toute l'équipe de {centre} vous souhaite un joyeux anniversaire !",
   loyal: "Bonjour {nom}, merci pour votre fidélité à {centre}. Prenez soin de vous !",
   defaut: "Bonjour {nom}, ici {centre}. ",
 };
@@ -147,7 +150,8 @@ const dateNaissance = (iso) => {
   return `${j}/${m}/${a}`;
 };
 
-const anniversaireProche = (jours) => {
+const anniversaireProche = (jours, depuis) => {
+  if (depuis != null && depuis >= 1 && depuis <= 7) return ` · anniversaire il y a ${depuis} j`;
   if (jours === 0) return " · anniversaire aujourd'hui";
   if (jours === 1) return ' · anniversaire demain';
   if (jours != null && jours <= 7) return ` · anniversaire dans ${jours} j`;
@@ -249,6 +253,26 @@ export default function SuiviPatients() {
   const appliquerFiltres = () => { setFiltres(brouillon); setPage(1); setFiltresOuverts(false); };
   const reinitialiserFiltres = () => { setBrouillon(FILTRES_VIDES); setFiltres(FILTRES_VIDES); setPage(1); setFiltresOuverts(false); };
 
+  const [toutExport, setToutExport] = useState(false);
+  const toutTelecharger = async () => {
+    setToutExport(true);
+    try {
+      const blob = await crmAPI.exportAll();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const lien = document.createElement('a');
+      lien.href = url;
+      lien.download = `suivi-patients-complet-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      enqueueSnackbar('Impossible de tout télécharger', { variant: 'error' });
+    } finally {
+      setToutExport(false);
+    }
+  };
+
   const exporter = async () => {
     setExport(true);
     try {
@@ -283,13 +307,15 @@ export default function SuiviPatients() {
 
   const envoyerWhatsApp = async () => {
     ecrireMemoire(message.cle, message.texte);
-    window.open(`${message.patient.whatsapp_url}?text=${encodeURIComponent(texteFinal(message))}`, '_blank');
+    const texteEnvoye = texteFinal(message);
+    window.open(`${message.patient.whatsapp_url}?text=${encodeURIComponent(texteEnvoye)}`, '_blank');
     const { patient, motifId } = message;
     setMessage(null);
     // On note la relance d'office : c'est elle qui permettra de savoir s'il est venu ensuite.
     try {
       const cree = await crmAPI.createContact({
         patient_id: patient.id, channel: 'whatsapp', reason_id: motifId || null, outcome: 'sent',
+        message: texteEnvoye,
       });
       charger();
       enqueueSnackbar('Relance notée', {
@@ -399,8 +425,16 @@ export default function SuiviPatients() {
               }}
             >
               <CakeIcon sx={{ fontSize: 14 }} />
-              {dateNaissance(p.date_of_birth)}{anniversaireProche(p.birthday_in)}
+              {dateNaissance(p.date_of_birth)}{anniversaireProche(p.birthday_in, p.birthday_since)}
             </Typography>
+          )}
+          {p.birthday_wished ? (
+            <Chip size="small" color="success" icon={<CakeIcon />}
+              label={`Vœux envoyés ${ilYa(Math.floor((Date.now() - new Date(p.birthday_wished.at)) / 86400000))}${p.birthday_wished.by ? ` par ${p.birthday_wished.by}` : ''}`}
+              sx={{ height: 20, fontSize: '0.68rem' }} />
+          ) : ((p.birthday_in != null && p.birthday_in <= 7) || (p.birthday_since != null && p.birthday_since >= 1 && p.birthday_since <= 7)) && (
+            <Chip size="small" color="warning" variant="outlined" icon={<CakeIcon />} label="Vœux pas encore envoyés"
+              sx={{ height: 20, fontSize: '0.68rem' }} />
           )}
         </Box>
       )}
@@ -507,6 +541,16 @@ export default function SuiviPatients() {
           >
             Exporter en Excel
           </Button>
+        )}
+        {donnees?.can_export && (
+          <Tooltip title="Patients, messages envoyés, infos des factures, passages, campagnes, statistiques : tout dans un seul fichier Excel">
+            <Button
+              size="small" variant="outlined" onClick={toutTelecharger} disabled={toutExport}
+              startIcon={toutExport ? <CircularProgress size={14} /> : <ToutIcon />}
+            >
+              Tout télécharger
+            </Button>
+          </Tooltip>
         )}
         </Box>
       </Box>
@@ -657,6 +701,31 @@ export default function SuiviPatients() {
           Message pour {message ? titre(message.patient.name) : ''}
         </DialogTitle>
         <DialogContent dividers>
+          {/* Déjà envoyé ? Signalé à chaque ouverture, pour ne pas écrire deux fois la même chose. */}
+          {message?.patient?.birthday_wished && message.cle.includes('birthday') && (
+            <Alert severity="warning" sx={{ mb: 1.5 }}>
+              Vœux d'anniversaire déjà envoyés le {new Date(message.patient.birthday_wished.at).toLocaleDateString('fr-FR')}
+              {message.patient.birthday_wished.by ? ` par ${message.patient.birthday_wished.by}` : ''}.
+            </Alert>
+          )}
+          {message?.patient?.recent_messages?.length > 0 && (
+            <Alert severity="info" sx={{ mb: 1.5 }}>
+              <Typography variant="body2" fontWeight={700} mb={0.5}>Déjà envoyé à ce patient :</Typography>
+              {message.patient.recent_messages.map((m, i) => (
+                <Box key={i} sx={{ mb: 0.75 }}>
+                  <Typography variant="body2">
+                    {new Date(m.at).toLocaleDateString('fr-FR')} ({ilYa(m.days)}) · {m.channel}
+                    {m.reason ? ` · ${m.reason}` : ''}{m.by ? ` · par ${m.by}` : ''} · {m.outcome_label.toLowerCase()}
+                  </Typography>
+                  {m.message && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
+                      « {m.message.length > 140 ? `${m.message.slice(0, 140)}…` : m.message} »
+                    </Typography>
+                  )}
+                </Box>
+              ))}
+            </Alert>
+          )}
           <TextField
             multiline minRows={4} fullWidth autoFocus value={message?.texte || ''}
             onChange={(e) => setMessage({ ...message, texte: e.target.value })}

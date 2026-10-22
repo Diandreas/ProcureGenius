@@ -130,6 +130,9 @@ const crmAPI = {
   },
 
   // Même liste au format Excel (mêmes filtres)
+  // « Tout télécharger » : toutes les données du Suivi patients (classeur à plusieurs onglets)
+  exportAll: async () => (await api.get('/crm/export/all/', { responseType: 'blob' })).data,
+
   exportPatients: async (params = {}) => {
     const response = await api.get('/crm/patients/export/', { params, responseType: 'blob' });
     return response.data;
