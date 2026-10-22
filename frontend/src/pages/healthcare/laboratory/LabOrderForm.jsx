@@ -414,7 +414,14 @@ const LabOrderForm = () => {
             }
 
             // Suivi patients : n'empêche jamais la demande si l'enregistrement échoue.
-            const factureCrm = newOrder.lab_invoice?.id || newOrder.lab_invoice;
+            let factureCrm = newOrder.lab_invoice?.id || newOrder.lab_invoice;
+            if (!factureCrm && linkedImagingOrders.length > 0) {
+                // demande d'imagerie seule : la facture est celle de la commande d'imagerie liée
+                try {
+                    const io = await imagingAPI.getOrder(linkedImagingOrders[0].id);
+                    factureCrm = io?.imaging_invoice?.id;
+                } catch (e) { /* sans gravité */ }
+            }
             if (factureCrm) {
                 if (crmInfo.upsold || crmInfo.came_for || crmInfo.note || crmInfo.revisit_date) {
                     await crmAPI.saveInvoiceInfoAfterCreate(factureCrm, {
@@ -805,8 +812,7 @@ const LabOrderForm = () => {
                         <CardContent>
                             <Tabs value={selectionTab} onChange={(_, v) => setSelectionTab(v)} sx={{ mb: 2 }}>
                                 <Tab value={0} label={`Examens Labo (${formData.tests.length} sélectionnés)`} />
-                                {/* Plus d'examens d'imagerie dans une demande de laboratoire (demande de la
-                                    direction) : l'imagerie se prescrit depuis le module Imagerie. */}
+                                <Tab value={1} label={`Imagerie (${formData.exam_types.length} sélectionnés)`} />
                                 <Tab value={2} label={`Bilans (${formData.panels.length} sélectionnés)`} />
                             </Tabs>
 
