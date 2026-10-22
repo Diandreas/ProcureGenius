@@ -43,6 +43,7 @@ import StatCard from '../components/analytics/StatCard';
 import NestedStatCard from '../components/analytics/NestedStatCard';
 import DateRangeSelector from '../components/analytics/DateRangeSelector';
 import BatchAlertCard from '../components/inventory/BatchAlertCard';
+import AnniversairesDuJour from '../components/crm/AnniversairesDuJour';
 import { LabOrdersStatusWidget, LabTurnaroundWidget } from '../components/widgets/healthcare';
 import healthcareAnalyticsAPI from '../services/healthcareAnalyticsAPI';
 import inventoryAnalyticsAPI from '../services/inventoryAnalyticsAPI';
@@ -279,6 +280,8 @@ const Dashboard = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 2, md: 4 }, pb: { xs: 10, md: 4 } }}>
       <Container maxWidth="xl" disableGutters={false} sx={{ px: { xs: 1.5, sm: 3 } }}>
+        {/* Rappel : anniversaires du jour à souhaiter (Suivi patients) */}
+        <AnniversairesDuJour />
         {/* Header */}
         <Box mb={2} display="flex" alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
           {/* Le titre de la page est deja affiche par le header de l'application :
