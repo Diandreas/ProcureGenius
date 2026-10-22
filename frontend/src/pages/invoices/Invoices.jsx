@@ -55,6 +55,7 @@ import { useSnackbar } from 'notistack';
 import { fetchInvoices } from '../../store/slices/invoicesSlice';
 import { formatDate, formatTime } from '../../utils/formatters';
 import useCurrency from '../../hooks/useCurrency';
+import AnniversairesDuJour from '../../components/crm/AnniversairesDuJour';
 import EmptyState from '../../components/EmptyState';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
@@ -509,6 +510,8 @@ function Invoices() {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {/* Rappel : anniversaires du jour à souhaiter (Suivi patients) */}
+      <AnniversairesDuJour />
 
       {/* Header avec stats */}
       <Box sx={{ mb: 3 }}>
