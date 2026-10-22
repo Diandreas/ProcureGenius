@@ -45,6 +45,10 @@ import api from '../../../services/api';
 import QuickClientCreateModal from './components/QuickClientCreateModal';
 import { buildLabOrderGroup, enqueueGroup } from '../../../db/offlineDb';
 import { isOfflineError } from '../../../services/syncEngine';
+import ProvenanceChips from '../../../components/crm/ProvenanceChips';
+import RelancesEnAttente from '../../../components/crm/RelancesEnAttente';
+import InvoiceCrmPanel, { INFO_VIDE } from '../../../components/crm/InvoiceCrmPanel';
+import crmAPI from '../../../services/crmAPI';
 
 const LabOrderForm = () => {
     const { t } = useTranslation();
@@ -68,6 +72,9 @@ const LabOrderForm = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [openClientModal, setOpenClientModal] = useState(false);
+    // Suivi patients : comme sur une facture, enregistré sur la facture créée avec la demande.
+    const [crmInfo, setCrmInfo] = useState(INFO_VIDE);
+    const [relanceLiee, setRelanceLiee] = useState('');
     const [selectionTab, setSelectionTab] = useState(0); // 0=examens, 1=imagerie, 2=bilans
 
     // Rapprochement imagerie : examens d'imagerie individuels, ajoutables au
@@ -406,6 +413,19 @@ const LabOrderForm = () => {
                 }
             }
 
+            // Suivi patients : n'empêche jamais la demande si l'enregistrement échoue.
+            const factureCrm = newOrder.lab_invoice?.id || newOrder.lab_invoice;
+            if (factureCrm) {
+                if (crmInfo.upsold || crmInfo.came_for || crmInfo.note || crmInfo.revisit_date) {
+                    await crmAPI.saveInvoiceInfoAfterCreate(factureCrm, {
+                        upsold: crmInfo.upsold, came_for: crmInfo.came_for, note: crmInfo.note,
+                        revisit_date: crmInfo.revisit_date || null,
+                        planned_amount: crmInfo.planned_amount === '' ? null : crmInfo.planned_amount,
+                    });
+                }
+                if (relanceLiee) await crmAPI.linkContactToInvoice(relanceLiee, factureCrm);
+            }
+
             enqueueSnackbar('Ordre créé avec succès', { variant: 'success' });
 
             // Commande sans aucun test labo (uniquement des examens d'imagerie) :
@@ -492,6 +512,20 @@ const LabOrderForm = () => {
                                     <Typography variant="body2"><strong>Sexe:</strong> {formData.patient.gender}</Typography>
                                     <Typography variant="body2" color="error"><strong>Allergies:</strong> {formData.patient.allergies || 'Aucune'}</Typography>
                                 </Box>
+                            )}
+
+                            {formData.patient?.id && (
+                                <>
+                                    <Box sx={{ mt: 1.5 }}>
+                                        <ProvenanceChips patientId={formData.patient.id} masquerSiRenseigne dense />
+                                    </Box>
+                                    <Box sx={{ mt: 1.5 }}>
+                                        <RelancesEnAttente patientId={formData.patient.id} value={relanceLiee} onChange={setRelanceLiee} />
+                                    </Box>
+                                    <Box sx={{ mt: 1.5 }}>
+                                        <InvoiceCrmPanel value={crmInfo} onChange={setCrmInfo} total={calculateTotal()} />
+                                    </Box>
+                                </>
                             )}
 
                             {formData.patient?.has_privilege_card && (
