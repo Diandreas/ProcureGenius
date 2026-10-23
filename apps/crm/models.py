@@ -99,6 +99,7 @@ class PatientOrigin(models.Model):
         ('passing_by', 'Passé devant le centre'),
         ('facebook', 'Facebook'),
         ('whatsapp', 'WhatsApp'),
+        ('website', 'Site internet'),
         ('doctor', 'Envoyé par un médecin'),
         ('company', 'Entreprise'),
         ('door_to_door', 'Porte-à-porte'),
