@@ -580,6 +580,22 @@ class LabOrderCreateView(APIView):
         # Refresh order from database to ensure all relationships are loaded
         order.refresh_from_db()
 
+        # Acompte versé à la création (le reste s'encaisse plus tard depuis la facture).
+        acompte = request.data.get('acompte')
+        if acompte:
+            try:
+                from apps.healthcare.invoice_services import enregistrer_acompte
+                facture = order.lab_invoice
+                if facture is None:
+                    liee = order.linked_imaging_orders.select_related('imaging_invoice').first()
+                    facture = liee.imaging_invoice if liee else None
+                enregistrer_acompte(facture, acompte, request.user)
+                order.refresh_from_db()
+            except Exception as e:
+                import traceback
+                print(f"Error recording lab order deposit: {e}")
+                traceback.print_exc()
+
         return Response(
             LabOrderSerializer(order).data,
             status=status.HTTP_201_CREATED

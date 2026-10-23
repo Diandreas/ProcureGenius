@@ -127,12 +127,33 @@ def _principal(etape, niveau):
     return ' + '.join(sorted(etape[1]))
 
 
-def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie=True, avec_montants=False):
+def _equipe(organization, debut_dt, fin_dt):
+    """Qui a fait les factures de la période : {user_id: (nom, {patients})}."""
+    equipe = {}
+    for f in (Invoice.objects.filter(organization=organization, created_at__gte=debut_dt, created_at__lte=fin_dt,
+                                     created_by__isnull=False)
+              .exclude(status__in=['draft', 'cancelled']).exclude(invoice_type='credit_note')
+              .select_related('created_by').order_by()):
+        u = f.created_by
+        nom, pats = equipe.setdefault(u.id, ((u.get_full_name() or u.username), set()))
+        if f.client_id:
+            pats.add(f.client_id)
+    return equipe
+
+
+def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie=True, avec_montants=False,
+                      agent_id=None):
+    """agent_id : seulement les patients dont cette personne a fait au moins une facture sur la période
+    (« le circuit des patients passés par sa caisse »)."""
     niveau = 'acte' if niveau == 'acte' else 'service'
     debut_dt = timezone.make_aware(datetime.combine(debut, time.min))
     fin_dt = timezone.make_aware(datetime.combine(fin, time.max))
     aujourdhui = date.today()
     par_patient = _etapes_par_patient(organization, fin, sans_pharmacie=sans_pharmacie)
+    equipe = _equipe(organization, debut_dt, fin_dt)
+    if agent_id is not None:
+        garder = equipe.get(agent_id, ('', set()))[1]
+        par_patient = {pid: e for pid, e in par_patient.items() if pid in garder}
 
     def libelles(etape):
         return set(etape[1]) if niveau == 'service' else set(etape[2])
@@ -217,6 +238,9 @@ def calculer_parcours(organization, debut, fin, niveau='service', sans_pharmacie
         'period': {'start': debut.isoformat(), 'end': fin.isoformat()},
         'level': niveau,
         'without_pharmacy': sans_pharmacie,
+        'agent': str(agent_id) if agent_id else None,
+        'agents': sorted([{'id': str(uid), 'name': nom, 'patients': len(p)} for uid, (nom, p) in equipe.items()],
+                         key=lambda x: -x['patients']),
         'active_patients': len(patients_actifs),
         'patients_with_next_step': len({p for v in paires.values() for p, _, _ in v}),
         'transitions': transitions[:400],

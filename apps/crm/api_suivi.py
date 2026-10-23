@@ -668,10 +668,16 @@ class CrmJourneyView(APIView):
             return _invalide('La date de début suit la date de fin.')
         if (fin - debut).days > 800:
             return _invalide('Période trop longue.')
+        agent = params.get('agent')
+        try:
+            import uuid
+            agent = uuid.UUID(str(agent)) if agent else None
+        except ValueError:
+            return _invalide('Personne inconnue.')
         from .parcours import calculer_parcours
         return Response(calculer_parcours(user.organization, debut, fin, params.get('level', 'service'),
                                            sans_pharmacie=params.get('pharmacy') != '1',
-                                           avec_montants=services.voit_montants(user)))
+                                           avec_montants=services.voit_montants(user), agent_id=agent))
 
 
 # ── Qualité des fiches ────────────────────────────────────────────────────

@@ -29,17 +29,19 @@ export default function ParcoursPanel({ periode }) {
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState('');
   const [depart, setDepart] = useState('');
+  const [agent, setAgent] = useState('');
+  const [agents, setAgents] = useState([]);
 
   useEffect(() => {
     let vivant = true;
     setChargement(true);
     setErreur('');
-    crmAPI.getJourney({ ...periode, level: niveau, pharmacy: pharmacie ? '1' : '0' })
-      .then((d) => { if (vivant) { setDonnees(d); setDepart(''); } })
+    crmAPI.getJourney({ ...periode, level: niveau, pharmacy: pharmacie ? '1' : '0', ...(agent ? { agent } : {}) })
+      .then((d) => { if (vivant) { setDonnees(d); setDepart(''); setAgents(d.agents || []); } })
       .catch(() => { if (vivant) setErreur('Impossible de charger les parcours.'); })
       .finally(() => { if (vivant) setChargement(false); });
     return () => { vivant = false; };
-  }, [periode, niveau, pharmacie]);
+  }, [periode, niveau, pharmacie, agent]);
 
   const depuis = depart || donnees?.steps?.[0] || '';
   const suites = useMemo(
@@ -58,6 +60,10 @@ export default function ParcoursPanel({ periode }) {
           control={<Switch size="small" checked={pharmacie} onChange={(e) => setPharmacie(e.target.checked)} />}
           label={<Typography variant="body2">Inclure la pharmacie</Typography>}
         />
+        <TextField select size="small" label="Équipe" value={agent} onChange={(e) => setAgent(e.target.value)} sx={{ minWidth: 220 }}>
+          <MenuItem value="">Toute l'équipe</MenuItem>
+          {agents.map((a) => <MenuItem key={a.id} value={a.id}>{a.name} ({a.patients} patients)</MenuItem>)}
+        </TextField>
       </Box>
 
       {chargement && <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>}

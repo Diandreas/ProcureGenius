@@ -49,6 +49,7 @@ import ProvenanceChips from '../../../components/crm/ProvenanceChips';
 import RelancesEnAttente from '../../../components/crm/RelancesEnAttente';
 import InvoiceCrmPanel, { INFO_VIDE } from '../../../components/crm/InvoiceCrmPanel';
 import crmAPI from '../../../services/crmAPI';
+import AcompteFields, { ACOMPTE_VIDE } from '../../../components/invoices/AcompteFields';
 
 const LabOrderForm = () => {
     const { t } = useTranslation();
@@ -75,6 +76,8 @@ const LabOrderForm = () => {
     // Suivi patients : comme sur une facture, enregistré sur la facture créée avec la demande.
     const [crmInfo, setCrmInfo] = useState(INFO_VIDE);
     const [relanceLiee, setRelanceLiee] = useState('');
+    // Acompte : le patient verse une partie maintenant, le reste plus tard (bouton « Encaisser » de la facture).
+    const [acompte, setAcompte] = useState(ACOMPTE_VIDE);
     const [selectionTab, setSelectionTab] = useState(0); // 0=examens, 1=imagerie, 2=bilans
 
     // Rapprochement imagerie : examens d'imagerie individuels, ajoutables au
@@ -362,6 +365,15 @@ const LabOrderForm = () => {
                 clinical_notes: formData.clinical_notes || '',
                 payment_method: formData.payment_method || 'cash',
             };
+            if (acompte.actif) {
+                const montant = parseFloat(acompte.montant) || 0;
+                if (montant <= 0 || montant >= calculateTotal()) {
+                    enqueueSnackbar("Montant de l'acompte invalide : il doit être supérieur à 0 et inférieur au total", { variant: 'warning' });
+                    setLoading(false);
+                    return;
+                }
+                payload.acompte = { montant, date: acompte.date, mode: acompte.mode };
+            }
 
             if (formData.patient.has_privilege_card) {
                 if (privilegeCardUsedByMode === 'patient' && privilegeCardUsedByPatient) {
@@ -433,7 +445,9 @@ const LabOrderForm = () => {
                 if (relanceLiee) await crmAPI.linkContactToInvoice(relanceLiee, factureCrm);
             }
 
-            enqueueSnackbar('Ordre créé avec succès', { variant: 'success' });
+            enqueueSnackbar(payload.acompte
+                ? `Ordre créé : acompte de ${new Intl.NumberFormat('fr-FR').format(payload.acompte.montant)} XAF enregistré, le reste est à encaisser sur la facture`
+                : 'Ordre créé avec succès', { variant: 'success' });
 
             // Commande sans aucun test labo (uniquement des examens d'imagerie) :
             // la LabOrder créée est vide (pas de facture), la redirection vers son
@@ -686,6 +700,12 @@ const LabOrderForm = () => {
                                 <MenuItem value="insurance">Assurance</MenuItem>
                                 <MenuItem value="other">Autre</MenuItem>
                             </TextField>
+
+                            {!formData.subcontractor && (
+                                <Box sx={{ mt: 1.5 }}>
+                                    <AcompteFields value={acompte} onChange={setAcompte} total={calculateTotal()} />
+                                </Box>
+                            )}
 
                             <Divider sx={{ my: 2 }} />
 

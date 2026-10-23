@@ -3,6 +3,7 @@ Services pour génération de factures des modules santé
 Manuel uniquement (bouton "Générer Facture")
 """
 from decimal import Decimal
+from django.db import transaction
 from django.utils import timezone
 from apps.invoicing.models import Invoice, InvoiceItem, Product
 from apps.accounts.privilege_card import apply_privilege_card_discount, is_medication_item
@@ -205,6 +206,41 @@ class LabOrderInvoiceService:
         lab_order.save(update_fields=['lab_invoice'])
 
         return invoice
+
+
+def enregistrer_acompte(invoice, acompte, user):
+    """Acompte versé à la création : la facture passe « à régler » et l'acompte devient son
+    premier paiement (montant, date réelle du versement, mode). Ignoré si absent, nul ou si
+    l'acompte couvre toute la facture (elle reste alors payée).
+
+    acompte : {'montant': ..., 'date': 'AAAA-MM-JJ', 'mode': 'cash'|...}
+    Renvoie le Payment créé, ou None.
+    """
+    from datetime import date as _date
+    from apps.invoicing.models import Payment
+    if not invoice or not acompte:
+        return None
+    try:
+        montant = Decimal(str(acompte.get('montant') or 0)).quantize(Decimal('0.01'))
+    except Exception:
+        return None
+    if montant <= 0 or montant >= (invoice.total_amount or 0):
+        return None
+    try:
+        jour = _date.fromisoformat(str(acompte.get('date'))[:10]) if acompte.get('date') else timezone.localdate()
+    except ValueError:
+        jour = timezone.localdate()
+    jour = min(jour, timezone.localdate())
+    modes = dict(Payment._meta.get_field('payment_method').choices or [])
+    mode = acompte.get('mode') if acompte.get('mode') in modes else 'cash'
+    with transaction.atomic():
+        invoice.status = 'sent'
+        invoice.save(update_fields=['status'])
+        paiement = Payment(invoice=invoice, amount=montant, payment_date=jour, payment_method=mode,
+                           notes='Acompte versé à la création', created_by=user, status='success')
+        paiement.full_clean()
+        paiement.save()
+    return paiement
 
 
 class PharmacyInvoiceService:

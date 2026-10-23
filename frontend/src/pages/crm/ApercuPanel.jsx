@@ -69,6 +69,9 @@ export default function ApercuPanel() {
   const [colSchema, setColSchema] = useState(0);
   const [circuit, setCircuit] = useState(null);
   const [chargeCircuit, setChargeCircuit] = useState(false);
+  // Circuit d'une seule personne de l'équipe (patients passés par sa caisse sur la période)
+  const [agent, setAgent] = useState('');
+  const [agents, setAgents] = useState([]);
 
   const colonnes = useMemo(() => {
     const t = new Date();
@@ -98,12 +101,12 @@ export default function ApercuPanel() {
     if (!periodeSchema) { setCircuit(null); return undefined; }
     let vivant = true;
     setChargeCircuit(true);
-    crmAPI.getJourney({ start: periodeSchema.start, end: periodeSchema.end, level: 'service', pharmacy: '0' })
-      .then((d) => { if (vivant) setCircuit(d.circuit); })
+    crmAPI.getJourney({ start: periodeSchema.start, end: periodeSchema.end, level: 'service', pharmacy: '0', ...(agent ? { agent } : {}) })
+      .then((d) => { if (vivant) { setCircuit(d.circuit); setAgents(d.agents || []); } })
       .catch(() => { if (vivant) setCircuit(null); })
       .finally(() => { if (vivant) setChargeCircuit(false); });
     return () => { vivant = false; };
-  }, [periodeSchema?.start, periodeSchema?.end]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [periodeSchema?.start, periodeSchema?.end, agent]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const basculer = (code) => setCoches((l) => (l.includes(code) ? l.filter((x) => x !== code) : [...l, code]));
   const montants = Boolean(donnees?.amounts_visible);
@@ -219,6 +222,11 @@ export default function ApercuPanel() {
                 {montants ? ' Sous chaque action : patients et encaissé (survol : panier moyen).' : ''}
               </Typography>
             </Box>
+            <TextField select size="small" label="Équipe" value={agent} onChange={(e) => setAgent(e.target.value)} sx={{ minWidth: 220 }}
+              helperText={agent ? 'Patients passés par sa caisse sur la période' : ' '}>
+              <MenuItem value="">Toute l'équipe</MenuItem>
+              {agents.map((a) => <MenuItem key={a.id} value={a.id}>{a.name} ({a.patients} patients)</MenuItem>)}
+            </TextField>
             {colonnes.length > 1 && (
               <TextField select size="small" label="Période du schéma" value={Math.min(colSchema, colonnes.length - 1)}
                 onChange={(e) => setColSchema(Number(e.target.value))} sx={{ minWidth: 200 }}>
