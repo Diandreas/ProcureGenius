@@ -7,6 +7,7 @@ import crmAPI from '../../services/crmAPI';
 import ProfilDepensesPanel from './ProfilDepensesPanel';
 import ParcoursPanel from './ParcoursPanel';
 import ApercuPanel from './ApercuPanel';
+import ComparaisonEquipes from './ComparaisonEquipes';
 
 // Date locale au format AAAA-MM-JJ (toISOString passerait en UTC et décalerait d'un jour).
 const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -696,6 +697,12 @@ export default function StatsPanel({ peutVoirMontants }) {
             <>
               {section === 'equipe' && (
                 <Stack spacing={1.5}>
+                  <Carte
+                    titre="Comparer les équipes (selon qui est à la caisse)"
+                    note="Cochez les personnes à comparer. Chaque chiffre porte sur les factures qu'elle a faites et les relances qu'elle a envoyées pendant la période. Vert : le meilleur ; orange : le moins bon. À lire avec le nombre de jours de caisse : comparez plutôt les chiffres « par jour » et les moyennes."
+                  >
+                    <ComparaisonEquipes caisse={donnees.cashier} conversion={donnees.team_conversion} montants={montants} />
+                  </Carte>
                   <Carte
                     titre="Qui convertit le mieux, étape par étape"
                     note="Chaque pourcentage se calcule sur l'étape d'avant (ex. « Sont venus » = venus / d'accord). En vert : le meilleur taux de l'étape (au moins 5 personnes à l'étape d'avant). « Sont revenus ensuite » : une nouvelle visite après celle obtenue par la relance. « Passages → achat » : patients passés au centre (bouton « un patient est passé ») qui ont acheté."
