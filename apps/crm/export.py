@@ -179,6 +179,19 @@ def classeur_complet(organization, user):
         lignes.append(ligne)
     _feuille(classeur, 'Conversion équipe (12 mois)', colonnes, lignes)
 
+    colonnes = [('À la caisse', 24), ('Jours', 7), ('Factures', 9), ('Patients / jour', 9), ('Nouveaux patients', 9),
+                ('Grosses factures', 9), ('Montées en gamme', 9), ('Non soldées', 9)]
+    if montants:
+        colonnes += [('Encaissé (FCFA)', 13), ('Encaissé / jour', 12), ('Panier moyen', 12), ('Par patient', 12)]
+    lignes = []
+    for a in st['cashier']['rows']:
+        ligne = [a['label'], a['days'], a['invoices'], a['patients_per_day'], a['new_patients'], a['big_invoices'],
+                 a['upsold'], a['unpaid']]
+        if montants:
+            ligne += [a['revenue'], a['revenue_per_day'], a['basket'], a['per_patient']]
+        lignes.append(ligne)
+    _feuille(classeur, 'Caisse par personne (12 mois)', colonnes, lignes)
+
     colonnes = [('Canal', 24), ('Patients', 9), ('Jamais venus', 9), ('Nouveaux (12 mois)', 10), ('% qui reviennent', 10),
                 ('Visites par patient', 10), ('Services les plus utilisés', 40)]
     if montants:

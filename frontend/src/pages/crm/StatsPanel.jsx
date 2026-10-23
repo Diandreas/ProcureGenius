@@ -160,6 +160,62 @@ function TableauEquipe({ lignes, montants }) {
   );
 }
 
+// « Qui est à la caisse » : ce que rapportent les patients selon la personne qui fait la facture.
+function TableauCaisse({ donnees, montants }) {
+  const lignes = (donnees?.rows || []).filter((l) => l.invoices > 0);
+  if (!lignes.length) return <Typography variant="body2" color="text.secondary">Aucune facture sur la période.</Typography>;
+  const meilleur = (cle) => {
+    const v = lignes.filter((l) => l.days >= 2 && l[cle] != null).map((l) => l[cle]);
+    return v.length > 1 ? Math.max(...v) : null;
+  };
+  const top = { revenue_per_day: meilleur('revenue_per_day'), basket: meilleur('basket'), per_patient: meilleur('per_patient'),
+    patients_per_day: meilleur('patients_per_day'), upsold_rate: meilleur('upsold_rate') };
+  const vert = (l, cle) => (top[cle] != null && l[cle] === top[cle]
+    ? { bgcolor: 'success.light', color: 'success.contrastText', fontWeight: 700, whiteSpace: 'nowrap' } : { whiteSpace: 'nowrap' });
+  return (
+    <Box sx={{ overflowX: 'auto' }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>À la caisse</TableCell>
+            <TableCell align="right">Jours</TableCell>
+            <TableCell align="right">Factures</TableCell>
+            <TableCell align="right">Patients / jour</TableCell>
+            <TableCell align="right">Nouveaux patients</TableCell>
+            {montants && <TableCell align="right">Encaissé</TableCell>}
+            {montants && <TableCell align="right">Encaissé / jour</TableCell>}
+            {montants && <TableCell align="right">Panier moyen</TableCell>}
+            {montants && <TableCell align="right">Par patient</TableCell>}
+            <TableCell align="right">Grosses factures</TableCell>
+            <TableCell align="right">Montées en gamme</TableCell>
+            <TableCell align="right">Non soldées</TableCell>
+            <TableCell>Ce qu'elle facture le plus</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {lignes.map((l) => (
+            <TableRow key={l.label}>
+              <TableCell><strong>{l.label}</strong></TableCell>
+              <TableCell align="right">{l.days}</TableCell>
+              <TableCell align="right">{l.invoices}</TableCell>
+              <TableCell align="right" sx={vert(l, 'patients_per_day')}>{l.patients_per_day ?? '—'}</TableCell>
+              <TableCell align="right">{l.new_patients}{l.files_created ? <Typography component="span" variant="caption" sx={{ ml: 0.5, opacity: 0.8 }}>({l.files_created} fiches créées)</Typography> : null}</TableCell>
+              {montants && <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{fmt(l.revenue)}</TableCell>}
+              {montants && <TableCell align="right" sx={vert(l, 'revenue_per_day')}>{fmt(l.revenue_per_day)}</TableCell>}
+              {montants && <TableCell align="right" sx={vert(l, 'basket')}>{fmt(l.basket)}</TableCell>}
+              {montants && <TableCell align="right" sx={vert(l, 'per_patient')}>{fmt(l.per_patient)}</TableCell>}
+              <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{l.big_invoices} <Typography component="span" variant="caption">({pc(l.big_rate)})</Typography></TableCell>
+              <TableCell align="right" sx={vert(l, 'upsold_rate')}>{l.upsold} <Typography component="span" variant="caption">({pc(l.upsold_rate)})</Typography></TableCell>
+              <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{l.unpaid}{montants && l.due ? <Typography component="span" variant="caption" sx={{ ml: 0.5 }}>({fmt(l.due)})</Typography> : null}</TableCell>
+              <TableCell><Typography variant="caption">{(l.top_services || []).map((s) => s.label).join(', ')}</Typography></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+}
+
 function Semaines({ points }) {
   if (!points.length) return null;
   const max = Math.max(...points.map((p) => p.contacts), 1);
@@ -645,6 +701,12 @@ export default function StatsPanel({ peutVoirMontants }) {
                     note="Chaque pourcentage se calcule sur l'étape d'avant (ex. « Sont venus » = venus / d'accord). En vert : le meilleur taux de l'étape (au moins 5 personnes à l'étape d'avant). « Sont revenus ensuite » : une nouvelle visite après celle obtenue par la relance. « Passages → achat » : patients passés au centre (bouton « un patient est passé ») qui ont acheté."
                   >
                     <TableauEquipe lignes={donnees.team_conversion || []} montants={montants} />
+                  </Carte>
+                  <Carte
+                    titre="Qui est à la caisse : quels patients dépensent le plus selon l'équipe"
+                    note={`Par personne qui a fait la facture, sur la période. « Jours » = jours où elle a facturé. « Encaissé » = factures payées. « Grosses factures » = parmi le 1/5 des plus grosses factures payées de la période${donnees.cashier?.big_threshold ? ` (${fmt(donnees.cashier.big_threshold)} et plus)` : ''}. En vert : le meilleur (au moins 2 jours de présence).`}
+                  >
+                    <TableauCaisse donnees={donnees.cashier} montants={montants} />
                   </Carte>
                 </Stack>
               )}

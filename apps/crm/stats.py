@@ -242,6 +242,76 @@ def calculer_complements(organization, debut, fin, avec_montants, base, visites,
             'revisits': controles}
 
 
+def calculer_caisse(organization, debut, fin, avec_montants, ids_base):
+    """Par personne qui a fait la facture (« qui est à la caisse ») : quels patients dépensent le plus
+    selon l'équipe présente. Jours de présence = jours où la personne a fait au moins une facture."""
+    from .models import PatientCRMProfile
+    d0, d1 = _bornes(debut, fin)
+    factures = (Invoice.objects.filter(organization=organization, client_id__in=ids_base,
+                                       created_at__gte=d0, created_at__lte=d1)
+                .exclude(status__in=['draft', 'cancelled']).exclude(invoice_type='credit_note')
+                .select_related('created_by'))
+    infos = {i.invoice_id: i for i in InvoiceCRMInfo.objects.filter(invoice__in=factures)}
+    nouveaux = set(services.patients_du_centre(organization)
+                   .filter(created_at__gte=d0, created_at__lte=d1).values_list('id', flat=True))
+    par = defaultdict(lambda: {'jours': set(), 'factures': 0, 'patients': set(), 'nouveaux': set(), 'paye': 0.0,
+                               'factures_payees': 0, 'en_attente': 0, 'du': 0.0, 'services': Counter(),
+                               'montees': 0, 'infos': 0, 'gros': 0})
+    seuil = None
+    montants_factures = sorted(float(f.total_amount or 0) for f in factures if f.status == 'paid')
+    if montants_factures:
+        seuil = montants_factures[int(len(montants_factures) * 0.8)]  # le 1/5 des plus grosses factures
+    libelles = dict(Invoice.INVOICE_TYPES)
+    for f in factures:
+        nom = (f.created_by.get_full_name() or f.created_by.username) if f.created_by_id else 'Inconnu'
+        g = par[nom]
+        g['jours'].add(timezone.localtime(f.created_at).date())
+        g['factures'] += 1
+        g['patients'].add(f.client_id)
+        if f.client_id in nouveaux:
+            g['nouveaux'].add(f.client_id)
+        g['services'][str(libelles.get(f.invoice_type, f.invoice_type))] += 1
+        if f.status == 'paid':
+            g['factures_payees'] += 1
+            g['paye'] += float(f.total_amount or 0)
+            if seuil is not None and float(f.total_amount or 0) >= seuil:
+                g['gros'] += 1
+        else:
+            g['en_attente'] += 1
+            g['du'] += float(f.reste_a_payer or 0)
+        i = infos.get(f.id)
+        if i:
+            g['infos'] += 1
+            if i.upsold:
+                g['montees'] += 1
+    # Fiches patients créées (et provenance posée) par chaque personne sur la période
+    fiches = Counter()
+    for p in PatientCRMProfile.objects.filter(organization=organization, patient__created_at__gte=d0,
+                                              patient__created_at__lte=d1).select_related('created_by', 'origin'):
+        if p.created_by_id:
+            fiches[(p.created_by.get_full_name() or p.created_by.username)] += 1
+    sortie = []
+    for nom, g in par.items():
+        jours = len(g['jours'])
+        sortie.append({
+            'label': nom, 'days': jours, 'invoices': g['factures'], 'patients': len(g['patients']),
+            'new_patients': len(g['nouveaux']), 'files_created': fiches.get(nom, 0),
+            'invoices_per_day': round(g['factures'] / jours, 1) if jours else None,
+            'patients_per_day': round(len(g['patients']) / jours, 1) if jours else None,
+            'revenue': round(g['paye']) if avec_montants else None,
+            'revenue_per_day': round(g['paye'] / jours) if (avec_montants and jours) else None,
+            'basket': round(g['paye'] / g['factures_payees']) if (avec_montants and g['factures_payees']) else None,
+            'per_patient': round(g['paye'] / len(g['patients'])) if (avec_montants and g['patients']) else None,
+            'big_invoices': g['gros'], 'big_rate': _pct(g['gros'], g['factures_payees']),
+            'unpaid': g['en_attente'], 'due': round(g['du']) if avec_montants else None,
+            'upsold': g['montees'], 'upsold_rate': _pct(g['montees'], g['factures']),
+            'info_rate': _pct(g['infos'], g['factures']),
+            'top_services': [{'label': k, 'count': v} for k, v in g['services'].most_common(3)],
+        })
+    sortie.sort(key=lambda x: -(x['revenue'] or x['invoices']))
+    return {'rows': sortie, 'big_threshold': round(seuil) if (avec_montants and seuil is not None) else None}
+
+
 def calculer_statistiques(organization, debut, fin, avec_montants):
     d0, d1 = _bornes(debut, fin)
     maintenant = timezone.now()
@@ -509,6 +579,7 @@ def calculer_statistiques(organization, debut, fin, avec_montants):
         'by_channel': sorted([_finir(g, k, avec_montants) for k, g in par_canal.items()], key=lambda x: -x['contacts']),
         'by_agent': sorted([_finir(g, k, avec_montants) for k, g in par_agent.items()], key=lambda x: -x['contacts']),
         'team_conversion': conversion,
+        'cashier': calculer_caisse(organization, debut, fin, avec_montants, ids_base),
         'by_outcome': [{'code': c, 'label': LIBELLES_ISSUE[c], 'count': issues.get(c, 0)} for c, _ in ContactLog.OUTCOME_CHOICES],
         'timeline': [{'week': k.isoformat(), **v} for k, v in sorted(semaines.items())],
         'to_follow': a_suivre[:30],
