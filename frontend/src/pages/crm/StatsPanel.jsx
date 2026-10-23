@@ -13,6 +13,14 @@ const isoLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
 
 const PERIODES = [
   { code: 'semaine', label: 'Semaine en cours', calc: (t) => { const d = new Date(t); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return [d, t]; } },
+  {
+    code: 'semaine_derniere', label: 'Semaine dernière',
+    calc: (t) => {
+      const lundi = new Date(t); lundi.setDate(lundi.getDate() - ((lundi.getDay() + 6) % 7) - 7);
+      const dimanche = new Date(lundi); dimanche.setDate(lundi.getDate() + 6);
+      return [lundi, dimanche];
+    },
+  },
   { code: 'mois', label: 'Mois en cours', calc: (t) => [new Date(t.getFullYear(), t.getMonth(), 1), t] },
   { code: 'mois_dernier', label: 'Mois dernier', calc: (t) => [new Date(t.getFullYear(), t.getMonth() - 1, 1), new Date(t.getFullYear(), t.getMonth(), 0)] },
   { code: '30', label: '30 jours', calc: (t) => { const d = new Date(t); d.setDate(d.getDate() - 29); return [d, t]; } },
