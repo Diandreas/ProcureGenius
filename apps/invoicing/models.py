@@ -922,7 +922,11 @@ class ProductBatch(models.Model):
         if self.quantity_remaining <= 0:
             self.status = 'depleted'
         elif self.opened_at:
-            self.status = 'expired' if self.is_expired else 'opened'
+            # Le centre sort les reactifs perimes A LA MAIN (decision du 19/10/2026).
+            # Basculer ici en 'expired' faisait disparaitre tout le lot du stock au
+            # premier examen, sans aucun mouvement trace. On ne garde 'expired' que
+            # s'il a ete pose explicitement (cloture, sortie pour peremption).
+            self.status = 'expired' if self.status == 'expired' else 'opened'
         else:
             self.status = 'available'
         self.save(update_fields=['status'])
