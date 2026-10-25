@@ -139,8 +139,10 @@ const crmAPI = {
   },
 
   // Rapport mensuel « patients financiers » (administrateurs) : fichier Excel du mois AAAA-MM
-  downloadFinancialReport: async (month) => {
-    const response = await api.get('/crm/reports/financial-patients/', { params: { month }, responseType: 'blob' });
+  // { start, end } (AAAA-MM-JJ) ou une chaîne « AAAA-MM » pour un mois entier
+  downloadFinancialReport: async (periode) => {
+    const params = typeof periode === 'string' ? { month: periode } : periode;
+    const response = await api.get('/crm/reports/financial-patients/', { params, responseType: 'blob' });
     return response.data;
   },
   getSpendingProfile: async (month) => (await api.get('/crm/reports/spending-profile/', { params: { month } })).data,

@@ -594,15 +594,14 @@ class CrmFinancialReportView(APIView):
         if not _peut_rapport(request.user):
             return Response({'error': 'Accès refusé.'}, status=status.HTTP_403_FORBIDDEN)
         try:
-            debut, fin = (rapport.bornes_du_mois(request.query_params['month'])
-                          if request.query_params.get('month') else rapport.mois_precedent())
+            debut, fin = rapport.bornes_periode(request.query_params)
         except (ValueError, TypeError):
-            return Response({'error': 'Mois invalide (AAAA-MM).'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Période invalide (AAAA-MM-JJ ou mois AAAA-MM).'}, status=status.HTTP_400_BAD_REQUEST)
         org = request.user.organization
         tampon, _ = rapport.construire_classeur(org, debut, fin)
         rep = HttpResponse(tampon.read(),
                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        rep['Content-Disposition'] = 'attachment; filename="%s"' % rapport.nom_fichier(org, debut)
+        rep['Content-Disposition'] = 'attachment; filename="%s"' % rapport.nom_fichier(org, debut, fin)
         return rep
 
 

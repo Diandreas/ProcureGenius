@@ -31,6 +31,20 @@ def mois_precedent(aujourdhui=None):
     return fin.replace(day=1), fin
 
 
+def bornes_periode(params):
+    """(debut, fin) depuis ?start=AAAA-MM-JJ&end=AAAA-MM-JJ, sinon ?month=AAAA-MM, sinon le mois
+    precedent. Leve ValueError si invalide."""
+    if params.get('start') or params.get('end'):
+        debut = date.fromisoformat(str(params.get('start')))
+        fin = date.fromisoformat(str(params.get('end')))
+        if debut > fin or (fin - debut).days > 400:
+            raise ValueError('periode')
+        return debut, fin
+    if params.get('month'):
+        return bornes_du_mois(params['month'])
+    return mois_precedent()
+
+
 def bornes_du_mois(texte):
     """'2026-09' -> (2026-09-01, 2026-09-30). Leve ValueError si invalide."""
     annee, mois = (int(x) for x in texte.split('-'))
@@ -52,8 +66,44 @@ def factures_du_mois(organization, debut, fin, inclure_externes=False):
             .exclude(status__in=['cancelled', 'draft'])
             .exclude(invoice_type='credit_note')
             .select_related('client')
-            .prefetch_related(Prefetch('items', queryset=InvoiceItem.objects.order_by('created_at')))
+            .prefetch_related(Prefetch('items', queryset=InvoiceItem.objects.select_related('product__category')
+                                       .order_by('created_at')))
             .order_by('created_at'))
+
+
+def service_de(facture):
+    """Service d'une facture (Consultation, Laboratoire, Pharmacie...), comme dans les parcours."""
+    from .parcours import SERVICE_PAR_TYPE, _service_ligne
+    if facture.invoice_type in SERVICE_PAR_TYPE:
+        return SERVICE_PAR_TYPE[facture.invoice_type]
+    noms = []
+    for i in facture.items.all():
+        p = i.product
+        cat = p.category.name if p is not None and p.category_id else ''
+        s = _service_ligne(cat, p.product_type if p is not None else 'service')
+        if s not in noms:
+            noms.append(s)
+    return ' + '.join(noms) or 'Autres services'
+
+
+def rangs_des_actions(organization, ids_patients, fin):
+    """Pour chaque patient, ses factures depuis toujours (jusqu'a `fin`), dans l'ordre :
+    {facture_id: rang (1 = premiere action au centre)}, {patient: [id 1re, id 2e]}."""
+    from django.utils import timezone
+    from datetime import datetime, time
+    limite = timezone.make_aware(datetime.combine(fin, time.max))
+    rang, premieres = {}, {}
+    for f in (Invoice.objects.filter(organization=organization, client_id__in=ids_patients, created_at__lte=limite)
+              .exclude(status__in=['cancelled', 'draft']).exclude(invoice_type='credit_note')
+              .order_by('client_id', 'created_at').values('id', 'client_id')):
+        liste = premieres.setdefault(f['client_id'], [])
+        liste.append(f['id'])
+        rang[f['id']] = len(liste)
+    return rang, {k: v[:2] for k, v in premieres.items()}
+
+
+def libelle_rang(n):
+    return '1re action' if n == 1 else '%se action' % n
 
 
 def agreger_par_patient(factures):
@@ -138,9 +188,25 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
     from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.utils import get_column_letter
 
+    from django.utils import timezone
+    from .models import PatientCRMProfile
+
     factures = list(factures_du_mois(organization, debut, fin, inclure_externes))
 
     par_patient = agreger_par_patient(factures)
+    rang, premieres = rangs_des_actions(organization, list(par_patient.keys()), fin)
+    ids_premieres = [i for v in premieres.values() for i in v]
+    actions = {f.id: f for f in (Invoice.objects.filter(id__in=ids_premieres).select_related('client')
+                                 .prefetch_related(Prefetch('items', queryset=InvoiceItem.objects
+                                                            .select_related('product__category').order_by('created_at'))))}
+    provenances = {}
+    for p in PatientCRMProfile.objects.filter(patient_id__in=list(par_patient.keys())).select_related('origin'):
+        provenances[p.patient_id] = p.origin.label if p.origin_id else ('Inconnue' if p.unknown else '')
+    jour = lambda d: timezone.localtime(d).strftime('%d/%m/%Y')
+    heure = lambda d: timezone.localtime(d).strftime('%d/%m/%Y %H:%M')
+    dates_periode = {}
+    for f in factures:
+        dates_periode.setdefault(f.client_id, []).append(f.created_at)
 
     classeur = Workbook()
     en_tete = Font(bold=True, color='FFFFFF')
@@ -169,24 +235,62 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
                        age if age is not None else '', SEXES.get(c.gender, ''), fiche['passages'],
                        float(fiche['paye']), float(fiche['non_regle']),
                        ' ; '.join(fiche['articles'].keys())])
-    ws = classeur.active
-    ws.title = 'Par patient'
-    feuille(ws, ['N° patient', 'Patient', 'Téléphone', 'Âge', 'Sexe', 'Passages', 'Total payé (FCFA)',
-                 'Non réglé (FCFA)', 'Services / produits'],
-            resume, [13, 30, 15, 7, 10, 10, 16, 15, 80])
+    # 0. Ce que demande la direction : la 1re et la 2e action de chaque patient venu sur la période
+    wa = classeur.active
+    wa.title = '1re et 2e action'
+    lignes_actions = []
+    for pid, fiche in sorted(par_patient.items(), key=lambda kv: min(dates_periode[kv[0]])):
+        c = fiche['client']
+        ids = premieres.get(pid, [])
+        ligne = [c.patient_number or '', c.name, c.phone or '', provenances.get(pid, '')]
+        for k in range(2):
+            f = actions.get(ids[k]) if k < len(ids) else None
+            if f is None:
+                ligne += ['', '', '', None, '']
+                continue
+            ligne += [heure(f.created_at), service_de(f), ' ; '.join(_libelle_item(i) for i in f.items.all()),
+                      float(f.total_amount or 0), STATUTS.get(f.status, f.get_status_display())]
+        rangs_periode = sorted(rang.get(f.id, 0) for f in factures if f.client_id == pid)
+        nouveau = bool(ids) and ids[0] in {f.id for f in factures}
+        ligne += ['oui' if nouveau else 'non', ', '.join(libelle_rang(n) for n in rangs_periode),
+                  fiche['passages'], float(fiche['paye'])]
+        lignes_actions.append(ligne)
+    feuille(wa, ['N° patient', 'Patient', 'Téléphone', 'Comment il a connu le centre',
+                 '1re action : date', '1re action : service', '1re action : détail', '1re action : montant (FCFA)', '1re action : statut',
+                 '2e action : date', '2e action : service', '2e action : détail', '2e action : montant (FCFA)', '2e action : statut',
+                 'Nouveau sur la période', 'Actions sur la période', 'Passages sur la période', 'Payé sur la période (FCFA)'],
+            lignes_actions, [13, 28, 14, 18, 16, 16, 40, 14, 12, 16, 16, 40, 14, 12, 11, 22, 11, 16])
+    vert = PatternFill('solid', fgColor='E2EFDA')
+    for row in wa.iter_rows(min_row=2, max_row=1 + len(lignes_actions)):
+        if row[14].value == 'oui':
+            for c in row[4:9]:
+                c.fill = vert
+    wa.append([])
+    wa.append(['', 'Période du %s au %s. « 1re action » = toute première facture du patient au centre, même avant '
+               'la période. En vert : 1re action faite pendant la période (nouveau patient).'
+               % (debut.strftime('%d/%m/%Y'), fin.strftime('%d/%m/%Y'))])
+
+    ws = classeur.create_sheet('Par patient')
+    for ligne, fiche in zip(resume, sorted(par_patient.values(), key=lambda x: -x['paye'])):
+        ds = dates_periode[fiche['client'].id]
+        ligne.insert(5, jour(min(ds)))
+        ligne.insert(6, jour(max(ds)))
+    feuille(ws, ['N° patient', 'Patient', 'Téléphone', 'Âge', 'Sexe', 'Premier passage (période)', 'Dernier passage (période)',
+                 'Passages', 'Total payé (FCFA)', 'Non réglé (FCFA)', 'Services / produits'],
+            resume, [13, 30, 15, 7, 10, 14, 14, 10, 16, 15, 80])
     rouge = PatternFill('solid', fgColor='FFC7CE')
     for row in ws.iter_rows(min_row=2, max_row=1 + len(resume)):
-        if (row[6].value or 0) < SEUIL_DEPENSE:
+        if (row[8].value or 0) < SEUIL_DEPENSE:
             for c in row:
                 c.fill = rouge
-            row[6].font = Font(bold=True, color='9C0006')
+            row[8].font = Font(bold=True, color='9C0006')
     total_paye = float(sum(f['paye'] for f in par_patient.values()))
     ws.append([])
-    ws.append(['', 'TOTAL', '', '', '', len(factures), total_paye,
+    ws.append(['', 'TOTAL', '', '', '', '', '', len(factures), total_paye,
                float(sum(f['non_regle'] for f in par_patient.values())), ''])
     for c in ws[ws.max_row]:
         c.font = Font(bold=True)
-    en_dessous = sum(1 for r in resume if r[6] < SEUIL_DEPENSE)
+    en_dessous = sum(1 for r in resume if r[8] < SEUIL_DEPENSE)
     ws.append(['', 'En rouge : moins de {:,} FCFA dépensés ({} patient(s) sur {})'.format(
         SEUIL_DEPENSE, en_dessous, len(resume)).replace(',', ' ')])
 
@@ -194,8 +298,10 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
     detail = []
     for f in factures:
         c = f.client
+        n = rang.get(f.id, 0)
         detail.append([
-            f.created_at.strftime('%d/%m/%Y'), f.invoice_number, c.patient_number or '', c.name,
+            heure(f.created_at), f.invoice_number, c.patient_number or '', c.name,
+            libelle_rang(n) if n else '', 'Première action' if n == 1 else 'Action suivante', service_de(f),
             float(f.total_amount or 0), STATUTS.get(f.status, f.get_status_display()),
             f.get_payment_method_display() if getattr(f, 'payment_method', '') else '',
             ' ; '.join(_libelle_item(i) for i in f.items.all()),
@@ -222,8 +328,9 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
         wp.column_dimensions[get_column_letter(i)].width = l
 
     ws2 = classeur.create_sheet('Détail des passages')
-    feuille(ws2, ['Date', 'N° facture', 'N° patient', 'Patient', 'Montant (FCFA)', 'Statut',
-                  'Mode de paiement', 'Services / produits'], detail, [12, 18, 13, 30, 15, 13, 16, 80])
+    feuille(ws2, ['Date et heure', 'N° facture', 'N° patient', 'Patient', 'N° de l\'action', 'Type d\'action', 'Service',
+                  'Montant (FCFA)', 'Statut', 'Mode de paiement', 'Services / produits'],
+            detail, [16, 18, 13, 30, 11, 15, 16, 15, 13, 16, 80])
 
     tampon = io.BytesIO()
     classeur.save(tampon)
@@ -232,8 +339,11 @@ def construire_classeur(organization, debut, fin, inclure_externes=False):
                     'sous_seuil': en_dessous}
 
 
-def nom_fichier(organization, debut):
-    return 'patients_financiers_%s_%s.xlsx' % (organization.name.replace(' ', '_'), debut.strftime('%Y-%m'))
+def nom_fichier(organization, debut, fin=None):
+    if fin is None:
+        return 'patients_financiers_%s_%s.xlsx' % (organization.name.replace(' ', '_'), debut.strftime('%Y-%m'))
+    return 'patients_financiers_%s_%s_au_%s.xlsx' % (organization.name.replace(' ', '_'),
+                                                     debut.strftime('%Y-%m-%d'), fin.strftime('%Y-%m-%d'))
 
 
 def envoyer_rapport(organization, debut, fin, destinataires, inclure_externes=False):

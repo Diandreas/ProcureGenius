@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import {
   Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Switch, FormControlLabel,
-  Typography, Box, Stack, Divider, Alert, CircularProgress,
+  Typography, Box, Stack, Divider, Alert, CircularProgress, Chip,
 } from '@mui/material';
 import { Download as DownloadIcon, MailOutline as MailIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import crmAPI from '../../services/crmAPI';
+
+// Date locale AAAA-MM-JJ (toISOString passerait en UTC et décalerait d'un jour).
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const lundi = (t) => { const d = new Date(t); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; };
+const decale = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const PERIODES = [
+  { code: 'semaine', label: 'Semaine en cours', calc: (t) => [lundi(t), t] },
+  { code: 'semaine_derniere', label: 'Semaine dernière', calc: (t) => [decale(lundi(t), -7), decale(lundi(t), -1)] },
+  { code: 'mois', label: 'Mois en cours', calc: (t) => [new Date(t.getFullYear(), t.getMonth(), 1), t] },
+  { code: 'mois_dernier', label: 'Mois dernier', calc: (t) => [new Date(t.getFullYear(), t.getMonth() - 1, 1), new Date(t.getFullYear(), t.getMonth(), 0)] },
+  { code: 'plage', label: 'Dates précises…' },
+];
 
 const moisPrecedent = () => {
   const d = new Date();
@@ -23,7 +35,9 @@ export default function MonthlyReportButton({ size = 'small' }) {
   const { enqueueSnackbar } = useSnackbar();
   const [autorise, setAutorise] = useState(false);
   const [ouvert, setOuvert] = useState(false);
-  const [mois, setMois] = useState(moisPrecedent());
+  const [mois, setMois] = useState(moisPrecedent()); // eslint-disable-line no-unused-vars
+  const [periode, setPeriode] = useState('semaine_derniere');
+  const [plage, setPlage] = useState({ start: '', end: '' });
   const [plan, setPlan] = useState(null);
   const [telechargement, setTelechargement] = useState(false);
   const [enregistrement, setEnregistrement] = useState(false);
@@ -42,11 +56,13 @@ export default function MonthlyReportButton({ size = 'small' }) {
   const telecharger = async () => {
     setTelechargement(true);
     try {
-      const blob = await crmAPI.downloadFinancialReport(mois);
+      const p = PERIODES.find((x) => x.code === periode);
+      const [d, f] = p.calc ? p.calc(new Date()).map(iso) : [plage.start, plage.end];
+      const blob = await crmAPI.downloadFinancialReport({ start: d, end: f });
       const url = window.URL.createObjectURL(new Blob([blob]));
       const lien = document.createElement('a');
       lien.href = url;
-      lien.download = `patients-financiers-${mois}.xlsx`;
+      lien.download = `patients-financiers-${d}-au-${f}.xlsx`;
       document.body.appendChild(lien);
       lien.click();
       lien.remove();
@@ -77,24 +93,36 @@ export default function MonthlyReportButton({ size = 'small' }) {
   return (
     <>
       <Button size={size} variant="outlined" startIcon={<DownloadIcon />} onClick={() => setOuvert(true)}>
-        Rapport mensuel
+        Rapport patients
       </Button>
       <Dialog open={ouvert} onClose={() => setOuvert(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Patients financiers — rapport mensuel</DialogTitle>
+        <DialogTitle>Patients financiers — rapport par période</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2.5}>
             <Box>
               <Typography variant="body2" color="text.secondary" mb={1.5}>
-                Pour chaque patient : le montant dépensé à chaque passage et les services ou
-                produits achetés (un onglet « par patient », un onglet « par passage »).
+                Pour chaque patient venu sur la période : sa 1re et sa 2e action (date, service, détail,
+                montant), puis un onglet par patient et le détail de chaque passage avec son rang
+                (1re action, 2e action…).
               </Typography>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <TextField
-                  type="month" size="small" label="Mois" value={mois}
-                  onChange={(e) => setMois(e.target.value)} InputLabelProps={{ shrink: true }}
-                />
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                {PERIODES.map((p) => (
+                  <Chip key={p.code} label={p.label} clickable onClick={() => setPeriode(p.code)}
+                    color={periode === p.code ? 'primary' : 'default'} variant={periode === p.code ? 'filled' : 'outlined'} />
+                ))}
+              </Box>
+              <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                {periode === 'plage' && (
+                  <>
+                    <TextField type="date" size="small" label="Du" value={plage.start}
+                      onChange={(e) => setPlage({ ...plage, start: e.target.value })} InputLabelProps={{ shrink: true }} />
+                    <TextField type="date" size="small" label="Au" value={plage.end}
+                      onChange={(e) => setPlage({ ...plage, end: e.target.value })} InputLabelProps={{ shrink: true }} />
+                  </>
+                )}
                 <Button
-                  variant="contained" onClick={telecharger} disabled={telechargement || !mois}
+                  variant="contained" onClick={telecharger}
+                  disabled={telechargement || (periode === 'plage' && (!plage.start || !plage.end || plage.start > plage.end))}
                   startIcon={telechargement ? <CircularProgress size={16} /> : <DownloadIcon />}
                 >
                   Télécharger
