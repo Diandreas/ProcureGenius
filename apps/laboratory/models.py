@@ -1063,6 +1063,27 @@ class LabOrderItem(models.Model):
 
         LabOrder.objects.get(pk=self.lab_order_id).sync_collection_status(collected_by=collected_by)
 
+    # Avant le 26/10/2026, un résultat saisi sans l'étape « prélèvement » (cas
+    # fréquent pour Saint Tropez) ne sortait jamais le stock. On ne rattrape pas
+    # ces anciens examens : les stocks ont été alignés sur l'inventaire du 25/10.
+    DECOMPTE_AU_RESULTAT_DEPUIS = (2026, 10, 26)
+
+    def decompter_si_saisi_sans_prelevement(self, user=None):
+        """
+        Résultat saisi sur un test jamais prélevé dans le logiciel : le prélèvement
+        a forcément eu lieu, on l'enregistre (ce qui sort le stock, une seule fois).
+        """
+        if self.sample_collected_at or not self.has_result:
+            return False
+        from datetime import datetime
+        debut = timezone.make_aware(datetime(*self.DECOMPTE_AU_RESULTAT_DEPUIS))
+        if self.lab_order.order_date < debut:
+            return False
+        if ReagentUsage.objects.filter(lab_order_item=self).exists():
+            return False
+        self.collect_sample(collected_by=user)
+        return True
+
     def reset_collection(self):
         """
         Renvoie ce test au prélèvement — ex: conditions de prélèvement non

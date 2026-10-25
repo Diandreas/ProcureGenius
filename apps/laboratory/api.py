@@ -775,6 +775,7 @@ class EnterLabResultsView(APIView):
                         item.result_value = 'voir paramètres'
 
                 item.save()
+                item.decompter_si_saisi_sans_prelevement(request.user)
                 updated_items.append(item)
 
             except LabOrderItem.DoesNotExist:
