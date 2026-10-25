@@ -292,11 +292,14 @@ const LabOrderForm = () => {
         return 0;
     };
 
-    // Carte Privilège : sur toutes les analyses, examens et bilans (miroir de
-    // apply_privilege_card_discount côté serveur, règle du 16/10/2026).
+    // Carte Privilège : sur les examens individuels seulement, jamais sur les bilans
+    // (miroir de apply_privilege_card_discount / is_bilan_item côté serveur, règle du 24/10/2026).
     const privilegeCardDiscount = () => {
         if (!privilegeCardSettings.enabled || !formData.patient?.has_privilege_card) return 0;
-        return Math.round(calculateSubtotal() * privilegeCardSettings.laboratoryDiscountPercent) / 100;
+        const examensSeuls = formData.tests.reduce((sum, test) => {
+            return sum + getEffectivePrice(test) - (parseFloat(test.discount) || 0);
+        }, 0);
+        return Math.round(examensSeuls * privilegeCardSettings.laboratoryDiscountPercent) / 100;
     };
 
     const calculateTotal = () => {
@@ -552,7 +555,7 @@ const LabOrderForm = () => {
                             {formData.patient?.has_privilege_card && (
                                 <Box sx={{ mt: 2 }}>
                                     <Alert severity="success" sx={{ mb: 1 }}>
-                                        Carte Privilège active — {privilegeCardSettings.laboratoryDiscountPercent}% appliqué automatiquement sur toutes les analyses.
+                                        Carte Privilège active — {privilegeCardSettings.laboratoryDiscountPercent}% appliqué automatiquement sur les examens individuels (pas sur les bilans).
                                     </Alert>
                                     <TextField
                                         select size="small" fullWidth
@@ -794,7 +797,7 @@ const LabOrderForm = () => {
                             {privilegeCardDiscount() > 0 && (
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                     <Typography variant="body2" color="success.main">
-                                        Réduction Carte Privilège ({privilegeCardSettings.laboratoryDiscountPercent}% sur les analyses) :
+                                        Réduction Carte Privilège ({privilegeCardSettings.laboratoryDiscountPercent}% sur les examens, hors bilans) :
                                     </Typography>
                                     <Typography variant="body2" color="success.main" fontWeight="bold">
                                         −{new Intl.NumberFormat('fr-FR').format(privilegeCardDiscount())} XAF

@@ -43,6 +43,14 @@ def is_medication_item(invoice_item):
     return product.category.name.strip().lower() in MEDICATION_CATEGORY_NAMES
 
 
+def is_bilan_item(invoice_item):
+    """True pour une ligne de bilan ou de pack (forfait déjà remisé) : la carte privilège ne s'y
+    applique jamais (règle de la direction du 24/10/2026 : seulement les examens individuels)."""
+    desc = (invoice_item.description or '').strip().lower()
+    notes = (invoice_item.notes or '').strip().lower()
+    return desc.startswith('bilan') or desc.startswith('pack') or notes.startswith('forfait bilan')
+
+
 def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None, used_by_name='', used_by_relationship='', item_filter=None):
     """
     Si le patient a la carte privilège et que la fonctionnalité est activée pour
@@ -80,7 +88,8 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
 
     total_discount = Decimal('0')
     item_discounts = {}
-    eligible_items = invoice.items.all()
+    # Jamais de réduction sur un bilan ou un pack, quel que soit le module ou l'appelant.
+    eligible_items = [item for item in invoice.items.all() if not is_bilan_item(item)]
     if item_filter is not None:
         eligible_items = [item for item in eligible_items if item_filter(item)]
     for item in eligible_items:
@@ -155,10 +164,9 @@ def get_module_for_invoice(invoice):
 
 
 def get_item_filter_for_module(module):
-    """Filtre d'éligibilité des lignes pour ce module, ou None si toutes les lignes
-    sont éligibles. Depuis le 16/10/2026 (règle de la direction : -10 % analyses,
-    -5 % tout le reste), toutes les lignes le sont : plus de « bilans seulement » en
-    laboratoire ni de « médicaments seulement » en pharmacie."""
+    """Filtre d'éligibilité supplémentaire pour ce module, ou None. Règle de la direction :
+    -10 % analyses, -5 % tout le reste (16/10/2026) ; les bilans et packs sont toujours exclus
+    (24/10/2026), directement dans apply_privilege_card_discount (is_bilan_item)."""
     return None
 
 
