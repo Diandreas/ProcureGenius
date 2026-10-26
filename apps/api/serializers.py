@@ -297,6 +297,14 @@ class ProductSerializer(ModuleAwareSerializerMixin, serializers.ModelSerializer)
 
         return attrs
 
+    def update(self, instance, validated_data):
+        # Le stock d'un produit physique ne bouge que par les lots et les
+        # mouvements. Le formulaire produit renvoie toujours stock_quantity=0 :
+        # l'accepter remettait le stock a zero a chaque enregistrement de la fiche.
+        if instance.product_type == 'physical':
+            validated_data.pop('stock_quantity', None)
+        return super().update(instance, validated_data)
+
     def get_warehouse_location(self, obj):
         if obj.warehouse:
             return f"{obj.warehouse.city}, {obj.warehouse.province}"
