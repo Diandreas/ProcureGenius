@@ -958,6 +958,25 @@ class PatientHistoryPDFView(APIView):
 # Consultation adaptee a la specialite
 # ---------------------------------------------------------------------------
 
+def texte_brut(html):
+    """Resultat saisi dans l'editeur riche : on garde le texte, sans balises ni commentaires."""
+    import re
+    from html import unescape
+    from django.utils.html import strip_tags
+    t = re.sub(r'<!--.*?-->', ' ', html or '', flags=re.S)
+    t = re.sub(r'<\s*(br|/p|/div|/li|/tr)\s*/?>', '\n', t, flags=re.I)
+    t = unescape(strip_tags(t))
+    return '\n'.join(ligne.strip() for ligne in t.splitlines() if ligne.strip())
+
+
+def nombre(valeur):
+    """5.0000 -> '5', 0.2500 -> '0.25' ; vide si pas de valeur."""
+    if valeur is None:
+        return ''
+    texte = format(valeur, 'f')
+    return texte.rstrip('0').rstrip('.') if '.' in texte else texte
+
+
 class ConsultationPatientContextView(APIView):
     """
     Ce qu'il faut savoir sur le patient en ouvrant la consultation : identite, allergies,
@@ -1003,6 +1022,9 @@ class ConsultationPatientContextView(APIView):
 
         naissance = getattr(patient, 'date_of_birth', None)
         return Response({
+            'historique': self._historique(consultations),
+            'labo': self._labo(request, patient),
+            'imagerie': self._imagerie(request, patient),
             'patient': {
                 'id': str(patient.id), 'nom': patient.name,
                 'sexe': getattr(patient, 'gender', '') or '',
@@ -1018,6 +1040,75 @@ class ConsultationPatientContextView(APIView):
             'derniere_par_specialite': derniere_par_specialite,
             'vaccins': vaccins,
         })
+
+    @staticmethod
+    def _historique(consultations):
+        """Les consultations precedentes, de la plus recente a la plus ancienne, avec l'ordonnance."""
+        sortie = []
+        for c in consultations.select_related('patient').prefetch_related('prescriptions__items').order_by('-consultation_date')[:15]:
+            ordo = next((p for p in c.prescriptions.all() if p.status != 'cancelled'), None)
+            sortie.append({
+                'id': str(c.id), 'date': c.consultation_date, 'specialite': c.get_specialty_display(),
+                'praticien': c.practitioner_name or (c.doctor.get_full_name() if c.doctor_id else ''),
+                'motif': c.chief_complaint, 'diagnostic': c.diagnosis, 'examen': c.physical_examination,
+                'resume_specialite': (c.specialty_data or {}).get('resume', ''),
+                'traitement': c.treatment_plan,
+                'constantes': {'ta': c.blood_pressure, 'temperature': c.temperature, 'poids': c.weight, 'fc': c.heart_rate},
+                'ordonnance': [{
+                    'medication_id': str(i.medication_id) if i.medication_id else None, 'medication_name': i.medication_name,
+                    'dosage': i.dosage, 'frequency': i.frequency, 'duration': i.duration, 'instructions': i.instructions,
+                    'quantity': i.quantity_prescribed,
+                } for i in ordo.items.all()] if ordo else [],
+                'a_revoir_le': c.follow_up_date,
+            })
+        return sortie
+
+    @staticmethod
+    def _labo(request, patient):
+        """Les dernieres demandes de labo avec leurs resultats ; les valeurs anormales sont signalees."""
+        from apps.laboratory.models import LabOrder
+        commandes = (LabOrder.objects.filter(organization=request.user.organization, patient=patient)
+                     .exclude(status='cancelled').order_by('-order_date')
+                     .prefetch_related('items__lab_test', 'items__parameter_results__parameter')[:12])
+        sortie = []
+        for o in commandes:
+            examens = []
+            for i in o.items.all():
+                params = [{
+                    'nom': r.parameter.name, 'valeur': texte_brut(r.result_text) or nombre(r.result_numeric),
+                    'unite': r.parameter.unit, 'flag': r.flag or '',
+                } for r in i.parameter_results.all() if (r.result_text or r.result_numeric is not None)]
+                valeur = texte_brut(i.result_value)
+                if valeur == 'voir paramètres':
+                    valeur = ''
+                if not valeur and i.result_numeric is not None:
+                    valeur = nombre(i.result_numeric)
+                examens.append({
+                    'nom': i.lab_test.name, 'code': i.lab_test.test_code, 'valeur': valeur, 'unite': i.result_unit,
+                    'reference': i.reference_range, 'anormal': bool(i.is_abnormal) or any(p['flag'] in ('H', 'L', 'H*', 'L*') for p in params),
+                    'critique': bool(i.is_critical), 'interpretation': texte_brut(i.interpretation), 'parametres': params,
+                    'resultat_saisi': bool(valeur or params),
+                })
+            sortie.append({
+                'id': str(o.id), 'numero': o.order_number, 'date': o.order_date, 'statut': o.get_status_display(),
+                'diagnostic_biologiste': o.biologist_diagnosis, 'examens': examens,
+            })
+        return sortie
+
+    @staticmethod
+    def _imagerie(request, patient):
+        """Les derniers comptes rendus d'imagerie."""
+        try:
+            from apps.imaging.models import ImagingOrder
+        except Exception:
+            return []
+        sortie = []
+        for o in (ImagingOrder.objects.filter(organization=request.user.organization, patient=patient)
+                  .order_by('-order_date').prefetch_related('items__exam_type')[:8]):
+            for i in o.items.all():
+                sortie.append({'date': o.order_date, 'examen': i.exam_type.name if i.exam_type_id else '',
+                               'statut': o.get_status_display(), 'compte_rendu': texte_brut(i.report_text)[:600]})
+        return sortie
 
 
 class PractitionerNamesView(APIView):

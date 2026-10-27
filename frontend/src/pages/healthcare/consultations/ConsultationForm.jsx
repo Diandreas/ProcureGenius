@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
     Box, Button, Card, CardContent, Grid, TextField, Typography, Stack, Autocomplete, IconButton,
     Checkbox, Chip, CircularProgress, Alert, Accordion, AccordionSummary, AccordionDetails, Dialog,
-    DialogTitle, DialogContent, DialogActions, List, ListItemButton, ListItemText, Tooltip, Paper,
+    DialogTitle, DialogContent, DialogActions, List, ListItemButton, ListItemText, Tooltip, Paper, useMediaQuery, useTheme,
 } from '@mui/material';
 import {
     Save as SaveIcon, CheckCircle as CompleteIcon, Add as AddIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon,
@@ -31,6 +31,7 @@ import BlocGyneco, { resumeGyneco } from '../../../components/consultation/BlocG
 import BlocCardio, { resumeCardio } from '../../../components/consultation/BlocCardio';
 import BlocEsthetique, { resumeEsthetique } from '../../../components/consultation/BlocEsthetique';
 import BlocPediatrie, { resumePediatrie } from '../../../components/consultation/BlocPediatrie';
+import DossierPatient, { resultatsDepuisDerniereVisite } from '../../../components/consultation/DossierPatient';
 import {
     SPECIALITES, MOTIFS, DIAGNOSTICS, ZONES_CORPS, basculerLigne, contientLigne, ageDepuis, libelleAge,
 } from '../../../components/consultation/specialites';
@@ -118,6 +119,8 @@ const ConsultationForm = () => {
     const [searchParams] = useSearchParams();
     const { enqueueSnackbar } = useSnackbar();
     const { user } = useCurrentUser();
+    const theme = useTheme();
+    const petitEcran = useMediaQuery(theme.breakpoints.down('md'));
     const isNew = !id;
 
     const [loading, setLoading] = useState(false);
@@ -331,6 +334,20 @@ const ConsultationForm = () => {
         setOrdosSimilaires(null);
     };
 
+    // Reprises depuis le dossier du patient
+    const reprendreTraitement = (items) => {
+        items.forEach(i => ajouterMedicament({
+            medication: i.medication_id ? { id: i.medication_id, name: i.medication_name } : null, medication_name: i.medication_name,
+            is_external: !i.medication_id, dosage: i.dosage, frequency: i.frequency, duration: i.duration, instructions: i.instructions, quantity: i.quantity || 1,
+        }));
+        enqueueSnackbar(`${items.length} médicament(s) ajouté(s) à l'ordonnance`, { variant: 'info' });
+    };
+    const citerDansHistoire = (texte) => setFormData(p => ({ ...p, history_of_present_illness: basculerLigne(p.history_of_present_illness, texte) }));
+    const ajouterResultats = (lignes) => {
+        setFormData(p => ({ ...p, complementary_exams: lignes.reduce((t, l) => (contientLigne(t, l) ? t : basculerLigne(t, l)), p.complementary_exams) }));
+        enqueueSnackbar('Résultats ajoutés à la consultation', { variant: 'info' });
+    };
+
     const ajouterPhoto = async (fichier, moment) => {
         try {
             const p = await consultationAPI.addPhoto(id, fichier, moment);
@@ -415,8 +432,14 @@ const ConsultationForm = () => {
     const isCompleted = consultationStatus === 'completed';
     const canEdit = !isCompleted || (completedById === user?.id);
     const allergies = (contexte?.patient?.allergies || formData.antecedents_immuno_allergies || '').trim();
+    const sansAllergie = !allergies || /^(pas d.allergie|aucune?|n[ée]ant|ras|non|rien)/i.test(allergies);
     const derniere = contexte?.derniere_visite;
     const constatsCorps = formData.specialty === 'general' || formData.specialty === 'pediatrics';
+    const resultats = resultatsDepuisDerniereVisite(contexte);
+    const dossier = formData.patient ? (
+        <DossierPatient contexte={contexte} onReprendreTraitement={reprendreTraitement} onCopierHistoire={citerDansHistoire}
+            onAjouterResultats={ajouterResultats} ongletInitial={resultats.commandes > 0 ? 1 : 0} key={contexte ? 'ok' : 'vide'} />
+    ) : null;
 
     return (
         <Box sx={{ pb: 4 }}>
@@ -478,8 +501,12 @@ const ConsultationForm = () => {
                                     </Typography>
                                 )}
                             </Box>
-                            {allergies && (
+                            {!sansAllergie && (
                                 <Chip color="error" icon={<WarningIcon />} label={`Allergies : ${allergies.split('\n').join(', ').slice(0, 80)}`} sx={{ maxWidth: '100%' }} />
+                            )}
+                            {resultats.commandes > 0 && (
+                                <Chip color={resultats.anormaux ? 'warning' : 'success'} icon={<ScienceIcon />}
+                                    label={`${resultats.commandes} analyse(s) depuis la dernière visite${resultats.anormaux ? ` — ${resultats.anormaux} anormale(s)` : ''}`} />
                             )}
                             {isNew && <Button size="small" onClick={() => choisirPatient(null)}>Changer de patient</Button>}
                             <ConsultationTimer compact onStart={(t) => maj('started_at', t)} onEnd={(t) => maj('ended_at', t)}
@@ -513,6 +540,16 @@ const ConsultationForm = () => {
                     </CardContent>
                 </Card>
 
+                {petitEcran && dossier && (
+                    <Accordion disableGutters sx={{ mb: 2 }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography sx={{ fontWeight: 600 }}>Dossier du patient — visites, labo, imagerie</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 0 }}>{dossier}</AccordionDetails>
+                    </Accordion>
+                )}
+                <Grid container spacing={2}>
+                <Grid item xs={12} md={dossier ? 8 : 12}>
                 {/* Constantes */}
                 <Section titre="Constantes" sousTitre={contexte?.mesures?.length ? 'En gris : la valeur de la visite précédente' : undefined}>
                     <Grid container spacing={1.5}>
@@ -611,6 +648,8 @@ const ConsultationForm = () => {
                         value={imagingExamTypes.filter(t => formData.imaging_exam_types.includes(t.id))} onChange={(e, v) => maj('imaging_exam_types', v.map(t => t.id))}
                         renderInput={(p) => <TextField {...p} placeholder="Ajouter un examen d'imagerie" inputProps={{ ...p.inputProps, 'data-testid': 'consult-input-imaging-exams' }} />}
                         renderTags={(v, getTagProps) => v.map((o, i) => <Chip label={o.name} {...getTagProps({ index: i })} size="small" color="secondary" />)} />
+                    <TextField label="Résultats d'examens (repris du dossier ou saisis)" name="complementary_exams" value={formData.complementary_exams} onChange={handleInputChange}
+                        multiline minRows={formData.complementary_exams ? 2 : 1} fullWidth sx={{ mt: 2 }} />
                     <TextField label="Notes d'imagerie" name="imaging" value={formData.imaging} onChange={handleInputChange} multiline minRows={1} fullWidth sx={{ mt: 2 }} />
                 </Section>
 
@@ -676,6 +715,16 @@ const ConsultationForm = () => {
                         </Grid>
                     </Grid>
                 </Section>
+                </Grid>
+                {!petitEcran && dossier && (
+                    <Grid item md={4}>
+                        <Box sx={{ position: 'sticky', top: 150 }}>
+                            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>Dossier du patient</Typography>
+                            {dossier}
+                        </Box>
+                    </Grid>
+                )}
+                </Grid>
             </Box>
 
             <Dialog open={!!ordosSimilaires} onClose={() => setOrdosSimilaires(null)} fullWidth maxWidth="sm">
