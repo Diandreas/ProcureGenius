@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
     Box, Button, Card, CardContent, Grid, TextField, Typography, Stack, Autocomplete, IconButton,
     Checkbox, Chip, CircularProgress, Alert, Accordion, AccordionSummary, AccordionDetails, Dialog,
-    DialogTitle, DialogContent, DialogActions, List, ListItemButton, ListItemText, Tooltip, Paper, useMediaQuery, useTheme,
+    DialogTitle, DialogContent, DialogActions, List, ListItemButton, ListItemText, Tooltip, Paper, useMediaQuery, useTheme, Tabs, Tab,
 } from '@mui/material';
 import {
     Save as SaveIcon, CheckCircle as CompleteIcon, Add as AddIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon,
     Person as PersonIcon, Visibility as ViewIcon, ExpandMore as ExpandMoreIcon, Warning as WarningIcon,
-    History as HistoryIcon, ContentCopy as CopyIcon, Science as ScienceIcon,
+    History as HistoryIcon, ContentCopy as CopyIcon, Science as ScienceIcon, Assignment as ExamIcon, Medication as RxIcon,
+    ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -123,6 +124,7 @@ const ConsultationForm = () => {
     const petitEcran = useMediaQuery(theme.breakpoints.down('md'));
     const isNew = !id;
 
+    const [tabValue, setTabValue] = useState(0);
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
     const [consultationStatus, setConsultationStatus] = useState(null);
@@ -366,6 +368,7 @@ const ConsultationForm = () => {
     const handleSubmit = async (statusArg = 'in_consultation') => {
         if (!formData.patient) {
             enqueueSnackbar('Sélectionner un patient', { variant: 'warning' });
+            setTabValue(0);
             return;
         }
         setLoading(true);
@@ -432,7 +435,7 @@ const ConsultationForm = () => {
     const isCompleted = consultationStatus === 'completed';
     const canEdit = !isCompleted || (completedById === user?.id);
     const allergies = (contexte?.patient?.allergies || formData.antecedents_immuno_allergies || '').trim();
-    const sansAllergie = !allergies || /^(pas d.allergie|aucune?|n[ée]ant|ras|non|rien)/i.test(allergies);
+    const sansAllergie = !allergies || /^(pas d.allergie|aucune?|n[ée]ant|ras|non|rien)(\s|$|\W)/i.test(allergies);
     const derniere = contexte?.derniere_visite;
     const constatsCorps = formData.specialty === 'general' || formData.specialty === 'pediatrics';
     const resultats = resultatsDepuisDerniereVisite(contexte);
@@ -550,6 +553,16 @@ const ConsultationForm = () => {
                 )}
                 <Grid container spacing={2}>
                 <Grid item xs={12} md={dossier ? 8 : 12}>
+                {/* Les 4 onglets de toujours : Vitals, Histoire, Examen, Traitement */}
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                    <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
+                        <Tab data-testid="consult-tab-vitals" icon={<PersonIcon />} iconPosition="start" label="Vitals" />
+                        <Tab data-testid="consult-tab-history" icon={<HistoryIcon />} iconPosition="start" label="Histoire" />
+                        <Tab data-testid="consult-tab-exam" icon={<ExamIcon />} iconPosition="start" label="Examen" />
+                        <Tab data-testid="consult-tab-treatment" icon={<RxIcon />} iconPosition="start" label="Traitement" />
+                    </Tabs>
+                </Box>
+                {tabValue === 0 && (<>
                 {/* Constantes */}
                 <Section titre="Constantes" sousTitre={contexte?.mesures?.length ? 'En gris : la valeur de la visite précédente' : undefined}>
                     <Grid container spacing={1.5}>
@@ -570,6 +583,8 @@ const ConsultationForm = () => {
                     </Grid>
                 </Section>
 
+                </>)}
+                {tabValue === 1 && (<>
                 {/* Motif et histoire */}
                 <Section titre="Motif et histoire">
                     <Pastilles options={MOTIFS[formData.specialty] || MOTIFS.general} actif={(v) => contientLigne(formData.chief_complaint, v)}
@@ -577,7 +592,7 @@ const ConsultationForm = () => {
                     <TextField label="Motif de consultation" name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} multiline minRows={2} fullWidth sx={{ mt: 1 }} />
                     <TextField label="Histoire de la maladie" name="history_of_present_illness" value={formData.history_of_present_illness} onChange={handleInputChange} multiline minRows={2} fullWidth sx={{ mt: 2 }} />
                     <QuickTemplate label="Raccourcis histoire" templates={HISTORY_TEMPLATES} onSelect={(v) => maj('history_of_present_illness', basculerLigne(formData.history_of_present_illness, v))} />
-                    <Accordion disableGutters elevation={0} sx={{ mt: 1, border: 1, borderColor: 'divider', '&:before': { display: 'none' } }}>
+                    <Accordion defaultExpanded disableGutters elevation={0} sx={{ mt: 1, border: 1, borderColor: 'divider', '&:before': { display: 'none' } }}>
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                             <Typography variant="subtitle2">Antécédents{ANTECEDENTS.some(([k]) => formData[k]) ? ' (repris du dossier)' : ''}</Typography>
                         </AccordionSummary>
@@ -594,6 +609,8 @@ const ConsultationForm = () => {
                     </Accordion>
                 </Section>
 
+                </>)}
+                {tabValue === 2 && (<>
                 {/* Examen spécialisé */}
                 {specialite.cle && (
                     <Section titre={`Examen — ${specialite.libelle}`} sousTitre="Touchez les pastilles et les schémas ; tout est repris dans le dossier et le compte rendu">
@@ -653,6 +670,8 @@ const ConsultationForm = () => {
                     <TextField label="Notes d'imagerie" name="imaging" value={formData.imaging} onChange={handleInputChange} multiline minRows={1} fullWidth sx={{ mt: 2 }} />
                 </Section>
 
+                </>)}
+                {tabValue === 3 && (<>
                 {/* Traitement et ordonnance */}
                 <Section titre="Traitement et ordonnance" action={(
                     <Stack direction="row" spacing={1}>
@@ -715,6 +734,17 @@ const ConsultationForm = () => {
                         </Grid>
                     </Grid>
                 </Section>
+                </>)}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                    <Button disabled={tabValue === 0} onClick={() => { setTabValue(tabValue - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Onglet précédent</Button>
+                    {tabValue < 3 ? (
+                        <Button variant="outlined" endIcon={<ArrowForwardIcon />} onClick={() => { setTabValue(tabValue + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                            {['Histoire', 'Examen', 'Traitement'][tabValue]}
+                        </Button>
+                    ) : (
+                        <Button variant="contained" color="success" startIcon={<CompleteIcon />} onClick={() => handleSubmit('completed')} disabled={loading}>Terminer</Button>
+                    )}
+                </Box>
                 </Grid>
                 {!petitEcran && dossier && (
                     <Grid item md={4}>
