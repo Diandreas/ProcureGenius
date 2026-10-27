@@ -2,7 +2,19 @@
 Serializers for Consultations app
 """
 from rest_framework import serializers
-from .models import Consultation, Prescription, PrescriptionItem
+from .models import Consultation, ConsultationPhoto, Prescription, PrescriptionItem
+
+
+class ConsultationPhotoSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+    moment_display = serializers.CharField(source='get_moment_display', read_only=True)
+
+    class Meta:
+        model = ConsultationPhoto
+        fields = ['id', 'url', 'moment', 'moment_display', 'zone', 'notes', 'created_at']
+
+    def get_url(self, obj):
+        return obj.image.url if obj.image else None
 
 
 class PrescriptionItemSerializer(serializers.ModelSerializer):
@@ -118,6 +130,8 @@ class ConsultationSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     vitals_taken_by_name = serializers.SerializerMethodField()
     completed_by_name = serializers.SerializerMethodField()
+    specialty_display = serializers.CharField(source='get_specialty_display', read_only=True)
+    photos = ConsultationPhotoSerializer(many=True, read_only=True)
     prescribed_lab_tests_data = serializers.SerializerMethodField()
     prescribed_imaging_exam_types_data = serializers.SerializerMethodField()
 
@@ -135,6 +149,12 @@ class ConsultationSerializer(serializers.ModelSerializer):
             'doctor_name',
             'consultation_date',
             'fee',
+            # Specialite
+            'specialty',
+            'specialty_display',
+            'practitioner_name',
+            'specialty_data',
+            'photos',
             # Workflow
             'status',
             'status_display',
@@ -303,6 +323,8 @@ class ConsultationListSerializer(serializers.ModelSerializer):
             'status_display',
             'completed_by',
             'queue_position',
+            'specialty',
+            'practitioner_name',
             'chief_complaint',
             'diagnosis',
             'follow_up_required',
@@ -331,7 +353,7 @@ class PrescriptionItemCreateSerializer(serializers.Serializer):
     medication_id = serializers.UUIDField(required=False, allow_null=True)
     medication_name = serializers.CharField(required=False, allow_blank=True)
     dosage = serializers.CharField(required=False, allow_blank=True, default='')
-    frequency = serializers.CharField()
+    frequency = serializers.CharField(required=False, allow_blank=True, default='')
     duration = serializers.CharField(required=False, allow_blank=True)
     route = serializers.ChoiceField(choices=PrescriptionItem.ROUTE_CHOICES, default='oral')
     quantity_prescribed = serializers.IntegerField(min_value=1)

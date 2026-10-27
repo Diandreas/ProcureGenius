@@ -42,6 +42,13 @@ urlpatterns = [
     # Lab order endpoints
     path('lab-orders/create/', api.CreateLabOrderView.as_view(), name='create-lab-order'),
 
+    # Consultation adaptee a la specialite
+    path('patient-context/<uuid:patient_id>/', api.ConsultationPatientContextView.as_view(), name='patient-context'),
+    path('practitioners/', api.PractitionerNamesView.as_view(), name='practitioner-names'),
+    path('similar-prescriptions/', api.SimilarPrescriptionsView.as_view(), name='similar-prescriptions'),
+    path('<uuid:pk>/photos/', api.ConsultationPhotoView.as_view(), name='consultation-photos'),
+    path('<uuid:pk>/clear-prescription/', api.ConsultationPrescriptionClearView.as_view(), name='clear-prescription'),
+
     # Patient medical history
     path('patient/<uuid:patient_id>/history/', api.PatientMedicalHistoryView.as_view(), name='patient-history'),
 ]

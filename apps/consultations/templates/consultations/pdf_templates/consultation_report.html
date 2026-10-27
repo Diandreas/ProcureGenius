@@ -102,6 +102,12 @@
             {% elif consultation.doctor %}
             <div><span class="label">Médecin:</span> <b>Dr. {{ consultation.doctor.get_full_name }}</b></div>
             {% endif %}
+            {% if consultation.practitioner_name %}
+            <div><span class="label">Médecin consultant:</span> <b>Dr {{ consultation.practitioner_name }}</b></div>
+            {% endif %}
+            {% if consultation.specialty and consultation.specialty != 'general' %}
+            <div><span class="label">Spécialité:</span> {{ consultation.get_specialty_display }}</div>
+            {% endif %}
             {% if consultation.doctor and consultation.completed_by %}
                 {% if consultation.doctor.id != consultation.completed_by.id %}
             <div><span class="label">Médecin réf.:</span> Dr. {{ consultation.doctor.get_full_name }}</div>
@@ -194,9 +200,17 @@
     <p>{{ consultation.physical_examination|linebreaksbr|default:"RAS" }}</p>
 </div>
 
+{% if consultation.specialty_data.resume %}
+<div class="section">
+    <div class="section-title">Examen — {{ consultation.get_specialty_display }}</div>
+    <p>{{ consultation.specialty_data.resume|linebreaksbr }}</p>
+</div>
+{% endif %}
+
 <div class="section">
     <div class="section-title">Diagnostic</div>
-    <p style="font-weight: bold; font-size: 11pt; color: #c0392b;">{{ consultation.diagnosis|default:"En cours d'investigation" }}</p>
+    <p style="font-weight: bold; font-size: 11pt; color: #c0392b;">{{ consultation.diagnosis|linebreaksbr|default:"En cours d'investigation" }}</p>
+    {% if consultation.follow_up_date %}<p><span class="label">À revoir le:</span> {{ consultation.follow_up_date|date:"d/m/Y" }}</p>{% endif %}
 </div>
 
 {% if consultation.complementary_exams or consultation.imaging %}

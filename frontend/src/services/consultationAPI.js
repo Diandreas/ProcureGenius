@@ -107,6 +107,49 @@ const consultationAPI = {
     createLabOrder: async (data) => {
         const response = await api.post('/healthcare/consultations/lab-orders/create/', data);
         return response.data;
+    },
+
+    // ===== Consultation adaptée à la spécialité =====
+
+    // Patient : allergies, dernière visite, mesures passées (courbes), dernières fiches par spécialité, vaccins
+    getPatientContext: async (patientId, excludeId) => {
+        const response = await api.get(`/healthcare/consultations/patient-context/${patientId}/`, {
+            params: excludeId ? { exclude: excludeId } : {},
+        });
+        return response.data;
+    },
+
+    // Noms des médecins consultants déjà saisis
+    getPractitioners: async () => {
+        const response = await api.get('/healthcare/consultations/practitioners/');
+        return response.data;
+    },
+
+    // Ordonnances déjà faites au centre pour un diagnostic proche
+    getSimilarPrescriptions: async (diagnostic) => {
+        const response = await api.get('/healthcare/consultations/similar-prescriptions/', { params: { diagnostic } });
+        return response.data;
+    },
+
+    // Plus aucun médicament : supprime l'ordonnance non délivrée de la consultation
+    clearPrescription: async (id) => {
+        const response = await api.post(`/healthcare/consultations/${id}/clear-prescription/`);
+        return response.data;
+    },
+
+    addPhoto: async (id, fichier, moment = 'avant', zone = '') => {
+        const data = new FormData();
+        data.append('image', fichier);
+        data.append('moment', moment);
+        data.append('zone', zone);
+        const response = await api.post(`/healthcare/consultations/${id}/photos/`, data, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
+
+    deletePhoto: async (id, photoId) => {
+        await api.delete(`/healthcare/consultations/${id}/photos/`, { params: { photo: photoId } });
     }
 };
 

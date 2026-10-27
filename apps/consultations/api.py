@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from datetime import timedelta
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from .services import ConsultationPDFGenerator
 from .permissions import CanModifyConsultation
 import logging
@@ -586,8 +587,21 @@ class PrescriptionCreateView(APIView):
         # Calculate valid_until
         valid_until = (timezone.now() + timedelta(days=data.get('valid_days', 30))).date()
         
+        # Chaque « Enregistrer » renvoie l'ordonnance complete : on remplace celle de la
+        # consultation tant que la pharmacie ne l'a pas delivree, au lieu d'en creer une de plus.
+        prescription = None
+        if consultation:
+            existante = consultation.prescriptions.filter(
+                pharmacy_dispensing__isnull=True, status='pending'
+            ).order_by('-created_at').first()
+            if existante and not existante.items.filter(quantity_dispensed__gt=0).exists():
+                existante.items.all().delete()
+                existante.notes = data.get('notes', existante.notes)
+                existante.save(update_fields=['notes'])
+                prescription = existante
+
         # Create prescription
-        prescription = Prescription.objects.create(
+        prescription = prescription or Prescription.objects.create(
             organization=request.user.organization,
             patient=patient,
             consultation=consultation,
@@ -616,8 +630,8 @@ class PrescriptionCreateView(APIView):
                 prescription=prescription,
                 medication=medication,
                 medication_name=medication_name,
-                dosage=item_data['dosage'],
-                frequency=item_data['frequency'],
+                dosage=item_data.get('dosage', ''),
+                frequency=item_data.get('frequency', ''),
                 duration=item_data.get('duration', ''),
                 route=item_data.get('route', 'oral'),
                 quantity_prescribed=item_data['quantity_prescribed'],
@@ -938,3 +952,162 @@ class PatientHistoryPDFView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
+# ---------------------------------------------------------------------------
+# Consultation adaptee a la specialite
+# ---------------------------------------------------------------------------
+
+class ConsultationPatientContextView(APIView):
+    """
+    Ce qu'il faut savoir sur le patient en ouvrant la consultation : identite, allergies,
+    derniere visite, historique des constantes (courbes), derniere fiche de chaque
+    specialite (pour reprendre DDR, facteurs de risque...), vaccins a faire.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, patient_id):
+        patient = get_object_or_404(Client, id=patient_id, organization=request.user.organization)
+        exclure = request.query_params.get('exclude')
+        consultations = Consultation.objects.filter(
+            organization=request.user.organization, patient=patient
+        ).exclude(status='cancelled').order_by('consultation_date')
+        if exclure:
+            consultations = consultations.exclude(id=exclure)
+
+        mesures, derniere_par_specialite = [], {}
+        for c in consultations:
+            mesures.append({
+                'date': c.consultation_date,
+                'tas': c.blood_pressure_systolic, 'tad': c.blood_pressure_diastolic,
+                'fc': c.heart_rate, 'temperature': c.temperature, 'poids': c.weight,
+                'taille': c.height, 'pc': (c.specialty_data or {}).get('pediatrie', {}).get('pc'),
+            })
+            if c.specialty_data:
+                derniere_par_specialite[c.specialty or 'general'] = {
+                    'date': c.consultation_date, 'donnees': c.specialty_data,
+                }
+        derniere = consultations.last()
+
+        vaccins = []
+        try:
+            from apps.vaccination.models import VaccinationRecord
+            for v in VaccinationRecord.objects.filter(patient=patient).order_by('-administered_date')[:40]:
+                vaccins.append({
+                    'vaccin': str(v.vaccine_type) + (' (dose %s)' % v.dose_number if v.dose_number else ''),
+                    'date': getattr(v, 'administered_date', None),
+                    'prochaine_dose': getattr(v, 'next_dose_due_date', None),
+                })
+        except Exception:
+            vaccins = []
+
+        naissance = getattr(patient, 'date_of_birth', None)
+        return Response({
+            'patient': {
+                'id': str(patient.id), 'nom': patient.name,
+                'sexe': getattr(patient, 'gender', '') or '',
+                'date_naissance': naissance,
+                'allergies': getattr(patient, 'antecedents_immuno_allergies', '') or '',
+            },
+            'derniere_visite': {
+                'date': derniere.consultation_date, 'diagnostic': derniere.diagnosis,
+                'motif': derniere.chief_complaint, 'specialite': derniere.get_specialty_display(),
+            } if derniere else None,
+            'nombre_consultations': consultations.count(),
+            'mesures': mesures,
+            'derniere_par_specialite': derniere_par_specialite,
+            'vaccins': vaccins,
+        })
+
+
+class PractitionerNamesView(APIView):
+    """Noms de medecins deja saisis (avec la specialite la plus frequente) pour l'autocompletion."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from collections import Counter
+        compte = Counter(
+            Consultation.objects.filter(organization=request.user.organization)
+            .exclude(practitioner_name='').values_list('practitioner_name', 'specialty')
+        )
+        par_nom = {}
+        for (nom, spe), n in compte.most_common():
+            par_nom.setdefault(nom, spe)
+        return Response([{'nom': n, 'specialite': s} for n, s in par_nom.items()])
+
+
+class SimilarPrescriptionsView(APIView):
+    """
+    Ordonnances deja faites au centre pour un diagnostic proche : le medecin reprend
+    celle qui convient au lieu de tout retaper. Aucune ordonnance n'est inventee.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        terme = (request.query_params.get('diagnostic') or '').strip()
+        if len(terme) < 3:
+            return Response([])
+        ordos = (Prescription.objects.filter(
+            organization=request.user.organization, consultation__diagnosis__icontains=terme
+        ).exclude(status='cancelled').select_related('consultation').prefetch_related('items').order_by('-created_at')[:60])
+        vues, resultat = set(), []
+        for p in ordos:
+            items = [{
+                'medication_id': str(i.medication_id) if i.medication_id else None,
+                'medication_name': i.medication_name, 'dosage': i.dosage, 'frequency': i.frequency,
+                'duration': i.duration, 'instructions': i.instructions, 'quantity': i.quantity_prescribed,
+            } for i in p.items.all()]
+            cle = tuple(sorted(x['medication_name'].lower() for x in items))
+            if not items or cle in vues:
+                continue
+            vues.add(cle)
+            resultat.append({'date': p.created_at, 'diagnostic': p.consultation.diagnosis[:120] if p.consultation else '', 'items': items})
+            if len(resultat) >= 5:
+                break
+        return Response(resultat)
+
+
+class ConsultationPhotoView(APIView):
+    """Ajouter (POST multipart : image, moment, zone, notes) ou retirer (DELETE ?photo=<id>) une photo."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        from .models import ConsultationPhoto
+        from .serializers import ConsultationPhotoSerializer
+        consultation = get_object_or_404(Consultation, id=pk, organization=request.user.organization)
+        fichier = request.FILES.get('image')
+        if not fichier:
+            return Response({'error': 'Aucune photo envoyée'}, status=status.HTTP_400_BAD_REQUEST)
+        if not (fichier.content_type or '').startswith('image/'):
+            return Response({'error': 'Le fichier doit être une image'}, status=status.HTTP_400_BAD_REQUEST)
+        if fichier.size > 8 * 1024 * 1024:
+            return Response({'error': 'Photo trop lourde (8 Mo maximum)'}, status=status.HTTP_400_BAD_REQUEST)
+        photo = ConsultationPhoto.objects.create(
+            consultation=consultation, image=fichier,
+            moment=request.data.get('moment') or 'avant',
+            zone=(request.data.get('zone') or '')[:60], notes=(request.data.get('notes') or '')[:255],
+            created_by=request.user,
+        )
+        return Response(ConsultationPhotoSerializer(photo).data, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, pk):
+        from .models import ConsultationPhoto
+        photo = get_object_or_404(ConsultationPhoto, id=request.query_params.get('photo'), consultation_id=pk,
+                                  consultation__organization=request.user.organization)
+        photo.image.delete(save=False)
+        photo.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ConsultationPrescriptionClearView(APIView):
+    """Le medecin a retire tous les medicaments : on supprime l'ordonnance non delivree de la consultation."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        consultation = get_object_or_404(Consultation, id=pk, organization=request.user.organization)
+        supprimees = 0
+        for p in consultation.prescriptions.filter(pharmacy_dispensing__isnull=True, status='pending'):
+            if not p.items.filter(quantity_dispensed__gt=0).exists():
+                p.delete()
+                supprimees += 1
+        return Response({'supprimees': supprimees})

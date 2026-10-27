@@ -292,6 +292,29 @@ class Consultation(models.Model):
         verbose_name=_("Instructions de suivi")
     )
     
+    # === Specialite (formulaire adapte) ===
+    SPECIALTY_CHOICES = [
+        ('general', _('Médecine générale')),
+        ('gynecology', _('Gynécologie')),
+        ('cardiology', _('Cardiologie')),
+        ('aesthetic', _('Médecine esthétique')),
+        ('pediatrics', _('Pédiatrie')),
+    ]
+    specialty = models.CharField(
+        max_length=20, choices=SPECIALTY_CHOICES, default='general', blank=True,
+        verbose_name=_("Spécialité")
+    )
+    practitioner_name = models.CharField(
+        max_length=150, blank=True, default='',
+        verbose_name=_("Médecin consultant"),
+        help_text=_("Nom du médecin, même sans compte dans le logiciel")
+    )
+    specialty_data = models.JSONField(
+        default=dict, blank=True,
+        verbose_name=_("Examen spécialisé"),
+        help_text=_("Données structurées propres à la spécialité, avec un résumé lisible ('resume')")
+    )
+
     # === Additional Notes ===
     private_notes = models.TextField(
         blank=True,
@@ -839,3 +862,33 @@ class PrescriptionItem(models.Model):
         if self.quantity_dispensed >= self.quantity_prescribed:
             self.is_dispensed = True
         self.save()
+
+
+def consultation_photo_upload_path(instance, filename):
+    return f"consultations/photos/{timezone.now():%Y/%m}/{instance.consultation_id}_{filename}"
+
+
+class ConsultationPhoto(models.Model):
+    """Photo clinique (avant / après, suivi d'une lésion), surtout en médecine esthétique."""
+    MOMENTS = [
+        ('avant', _('Avant')),
+        ('apres', _('Après')),
+        ('suivi', _('Suivi')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    consultation = models.ForeignKey(Consultation, on_delete=models.CASCADE, related_name='photos')
+    image = models.FileField(upload_to=consultation_photo_upload_path, verbose_name=_("Photo"))
+    moment = models.CharField(max_length=10, choices=MOMENTS, default='avant', verbose_name=_("Moment"))
+    zone = models.CharField(max_length=60, blank=True, default='', verbose_name=_("Zone"))
+    notes = models.CharField(max_length=255, blank=True, default='', verbose_name=_("Note"))
+    created_by = models.ForeignKey('accounts.CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = _("Photo de consultation")
+        verbose_name_plural = _("Photos de consultation")
+
+    def __str__(self):
+        return f"{self.consultation} - {self.get_moment_display()}"

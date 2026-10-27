@@ -169,8 +169,34 @@ const ConsultationDetail = () => {
                 <Grid item xs={12} md={6}>
                     <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
                         <Stack spacing={2}>
-                            <Box><Typography variant="caption" fontWeight={700}>MOTIF</Typography><Typography variant="body2">{consultation.chief_complaint}</Typography></Box>
-                            <Box><Typography variant="caption" fontWeight={700}>DIAGNOSTIC</Typography><Typography variant="body2" color="error.main" fontWeight={700}>{consultation.diagnosis}</Typography></Box>
+                            {(consultation.specialty && consultation.specialty !== 'general') || consultation.practitioner_name ? (
+                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                    {consultation.specialty && consultation.specialty !== 'general' && <Chip size="small" color="primary" label={consultation.specialty_display} />}
+                                    {consultation.practitioner_name && <Chip size="small" variant="outlined" label={`Dr ${consultation.practitioner_name}`} />}
+                                </Box>
+                            ) : null}
+                            <Box><Typography variant="caption" fontWeight={700}>MOTIF</Typography><Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>{consultation.chief_complaint}</Typography></Box>
+                            {consultation.physical_examination && (
+                                <Box><Typography variant="caption" fontWeight={700}>EXAMEN PHYSIQUE</Typography><Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>{consultation.physical_examination}</Typography></Box>
+                            )}
+                            {consultation.specialty_data?.resume && (
+                                <Box><Typography variant="caption" fontWeight={700}>EXAMEN — {(consultation.specialty_display || '').toUpperCase()}</Typography>
+                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>{consultation.specialty_data.resume}</Typography></Box>
+                            )}
+                            {consultation.photos?.length > 0 && (
+                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                    {consultation.photos.map(p => (
+                                        <Box key={p.id} component="a" href={p.url} target="_blank" rel="noreferrer" sx={{ textAlign: 'center', textDecoration: 'none', color: 'text.secondary' }}>
+                                            <Box component="img" src={p.url} alt={p.moment_display} sx={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 1, border: 1, borderColor: 'divider', display: 'block' }} />
+                                            <Typography variant="caption">{p.moment_display}</Typography>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
+                            <Box><Typography variant="caption" fontWeight={700}>DIAGNOSTIC</Typography><Typography variant="body2" color="error.main" fontWeight={700} sx={{ whiteSpace: 'pre-line' }}>{consultation.diagnosis}</Typography></Box>
+                            {consultation.follow_up_date && (
+                                <Box><Typography variant="caption" fontWeight={700}>À REVOIR LE</Typography><Typography variant="body2">{new Date(consultation.follow_up_date).toLocaleDateString('fr-FR')}</Typography></Box>
+                            )}
                             <Accordion elevation={0}>
                                 <AccordionSummary expandIcon={<ExpandMoreIcon />}><Typography variant="caption" fontWeight={700}>ANTÉCÉDENTS</Typography></AccordionSummary>
                                 <AccordionDetails>
@@ -193,8 +219,8 @@ const ConsultationDetail = () => {
                                     <Typography variant="caption" fontWeight={700}>Ordonnance N° {p.prescription_number}</Typography>
                                     {p.items?.map((item, idx) => (
                                         <Box key={idx} sx={{ pl: 1, borderLeft: '2px solid', borderColor: 'primary.main', mt: 1 }}>
-                                            <Typography variant="body2" fontWeight={700}>{item.medication_name} - {item.dosage}</Typography>
-                                            <Typography variant="caption" color="text.secondary">{item.frequency} - {item.duration}</Typography>
+                                            <Typography variant="body2" fontWeight={700}>{[item.medication_name, item.dosage].filter(Boolean).join(' — ')}</Typography>
+                                            <Typography variant="caption" color="text.secondary">{[item.frequency, item.duration, item.instructions].filter(Boolean).join(' · ')}</Typography>
                                         </Box>
                                     ))}
                                 </Box>
