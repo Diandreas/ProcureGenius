@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box,
     Card,
@@ -49,149 +49,14 @@ import LoadingState from '../../../components/LoadingState';
 import ErrorState from '../../../components/ErrorState';
 import { formatDate } from '../../../utils/formatters';
 
-const PatientList = () => {
-    const { t } = useTranslation();
+const PatientCard = React.memo(({ patient, index, onMerge }) => {
     const navigate = useNavigate();
-    const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-    const [loading, setLoading] = useState(false);
-    const [patients, setPatients] = useState([]);
-    const [stats, setStats] = useState({
-        total: 0,
-        newLast7Days: 0,
-        male: 0,
-        female: 0,
-    });
-    const [search, setSearch] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState('');
-    const [page, setPage] = useState(1);
-    const [quickFilter, setQuickFilter] = useState('');
-
-    // Debounce 500ms — stats ne se rechargent qu'à l'init (search vide)
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(search.length >= 2 ? search : search.length === 0 ? '' : debouncedSearch);
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [search]);
-
-    useEffect(() => {
-        fetchPatients();
-    }, [page, debouncedSearch, quickFilter]);
-
-    const fetchPatients = async () => {
-        setLoading(true);
-        try {
-            const params = { page, page_size: 50 };
-            if (debouncedSearch) params.search = debouncedSearch;
-            if (quickFilter === 'male') params.gender = 'M';
-            if (quickFilter === 'female') params.gender = 'F';
-            if (quickFilter === 'new') {
-                const d = new Date();
-                d.setDate(d.getDate() - 7);
-                params.created_after = d.toISOString().slice(0, 10);
-            }
-
-            const listResponse = await patientAPI.getPatients(params);
-            setPatients(listResponse.results || []);
-
-            // Stats globales uniquement au premier chargement (sans filtre)
-            if (!debouncedSearch && !quickFilter && page === 1) {
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
-                const [totalResponse, newResponse, maleResponse, femaleResponse] = await Promise.all([
-                    patientAPI.getPatients({ page: 1, page_size: 1 }),
-                    patientAPI.getPatients({ page: 1, page_size: 1, created_after: sevenDaysAgoStr }),
-                    patientAPI.getPatients({ page: 1, page_size: 1, gender: 'M' }),
-                    patientAPI.getPatients({ page: 1, page_size: 1, gender: 'F' }),
-                ]);
-                setStats({
-                    total: totalResponse.count || 0,
-                    newLast7Days: newResponse.count || 0,
-                    male: maleResponse.count || 0,
-                    female: femaleResponse.count || 0,
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching patients:', error);
-            enqueueSnackbar(t('common.error'), { variant: 'error' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSearchChange = (e) => {
-        setSearch(e.target.value);
-        setPage(1);
-    };
-
-    const handleQuickFilterClick = (filterValue) => {
-        setQuickFilter(quickFilter === filterValue ? '' : filterValue);
-        setPage(1);
-    };
-
-    // === Merge patients dialog ===
-    const [mergeDialog, setMergeDialog] = useState({ open: false, primary: null });
-    const [mergeSecondary, setMergeSecondary] = useState(null);
-    const [mergeSearch, setMergeSearch] = useState('');
-    const [mergeOptions, setMergeOptions] = useState([]);
-    const [mergeSaving, setMergeSaving] = useState(false);
-
-    useEffect(() => {
-        if (!mergeDialog.open) return;
-        const timer = setTimeout(async () => {
-            try {
-                const data = await patientAPI.getPatients({ search: mergeSearch, page_size: 20 });
-                setMergeOptions((data.results || []).filter(p => p.id !== mergeDialog.primary?.id));
-            } catch {}
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [mergeSearch, mergeDialog.open, mergeDialog.primary]);
-
-    const handleMergeSubmit = async () => {
-        if (!mergeDialog.primary || !mergeSecondary) return;
-        if (!window.confirm(
-            `Fusionner "${mergeSecondary.name}" → "${mergeDialog.primary.name}" ?\n\nToutes les factures, commandes labo et consultations seront transférées. Le doublon sera désactivé. Cette action est irréversible.`
-        )) return;
-        setMergeSaving(true);
-        try {
-            await api.post(`/healthcare/patients/${mergeDialog.primary.id}/merge/`, {
-                secondary_patient_id: mergeSecondary.id
-            });
-            enqueueSnackbar(`Fusion réussie : "${mergeSecondary.name}" fusionné dans "${mergeDialog.primary.name}"`, { variant: 'success' });
-            setMergeDialog({ open: false, primary: null });
-            setMergeSecondary(null);
-            fetchPatients();
-        } catch (err) {
-            const msg = err.response?.data?.error || 'Erreur lors de la fusion';
-            enqueueSnackbar(msg, { variant: 'error' });
-        } finally {
-            setMergeSaving(false);
-        }
-    };
-
-    // Filtrage géré côté API — patients est déjà filtré
-    const filteredPatients = patients;
-
-    // Stats Calculation (global backend counts)
-    const totalPatients = stats.total;
-    const newPatients = stats.newLast7Days;
-    const malePatients = stats.male;
-    const femalePatients = stats.female;
-
-    // Loading & Error States
-    if (loading && patients.length === 0) return <LoadingState message={t('patients.loading', 'Chargement des patients...')} />;
-
-    // Patient Card Component
-    const PatientCard = ({ patient, index }) => (
+    return (
         <motion.div
-            layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.05 }}
+            transition={{ duration: 0.2, delay: Math.min(index, 8) * 0.03 }}
         >
             <Card
                 sx={{
@@ -316,7 +181,7 @@ const PatientList = () => {
                             </IconButton>
                         </Tooltip>
                         <Tooltip title="Fusionner avec un doublon">
-                            <IconButton size="small" color="warning" onClick={() => { setMergeDialog({ open: true, primary: patient }); setMergeSecondary(null); setMergeSearch(''); }}>
+                            <IconButton size="small" color="warning" onClick={() => onMerge(patient)}>
                                 <MergeIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
@@ -325,17 +190,18 @@ const PatientList = () => {
             </Card>
         </motion.div>
     );
+});
 
-    const StatCard = ({ title, count, icon: Icon, color, filterKey }) => (
+const StatCard = React.memo(({ title, count, icon: Icon, color, filterKey, active, onSelect }) => (
         <Card
-            onClick={() => handleQuickFilterClick(filterKey)}
+            onClick={() => onSelect(filterKey)}
             sx={{
                 cursor: 'pointer',
                 borderRadius: 2.5,
                 height: '100%',
                 background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
                 border: '1.5px solid',
-                borderColor: quickFilter === filterKey ? color : 'transparent',
+                borderColor: active ? color : 'transparent',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                     transform: 'translateY(-2px)',
@@ -354,7 +220,156 @@ const PatientList = () => {
                 </Typography>
             </CardContent>
         </Card>
-    );
+    ));
+
+const PatientList = () => {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { enqueueSnackbar } = useSnackbar();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const [loading, setLoading] = useState(false);
+    const [patients, setPatients] = useState([]);
+    const [stats, setStats] = useState({
+        total: 0,
+        newLast7Days: 0,
+        male: 0,
+        female: 0,
+    });
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [quickFilter, setQuickFilter] = useState('');
+    const [premierChargementFait, setPremierChargementFait] = useState(false);
+    const derniereRequete = useRef(0);
+
+    // Debounce 300ms — stats ne se rechargent qu'à l'init (search vide)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search.length >= 2 ? search : search.length === 0 ? '' : debouncedSearch);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    useEffect(() => {
+        fetchPatients();
+    }, [page, debouncedSearch, quickFilter]);
+
+    const fetchPatients = async () => {
+        const numero = ++derniereRequete.current;
+        setLoading(true);
+        try {
+            const params = { page, page_size: 50 };
+            if (debouncedSearch) params.search = debouncedSearch;
+            if (quickFilter === 'male') params.gender = 'M';
+            if (quickFilter === 'female') params.gender = 'F';
+            if (quickFilter === 'new') {
+                const d = new Date();
+                d.setDate(d.getDate() - 7);
+                params.created_after = d.toISOString().slice(0, 10);
+            }
+
+            const listResponse = await patientAPI.getPatients(params);
+            if (numero !== derniereRequete.current) return; // une recherche plus récente est partie
+            setPatients(listResponse.results || []);
+
+            // Stats globales uniquement au premier chargement (sans filtre)
+            if (!debouncedSearch && !quickFilter && page === 1) {
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+                const [totalResponse, newResponse, maleResponse, femaleResponse] = await Promise.all([
+                    patientAPI.getPatients({ page: 1, page_size: 1 }),
+                    patientAPI.getPatients({ page: 1, page_size: 1, created_after: sevenDaysAgoStr }),
+                    patientAPI.getPatients({ page: 1, page_size: 1, gender: 'M' }),
+                    patientAPI.getPatients({ page: 1, page_size: 1, gender: 'F' }),
+                ]);
+                setStats({
+                    total: totalResponse.count || 0,
+                    newLast7Days: newResponse.count || 0,
+                    male: maleResponse.count || 0,
+                    female: femaleResponse.count || 0,
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching patients:', error);
+            enqueueSnackbar(t('common.error'), { variant: 'error' });
+        } finally {
+            if (numero === derniereRequete.current) {
+                setLoading(false);
+                setPremierChargementFait(true);
+            }
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        setSearch(e.target.value);
+        setPage(1);
+    };
+
+    const handleQuickFilterClick = useCallback((filterValue) => {
+        setQuickFilter(prev => (prev === filterValue ? '' : filterValue));
+        setPage(1);
+    }, []);
+
+    const openMerge = useCallback((patient) => {
+        setMergeDialog({ open: true, primary: patient });
+        setMergeSecondary(null);
+        setMergeSearch('');
+    }, []);
+
+    // === Merge patients dialog ===
+    const [mergeDialog, setMergeDialog] = useState({ open: false, primary: null });
+    const [mergeSecondary, setMergeSecondary] = useState(null);
+    const [mergeSearch, setMergeSearch] = useState('');
+    const [mergeOptions, setMergeOptions] = useState([]);
+    const [mergeSaving, setMergeSaving] = useState(false);
+
+    useEffect(() => {
+        if (!mergeDialog.open) return;
+        const timer = setTimeout(async () => {
+            try {
+                const data = await patientAPI.getPatients({ search: mergeSearch, page_size: 20 });
+                setMergeOptions((data.results || []).filter(p => p.id !== mergeDialog.primary?.id));
+            } catch {}
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [mergeSearch, mergeDialog.open, mergeDialog.primary]);
+
+    const handleMergeSubmit = async () => {
+        if (!mergeDialog.primary || !mergeSecondary) return;
+        if (!window.confirm(
+            `Fusionner "${mergeSecondary.name}" → "${mergeDialog.primary.name}" ?\n\nToutes les factures, commandes labo et consultations seront transférées. Le doublon sera désactivé. Cette action est irréversible.`
+        )) return;
+        setMergeSaving(true);
+        try {
+            await api.post(`/healthcare/patients/${mergeDialog.primary.id}/merge/`, {
+                secondary_patient_id: mergeSecondary.id
+            });
+            enqueueSnackbar(`Fusion réussie : "${mergeSecondary.name}" fusionné dans "${mergeDialog.primary.name}"`, { variant: 'success' });
+            setMergeDialog({ open: false, primary: null });
+            setMergeSecondary(null);
+            fetchPatients();
+        } catch (err) {
+            const msg = err.response?.data?.error || 'Erreur lors de la fusion';
+            enqueueSnackbar(msg, { variant: 'error' });
+        } finally {
+            setMergeSaving(false);
+        }
+    };
+
+    // Filtrage géré côté API — patients est déjà filtré
+    const filteredPatients = patients;
+
+    // Stats Calculation (global backend counts)
+    const totalPatients = stats.total;
+    const newPatients = stats.newLast7Days;
+    const malePatients = stats.male;
+    const femalePatients = stats.female;
+
+    // Loading & Error States
+    if (!premierChargementFait && loading) return <LoadingState message={t('patients.loading', 'Chargement des patients...')} />;
 
     return (
         <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -390,16 +405,16 @@ const PatientList = () => {
             {/* Stat Cards Grid */}
             <Grid container spacing={2} mb={4}>
                 <Grid item xs={6} md={3}>
-                    <StatCard title="Total Patients" count={totalPatients} icon={PersonIcon} color={theme.palette.primary.main} filterKey="" />
+                    <StatCard title="Total Patients" count={totalPatients} icon={PersonIcon} color={theme.palette.primary.main} filterKey="" active={quickFilter === ""} onSelect={handleQuickFilterClick} />
                 </Grid>
                 <Grid item xs={6} md={3}>
-                    <StatCard title="Nouveaux (7j)" count={newPatients} icon={FiberNew} color={theme.palette.success.main} filterKey="new" />
+                    <StatCard title="Nouveaux (7j)" count={newPatients} icon={FiberNew} color={theme.palette.success.main} filterKey="new" active={quickFilter === "new"} onSelect={handleQuickFilterClick} />
                 </Grid>
                 <Grid item xs={6} md={3}>
-                    <StatCard title="Hommes" count={malePatients} icon={Male} color={theme.palette.info.main} filterKey="male" />
+                    <StatCard title="Hommes" count={malePatients} icon={Male} color={theme.palette.info.main} filterKey="male" active={quickFilter === "male"} onSelect={handleQuickFilterClick} />
                 </Grid>
                 <Grid item xs={6} md={3}>
-                    <StatCard title="Femmes" count={femalePatients} icon={Female} color={theme.palette.secondary.main} filterKey="female" />
+                    <StatCard title="Femmes" count={femalePatients} icon={Female} color={theme.palette.secondary.main} filterKey="female" active={quickFilter === "female"} onSelect={handleQuickFilterClick} />
                 </Grid>
             </Grid>
 
@@ -435,7 +450,7 @@ const PatientList = () => {
             <Grid container spacing={2.5}>
                 {filteredPatients.map((patient, index) => (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={patient.id}>
-                        <PatientCard patient={patient} index={index} />
+                        <PatientCard patient={patient} index={index} onMerge={openMerge} />
                     </Grid>
                 ))}
             </Grid>
