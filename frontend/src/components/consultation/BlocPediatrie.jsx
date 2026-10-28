@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Grid, TextField, Typography, Alert, Chip } from '@mui/material';
 import Pastilles from './Pastilles';
-import CourbeSimple from './CourbeSimple';
+import CourbeCroissance from './CourbeCroissance';
 import { ageDepuis, libelleAge } from './specialites';
 
 // Pédiatrie : âge exact, périmètre crânien, courbe de poids de l'enfant (ses propres mesures),
@@ -27,14 +27,6 @@ const BlocPediatrie = ({ data = {}, onData, contexte, constantes }) => {
     const maj = (champ, valeur) => onData({ ...data, [champ]: valeur });
     const naissance = contexte?.patient?.date_naissance;
     const age = ageDepuis(naissance);
-    const enMois = (date) => {
-        const a = ageDepuis(naissance, new Date(date));
-        return a ? a.mois : null;
-    };
-    const poids = [
-        ...(contexte?.mesures || []).filter(m => m.poids).map(m => ({ x: enMois(m.date), y: +m.poids })),
-        ...(constantes.weight && age ? [{ x: age.mois, y: +constantes.weight }] : []),
-    ].filter(p => p.x !== null);
     const aujourdhui = new Date().toISOString().slice(0, 10);
     const enRetard = (contexte?.vaccins || []).filter(v => v.prochaine_dose && v.prochaine_dose < aujourdhui);
     const aVenir = (contexte?.vaccins || []).filter(v => v.prochaine_dose && v.prochaine_dose >= aujourdhui);
@@ -52,8 +44,7 @@ const BlocPediatrie = ({ data = {}, onData, contexte, constantes }) => {
                     <TextField label="Périmètre crânien (cm)" value={data.pc || ''} onChange={e => maj('pc', e.target.value.replace(',', '.'))} fullWidth size="small" />
                 </Grid>
             </Grid>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600, mb: 0.5 }}>Courbe de poids de l'enfant (selon l'âge en mois)</Typography>
-            <CourbeSimple series={[{ nom: 'Poids', couleur: '#1D9E75', points: poids }]} etiquetteX={m => `${Math.round(m)} mois`} unite=" kg" hauteur={120} />
+            <CourbeCroissance contexte={contexte} constantes={{ weight: constantes.weight, height: constantes.height, pc: data.pc }} age={age} />
             <Box sx={{ my: 1 }}>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 600, mb: 0.5 }}>Vaccins</Typography>
                 {enRetard.length > 0 && (

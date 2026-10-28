@@ -3,6 +3,7 @@ import {
     Box, Button, Card, CardContent, Grid, TextField, Typography, Stack, Autocomplete, IconButton,
     Checkbox, Chip, CircularProgress, Alert, Accordion, AccordionSummary, AccordionDetails, Dialog,
     DialogTitle, DialogContent, DialogActions, List, ListItemButton, ListItemText, Tooltip, Paper, useMediaQuery, useTheme, Tabs, Tab,
+    ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import {
     Save as SaveIcon, CheckCircle as CompleteIcon, Add as AddIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon,
@@ -19,6 +20,17 @@ import pharmacyAPI from '../../../services/pharmacyAPI';
 import laboratoryAPI from '../../../services/laboratoryAPI';
 import imagingAPI from '../../../services/imagingAPI';
 import PatientQuickViewButton from '../../../components/patients/PatientQuickView';
+import PersonSearchOutlinedIcon from '@mui/icons-material/PersonSearchOutlined';
+import MonitorHeartOutlinedIcon from '@mui/icons-material/MonitorHeartOutlined';
+import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
+import MedicalServicesOutlinedIcon from '@mui/icons-material/MedicalServicesOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import BiotechOutlinedIcon from '@mui/icons-material/BiotechOutlined';
+import MedicationOutlinedIcon from '@mui/icons-material/MedicationOutlined';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
+import SectionCarte from '../../../components/consultation/SectionCarte';
+import EnTetePatient from '../../../components/consultation/EnTetePatient';
+import ConstantesVitales from '../../../components/consultation/ConstantesVitales';
 import ConsultationTimer from '../../../components/healthcare/ConsultationTimer';
 import QuickTemplate from '../../../components/healthcare/QuickTemplate';
 import {
@@ -27,14 +39,16 @@ import {
     PHYSICAL_EXAM_TEMPLATES, TREATMENT_TEMPLATES,
 } from '../../../constants/clinicalTemplates';
 import Pastilles from '../../../components/consultation/Pastilles';
-import SchemaCliquable, { FORMES_CORPS, VIEWBOX_CORPS } from '../../../components/consultation/SchemaCliquable';
+import SchemaCliquable, { resumeReperes } from '../../../components/consultation/SchemaCliquable';
+import { SCHEMAS, corpsSelonAge, thorax, orl } from '../../../components/consultation/schemas';
 import BlocGyneco, { resumeGyneco } from '../../../components/consultation/BlocGyneco';
 import BlocCardio, { resumeCardio } from '../../../components/consultation/BlocCardio';
 import BlocEsthetique, { resumeEsthetique } from '../../../components/consultation/BlocEsthetique';
 import BlocPediatrie, { resumePediatrie } from '../../../components/consultation/BlocPediatrie';
 import DossierPatient, { resultatsDepuisDerniereVisite } from '../../../components/consultation/DossierPatient';
 import {
-    SPECIALITES, MOTIFS, DIAGNOSTICS, ZONES_CORPS, basculerLigne, contientLigne, ageDepuis, libelleAge,
+    SPECIALITES, motifsPour, diagnosticsPour, specialitesPour, ENQUETE_SELON_SEXE, EXAMEN_SELON_SEXE,
+    ANTECEDENTS_UROGENITAL_HOMME, ANTECEDENTS_GYNECO_FEMME, basculerLigne, contientLigne, ageDepuis, libelleAge,
 } from '../../../components/consultation/specialites';
 
 // Consultation sur une seule page, adaptée à la spécialité : on touche des pastilles et des schémas,
@@ -99,20 +113,20 @@ const RechercheAsync = ({ value, onChange, charger, getOptionLabel, label, place
     );
 };
 
-const Section = ({ titre, sousTitre, children, action }) => (
-    <Card sx={{ mb: 2 }}>
-        <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
-                <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>{titre}</Typography>
-                    {sousTitre && <Typography variant="caption" color="text.secondary">{sousTitre}</Typography>}
-                </Box>
-                {action}
-            </Box>
-            {children}
-        </CardContent>
-    </Card>
-);
+// Icône et teinte de chaque section (la carte elle-même est SectionCarte)
+const ICONES_SECTION = [
+    ['Patient', PersonSearchOutlinedIcon, 'primary'], ['Constantes', MonitorHeartOutlinedIcon, 'error'], ['Motif', EditNoteOutlinedIcon, 'primary'],
+    ['Examen —', MedicalServicesOutlinedIcon, 'secondary'], ['Examen clinique', VisibilityOutlinedIcon, 'info'], ['Diagnostic', BiotechOutlinedIcon, 'warning'],
+    ['Traitement', MedicationOutlinedIcon, 'success'], ['Suivi', EventAvailableOutlinedIcon, 'info'],
+];
+const Section = ({ titre, sousTitre, children, action }) => {
+    const [, Icone, teinte] = ICONES_SECTION.find(([debut]) => titre.startsWith(debut)) || [null, undefined, 'primary'];
+    return (
+        <Box sx={{ mb: 2 }}>
+            <SectionCarte titre={titre} sousTitre={sousTitre} icone={Icone} teinte={teinte} action={action}>{children}</SectionCarte>
+        </Box>
+    );
+};
 
 const ConsultationForm = () => {
     const navigate = useNavigate();
@@ -125,6 +139,8 @@ const ConsultationForm = () => {
     const isNew = !id;
 
     const [tabValue, setTabValue] = useState(0);
+    const [schemaExamen, setSchemaExamen] = useState('corps');
+    const [ongletDossier, setOngletDossier] = useState(null);
     const [loading, setLoading] = useState(false);
     const [initializing, setInitializing] = useState(true);
     const [consultationStatus, setConsultationStatus] = useState(null);
@@ -245,6 +261,8 @@ const ConsultationForm = () => {
                 ANTECEDENTS.forEach(([k]) => { suite[k] = patData[k] || prev[k]; });
                 const age = ageDepuis(ctx?.patient?.date_naissance);
                 if (!specialiteChoisie.current && age && age.ans < 15) suite.specialty = 'pediatrics';
+                // la gynécologie n'a pas de sens pour un patient de sexe masculin : retour à la médecine générale
+                if (ctx?.patient?.sexe === 'M' && suite.specialty === 'gynecology') suite.specialty = 'general';
                 // reprendre la dernière fiche de la spécialité (DDR, facteurs de risque, phototype…) sans les constats du jour
                 const precedent = ctx?.derniere_par_specialite?.[suite.specialty]?.donnees;
                 if (precedent && Object.keys(prev.specialty_data || {}).length === 0) suite.specialty_data = reprendre(precedent);
@@ -278,6 +296,17 @@ const ConsultationForm = () => {
 
     const specialite = SPECIALITES.find(s => s.code === formData.specialty) || SPECIALITES[0];
     const age = ageDepuis(contexte?.patient?.date_naissance);
+    // les suggestions (motifs, diagnostics, antécédents…) dépendent du sexe et de l'âge du patient
+    const sexe = contexte?.patient?.sexe || null;
+    const ageAns = age ? age.ans : null;
+    const antecedentsAffiches = ANTECEDENTS
+        .filter(([k]) => !(k === 'antecedents_gyneco_obs' && ageAns !== null && ageAns < 12))
+        .map(([k, lib, modeles]) => {
+            if (k !== 'antecedents_gyneco_obs') return [k, lib, modeles];
+            if (sexe === 'M') return [k, 'Uro-génital', ANTECEDENTS_UROGENITAL_HOMME];
+            if (sexe === 'F') return [k, 'Gynéco-obstétrique', ANTECEDENTS_GYNECO_FEMME];
+            return [k, 'Gynéco-obstétrique / uro-génital', modeles];
+        });
     const donneesSpe = (cle) => formData.specialty_data?.[cle] || {};
     const majSpe = (cle) => (v) => setFormData(prev => ({ ...prev, specialty_data: { ...prev.specialty_data, [cle]: v } }));
     const derniereMesure = useMemo(() => {
@@ -296,7 +325,7 @@ const ConsultationForm = () => {
     };
 
     // Examens proposés par les diagnostics cochés
-    const diagnosticsCoches = (DIAGNOSTICS[formData.specialty] || []).filter(x => contientLigne(formData.diagnosis, x.d));
+    const diagnosticsCoches = diagnosticsPour(formData.specialty, sexe, ageAns).filter(x => contientLigne(formData.diagnosis, x.d));
     const testsProposes = useMemo(() => {
         const codes = [...new Set(diagnosticsCoches.flatMap(x => x.labo))];
         return codes.map(c => labTests.find(t => t.test_code === c)).filter(t => t && !formData.lab_tests.includes(t.id));
@@ -373,7 +402,7 @@ const ConsultationForm = () => {
         }
         setLoading(true);
         try {
-            const lignes = resume();
+            const lignes = [...resume(), ...resumeReperes(formData.specialty_data?.reperes || [], SCHEMAS)];
             const payload = {
                 patient: formData.patient.id,
                 ...Object.fromEntries(['chief_complaint', 'history_of_present_illness', ...ANTECEDENTS.map(a => a[0]), 'enquetes_systeme',
@@ -441,7 +470,7 @@ const ConsultationForm = () => {
     const resultats = resultatsDepuisDerniereVisite(contexte);
     const dossier = formData.patient ? (
         <DossierPatient contexte={contexte} onReprendreTraitement={reprendreTraitement} onCopierHistoire={citerDansHistoire}
-            onAjouterResultats={ajouterResultats} ongletInitial={resultats.commandes > 0 ? 1 : 0} key={contexte ? 'ok' : 'vide'} />
+            onAjouterResultats={ajouterResultats} ongletInitial={ongletDossier ?? (resultats.commandes > 0 ? 1 : 0)} key={`${contexte ? 'ok' : 'vide'}-${ongletDossier ?? 'a'}`} />
     ) : null;
 
     return (
@@ -490,32 +519,13 @@ const ConsultationForm = () => {
                             label="Rechercher le patient (nom, numéro, téléphone)" testId="consult-input-patient" />
                     </Section>
                 ) : (
-                    <Card sx={{ mb: 2 }}>
-                        <CardContent sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', py: '12px !important' }}>
-                            <Box sx={{ flex: 1, minWidth: 200 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    {[contexte?.patient?.sexe === 'M' ? 'Homme' : contexte?.patient?.sexe === 'F' ? 'Femme' : '', age ? libelleAge(age) : '',
-                                        contexte ? `${contexte.nombre_consultations} consultation(s) avant celle-ci` : ''].filter(Boolean).join(' · ')}
-                                </Typography>
-                                {derniere && (
-                                    <Typography variant="body2">
-                                        <HistoryIcon sx={{ fontSize: 16, verticalAlign: 'middle', mr: 0.5 }} />
-                                        Dernière visite le {new Date(derniere.date).toLocaleDateString('fr-FR')}{derniere.diagnostic ? ` : ${derniere.diagnostic.split('\n')[0]}` : ''}
-                                    </Typography>
-                                )}
-                            </Box>
-                            {!sansAllergie && (
-                                <Chip color="error" icon={<WarningIcon />} label={`Allergies : ${allergies.split('\n').join(', ').slice(0, 80)}`} sx={{ maxWidth: '100%' }} />
-                            )}
-                            {resultats.commandes > 0 && (
-                                <Chip color={resultats.anormaux ? 'warning' : 'success'} icon={<ScienceIcon />}
-                                    label={`${resultats.commandes} analyse(s) depuis la dernière visite${resultats.anormaux ? ` — ${resultats.anormaux} anormale(s)` : ''}`} />
-                            )}
-                            {isNew && <Button size="small" onClick={() => choisirPatient(null)}>Changer de patient</Button>}
+                    <EnTetePatient patient={formData.patient} contexte={contexte} age={age} allergies={allergies} sansAllergie={sansAllergie}
+                        resultats={resultats} isNew={isNew} onChangerPatient={() => choisirPatient(null)}
+                        onVoirResultats={() => setOngletDossier(1)} sx={{ mb: 2 }}
+                        minuteur={(
                             <ConsultationTimer compact onStart={(t) => maj('started_at', t)} onEnd={(t) => maj('ended_at', t)}
                                 initialStartTime={formData.started_at} initialEndTime={formData.ended_at} />
-                        </CardContent>
-                    </Card>
+                        )} />
                 )}
 
                 {/* Spécialité + médecin */}
@@ -523,7 +533,7 @@ const ConsultationForm = () => {
                     <CardContent sx={{ py: '12px !important' }}>
                         <Grid container spacing={2} alignItems="center">
                             <Grid item xs={12} md={8}>
-                                <Pastilles options={SPECIALITES.map(s => ({ valeur: s.code, libelle: s.libelle }))}
+                                <Pastilles options={specialitesPour(sexe).map(s => ({ valeur: s.code, libelle: s.libelle }))}
                                     actif={(v) => formData.specialty === v} onBascule={changerSpecialite} />
                             </Grid>
                             <Grid item xs={12} md={4}>
@@ -564,30 +574,15 @@ const ConsultationForm = () => {
                 </Box>
                 {tabValue === 0 && (<>
                 {/* Constantes */}
-                <Section titre="Constantes" sousTitre={contexte?.mesures?.length ? 'En gris : la valeur de la visite précédente' : undefined}>
-                    <Grid container spacing={1.5}>
-                        {CONSTANTES.map(([k, lib, cleHisto]) => {
-                            const avant = cleHisto ? derniereMesure(cleHisto) : null;
-                            return (
-                                <Grid item xs={6} sm={4} md={2} key={k}>
-                                    <TextField label={lib} name={k} value={formData[k] ?? ''} onChange={handleInputChange} fullWidth size="small"
-                                        inputProps={{ inputMode: 'decimal', ...(TESTID[k] ? { 'data-testid': TESTID[k] } : {}) }}
-                                        helperText={avant ? `${avant[cleHisto]} le ${new Date(avant.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : ' '} />
-                                </Grid>
-                            );
-                        })}
-                        <Grid item xs={6} sm={4} md={2}>
-                            <TextField label="IMC" value={formData.bmi} disabled fullWidth size="small"
-                                helperText={formData.bmi ? (formData.bmi < 18.5 ? 'Insuffisance' : formData.bmi < 25 ? 'Normal' : formData.bmi < 30 ? 'Surpoids' : 'Obésité') : ' '} />
-                        </Grid>
-                    </Grid>
+                <Section titre="Constantes" sousTitre={contexte?.mesures?.length ? 'La valeur de la visite précédente est rappelée sous chaque mesure' : undefined}>
+                    <ConstantesVitales formData={formData} onChange={(k, v) => maj(k, String(v).replace(',', '.'))} contexte={contexte} age={age} />
                 </Section>
 
                 </>)}
                 {tabValue === 1 && (<>
                 {/* Motif et histoire */}
                 <Section titre="Motif et histoire">
-                    <Pastilles options={MOTIFS[formData.specialty] || MOTIFS.general} actif={(v) => contientLigne(formData.chief_complaint, v)}
+                    <Pastilles options={motifsPour(formData.specialty, sexe, ageAns)} actif={(v) => contientLigne(formData.chief_complaint, v)}
                         onBascule={(v) => maj('chief_complaint', basculerLigne(formData.chief_complaint, v))} />
                     <TextField label="Motif de consultation" name="chief_complaint" value={formData.chief_complaint} onChange={handleInputChange} multiline minRows={2} fullWidth sx={{ mt: 1 }} />
                     <TextField label="Histoire de la maladie" name="history_of_present_illness" value={formData.history_of_present_illness} onChange={handleInputChange} multiline minRows={2} fullWidth sx={{ mt: 2 }} />
@@ -598,7 +593,7 @@ const ConsultationForm = () => {
                         </AccordionSummary>
                         <AccordionDetails>
                             <Grid container spacing={2}>
-                                {ANTECEDENTS.map(([k, lib, modeles]) => (
+                                {antecedentsAffiches.map(([k, lib, modeles]) => (
                                     <Grid item xs={12} md={6} key={k}>
                                         <TextField label={lib} name={k} value={formData[k]} onChange={handleInputChange} multiline minRows={2} fullWidth />
                                         <QuickTemplate label="Suggestions" templates={modeles} onSelect={(v) => maj(k, basculerLigne(formData[k], v))} />
@@ -615,10 +610,12 @@ const ConsultationForm = () => {
                 {specialite.cle && (
                     <Section titre={`Examen — ${specialite.libelle}`} sousTitre="Touchez les pastilles et les schémas ; tout est repris dans le dossier et le compte rendu">
                         {formData.specialty === 'gynecology' && <BlocGyneco data={donneesSpe('gyneco')} onData={majSpe('gyneco')} />}
-                        {formData.specialty === 'cardiology' && <BlocCardio data={donneesSpe('cardio')} onData={majSpe('cardio')} contexte={contexte} constantes={formData} />}
+                        {formData.specialty === 'cardiology' && <BlocCardio data={donneesSpe('cardio')} onData={majSpe('cardio')} contexte={contexte} constantes={formData} age={age} sexe={contexte?.patient?.sexe} />}
                         {formData.specialty === 'aesthetic' && (
                             <BlocEsthetique data={donneesSpe('esthetique')} onData={majSpe('esthetique')} photos={photos}
-                                onAjouterPhoto={ajouterPhoto} onSupprimerPhoto={supprimerPhoto} peutPhoto={!!id} />
+                                onAjouterPhoto={ajouterPhoto} onSupprimerPhoto={supprimerPhoto} peutPhoto={!!id}
+                                reperes={formData.specialty_data?.reperes || []}
+                                onReperes={(r) => setFormData(p => ({ ...p, specialty_data: { ...p.specialty_data, reperes: r } }))} />
                         )}
                         {formData.specialty === 'pediatrics' && <BlocPediatrie data={donneesSpe('pediatrie')} onData={majSpe('pediatrie')} contexte={contexte} constantes={formData} />}
                     </Section>
@@ -628,19 +625,31 @@ const ConsultationForm = () => {
                 <Section titre="Examen clinique">
                     {constatsCorps && (
                         <Box sx={{ mb: 2 }}>
-                            <SchemaCliquable viewBox={VIEWBOX_CORPS} largeur={130} formes={FORMES_CORPS} zones={ZONES_CORPS}
-                                texte={formData.physical_examination} onTexte={(v) => maj('physical_examination', v)} legende="Touchez une zone" />
+                            <ToggleButtonGroup size="small" exclusive value={schemaExamen} onChange={(e, v) => v && setSchemaExamen(v)} sx={{ mb: 1.5 }}>
+                                <ToggleButton value="corps" sx={{ textTransform: 'none', px: 2 }}>Corps</ToggleButton>
+                                <ToggleButton value="thorax" sx={{ textTransform: 'none', px: 2 }}>Thorax</ToggleButton>
+                                <ToggleButton value="orl" sx={{ textTransform: 'none', px: 2 }}>ORL</ToggleButton>
+                            </ToggleButtonGroup>
+                            {(() => {
+                                const schema = schemaExamen === 'thorax' ? thorax : schemaExamen === 'orl' ? orl : corpsSelonAge(age ? age.mois : null, contexte?.patient?.sexe);
+                                return (
+                                    <SchemaCliquable key={schema.id} schema={schema} opts={{ sexe: contexte?.patient?.sexe || null, ageMois: age ? age.mois : null }}
+                                        texte={formData.physical_examination} onTexte={(v) => maj('physical_examination', v)}
+                                        reperes={formData.specialty_data?.reperes || []}
+                                        onReperes={(r) => setFormData(p => ({ ...p, specialty_data: { ...p.specialty_data, reperes: r } }))} />
+                                );
+                            })()}
                         </Box>
                     )}
                     <TextField label="Examen physique" name="physical_examination" value={formData.physical_examination} onChange={handleInputChange} multiline minRows={3} fullWidth />
-                    <QuickTemplate label="Raccourcis examen physique" templates={PHYSICAL_EXAM_TEMPLATES} onSelect={(v) => maj('physical_examination', basculerLigne(formData.physical_examination, v))} />
+                    <QuickTemplate label="Raccourcis examen physique" templates={[...PHYSICAL_EXAM_TEMPLATES, ...(EXAMEN_SELON_SEXE[sexe] || [])]} onSelect={(v) => maj('physical_examination', basculerLigne(formData.physical_examination, v))} />
                     <TextField label="Enquête des systèmes" name="enquetes_systeme" value={formData.enquetes_systeme} onChange={handleInputChange} multiline minRows={1} fullWidth sx={{ mt: 2 }} />
-                    <QuickTemplate label="Suggestions" templates={ENQUETES_SYSTEME_TEMPLATES} onSelect={(v) => maj('enquetes_systeme', basculerLigne(formData.enquetes_systeme, v))} />
+                    <QuickTemplate label="Suggestions" templates={[...ENQUETES_SYSTEME_TEMPLATES, ...(ENQUETE_SELON_SEXE[sexe] || [])]} onSelect={(v) => maj('enquetes_systeme', basculerLigne(formData.enquetes_systeme, v))} />
                 </Section>
 
                 {/* Diagnostic et examens */}
                 <Section titre="Diagnostic et examens">
-                    <Pastilles options={(DIAGNOSTICS[formData.specialty] || DIAGNOSTICS.general).map(x => x.d)} couleur="error"
+                    <Pastilles options={diagnosticsPour(formData.specialty, sexe, ageAns).map(x => x.d)} couleur="error"
                         actif={(v) => contientLigne(formData.diagnosis, v)} onBascule={(v) => maj('diagnosis', basculerLigne(formData.diagnosis, v))} />
                     <TextField label="Diagnostic" name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} multiline minRows={2} fullWidth sx={{ mt: 1 }}
                         inputProps={{ 'data-testid': 'consult-input-diagnosis' }} />
