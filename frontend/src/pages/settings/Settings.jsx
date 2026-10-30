@@ -1389,6 +1389,79 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
             </AccordionDetails>
           </Accordion>
         </Grid>
+
+        <Grid item xs={12}>
+          <Accordion defaultExpanded={false}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Partage du revenu net</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Le chiffre d'affaires affiché est ce qui est facturé au patient, pas ce que le centre
+                conserve. Renseignez ici vos propres accords : les tableaux de bord afficheront alors
+                le net réellement gardé. Laissez à zéro ce qui ne vous concerne pas — la ligne
+                correspondante disparaîtra de l'écran.
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Net gardé par consultation (FCFA)"
+                    helperText="Le reste part en primes au médecin"
+                    value={settings.consultationNetPerUnit ?? 0}
+                    onChange={(e) => onUpdate('consultationNetPerUnit', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Imagerie — part du centre (%)"
+                    value={settings.imagingCenterSharePercent ?? 0}
+                    onChange={(e) => onUpdate('imagingCenterSharePercent', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Imagerie — part du prescripteur (%)"
+                    value={settings.imagingDoctorSharePercent ?? 0}
+                    onChange={(e) => onUpdate('imagingDoctorSharePercent', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Sous-traitance — part du centre (%)"
+                    value={settings.subcontractCenterSharePercent ?? 0}
+                    onChange={(e) => onUpdate('subcontractCenterSharePercent', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Sous-traitance — part partenaires (%)"
+                    value={settings.subcontractPartnerSharePercent ?? 0}
+                    onChange={(e) => onUpdate('subcontractPartnerSharePercent', e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Nom des partenaires"
+                    helperText="Affiché dans la note du tableau de bord"
+                    value={settings.subcontractPartnerLabel ?? ''}
+                    onChange={(e) => onUpdate('subcontractPartnerLabel', e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+            </AccordionDetails>
+          </Accordion>
+        </Grid>
       </Grid>
     </Box>
   );

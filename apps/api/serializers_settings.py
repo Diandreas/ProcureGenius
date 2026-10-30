@@ -92,6 +92,13 @@ class OrganizationSettingsSerializer(CamelCaseSerializer):
             # Noms sur les résultats de laboratoire
             'lab_technician_names',
             'lab_biologist_name',
+            # Partage du revenu net affiché sur les tableaux de bord
+            'consultation_net_per_unit',
+            'imaging_center_share_percent',
+            'imaging_doctor_share_percent',
+            'subcontract_center_share_percent',
+            'subcontract_partner_share_percent',
+            'subcontract_partner_label',
             'created_at',
             'updated_at',
         ]

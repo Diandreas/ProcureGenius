@@ -48,6 +48,7 @@ import { LabOrdersStatusWidget, LabTurnaroundWidget } from '../components/widget
 import healthcareAnalyticsAPI from '../services/healthcareAnalyticsAPI';
 import inventoryAnalyticsAPI from '../services/inventoryAnalyticsAPI';
 import api from '../services/api';
+import { settingsAPI } from '../services/settingsAPI';
 import dayjs from 'dayjs';
 
 const formatCurrency = (value) =>
@@ -75,11 +76,16 @@ const ACTIVITY_LABELS = {
 
 // Quote-part réellement conservée par le centre — le CA affiché est le montant
 // facturé au patient, pas ce qui reste net après reversement aux médecins/partenaires.
-const CONSULTATION_NET_PER_UNIT = 2150; // FCFA retenus par le centre, par consultation (reste = primes médecin)
-const IMAGING_CENTER_SHARE = 0.30; // 30% pour le centre
-const IMAGING_DOCTOR_SHARE = 0.15; // 15% reversés au médecin prescripteur
-const SUBCONTRACT_CENTER_SHARE = 0.90; // 90% pour le centre
-const SUBCONTRACT_PARTNER_SHARE = 0.10; // 10% reversés à Emmanuel et Christian
+// Partage du revenu net : lu dans Paramètres > Organisation, pas codé ici.
+// Chaque centre a ses propres accords ; zéro = non configuré, on n'affiche rien.
+const PARTAGE_VIDE = {
+  consultationNet: 0,
+  imagerieCentre: 0,
+  imagerieMedecin: 0,
+  soustraitanceCentre: 0,
+  soustraitancePartenaire: 0,
+  partenaireNom: '',
+};
 const getActivityLabel = (type) => ACTIVITY_LABELS[type] || `Autres (${type || 'non défini'})`;
 
 const QuickLink = ({ title, description, icon, color, to, navigate }) => (
@@ -116,6 +122,8 @@ const Dashboard = () => {
   const handleTabChange = (e, v) => setSearchParams({ tab: v });
 
   const [loading, setLoading] = useState(true);
+  // Partage du revenu net, propre a chaque centre (Parametres > Organisation).
+  const [partage, setPartage] = useState(PARTAGE_VIDE);
   const [activityData, setActivityData] = useState(null);
   const [revenueData, setRevenueData] = useState(null);
   const [labServiceData, setLabServiceData] = useState(null);  // CA labo par catégorie
@@ -132,6 +140,22 @@ const Dashboard = () => {
     start_date: dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
     end_date: dayjs().format('YYYY-MM-DD'),
   });
+
+  useEffect(() => {
+    settingsAPI.getAll()
+      .then((res) => {
+        const d = res.data || {};
+        setPartage({
+          consultationNet: Number(d.consultationNetPerUnit) || 0,
+          imagerieCentre: Number(d.imagingCenterSharePercent) || 0,
+          imagerieMedecin: Number(d.imagingDoctorSharePercent) || 0,
+          soustraitanceCentre: Number(d.subcontractCenterSharePercent) || 0,
+          soustraitancePartenaire: Number(d.subcontractPartnerSharePercent) || 0,
+          partenaireNom: d.subcontractPartnerLabel || "",
+        });
+      })
+      .catch(() => setPartage(PARTAGE_VIDE));
+  }, []);
 
   useEffect(() => { fetchStats(); }, [dateRange]);
 
@@ -200,11 +224,11 @@ const Dashboard = () => {
   // CA facturé vs part réellement conservée par le centre
   const consultationRevenue = byActivity.find(a => a.activity_type === 'healthcare_consultation')?.revenue || 0;
   const consultationCount = byActivity.find(a => a.activity_type === 'healthcare_consultation')?.count || 0;
-  const consultationNetRevenue = consultationCount * CONSULTATION_NET_PER_UNIT;
-  const imagingCenterNet = imagingRevenue * IMAGING_CENTER_SHARE;
-  const imagingDoctorShare = imagingRevenue * IMAGING_DOCTOR_SHARE;
-  const subcontractCenterNet = (subcontractingInfo.revenue || 0) * SUBCONTRACT_CENTER_SHARE;
-  const subcontractPartnerShare = (subcontractingInfo.revenue || 0) * SUBCONTRACT_PARTNER_SHARE;
+  const consultationNetRevenue = consultationCount * partage.consultationNet;
+  const imagingCenterNet = imagingRevenue * (partage.imagerieCentre / 100);
+  const imagingDoctorShare = imagingRevenue * (partage.imagerieMedecin / 100);
+  const subcontractCenterNet = (subcontractingInfo.revenue || 0) * (partage.soustraitanceCentre / 100);
+  const subcontractPartnerShare = (subcontractingInfo.revenue || 0) * (partage.soustraitancePartenaire / 100);
 
   // Soins par catégorie
   const allServicesCategories = servicesData?.by_category || [];
@@ -377,7 +401,7 @@ const Dashboard = () => {
                     { label: `dont Sous-traitance (${financial.subcontract_count ?? 0} ex.)`, value: formatCurrency(financial.subcontract_revenue), indent: true },
                     { label: 'Kits de prélèvement', value: formatCurrency(financial.lab_kit_revenue) },
                   ]}
-                  footnote={loading ? '' : `Net centre sur sous-traitance (90%) : ${formatCurrency((financial.subcontract_revenue || 0) * SUBCONTRACT_CENTER_SHARE)}`} />
+                  footnote={loading || !partage.soustraitanceCentre ? '' : `Net centre sur sous-traitance (${partage.soustraitanceCentre} %) : ${formatCurrency((financial.subcontract_revenue || 0) * (partage.soustraitanceCentre / 100))}`} />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="CA Imagerie médicale"
@@ -519,7 +543,7 @@ const Dashboard = () => {
                 <StatCard title="CA Consultations"
                   value={loading ? '...' : formatCurrency(consultationRevenue)}
                   icon={<MedicalIcon />} color="#8b5cf6" loading={loading}
-                  subtitle={loading ? '' : `Net centre : ${formatCurrency(consultationNetRevenue)} (${CONSULTATION_NET_PER_UNIT} F/consultation, reste = primes médecin)`} />
+                  subtitle={loading || !partage.consultationNet ? '' : `Net centre : ${formatCurrency(consultationNetRevenue)} (${partage.consultationNet} F/consultation, reste = primes médecin)`} />
               </Grid>
             </Grid>
             {/* KPI cards — ligne 1bis : CA Jour / Nuit */}
@@ -551,7 +575,7 @@ const Dashboard = () => {
                   breakdownItems={[
                     { label: `dont Sous-traitance (${subcontractingInfo.count ?? 0} ex.)`, value: formatCurrency(subcontractingInfo.revenue), indent: true },
                   ]}
-                  footnote={loading ? '' : `Net centre sur sous-traitance (90%) : ${formatCurrency(subcontractCenterNet)} · Emmanuel/Christian (10%) : ${formatCurrency(subcontractPartnerShare)}`} />
+                  footnote={loading || !partage.soustraitanceCentre ? '' : `Net centre sur sous-traitance (${partage.soustraitanceCentre} %) : ${formatCurrency(subcontractCenterNet)}${partage.soustraitancePartenaire ? ` · ${partage.partenaireNom || 'Partenaires'} (${partage.soustraitancePartenaire} %) : ${formatCurrency(subcontractPartnerShare)}` : ''}`} />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="CA Imagerie médicale"

@@ -19,6 +19,7 @@ import {
     Vaccines as VaccinesIcon,
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { settingsAPI } from '../../../services/settingsAPI';
 import { motion } from 'framer-motion';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DateNavigator from '../../../components/common/DateNavigator';
@@ -36,11 +37,31 @@ const RevenueAnalyticsDashboard = () => {
     const urlParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
     const [loading, setLoading] = useState(false);
+    // Partage du revenu net : propre a chaque centre, lu dans les parametres.
+    const [partage, setPartage] = useState({
+        consultationNet: 0, imagerieCentre: 0, imagerieMedecin: 0,
+        soustraitancePartenaire: 0, partenaireNom: '',
+    });
     const [error, setError] = useState(null);
     const [period, setPeriod] = useState('day');
     const [startDate, setStartDate] = useState(() => urlParams.get('start_date') || '');
     const [endDate, setEndDate] = useState(() => urlParams.get('end_date') || '');
     const [data, setData] = useState(null);
+
+    useEffect(() => {
+        settingsAPI.getAll()
+            .then((res) => {
+                const d = res.data || {};
+                setPartage({
+                    consultationNet: Number(d.consultationNetPerUnit) || 0,
+                    imagerieCentre: Number(d.imagingCenterSharePercent) || 0,
+                    imagerieMedecin: Number(d.imagingDoctorSharePercent) || 0,
+                    soustraitancePartenaire: Number(d.subcontractPartnerSharePercent) || 0,
+                    partenaireNom: d.subcontractPartnerLabel || "",
+                });
+            })
+            .catch(() => { /* paramètres indisponibles : on n'affiche aucune règle */ });
+    }, []);
 
     useEffect(() => {
         fetchRevenueAnalytics();
@@ -352,15 +373,25 @@ const RevenueAnalyticsDashboard = () => {
                                 <Typography variant="caption" color="text.secondary" fontWeight={700}>
                                     À lire : le CA ci-dessus est le montant facturé au patient, pas ce que le centre conserve net.
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    • Consultation : le centre ne retient que 2 150 FCFA par consultation, le reste part en primes au médecin.
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    • Imagerie : le centre ne conserve que 30% du CA imagerie, 15% est reversé au médecin prescripteur.
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    • Sous-traitance Labo : incluse dans le CA Laboratoire ci-dessous (détail sur la carte), 10% reversé à Emmanuel et Christian.
-                                </Typography>
+                                {/* Ces règles sont propres à chaque centre : elles viennent de
+                                    Paramètres > Organisation. Une règle non configurée ne s'affiche pas. */}
+                                {partage.consultationNet > 0 && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        • Consultation : le centre ne retient que {partage.consultationNet} FCFA par consultation, le reste part en primes au médecin.
+                                    </Typography>
+                                )}
+                                {partage.imagerieCentre > 0 && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        • Imagerie : le centre ne conserve que {partage.imagerieCentre}% du CA imagerie
+                                        {partage.imagerieMedecin > 0 && `, ${partage.imagerieMedecin}% est reversé au médecin prescripteur`}.
+                                    </Typography>
+                                )}
+                                {partage.soustraitancePartenaire > 0 && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        • Sous-traitance Labo : incluse dans le CA Laboratoire ci-dessous (détail sur la carte),
+                                        {' '}{partage.soustraitancePartenaire}% reversé {partage.partenaireNom ? `à ${partage.partenaireNom}` : 'aux partenaires'}.
+                                    </Typography>
+                                )}
                             </Stack>
                         </Stack>
                     </Box>

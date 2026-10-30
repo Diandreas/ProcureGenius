@@ -223,6 +223,41 @@ class OrganizationSettings(models.Model):
         help_text=_("Remplace le nom du compte qui a validé, sur tous les résultats.")
     )
 
+    # Partage du revenu net, affiche sur les tableaux de bord. Ce sont des
+    # notes explicatives : aucun calcul de facture n'en depend. Une valeur a
+    # zero signifie « non configure » et la ligne disparait de l'ecran, pour
+    # qu'un nouveau centre ne voie pas des regles qui ne sont pas les siennes.
+    consultation_net_per_unit = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        verbose_name=_("Net conservé par consultation"),
+        help_text=_("Montant que le centre garde sur chaque consultation ; le reste part en primes au médecin. 0 = ne pas afficher.")
+    )
+    imaging_center_share_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        verbose_name=_("Part du centre sur l'imagerie (%)"),
+        help_text=_("0 = ne pas afficher.")
+    )
+    imaging_doctor_share_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        verbose_name=_("Part reversée au médecin prescripteur sur l'imagerie (%)"),
+        help_text=_("0 = ne pas afficher.")
+    )
+    subcontract_center_share_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        verbose_name=_("Part du centre sur la sous-traitance (%)"),
+        help_text=_("0 = ne pas afficher.")
+    )
+    subcontract_partner_share_percent = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        verbose_name=_("Part reversée aux partenaires sur la sous-traitance (%)"),
+        help_text=_("0 = ne pas afficher.")
+    )
+    subcontract_partner_label = models.CharField(
+        max_length=120, blank=True, default='',
+        verbose_name=_("Nom des partenaires de sous-traitance"),
+        help_text=_("Affiché dans la note explicative du tableau de bord. Vide : « aux partenaires ».")
+    )
+
     # Taxation
     default_tax_rate = models.DecimalField(
         max_digits=5,
