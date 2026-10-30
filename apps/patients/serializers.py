@@ -49,13 +49,29 @@ class PatientSerializer(serializers.ModelSerializer):
             'referring_hospital',
             'has_privilege_card',
             'privilege_card_number',
+            'privilege_card_assigned_at',
+            'privilege_card_assigned_by',
             'is_active',
             'visits_count',
             'last_visit_date',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'patient_number', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'patient_number', 'created_at', 'updated_at', 'privilege_card_assigned_by']
+
+    def validate(self, attrs):
+        """Une carte privilège sans numéro ne peut pas être suivie : on l'exige."""
+        instance = getattr(self, 'instance', None)
+        coche = attrs.get('has_privilege_card',
+                          getattr(instance, 'has_privilege_card', False))
+        numero = attrs.get('privilege_card_number',
+                           getattr(instance, 'privilege_card_number', '') or '')
+        if coche and not str(numero).strip():
+            raise serializers.ValidationError({
+                'privilege_card_number':
+                    "Le numéro de la carte est obligatoire quand « carte privilège » est coché."
+            })
+        return attrs
     
     def get_age(self, obj):
         """Calculate age from date of birth"""

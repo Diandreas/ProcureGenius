@@ -394,6 +394,8 @@ class ClientSerializer(serializers.ModelSerializer):
             'id', 'name', 'email', 'phone', 'address',
             'contact_person', 'tax_id', 'payment_terms', 'is_active',
             'has_privilege_card', 'privilege_card_number',
+            'privilege_card_assigned_at',
+            'privilege_card_assigned_by',
             'total_invoices', 'total_sales_amount', 'total_paid_amount',
             'total_outstanding', 'last_invoice_date',
             'last_activity_date', 'auto_inactive_since', 'is_manually_active',
@@ -405,6 +407,20 @@ class ClientSerializer(serializers.ModelSerializer):
             'total_outstanding', 'last_invoice_date',
             'last_activity_date', 'auto_inactive_since'
         ]
+
+    def validate(self, attrs):
+        """Une carte privilège sans numéro ne peut pas être suivie : on l'exige."""
+        instance = getattr(self, 'instance', None)
+        coche = attrs.get('has_privilege_card',
+                          getattr(instance, 'has_privilege_card', False))
+        numero = attrs.get('privilege_card_number',
+                           getattr(instance, 'privilege_card_number', '') or '')
+        if coche and not str(numero).strip():
+            raise serializers.ValidationError({
+                'privilege_card_number':
+                    "Le numéro de la carte est obligatoire quand « carte privilège » est coché."
+            })
+        return attrs
 
     def validate_name(self, value):
         """Valider que le nom n'est pas vide"""

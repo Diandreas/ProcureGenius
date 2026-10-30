@@ -68,6 +68,7 @@ const PatientForm = () => {
         emergency_contact_phone: '',
         has_privilege_card: false,
         privilege_card_number: '',
+        privilege_card_assigned_at: '',
     });
 
     useEffect(() => {
@@ -96,6 +97,7 @@ const PatientForm = () => {
                 emergency_contact_phone: data.emergency_contact_phone || '',
                 has_privilege_card: data.has_privilege_card || false,
                 privilege_card_number: data.privilege_card_number || '',
+                privilege_card_assigned_at: data.privilege_card_assigned_at || '',
             });
         } catch (error) {
             console.error('Error fetching patient:', error);
@@ -319,15 +321,39 @@ const PatientForm = () => {
                             />
                         </Grid>
                         {formData.has_privilege_card && (
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Numéro de carte"
-                                    name="privilege_card_number"
-                                    value={formData.privilege_card_number || ''}
-                                    onChange={handleChange}
-                                />
-                            </Grid>
+                            <>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        required
+                                        label="Numéro de carte"
+                                        name="privilege_card_number"
+                                        value={formData.privilege_card_number || ''}
+                                        onChange={handleChange}
+                                        error={!String(formData.privilege_card_number || '').trim()}
+                                        helperText={!String(formData.privilege_card_number || '').trim()
+                                            ? 'Obligatoire : sans numéro, la carte ne peut pas être suivie.'
+                                            : ' '}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    {/* Date de remise réelle : posée automatiquement à l'activation,
+                                        modifiable si la carte a été remise un autre jour. */}
+                                    <TextField
+                                        fullWidth
+                                        type="date"
+                                        label="Carte attribuée le"
+                                        name="privilege_card_assigned_at"
+                                        InputLabelProps={{ shrink: true }}
+                                        value={(formData.privilege_card_assigned_at || '').slice(0, 10)}
+                                        onChange={(e) => setFormData(prev => ({
+                                            ...prev,
+                                            privilege_card_assigned_at: e.target.value,
+                                        }))}
+                                        helperText="Sert à compter les nouvelles cartes de la semaine."
+                                    />
+                                </Grid>
+                            </>
                         )}
                     </Grid>
 

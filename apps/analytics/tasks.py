@@ -289,6 +289,58 @@ def _send_report_for_config(config, today):
                 'lab_pending_list': [], 'exams_prev': 0, 'consultations_prev': 0,
             }
 
+    # ---- Carte privilège ----
+    # Deux chiffres distincts : les cartes REMISES cette semaine (distribution
+    # par l'équipe) et les cartes UTILISÉES (impact sur le chiffre d'affaires).
+    try:
+        from apps.accounts.models import Client, PrivilegeCardUsage
+
+        nouvelles = Client.objects.filter(
+            organization=org,
+            has_privilege_card=True,
+            privilege_card_assigned_at__date__gte=period_start,
+            privilege_card_assigned_at__date__lte=today,
+        ).select_related('privilege_card_assigned_by').order_by('privilege_card_assigned_at')
+
+        nouvelles_prec = Client.objects.filter(
+            organization=org,
+            has_privilege_card=True,
+            privilege_card_assigned_at__date__gte=prev_period_start,
+            privilege_card_assigned_at__date__lt=period_start,
+        ).count()
+
+        usages = PrivilegeCardUsage.objects.filter(
+            organization=org,
+            used_at__date__gte=period_start,
+            used_at__date__lte=today,
+        ).select_related('card_holder')
+
+        remise_totale = sum(float(u.discount_amount or 0) for u in usages)
+
+        # Qui a remis les cartes, pour suivre la distribution par agent.
+        par_agent = {}
+        for c in nouvelles:
+            agent = c.privilege_card_assigned_by
+            nom = agent.get_full_name() if agent else 'Non renseigné'
+            par_agent[nom] = par_agent.get(nom, 0) + 1
+
+        context['sections']['privilege'] = {
+            'nouvelles': nouvelles.count(),
+            'nouvelles_prec': nouvelles_prec,
+            'nouvelles_liste': list(nouvelles[:15]),
+            'par_agent': sorted(par_agent.items(), key=lambda x: -x[1]),
+            'utilisations': usages.count(),
+            'patients_servis': usages.values('card_holder').distinct().count(),
+            'remise_totale': round(remise_totale),
+            'total_cartes': Client.objects.filter(
+                organization=org, has_privilege_card=True).count(),
+            'sans_numero': Client.objects.filter(
+                organization=org, has_privilege_card=True, privilege_card_number='').count(),
+        }
+    except Exception as e:
+        logger.error(f"Error building privilege card section: {e}")
+
+
     # ---- Finance section ----
     if config.include_finance:
         inv_qs = Invoice.objects.filter(

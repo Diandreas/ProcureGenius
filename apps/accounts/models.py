@@ -299,6 +299,19 @@ class Client(models.Model):
     privilege_card_number = models.CharField(
         max_length=50, blank=True, verbose_name=_("Numéro de carte privilège")
     )
+    privilege_card_assigned_at = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name=_("Carte attribuée le"),
+        help_text=_("Renseignée automatiquement à l'activation de la carte ; "
+                    "modifiable si la carte a été remise un autre jour.")
+    )
+    privilege_card_assigned_by = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='privilege_cards_assigned',
+        verbose_name=_("Carte attribuée par")
+    )
 
     # === Status & Activity ===
     is_active = models.BooleanField(default=True, verbose_name=_("Actif"))
@@ -348,6 +361,13 @@ class Client(models.Model):
         if self.client_type in ['patient', 'both'] and not self.patient_number:
             self.patient_number = self._generate_patient_number()
         
+
+        # La date d'attribution se pose toute seule à l'activation de la carte :
+        # c'est elle qui permet de compter les nouvelles cartes de la semaine.
+        # On ne l'efface jamais : si la carte est retirée puis rendue, on garde
+        # la trace de la première remise tant qu'on ne la corrige pas à la main.
+        if self.has_privilege_card and not self.privilege_card_assigned_at:
+            self.privilege_card_assigned_at = timezone.now()
         super().save(*args, **kwargs)
     
     def _generate_patient_number(self):
