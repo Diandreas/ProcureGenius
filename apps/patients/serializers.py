@@ -59,14 +59,26 @@ class PatientSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'patient_number', 'created_at', 'updated_at', 'privilege_card_assigned_by']
 
+    def to_internal_value(self, data):
+        """Un champ date laissé vide arrive en chaîne vide : on le lit comme « non renseigné »."""
+        if isinstance(data, dict) and data.get('privilege_card_assigned_at') == '':
+            data = data.copy()
+            data['privilege_card_assigned_at'] = None
+        return super().to_internal_value(data)
+
     def validate(self, attrs):
-        """Une carte privilège sans numéro ne peut pas être suivie : on l'exige."""
+        """Une carte privilège sans numéro ne peut pas être suivie : on l'exige.
+
+        On ne l'exige qu'au moment où la case est cochée : les fiches déjà
+        enregistrées sans numéro restent modifiables, sinon on bloque le centre.
+        """
         instance = getattr(self, 'instance', None)
         coche = attrs.get('has_privilege_card',
                           getattr(instance, 'has_privilege_card', False))
+        deja_cochee = bool(getattr(instance, 'has_privilege_card', False))
         numero = attrs.get('privilege_card_number',
                            getattr(instance, 'privilege_card_number', '') or '')
-        if coche and not str(numero).strip():
+        if coche and not deja_cochee and not str(numero).strip():
             raise serializers.ValidationError({
                 'privilege_card_number':
                     "Le numéro de la carte est obligatoire quand « carte privilège » est coché."

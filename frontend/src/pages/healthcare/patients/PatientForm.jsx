@@ -134,14 +134,20 @@ const PatientForm = () => {
             return;
         }
 
+        // Un champ date laissé vide ne doit pas partir en chaîne vide : le serveur la refuse.
+        const donnees = { ...formData };
+        if (!donnees.privilege_card_assigned_at) {
+            delete donnees.privilege_card_assigned_at;
+        }
+
         setLoading(true);
         try {
             if (isEdit) {
-                await patientAPI.updatePatient(id, formData);
+                await patientAPI.updatePatient(id, donnees);
                 enqueueSnackbar(t('patients.update_success', 'Patient mis à jour avec succès'), { variant: 'success' });
                 navigate(`/healthcare/patients/${id}`);
             } else {
-                const response = await patientAPI.createPatient(formData);
+                const response = await patientAPI.createPatient(donnees);
                 await crmAPI.saveProvenanceAfterCreate(response.id, provenance, campagne,
                     { quartier, referred_by_id: parrain ? parrain.id : '' });
                 enqueueSnackbar(t('patients.create_success', 'Patient créé avec succès'), { variant: 'success' });
@@ -150,7 +156,16 @@ const PatientForm = () => {
         } catch (error) {
             console.error('Error saving patient:', error);
             // Show more specific error message if available
-            const errorMessage = error.response?.data?.detail || error.response?.data?.non_field_errors?.[0] || t('common.error_saving');
+            // On remonte aussi les erreurs par champ, sinon l'utilisateur ne voit qu'un message vague.
+            const corps = error.response?.data;
+            const parChamp = corps && typeof corps === 'object'
+                ? Object.entries(corps)
+                    .filter(([champ]) => champ !== 'detail' && champ !== 'non_field_errors')
+                    .map(([champ, msg]) => `${champ} : ${Array.isArray(msg) ? msg[0] : msg}`)
+                    .slice(0, 2)
+                    .join(' — ')
+                : '';
+            const errorMessage = corps?.detail || corps?.non_field_errors?.[0] || parChamp || t('common.error_saving');
             enqueueSnackbar(errorMessage, { variant: 'error' });
         } finally {
             setLoading(false);
