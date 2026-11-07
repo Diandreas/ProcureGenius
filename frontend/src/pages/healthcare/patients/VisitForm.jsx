@@ -39,7 +39,7 @@ const VisitForm = () => {
         { value: 'follow_up_exam', label: 'Suivi après Examens' },
         { value: 'prescription_renewal', label: 'Renouvellement Ordonnance' },
         { value: 'laboratory', label: 'Examens Laboratoire' },
-        { value: 'pharmacy', label: 'Dispensation Pharmacie' },
+        { value: 'pharmacy', label: 'Dispensation Pro-pharmacie' },
         { value: 'emergency', label: 'Urgence' },
         { value: 'follow_up', label: 'Consultation de Suivi' },
         { value: 'vaccination', label: 'Vaccination' },

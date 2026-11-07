@@ -34,7 +34,7 @@ const canEditOrDelete = (createdAt) => {
 const SERVICE_LABELS = {
     consultation: 'Consultation',
     laboratory: 'Laboratoire',
-    pharmacy: 'Pharmacie',
+    pharmacy: 'Pro-pharmacie',
     nursing_care: 'Soin infirmier',
     imaging: 'Imagerie',
     procedure: 'Procédure',

@@ -13,7 +13,7 @@ import BackButton from '../../../components/navigation/BackButton';
 const MODULE_LABELS = {
     laboratory: 'Laboratoire',
     imaging: 'Imagerie',
-    pharmacy: 'Pharmacie',
+    pharmacy: 'Pro-pharmacie',
     consultation: 'Consultation',
 };
 

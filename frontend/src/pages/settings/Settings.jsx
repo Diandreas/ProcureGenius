@@ -1244,7 +1244,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
                   <TextField
                     fullWidth
                     size="small"
-                    label="Réduction Pharmacie (%)"
+                    label="Réduction Pro-pharmacie (%)"
                     type="number"
                     value={settings.privilegeCardPharmacyDiscountPercent ?? 20}
                     onChange={(e) => onUpdate('privilegeCardPharmacyDiscountPercent', parseFloat(e.target.value))}
@@ -1308,7 +1308,7 @@ const GeneralSection = ({ settings, onUpdate, onFileSelect }) => {
         <Grid item xs={12}>
           <Accordion defaultExpanded={false}>
             <AccordionSummary expandIcon={<ExpandMore />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Stock & Pharmacie</Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Stock & Pro-pharmacie</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

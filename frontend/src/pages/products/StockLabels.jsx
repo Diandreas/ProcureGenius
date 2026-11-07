@@ -120,7 +120,7 @@ const StockLabels = () => {
                 <BackButton />
                 <Alert severity="info" sx={{ mt: 2 }}>
                     Les codes-barres / QR ne sont pas activés pour cette structure.
-                    Vous pouvez les activer dans <strong>Paramètres → Général → Stock &amp; Pharmacie</strong>.
+                    Vous pouvez les activer dans <strong>Paramètres → Général → Stock &amp; Pro-pharmacie</strong>.
                 </Alert>
             </Box>
         );

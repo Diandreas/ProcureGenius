@@ -173,7 +173,7 @@ const StockReception = () => {
                 <BackButton />
                 <Alert severity="info" sx={{ mt: 2 }}>
                     La réception de marchandise n&apos;est pas activée pour cette structure.
-                    Vous pouvez l&apos;activer dans <strong>Paramètres → Général → Stock &amp; Pharmacie</strong>.
+                    Vous pouvez l&apos;activer dans <strong>Paramètres → Général → Stock &amp; Pro-pharmacie</strong>.
                 </Alert>
             </Box>
         );

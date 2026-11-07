@@ -763,7 +763,7 @@ class ActivityIndicatorsView(APIView):
             invoice_type='healthcare_pharmacy'
         ).aggregate(total=Sum('total_amount'))['total'] or 0)
 
-        # CA Pharmacie "pur" : factures payées ne contenant QUE des articles pharmacie
+        # CA Pro-pharmacie "pur" : factures payées ne contenant QUE des articles pharmacie
         # (aucun acte de consultation/labo/soins sur la même facture ce jour-là).
         PHARMACY_CATS = ['medicaments', 'consommables laboratoire', 'materiel medical']
         pharmacy_cat_q = Q()
@@ -1240,7 +1240,7 @@ class EnhancedRevenueAnalyticsView(APIView):
             'healthcare_imaging':      'Imagerie médicale',
             'healthcare_maternity':    'Maternité',
             'healthcare_vaccination':  'Vaccination',
-            'healthcare_pharmacy':     'Pharmacie / Médicaments',
+            'healthcare_pharmacy':     'Pro-pharmacie / Médicaments',
             'healthcare_services':     'Soins / Petite chirurgie / Hospitalisation',
             'standard':                'Vente comptoir / Divers',
             'subcontracting':          'Sous-traitance Labo',
@@ -1426,7 +1426,7 @@ class ServiceRevenueAnalyticsView(APIView):
                 Q(description__icontains="Consultation M")
             )
         elif invoice_type_filter == 'healthcare_pharmacy':
-            # Pharmacie : factures healthcare_pharmacy + items médicaments/matériel dans standard
+            # Pro-pharmacie : factures healthcare_pharmacy + items médicaments/matériel dans standard
             cat_q = Q()
             for cat in PHARMACY_CATS:
                 cat_q |= Q(product__category__name__icontains=cat)

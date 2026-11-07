@@ -949,7 +949,7 @@ class Invoice(models.Model):
         ('healthcare_imaging', _('Imagerie médicale')),
         ('healthcare_maternity', _('Maternité')),
         ('healthcare_vaccination', _('Vaccination')),
-        ('healthcare_pharmacy', _('Pharmacie / Médicaments')),
+        ('healthcare_pharmacy', _('Pro-pharmacie / Médicaments')),
         ('healthcare_services', _('Soins / Petite chirurgie / Hospitalisation')),
         ('credit_note', _('Avoir - Note de crédit')),
     ]
@@ -1124,7 +1124,7 @@ class Invoice(models.Model):
         title_templates = {
             'healthcare_consultation': f"Consultation - {client_name}",
             'healthcare_laboratory': f"Analyses Laboratoire - {client_name}",
-            'healthcare_pharmacy': f"Dispensation Pharmacie - {client_name}",
+            'healthcare_pharmacy': f"Dispensation Pro-pharmacie - {client_name}",
             'standard': "Facture Standard"
         }
 

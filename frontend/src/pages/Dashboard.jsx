@@ -68,9 +68,9 @@ const ACTIVITY_LABELS = {
   healthcare_imaging: 'Imagerie médicale',
   healthcare_maternity: 'Maternité',
   healthcare_vaccination: 'Vaccination',
-  healthcare_pharmacy: 'Pharmacie & Médicaments',
+  healthcare_pharmacy: 'Pro-pharmacie & Médicaments',
   healthcare_services: 'Soins / Chirurgie / Hosp.',
-  standard: 'Pharmacie & Médicaments',
+  standard: 'Pro-pharmacie & Médicaments',
   subcontracting: 'Sous-traitance Labo',
 };
 
@@ -204,7 +204,7 @@ const Dashboard = () => {
   // Catégories labo — déjà filtrées par invoice_type=healthcare_laboratory côté backend
   const labCategories = (labServiceData?.by_category || []);
 
-  // Pharmacie & Médicaments : catégories (depuis pharmacyServiceData = healthcare_pharmacy + standard)
+  // Pro-pharmacie & Médicaments : catégories (depuis pharmacyServiceData = healthcare_pharmacy + standard)
   const pharmacyCategories = (pharmacyServiceData?.by_category || []).slice(0, 10);
   const pharmacyTotalRevenue = pharmacyServiceData?.total_revenue || 0;
 
@@ -212,7 +212,7 @@ const Dashboard = () => {
   const subcontractingInfo = revenueData?.subcontracting_info || { revenue: 0, count: 0 };
 
   // KPIs par type d'activité
-  // Pharmacie = healthcare_pharmacy + standard (propharmacie comptoir) fusionnés
+  // Pro-pharmacie = healthcare_pharmacy + standard (propharmacie comptoir) fusionnés
   const pharmacyRevenue = (byActivity.find(a => a.activity_type === 'healthcare_pharmacy')?.revenue || 0)
     + (byActivity.find(a => a.activity_type === 'standard')?.revenue || 0);
   const labRevenue = byActivity.find(a => a.activity_type === 'healthcare_laboratory')?.revenue || 0;
@@ -247,7 +247,7 @@ const Dashboard = () => {
   // servicesRevenue (EnhancedRevenueAnalyticsView, corrigé). On remet donc Chirurgie/
   // Hospitalisation à l'échelle du total corrigé avant de calculer Soins par différence,
   // pour que les 3 lignes du tableau "CA par Activité" s'additionnent toujours exactement
-  // au vrai total (voir la même correction déjà appliquée côté backend pour Labo/Pharmacie).
+  // au vrai total (voir la même correction déjà appliquée côté backend pour Labo/Pro-pharmacie).
   const rawServiceScale = servicesTotalRevenue > 0 ? servicesRevenue / servicesTotalRevenue : 1;
   const chirurgieRevenue = sumCatMatching('chirurgie') * rawServiceScale;
   const hospitalisationRevenue = sumCatMatching('hospitalisation') * rawServiceScale;
@@ -256,7 +256,7 @@ const Dashboard = () => {
   const hospitalisationCount = sumCountMatching('hospitalisation');
   const soinsCount = Math.max(0, (byActivity.find(a => a.activity_type === 'healthcare_services')?.count || 0) - chirurgieCount - hospitalisationCount);
 
-  // Merge entries with same display label (ex: healthcare_pharmacy + standard → Pharmacie & Médicaments).
+  // Merge entries with same display label (ex: healthcare_pharmacy + standard → Pro-pharmacie & Médicaments).
   // "healthcare_services" est éclaté en 3 lignes (Soins / Chirurgie / Hospitalisation) au lieu d'un
   // seul total combiné — sinon la carte "CA Soins" isolée plus haut ne représente qu'un sous-ensemble
   // de ce que montre ce tableau, ce qui prête à confusion en lecture rapide.
@@ -390,7 +390,7 @@ const Dashboard = () => {
               <Grid item xs={6} sm={6} md={3}>
                 <StatCard title="Actes Médicaux" value={loading ? '...' : actVol?.medical_acts?.total ?? 0}
                   icon={<AssessmentIcon />} color="#6366f1" loading={loading}
-                  subtitle="Pharmacie ordonnance + Soins divers" />
+                  subtitle="Pro-pharmacie ordonnance + Soins divers" />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <NestedStatCard title="CA Laboratoire"
@@ -594,7 +594,7 @@ const Dashboard = () => {
                   icon={<VaccinesIcon />} color="#0ea5e9" loading={loading} />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
-                <NestedStatCard title="CA Pharmacie & Médicaments"
+                <NestedStatCard title="CA Pro-pharmacie & Médicaments"
                   value={loading ? '...' : formatCurrency(pharmacyRevenue)}
                   icon={<HospitalIcon />} color="#10b981" loading={loading}
                   breakdownItems={[
@@ -762,13 +762,13 @@ const Dashboard = () => {
               </Grid>
             </Grid>
 
-            {/* CA Pharmacie & Médicaments par catégorie */}
+            {/* CA Pro-pharmacie & Médicaments par catégorie */}
             {(loading || pharmacyRevenue > 0) && (
               <Grid container spacing={3} mt={1}>
                 <Grid item xs={12}>
                   <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 3 }, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                      <SectionTitle>CA Pharmacie & Médicaments — par Catégorie</SectionTitle>
+                      <SectionTitle>CA Pro-pharmacie & Médicaments — par Catégorie</SectionTitle>
                       <Chip label={formatCurrency(pharmacyTotalRevenue || pharmacyRevenue)} color="success" size="small" />
                     </Box>
                     {loading ? <CircularProgress size={32} /> : pharmacyCategories.length > 0 ? (
@@ -939,7 +939,7 @@ const Dashboard = () => {
           const ACT_CONFIG = [
             { key: 'consultation', label: 'Consultation', color: '#2563eb', icon: <MedicalIcon sx={{ fontSize: 14 }} /> },
             { key: 'labo', label: 'Laboratoire', color: '#10b981', icon: <BiotechIcon sx={{ fontSize: 14 }} /> },
-            { key: 'pharmacie', label: 'Pharmacie', color: '#f59e0b', icon: <PharmacyIcon sx={{ fontSize: 14 }} /> },
+            { key: 'pharmacie', label: 'Pro-pharmacie', color: '#f59e0b', icon: <PharmacyIcon sx={{ fontSize: 14 }} /> },
             { key: 'soins', label: 'Soins', color: '#8b5cf6', icon: <SoinsIcon sx={{ fontSize: 14 }} /> },
             { key: 'sous_traitance', label: 'Sous-traitance', color: '#ef4444', icon: <SubcontractIcon sx={{ fontSize: 14 }} /> },
           ];

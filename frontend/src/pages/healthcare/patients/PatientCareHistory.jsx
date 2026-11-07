@@ -80,7 +80,7 @@ const PatientCareHistory = ({ patientId }) => {
     return (
         <Box>
             <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 2 }}>
-                Historique des Soins (Consultations, Nursing, Labo, Pharmacie)
+                Historique des Soins (Consultations, Nursing, Labo, Pro-pharmacie)
             </Typography>
             {careHistory.length === 0 ? (
                 <Typography color="text.secondary">Aucun soin enregistré pour ce patient.</Typography>
@@ -111,7 +111,7 @@ const PatientCareHistory = ({ patientId }) => {
                                                 label={
                                                     care.service_type === 'consultation' ? 'Consultation' :
                                                     care.service_type === 'laboratory' ? 'Laboratoire' :
-                                                    care.service_type === 'pharmacy' ? 'Pharmacie' :
+                                                    care.service_type === 'pharmacy' ? 'Pro-pharmacie' :
                                                     care.service_type === 'nursing_care' ? 'Soin' :
                                                     care.service_type === 'imaging' ? 'Imagerie' :
                                                     care.service_type === 'procedure' ? 'Procédure' : 'Autre'

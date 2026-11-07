@@ -33,7 +33,7 @@ def create_invoice_for_dispensing(sender, instance, **kwargs):
             organization=instance.organization,
             client=instance.patient,
             created_by=instance.dispensed_by or instance.organization.users.first(),
-            title=f"Pharmacie - {instance.dispensing_number}",
+            title=f"Pro-pharmacie - {instance.dispensing_number}",
             description=f"Dispensation du {instance.dispensed_at.strftime('%d/%m/%Y')}",
             invoice_type='healthcare_pharmacy',
             due_date=due_date,

@@ -22,7 +22,7 @@ const MODULE_OPTIONS = [
     { value: 'consultations', label: 'Consultations' },
     { value: 'laboratory', label: 'Laboratoire' },
     { value: 'imaging', label: 'Imagerie' },
-    { value: 'pharmacy', label: 'Pharmacie' },
+    { value: 'pharmacy', label: 'Pro-pharmacie' },
     { value: 'ai-assistant', label: 'Assistant IA' },
     { value: 'integrations', label: 'Intégrations' },
     { value: 'data-migration', label: 'Migration de données' },

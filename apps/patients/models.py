@@ -18,7 +18,7 @@ class PatientVisit(models.Model):
         ('follow_up_exam', _('Suivi après Examens')),
         ('prescription_renewal', _('Renouvellement Ordonnance')),
         ('laboratory', _('Examens Laboratoire')),
-        ('pharmacy', _('Dispensation Pharmacie')),
+        ('pharmacy', _('Dispensation Pro-pharmacie')),
         ('emergency', _('Urgence')),
         ('follow_up', _('Consultation de Suivi')),
         ('vaccination', _('Vaccination')),

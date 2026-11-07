@@ -129,7 +129,7 @@ MODULE_METADATA = {
         'always_enabled': False,
     },
     Modules.PHARMACY: {
-        'name': _('Pharmacie'),
+        'name': _('Pro-pharmacie'),
         'description': _('Dispensation de médicaments'),
         'icon': 'local_pharmacy',
         'always_enabled': False,
@@ -283,11 +283,11 @@ PROFILE_METADATA = {
     },
     ProfileTypes.HEALTHCARE: {
         'name': _('Santé'),
-        'description': _('Solution LIMS + HMS + Pharmacie'),
+        'description': _('Solution LIMS + HMS + Pro-pharmacie'),
         'features': [
             _('Gestion des patients'),
             _('Laboratoire (LIMS)'),
-            _('Pharmacie'),
+            _('Pro-pharmacie'),
             _('Consultations médicales'),
             _('Facturation patients'),
         ],

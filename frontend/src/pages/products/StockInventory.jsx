@@ -195,7 +195,7 @@ const StockInventory = () => {
                 <BackButton />
                 <Alert severity="info" sx={{ mt: 2 }}>
                     L&apos;inventaire physique n&apos;est pas activé pour cette structure.
-                    Vous pouvez l&apos;activer dans <strong>Paramètres → Général → Stock &amp; Pharmacie</strong>.
+                    Vous pouvez l&apos;activer dans <strong>Paramètres → Général → Stock &amp; Pro-pharmacie</strong>.
                 </Alert>
             </Box>
         );

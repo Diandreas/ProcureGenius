@@ -159,7 +159,7 @@ class OrganizationSettings(models.Model):
     )
     privilege_card_pharmacy_discount_percent = models.DecimalField(
         max_digits=5, decimal_places=2, default=20.00,
-        verbose_name=_("Réduction carte privilège — Pharmacie (%)")
+        verbose_name=_("Réduction carte privilège — Pro-pharmacie (%)")
     )
     privilege_card_laboratory_discount_percent = models.DecimalField(
         max_digits=5, decimal_places=2, default=20.00,

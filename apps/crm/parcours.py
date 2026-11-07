@@ -2,9 +2,9 @@
 
 Chaque facture (ni brouillon, ni annulée, ni avoir) est une ÉTAPE, datée de `created_at` comme
 le reste du logiciel. Deux niveaux de lecture :
-- « service » : le type de facture (Consultation, Laboratoire, Pharmacie, Imagerie...) ;
+- « service » : le type de facture (Consultation, Laboratoire, Pro-pharmacie, Imagerie...) ;
 - « acte »    : ce qui a été fait — le bilan (« Bilan tropical »), l'examen, le type de
-                consultation, le vaccin, l'acte de maternité. Pharmacie et ventes restent groupées
+                consultation, le vaccin, l'acte de maternité. Pro-pharmacie et ventes restent groupées
                 (les produits un à un rendraient la lecture illisible).
 
 On compte des PATIENTS, pas des factures : un patient qui enchaîne dix fois consultation -> bilan
@@ -24,13 +24,17 @@ from . import services
 import unicodedata
 
 # Service d'une facture « typée » (créée par son module).
+# Libelle unique : il sert d'etiquette ET de cle de comparaison dans les parcours.
+# Les deux doivent bouger ensemble, sinon le filtre « sans pharmacie » cesse de filtrer.
+PRO_PHARMACIE = 'Pro-pharmacie'
+
 SERVICE_PAR_TYPE = {
     'healthcare_consultation': 'Consultation',
     'healthcare_laboratory': 'Laboratoire',
     'healthcare_imaging': 'Imagerie',
     'healthcare_maternity': 'Maternité',
     'healthcare_vaccination': 'Vaccination',
-    'healthcare_pharmacy': 'Pharmacie',
+    'healthcare_pharmacy': PRO_PHARMACIE,
     'healthcare_services': 'Soins / hospitalisation',
 }
 # Factures « Vente de produits » (page Facture) : elles mélangent consultation, soins, hospitalisation
@@ -51,7 +55,7 @@ def _sans_accents(t):
 def _service_ligne(categorie, type_produit):
     """Service d'une ligne de facture générique, d'après la catégorie de son produit."""
     if type_produit != 'service':
-        return 'Pharmacie'   # tout produit physique (médicament, gants, matériel) est un produit délivré
+        return PRO_PHARMACIE   # tout produit physique (médicament, gants, matériel) est un produit délivré
     cat = _sans_accents(categorie)
     for mot, service in MOTS_SERVICE:
         if mot in cat:
@@ -88,7 +92,7 @@ def _etapes_par_patient(organization, fin, patient_id=None, sans_pharmacie=False
         if typ in SERVICE_PAR_TYPE:
             svc = {SERVICE_PAR_TYPE[typ]}
             if typ == 'healthcare_pharmacy':
-                actes = {'Pharmacie'}
+                actes = {PRO_PHARMACIE}
             else:
                 descs = {_propre(x['description']) for x in lg} - {''}
                 bilans = {d for d in descs if d.startswith('Bilan ')}
@@ -98,7 +102,7 @@ def _etapes_par_patient(organization, fin, patient_id=None, sans_pharmacie=False
             for x in lg:
                 s_ligne = _service_ligne(x['product__category__name'], x['product__product_type'])
                 svc.add(s_ligne)
-                actes.add('Pharmacie' if s_ligne == 'Pharmacie' else (_propre(x['description']) or s_ligne))
+                actes.add(PRO_PHARMACIE if s_ligne == PRO_PHARMACIE else (_propre(x['description']) or s_ligne))
             if not svc:
                 svc = {'Autres services'}
         if not actes or len(actes) > MAX_ACTES:
@@ -106,7 +110,7 @@ def _etapes_par_patient(organization, fin, patient_id=None, sans_pharmacie=False
         if sans_pharmacie:
             # Parcours médical seul : les produits délivrés sont retirés ; une facture qui n'était
             # que de la pharmacie n'est plus une étape.
-            svc, actes = set(svc) - {'Pharmacie'}, set(actes) - {'Pharmacie'}
+            svc, actes = set(svc) - {PRO_PHARMACIE}, set(actes) - {PRO_PHARMACIE}
             if not svc:
                 continue
             actes = actes or set(svc)

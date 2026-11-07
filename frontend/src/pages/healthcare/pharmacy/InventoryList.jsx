@@ -464,7 +464,7 @@ const InventoryList = () => {
                         }}
                     >
                         <PharmacyIcon sx={{ color: theme.palette.success.main, fontSize: 36 }} />
-                        {t('pharmacy.inventory', 'Pharmacie - Inventaire')}
+                        {t('pharmacy.inventory', 'Pro-pharmacie - Inventaire')}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
                         Gestion des stocks, péremptions et médicaments

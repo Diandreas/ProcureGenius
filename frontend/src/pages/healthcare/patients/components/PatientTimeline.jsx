@@ -35,7 +35,7 @@ const canEditOrDelete = (createdAt) => {
 const typeConfig = {
     consultation: { icon: <ConsultIcon fontSize="small" />, color: '#2563eb', label: 'Consultation' },
     laboratory: { icon: <LabIcon fontSize="small" />, color: '#f59e0b', label: 'Laboratoire' },
-    pharmacy: { icon: <PharmacyIcon fontSize="small" />, color: '#10b981', label: 'Pharmacie' },
+    pharmacy: { icon: <PharmacyIcon fontSize="small" />, color: '#10b981', label: 'Pro-pharmacie' },
     care: { icon: <CareIcon fontSize="small" />, color: '#8b5cf6', label: 'Soin' },
 };
 
@@ -218,7 +218,7 @@ const PatientTimeline = ({ patientId }) => {
         { value: 'all', label: 'Tout' },
         { value: 'consultation', label: 'Consultations' },
         { value: 'laboratory', label: 'Laboratoire' },
-        { value: 'pharmacy', label: 'Pharmacie' },
+        { value: 'pharmacy', label: 'Pro-pharmacie' },
         { value: 'care', label: 'Soins' },
     ];
 

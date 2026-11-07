@@ -109,8 +109,8 @@ const VisitsDashboard = () => {
             waiting_lab: { label: 'Envoyé au Labo', color: 'secondary' },
             in_lab: { label: 'Au Labo', color: 'secondary' },
             waiting_results: { label: 'Attente Résultats', color: 'info' },
-            waiting_pharmacy: { label: 'Envoyé Pharmacie', color: 'secondary' },
-            at_pharmacy: { label: 'À la Pharmacie', color: 'secondary' },
+            waiting_pharmacy: { label: 'Envoyé Pro-pharmacie', color: 'secondary' },
+            at_pharmacy: { label: 'À la Pro-pharmacie', color: 'secondary' },
             completed: { label: 'Terminé', color: 'success' },
             cancelled: { label: 'Annulé', color: 'error' },
             no_show: { label: 'Absent', color: 'error' },
@@ -230,12 +230,12 @@ const VisitsDashboard = () => {
                         ) : (
                             activeVisits.map((visit) => (
                                 <TableRow key={visit.id} hover>
-                                    <TableCell>{formatTime(visit.created_at)}</TableCell>
+                                    <TableCell>{formatTime(visit.arrived_at || visit.created_at)}</TableCell>
                                     <TableCell>
                                         <Typography variant="subtitle2" fontWeight="600">{visit.patient_name}</Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Chip label={visit.visit_type || 'Visite'} size="small" variant="outlined" />
+                                        <Chip label={visit.visit_type_display || visit.visit_type || 'Visite'} size="small" variant="outlined" />
                                     </TableCell>
                                     <TableCell>
                                         <Chip
@@ -253,7 +253,7 @@ const VisitsDashboard = () => {
                                                     Constantes
                                                 </Button>
                                             )}
-                                            {!['checked_in', 'registered', 'completed', 'cancelled'].includes(visit.status) && (
+                                            {!['completed', 'cancelled'].includes(visit.status) && (
                                                 <Tooltip title="Terminer la visite">
                                                     <Button
                                                         size="small"
@@ -295,9 +295,9 @@ const VisitsDashboard = () => {
                             <TableBody>
                                 {completedVisits.map((visit) => (
                                     <TableRow key={visit.id}>
-                                        <TableCell>{formatTime(visit.created_at)}</TableCell>
+                                        <TableCell>{formatTime(visit.arrived_at || visit.created_at)}</TableCell>
                                         <TableCell>{visit.patient_name}</TableCell>
-                                        <TableCell><Chip label={visit.visit_type || 'Visite'} size="small" variant="outlined" /></TableCell>
+                                        <TableCell><Chip label={visit.visit_type_display || visit.visit_type || 'Visite'} size="small" variant="outlined" /></TableCell>
                                         <TableCell>{visit.chief_complaint || '-'}</TableCell>
                                         <TableCell>{getStatusChip(visit.status)}</TableCell>
                                     </TableRow>

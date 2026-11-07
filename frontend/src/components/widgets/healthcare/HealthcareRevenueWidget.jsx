@@ -49,7 +49,7 @@ const HealthcareRevenueWidget = ({ period = 'last_30_days' }) => {
   const chartData = [
     { name: 'Consultations', value: consultationsRevenue, icon: Activity },
     { name: 'Laboratoire', value: labRevenue, icon: Microscope },
-    { name: 'Pharmacie', value: pharmacyRevenue, icon: Pill },
+    { name: 'Pro-pharmacie', value: pharmacyRevenue, icon: Pill },
   ].filter(item => item.value > 0);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b'];

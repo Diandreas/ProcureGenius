@@ -46,7 +46,7 @@ const PharmacyDispensingWidget = ({ period = 'last_30_days' }) => {
       <div className="widget-header">
         <div className="widget-title">
           <Pill className="widget-icon" />
-          <h3>Pharmacie</h3>
+          <h3>Pro-pharmacie</h3>
         </div>
       </div>
       <div className="widget-content">

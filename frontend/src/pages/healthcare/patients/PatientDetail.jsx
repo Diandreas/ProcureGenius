@@ -475,7 +475,7 @@ const PatientDetail = () => {
                         <SafeTab icon={<TimelineIcon />} iconPosition="start" label="Timeline" />
                         <SafeTab icon={<ConsultationIcon />} iconPosition="start" label="Consultations" />
                         <SafeTab icon={<LabIcon />} iconPosition="start" label="Examens Labo" />
-                        <SafeTab icon={<PharmacyIcon />} iconPosition="start" label="Pharmacie" />
+                        <SafeTab icon={<PharmacyIcon />} iconPosition="start" label="Pro-pharmacie" />
                         {showMaternityTab && (
                             <SafeTab icon={<MaternityTabIcon />} iconPosition="start" label="Maternité" />
                         )}

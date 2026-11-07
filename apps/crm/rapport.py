@@ -72,7 +72,7 @@ def factures_du_mois(organization, debut, fin, inclure_externes=False):
 
 
 def service_de(facture):
-    """Service d'une facture (Consultation, Laboratoire, Pharmacie...), comme dans les parcours."""
+    """Service d'une facture (Consultation, Laboratoire, Pro-pharmacie...), comme dans les parcours."""
     from .parcours import SERVICE_PAR_TYPE, _service_ligne
     if facture.invoice_type in SERVICE_PAR_TYPE:
         return SERVICE_PAR_TYPE[facture.invoice_type]

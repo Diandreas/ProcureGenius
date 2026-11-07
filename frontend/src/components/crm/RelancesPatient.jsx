@@ -69,7 +69,7 @@ export default function RelancesPatient({ patient }) {
           )}
           {(resume.journey || []).length > 1 && (
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.25 }}>
-              Parcours : {resume.journey.slice(-8).map((e) => `${e.services.filter((x) => x !== 'Pharmacie').join(' + ') || 'Pharmacie'} (${e.date.slice(8, 10)}/${e.date.slice(5, 7)})`).join(' → ')}
+              Parcours : {resume.journey.slice(-8).map((e) => `${e.services.filter((x) => x !== 'Pro-pharmacie').join(' + ') || 'Pro-pharmacie'} (${e.date.slice(8, 10)}/${e.date.slice(5, 7)})`).join(' → ')}
             </Typography>
           )}
         </Box>
