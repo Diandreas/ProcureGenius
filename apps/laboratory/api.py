@@ -513,12 +513,16 @@ class LabOrderCreateView(APIView):
         if visit:
             visit.send_to_lab()
         
-        # Auto-create invoice for lab order using service
+        # Auto-create invoice for lab order using service.
+        # Une demande d'imagerie seule n'a aucun examen de labo : on ne tente pas
+        # de la facturer ici (c'est la facture de l'imagerie qui fait foi), sinon
+        # le service lève « Aucun test dans cette commande » et pollue les logs.
         try:
             from apps.healthcare.invoice_services import LabOrderInvoiceService
             # Ensure we have the latest version of the order with its items
             order.refresh_from_db()
-            LabOrderInvoiceService.generate_invoice(order, privilege_card_used_by=privilege_card_used_by)
+            if order.items.exists():
+                LabOrderInvoiceService.generate_invoice(order, privilege_card_used_by=privilege_card_used_by)
         except Exception as e:
             # Don't fail the order if invoice creation fails
             import traceback
@@ -596,10 +600,18 @@ class LabOrderCreateView(APIView):
                 print(f"Error recording lab order deposit: {e}")
                 traceback.print_exc()
 
-        return Response(
-            LabOrderSerializer(order).data,
-            status=status.HTTP_201_CREATED
-        )
+        # Une demande qui ne contient QUE de l'imagerie laissait derrière elle une
+        # commande de laboratoire vide : aucun examen, aucune facture, mais bien
+        # visible dans le module Laboratoire. Le contenu facturé est dans la
+        # commande d'imagerie liée, qui survit (linked_lab_order est en SET_NULL).
+        # On sérialise AVANT de supprimer : la réponse garde « linked_imaging_orders »,
+        # dont le formulaire se sert pour rediriger vers l'imagerie.
+        donnees = LabOrderSerializer(order).data
+        if not order.items.exists() and order.linked_imaging_orders.exists():
+            order.linked_imaging_orders.update(linked_lab_order=None)
+            order.delete()
+
+        return Response(donnees, status=status.HTTP_201_CREATED)
 
 
 class LabOrderStatusUpdateView(APIView):
