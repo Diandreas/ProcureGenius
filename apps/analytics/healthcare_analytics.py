@@ -1112,13 +1112,29 @@ class EnhancedRevenueAnalyticsView(APIView):
             activity_acc[act]['revenue'] += float(rev or 0)
             activity_acc[act]['count'] += int(cnt or 0)
 
-        # Factures healthcare_* directes (labo, pharmacie, services) → montant total de la facture
+        # Factures healthcare_* directes (labo, pharmacie, services) → montant total de la facture.
+        # Depuis novembre 2026, un bilan mixte est facture UNE seule fois : la facture
+        # porte le type « laboratoire » mais contient aussi des lignes d'imagerie.
+        # On les retire du laboratoire et on les rend a l'imagerie, sinon le chiffre
+        # d'affaires de l'imagerie — et donc la part du medecin — serait sous-evalue.
+        from apps.invoicing.models import InvoiceItem as _Ligne
+        imagerie_sur_autres_factures = _Ligne.objects.filter(
+            invoice__in=invoices, service_type='imaging'
+        ).exclude(invoice__invoice_type='healthcare_imaging').aggregate(
+            s=Sum('total_price')
+        )['s'] or 0
+
         for inv_type in ['healthcare_laboratory', 'healthcare_imaging', 'healthcare_maternity', 'healthcare_vaccination', 'healthcare_pharmacy', 'healthcare_services']:
             agg = invoices.filter(invoice_type=inv_type).aggregate(
                 rev=Sum('total_amount'), cnt=Count('id')
             )
-            if agg['rev']:
-                _add_activity(inv_type, agg['rev'], agg['cnt'])
+            rev = float(agg['rev'] or 0)
+            if inv_type == 'healthcare_laboratory':
+                rev -= float(imagerie_sur_autres_factures)
+            elif inv_type == 'healthcare_imaging':
+                rev += float(imagerie_sur_autres_factures)
+            if rev:
+                _add_activity(inv_type, rev, agg['cnt'] or 0)
 
         # Tous les items des factures healthcare_consultation + standard → décomposer par catégorie.
         # Accumulé à PART (decomp_acc) et non dans activity_acc : ces deux invoice_type sont les

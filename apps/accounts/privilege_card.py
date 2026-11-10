@@ -3,7 +3,7 @@ Application de la réduction "Carte Privilège" aux factures des modules santé.
 Logique partagée par ConsultationInvoiceService, LabOrderInvoiceService,
 PharmacyInvoiceService et ImagingOrderInvoiceService.
 """
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 MODULE_DISCOUNT_FIELDS = {
     'laboratory': 'privilege_card_laboratory_discount_percent',
@@ -59,6 +59,8 @@ def is_imaging_item(invoice_item):
     facture qui la porte ou par le code d'examen noté dessus — utile le jour où
     labo et imagerie partageront une même facture.
     """
+    if getattr(invoice_item, 'service_type', '') == 'imaging':
+        return True
     if getattr(invoice_item.invoice, 'invoice_type', '') == 'healthcare_imaging':
         return True
     from apps.imaging.models import ImagingExamType

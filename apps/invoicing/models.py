@@ -1544,6 +1544,18 @@ class InvoiceItem(models.Model):
     
     # Informations service/produit
     service_code = models.CharField(max_length=100, verbose_name=_("Code service"), default="SVC-001")
+    # Service dont releve la ligne. Indispensable depuis qu'une meme facture peut
+    # porter du laboratoire ET de l'imagerie : sans lui, le chiffre d'affaires de
+    # l'imagerie serait compte comme du laboratoire, et la part du medecin fausse.
+    SERVICE_TYPES = [
+        ('laboratory', _("Laboratoire")),
+        ('imaging', _("Imagerie")),
+    ]
+    service_type = models.CharField(
+        max_length=20, choices=SERVICE_TYPES, blank=True, default='',
+        verbose_name=_("Service"),
+        help_text=_("Vide = le service de la facture fait foi"),
+    )
     product_reference = models.CharField(max_length=100, blank=True, default="", verbose_name=_("Référence produit"), help_text=_("Référence manuelle si produit non lié"))
     description = models.CharField(max_length=500, verbose_name=_("Description"))
     detailed_description = models.TextField(blank=True, default="", verbose_name=_("Description détaillée"))

@@ -2,7 +2,7 @@
 API Views for Imaging app
 """
 import os
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from django.db import transaction
 from django.db.models import Q, Case, When, IntegerField
 from django.utils import timezone

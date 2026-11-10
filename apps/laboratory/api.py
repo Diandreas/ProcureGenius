@@ -11,7 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q, Case, When, IntegerField
 from django.utils import timezone
 from django.http import HttpResponse
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from .services import LabResultPDFGenerator
 from .signals import set_current_user
 
@@ -578,7 +578,31 @@ class LabOrderCreateView(APIView):
                 imaging_order.total_price = imaging_total
                 imaging_order.save(update_fields=['total_price'])
                 imaging_order.refresh_from_db()
-                ImagingOrderInvoiceService.generate_invoice(imaging_order, privilege_card_used_by=privilege_card_used_by)
+
+                # Le patient a demande UNE chose : il recoit UNE facture. Si la
+                # demande contient aussi du laboratoire, la facture du labo
+                # existe deja : on y ajoute les lignes d'imagerie au lieu d'en
+                # creer une seconde. Chaque ligne garde son service, pour que le
+                # chiffre d'affaires de l'imagerie reste attribue a l'imagerie.
+                facture_labo = order.lab_invoice
+                if facture_labo is not None:
+                    from apps.invoicing.models import InvoiceItem as _LigneFacture
+                    for it in imaging_order.items.all().select_related('exam_type', 'panel'):
+                        note = (f"Forfait bilan : {it.panel.name}" if it.panel_id
+                                else (f"Code: {it.exam_type.exam_code}" if it.exam_type.exam_code else ''))
+                        _LigneFacture.objects.create(
+                            invoice=facture_labo, product=None,
+                            description=it.exam_type.name, quantity=1,
+                            unit_price=it.price, discount_amount=it.discount or Decimal('0'),
+                            total_price=it.price - (it.discount or Decimal('0')),
+                            notes=note, service_type='imaging',
+                        )
+                    facture_labo.recalculate_totals()
+                    imaging_order.imaging_invoice = facture_labo
+                    imaging_order.save(update_fields=['imaging_invoice'])
+                else:
+                    # Demande d'imagerie seule : elle garde sa propre facture.
+                    ImagingOrderInvoiceService.generate_invoice(imaging_order, privilege_card_used_by=privilege_card_used_by)
             except Exception as e:
                 import traceback
                 print(f"Error creating linked imaging order/invoice: {e}")
