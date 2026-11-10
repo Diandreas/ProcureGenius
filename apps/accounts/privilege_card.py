@@ -51,6 +51,25 @@ def is_bilan_item(invoice_item):
     return desc.startswith('bilan') or desc.startswith('pack') or notes.startswith('forfait bilan')
 
 
+def is_imaging_item(invoice_item):
+    """True pour une ligne d'examen d'imagerie.
+
+    Règle de la direction du 10/11/2026 : une réduction ne touche JAMAIS le prix
+    d'un examen d'imagerie, même pris dans un bilan. On reconnaît la ligne par la
+    facture qui la porte ou par le code d'examen noté dessus — utile le jour où
+    labo et imagerie partageront une même facture.
+    """
+    if getattr(invoice_item.invoice, 'invoice_type', '') == 'healthcare_imaging':
+        return True
+    from apps.imaging.models import ImagingExamType
+    desc = (invoice_item.description or '').strip()
+    if not desc:
+        return False
+    return ImagingExamType.objects.filter(
+        name__iexact=desc, organization=invoice_item.invoice.organization
+    ).exists()
+
+
 def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None, used_by_name='', used_by_relationship='', item_filter=None):
     """
     Si le patient a la carte privilège et que la fonctionnalité est activée pour
@@ -89,7 +108,8 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
     total_discount = Decimal('0')
     item_discounts = {}
     # Jamais de réduction sur un bilan ou un pack, quel que soit le module ou l'appelant.
-    eligible_items = [item for item in invoice.items.all() if not is_bilan_item(item)]
+    eligible_items = [item for item in invoice.items.all()
+                      if not is_bilan_item(item) and not is_imaging_item(item)]
     if item_filter is not None:
         eligible_items = [item for item in eligible_items if item_filter(item)]
     for item in eligible_items:

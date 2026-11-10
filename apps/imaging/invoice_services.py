@@ -50,6 +50,12 @@ class ImagingOrderInvoiceService:
         for item in imaging_order.items.all().select_related('exam_type'):
             final_price = item.price - (item.discount or 0)
             notes = f"Code: {item.exam_type.exam_code}" if item.exam_type.exam_code else ''
+            # Ligne issue d'un bilan : le forfait est deja remise, aucune
+            # reduction ne doit s'y ajouter (cf. is_bilan_item).
+            if item.panel_id:
+                notes = f"Forfait bilan : {item.panel.name}"
+                if item.exam_type.exam_code:
+                    notes += f" (code {item.exam_type.exam_code})"
             InvoiceItem.objects.create(
                 invoice=invoice,
                 product=None,
