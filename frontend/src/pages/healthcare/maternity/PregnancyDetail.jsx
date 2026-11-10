@@ -75,13 +75,15 @@ export default function PregnancyDetail() {
         }).catch(() => {});
     }, []);
 
+    // Le module Maternite enregistre l'acte medical, il ne facture pas : la
+    // facturation se fait a l'accueil, comme pour tout le reste. Generer une
+    // facture ici produisait un doublon (accouchement facture deux fois le
+    // 06/11 puis le 10/11/2026). Ne pas reintroduire d'appel a
+    // generate...Invoice dans cet ecran.
     const handleSaveCpn = async () => {
         setSaving(true);
         try {
             const visit = await maternityAPI.createPrenatalVisit({ ...cpnForm, pregnancy: id });
-            try {
-                await maternityAPI.generatePrenatalVisitInvoice(visit.id);
-            } catch (e) { /* facturation optionnelle, ne bloque pas la CPN */ }
             enqueueSnackbar('Consultation prénatale enregistrée', { variant: 'success' });
             setCpnDialogOpen(false);
             setCpnForm(emptyVisit);
@@ -99,9 +101,6 @@ export default function PregnancyDetail() {
             const delivery = await maternityAPI.createDelivery({
                 ...deliveryForm, pregnancy: id,
             });
-            try {
-                await maternityAPI.generateDeliveryInvoice(delivery.id);
-            } catch (e) { /* facturation optionnelle */ }
             enqueueSnackbar('Accouchement enregistré', { variant: 'success' });
             setDeliveryDialogOpen(false);
             fetchPregnancy();
@@ -135,9 +134,6 @@ export default function PregnancyDetail() {
             const payload = { ...postnatalForm, delivery: pregnancy.delivery.id };
             if (!payload.newborn) delete payload.newborn;
             const visit = await maternityAPI.createPostnatalVisit(payload);
-            try {
-                await maternityAPI.generatePostnatalVisitInvoice(visit.id);
-            } catch (e) { /* facturation optionnelle, ne bloque pas le suivi */ }
             enqueueSnackbar('Suivi post-natal enregistré', { variant: 'success' });
             setPostnatalDialogOpen(false);
             setPostnatalForm(emptyPostnatal);
