@@ -93,7 +93,9 @@ def apply_privilege_card_discount(invoice, patient, module, used_by_patient=None
     if item_filter is not None:
         eligible_items = [item for item in eligible_items if item_filter(item)]
     for item in eligible_items:
-        item_discount = (item.total_price * rate / Decimal('100')).quantize(Decimal('0.01'))
+        # Arrondi au franc : une remise de 5 % sur 6 486 F ne doit pas donner 324,30 F.
+        item_discount = (item.total_price * rate / Decimal('100')
+                         ).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
         if item_discount <= 0:
             continue
         item.discount_amount = (item.discount_amount or Decimal('0')) + item_discount

@@ -433,7 +433,10 @@ class LabOrderCreateView(APIView):
                     combined_total = lab_catalog_total + imaging_catalog_total
 
                     if panel_exam_types and combined_total > 0:
-                        lab_share = (panel_net_price * lab_catalog_total / combined_total)
+                        # Le FCFA n'a pas de centimes : on arrondit la part labo au franc,
+                        # et la part imagerie prend le reste — le total du bilan reste exact.
+                        lab_share = (panel_net_price * lab_catalog_total / combined_total
+                                     ).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
                         imaging_share = panel_net_price - lab_share
                     else:
                         lab_share = panel_net_price
