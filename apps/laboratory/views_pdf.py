@@ -349,7 +349,7 @@ class LabTubeLabelsView(TokenLoginRequiredMixin, HealthcarePDFMixin, SafeWeasyTe
                 test_list = []
                 for item in tube_items:
                     test_list.append({
-                        'name': item.lab_test.name,
+                        'name': item.nom_examen,
                     })
 
                 # Get display names using Django's get_FOO_display()

@@ -12,6 +12,8 @@ from django.db.models import Q, Case, When, IntegerField
 from django.utils import timezone
 from django.http import HttpResponse
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+
+from django.db.models import ProtectedError
 from .services import LabResultPDFGenerator
 from .signals import set_current_user
 
@@ -1408,6 +1410,28 @@ class LabTestPanelDetailView(generics.RetrieveUpdateDestroyAPIView):
         return LabTestPanel.objects.filter(
             organization=self.request.user.organization
         ).prefetch_related('tests')
+
+    def destroy(self, request, *args, **kwargs):
+        """Un bilan deja utilise ne se supprime pas : on le desactive.
+
+        Le supprimer effacerait le lien des commandes passees vers leur bilan,
+        et les statistiques par bilan perdraient leur historique. On repond donc
+        par un message clair plutot que par une erreur technique.
+        """
+        panel = self.get_object()
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            n = LabOrderItem.objects.filter(panel=panel).values('lab_order').distinct().count()
+            return Response(
+                {'error': (
+                    "Ce bilan a déjà servi dans %d commande(s) : le supprimer ferait "
+                    "perdre l'historique et les statistiques correspondantes. "
+                    "Désactivez-le plutôt — il disparaîtra des nouvelles demandes "
+                    "sans effacer le passé." % n
+                )},
+                status=status.HTTP_409_CONFLICT,
+            )
 
 
 class PrescriberListCreateView(generics.ListCreateAPIView):

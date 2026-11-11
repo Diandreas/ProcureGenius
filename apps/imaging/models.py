@@ -299,12 +299,43 @@ class ImagingOrderItem(models.Model):
     # premier item du groupe (même convention que LabOrderItem.panel_price).
     panel = models.ForeignKey(
         'laboratory.LabTestPanel',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name='imaging_order_items',
         verbose_name=_("Bilan")
     )
+    # --- noms figes a la commande ---
+    # Le catalogue evolue : un examen peut etre renomme, un bilan recompose.
+    # Ces deux champs gardent ce qui a reellement ete prescrit ce jour-la, pour
+    # que les comptes rendus deja rendus et les statistiques ne changent jamais
+    # retroactivement. Ils sont remplis automatiquement a la creation.
+    exam_type_name = models.CharField(
+        max_length=255, blank=True, default='',
+        verbose_name=_("Nom de l'examen au moment de la commande"),
+    )
+    panel_name = models.CharField(
+        max_length=255, blank=True, default='',
+        verbose_name=_("Nom du bilan au moment de la commande"),
+    )
+
+    @property
+    def nom_examen(self):
+        """Nom a afficher : celui fige a la commande, sinon celui du catalogue."""
+        return self.exam_type_name or (getattr(self.exam_type, 'name', '') if self.exam_type_id else '')
+
+    @property
+    def nom_bilan(self):
+        return self.panel_name or (getattr(self.panel, 'name', '') if self.panel_id else '')
+
+    def save(self, *args, **kwargs):
+        # On fige a la premiere ecriture, puis on n'y touche plus.
+        if not self.exam_type_name and self.exam_type_id:
+            self.exam_type_name = getattr(self.exam_type, 'name', '') or ''
+        if not self.panel_name and self.panel_id:
+            self.panel_name = getattr(self.panel, 'name', '') or ''
+        super().save(*args, **kwargs)
+
     panel_price = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
         verbose_name=_("Prix du bilan (part imagerie)")

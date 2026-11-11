@@ -790,12 +790,35 @@ class LabOrderItem(models.Model):
     # Bilan (panel) link — set when this item was added as part of a bundle
     panel = models.ForeignKey(
         'LabTestPanel',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name='order_items',
         verbose_name=_("Bilan")
     )
+    # --- noms figes a la commande ---
+    # Le catalogue evolue : un examen peut etre renomme, un bilan recompose.
+    # Ces deux champs gardent ce qui a reellement ete prescrit ce jour-la, pour
+    # que les comptes rendus deja rendus et les statistiques ne changent jamais
+    # retroactivement. Ils sont remplis automatiquement a la creation.
+    lab_test_name = models.CharField(
+        max_length=255, blank=True, default='',
+        verbose_name=_("Nom de l'examen au moment de la commande"),
+    )
+    panel_name = models.CharField(
+        max_length=255, blank=True, default='',
+        verbose_name=_("Nom du bilan au moment de la commande"),
+    )
+
+    @property
+    def nom_examen(self):
+        """Nom a afficher : celui fige a la commande, sinon celui du catalogue."""
+        return self.lab_test_name or (getattr(self.lab_test, 'name', '') if self.lab_test_id else '')
+
+    @property
+    def nom_bilan(self):
+        return self.panel_name or (getattr(self.panel, 'name', '') if self.panel_id else '')
+
     # Price paid for the whole panel (stored only on the first item of the panel)
     panel_price = models.DecimalField(
         max_digits=10,
@@ -939,7 +962,15 @@ class LabOrderItem(models.Model):
         # Set result_entered_at when result is first entered (either text or numeric)
         if (self.result_value or self.result_numeric is not None) and not self.result_entered_at:
             self.result_entered_at = timezone.now()
-        
+
+        # On fige le nom de l'examen et celui du bilan a la premiere ecriture, puis
+        # on n'y touche plus : renommer le catalogue ne doit pas reecrire ce qui a
+        # deja ete prescrit, rendu et facture.
+        if not self.lab_test_name and self.lab_test_id:
+            self.lab_test_name = getattr(self.lab_test, 'name', '') or ''
+        if not self.panel_name and self.panel_id:
+            self.panel_name = getattr(self.panel, 'name', '') or ''
+
         super().save(*args, **kwargs)
 
     def __str__(self):

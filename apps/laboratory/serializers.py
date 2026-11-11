@@ -389,7 +389,7 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
 
 
 class PrescriberCustomPriceSerializer(serializers.ModelSerializer):
-    lab_test_name = serializers.CharField(source='lab_test.name', read_only=True)
+    lab_test_name = serializers.CharField(source='nom_examen', read_only=True)
     exam_type_name = serializers.CharField(source='exam_type.name', read_only=True)
 
     class Meta:
@@ -599,7 +599,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
 
 class LabOrderListItemSerializer(serializers.ModelSerializer):
     """Minimal item info for list view"""
-    lab_test_name = serializers.CharField(source='lab_test.name', read_only=True)
+    lab_test_name = serializers.CharField(source='nom_examen', read_only=True)
     sample_type = serializers.CharField(source='lab_test.sample_type', read_only=True)
     item_status = serializers.SerializerMethodField()
 
@@ -882,7 +882,7 @@ class LabTestPanelSerializer(serializers.ModelSerializer):
 # =============================================================================
 
 class SubcontractorPriceSerializer(serializers.ModelSerializer):
-    lab_test_name = serializers.CharField(source='lab_test.name', read_only=True)
+    lab_test_name = serializers.CharField(source='nom_examen', read_only=True)
     lab_test_code = serializers.CharField(source='lab_test.test_code', read_only=True)
     lab_test_category = serializers.CharField(source='lab_test.category.name', read_only=True, default='')
 
